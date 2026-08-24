@@ -2,7 +2,6 @@ import { act, createEvent, fireEvent, render, screen, userEvent } from 'test/tes
 
 import { LazyLoader } from '@grafana/scenes';
 
-import { EditActionsLayoutProvider } from './EditActionsLayoutContext';
 import { EditActionsPopover, WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 
 jest.mock('app/core/app_events', () => ({
@@ -137,20 +136,23 @@ describe('<EditActionsPopover />', () => {
       expect(stopPropagation).toHaveBeenCalled();
     });
 
-    test('when a layout provider supplies a portal root and the pointer rests, floating content is in that root', async () => {
-      const portalRoot = document.createElement('div');
-      const { container } = render(
-        <EditActionsLayoutProvider canvasRef={{ current: portalRoot }} isDocked={false} isHidden={false}>
-          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>}>
+    describe('when portalRoot is set', () => {
+      test('when the pointer rests, floating content is in that root', async () => {
+        const portalRoot = document.createElement('div');
+        document.body.appendChild(portalRoot);
+
+        render(
+          <EditActionsPopover isEditable={true} content={<span>popover-actions</span>} portalRoot={() => portalRoot}>
             <div data-testid="reference-child">variable control</div>
           </EditActionsPopover>
-        </EditActionsLayoutProvider>
-      );
-      container.appendChild(portalRoot);
+        );
 
-      await hoverAndRest(screen.getByTestId('reference-child'));
+        await hoverAndRest(screen.getByTestId('reference-child'));
 
-      expect(portalRoot).toContainElement(screen.getByText('popover-actions'));
+        expect(portalRoot).toContainElement(screen.getByText('popover-actions'));
+
+        portalRoot.remove();
+      });
     });
   });
 });

@@ -19,6 +19,7 @@ import {
   getActionStyles,
   SettingsActionButton,
 } from './EditActions';
+import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { HoverPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
 export function PanelEditActions({
@@ -83,6 +84,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 
 function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
+  const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   const onClickEdit = useCallback(() => {
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
@@ -128,7 +130,13 @@ function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; childre
   );
 
   return (
-    <HoverPopover content={editActions} placement="top-end" zIndex={theme.zIndex.dropdown} shiftPadding="sidebar">
+    <HoverPopover
+      content={editActions}
+      placement="top-end"
+      portalRoot={getPortalRoot}
+      zIndex={theme.zIndex.dropdown}
+      shiftPadding={getSidebarShiftPadding}
+    >
       {children}
     </HoverPopover>
   );

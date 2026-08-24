@@ -14,6 +14,7 @@ import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { SHOW_COPIED_DURATION_MS } from './EditActions';
+import { EditActionsLayoutProvider } from './EditActionsLayoutContext';
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { PanelEditActions, PanelEditActionsWrapper } from './PanelEditActions';
 
@@ -273,7 +274,7 @@ describe('<PanelEditActionsWrapper />', () => {
     });
   });
 
-  test('if the user clicks Edit visualization, then panelActionClicked is called', async () => {
+  test('if the user clicks Edit visualization, the panel editor is opened', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     new DashboardScene({
       isEditing: true,
@@ -336,7 +337,7 @@ describe('<PanelEditActionsWrapper />', () => {
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('duplicate', 1, 'edit_popover');
   });
 
-  test('if the user clicks & confirms Delete,  the panel is removed via its layout manager', async () => {
+  test('if the user clicks & confirms Delete, the panel is removed via its layout manager', async () => {
     const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
     const layoutManager = DefaultGridLayoutManager.fromVizPanels([panel]);
     new DashboardScene({
@@ -360,31 +361,46 @@ describe('<PanelEditActionsWrapper />', () => {
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
   });
 
-  test('when the sidebar is undocked and the pointer rests, floating content is shown', async () => {
-    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
-    const scene = new DashboardScene({
-      isEditing: true,
-      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+  describe('when a layout provider supplies a portal root', () => {
+    test('when the pointer rests, the floating content is in that element', async () => {
+      const portalRoot = document.createElement('div');
+      document.body.appendChild(portalRoot);
+
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+      new DashboardScene({
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      render(
+        <EditActionsLayoutProvider containerRef={{ current: portalRoot }} isDocked={false} isHidden={false}>
+          <ElementSelectionContext.Provider
+            value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
+          >
+            <PanelEditActionsWrapper panel={panel}>
+              <div data-testid="reference-child">panel</div>
+            </PanelEditActionsWrapper>
+          </ElementSelectionContext.Provider>
+        </EditActionsLayoutProvider>
+      );
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(portalRoot).toContainElement(screen.getByRole('button', { name: 'Settings' }));
+
+      portalRoot.remove();
     });
-    scene.state.sidebar.setState({ isDocked: false });
-
-    renderPanelEditActionsWrapper(panel);
-
-    await hoverAndRest(screen.getByTestId('reference-child'));
-
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
   });
 
   describe('when hover popover is not supported', () => {
     beforeEach(() => {
       mockUseHoverPopoverSupported.mockReturnValue(false);
     });
-
     afterEach(() => {
       mockUseHoverPopoverSupported.mockReturnValue(true);
     });
 
-    test('if the pointer rests, then floating content is not shown', async () => {
+    test('when hover popover is not supported and the pointer rests, the floating content is not shown', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
 
       renderPanelEditActionsWrapper(panel);

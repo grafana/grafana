@@ -17,8 +17,6 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { useEditActionsLayout } from './EditActionsLayoutContext';
-
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
 
 export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
@@ -47,9 +45,9 @@ type EditActionsPopoverProps = {
   content: React.ReactNode;
   children: React.JSX.Element;
   placement?: Placement;
-  portalRoot?: HTMLElement;
+  portalRoot?: () => HTMLElement | undefined;
   zIndex?: number;
-  shiftPadding?: 'sidebar';
+  shiftPadding?: () => number | { right: number };
 };
 
 export function HoverPopover({
@@ -63,7 +61,6 @@ export function HoverPopover({
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
-  const { getPortalRoot, getSidebarShiftPadding: getLayoutSidebarShiftPadding } = useEditActionsLayout();
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -78,7 +75,7 @@ export function HoverPopover({
       // Derivable options run when floating-ui computes (popover open), not on every panel render.
       shift(() => ({
         crossAxis: false,
-        padding: shiftPadding === 'sidebar' ? getLayoutSidebarShiftPadding() : 0,
+        padding: shiftPadding?.() ?? 0,
       })),
     ],
     whileElementsMounted: autoUpdate,
@@ -99,7 +96,7 @@ export function HoverPopover({
     <>
       {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isOpen && content && (
-        <Portal root={portalRoot ?? getPortalRoot()} zIndex={zIndex ?? theme.zIndex.portal}>
+        <Portal root={portalRoot?.()} zIndex={zIndex ?? theme.zIndex.portal}>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
             <EditActionsPopoverContext.Provider value={popoverContextValue}>
               {/* Stops pointerdown from all actions reaching ancestors, e.g. to prevent an element selection.

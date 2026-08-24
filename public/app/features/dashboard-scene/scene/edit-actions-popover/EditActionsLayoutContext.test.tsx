@@ -28,51 +28,51 @@ describe('measureSidebarShiftPadding()', () => {
     jest.restoreAllMocks();
   });
 
-  test('when the canvas is missing, padding is 0', () => {
+  test('when the container is missing, padding is 0', () => {
     const sidebar = document.createElement('div');
 
     expect(measureSidebarShiftPadding(undefined, sidebar)).toBe(0);
   });
 
   test('when the sidebar is missing, padding is 0', () => {
-    const canvas = document.createElement('div');
+    const container = document.createElement('div');
 
-    expect(measureSidebarShiftPadding(canvas, undefined)).toBe(0);
+    expect(measureSidebarShiftPadding(container, undefined)).toBe(0);
   });
 
-  test('when the canvas right edge is 1000 and the sidebar left edge is 680, right padding is 320', () => {
-    const canvas = document.createElement('div');
+  test('when the container right edge is 1000 and the sidebar left edge is 680, right padding is 320', () => {
+    const container = document.createElement('div');
     const sidebar = document.createElement('div');
-    stubClientRect(canvas, 0, 1000);
+    stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 680, 1000);
 
-    expect(measureSidebarShiftPadding(canvas, sidebar)).toEqual({ right: 320 });
+    expect(measureSidebarShiftPadding(container, sidebar)).toEqual({ right: 320 });
   });
 
-  test('when the sidebar left edge is past the canvas right edge, right padding is 0', () => {
-    const canvas = document.createElement('div');
+  test('when the sidebar left edge is past the container right edge, right padding is 0', () => {
+    const container = document.createElement('div');
     const sidebar = document.createElement('div');
-    stubClientRect(canvas, 0, 1000);
+    stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 1100, 1420);
 
-    expect(measureSidebarShiftPadding(canvas, sidebar)).toEqual({ right: 0 });
+    expect(measureSidebarShiftPadding(container, sidebar)).toEqual({ right: 0 });
   });
 });
 
 function renderUseEditActionsLayout({
-  canvas = null,
+  container = null,
   isDocked = false,
   isHidden = false,
 }: {
-  canvas?: HTMLDivElement | null;
+  container?: HTMLDivElement | null;
   isDocked?: boolean;
   isHidden?: boolean;
 } = {}) {
-  const canvasRef: RefObject<HTMLDivElement | null> = { current: canvas };
+  const containerRef: RefObject<HTMLDivElement | null> = { current: container };
 
   return renderHook(() => useEditActionsLayout(), {
     wrapper: ({ children }) => (
-      <EditActionsLayoutProvider canvasRef={canvasRef} isDocked={isDocked} isHidden={isHidden}>
+      <EditActionsLayoutProvider containerRef={containerRef} isDocked={isDocked} isHidden={isHidden}>
         {children}
       </EditActionsLayoutProvider>
     ),
@@ -99,55 +99,55 @@ describe('useEditActionsLayout()', () => {
     });
   });
 
-  test('when the provider has a canvas ref, getPortalRoot returns that element', () => {
-    const canvas = document.createElement('div');
-    const { result } = renderUseEditActionsLayout({ canvas });
+  test('when the provider has a container ref, getPortalRoot returns that element', () => {
+    const container = document.createElement('div');
+    const { result } = renderUseEditActionsLayout({ container });
 
-    expect(result.current.getPortalRoot()).toBe(canvas);
+    expect(result.current.getPortalRoot()).toBe(container);
   });
 
   test('when the provider is docked, sidebar shift padding is 0', () => {
-    const canvas = document.createElement('div');
+    const container = document.createElement('div');
     const sidebar = document.createElement('div');
     sidebar.id = 'sidebar-container';
     document.body.appendChild(sidebar);
-    stubClientRect(canvas, 0, 1000);
+    stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 680, 1000);
 
-    const { result } = renderUseEditActionsLayout({ canvas, isDocked: true });
+    const { result } = renderUseEditActionsLayout({ container, isDocked: true });
 
     expect(result.current.getSidebarShiftPadding()).toBe(0);
   });
 
   test('when the provider is hidden, sidebar shift padding is 0', () => {
-    const canvas = document.createElement('div');
+    const container = document.createElement('div');
     const sidebar = document.createElement('div');
     sidebar.id = 'sidebar-container';
     document.body.appendChild(sidebar);
-    stubClientRect(canvas, 0, 1000);
+    stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 680, 1000);
 
-    const { result } = renderUseEditActionsLayout({ canvas, isHidden: true });
+    const { result } = renderUseEditActionsLayout({ container, isHidden: true });
 
     expect(result.current.getSidebarShiftPadding()).toBe(0);
   });
 
   test('when the provider is undocked and the sidebar is missing, sidebar shift padding is 0', () => {
-    const canvas = document.createElement('div');
-    const { result } = renderUseEditActionsLayout({ canvas, isDocked: false, isHidden: false });
+    const container = document.createElement('div');
+    const { result } = renderUseEditActionsLayout({ container, isDocked: false, isHidden: false });
 
     expect(result.current.getSidebarShiftPadding()).toBe(0);
   });
 
-  test('when the provider is undocked and the canvas right is 1000 and the sidebar left is 680, right padding is 320', () => {
-    const canvas = document.createElement('div');
+  test('when the provider is undocked and the container right is 1000 and the sidebar left is 680, right padding is 320', () => {
+    const container = document.createElement('div');
     const sidebar = document.createElement('div');
     sidebar.id = 'sidebar-container';
     document.body.appendChild(sidebar);
-    stubClientRect(canvas, 0, 1000);
+    stubClientRect(container, 0, 1000);
     stubClientRect(sidebar, 680, 1000);
 
-    const { result } = renderUseEditActionsLayout({ canvas, isDocked: false, isHidden: false });
+    const { result } = renderUseEditActionsLayout({ container, isDocked: false, isHidden: false });
 
     expect(result.current.getSidebarShiftPadding()).toEqual({ right: 320 });
   });

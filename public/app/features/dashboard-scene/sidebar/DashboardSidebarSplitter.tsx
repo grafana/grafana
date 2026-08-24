@@ -67,7 +67,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -168,9 +168,9 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   }
 
   return (
-    <div ref={canvasRef} className={styles.container}>
+    <div ref={containerRef} className={styles.container}>
       <EditActionsLayoutProvider
-        canvasRef={canvasRef}
+        containerRef={containerRef}
         isDocked={sidebarContext.isDocked}
         isHidden={sidebarContext.isHidden}
       >

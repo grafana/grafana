@@ -15,23 +15,22 @@ const EditActionsLayoutContext = createContext<EditActionsLayout>(defaultLayout)
 export const useEditActionsLayout = () => useContext(EditActionsLayoutContext);
 
 export function measureSidebarShiftPadding(
-  canvas: HTMLElement | null | undefined,
+  container: HTMLElement | null | undefined,
   sidebar: HTMLElement | null | undefined
 ) {
-  if (!canvas || !sidebar) {
+  if (!container || !sidebar) {
     return 0;
   }
-
-  return { right: Math.max(0, canvas.getBoundingClientRect().right - sidebar.getBoundingClientRect().left) };
+  return { right: Math.max(0, container.getBoundingClientRect().right - sidebar.getBoundingClientRect().left) };
 }
 
 export function EditActionsLayoutProvider({
-  canvasRef,
+  containerRef,
   isDocked,
   isHidden,
   children,
 }: {
-  canvasRef: RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement | null>;
   isDocked: boolean;
   isHidden: boolean;
   children: ReactNode;
@@ -42,17 +41,17 @@ export function EditActionsLayoutProvider({
 
   const layout = useMemo<EditActionsLayout>(
     () => ({
-      getPortalRoot: () => canvasRef.current ?? undefined,
+      getPortalRoot: () => containerRef.current ?? undefined,
       getSidebarShiftPadding: () => {
         const { isDocked: docked, isHidden: hidden } = sidebarLayoutRef.current;
         if (docked || hidden) {
           return 0;
         }
 
-        return measureSidebarShiftPadding(canvasRef.current, document.getElementById('sidebar-container'));
+        return measureSidebarShiftPadding(containerRef.current, document.getElementById('sidebar-container'));
       },
     }),
-    [canvasRef]
+    [containerRef]
   );
 
   return <EditActionsLayoutContext.Provider value={layout}>{children}</EditActionsLayoutContext.Provider>;
