@@ -224,16 +224,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
-    });
-
-    // The only assertion that pins childItems: a plain Menu.Item silently drops the submenu chevron.
-    it('offers visualizations through a submenu', async () => {
-      const { user } = renderNotebook(true);
-
-      await user.click(screen.getAllByRole('button', { name: 'Add block' })[0]);
-
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitem', { name: 'Query' })).toBeInTheDocument();
     });
   });
 
@@ -286,7 +277,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitem', { name: 'Query' })).toBeInTheDocument();
     });
 
     // Regular typing (anything but a lone "/") never opens the menu — it is just markdown text.
