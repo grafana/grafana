@@ -16,7 +16,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneObjectStateChangedEvent, VizPanel } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelDataPaneNext } from '../panel-edit/PanelEditNext/PanelDataPaneNext';
@@ -544,6 +544,75 @@ describe('PanelPluginTransformationsBehaviour', () => {
       await waitFor(() => {
         expect(transformer.state.data === source.state.data).toBe(true);
       });
+    });
+  });
+
+  describe('a provider that deactivates', () => {
+    it('applies a plugin that finished loading while it was inactive', async () => {
+      const plugin = registerPlugin('cold', (p) => p.setSystemTransformations(() => [extractLabels]));
+      coldPlugins.add('cold');
+
+      const { transformer } = buildPipeline({ pluginId: 'cold', series: [frameWithLabels()] });
+      const deactivate = transformer.activate();
+
+      // Nothing resolves the id synchronously, so this first pass runs no transformations.
+      expect(fieldNames(transformer)).toEqual(['time', 'line', 'labels']);
+
+      deactivate();
+
+      // The import lands on a torn-down provider, so it cannot reprocess: the source has not emitted
+      // since, and the transformer would skip a pass over data it has already transformed.
+      await waitFor(() => expect(syncGetPanelPlugin('cold')).toBe(plugin));
+      expect(fieldNames(transformer)).toEqual(['time', 'line', 'labels']);
+
+      transformer.activate();
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toContain('level');
+      });
+    });
+
+    it('re-runs for a visualization switched while it was inactive', async () => {
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+      registerPlugin('reducer', (p) =>
+        p.setSystemTransformations(() => [{ id: 'reduce', options: { reducers: ['max'] } }])
+      );
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
+      const deactivate = transformer.activate();
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toContain('level');
+      });
+
+      deactivate();
+      // Nothing is subscribed to the panel, so the swap has to be noticed on the way back in.
+      panel.setState({ pluginId: 'reducer' });
+
+      transformer.activate();
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toEqual(['Field', 'Max']);
+      });
+    });
+
+    it('leaves the transformed data alone when the plugin is unchanged on the way back', async () => {
+      registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+
+      const { transformer } = buildPipeline({ pluginId: 'logs-table', series: [frameWithLabels()] });
+      const deactivate = transformer.activate();
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toContain('level');
+      });
+
+      const transformed = transformer.state.data;
+
+      deactivate();
+      transformer.activate();
+
+      // A forced pass would produce a new PanelData, which every consumer of the panel reacts to.
+      expect(transformer.state.data).toBe(transformed);
     });
   });
 

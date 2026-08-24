@@ -21,6 +21,14 @@ import { pluginTransformationsEnabled } from './systemTransformations';
  * `$behaviors` wholesale to drop one of them.
  */
 export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneObjectState> {
+  /**
+   * The plugin the pipeline last resolved against, kept across deactivation so a load that finished,
+   * or a visualization that was switched, while this was inactive is still visible on the way back.
+   * Boxed because "never activated" and "activated while nothing resolved" are different answers and
+   * both have to be representable.
+   */
+  private _resolvedPlugin: { plugin: PanelPlugin | undefined } | undefined;
+
   public constructor(state: SceneObjectState = {}) {
     super(state);
 
@@ -67,21 +75,32 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
 
     transformer.setSystemTransformations({ origin: 'plugin', supplier: this._supplier });
 
+    const plugin = this._plugin();
+    // Re-registering hands over the same supplier reference, which the transformer reads as no change,
+    // and its own activation pass is unforced and stops at the data it has already transformed. So a
+    // plugin that resolved while this was inactive reaches the pipeline only from here. A first
+    // activation needs no prompting: registering the supplier is itself the change.
+    const resolvedWhileInactive = this._resolvedPlugin !== undefined && this._resolvedPlugin.plugin !== plugin;
+
+    this._resolvedPlugin = { plugin };
+
+    if (resolvedWhileInactive) {
+      transformer.reprocessTransformations();
+    }
+
     // Two things change what the supplier resolves without producing new data to resolve against:
     // switching visualization, and the panel finishing a plugin load that had not resolved yet. The
     // second cannot be seen from `pluginId` -- `_pluginLoaded` writes the value already in state --
-    // so watch the plugin itself.
-    let loadedPlugin = getLoadedPluginFor(panel);
-
+    // so watch what the supplier itself reads.
     this._subs.add(
-      panel.subscribeToState((newState, prevState) => {
-        const nextPlugin = getLoadedPluginFor(panel);
+      panel.subscribeToState(() => {
+        const nextPlugin = this._plugin();
 
-        if (newState.pluginId === prevState.pluginId && nextPlugin === loadedPlugin) {
+        if (nextPlugin === this._resolvedPlugin?.plugin) {
           return;
         }
 
-        loadedPlugin = nextPlugin;
+        this._resolvedPlugin = { plugin: nextPlugin };
         transformer.reprocessTransformations();
       })
     );
@@ -117,10 +136,15 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
 
     importPanelPlugin(pluginId)
       .then(() => {
-        // The panel may have been swapped or the provider torn down while the chunk loaded.
-        if (this.isActive && panel.state.pluginId === pluginId) {
-          transformer.reprocessTransformations();
+        // The panel may have been swapped or the provider torn down while the chunk loaded. Nothing
+        // is lost in the second case: the next activation compares against what it last resolved and
+        // picks the load up there.
+        if (!this.isActive || panel.state.pluginId !== pluginId) {
+          return;
         }
+
+        this._resolvedPlugin = { plugin: this._plugin() };
+        transformer.reprocessTransformations();
       })
       // An id nothing can resolve leaves the panel on its untransformed data, the same outcome as a
       // plugin that registers nothing. Never error the panel's data over it.
