@@ -324,6 +324,7 @@
 "delete acl rules for deleted dashboards and folders"
 "create tag table"
 "add index tag.key_value"
+"Increase tag value column to length 512"
 "create login attempt table"
 "add index login_attempt.username"
 "drop index IDX_login_attempt_username - v1"
