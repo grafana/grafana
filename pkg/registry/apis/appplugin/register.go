@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	pluginregistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -69,7 +69,7 @@ type AppPluginRunnerOptions struct {
 type AppPluginAPIBuilder struct {
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
-	clientV3        func(ctx context.Context) (v3.ClientV3, bool)
+	clientV3Loader  v3.ClientV3Loader
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
@@ -87,16 +87,18 @@ type AppPluginAPIBuilder struct {
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
+	clientV3Loader v3.ClientV3Loader,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
-	opts AppPluginRunnerOptions, // can change without updating wire :)
-	tracer tracing.Tracer, // needed for proxy
+	opts AppPluginRunnerOptions,         // can change without updating wire :)
+	tracer tracing.Tracer,               // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
 		pluginJSON:      plugin.JSONData,
 		client:          client,
+		clientV3Loader:  clientV3Loader,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
@@ -107,17 +109,22 @@ func NewAppPluginAPIBuilder(
 	}, nil
 }
 
+// clientV3 returns the experimental v3 client for this builder's plugin, if available.
+func (b *AppPluginAPIBuilder) clientV3(ctx context.Context) (v3.ClientV3, bool) {
+	return b.clientV3Loader.ClientV3(ctx, b.pluginJSON.ID)
+}
+
 // Called in ST Grafana to register
 func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	contextProvider PluginContextWrapper,
-	pluginRegistry pluginregistry.Service,
+	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
 	decrypter decrypt.DecryptService,
-	tracer tracing.Tracer, // needed for proxy
+	tracer tracing.Tracer,               // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
@@ -154,6 +161,7 @@ func RegisterAPIService(
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
+			clientV3Loader,
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
@@ -171,14 +179,6 @@ func RegisterAPIService(
 		)
 		if err != nil {
 			return nil, err
-		}
-
-		b.clientV3 = func(ctx context.Context) (v3.ClientV3, bool) {
-			p, ok := pluginRegistry.Plugin(ctx, b.pluginJSON.ID, "")
-			if !ok || p.IsDecommissioned() {
-				return nil, false
-			}
-			return p.ClientV3(ctx)
 		}
 
 		apiRegistrar.RegisterAPI(b)

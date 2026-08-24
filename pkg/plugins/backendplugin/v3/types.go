@@ -13,3 +13,9 @@ type ClientV3 interface {
 	// Return an error when requests to this implementation will fail for setup reasons
 	IsHealthy(ctx context.Context) error
 }
+
+// ClientV3Loader looks up the ClientV3 for a plugin by ID, waiting for the plugin
+// registry to finish loading if necessary.
+type ClientV3Loader interface {
+	ClientV3(ctx context.Context, pluginID string) (ClientV3, bool)
+}
