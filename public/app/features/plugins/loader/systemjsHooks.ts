@@ -1,16 +1,26 @@
 import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
-import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
+import { extractCacheKeyFromPath, getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './sharedDependencies';
-import { type SystemJSWithLoaderHooks } from './types';
+import { type SystemJSRegistration, type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
+
+const monitoredSharedDependencyImports: Record<string, Record<string, true>> = {
+  'react-router-dom': {
+    Switch: true,
+    useHistory: true,
+  },
+};
+
+const reportedSharedDependencyImports = new Set<string>();
 
 export function initSystemJSHooks() {
   const imports = buildImportMap(sharedDependenciesMap);
@@ -52,10 +62,92 @@ export function initSystemJSHooks() {
   const systemJSResolve = systemJSPrototype.resolve;
   systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, systemJSResolve);
 
+  const systemJSInstantiate = systemJSPrototype.instantiate;
+  systemJSPrototype.instantiate = function (url: string, firstParentUrl?: string, meta?: unknown) {
+    return decorateSystemJSInstantiate.call(this, systemJSInstantiate, url, firstParentUrl, meta);
+  };
+
   // Older plugins load .css files which resolves to a CSS Module.
   // https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
   // Any css files loaded via SystemJS have their styles applied onload.
   systemJSPrototype.onload = decorateSystemJsOnload;
+}
+
+// Named imports only exist as property reads inside compiled System.register setters.
+// Proxy the namespace at that boundary to retain the importing plugin's identity.
+export async function decorateSystemJSInstantiate(
+  this: SystemJSWithLoaderHooks,
+  originalInstantiate: SystemJSWithLoaderHooks['instantiate'],
+  url: string,
+  firstParentUrl?: string,
+  meta?: unknown
+): Promise<SystemJSRegistration | undefined> {
+  const registration = await originalInstantiate.call(this, url, firstParentUrl, meta);
+  console.log('[systemjs] instantiate ' + url, { this: this, url, firstParentUrl, meta, registration });
+  const pluginId = extractCacheKeyFromPath(url);
+  if (!registration || !pluginId) {
+    return registration;
+  }
+
+  const [dependencies, declare, metadata] = registration;
+  if (!dependencies.some((dependency) => monitoredSharedDependencyImports[dependency])) {
+    return registration;
+  }
+
+  console.log('[systemjs] instantiate has a monitored dependency, wrapping setters for pluginId: ' + pluginId, {
+    dependencies,
+    declare,
+    metadata,
+  });
+
+  return [
+    dependencies,
+    function (_export, context) {
+      const declaration = declare(_export, context);
+      if (!declaration.setters) {
+        return declaration;
+      }
+
+      for (let index = 0; index < dependencies.length; index++) {
+        const dependencyName = dependencies[index];
+        const monitoredImports = monitoredSharedDependencyImports[dependencyName];
+        const setter = declaration.setters[index];
+        if (!monitoredImports || !setter) {
+          continue;
+        }
+
+        let dependencyProxy: System.Module | undefined;
+        declaration.setters[index] = function (dependency) {
+          dependencyProxy ??= new Proxy(dependency, {
+            get(target, property, receiver) {
+              if (typeof property === 'string' && monitoredImports[property]) {
+                reportSharedDependencyImport(pluginId, dependencyName, property);
+              }
+              return Reflect.get(target, property, receiver);
+            },
+          });
+          setter(dependencyProxy);
+        };
+      }
+
+      return declaration;
+    },
+    metadata,
+  ];
+}
+
+function reportSharedDependencyImport(pluginId: string, dependencyName: string, importName: string) {
+  const reportKey = `${pluginId}\0${dependencyName}\0${importName}`;
+  if (reportedSharedDependencyImports.has(reportKey)) {
+    return;
+  }
+  reportedSharedDependencyImports.add(reportKey);
+
+  getLogger('features.plugins').logInfo('Plugin accessed shared dependency import', {
+    pluginId,
+    dependencyName,
+    importName,
+  });
 }
 
 export async function decorateSystemJSFetch(
