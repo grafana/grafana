@@ -19,6 +19,7 @@ import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
+import * as variablesManagementAPI from 'app/features/variables-management/api';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
@@ -264,6 +265,44 @@ describe('browseDashboardsAPI', () => {
     await waitFor(() => {
       expect(setStarredPayloads).toEqual([{ id: 'folder-1', isStarred: false }]);
     });
+  });
+
+  it('invalidates the variables list after deleting a folder', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
+  it('does not invalidate the variables list when deleting a folder fails', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(
+        http.delete('/api/folders/folder-1', () =>
+          HttpResponse.json({ message: 'folder delete failed' }, { status: 500 })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
   });
 
   describe('getAffectedItems', () => {
@@ -522,6 +561,23 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('invalidates the variables list after bulk-deleting folders', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
     });
 
     it('removes each bulk-deleted folder from the nav starred section', async () => {

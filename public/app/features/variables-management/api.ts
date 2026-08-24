@@ -28,10 +28,13 @@ export function invalidatePredefinedVariableCaches() {
   getDashboardScenePageStateManager().clearSceneCache();
 }
 
-function invalidateAfterVariableMutation() {
+export function invalidateAfterVariableMutation() {
   dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
   invalidatePredefinedVariableCaches();
 }
+
+/** Folder delete cascades Variables; drop the management-page list cache so it does not stay stale. */
+export const invalidateVariablesAfterFolderDelete = invalidateAfterVariableMutation;
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
