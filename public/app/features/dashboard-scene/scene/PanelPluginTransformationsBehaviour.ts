@@ -135,6 +135,11 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
     const { pluginId } = panel.state;
 
     importPanelPlugin(pluginId)
+      // An id nothing can resolve leaves the panel on its untransformed data, the same outcome as a
+      // plugin that registers nothing. Never error the panel's data over it. Before the handler
+      // rather than after, so it cannot also swallow a failure to reprocess -- that one is a panel
+      // silently serving the wrong frames, which should surface rather than be tolerated.
+      .catch(() => undefined)
       .then(() => {
         // The panel may have been swapped or the provider torn down while the chunk loaded. Nothing
         // is lost in the second case: the next activation compares against what it last resolved and
@@ -143,12 +148,20 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
           return;
         }
 
-        this._resolvedPlugin = { plugin: this._plugin() };
+        const plugin = this._plugin();
+
+        // The panel loads the same chunk for itself and writes it to state, which reprocesses through
+        // the subscription above. Whichever of the two lands second has nothing left to do, and
+        // forcing the pipeline again would re-run every transformation over every frame and emit a
+        // second `PanelData` for every consumer to react to. An id that resolved nowhere lands here
+        // too, with nothing resolved before or after.
+        if (plugin === this._resolvedPlugin?.plugin) {
+          return;
+        }
+
+        this._resolvedPlugin = { plugin };
         transformer.reprocessTransformations();
-      })
-      // An id nothing can resolve leaves the panel on its untransformed data, the same outcome as a
-      // plugin that registers nothing. Never error the panel's data over it.
-      .catch(() => undefined);
+      });
   }
 }
 

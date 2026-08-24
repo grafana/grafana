@@ -113,6 +113,64 @@ describe('useTransformedFrames', () => {
 
     expect(unsubscribe).toHaveBeenCalled();
   });
+
+  it('returns the new frames rather than the previous output while a transform is in flight', () => {
+    const nextFrames = makeFrames(['c']);
+
+    const { result, rerender } = renderHook(({ data }: { data: DataFrame[] }) => useTransformedFrames(configs, data), {
+      initialProps: { data: frames },
+    });
+
+    expect(result.current).toBe(emitted);
+
+    // A query that has landed but not been transformed yet.
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ data: nextFrames }));
+
+    // Not `emitted`: those frames came out of the previous query, and a caller pairing them with
+    // this query's metadata configures its editors against a shape that never existed.
+    expect(result.current).toBe(nextFrames);
+  });
+
+  describe('when the transformations fail', () => {
+    let consoleError: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleError.mockRestore();
+    });
+
+    it('falls back to the untransformed frames when the pipeline errors', () => {
+      const failure = new Error('extractFields could not parse the column as JSON');
+      mockTransformDataFrame.mockReturnValue(
+        new Observable((subscriber) => {
+          subscriber.error(failure);
+        })
+      );
+
+      const { result } = renderHook(() => useTransformedFrames(configs, frames));
+
+      expect(result.current).toBe(frames);
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('Failed to replay'), failure);
+    });
+
+    it('falls back when a custom operator throws as its pipeline is built', () => {
+      // `transformDataFrame` calls operator factories synchronously, before there is an observable
+      // to carry the error — so this throws out of the effect and unmounts the pane if uncaught.
+      const failure = new Error('operator factory read a missing option');
+      mockTransformDataFrame.mockImplementation(() => {
+        throw failure;
+      });
+
+      const { result } = renderHook(() => useTransformedFrames(configs, frames));
+
+      expect(result.current).toBe(frames);
+      expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('Failed to replay'), failure);
+    });
+  });
 });
 
 describe('precedingTransformations', () => {

@@ -387,6 +387,24 @@ describe('PanelPluginTransformationsBehaviour', () => {
       });
     });
 
+    it('reprocesses once for a cold plugin, not once per path that notices it load', async () => {
+      registerPlugin('cold', (p) => p.setSystemTransformations(() => [extractLabels]));
+      coldPlugins.add('cold');
+
+      const { transformer, panel } = buildPipeline({ pluginId: 'cold', series: [frameWithLabels()] });
+      const reprocess = jest.spyOn(transformer, 'reprocessTransformations');
+      activateFullSceneTree(panel);
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toContain('level');
+      });
+
+      // The panel imports the chunk for itself and writes it to state, and the behaviour awaits the
+      // same cached promise. Both notice; only the first has anything to do. A forced pass re-runs
+      // every transformation over every frame and emits a `PanelData` every consumer reacts to.
+      expect(reprocess).toHaveBeenCalledTimes(1);
+    });
+
     it('applies transformations from a plugin only the panel can resolve', async () => {
       registerPlugin('runtime-only', (p) => p.setSystemTransformations(() => [extractLabels]));
       importerBlindPlugins.add('runtime-only');

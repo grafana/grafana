@@ -241,10 +241,13 @@ describe('useTransformationInputData', () => {
     it('runs them alone for a transformation missing from the list', () => {
       // findIndex returns -1 here; slicing by it directly would drop the list's last entry.
       const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
+      // Built outside the render callback: a fresh selection per render is a fresh config array per
+      // render, which re-runs the pipeline and sets state on every one of them.
+      const missing = makeTransformation('reduce');
 
       renderHook(() =>
         useTransformationInputData({
-          selectedTransformation: makeTransformation('reduce'),
+          selectedTransformation: missing,
           allTransformations: transformations,
           systemTransformations,
           rawData,
