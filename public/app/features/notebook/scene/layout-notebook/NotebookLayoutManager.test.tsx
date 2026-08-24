@@ -72,16 +72,18 @@ function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
   });
 }
 
-function attachHistory(manager: NotebookLayoutManager): NotebookEditHistory {
-  const scene = new NotebookScene({
+function attachScene(manager: NotebookLayoutManager): NotebookScene {
+  return new NotebookScene({
     title: 'My notebook',
     body: manager,
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
   });
+}
 
-  return scene.editHistory;
+function attachHistory(manager: NotebookLayoutManager): NotebookEditHistory {
+  return attachScene(manager).editHistory;
 }
 
 function renderManager(manager: NotebookLayoutManager) {
@@ -591,6 +593,33 @@ describe('NotebookLayoutManager', () => {
     await findByText(/you have dropped the item/i);
 
     expect(cellNames(manager)).toEqual(['b', 'a', 'c']);
+  });
+
+  describe('setTagsFromHeader', () => {
+    /**
+     * The header edits tags, the scene owns them, and the manager is the only thing between the two.
+     * Both readers of that walk are exercised elsewhere by their own effects; this is the one that had
+     * nothing on it, so a silent no-op here would have left tag editing dead with a green suite.
+     */
+    it('forwards the edit up to the scene, which owns the tags', () => {
+      const manager = buildManager([]);
+      const scene = attachScene(manager);
+
+      manager.setTagsFromHeader(['latency', 'slo']);
+
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+    });
+
+    // duplicate(), the deserializer and most of this file build a manager with no scene above it. The
+    // edit has nowhere to go, and the manager must not write its own copy instead - the scene is the
+    // single writer, and a second copy here is exactly the drift this arrangement exists to prevent.
+    it('leaves a manager with no scene above it untouched', () => {
+      const manager = buildManager([]);
+
+      manager.setTagsFromHeader(['latency']);
+
+      expect(manager.state.tags).toEqual(['incident', 'checkout']);
+    });
   });
 
   describe('editModeChanged', () => {

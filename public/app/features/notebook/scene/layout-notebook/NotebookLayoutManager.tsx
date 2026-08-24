@@ -102,32 +102,30 @@ export class NotebookLayoutManager
 
   /**
    * The scene above owns the history, so reading it here means nothing has to hand it over again when
-   * the scene swaps its body. duplicate(), the deserializer and tests build a manager with no scene
-   * above it. Editing one of those still works, the changes are just not recorded.
+   * the scene swaps its body. Editing a manager with no scene above it still works, the changes are
+   * just not recorded.
    */
   private get editHistory(): NotebookEditHistory | undefined {
-    let parent = this.parent;
-
-    while (parent) {
-      if (isNotebookScene(parent)) {
-        return parent.editHistory;
-      }
-      parent = parent.parent;
-    }
-
-    return undefined;
+    return this.notebookScene?.editHistory;
   }
 
   /**
    * The scene owns the tags - it is what the save model reads - so the header's edits are forwarded up
-   * to it rather than applied here. Found by walking the parents like editHistory above, and for the
-   * same reason: importing NotebookScene as a value would have this file and that one import each
-   * other. A notebook rendered without a scene above it silently keeps its tags read-only.
+   * to it rather than applied here. A notebook rendered without a scene above it silently keeps its
+   * tags read-only.
    */
   public setTagsFromHeader(tags: string[]): void {
     this.notebookScene?.onTagsChange(tags);
   }
 
+  /**
+   * Walked rather than imported: taking NotebookScene as a value would have this file and that one
+   * import each other, which is the cycle this layout is arranged to avoid - hence the brand check.
+   *
+   * Undefined is a real answer, not a failure. duplicate(), the deserializer and this class's own
+   * tests all build a manager with no scene above it, and both readers below treat that as "nothing
+   * to tell" rather than an error.
+   */
   private get notebookScene() {
     let parent = this.parent;
 
