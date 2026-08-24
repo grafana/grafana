@@ -12,12 +12,12 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { SceneDataNode, VizPanel, isSystemTransformation } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
+import { PanelPluginTransformationsBehaviour } from '../../scene/PanelPluginTransformationsBehaviour';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
@@ -67,7 +67,7 @@ const extractLabels = {
 };
 
 function buildScene(pluginId: string) {
-  const transformer = new PanelDataTransformer({
+  const transformer = new SceneDataTransformer({
     $data: new SceneDataNode({
       data: {
         state: LoadingState.Done,
@@ -76,6 +76,7 @@ function buildScene(pluginId: string) {
       },
     }),
     transformations: [],
+    $behaviors: [new PanelPluginTransformationsBehaviour()],
   });
 
   const panel = new VizPanel({ key: 'panel-1', pluginId, title: 'Logs', $data: transformer });
@@ -102,7 +103,7 @@ function buildScene(pluginId: string) {
   return { scene: scene as unknown as DashboardScene, panel, transformer };
 }
 
-function outputFieldNames(transformer: PanelDataTransformer) {
+function outputFieldNames(transformer: SceneDataTransformer) {
   return transformer.state.data?.series[0]?.fields.map((f) => f.name);
 }
 
@@ -130,7 +131,7 @@ describe('UPDATE_PANEL and plugin registered transformations', () => {
 
     // The plugin's prepended `extractFields` is running before the command lands.
     await waitFor(() => expect(outputFieldNames(transformer)).toContain('level'));
-    expect(transformer.state.transformations.filter(isSystemTransformation)).toHaveLength(2);
+    expect(transformer.state.transformations).toEqual([]);
 
     const client = new DashboardMutationClient(scene);
     const result = await client.execute({
@@ -162,21 +163,20 @@ describe('UPDATE_PANEL and plugin registered transformations', () => {
     // The command's own transformation took effect, so this is not a silently skipped update.
     await waitFor(() => expect(outputFieldNames(transformer)).not.toContain('labels'));
 
-    // The command replaces only the user tier, so the plugin's prepend and append wrappers survive.
-    expect(transformer.state.transformations.filter(isSystemTransformation)).toHaveLength(2);
-    // And they still run: `level` is only ever produced by the plugin's prepended `extractFields`.
+    // The command owns `state.transformations` outright, and the plugin's are resolved beside it.
+    expect(transformer.state.transformations).toHaveLength(1);
+    // They still run: `level` is only ever produced by the plugin's prepended `extractFields`.
     expect(outputFieldNames(transformer)).toContain('level');
   });
 });
 
 /**
- * Why UPDATE_PANEL calls `reprocessTransformations()` explicitly after `setUserTransformations`.
+ * Why UPDATE_PANEL pairs `setState({ transformations })` with an explicit `reprocessTransformations()`.
  *
- * The command used to pair `setState({ transformations })` with `reprocessTransformations()`, which
- * recomputed unconditionally. `setUserTransformations` is what preserves the plugin's entries, but it
- * routes through `_applyTransformations`, which returns early when the new list compares equal and
- * otherwise reprocesses only `if (this.isActive)`. Each test below pins one of those two conditions;
- * both fail if the explicit reprocess is removed. Neither depends on the feature flag, so it stays off.
+ * Writing the array does not re-run the pipeline on its own, and the two obvious ways to make it do
+ * so both have a hole: `setUserTransformations` returns early when the new list compares equal and
+ * otherwise reprocesses only `if (this.isActive)`. Each test below pins one of those conditions; both
+ * fail if the explicit reprocess is removed. Neither depends on the feature flag, so it stays off.
  */
 describe('UPDATE_PANEL reprocesses whatever the provider state', () => {
   beforeEach(() => {

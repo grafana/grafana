@@ -12,11 +12,11 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { SceneDataNode, SceneObjectRef, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, SceneObjectRef, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { PanelDataTransformer } from '../scene/PanelDataTransformer';
+import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransformationsBehaviour';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { InspectDataTab } from './InspectDataTab';
@@ -47,7 +47,7 @@ const extractLabels = {
 
 function buildTab(options: {
   pluginId: string;
-  userTransformations?: PanelDataTransformer['state']['transformations'];
+  userTransformations?: SceneDataTransformer['state']['transformations'];
   seriesMeta?: QueryResultMeta;
 }) {
   const series = [
@@ -61,11 +61,12 @@ function buildTab(options: {
     }),
   ];
 
-  const transformer = new PanelDataTransformer({
+  const transformer = new SceneDataTransformer({
     $data: new SceneDataNode({
       data: { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() },
     }),
     transformations: options.userTransformations ?? [],
+    $behaviors: [new PanelPluginTransformationsBehaviour()],
   });
 
   const panel = new VizPanel({

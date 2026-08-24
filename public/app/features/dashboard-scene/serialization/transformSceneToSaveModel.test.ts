@@ -27,7 +27,6 @@ import {
   SceneGridLayout,
   type SceneGridRow,
   VizPanel,
-  isSystemTransformation,
 } from '@grafana/scenes';
 import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -1765,15 +1764,15 @@ describe('given a panel plugin that registers transformations', () => {
     });
 
     const dataProvider = panel.state.body.state.$data as SceneDataTransformer;
-    // Installed directly: `PanelDataTransformer` installs on activation once it has resolved a
-    // plugin, and that mechanism is its own concern. What matters here is that installed entries
-    // never reach the save model. A plain config in the append slot proves the `origin` filter is
-    // doing the work, rather than the operator falling out for having no `id`.
+    // Registered directly rather than through a plugin, which is `PanelPluginTransformationsBehaviour`'s
+    // concern. A plain config rather than an operator, so a leak would be a plausible save model
+    // entry rather than something the serializer would reject anyway.
     dataProvider.setSystemTransformations({
-      prepend: [() => (source) => source],
-      append: [{ id: 'organize', options: {} }],
+      supplier: () => ({ prepend: [{ id: 'organize', options: {} }] }),
     });
-    expect(dataProvider.state.transformations.filter(isSystemTransformation)).toHaveLength(2);
+    // Resolved from the frames on every pass and never written to state, which is what keeps the
+    // serializer on a plain read of `state.transformations`.
+    expect(dataProvider.state.transformations).toEqual(transformations);
 
     const result = gridItemToPanel(panel);
 

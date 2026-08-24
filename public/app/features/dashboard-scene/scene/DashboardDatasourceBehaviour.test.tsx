@@ -23,7 +23,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { PanelDataTransformer } from './PanelDataTransformer';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const grafanaDs = {
@@ -1047,20 +1046,19 @@ describe('DashboardDatasourceBehaviour', () => {
     jest.spyOn(console, 'error').mockImplementation();
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
 
-    // An empty user list, so only the plugin's transformations make the transformer emit. Gating on
-    // `state.transformations.length` subscribes to the query runner instead and misses a reprocess,
-    // which runs no query.
-    const sourceTransformer = new PanelDataTransformer({
+    // An empty user list, so only the plugin's supplier makes the transformer emit — and a supplier
+    // resolves nothing into `state.transformations`, so gating on its length would subscribe to the
+    // query runner instead and miss a reprocess, which runs no query.
+    const sourceTransformer = new SceneDataTransformer({
       transformations: [],
       $data: new SceneQueryRunner({
         datasource: { uid: 'grafana' },
         queries: [{ refId: 'A', queryType: 'randomWalk' }],
       }),
     });
-    // Installed directly rather than through a registered plugin — this behaviour only cares that
-    // the source has transformations at all. Set after construction because the constructor drops
-    // system entries, which is what stops a clone inheriting the source panel's.
-    sourceTransformer.setSystemTransformations({ prepend: [() => (source) => source] });
+    // Registered directly rather than through a plugin: this behaviour only cares that the source
+    // can transform again without its query runner emitting.
+    sourceTransformer.setSystemTransformations({ supplier: () => ({ prepend: [() => (source) => source] }) });
 
     const sourcePanel = new VizPanel({
       title: 'Panel A',

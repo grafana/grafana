@@ -31,7 +31,6 @@ import {
   SceneDataNode,
   sceneUtils,
   dataLayers,
-  isSystemTransformation,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -54,7 +53,6 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelDataTransformer } from '../scene/PanelDataTransformer';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -1285,28 +1283,26 @@ describe('given a panel plugin that registers transformations', () => {
 
     // Each provider level carries its own current data, so the assertion can tell exactly which
     // level was snapshotted — the transformer's own data must never be captured.
-    const dataProvider = new PanelDataTransformer({
+    const dataProvider = new SceneDataTransformer({
       $data: new SceneDataNode({ data: { series: [rawFrame], state: LoadingState.Done, timeRange } }),
       transformations: [userTransformation],
       data: { series: [transformedFrame], state: LoadingState.Done, timeRange },
     });
 
-    // Installed directly: `PanelDataTransformer` installs on activation once it has resolved a
-    // plugin, and that mechanism is its own concern. What matters here is that installed entries
-    // never reach the save model. A plain config in the append slot proves the `origin` filter is
-    // doing the work, rather than the operator falling out for having no `id`.
+    // Registered directly rather than through a plugin, which is
+    // `PanelPluginTransformationsBehaviour`'s concern. A plain config rather than an operator, so a
+    // leak would be a plausible save model entry rather than something v2 would reject anyway.
     dataProvider.setSystemTransformations({
-      prepend: [() => (source) => source],
-      append: [{ id: 'organize', options: {} }],
+      supplier: () => ({ prepend: [{ id: 'organize', options: {} }] }),
     });
-    expect(dataProvider.state.transformations.filter(isSystemTransformation)).toHaveLength(2);
+    // Resolved from the frames on every pass and never written to state, which is what keeps the
+    // serializer on a plain read of `state.transformations`.
+    expect(dataProvider.state.transformations).toEqual([userTransformation]);
 
     return new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: dataProvider });
   }
 
   it('serializes only the user transformations', () => {
-    // v2 throws on any transformation that is not a plain config, so a leaked plugin operator
-    // is a hard failure rather than a silently malformed save model.
     const result = vizPanelToSchemaV2(buildVizPanel());
 
     expect((result.spec as PanelSpec).data.spec.transformations).toEqual([

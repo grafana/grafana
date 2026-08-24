@@ -42,7 +42,6 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { type TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { getUserTransformations } from '../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -337,7 +336,7 @@ function vizPanelDataToPanel(
   }
 
   if (dataProvider instanceof SceneDataTransformer) {
-    panel.transformations = getUserTransformations(dataProvider.state.transformations) as DataTransformerConfig[];
+    panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
 
   if (dataProvider && isSnapshot) {

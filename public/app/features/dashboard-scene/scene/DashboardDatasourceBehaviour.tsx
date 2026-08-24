@@ -21,6 +21,7 @@ import {
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
+import { pluginTransformationsEnabled } from './systemTransformations';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -166,11 +167,16 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
       };
 
-      const dataTransformer = sourcePanelQueryRunner.parent;
+      const parent = sourcePanelQueryRunner.parent;
+      const dataTransformer = parent instanceof SceneDataTransformer ? parent : undefined;
 
-      // Unfiltered by design: a source panel whose plugin registers transformations emits with an
-      // empty user list, and those emissions are the only signal for a reprocess that runs no query.
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // Only a transformer that can transform again without its source emitting needs watching for
+      // its own sake. While plugin transformations are on that is every panel, because each one's
+      // transformer holds a supplier: a source panel finishing a late plugin load, or having its
+      // visualization switched, reprocesses without re-querying. The flag stands in for asking the
+      // transformer directly, because this choice is made once, before the source panel is
+      // necessarily active enough to have registered anything.
+      if (dataTransformer && (dataTransformer.state.transformations.length > 0 || pluginTransformationsEnabled())) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
@@ -178,10 +184,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
         transformerSubs.push(transformerSub);
       } else {
-        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
-        // so we re-run when the source panel's data updates (e.g. after variable resolution or
-        // time range change). Without this, the dashboard-datasource panel can read stale data
-        // when it runs before the source panels complete and never updates.
+        // The transformer, if there is one, only ever passes its source through. Subscribe to the
+        // query runner so we re-run when the source panel's data updates (e.g. after variable
+        // resolution or time range change). Without this, the dashboard-datasource panel can read
+        // stale data when it runs before the source panels complete and never updates.
         const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
         transformerSubs.push(queryRunnerSub);
       }

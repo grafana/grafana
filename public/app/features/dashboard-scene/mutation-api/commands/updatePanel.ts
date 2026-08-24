@@ -5,10 +5,6 @@
  * only provided fields are applied. Options and fieldConfig are
  * deep-merged. Plugin type changes delegate to DashboardScene.changePanelPlugin()
  * which handles fieldConfig cleanup and $data pipeline management.
- *
- * Transformation updates force a reprocess instead of leaving it to setUserTransformations, which
- * reprocesses conditionally. updatePanel.systemTransformations.test.ts covers the two cases where it
- * does not.
  */
 
 import { cloneDeep, isArray, mergeWith } from 'lodash';
@@ -163,7 +159,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
               topic: transformDataTopic(t.spec.topic),
               options: t.spec.options,
             }));
-            dataPipeline.setUserTransformations(transformations);
+            dataPipeline.setState({ transformations });
             dataPipeline.reprocessTransformations();
           }
 

@@ -44,8 +44,8 @@ function createModelMock(
     getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
     onChangeTransformations: onChangeTransformationsMock,
-    // The real accessor delegates to `PanelDataTransformer`; this mock builds a bare
-    // `SceneDataTransformer`, so the resolved result is supplied directly.
+    // The real accessor resolves the panel plugin's supplier; this mock has no panel, so the
+    // resolved result is supplied directly.
     getResolvedSystemTransformations: () =>
       systemTransformations ? { ...NO_SYSTEM_TRANSFORMATIONS, ...systemTransformations } : NO_SYSTEM_TRANSFORMATIONS,
   } as unknown as PanelDataTransformationsTab;
@@ -70,26 +70,6 @@ describe('PanelDataTransformationsModel', () => {
     const { transformsTab } = setupTabScene('panel-1');
     transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
     expect(transformsTab.getDataTransformer().state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
-  });
-
-  it('preserves system transformations when changing user transformations', () => {
-    const { transformsTab } = setupTabScene('panel-1');
-    const transformer = transformsTab.getDataTransformer();
-
-    transformer.setSystemTransformations({
-      prepend: [{ id: 'limit', options: { limitField: 10 } }],
-      append: [{ id: 'reduce', options: {} }],
-    });
-
-    transformsTab.onChangeTransformations([{ id: 'calculateField', options: {} }]);
-
-    // The user's edit only addresses their own list, so the runtime entries have to survive it — and
-    // stay at the edges, since position is what orders them.
-    expect(transformer.state.transformations).toEqual([
-      { id: 'limit', options: { limitField: 10 }, origin: 'plugin', position: 'prepend' },
-      { id: 'calculateField', options: {} },
-      { id: 'reduce', options: {}, origin: 'plugin', position: 'append' },
-    ]);
   });
 });
 

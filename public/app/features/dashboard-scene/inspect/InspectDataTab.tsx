@@ -15,8 +15,6 @@ import { InspectTab } from 'app/features/inspector/types';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
-import { PanelDataTransformer } from '../scene/PanelDataTransformer';
-import { getUserTransformations } from '../scene/systemTransformations';
 
 export interface InspectDataTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -88,11 +86,16 @@ function hasTransformations(dataProvider: SceneDataProvider) {
     return false;
   }
 
-  if (getUserTransformations(dataProvider.state.transformations).length > 0) {
+  if (dataProvider.state.transformations.length > 0) {
     return true;
   }
 
-  return dataProvider instanceof PanelDataTransformer && dataProvider.hasResolvedSystemTransformations();
+  // Resolved against the source frames rather than any the caller holds: a caller asking this is
+  // asking about the panel. Whether the plugin registered a supplier is not the same question --
+  // one is free to resolve to nothing for the frames the panel currently has.
+  const { prepend, append } = dataProvider.getResolvedSystemTransformations();
+
+  return prepend.length > 0 || append.length > 0;
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {

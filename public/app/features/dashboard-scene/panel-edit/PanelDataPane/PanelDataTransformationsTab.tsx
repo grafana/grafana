@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   type CustomTransformOperator,
-  type DataFrame,
   type DataTransformContext,
   type DataTransformerConfig,
   type GrafanaTheme2,
@@ -30,12 +29,7 @@ import { Button, ButtonGroup, ConfirmModal, Icon, Tab, useStyles2 } from '@grafa
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
-import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
-import {
-  NO_SYSTEM_TRANSFORMATIONS,
-  getUserTransformations,
-  splitSystemTransformations,
-} from '../../scene/systemTransformations';
+import { getResolvedSystemTransformations } from '../../scene/systemTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 import {
@@ -91,16 +85,13 @@ export class PanelDataTransformationsTab
   }
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
-    // A plain `setState` would drop the plugin's entries, which share this array.
-    this.getDataTransformer().setUserTransformations(transformations);
+    const transformer = this.getDataTransformer();
+    transformer.setState({ transformations });
+    transformer.reprocessTransformations();
   }
 
-  public getResolvedSystemTransformations(series: DataFrame[]): ResolvedSystemTransformations {
-    const transformer = this.getDataTransformer();
-
-    return transformer instanceof PanelDataTransformer
-      ? transformer.getResolvedSystemTransformations(series)
-      : NO_SYSTEM_TRANSFORMATIONS;
+  public getResolvedSystemTransformations(): ResolvedSystemTransformations {
+    return getResolvedSystemTransformations(this.getDataTransformer());
   }
 }
 
@@ -144,25 +135,20 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
-  const { userTransformations } = useMemo(
-    () => splitSystemTransformations(Array.isArray(transformsWrongType) ? transformsWrongType : []),
-    [transformsWrongType]
-  );
-
-  // No `useMemo`: the provider's cache already makes this identity stable.
-  const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations(
-    sourceData.data?.series ?? []
-  );
+  // No `useMemo`: the provider's memo already makes this identity stable.
+  const { prepend: systemPrepend, append: systemAppend } = model.getResolvedSystemTransformations();
   const hasSystemTransformations = systemPrepend.length > 0 || systemAppend.length > 0;
 
   const editorData = useSystemTransformedData(sourceData.data, systemPrepend);
 
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
-    return userTransformations.filter(
+    const all = Array.isArray(transformsWrongType) ? transformsWrongType : [];
+
+    return all.filter(
       (t): t is DataTransformerConfig => t !== null && typeof t === 'object' && 'id' in t && typeof t.id === 'string'
     );
-  }, [userTransformations]);
+  }, [transformsWrongType]);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
@@ -428,7 +414,7 @@ function TransformationsTab(props: TransformationsTabProps) {
     <Tab
       label={model.getTabLabel()}
       icon="process"
-      counter={getUserTransformations(transformerState.transformations).length}
+      counter={transformerState.transformations.length}
       active={props.active}
       onChangeTab={props.onChangeTab}
     />

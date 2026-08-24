@@ -59,7 +59,6 @@ import {
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { getUserTransformations } from '../scene/systemTransformations';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -565,9 +564,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
-    // Load-bearing, not just tidiness: system entries are custom transform operators, which the loop
-    // below rejects outright.
-    const transformationList = getUserTransformations(dataProvider.state.transformations);
+    const transformationList = dataProvider.state.transformations;
 
     if (transformationList.length === 0) {
       return [];

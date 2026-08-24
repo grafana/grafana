@@ -1,5 +1,14 @@
-import { type ResolvedSystemTransformations } from '@grafana/data';
-import { isSystemTransformation, type SceneDataTransformation } from '@grafana/scenes';
+import {
+  type CustomTransformOperator,
+  type DataTransformerConfig,
+  type ResolvedSystemTransformations,
+} from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  type ResolvedSystemTransformations as ResolvedSceneTransformations,
+  type SceneDataTransformer,
+  type SystemTransformation,
+} from '@grafana/scenes';
 
 /**
  * Stable identity for "nothing registered", so consumers using these arrays as effect deps do not
@@ -10,34 +19,45 @@ export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> 
   append: [],
 };
 
-/**
- * Splits a transformer's list into the runtime (read-only) groups and the user-configured ones.
- *
- * Placement is read off `position` rather than the array index: with no user transformations the two
- * system groups are adjacent, so position is the only thing that distinguishes them.
- */
-export function splitSystemTransformations(transformations: SceneDataTransformation[]): {
-  systemPrepend: SceneDataTransformation[];
-  userTransformations: SceneDataTransformation[];
-  systemAppend: SceneDataTransformation[];
-} {
-  const systemPrepend: SceneDataTransformation[] = [];
-  const userTransformations: SceneDataTransformation[] = [];
-  const systemAppend: SceneDataTransformation[] = [];
-
-  for (const transformation of transformations) {
-    if (!isSystemTransformation(transformation)) {
-      userTransformations.push(transformation);
-    } else if (transformation.position === 'append') {
-      systemAppend.push(transformation);
-    } else {
-      systemPrepend.push(transformation);
-    }
-  }
-
-  return { systemPrepend, userTransformations, systemAppend };
+export function pluginTransformationsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false);
 }
 
-export function getUserTransformations(transformations: SceneDataTransformation[]): SceneDataTransformation[] {
-  return transformations.filter((transformation) => !isSystemTransformation(transformation));
+/** Keyed on what scenes returned, which is memoized per pass — see {@link getResolvedSystemTransformations}. */
+const unwrappedByResolved = new WeakMap<ResolvedSceneTransformations, ResolvedSystemTransformations>();
+
+/**
+ * The system transformations the panel's pipeline is currently running, in the shape the plugin
+ * registered them.
+ *
+ * Takes no frames: scenes resolves against the ones entering the pipeline, which is both what a
+ * caller asking this wants and the key of the memo the pipeline already resolved against — so this
+ * shares one supplier call per pass and returns a stable identity across renders.
+ */
+export function getResolvedSystemTransformations(transformer: SceneDataTransformer): ResolvedSystemTransformations {
+  const resolved = transformer.getResolvedSystemTransformations();
+  const unwrapped = unwrappedByResolved.get(resolved);
+
+  if (unwrapped) {
+    return unwrapped;
+  }
+
+  const result =
+    resolved.prepend.length === 0 && resolved.append.length === 0
+      ? NO_SYSTEM_TRANSFORMATIONS
+      : { prepend: resolved.prepend.map(asRegistered), append: resolved.append.map(asRegistered) };
+
+  unwrappedByResolved.set(resolved, result);
+
+  return result;
+}
+
+/**
+ * Scenes normalizes a custom operator into `{ operator, topic }` so it can tag it with an origin.
+ * Readers want it back the way the plugin wrote it: these go straight into `transformDataFrame`,
+ * which takes no wrapper, and their display name branches on whether the entry is a function. A
+ * config keeps its tags, which no reader looks at and `transformDataFrame` ignores.
+ */
+function asRegistered(transformation: SystemTransformation): DataTransformerConfig | CustomTransformOperator {
+  return 'operator' in transformation ? transformation.operator : transformation;
 }

@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 import {
-  type DataFrame,
   type DataTransformerConfig,
   FieldType,
   getDefaultTimeRange,
@@ -14,11 +13,12 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { SceneDataNode, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
+import { PanelPluginTransformationsBehaviour } from '../../scene/PanelPluginTransformationsBehaviour';
+import { getResolvedSystemTransformations } from '../../scene/systemTransformations';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { type PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';
@@ -60,12 +60,12 @@ const organize: DataTransformerConfig = { id: 'organize', options: {} };
 
 function createModel(pluginId: string) {
   // Needs a source to activate against; the tab reads the raw frames from the query runner below.
-  const transformer = new PanelDataTransformer({
+  const transformer = new SceneDataTransformer({
     $data: new SceneDataNode({ data: rawData }),
     transformations: [organize],
+    $behaviors: [new PanelPluginTransformationsBehaviour()],
   });
-  // Activating parents the transformer and is what installs the plugin's transformations — they are
-  // only added once a resolved plugin reports that it registers any.
+  // Activating parents the transformer and is what registers the plugin's supplier.
   activateFullSceneTree(new VizPanel({ pluginId, $data: transformer }));
 
   return {
@@ -73,8 +73,8 @@ function createModel(pluginId: string) {
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: rawData }),
     onChangeTransformations: jest.fn(),
     // Delegates for real rather than stubbing a result, so these tests exercise the resolver the
-    // pipeline uses — including its flag and plugin-identity checks.
-    getResolvedSystemTransformations: (series: DataFrame[]) => transformer.getResolvedSystemTransformations(series),
+    // pipeline uses, unwrapped exactly as the tab unwraps it.
+    getResolvedSystemTransformations: () => getResolvedSystemTransformations(transformer),
   } as unknown as PanelDataTransformationsTab;
 }
 

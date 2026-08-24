@@ -10,6 +10,7 @@ import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
   type SceneComponentProps,
+  SceneDataTransformer,
   SceneObjectBase,
   type SceneObjectRef,
   type SceneObjectState,
@@ -26,7 +27,7 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { PanelDataTransformer } from '../scene/PanelDataTransformer';
+import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransformationsBehaviour';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -297,7 +298,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         }
 
         panel.setState({
-          $data: new PanelDataTransformer({
+          $data: new SceneDataTransformer({
             $data: new SceneQueryRunner({
               datasource: {
                 uid: ds,
@@ -305,6 +306,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
               queries: [{ refId: 'A' }],
             }),
             transformations: [],
+            $behaviors: [new PanelPluginTransformationsBehaviour()],
           }),
         });
       }

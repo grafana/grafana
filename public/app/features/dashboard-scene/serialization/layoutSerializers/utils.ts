@@ -4,6 +4,7 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import {
   type SceneDataProvider,
   type SceneDataQuery,
+  SceneDataTransformer,
   type SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -30,10 +31,10 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
-import { PanelDataTransformer } from '../../scene/PanelDataTransformer';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { PanelPluginTransformationsBehaviour } from '../../scene/PanelPluginTransformationsBehaviour';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -249,8 +250,9 @@ function createPanelDataProvider(
   });
 
   // Wrap inner data provider in a data transformer
-  return new PanelDataTransformer({
+  return new SceneDataTransformer({
     $data: dataProvider,
+    $behaviors: [new PanelPluginTransformationsBehaviour()],
     transformations: panel.data.spec.transformations.map((t) => {
       const normalized = normalizeTransformation(t);
       return {

@@ -1,81 +1,96 @@
-import { type CustomTransformOperator } from '@grafana/data';
-import { type SceneDataTransformation } from '@grafana/scenes';
+import {
+  type CustomTransformOperator,
+  type DataFrame,
+  LoadingState,
+  getDefaultTimeRange,
+  toDataFrame,
+} from '@grafana/data';
+import { SceneDataNode, SceneDataTransformer } from '@grafana/scenes';
 import { DataTopic } from '@grafana/schema';
 
-import { NO_SYSTEM_TRANSFORMATIONS, getUserTransformations, splitSystemTransformations } from './systemTransformations';
+import { NO_SYSTEM_TRANSFORMATIONS, getResolvedSystemTransformations } from './systemTransformations';
 
 const passthrough: CustomTransformOperator = () => (source) => source;
+const reduce = { id: 'reduce', options: {} };
+const series = [toDataFrame([[1, 10]])];
 
-const systemPrependEntry: SceneDataTransformation = {
-  operator: passthrough,
-  topic: DataTopic.Series,
-  origin: 'plugin',
-  position: 'prepend',
-};
+function buildTransformer(sourceSeries: DataFrame[] = series) {
+  const source = new SceneDataNode({
+    data: { state: LoadingState.Done, series: sourceSeries, timeRange: getDefaultTimeRange() },
+  });
 
-const systemAppendEntry: SceneDataTransformation = {
-  operator: passthrough,
-  topic: DataTopic.Series,
-  origin: 'plugin',
-  position: 'append',
-};
+  return { source, transformer: new SceneDataTransformer({ $data: source, transformations: [] }) };
+}
 
-const userReduce: SceneDataTransformation = { id: 'reduce', options: {} };
-const userOrganize: SceneDataTransformation = { id: 'organize', options: {} };
+describe('getResolvedSystemTransformations', () => {
+  it('returns the shared empty result when nothing resolves for the current frames', () => {
+    const { transformer } = buildTransformer();
 
-describe('splitSystemTransformations', () => {
-  it('returns empty groups for an empty list', () => {
-    expect(splitSystemTransformations([])).toEqual({
-      systemPrepend: [],
-      userTransformations: [],
-      systemAppend: [],
+    transformer.setSystemTransformations({ supplier: () => ({}) });
+
+    expect(getResolvedSystemTransformations(transformer)).toBe(NO_SYSTEM_TRANSFORMATIONS);
+  });
+
+  it('unwraps a custom operator back to the function the plugin registered', () => {
+    const { transformer } = buildTransformer();
+
+    transformer.setSystemTransformations({ supplier: () => ({ prepend: [passthrough], append: [reduce] }) });
+
+    const { prepend, append } = getResolvedSystemTransformations(transformer);
+
+    // Scenes normalizes a bare operator into `{ operator, topic }` so it can tag it; readers feed
+    // these to `transformDataFrame`, which takes the function
+    expect(prepend).toEqual([passthrough]);
+    expect(append).toEqual([{ ...reduce, origin: 'plugin', position: 'append' }]);
+  });
+
+  it('keeps a stable identity across calls while the frames are unchanged', () => {
+    const { transformer } = buildTransformer();
+
+    transformer.setSystemTransformations({ supplier: () => ({ prepend: [passthrough] }) });
+
+    // Editor rows use these arrays as effect deps, so a fresh identity per render replays them all
+    expect(getResolvedSystemTransformations(transformer)).toBe(getResolvedSystemTransformations(transformer));
+  });
+
+  it('keeps a stable identity before the first query result', () => {
+    const { transformer } = buildTransformer([]);
+    const supplier = jest.fn().mockReturnValue({});
+
+    transformer.setSystemTransformations({ supplier });
+
+    // Resolving against no frames must not churn either: scenes stands in a shared array for the
+    // missing series, so the memo still hits
+    expect(getResolvedSystemTransformations(transformer)).toBe(NO_SYSTEM_TRANSFORMATIONS);
+    expect(getResolvedSystemTransformations(transformer)).toBe(NO_SYSTEM_TRANSFORMATIONS);
+    expect(supplier).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves again for a new frame set', () => {
+    const { source, transformer } = buildTransformer();
+
+    transformer.setSystemTransformations({
+      supplier: ({ series: frames }) => (frames[0].fields.length > 2 ? { prepend: [reduce] } : {}),
     });
+
+    expect(getResolvedSystemTransformations(transformer)).toBe(NO_SYSTEM_TRANSFORMATIONS);
+
+    source.setState({ data: { ...source.state.data!, series: [toDataFrame([[1, 10, 100]])] } });
+
+    expect(getResolvedSystemTransformations(transformer).prepend).toEqual([
+      { ...reduce, origin: 'plugin', position: 'prepend' },
+    ]);
   });
 
-  it('treats untagged transformations as user configured', () => {
-    expect(splitSystemTransformations([userReduce, userOrganize])).toEqual({
-      systemPrepend: [],
-      userTransformations: [userReduce, userOrganize],
-      systemAppend: [],
-    });
-  });
+  it('leaves an annotations-topic config alone, since only the supplier filters by topic', () => {
+    const { transformer } = buildTransformer();
+    const annotationsConfig = { id: 'reduce', options: {}, topic: DataTopic.Annotations };
 
-  it('groups by position rather than by array index', () => {
-    // The two system entries are adjacent, so index alone cannot tell them apart
-    expect(splitSystemTransformations([systemPrependEntry, systemAppendEntry])).toEqual({
-      systemPrepend: [systemPrependEntry],
-      userTransformations: [],
-      systemAppend: [systemAppendEntry],
-    });
-  });
+    transformer.setSystemTransformations({ supplier: () => ({ prepend: [annotationsConfig] }) });
 
-  it('splits a full pipeline into its three groups', () => {
-    expect(splitSystemTransformations([systemPrependEntry, userReduce, userOrganize, systemAppendEntry])).toEqual({
-      systemPrepend: [systemPrependEntry],
-      userTransformations: [userReduce, userOrganize],
-      systemAppend: [systemAppendEntry],
-    });
-  });
-
-  it('defaults a system transformation with no position to prepend', () => {
-    const noPosition: SceneDataTransformation = { id: 'reduce', options: {}, origin: 'plugin' };
-
-    expect(splitSystemTransformations([noPosition]).systemPrepend).toEqual([noPosition]);
-  });
-
-  it('treats a bare custom transform operator as user configured', () => {
-    // A bare function carries no origin, so it cannot be a system transformation
-    expect(splitSystemTransformations([passthrough]).userTransformations).toEqual([passthrough]);
-  });
-});
-
-describe('getUserTransformations', () => {
-  it('drops every system transformation regardless of position', () => {
-    expect(getUserTransformations([systemPrependEntry, userReduce, systemAppendEntry])).toEqual([userReduce]);
-  });
-
-  it('returns an empty list when only system transformations are installed', () => {
-    expect(getUserTransformations([systemPrependEntry, systemAppendEntry])).toEqual([]);
+    expect(getResolvedSystemTransformations(transformer).prepend).toEqual([
+      { ...annotationsConfig, origin: 'plugin', position: 'prepend' },
+    ]);
   });
 });
 

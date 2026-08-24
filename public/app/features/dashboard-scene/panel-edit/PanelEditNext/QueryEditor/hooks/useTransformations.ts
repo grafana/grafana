@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { standardTransformersRegistry } from '@grafana/data';
 import { type SceneDataTransformer } from '@grafana/scenes';
 
-import { splitSystemTransformations } from '../../../../scene/systemTransformations';
 import { type Transformation } from '../types';
 import { filterDataTransformerConfigs, getTransformId } from '../utils';
 
@@ -19,12 +18,8 @@ export function useTransformations(dataTransformer: SceneDataTransformer | null)
       return [];
     }
 
-    // Split first: the indices below are the basis PanelDataPaneNext mutates by. Filtering on shape
-    // alone is only accidentally correct today, because the wrappers carry no `id`.
-    const { userTransformations } = splitSystemTransformations(transformerState.transformations || []);
-
     // Filter to only include DataTransformerConfig items (exclude CustomTransformerDefinition)
-    const transformationList = filterDataTransformerConfigs(userTransformations);
+    const transformationList = filterDataTransformerConfigs(transformerState.transformations || []);
 
     // Use the transformation's id + index as a stable key for React
     // transformConfig holds the actual object reference from Scene state
