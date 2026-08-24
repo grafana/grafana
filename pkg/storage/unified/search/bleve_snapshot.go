@@ -90,13 +90,20 @@ type snapshotCandidate struct {
 	tier    int             // 0 = best, 2 = last resort
 }
 
-// snapshotSelectFn picks a snapshot under a given policy.
-//
-// Returns:
-//   - (key, meta, nil):                a snapshot was chosen.
-//   - (zero ULID, nil, nil):           no candidate; caller proceeds to its fallback.
-//   - (zero ULID, nil, err):           selection failed; caller treats as a download error.
-type snapshotSelectFn func(context.Context) (ulid.ULID, *IndexMeta, error)
+// snapshotChoice is a snapshot to try downloading.
+type snapshotChoice struct {
+	key  ulid.ULID
+	meta *IndexMeta
+}
+
+// snapshotSelectFn returns the snapshots to try, best first. Empty means no
+// candidate; an error is treated as a download error.
+type snapshotSelectFn func(context.Context) ([]snapshotChoice, error)
+
+// maxSnapshotDownloadAttempts bounds the retries, since each one is a full
+// download: enough to get past a broken snapshot, not enough for a namespace of
+// them to delay startup.
+const maxSnapshotDownloadAttempts = 3
 
 // tryDownloadRemoteSnapshot lists remote snapshots for the given resource,
 // picks the best candidate (see pickBestSnapshot), downloads and opens it
@@ -117,20 +124,21 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	logger.Info("Remote index snapshot download started", "policy", snapshotPolicyTiered)
 	return b.downloadSelectedSnapshot(ctx, key, resourceDir,
 		snapshotPolicyTiered, "search.remote_index_snapshot.download", logger,
-		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
+		func(ctx context.Context) ([]snapshotChoice, error) {
 			all, err := ListIndexSnapshots(ctx, b.opts.Snapshot.Store, key, logger)
 			if err != nil {
-				return ulid.ULID{}, nil, fmt.Errorf("listing remote snapshots: %w", err)
+				return nil, fmt.Errorf("listing remote snapshots: %w", err)
 			}
 			notOlderThan := time.Time{}
 			if maxAge := b.opts.Snapshot.MaxIndexAge; maxAge > 0 {
 				notOlderThan = time.Now().Add(-maxAge)
 			}
-			c, ok := b.pickBestSnapshot(all, notOlderThan, logger)
-			if !ok {
-				return ulid.ULID{}, nil, nil
+			ranked := b.rankSnapshots(all, notOlderThan, logger)
+			choices := make([]snapshotChoice, 0, len(ranked))
+			for _, c := range ranked {
+				choices = append(choices, snapshotChoice{key: c.key, meta: c.meta})
 			}
-			return c.key, c.meta, nil
+			return choices, nil
 		},
 	)
 }
@@ -163,12 +171,17 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 	}
 
 	return b.downloadSelectedSnapshot(ctx, key, resourceDir, policy, spanName, logger,
-		func(ctx context.Context) (ulid.ULID, *IndexMeta, error) {
+		func(ctx context.Context) ([]snapshotChoice, error) {
 			k, m, err := findFreshSnapshotByBuildStart(ctx, b.opts.Snapshot.Store, key, notOlderThan, b.opts.BuildVersion, b.maxSupportedIndexFormat, logger)
 			if err != nil {
-				return ulid.ULID{}, nil, fmt.Errorf("probing for fresh snapshot: %w", err)
+				return nil, fmt.Errorf("probing for fresh snapshot: %w", err)
 			}
-			return k, m, nil
+			if m == nil {
+				return nil, nil
+			}
+			// One candidate: the rebuild scan and the cold-start wait loop re-run this
+			// path, so a failure is retried anyway.
+			return []snapshotChoice{{key: k, meta: m}}, nil
 		},
 	)
 }
@@ -177,6 +190,10 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 // helpers: trace span, completion / failure log, outcome metric, and the
 // reserve-download-open-validate flow. Each policy provides its
 // selection logic via selectFn; the template handles everything else.
+//
+// Candidates are tried in order, so a snapshot that only proves unusable once
+// downloaded does not cost the caller its whole snapshot path. The outcome metric
+// counts one attempt, not one call.
 func (b *bleveBackend) downloadSelectedSnapshot(
 	ctx context.Context,
 	key resource.NamespacedResource,
@@ -223,40 +240,81 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 		} else {
 			logger.Info("Remote index snapshot download completed", "elapsed", elapsed, "policy", policy, "outcome", outcome)
 		}
-		b.recordSnapshotDownloadOutcome(policy, outcome)
 		span.End()
 	}()
 
-	var err error
-	snapKey, meta, err = selectFn(ctx)
+	var lastErr error
+
+	choices, err := selectFn(ctx)
 	if err != nil {
 		outcome = snapshotStatusDownloadError
+		b.recordSnapshotDownloadOutcome(policy, outcome)
 		return nil, "", 0, err
 	}
-	if meta == nil {
+	if len(choices) == 0 {
 		outcome = snapshotStatusEmpty
+		b.recordSnapshotDownloadOutcome(policy, outcome)
 		return nil, "", 0, nil
 	}
 
-	logFields := []any{
-		"snapshot_key", snapKey.String(),
-		"snapshot_version", meta.BuildVersion,
-		"snapshot_index_format", meta.IndexFormat,
-		"snapshot_rv", meta.LatestResourceVersion,
-		"snapshot_uploaded", meta.UploadTimestamp,
-	}
-	if !meta.BuildTime.IsZero() {
-		logFields = append(logFields, "snapshot_build_time", meta.BuildTime)
-	}
-	logger = logger.New(logFields...)
+	attempts := 0
+	for _, choice := range choices {
+		if attempts == maxSnapshotDownloadAttempts {
+			break
+		}
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, "", 0, ctxErr
+		}
+		attempts++
 
+		// Span attributes and the closing log line describe the snapshot we ended on.
+		snapKey, meta = choice.key, choice.meta
+
+		logFields := []any{
+			"snapshot_key", snapKey.String(),
+			"snapshot_version", meta.BuildVersion,
+			"snapshot_index_format", meta.IndexFormat,
+			"snapshot_rv", meta.LatestResourceVersion,
+			"snapshot_uploaded", meta.UploadTimestamp,
+		}
+		if !meta.BuildTime.IsZero() {
+			logFields = append(logFields, "snapshot_build_time", meta.BuildTime)
+		}
+		attemptLogger := logger.New(logFields...)
+
+		idx, name, rv, attemptOutcome, err := b.downloadSnapshotCandidate(ctx, key, resourceDir, snapKey, meta, attemptLogger)
+		outcome = attemptOutcome
+		b.recordSnapshotDownloadOutcome(policy, outcome)
+		if err == nil {
+			logger = attemptLogger
+			return idx, name, rv, nil
+		}
+
+		lastErr = err
+		attemptLogger.Warn("Remote index snapshot attempt failed", "policy", policy, "outcome", outcome, "attempt", attempts, "err", err)
+	}
+
+	span.SetAttributes(attribute.Int("attempts", attempts))
+	return nil, "", 0, lastErr
+}
+
+// downloadSnapshotCandidate downloads, opens and validates one snapshot, and
+// returns the outcome to record for the attempt. Cleans up everything it created
+// before returning an error, so the caller can try the next candidate.
+func (b *bleveBackend) downloadSnapshotCandidate(
+	ctx context.Context,
+	key resource.NamespacedResource,
+	resourceDir string,
+	snapKey ulid.ULID,
+	meta *IndexMeta,
+	logger log.Logger,
+) (_ bleve.Index, _ string, _ int64, _ string, retErr error) {
 	// Pick and reserve a fresh destination directory name. DownloadIndexSnapshot
 	// refuses to overwrite an existing destDir, so reserveIndexDir protects the
 	// not-yet-created path from other in-process builds while we download.
 	destDir, name, err := b.reserveIndexDir(resourceDir)
 	if err != nil {
-		outcome = snapshotStatusDownloadError
-		return nil, "", 0, fmt.Errorf("reserving local snapshot dir: %w", err)
+		return nil, "", 0, snapshotStatusDownloadError, fmt.Errorf("reserving local snapshot dir: %w", err)
 	}
 
 	// On success, ownership of the reservation transfers to the caller
@@ -272,23 +330,20 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	downloadedMeta, err := DownloadIndexSnapshot(ctx, b.opts.Snapshot.Store, key, snapKey, destDir)
 	if err != nil {
 		_ = os.RemoveAll(destDir)
-		outcome = snapshotStatusDownloadError
-		return nil, "", 0, fmt.Errorf("downloading snapshot: %w", err)
+		return nil, "", 0, snapshotStatusDownloadError, fmt.Errorf("downloading snapshot: %w", err)
 	}
 
 	idx, err := bleve.OpenUsing(destDir, map[string]interface{}{"bolt_timeout": boltTimeout})
 	if err != nil {
 		_ = os.RemoveAll(destDir)
-		outcome = snapshotStatusValidateError
-		return nil, "", 0, fmt.Errorf("opening downloaded snapshot: %w", err)
+		return nil, "", 0, snapshotStatusValidateError, fmt.Errorf("opening downloaded snapshot: %w", err)
 	}
 
 	rv, err := b.validateDownloadedIndex(idx)
 	if err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
-		outcome = snapshotStatusValidateError
-		return nil, "", 0, fmt.Errorf("validating downloaded snapshot: %w", err)
+		return nil, "", 0, snapshotStatusValidateError, fmt.Errorf("validating downloaded snapshot: %w", err)
 	}
 
 	if b.indexMetrics != nil {
@@ -303,24 +358,23 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 	if err := writeSnapshotMutationCount(idx, 0); err != nil {
 		_ = idx.Close()
 		_ = os.RemoveAll(destDir)
-		outcome = snapshotStatusValidateError
-		return nil, "", 0, fmt.Errorf("resetting snapshot mutation count: %w", err)
+		return nil, "", 0, snapshotStatusValidateError, fmt.Errorf("resetting snapshot mutation count: %w", err)
 	}
 	b.setUploadTracking(key, uploadedAt)
 
-	return idx, name, rv, nil
+	return idx, name, rv, snapshotStatusSuccess, nil
 }
 
-// pickBestSnapshot applies hard filters (upload time, index format,
+// rankSnapshots applies hard filters (upload time, index format,
 // unparseable version) and the three-tier preference to pick the best
-// snapshot, if any.
+// candidates in preference order, best first.
 //
 // Tier 0 (ideal): MinBuildVersion <= v <= runningVersion
 // Tier 1 (older, acceptable): v < MinBuildVersion
 // Tier 2 (newer, last resort): v > runningVersion
 //
 // Within each tier, sort by version desc -> RV desc -> upload time desc.
-func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) (snapshotCandidate, bool) {
+func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) []snapshotCandidate {
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
@@ -397,7 +451,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 
 	if len(candidates) == 0 {
 		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "dropped_unknown_requirements", droppedUnknownRequirements, "dropped_missing_features", droppedMissingFeatures, "max_supported_format", b.maxSupportedIndexFormat)
-		return snapshotCandidate{}, false
+		return nil
 	}
 
 	sort.Slice(candidates, func(i, j int) bool {
@@ -423,7 +477,16 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 		"dropped_unparseable", droppedUnparseable,
 		"dropped_format_unsupported", droppedFormatUnsupported,
 	)
-	return candidates[0], true
+	return candidates
+}
+
+// pickBestSnapshot returns the best candidate, for callers that do not retry.
+func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderThan time.Time, logger log.Logger) (snapshotCandidate, bool) {
+	ranked := b.rankSnapshots(all, notOlderThan, logger)
+	if len(ranked) == 0 {
+		return snapshotCandidate{}, false
+	}
+	return ranked[0], true
 }
 
 // snapshotTier returns the preference tier of v relative to the configured
@@ -473,7 +536,7 @@ func (b *bleveBackend) recordSnapshotDownloadOutcome(policy, status string) {
 	if b.indexMetrics == nil {
 		return
 	}
-	b.indexMetrics.IndexSnapshotDownloads.WithLabelValues(policy, status).Inc()
+	b.indexMetrics.IndexSnapshotDownloadAttempts.WithLabelValues(policy, status).Inc()
 }
 
 // findFreshSnapshotByUploadTime walks namespace snapshots newest-first and
@@ -541,7 +604,7 @@ func findFreshSnapshot(
 	logger log.Logger,
 	isFresh func(*IndexMeta) bool,
 ) (ulid.ULID, *IndexMeta, error) {
-	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
+	keys, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, nil, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeys(ctx, ns)
 	})
 	if err != nil {

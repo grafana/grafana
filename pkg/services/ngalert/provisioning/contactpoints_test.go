@@ -48,7 +48,7 @@ import (
 func TestIntegrationContactPointService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -499,7 +499,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	redactedUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 		1: {
@@ -559,7 +559,7 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	// User with basic read/write permissions but without protected field update permission
 	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
@@ -816,7 +816,7 @@ func TestRemoveSecretsForContactPoint_CaseInsensitive(t *testing.T) {
 func TestIntegrationAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sutWithAuthz := func() (*ContactPointService, *acfakes.FakeReceiverAccessService[*models.Receiver]) {
-		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+		secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t))) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		sut := createContactPointServiceSut(t, secretsService)
 		authz := &acfakes.FakeReceiverAccessService[*models.Receiver]{}
 		sut.authz = authz

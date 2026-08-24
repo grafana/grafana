@@ -1,8 +1,23 @@
-import { type EventProperty } from '@grafana/runtime/unstable';
+import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
   tab: string;
+}
+
+export interface RecommendationsShown extends EventProperty {
+  /** Stable ids of the recommendations shown to the user. */
+  recommendation_ids: string[];
+  /**
+   * Matrix base-row id driving the current card selection;
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state: string;
+  /**
+   * Stable id of the solution that was selected when the recommendations were shown;
+   * absent when no solution is selected.
+   */
+  solution?: string;
 }
 
 export interface ClearHistoryClicked extends EventProperty {
@@ -21,9 +36,7 @@ interface CtaClickedBase extends EventProperty {
   solution?: string;
 }
 
-type Satisfies<Constraint, Target extends Constraint> = Target;
-
-export type CtaClicked = Satisfies<
+export type CtaClicked = EventVariants<
   CtaClickedBase,
   | ({
       surface: 'alerts_card';
@@ -76,7 +89,7 @@ export type CtaClicked = Satisfies<
     }
   | {
       surface: 'recommendations';
-      action: 'enable' | 'setup';
+      action: 'enable' | 'setup' | 'learn_more';
       placement: 'card' | 'pill';
       /** Stable id of the recommendation whose Enable CTA was clicked. */
       recommendation_id: string;
@@ -116,6 +129,11 @@ export type CtaClicked = Satisfies<
         }
       | {
           action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution' | 'view_alerts' | 'enable' | 'setup' | 'learn_more';
           placement: 'card';
           solution: string;
         }

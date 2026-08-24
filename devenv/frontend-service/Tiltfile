@@ -13,6 +13,15 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
+# --- Bundler selection
+# Set RSPACK=1 to build the frontend with rspack instead of webpack. rspack writes
+# inside the webpack output directory, so the CDN mount and the public/build URL
+# prefix are the same either way; only the manifest and the flag change.
+use_rspack = os.environ.get('RSPACK', '') in ('1', 'true')
+build_dir = 'build/rspack' if use_rspack else 'build'
+manifest_path = 'public/%s/assets-manifest.json' % build_dir
+boot_path = 'public/%s/boot.js' % build_dir
+
 # A cold build (yarn install + serial plugin builds + main webpack compile) can take
 # longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
 # fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
@@ -30,8 +39,8 @@ local_resource(
 
 local_resource(
   'yarn start',
-  cmd='rm -rf public/build/assets-manifest.json',
-  serve_cmd='yarn start:noLint',
+  cmd='rm -rf %s' % manifest_path,
+  serve_cmd='yarn start:rspack:noLint' if use_rspack else 'yarn start:noLint',
   resource_deps=['yarn install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
@@ -39,7 +48,7 @@ local_resource(
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
+    exec=exec_action(["bash", "-c", "stat %s" % manifest_path]),
   ),
   allow_parallel=True,
   labels=["local"]
@@ -65,6 +74,15 @@ local_resource(
 # --- Docker Compose
 base_config = read_yaml('./docker-compose.yaml')
 
+# grafana-api evaluates feature flags from static config; the frontend-service
+# evaluates them from GOFF, so the two need the bundler flag set separately.
+grafana_api_env = {
+  'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
+  'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
+}
+if use_rspack:
+  grafana_api_env['GF_FEATURE_TOGGLES_grafana.rspackBuild'] = 'true'
+
 # Ports and port-dependent environment variables are set here rather than in
 # docker-compose.yaml so they can be derived from PORT.
 compose_overrides = {'services': {
@@ -76,10 +94,7 @@ compose_overrides = {'services': {
   },
   'grafana-api': {
     'ports': ['%d:3000' % port_api],
-    'environment': {
-      'GF_SERVER_CDN_URL': 'http://localhost:%d' % port_cdn,
-      'GF_AUTH_LOGIN_COOKIE_NAME': 'grafana_fs_%s_login' % workspace_name,
-    },
+    'environment': grafana_api_env,
   },
   'frontend-service': {
     'ports': ['%d:3000' % port_fs],
@@ -98,6 +113,9 @@ compose_overrides = {'services': {
     'ports': ['%d:1031/tcp' % port_goff],
   },
 }}
+
+if use_rspack:
+  compose_overrides['configs'] = {'goff_flags_bundler': {'file': './goff-flags.rspack.yaml'}}
 
 # Enterprise overrides: mount dev license into grafana-api
 base_volumes = base_config['services']['grafana-api']['volumes']
@@ -138,6 +156,7 @@ docker_build('grafana-fs-dev',
   # Set the docker context to the root of the repo
   context='../..',
   dockerfile='grafana-fs-dev.dockerfile',
+  build_args={'BUILD_DIR': build_dir},
 
   # Paths relative to the docker context (root of the repo)
   only=[
@@ -150,8 +169,8 @@ docker_build('grafana-fs-dev',
     'public/views',
     'public/dashboards',
     'public/app/plugins',
-    'public/build/assets-manifest.json',
-    'public/build/boot.js',
+    manifest_path,
+    boot_path,
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -166,8 +185,8 @@ docker_build('grafana-fs-dev',
     sync('../../public/views', '/grafana/public/views'),
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
-    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
-    sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
+    sync('../../' + manifest_path, '/grafana/' + manifest_path),
+    sync('../../' + boot_path, '/grafana/' + boot_path),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild

@@ -23800,7 +23800,8 @@
     },
     "/user/stars/dashboard/uid/{dashboard_uid}": {
       "delete": {
-        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "deprecated": true,
+        "description": "Deletes the starring of the given Dashboard for the actual user.\n\nUse: DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}",
         "operationId": "unstarDashboardByUID",
         "parameters": [
           {
@@ -23833,7 +23834,8 @@
         "tags": ["signed_in_user"]
       },
       "post": {
-        "description": "Stars the given Dashboard for the actual user.",
+        "deprecated": true,
+        "description": "Stars the given Dashboard for the actual user.\n\nUse: PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}",
         "operationId": "starDashboardByUID",
         "parameters": [
           {

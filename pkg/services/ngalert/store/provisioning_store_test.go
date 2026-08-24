@@ -337,29 +337,38 @@ func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 				require.Empty(t, mp.Identity)
 			})
 
-			t.Run("GetManagerPropertiesByUIDs returns properties and respects org + UID filters", func(t *testing.T) {
+			t.Run("GetAllManagerProperties returns all properties and respects org + resourceType filters", func(t *testing.T) {
 				const orgID = 200
+				const otherOrgID = 300
 				ruleTF := models.AlertRule{UID: "mp-by-uid-tf", OrgID: orgID}
 				ruleFile := models.AlertRule{UID: "mp-by-uid-file", OrgID: orgID}
 				ruleOther := models.AlertRule{UID: "mp-by-uid-other", OrgID: orgID}
+
+				otherOrgRuleTF := models.AlertRule{UID: "mp-by-uid-tf-300", OrgID: otherOrgID}
+				otherOrgRuleFile := models.AlertRule{UID: "mp-by-uid-file-300", OrgID: otherOrgID}
+				otherOrgRuleOther := models.AlertRule{UID: "mp-by-uid-other-300", OrgID: otherOrgID}
 
 				require.NoError(t, store.SetManagerProperties(context.Background(), &ruleTF, orgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
 				require.NoError(t, store.SetProvenance(context.Background(), &ruleFile, orgID, models.ProvenanceFile))
 				require.NoError(t, store.SetProvenance(context.Background(), &ruleOther, orgID, models.ProvenanceAPI))
 
-				got, err := store.GetManagerPropertiesByUIDs(context.Background(), orgID, ruleTF.ResourceType(), []string{ruleTF.UID, ruleFile.UID})
+				require.NoError(t, store.SetManagerProperties(context.Background(), &otherOrgRuleTF, otherOrgID, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}))
+				require.NoError(t, store.SetProvenance(context.Background(), &otherOrgRuleFile, otherOrgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(context.Background(), &otherOrgRuleOther, otherOrgID, models.ProvenanceAPI))
+
+				got, err := store.GetAllManagerProperties(context.Background(), orgID, ruleTF.ResourceType())
 				require.NoError(t, err)
-				require.Len(t, got, 2)
+				require.Len(t, got, 3)
 				require.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "ws"}, got[ruleTF.UID])
 				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), got[ruleFile.UID])
-				_, exists := got[ruleOther.UID]
-				require.False(t, exists)
-			})
+				require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceAPI), got[ruleOther.UID])
 
-			t.Run("GetManagerPropertiesByUIDs returns empty map for empty UIDs", func(t *testing.T) {
-				got, err := store.GetManagerPropertiesByUIDs(context.Background(), 1, (&models.AlertRule{}).ResourceType(), []string{})
-				require.NoError(t, err)
-				require.Empty(t, got)
+				_, exists := got[otherOrgRuleTF.UID]
+				require.False(t, exists)
+				_, exists = got[otherOrgRuleFile.UID]
+				require.False(t, exists)
+				_, exists = got[otherOrgRuleOther.UID]
+				require.False(t, exists)
 			})
 
 			t.Run("GetManagerProperties is scoped by org", func(t *testing.T) {

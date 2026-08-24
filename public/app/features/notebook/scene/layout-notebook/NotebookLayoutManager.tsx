@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropResult } from '@hello-pangea/dnd';
-import { useCallback, useState } from 'react';
+import { isEqual } from 'lodash';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,12 +21,20 @@ import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboa
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
+import {
+  type CellContentKind,
+  defaultCodeCellContentKind,
+  defaultMarkdownCellContentKind,
+  type NotebookLayoutItemKind,
+  type NotebookLayoutKind,
+} from '../../types';
+import { type NotebookEditAction, type NotebookEditHistory } from '../NotebookEditHistory';
+import { isNotebookScene } from '../isNotebookScene';
 
-import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
-import { NotebookAddBlockPrompt } from './edit/NotebookAddBlockPrompt';
+import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
@@ -43,12 +52,26 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   isEditing?: boolean;
 }
 
+// Keep typing useful to undo without storing every keystroke as a separate action.
+const CONTENT_EDIT_COALESCE_MS = 800;
+
+interface PendingContentEdit {
+  elementName: string;
+  before: CellContentKind;
+  after: CellContentKind;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
+  // Lets a cell find the manager that owns it without importing this class — see
+  // isNotebookLayoutManager for why that import direction has to stay closed.
+  public readonly isNotebookLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
     get name() {
@@ -65,16 +88,46 @@ export class NotebookLayoutManager
 
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
-  // Serialization lives here (not in a standalone helper) so the manager doesn't import the
-  // serializer module — that mutual import is what forms a dependency cycle. The serializer
-  // still imports this manager to construct it in deserialize, which stays one-directional.
+  private pendingContentEdit?: PendingContentEdit;
+
+  public constructor(state: NotebookLayoutManagerState) {
+    super(state);
+
+    // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
+    // closing the notebook mid-word would leave that step behind, and the next typing would join it.
+    this.addActivationHandler(() => {
+      return () => this.commitContentEdits();
+    });
+  }
+
+  /**
+   * The scene above owns the history, so reading it here means nothing has to hand it over again when
+   * the scene swaps its body. duplicate(), the deserializer and tests build a manager with no scene
+   * above it. Editing one of those still works, the changes are just not recorded.
+   */
+  private get editHistory(): NotebookEditHistory | undefined {
+    let parent = this.parent;
+
+    while (parent) {
+      if (isNotebookScene(parent)) {
+        return parent.editHistory;
+      }
+      parent = parent.parent;
+    }
+
+    return undefined;
+  }
+
+  // Serialization lives here instead of in a helper file, so that this file never has to import the
+  // serializer. If both files imported each other they would form a cycle, which is what this layout
+  // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
   public serialize(): NotebookLayoutKind {
     const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
         source: cell.state.source,
-        // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
+        // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
       },
     }));
@@ -82,8 +135,8 @@ export class NotebookLayoutManager
     return { kind: 'NotebookLayout', spec: { cells } };
   }
 
-  // Only panel cells are viz panels; markdown/code cells are narrative content and are
-  // intentionally invisible to the rest of the scene (query runner, edit tooling).
+  // Only panel cells hold a viz panel. Text and code cells are just content, and the rest of the
+  // scene (the query runner, the edit tools) is meant not to see them.
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
@@ -97,14 +150,247 @@ export class NotebookLayoutManager
   }
 
   /**
+   * Applies narrative content to every cell referencing the same element.
+   *
+   * Two layout items may legally reference one element, and the deserializer gives each its own
+   * cell — two views of one thing. serialize() collapses them back into a single elements[name]
+   * entry where the last cell processed wins, so updating only the edited cell loses the edit
+   * outright whenever an unedited duplicate follows it.
+   *
+   * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
+   *
+   * Also maintains the "always one more empty block ready" invariant: the moment the trailing cell —
+   * and only the trailing cell — stops being empty, a fresh empty one takes its place at the tail, so
+   * the reader never has to explicitly ask for the next block just to keep typing. Gated on the
+   * *transition* (was empty, now isn't), not merely "is non-empty", so this doesn't append again on
+   * every subsequent keystroke into what is now a real, settled cell — checked once here, against the
+   * state from before this specific edit, rather than inside applyCellContent below, which also runs
+   * on every coalesced keystroke of the same edit and on undo/redo replay.
+   */
+  public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    const previous = target.state.content;
+    if (!previous || isEqual(previous, content)) {
+      return;
+    }
+
+    const wasEmpty = isEmptyMarkdown(previous);
+    const index = this.state.cells.indexOf(target);
+
+    const pending = this.pendingContentEdit;
+    if (pending?.elementName === target.state.elementName) {
+      this.extendContentEdit(pending, content);
+    } else {
+      this.commitContentEdits();
+      this.startContentEdit(target.state.elementName, previous, content);
+    }
+
+    if (wasEmpty && !isEmptyMarkdown(content) && index === this.state.cells.length - 1) {
+      this.appendSystemCell(this.state.cells.length);
+    }
+  };
+
+  /**
+   * Adds a change to the edit already being typed, so a run of key presses is one undo step.
+   *
+   * Typing back to where the edit started leaves nothing to undo, so the action is taken off the
+   * history rather than left there doing nothing.
+   */
+  private extendContentEdit(edit: PendingContentEdit, content: CellContentKind): void {
+    this.applyCellContent(edit.elementName, content);
+    edit.after = structuredClone(content);
+
+    if (isEqual(edit.before, edit.after)) {
+      this.editHistory?.discard(edit.action);
+      this.finishContentEdit(edit);
+      return;
+    }
+
+    this.scheduleContentEditCommit(edit);
+  }
+
+  private startContentEdit(elementName: string, previous: CellContentKind, content: CellContentKind): void {
+    const after = structuredClone(content);
+    const history = this.editHistory;
+    if (!history) {
+      this.applyCellContent(elementName, after);
+      return;
+    }
+
+    // perform and undo read `edit` when they run, not now: extendContentEdit keeps changing `after`
+    // while typing continues, and the last value is the one to redo. Both stop the grouping first, so
+    // undoing while typing also ends the edit it undoes.
+    const edit: PendingContentEdit = {
+      elementName,
+      before: structuredClone(previous),
+      after,
+      action: {
+        label: t('notebooks.history.edit-block', 'Edit block'),
+        perform: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.finishContentEdit(edit);
+          this.applyCellContent(edit.elementName, edit.before);
+        },
+      },
+    };
+
+    this.pendingContentEdit = edit;
+    this.applyCellContent(edit.elementName, edit.after);
+    history.record(edit.action);
+    this.scheduleContentEditCommit(edit);
+  }
+
+  public commitContentEdits(): void {
+    if (this.pendingContentEdit) {
+      this.finishContentEdit(this.pendingContentEdit);
+    }
+  }
+
+  private scheduleContentEditCommit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishContentEdit(edit), CONTENT_EDIT_COALESCE_MS);
+  }
+
+  private finishContentEdit(edit: PendingContentEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingContentEdit === edit) {
+      this.pendingContentEdit = undefined;
+    }
+  }
+
+  private applyCellContent(elementName: string, content: CellContentKind): void {
+    for (const cell of this.state.cells) {
+      // Panel cells carry no content and must not gain any.
+      if (cell.state.content && cell.state.elementName === elementName) {
+        cell.setState({ content });
+      }
+    }
+  }
+
+  /**
+   * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
+   * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
+   * menu does, since the cell picking from that menu already exists and is already empty.
+   *
+   * Paragraph's starter content is already empty markdown, the same shape an unclaimed trailing
+   * slot has. setCellContent treats that as a no-op, so without the check below the slot would
+   * never be claimed and no replacement would appear — unlike Heading ("# ") or Code, whose
+   * starter content actually differs. The "/" menu does not hit this: typing "/" has already
+   * claimed the slot before convertCell runs.
+   */
+  public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+    const content = contentForBlockType(type);
+    if (!content) {
+      return;
+    }
+
+    if (isEqual(cell.state.content, content)) {
+      const index = this.state.cells.indexOf(cell);
+      if (index !== -1 && index === this.state.cells.length - 1 && isEmptyMarkdown(content)) {
+        this.appendSystemCell(this.state.cells.length);
+      }
+      return;
+    }
+
+    this.setCellContent(cell, content);
+  }
+
+  /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
    * rebuilt, so a panel cell keeps its VizPanel and its already-fetched data across the move.
    */
   public moveCell(fromIndex: number, toIndex: number) {
-    const cells = [...this.state.cells];
-    const [removed] = cells.splice(fromIndex, 1);
-    cells.splice(toIndex, 0, removed);
-    this.setState({ cells });
+    const cell = this.state.cells[fromIndex];
+    if (!cell || fromIndex === toIndex || toIndex < 0 || toIndex >= this.state.cells.length) {
+      return;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.move-block', 'Move block'),
+      perform: () => this.moveCellTo(cell, toIndex),
+      undo: () => this.moveCellTo(cell, fromIndex),
+    });
+  }
+
+  /**
+   * Builds the cell a given block type inserts, and clamps `index` to the current cells length —
+   * shared by `addCell` (a reader-initiated, undoable insert) and `appendSystemCell` (the "always one
+   * more empty block ready" invariant's own automatic appends, which must stay off the undo stack:
+   * they're bookkeeping the notebook performs on the reader's behalf, not a distinct action anyone
+   * asked for). `undefined` when `type` has nothing to build yet (Visualization).
+   */
+  private buildCellFor(type: NotebookBlockType, index: number): { cell: NotebookCellItem; index: number } | undefined {
+    const content = contentForBlockType(type);
+    if (!content) {
+      return undefined;
+    }
+
+    const cell = new NotebookCellItem({
+      // A fresh name for the same reason duplicateCell needs one: serialize() writes it as the key into
+      // the notebook's `elements` map, so reusing one would collapse the two cells into one element.
+      elementName: this.nextElementName(type),
+      // Everything the add-block menu inserts was asked for by a person, not proposed by the assistant.
+      source: 'user',
+      content,
+    });
+
+    return { cell, index: Math.max(0, Math.min(index, this.state.cells.length)) };
+  }
+
+  /**
+   * Inserts a new cell at `index`, the position the add-block affordance was offering.
+   *
+   * Visualization stays inert rather than inserting a cell with no content kind behind it, which the
+   * renderer would draw as a blank gap — the menu's "Coming soon" submenu is the only thing it offers.
+   *
+   * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
+   */
+  public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
+    const content = contentForBlockType(type);
+    if (!content) {
+      return undefined;
+    }
+
+    // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
+    // that slot would leave it stranded mid-document once the invariant appends a replacement after
+    // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
+    // executeEdit as "Add block" — convertCell would skip the undo stack for Paragraph (identical
+    // empty markdown, so only appendSystemCell ran) and record Heading/Code as "Edit block".
+    const trailing = this.state.cells.at(-1);
+    if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
+      index = this.state.cells.length - 1;
+    }
+
+    const built = this.buildCellFor(type, index);
+    if (!built) {
+      return undefined;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      perform: () => this.insertCell(built.cell, built.index),
+      undo: () => this.removeCellInstance(built.cell),
+    });
+
+    return built.cell;
+  };
+
+  /**
+   * The "always one more empty block ready" invariant's own way of appending a cell (see
+   * setCellContent and the renderer's own bootstrap effect) — bypasses addCell's undo/redo recording
+   * entirely, on purpose: this never runs from a reader-initiated action, so it must not show up as
+   * something a reader can "undo" (nor sit on the same step as whatever edit triggered it).
+   */
+  public appendSystemCell(index: number): NotebookCellItem | undefined {
+    const built = this.buildCellFor('paragraph', index);
+    if (!built) {
+      return undefined;
+    }
+
+    this.insertCell(built.cell, built.index);
+    return built.cell;
   }
 
   /**
@@ -125,38 +411,115 @@ export class NotebookLayoutManager
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
     const copy = cell.clone({
       key: undefined,
-      elementName: this.nextElementName(cell.state.elementName),
+      elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
     });
 
-    const cells = [...this.state.cells];
-    cells.splice(index + 1, 0, copy);
-    this.setState({ cells });
+    this.executeEdit({
+      label: t('notebooks.history.duplicate-block', 'Duplicate block'),
+      perform: () => this.insertCell(copy, index + 1),
+      undo: () => this.removeCellInstance(copy),
+    });
+  }
+
+  /**
+   * Inserts a brand-new cell directly below `target`, with explicit content rather than a clone of an
+   * existing one — Enter's own "split into a new block" gesture (see NotebookLayoutManagerRenderer's
+   * onAdvance): the reader's cursor sits inside `target`, so the new block belongs immediately after
+   * it, not wherever the document's own trailing empty cell happens to be. Defaults to an empty
+   * paragraph when no content is given.
+   *
+   * Returns the new cell so the caller can hand it the caret; undefined when `target` isn't (or is no
+   * longer) part of this notebook.
+   */
+  public insertCellAfter(target: NotebookCellItem, content?: CellContentKind): NotebookCellItem | undefined {
+    const index = this.state.cells.indexOf(target);
+    if (index === -1) {
+      return undefined;
+    }
+
+    const cell = new NotebookCellItem({
+      elementName: this.nextElementName('paragraph'),
+      source: 'user',
+      content: content ?? defaultMarkdownCellContentKind(),
+    });
+
+    this.executeEdit({
+      label: t('notebooks.history.split-block', 'Split block'),
+      perform: () => this.insertCell(cell, index + 1),
+      undo: () => this.removeCellInstance(cell),
+    });
+
+    return cell;
   }
 
   public removeCell(cell: NotebookCellItem): void {
-    const cells = this.state.cells.filter((candidate) => candidate !== cell);
+    const index = this.state.cells.indexOf(cell);
+    if (index === -1) {
+      return;
+    }
 
+    this.executeEdit({
+      label: t('notebooks.history.delete-block', 'Delete block'),
+      perform: () => this.removeCellInstance(cell),
+      undo: () => this.insertCell(cell, index),
+    });
+  }
+
+  private executeEdit(action: NotebookEditAction): void {
+    this.commitContentEdits();
+    const history = this.editHistory;
+    if (history) {
+      history.execute(action);
+    } else {
+      action.perform();
+    }
+  }
+
+  private insertCell(cell: NotebookCellItem, index: number): void {
+    if (this.state.cells.includes(cell)) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(index, 0, cell);
+    this.setState({ cells });
+  }
+
+  private removeCellInstance(cell: NotebookCellItem): void {
+    const cells = this.state.cells.filter((candidate) => candidate !== cell);
     if (cells.length !== this.state.cells.length) {
       this.setState({ cells });
     }
   }
 
+  private moveCellTo(cell: NotebookCellItem, toIndex: number): void {
+    const fromIndex = this.state.cells.indexOf(cell);
+    if (fromIndex === -1 || fromIndex === toIndex) {
+      return;
+    }
+
+    const cells = [...this.state.cells];
+    cells.splice(fromIndex, 1);
+    cells.splice(toIndex, 0, cell);
+    this.setState({ cells });
+  }
+
   /**
-   * A name derived from the original and not yet taken. Checked against every cell rather than a counter,
-   * because the names a saved notebook arrives with are arbitrary and a counter would eventually land on
-   * one of them.
+   * `${base}-${n}` for the lowest n not yet taken. Checked against every cell rather than kept as a
+   * counter, because the names a saved notebook arrives with are arbitrary and a counter would
+   * eventually land on one of them.
    */
   private nextElementName(base: string): string {
     const taken = new Set(this.state.cells.map((current) => current.state.elementName));
 
     let suffix = 1;
-    while (taken.has(`${base}-copy-${suffix}`)) {
+    while (taken.has(`${base}-${suffix}`)) {
       suffix++;
     }
 
-    return `${base}-copy-${suffix}`;
+    return `${base}-${suffix}`;
   }
 
   public addPanel(): void {}
@@ -205,6 +568,42 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
+  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number; caretOffset?: number } | null>(null);
+  const nextFocusId = useRef(0);
+  // `caretOffset` only matters for a split (see onAdvance below): the new cell's content there isn't
+  // just short starter text but carries the reader's own text along with it, so the default "end of
+  // document" would land the caret after that carried-over text instead of at the actual split point.
+  const requestFocus = useCallback((key: string | null | undefined, caretOffset?: number) => {
+    if (!key) {
+      setFocusRequest(null);
+      return;
+    }
+    nextFocusId.current += 1;
+    setFocusRequest({ key, id: nextFocusId.current, caretOffset });
+  }, []);
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+    if (cells.length === 0) {
+      requestFocus(model.appendSystemCell(0)?.state.key);
+      return;
+    }
+    const last = cells[cells.length - 1];
+    if (!isEmptyMarkdown(last.state.content)) {
+      model.appendSystemCell(cells.length);
+    }
+  }, [isEditing, cells, model, requestFocus]);
+
+  const onAdd = useCallback(
+    (type: NotebookBlockType, index: number) => {
+      // The reader asked for a block, so the caret belongs in it rather than one click away.
+      requestFocus(model.addCell(type, index)?.state.key);
+    },
+    [model, requestFocus]
+  );
+
   const onDragStart = useCallback((start: DragStart) => {
     setDrag({ source: start.source.index, destination: start.source.index });
   }, []);
@@ -234,7 +633,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       </header>
 
       <div className={styles.column}>
-        {isEditing && cells.length > 0 && <NotebookAddBlockDivider index={0} />}
+        {isEditing && cells.length > 0 && <NotebookAddBlockDivider index={0} onAdd={onAdd} />}
 
         <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
           <Droppable droppableId={key!} direction="vertical">
@@ -246,18 +645,42 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
               >
                 {cells.map((cell, index) => (
                   // Each frame is one Draggable and owns the divider below it, so a reorder moves a cell
-                  // together with its insertion point and nothing has to be re-indexed.
+                  // together with its insertion point and nothing has to be re-indexed. The trailing
+                  // slot's own placeholder/"/" menu (see NotebookCellRenderer) key off whether a cell's
+                  // own content is empty, not its position — the invariant above just guarantees the
+                  // last cell always qualifies, with the same drag handle, hover actions, and
+                  // "Add block" divider spacing every other cell already has, since it's a real cell
+                  // rendered through the exact same path.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
                     index={index}
                     isEditing={isEditing}
+                    autoFocus={cell.state.key === focusRequest?.key}
+                    focusRequestId={focusRequest && cell.state.key === focusRequest.key ? focusRequest.id : undefined}
+                    caretOffset={
+                      focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
+                    }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
                     // manager, so the frame never needs to reach back up for its own position.
+                    onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
+                    onAdvance={(remainder, marker) => {
+                      // With neither a marker nor a remainder, insertCellAfter's own empty-paragraph
+                      // default applies — see splitSeed for how the two combine otherwise.
+                      const { text, caretOffset } = splitSeed(remainder, marker);
+                      const created = model.insertCellAfter(
+                        cell,
+                        text !== undefined ? { kind: 'Markdown', spec: { text } } : undefined
+                      );
+                      // The split point, not the end of whatever text got carried along with it — see
+                      // requestFocus's own doc comment on `caretOffset`.
+                      requestFocus(created?.state.key, caretOffset);
+                    }}
+                    onFocusRequest={() => requestFocus(cell.state.key)}
                   />
                 ))}
                 {dropProvided.placeholder}
@@ -265,14 +688,68 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
             )}
           </Droppable>
         </DragDropContext>
-
-        {/* The end of the document. Outside the droppable, like the leading divider, and always visible
-            rather than hover-revealed. cells.length is the append position — the same one the last cell's
-            divider offers */}
-        {isEditing && <NotebookAddBlockPrompt index={cells.length} />}
       </div>
     </div>
   );
+}
+
+/**
+ * The content a freshly added or converted block starts with. Heading and paragraph are both markdown
+ * cells — the menu offers them as separate entries because that is how a reader thinks about what
+ * they're adding, but the editor underneath is the same one. A heading starts with its marker already
+ * typed so the live-preview cell opens straight into "type your heading text" rather than a blank
+ * block the reader has to know to prefix themselves.
+ */
+function contentForBlockType(type: NotebookBlockType): CellContentKind | undefined {
+  switch (type) {
+    case 'heading':
+      return { kind: 'Markdown', spec: { text: '# ' } };
+    case 'paragraph':
+      return defaultMarkdownCellContentKind();
+    case 'code':
+      return defaultCodeCellContentKind();
+    case 'visualization':
+      return undefined;
+  }
+}
+
+/**
+ * Whether `content` is an untouched, empty markdown cell — the shape the trailing-slot invariant (see
+ * setCellContent and the renderer's own bootstrap effect) watches for. `undefined` (a panel or
+ * collapsed cell, which carries no `content` at all) deliberately does *not* count: it isn't a
+ * typeable markdown slot either, so a panel ending up last must still get a fresh empty cell appended
+ * after it, exactly like any other non-empty trailing content would.
+ */
+function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
+  return content?.kind === 'Markdown' && content.spec.text === '';
+}
+
+/**
+ * What Enter's split-off cell (see NotebookLayoutManagerRenderer's onAdvance) should start with, and
+ * where its caret belongs. `remainder` is every line MarkdownCell found after the caret, exactly as
+ * the reader left it — which, for a cell that already holds further list items typed in via
+ * Shift+Enter, includes those items too, each already carrying its own marker. `marker` only ever
+ * describes the item the caret was actually in, so it only belongs in front of *that* item's leftover
+ * text: once the caret sat at the very end of it, gluing the marker onto the whole remainder instead
+ * would prefix an extra, empty item ahead of the next one rather than cleanly handing it over.
+ */
+export function splitSeed(
+  remainder: string,
+  marker: string | undefined
+): { text: string | undefined; caretOffset: number } {
+  if (marker === undefined) {
+    return { text: remainder || undefined, caretOffset: 0 };
+  }
+
+  const newlineIndex = remainder.indexOf('\n');
+  const restOfCaretLine = newlineIndex === -1 ? remainder : remainder.slice(0, newlineIndex);
+  const laterLines = newlineIndex === -1 ? '' : remainder.slice(newlineIndex + 1);
+
+  if (restOfCaretLine === '' && laterLines) {
+    return { text: laterLines, caretOffset: 0 };
+  }
+
+  return { text: marker + remainder, caretOffset: marker.length };
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {
