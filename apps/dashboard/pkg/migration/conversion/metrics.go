@@ -2,10 +2,12 @@ package conversion
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -88,30 +90,49 @@ type dashboardInfo struct {
 	targetSchema    interface{}
 	sourceSchemaStr string
 	targetSchemaStr string
+	// sourceSizeBytes is the JSON-encoded size of the source dashboard spec being converted.
+	// It is -1 when the size could not be determined (e.g. marshal failure).
+	sourceSizeBytes int
 }
 
-// extractDashboardInfo extracts UID and schema versions from source and target dashboards
-func extractDashboardInfo(a, b interface{}) dashboardInfo {
-	info := dashboardInfo{}
+// specSizeBytes returns the JSON-encoded size of a dashboard spec in bytes.
+// It returns -1 if the spec cannot be marshalled so callers can distinguish
+// "unknown" from a genuinely empty (zero-byte) spec.
+func specSizeBytes(spec interface{}) int {
+	b, err := json.Marshal(spec)
+	if err != nil {
+		return -1
+	}
+	return len(b)
+}
 
-	// get uid and schema version from source
+// extractDashboardInfo extracts UID, schema versions and source size from source and target dashboards
+func extractDashboardInfo(a, b interface{}) dashboardInfo {
+	info := dashboardInfo{sourceSizeBytes: -1}
+
+	// get uid, schema version and encoded size from source
 	switch source := a.(type) {
 	case *dashv0.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 		if source.Spec.Object != nil {
 			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
 		}
 	case *dashv1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 		if source.Spec.Object != nil {
 			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
 		}
 	case *dashv2alpha1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 	case *dashv2beta1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 	case *dashv2.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 	}
 
 	// determine target schema version
@@ -163,6 +184,10 @@ func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, e
 		"dashboardUID", info.uid,
 	}
 
+	if info.sourceSizeBytes >= 0 {
+		logFields = append(logFields, "sourceSizeBytes", info.sourceSizeBytes)
+	}
+
 	// add schema version fields only if we have them (v0/v1 dashboards)
 	if info.sourceSchema != nil && info.targetSchema != nil {
 		logFields = append(logFields,
@@ -195,6 +220,10 @@ func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashb
 		"sourceVersionAPI", sourceVersionAPI,
 		"targetVersionAPI", targetVersionAPI,
 		"dashboardUID", info.uid,
+	}
+
+	if info.sourceSizeBytes >= 0 {
+		logFields = append(logFields, "sourceSizeBytes", info.sourceSizeBytes)
 	}
 
 	// add schema version fields only if we have them (v0/v1 dashboards)
@@ -251,6 +280,13 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		if schemaVer, ok := info.sourceSchema.(float64); ok {
 			span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
 		}
+		if info.sourceSizeBytes >= 0 {
+			span.SetAttributes(attribute.Int("source.size_bytes", info.sourceSizeBytes))
+			migration.MDashboardConversionObjectSizeBytes.WithLabelValues(
+				sourceVersionAPI,
+				targetVersionAPI,
+			).Observe(float64(info.sourceSizeBytes))
+		}
 
 		// wrape scope so we can pass context with span to child conversion functions
 		wrappedScope := &scopeWithContext{
@@ -259,6 +295,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		}
 
 		// execute the actual conversion
+		start := time.Now()
 		err := conversionFunc(a, b, wrappedScope)
 
 		// if conversion succeeded, run data loss check
@@ -266,17 +303,20 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			err = checkConversionDataLoss(sourceVersionAPI, targetVersionAPI, a, b)
 		}
 
+		duration := time.Since(start)
+
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			span.RecordError(err)
 		} else {
 			span.SetStatus(codes.Ok, "conversion successful")
 		}
+		span.SetAttributes(attribute.Float64("duration_seconds", duration.Seconds()))
 
 		if err != nil {
-			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b)
+			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b, duration)
 		} else {
-			recordConversionSuccess(sourceVersionAPI, targetVersionAPI, info)
+			recordConversionSuccess(sourceVersionAPI, targetVersionAPI, info, duration)
 		}
 
 		return nil
@@ -284,7 +324,7 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 }
 
 // recordConversionFailure records metrics and logs for failed conversions
-func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}) {
+func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}, duration time.Duration) {
 	errorType := classifyConversionError(err)
 
 	migration.MDashboardConversionFailureTotal.WithLabelValues(
@@ -295,7 +335,14 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 		errorType,
 	).Inc()
 
+	migration.MDashboardConversionDuration.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		"failure",
+	).Observe(duration.Seconds())
+
 	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b)
+	logFields = append(logFields, "durationMs", duration.Milliseconds())
 	if errorType == "schema_minimum_version_error" {
 		getLogger().Warn("Dashboard conversion failed", logFields...)
 	} else {
@@ -304,7 +351,7 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 }
 
 // recordConversionSuccess records metrics and logs for successful conversions
-func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) {
+func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info dashboardInfo, duration time.Duration) {
 	migration.MDashboardConversionSuccessTotal.WithLabelValues(
 		sourceVersionAPI,
 		targetVersionAPI,
@@ -312,6 +359,13 @@ func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info das
 		info.targetSchemaStr,
 	).Inc()
 
+	migration.MDashboardConversionDuration.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		"success",
+	).Observe(duration.Seconds())
+
 	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info)
+	successLogFields = append(successLogFields, "durationMs", duration.Milliseconds())
 	getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
 }
