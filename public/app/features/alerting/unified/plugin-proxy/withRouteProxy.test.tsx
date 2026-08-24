@@ -3,6 +3,8 @@ import { render, screen } from 'test/test-utils';
 
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import * as Analytics from '../Analytics';
+import * as pluginBridgeHooks from '../hooks/usePluginBridge';
 import { setupMswServer } from '../mockApi';
 import { mockDataSource } from '../mocks';
 import { addPlugin, disablePlugin } from '../mocks/server/configure';
@@ -37,6 +39,11 @@ const PLUGIN_TARGET = `/a/${SupportedPlugin.PrometheusAlerting}/rules/${encodeUR
 
 beforeEach(() => {
   setupDataSources(mockDataSource({ name: MIMIR_NAME, uid: MIMIR_UID, type: 'prometheus' }));
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
 });
 
 function CorePage() {
@@ -118,5 +125,25 @@ describe('withRouteProxy', () => {
 
     expect(screen.getByText('Loading…')).toBeInTheDocument();
     expect(await screen.findByText(`Redirected to ${PLUGIN_TARGET}`)).toBeInTheDocument();
+  });
+
+  it('falls back to Grafana and logs when plugin discovery times out', async () => {
+    const timeoutError = new pluginBridgeHooks.PluginBridgeTimeoutError(SupportedPlugin.PrometheusAlerting, 5_000);
+    const usePluginBridge = jest.spyOn(pluginBridgeHooks, 'usePluginBridge').mockReturnValue({
+      loading: false,
+      error: timeoutError,
+    });
+    const logError = jest.spyOn(Analytics, 'logError').mockImplementation();
+
+    renderProxiedRoute(DATA_SOURCE_URL);
+
+    expect(await screen.findByText('core alerting page')).toBeInTheDocument();
+
+    const options = usePluginBridge.mock.calls[0][1];
+    options?.onTimeout?.(timeoutError);
+    expect(logError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Timed out while checking Prometheus Alerting plugin status' }),
+      { timeout: '5000' }
+    );
   });
 });

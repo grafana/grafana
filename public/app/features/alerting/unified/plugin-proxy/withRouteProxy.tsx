@@ -10,12 +10,15 @@ import {
   type RouteDescriptor,
 } from 'app/core/navigation/types';
 
+import { logError } from '../Analytics';
 import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 import { routeProxies } from './proxies';
 import { buildProxyContext, stripSubPath } from './resolve';
 import { type ProxyContext, type RouteProxy } from './types';
+
+const PLUGIN_DISCOVERY_TIMEOUT_MS = 5_000;
 
 /**
  * Reads the browser's location instead of react-router's, because react-router hands back a
@@ -42,7 +45,18 @@ export function withRouteProxy(proxy: RouteProxy, Page: GrafanaRouteComponent): 
 
     // `installed` is true only when the plugin is both present and enabled, so a plugin that's
     // been switched off is treated the same as one that was never there.
-    const { loading: checkingPlugin, installed: pluginAvailable } = usePluginBridge(SupportedPlugin.PrometheusAlerting);
+    const { loading: checkingPlugin, installed: pluginAvailable } = usePluginBridge(
+      SupportedPlugin.PrometheusAlerting,
+      {
+        timeoutMs: belongsToPlugin ? PLUGIN_DISCOVERY_TIMEOUT_MS : undefined,
+        onTimeout: (error) => {
+          logError(new Error('Timed out while checking Prometheus Alerting plugin status'), {
+            timeout: String(error.timeoutMs),
+          });
+        },
+      }
+    );
+
     // Only worth working out a target once we know there's a plugin to send people to.
     const { value: target, loading: buildingTarget } = useAsync(
       async () => (belongsToPlugin && pluginAvailable ? proxy.handler(context) : undefined),
