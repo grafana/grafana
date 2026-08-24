@@ -199,6 +199,13 @@ type resolvedRulerSync struct {
 	targetUID string             // recording-rules write target (defaults to uid)
 	promote   bool               // one-way promote-to-native requested (API path only)
 	origin    externalSyncOrigin // where uid came from
+	// persistedHash is the last-applied upstream hash from Config status,
+	// read back on the API path only (that path already fetches the whole
+	// Config object; the ini path stays independent of apiserver availability
+	// for its own dedup decision, so it relies on the in-memory cache alone —
+	// the ini-only syncer's own version-churn gap from that is a known,
+	// separate, already-shipped limitation, not addressed here).
+	persistedHash string
 }
 
 // resolveExternalRulerConfig computes the effective sync config for the org.
@@ -235,7 +242,13 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 	if targetUID == "" {
 		targetUID = uid
 	}
-	return resolvedRulerSync{uid: uid, targetUID: targetUID, promote: externalRulerSyncPromoteFromConfig(cfg), origin: originAPI}, nil
+	return resolvedRulerSync{
+		uid:           uid,
+		targetUID:     targetUID,
+		promote:       externalRulerSyncPromoteFromConfig(cfg),
+		origin:        originAPI,
+		persistedHash: externalRulerSyncLastAppliedHashFromConfig(cfg),
+	}, nil
 }
 
 // writeStatus upserts the org's Config.status using compute(prev), creating the
@@ -290,11 +303,12 @@ func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, comp
 }
 
 // recordSyncResult writes the latest sync outcome (nil = success) onto the
-// org's Config.status.
-func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
+// org's Config.status. appliedHash, on success, is persisted so a later
+// restart or replica can skip an unchanged re-apply.
+func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error, appliedHash string) {
 	now := time.Now()
 	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
-		return computeSyncStatus(prev, uid, origin, syncErr, now)
+		return computeSyncStatus(prev, uid, origin, syncErr, now, appliedHash)
 	})
 }
 
@@ -485,7 +499,15 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
 
-	// Skip if the upstream is unchanged since the last successful apply.
+	// Skip if the upstream is unchanged since the last successful apply. The
+	// persisted hash (from Config status, API path only) survives restarts and
+	// multiple replicas; the in-memory map is the fast path and the fallback
+	// when a persisted hash isn't available.
+	hashStr := strconv.FormatUint(hash, 10)
+	if rc.persistedHash != "" && rc.persistedHash == hashStr {
+		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+		return
+	}
 	s.lastSyncHashMu.RLock()
 	prev, has := s.lastSyncHash[orgID]
 	s.lastSyncHashMu.RUnlock()
@@ -504,7 +526,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	s.lastSyncHashMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
-	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil)
+	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
 }
 
 type groupKey struct {
@@ -687,5 +709,5 @@ func (s *ExternalRulerSyncer) promote(ctx context.Context, user identity.Request
 func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
-	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
+	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "")
 }
