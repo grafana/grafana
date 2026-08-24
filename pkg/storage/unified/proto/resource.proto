@@ -269,6 +269,7 @@ message ListRequest {
   // ListResponse returns only metadata for each item, without their value
   // Available for STORE source only
   // Does not support field/label selectors
+  // Must be cluster-wide: the key namespace has to be empty
   bool keys_only = 8;
 }
 

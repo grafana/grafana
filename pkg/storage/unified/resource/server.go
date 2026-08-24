@@ -1579,6 +1579,12 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}, nil
 	}
 
+	if req.KeysOnly && req.Options.Key.Namespace != "" {
+		return &resourcepb.ListResponse{
+			Error: NewBadRequestError("keys_only lists are cluster-wide, so the namespace must be empty"),
+		}, nil
+	}
+
 	if _, ok := claims.AuthInfoFrom(ctx); !ok {
 		return &resourcepb.ListResponse{
 			Error: &resourcepb.ErrorResult{
@@ -1731,13 +1737,11 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
-			// A keys-only list is always cluster-wide, so the request key carries
-			// no namespace and the item's own is the only scope that can be
-			// checked. FilterAuthorized batches per namespace, so varying it per
-			// item is fine. Confined to keys_only: other list paths can be
-			// changed later.
+			// keys_only is cluster-wide and has an empty namespace in the key, so
+			// we use the actual item namespace. FilterAuthorized still checks each
+			// item using the authenticated identity from ctx.
 			namespace := key.Namespace
-			if req.KeysOnly && namespace == "" {
+			if req.KeysOnly {
 				namespace = c.namespace
 			}
 			return authz.BatchCheckItem{

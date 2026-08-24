@@ -3090,7 +3090,9 @@ func TestServerListKeysOnly(t *testing.T) {
 		}
 	}
 
-	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+	// keys_only lists are cluster-wide, so the request carries no namespace even
+	// though the seeded items live in one.
+	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
 
 	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
 		srv, ctx := newKeysOnlyTestServer(t)
@@ -3374,13 +3376,6 @@ func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
 			requestNamespace:  "",
 			wantErr:           "namespace mismatch",
 		},
-		// Proves the refusals are about crossing namespaces, not about the
-		// identity being unable to read anything.
-		"tenant-scoped identity reads its own namespace": {
-			identityNamespace: "stacks-123",
-			requestNamespace:  "stacks-123",
-			wantNamespaces:    []string{"stacks-123"},
-		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			ac := NewAuthzLimitedClient(newNamespaceRecordingAccessClient(), AuthzOptions{Registry: prometheus.NewRegistry()})
@@ -3432,11 +3427,6 @@ func TestOnlyKeysListSubstitutesTheItemNamespace(t *testing.T) {
 		},
 		"normal cross-namespace list still batches under the empty namespace": {
 			wantBatches: []string{""},
-		},
-		"keys-only namespaced list uses the request key": {
-			keysOnly:         true,
-			requestNamespace: "ns-one",
-			wantBatches:      []string{"ns-one"},
 		},
 		"normal namespaced list uses the request key": {
 			requestNamespace: "ns-one",
@@ -3501,34 +3491,34 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 		ns       = "default"
 	)
 
-	field := func(reqNS, key, op string, values ...string) *resourcepb.ListOptions {
+	// Cluster-wide, so these exercise the selector refusal rather than the
+	// namespace one.
+	field := func(key, op string, values ...string) *resourcepb.ListOptions {
 		return &resourcepb.ListOptions{
-			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: reqNS},
+			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
 			Fields: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
 		}
 	}
 	label := func(key, op string, values ...string) *resourcepb.ListOptions {
 		return &resourcepb.ListOptions{
-			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns},
+			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
 			Labels: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
 		}
 	}
 
 	for name, opts := range map[string]*resourcepb.ListOptions{
 		// Survive filterSelectors.
-		"field equality": field(ns, "metadata.name", "=", "aaa"),
+		"field equality": field("metadata.name", "=", "aaa"),
 		"label equality": label("team", "=", "a"),
 		// Dropped by filterSelectors, so a check placed after it would never see them.
-		"field inequality": field(ns, "metadata.name", "!=", "aaa"),
+		"field inequality": field("metadata.name", "!=", "aaa"),
 		"label inequality": label("team", "!=", "a"),
 		"label exists":     label("team", "exists"),
 		"label not exists": label("team", "!"),
-		// metadata.namespace is dropped whatever its value, matching or not.
-		"namespace matching the request key":    field(ns, "metadata.namespace", "=", ns),
-		"namespace mismatching the request key": field(ns, "metadata.namespace", "=", "other"),
-		// A cluster-scoped list has an empty request namespace, so an empty
-		// selector value is not redundant with it -- it would restrict the scan.
-		"empty namespace on a cross-namespace list": field("", "metadata.namespace", "=", ""),
+		// metadata.namespace is dropped whatever its value, so it would narrow the
+		// scan silently.
+		"namespace selector":       field("metadata.namespace", "=", ns),
+		"empty namespace selector": field("metadata.namespace", "=", ""),
 	} {
 		t.Run(name, func(t *testing.T) {
 			srv, ctx := newKeysOnlyTestServer(t)
@@ -3544,7 +3534,59 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, rsp.Error, "must be refused, not served as if the selector matched")
 			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			// Named, so these cannot start passing because some other validation
+			// began rejecting the request first.
+			require.Contains(t, rsp.Error.Message, "selectors")
 			require.Empty(t, rsp.Items)
+		})
+	}
+}
+
+// keys_only is cluster-wide by contract, so a namespaced request is a caller bug
+// rather than something to serve narrowly. Refusing it is what lets listAuthorized
+// assume the request key has no namespace.
+func TestServerListKeysOnly_RefusesANamespacedRequest(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+	)
+
+	for name, tc := range map[string]struct {
+		namespace string
+		keysOnly  bool
+		wantError string
+	}{
+		"keys-only with a namespace": {
+			namespace: "default",
+			keysOnly:  true,
+			wantError: "cluster-wide",
+		},
+		"keys-only without one": {
+			keysOnly: true,
+		},
+		// The contract is on keys_only alone; normal lists stay namespaced.
+		"normal list with a namespace": {
+			namespace: "default",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv, ctx := newKeysOnlyTestServer(t)
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: tc.namespace,
+				}},
+				KeysOnly: tc.keysOnly,
+			})
+			require.NoError(t, err)
+
+			if tc.wantError == "" {
+				require.Nil(t, rsp.Error)
+				return
+			}
+			require.NotNil(t, rsp.Error)
+			assert.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			assert.Contains(t, rsp.Error.Message, tc.wantError)
 		})
 	}
 }
@@ -3576,7 +3618,7 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 	}
 
 	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
-		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}},
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource}},
 		KeysOnly: true,
 		Limit:    50,
 	})
