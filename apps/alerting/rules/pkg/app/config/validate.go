@@ -17,7 +17,7 @@ func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Co
 	return func(ctx context.Context, req validation.Request[*v0alpha1.Config]) error {
 		obj := req.Object
 		if obj.GetName() != v0alpha1.ConfigSingletonName {
-			return fmt.Errorf("Config is a singleton; the only valid name is %q", v0alpha1.ConfigSingletonName)
+			return fmt.Errorf("kind Config is a singleton; the only valid name is %q", v0alpha1.ConfigSingletonName)
 		}
 
 		if newUID, changed := externalRulerSyncUIDChange(obj, req.OldObject); changed && newUID != "" {
