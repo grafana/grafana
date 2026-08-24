@@ -274,6 +274,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                     props: traceContext,
                     components: extensionComponents,
                     limit: 2,
+                    wrapper: ({ children }) => <div className={styles.pluginActionItem}>{children}</div>,
                   })
                 : null}
             </div>
@@ -476,6 +477,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     pluginActions: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      flexShrink: 0,
+    }),
+
+    pluginActionItem: css({
       display: 'flex',
       alignItems: 'center',
       '&:has([data-testid="assistant-button"])': {
