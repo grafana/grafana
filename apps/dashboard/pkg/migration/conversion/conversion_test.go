@@ -1185,6 +1185,141 @@ func TestConversionDurationAndSizeMetrics(t *testing.T) {
 	}
 }
 
+// TestSpecSizeBytes verifies specSizeBytes returns the JSON-encoded byte length for
+// marshalable specs and the -1 "unknown" sentinel when a spec cannot be marshalled.
+func TestSpecSizeBytes(t *testing.T) {
+	tests := []struct {
+		name         string
+		spec         interface{}
+		wantSentinel bool // expect the -1 sentinel because the spec cannot be marshalled
+	}{
+		{
+			name: "empty typed spec",
+			spec: dashv2.DashboardSpec{},
+		},
+		{
+			name: "populated typed spec",
+			spec: dashv2.DashboardSpec{Title: "test"},
+		},
+		{
+			name: "unstructured spec",
+			spec: common.Unstructured{Object: map[string]any{"title": "test", "schemaVersion": 20}},
+		},
+		{
+			name:         "unmarshalable spec returns -1 sentinel",
+			spec:         make(chan int),
+			wantSentinel: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := specSizeBytes(tt.spec)
+			if tt.wantSentinel {
+				require.Equal(t, -1, got)
+				return
+			}
+
+			b, err := json.Marshal(tt.spec)
+			require.NoError(t, err)
+			require.Equal(t, len(b), got, "size should match the JSON-encoded spec length")
+		})
+	}
+}
+
+// TestExtractDashboardInfo verifies UID, schema versions and encoded source size are
+// extracted from every supported source/target type, including the -1 size sentinel
+// when the source spec cannot be marshalled.
+func TestExtractDashboardInfo(t *testing.T) {
+	tests := []struct {
+		name             string
+		source           interface{}
+		target           interface{}
+		wantUID          string
+		wantSourceSchema interface{}
+		wantTargetSchema interface{}
+		wantSizeUnknown  bool // expect the -1 sentinel because the spec cannot be marshalled
+	}{
+		{
+			name: "v0 unstructured source to v0 target keeps source schema",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v0"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "title": "t"}},
+			},
+			target:           &dashv0.Dashboard{},
+			wantUID:          "uid-v0",
+			wantSourceSchema: 20,
+			wantTargetSchema: 20,
+		},
+		{
+			name: "v1 unstructured source to v1 target migrates to latest",
+			source: &dashv1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v1"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "title": "t"}},
+			},
+			target:           &dashv1.Dashboard{},
+			wantUID:          "uid-v1",
+			wantSourceSchema: 20,
+			wantTargetSchema: schemaversion.LATEST_VERSION,
+		},
+		{
+			name: "v2 typed source has no schema versions",
+			source: &dashv2.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2"},
+				Spec:       dashv2.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2",
+		},
+		{
+			name: "v2alpha1 typed source has no schema versions",
+			source: &dashv2alpha1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2alpha1"},
+				Spec:       dashv2alpha1.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2alpha1",
+		},
+		{
+			name: "v2beta1 typed source has no schema versions",
+			source: &dashv2beta1.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-v2beta1"},
+				Spec:       dashv2beta1.DashboardSpec{Title: "t"},
+			},
+			target:  &dashv1.Dashboard{},
+			wantUID: "uid-v2beta1",
+		},
+		{
+			name: "unmarshalable source spec records the size sentinel",
+			source: &dashv0.Dashboard{
+				ObjectMeta: metav1.ObjectMeta{Name: "uid-bad"},
+				Spec:       common.Unstructured{Object: map[string]any{"schemaVersion": 20, "bad": make(chan int)}},
+			},
+			target:           &dashv0.Dashboard{},
+			wantUID:          "uid-bad",
+			wantSourceSchema: 20,
+			wantTargetSchema: 20,
+			wantSizeUnknown:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			info := extractDashboardInfo(tt.source, tt.target)
+
+			require.Equal(t, tt.wantUID, info.uid)
+			require.Equal(t, tt.wantSourceSchema, info.sourceSchema)
+			require.Equal(t, tt.wantTargetSchema, info.targetSchema)
+
+			if tt.wantSizeUnknown {
+				require.Equal(t, -1, info.sourceSizeBytes, "unmarshalable spec should record the -1 sentinel")
+			} else {
+				require.Greater(t, info.sourceSizeBytes, 0, "valid spec should record a positive encoded size")
+			}
+		})
+	}
+}
+
 // TestSchemaVersionExtraction tests that schema versions are extracted correctly from different dashboard types
 func TestSchemaVersionExtraction(t *testing.T) {
 	tests := []struct {
