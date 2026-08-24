@@ -4,7 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"strings"
+	"fmt"
+	"regexp"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
@@ -69,26 +70,15 @@ func buildGrafanaExternalID(stackExternalID, datasourceUID string) string {
 }
 
 // isValidGrafanaExternalID reports whether id is bound to this stack + datasource UID
-// with a 16-char lowercase hex suffix. Uses HasPrefix (stack/UID may contain dashes).
+// with a 16-char lowercase hex suffix.
 func isValidGrafanaExternalID(id, stackExternalID, datasourceUID string) bool {
 	if id == "" || stackExternalID == "" || datasourceUID == "" {
 		return false
 	}
-	prefix := stackExternalID + "-" + datasourceUID + "-"
-	if !strings.HasPrefix(id, prefix) {
-		return false
-	}
-	suffix := id[len(prefix):]
-	if len(suffix) != grafanaExternalIDHexBytes*2 {
-		return false
-	}
-	for i := 0; i < len(suffix); i++ {
-		c := suffix[i]
-		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
-			return false
-		}
-	}
-	return true
+	pattern := fmt.Sprintf("^%s-%s-[0-9a-f]{%d}$",
+		regexp.QuoteMeta(stackExternalID), regexp.QuoteMeta(datasourceUID), grafanaExternalIDHexBytes*2)
+	matched, err := regexp.MatchString(pattern, id)
+	return err == nil && matched
 }
 
 // isGrafanaAssumeRole reports whether jsonData declares Grafana Assume Role auth, either via
@@ -105,9 +95,9 @@ func isGrafanaAssumeRole(jsonData *simplejson.Json) bool {
 }
 
 // externalIDKeys selects the per-datasource ID / mode key pair to operate on.
-// A non-empty sigV4AuthType means the SigV4 key namespace — datasources do not switch
-// between native and SigV4 auth on the same instance, so this stays stable when leaving
-// Grafana Assume Role (e.g. sigV4AuthType becomes "keys"). An empty string is ignored so
+// A non-empty sigV4AuthType means the SigV4 key namespace — a datasource that signs with
+// SigV4 keeps doing so, so the namespace stays stable when the datasource leaves Grafana
+// Assume Role (e.g. sigV4AuthType becomes "keys"). An empty string is ignored so
 // a spoofed `sigV4AuthType: ""` on a native datasource cannot redirect scrub/mint onto
 // the SigV4 keys and leave an unvetted native grafanaExternalId behind.
 func externalIDKeys(jsonData *simplejson.Json) (idKey, modeKey string) {
@@ -199,7 +189,9 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	idKey, modeKey := externalIDKeys(updated)
 	modeSet, modeOn := usePerDatasourceExternalID(updated)
 
-	// Leaving Grafana Assume Role: drop the ID when minting is FT-enabled (otherwise restore below).
+	// Leaving Grafana Assume Role with minting FT-enabled: BeforeSave already cleared the
+	// payload IDs, so returning here is what drops the ID. With the FT off we fall through
+	// and restore the stored value below.
 	if allowGenerate && !updatedIsGAR {
 		return
 	}
