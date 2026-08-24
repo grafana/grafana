@@ -475,6 +475,7 @@ export {
   type RestrictedGrafanaApisAllowList,
   type DashboardMutationAPI,
   type DashboardMutationResult,
+  type DashboardEditorAPI,
   RestrictedGrafanaApisContext,
   RestrictedGrafanaApisContextProvider,
   useRestrictedGrafanaApis,
