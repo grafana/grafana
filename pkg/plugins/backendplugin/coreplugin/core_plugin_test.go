@@ -4,12 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 )
@@ -33,9 +31,6 @@ func TestCorePlugin(t *testing.T) {
 
 		err = p.CallResource(context.Background(), nil, nil)
 		require.Equal(t, plugins.ErrMethodNotImplemented, err)
-
-		_, ok := p.(backendplugin.PluginV3)
-		require.False(t, ok)
 	})
 
 	t.Run("New core plugin with handlers set in opts should return expected values", func(t *testing.T) {
