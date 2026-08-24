@@ -3,7 +3,7 @@ import { type BackendSrv, DataSourceWithBackend, getBackendSrv } from '@grafana/
 import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { resetProbeCandidates } from './probeUtils';
-import { labelRecencyProbe, probeFound, tempoHasTraces } from './solutionDataProbes';
+import { labelRecencyProbe, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -151,6 +151,25 @@ describe('labelRecencyProbe', () => {
     const hasRecentLabels = labelRecencyProbe('labels', (ms) => ms);
 
     await expect(hasRecentLabels(datasource('loki'))).resolves.toBe(false);
+  });
+});
+
+describe('prometheusHasRecentMetrics', () => {
+  it('ignores alert-state series but counts real telemetry', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: ['ALERTS', 'ALERTS_FOR_STATE', 'GRAFANA_ALERTS'] });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(false);
+
+    getResource.mockResolvedValue({ data: ['ALERTS', 'node_uname_info'] });
+    await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
+  });
+
+  it('counts metric names that collide with Object.prototype properties', async () => {
+    const getResource = jest.fn().mockResolvedValue({ data: ['constructor'] });
+    mockInstance.mockResolvedValue(backendInstance(getResource));
+
+    await expect(prometheusHasRecentMetrics(datasource('prometheus'))).resolves.toBe(true);
   });
 });
 

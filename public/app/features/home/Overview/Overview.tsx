@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, useStyles2 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
@@ -103,7 +104,15 @@ export function Overview({ solutions }: OverviewProps) {
 
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  // Handle each hash value once: `options` rebuilds as cards and guides settle, and re-running
+  // the match would re-scroll the page and override a filter the user picked in the meantime.
+  const handledHash = useRef<string | undefined>(undefined);
   useEffect(() => {
+    if (location.hash === handledHash.current) {
+      return;
+    }
+    // Record even without a match so clearing the hash re-arms the same anchor for a later visit.
+    handledHash.current = location.hash;
     const match = options.find((o) => o.value === location.hash.slice(1));
     if (match) {
       setStored(match.value);
@@ -130,6 +139,13 @@ export function Overview({ solutions }: OverviewProps) {
               label={label}
               onClick={() => {
                 setStored(value);
+                // The hash is a one-shot deep link and nothing else on this route reads
+                // fragments, so an explicit pick clears whatever anchor is present — including
+                // typo'd or outdated ones that would otherwise linger looking broken.
+                const current = locationService.getLocation();
+                if (current.hash) {
+                  locationService.replace({ ...current, hash: '' });
+                }
                 ctaClicked({
                   surface: 'overview',
                   action: 'change_overview_filter',

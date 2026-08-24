@@ -359,11 +359,6 @@
       "count": 9
     }
   },
-  "packages/grafana-runtime/src/services/pluginMeta/datasources.ts": {
-    "@grafana/no-config-datasources": {
-      "count": 2
-    }
-  },
   "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -761,11 +756,6 @@
   "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/app.ts": {
-    "@grafana/no-config-datasources": {
-      "count": 2
     }
   },
   "public/app/core/TableModel.ts": {
@@ -1477,9 +1467,6 @@
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 3
     },
@@ -2188,16 +2175,6 @@
       "count": 1
     }
   },
-  "public/app/features/migrate-to-cloud/onprem/NameCell.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 2
-    }
-  },
-  "public/app/features/migrate-to-cloud/onprem/ResourcesTable.test.tsx": {
-    "@grafana/no-config-datasources": {
-      "count": 4
-    }
-  },
   "public/app/features/migrate-to-cloud/onprem/resourceDependency.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -2272,9 +2249,6 @@
     }
   },
   "public/app/features/plugins/datasource_srv.ts": {
-    "@grafana/no-config-datasources": {
-      "count": 1
-    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     },

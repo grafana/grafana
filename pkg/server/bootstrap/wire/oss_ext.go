@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/extras"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,4 +45,8 @@ var BaseCLISet = wire.NewSet(
 
 var StandaloneAPIServerSet = wire.NewSet(
 	standalone.ProvideAPIServerFactory,
+)
+
+var RouterFactorySet = wire.NewSet(
+	router.ProvideRouterFactory,
 )
