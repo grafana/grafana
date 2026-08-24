@@ -13,6 +13,11 @@ type AnnotationAppPlatformSettings struct {
 	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
 	RetentionTTL time.Duration // Retention TTL for annotations
 
+	// MaxAnnotationsPerNamespace caps how many live annotations a single
+	// namespace may retain. 0 disables the cap. Enforced by the cleanup loop;
+	// only the postgres backend currently implements it.
+	MaxAnnotationsPerNamespace int64
+
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
 	GRPCTLSCAFile     string // Path to CA certificate file (optional)
@@ -65,14 +70,15 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 	appPlatformSection := cfg.Raw.Section("annotations.app_platform")
 
 	settings := AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(0),
-		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
-		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
-		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
-		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
-		TLSClientConfig:   loadTLSClientConfig(cfg),
+		Enabled:                    appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:               appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:               appPlatformSection.Key("retention_ttl").MustDuration(0),
+		MaxAnnotationsPerNamespace: appPlatformSection.Key("max_annotations_per_namespace").MustInt64(0),
+		EnableLegacyID:             appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:              appPlatformSection.Key("max_scope_count").MustInt(5),
+		APIMigrationPhase:          appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
+		APIServerURL:               appPlatformSection.Key("api_server_url").MustString(""),
+		TLSClientConfig:            loadTLSClientConfig(cfg),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -94,6 +100,10 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 
 	if settings.RetentionTTL < 0 {
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.retention_ttl] must not be negative")
+	}
+
+	if settings.MaxAnnotationsPerNamespace < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_annotations_per_namespace] must not be negative")
 	}
 
 	return settings, nil

@@ -101,7 +101,8 @@ func NewAppInstaller(
 
 	// Start background cleanup if the store supports lifecycle management
 	if lifecycleMgr, ok := store.(LifecycleManager); ok {
-		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL)
+		capEnforcer, _ := store.(NamespaceCapEnforcer)
+		installer.startCleanup(ctx, lifecycleMgr, cfg.RetentionTTL, capEnforcer, cfg.MaxAnnotationsPerNamespace)
 	}
 
 	var sfNode *snowflake.Node

@@ -23,6 +23,10 @@ type Metrics struct {
 	CleanupRuns        *prometheus.CounterVec
 	CleanupRowsDeleted prometheus.Counter
 
+	NamespaceCapDuration    prometheus.Histogram
+	NamespaceCapRuns        *prometheus.CounterVec
+	NamespaceCapRowsDeleted prometheus.Counter
+
 	TagCacheHits   prometheus.Counter
 	TagCacheMisses prometheus.Counter
 }
@@ -75,6 +79,28 @@ func ProvideMetrics(reg prometheus.Registerer) *Metrics {
 			Subsystem: metricsSubsystem,
 			Name:      "cleanup_rows_deleted_total",
 			Help:      "Cumulative number of annotation rows removed by the cleanup loop.",
+		}),
+		NamespaceCapDuration: f.NewHistogram(prometheus.HistogramOpts{
+			Namespace:                       metricsNamespace,
+			Subsystem:                       metricsSubsystem,
+			Name:                            "namespace_cap_cleanup_duration_seconds",
+			Help:                            "Time of each successful namespace-cap cleanup loop iteration. Failures are excluded so the timeout ceiling does not pin p99 during incidents (see namespace_cap_cleanup_runs_total).",
+			Buckets:                         []float64{1, 5, 15, 30, 60, 120, 240, 300},
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		NamespaceCapRuns: f.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "namespace_cap_cleanup_runs_total",
+			Help:      "Cumulative number of namespace-cap cleanup loop runs by outcome.",
+		}, []string{"result"}),
+		NamespaceCapRowsDeleted: f.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "namespace_cap_cleanup_rows_deleted_total",
+			Help:      "Cumulative number of annotation rows removed because a namespace exceeded max_annotations_per_namespace.",
 		}),
 		TagCacheHits: f.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,

@@ -19,6 +19,9 @@ const (
 	// defaultMaxScopeCount caps how many scopes can be attached to a single
 	// annotation. 0 means no scopes are allowed.
 	defaultMaxScopeCount = 5
+	// defaultMaxAnnotationsPerNamespace caps how many live annotations a
+	// single namespace may retain. 0 disables the cap.
+	defaultMaxAnnotationsPerNamespace = 0
 )
 
 // Config holds the store backend configuration for the annotation app.
@@ -27,6 +30,11 @@ type Config struct {
 
 	// General lifecycle configuration
 	RetentionTTL time.Duration
+
+	// MaxAnnotationsPerNamespace caps how many live annotations a single
+	// namespace may retain. 0 disables the cap. Only the postgres backend
+	// currently enforces it.
+	MaxAnnotationsPerNamespace int64
 
 	// gRPC store configuration
 	GRPCAddress       string
@@ -63,6 +71,7 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 
 	// General lifecycle flags
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
+	flags.Int64Var(&c.MaxAnnotationsPerNamespace, "annotation.max-annotations-per-namespace", defaultMaxAnnotationsPerNamespace, "Maximum number of live annotations retained per namespace (0 disables the cap)")
 
 	flags.IntVar(&c.MaxScopeCount, "annotation.max-scope-count", defaultMaxScopeCount, "Maximum number of scopes that can be attached to a single annotation")
 
@@ -83,10 +92,11 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 
 func newConfigFromSettings(cfg *setting.Cfg) Config {
 	return Config{
-		StoreBackend:   cfg.AnnotationAppPlatform.StoreBackend,
-		RetentionTTL:   cfg.AnnotationAppPlatform.RetentionTTL,
-		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
-		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
+		StoreBackend:               cfg.AnnotationAppPlatform.StoreBackend,
+		RetentionTTL:               cfg.AnnotationAppPlatform.RetentionTTL,
+		MaxAnnotationsPerNamespace: cfg.AnnotationAppPlatform.MaxAnnotationsPerNamespace,
+		EnableLegacyID:             cfg.AnnotationAppPlatform.EnableLegacyID,
+		MaxScopeCount:              cfg.AnnotationAppPlatform.MaxScopeCount,
 
 		GRPCAddress:       cfg.AnnotationAppPlatform.GRPCAddress,
 		GRPCUseTLS:        cfg.AnnotationAppPlatform.GRPCUseTLS,

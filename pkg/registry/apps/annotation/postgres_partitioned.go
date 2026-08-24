@@ -43,6 +43,25 @@ var (
 	insertAnnotationSQL = buildSingleRowInsertSQL()
 )
 
+const (
+	// incrementNamespaceCountSQL bumps (or seeds) the live-row counter for a
+	// namespace. Run in the same transaction as the row insert so the count
+	// never drifts ahead of what was actually committed.
+	incrementNamespaceCountSQL = `
+		INSERT INTO annotation_namespace_counts (namespace, count)
+		VALUES ($1, 1)
+		ON CONFLICT (namespace) DO UPDATE SET count = annotation_namespace_counts.count + 1
+	`
+
+	// namespacesOverCapSQL finds namespaces whose counter currently exceeds
+	// the configured cap, along with the number of rows to prune from each.
+	namespacesOverCapSQL = `
+		SELECT namespace, count - $1 AS excess
+		FROM annotation_namespace_counts
+		WHERE count > $1
+	`
+)
+
 func buildSingleRowInsertSQL() string {
 	placeholders := make([]string, annotationColumnCount)
 	for i := range placeholders {
@@ -216,17 +235,34 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 		legacyData = &d
 	}
 
-	_, err := s.pool.Exec(ctx, insertAnnotationSQL,
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			s.logger.Error("failed to rollback transaction", "error", err)
+		}
+	}()
+
+	if _, err := tx.Exec(ctx, insertAnnotationSQL,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
 		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID, legacyData,
-	)
-	if err != nil {
+	); err != nil {
 		// Check for unique constraint violation
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, fmt.Errorf("%w: %s/%s", ErrAlreadyExists, namespace, name)
 		}
 		return nil, fmt.Errorf("failed to insert annotation: %w", err)
+	}
+
+	if _, err := tx.Exec(ctx, incrementNamespaceCountSQL, namespace); err != nil {
+		return nil, fmt.Errorf("failed to update namespace count: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return anno, nil

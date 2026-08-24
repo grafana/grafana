@@ -350,6 +350,28 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 		assert.Contains(t, remaining, getPartitionName(current.UnixMilli()), "current partition should be kept by the 24h floor")
 		assert.NotContains(t, remaining, getPartitionName(old.UnixMilli()), "old partition should be dropped")
 	})
+
+	t.Run("decrements the namespace counter for rows in dropped partitions", func(t *testing.T) {
+		store := newTestPostgresStore(t)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		now := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+		old := now.AddDate(0, 0, -120)
+		recent := now.AddDate(0, 0, -30)
+		seed(t, store, ctx, "old", old)
+		seed(t, store, ctx, "recent", recent)
+
+		var beforeCount int64
+		require.NoError(t, store.pool.QueryRow(ctx, `SELECT count FROM annotation_namespace_counts WHERE namespace = $1`, ns).Scan(&beforeCount))
+		require.Equal(t, int64(2), beforeCount)
+
+		_, err := store.Cleanup(ctx, now.AddDate(0, 0, -90))
+		require.NoError(t, err)
+
+		var afterCount int64
+		require.NoError(t, store.pool.QueryRow(ctx, `SELECT count FROM annotation_namespace_counts WHERE namespace = $1`, ns).Scan(&afterCount))
+		assert.Equal(t, int64(1), afterCount, "counter should drop by the one row removed with the old partition")
+	})
 }
 
 func partitionNameSet(ctx context.Context, t *testing.T, store *PostgreSQLStore) map[string]struct{} {

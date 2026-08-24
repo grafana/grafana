@@ -66,6 +66,14 @@ type LifecycleManager interface {
 	Cleanup(ctx context.Context, before time.Time) (int64, error)
 }
 
+// NamespaceCapEnforcer prunes the oldest live annotations in any namespace
+// whose row count exceeds maxPerNamespace. It returns the total number of
+// rows deleted. Backends that cannot track per-namespace counts cheaply
+// (e.g. the gRPC proxy) need not implement it.
+type NamespaceCapEnforcer interface {
+	EnforceNamespaceCap(ctx context.Context, maxPerNamespace int64) (int64, error)
+}
+
 type TagProvider interface {
 	ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error)
 }
