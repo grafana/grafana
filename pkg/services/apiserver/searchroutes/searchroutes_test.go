@@ -151,6 +151,7 @@ func TestBuild_EnrolmentIsPerKindNotPerGroup(t *testing.T) {
 		"teams/search",
 		"teambindings/search",
 		"externalgroupmappings/search",
+		"authinfos/search",
 	}, got["iam.grafana.app/v0alpha1"], "only the IAM kinds declaring search fields")
 
 	assert.Empty(t, got["secret.grafana.app/v1beta1"])
@@ -258,6 +259,7 @@ func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
 		"teambindings",
 		"teams",
 		"users",
+		"authinfos",
 		// Served before enrolment asked for search fields.
 		"folders",
 		"notebooks",
