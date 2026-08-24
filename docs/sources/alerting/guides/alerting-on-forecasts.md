@@ -108,7 +108,7 @@ The query works as follows:
 5. The alert rule evaluates every `12` hours because disk utilization changes relatively slowly.
 
 {{< admonition type="tip" >}}
-You can explore [this alert example in Grafana Play](https://play.grafana.org/alerting/grafana/bfvoftrucmsxsb/view?tech=docs&pg=alerting-examples&plcmt=learn-more&cta=alert-forecast-with-predict-linear).
+You can explore [this alert example in Grafana Play](https://play.grafana.org/alerting/grafana/qp_pvc_disk_capacity_forecast/view?tech=docs&pg=alerting-examples&plcmt=learn-more&cta=alert-forecast-with-predict-linear).
 
 **Alert description**: The PVC is forecast to reach more than 85% used capacity within the next 7 days based on the last 14 days of usage. Review disk growth and plan capacity expansion before the volume reaches the threshold.
 {{< /admonition >}}
@@ -152,7 +152,7 @@ In this example, the alert query uses the upper forecast bound (`yhat_upper`) ra
 In this example, the forecast provides up to 15 days of future prediction data. The maximum function value is used so that the alert fires if the forecast is expected to exceed the threshold at any point during the next 7 days.
 
 {{< admonition type="tip" >}}
-You can explore [this alert example in Grafana Play](https://play.grafana.org/alerting/grafana/efsdlcw28libke/view?tab=query&tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=db-utilization-forecast-alert-example).
+You can explore [this alert example in Grafana Play](https://play.grafana.org/alerting/grafana/qp_db_utilization_forecast/view?tab=query&tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=db-utilization-forecast-alert-example).
 {{< /admonition >}}
 
 ### Alert when the actual state is outside the forecast
