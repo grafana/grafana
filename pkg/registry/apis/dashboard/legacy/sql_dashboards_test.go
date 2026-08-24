@@ -37,6 +37,7 @@ func TestScanRow(t *testing.T) {
 	}
 
 	columns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
+	fallbackColumns := []string{"orgId", "dashboard_id", "name", "title", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "version_data", "dashboard_data", "api_version"}
 	id := int64(100)
 	uid := "someuid"
 	title := "Test Dashboard"
@@ -56,7 +57,7 @@ func TestScanRow(t *testing.T) {
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		row, err := store.scanRow(resultRows, false)
+		row, err := store.scanRow(resultRows, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 		require.Equal(t, uid, row.Dash.Name)
@@ -87,7 +88,7 @@ func TestScanRow(t *testing.T) {
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		row, err := store.scanRow(resultRows, false)
+		row, err := store.scanRow(resultRows, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 
@@ -115,7 +116,7 @@ func TestScanRow(t *testing.T) {
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		row, err := store.scanRow(resultRows, false)
+		row, err := store.scanRow(resultRows, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 
@@ -129,9 +130,9 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
 
-	t.Run("Migration scenario should use COALESCE logic with AllowFallback=true", func(t *testing.T) {
+	t.Run("Migration scenario should use fallback data with AllowFallback=true", func(t *testing.T) {
 		// This specifically tests the migration use case where GetHistory=true but AllowFallback=true
-		// allows the query to use COALESCE logic to fall back to dashboard table data when
+		// allows the reader to fall back to dashboard table data when
 		// dashboard_version entries are missing.
 
 		migrationTimestamp := timestamp.Add(2 * time.Hour) // Migration scenario timestamp
@@ -141,14 +142,14 @@ func TestScanRow(t *testing.T) {
 		migrationData := []byte(`{"migration": "data", "title": "Migrated Dashboard"}`)
 		migrationAPIVersion := "v0alpha1"
 
-		// In migration scenario, COALESCE functions return dashboard table values
-		// when dashboard_version values are NULL, ensuring all dashboards are migrated
-		rows := sqlmock.NewRows(columns).AddRow(
+		// In a migration, scalar fields are coalesced by SQL and raw JSON data is selected
+		// by the reader, ensuring dashboards without version rows are still migrated.
+		rows := sqlmock.NewRows(fallbackColumns).AddRow(
 			1, id, uid, title, folderUID, nil, "", // basic dashboard fields
 			"", "", "", 0, // origin fields
 			timestamp, createdUser, 0, // created fields
-			// These represent COALESCED values from dashboard table (not version table)
-			migrationTimestamp, migrationUpdatedUser, 0, migrationVersion, migrationMessage, migrationData, migrationAPIVersion,
+			// The nil version data causes the reader to select the dashboard table data.
+			migrationTimestamp, migrationUpdatedUser, 0, migrationVersion, migrationMessage, nil, migrationData, migrationAPIVersion,
 		)
 
 		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
@@ -157,8 +158,8 @@ func TestScanRow(t *testing.T) {
 		defer resultRows.Close() // nolint:errcheck
 		resultRows.Next()
 
-		// Test with history=true (migration scenario) - should work with COALESCED values
-		row, err := store.scanRow(resultRows, true)
+		// Test with history=true and raw fallback data columns.
+		row, err := store.scanRow(resultRows, true, true)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 
@@ -189,6 +190,24 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "dashboard.grafana.app/"+migrationAPIVersion, row.Dash.APIVersion)
 	})
 
+	t.Run("preserves escaped regexes in dashboard JSON", func(t *testing.T) {
+		data := []byte(`{"templating":{"list":[{"regex":"/^(.*)-(?:[0-9a-fA-F]{7,10}-[0-9a-zA-Z]{4,5}|\\d+)$/"}]}}`)
+		rows := sqlmock.NewRows(fallbackColumns).AddRow(1, id, uid, title, folderUID, nil, "", "", "", "", 0, timestamp, createdUser, 0, timestamp, updatedUser, 0, version, message, data, []byte(`{"templating":{"list":[]}}`), "vXyz")
+		mock.ExpectQuery("SELECT *").WillReturnRows(rows)
+		resultRows, err := mockDB.Query("SELECT *")
+		require.NoError(t, err)
+		defer resultRows.Close() // nolint:errcheck
+		resultRows.Next()
+
+		row, err := store.scanRow(resultRows, true, true)
+		require.NoError(t, err)
+
+		templating := row.Dash.Spec.Object["templating"].(map[string]interface{})
+		variables := templating["list"].([]interface{})
+		variable := variables[0].(map[string]interface{})
+		require.Equal(t, `/^(.*)-(?:[0-9a-fA-F]{7,10}-[0-9a-zA-Z]{4,5}|\d+)$/`, variable["regex"])
+	})
+
 	t.Run("should follow dashboard template when failing to unmarshal dashboard", func(t *testing.T) {
 		// row with bad data
 		badData := []byte(`{"rows":[{"panels":[{"targets":[{"refId":"A","target":"aliasSub(alias, '^(.{27}).+', '\1...')"}]}]}]}`)
@@ -207,7 +226,7 @@ func TestScanRow(t *testing.T) {
 			log:          log.New("test"),
 		}
 
-		row, err := store.scanRow(resultRows, false)
+		row, err := store.scanRow(resultRows, false, false)
 		require.NoError(t, err)
 		require.NotNil(t, row)
 		require.Equal(t, uid, row.Dash.Name)
@@ -527,8 +546,8 @@ func TestDashboardMigrationQuery(t *testing.T) {
 		require.True(t, historyQuery.GetHistory, "History query should get history")
 	})
 
-	t.Run("Migration query template produces COALESCE SQL", func(t *testing.T) {
-		// Test that the SQL template produces COALESCE logic for migration queries
+	t.Run("Migration query template keeps dashboard JSON raw", func(t *testing.T) {
+		// Test that scalar fallback remains in SQL while dashboard JSON fallback happens in Go.
 		migrationQuery := &DashboardQuery{
 			OrgID:         1,
 			GetHistory:    true,
@@ -545,14 +564,17 @@ func TestDashboardMigrationQuery(t *testing.T) {
 
 		sql := rawQuery
 
-		// Verify that COALESCE functions are present in the generated SQL
-		// These should be used when GetHistory=true AND AllowFallback=true
+		// Scalar fields still use SQL fallback when GetHistory=true AND AllowFallback=true.
 		require.Contains(t, sql, "COALESCE(dashboard_version.created, dashboard.updated)",
 			"Migration SQL should contain COALESCE for updated timestamp")
 		require.Contains(t, sql, "COALESCE(dashboard_version.version, dashboard.version)",
 			"Migration SQL should contain COALESCE for version")
-		require.Contains(t, sql, "COALESCE(dashboard_version.data, dashboard.data)",
-			"Migration SQL should contain COALESCE for data")
+		require.Contains(t, sql, "dashboard_version.data as version_data",
+			"Migration SQL should return raw history data")
+		require.Contains(t, sql, "dashboard.data as dashboard_data",
+			"Migration SQL should return raw fallback data")
+		require.NotContains(t, sql, "COALESCE(dashboard_version.data, dashboard.data)",
+			"Migration SQL should not transform dashboard JSON")
 		require.Contains(t, sql, "COALESCE(dashboard_version.api_version, dashboard.api_version)",
 			"Migration SQL should contain COALESCE for api_version")
 		require.Contains(t, sql, "COALESCE(dashboard_version.message, '')",
@@ -567,6 +589,23 @@ func TestDashboardMigrationQuery(t *testing.T) {
 		// Verify it doesn't have the strict history table filter that would exclude NULL version entries
 		require.NotContains(t, sql, "dashboard_version.id IS NOT NULL",
 			"Migration SQL should not exclude dashboards without version entries")
+	})
+
+	t.Run("Version query retains a single data column", func(t *testing.T) {
+		versionQuery := &DashboardQuery{
+			OrgID:   1,
+			UID:     "dashboard-uid",
+			Version: 2,
+		}
+
+		req := newQueryReq(nodb, versionQuery)
+		req.SQLTemplate = mocks.NewTestingSQLTemplate()
+
+		rawQuery, err := sqltemplate.Execute(sqlQueryDashboards, &req)
+		require.NoError(t, err)
+		require.Contains(t, rawQuery, "COALESCE(dashboard_version.data, dashboard.data) as data")
+		require.NotContains(t, rawQuery, "dashboard_version.data as version_data")
+		require.False(t, versionQuery.SelectRawDataColumns())
 	})
 
 	t.Run("Regular history query produces strict SQL", func(t *testing.T) {

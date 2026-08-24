@@ -51,6 +51,12 @@ func (r *DashboardQuery) UseHistoryTable() bool {
 	return r.GetHistory || r.Version > 0
 }
 
+// SelectRawDataColumns avoids applying SQL fallback expressions to dashboard JSON.
+// The reader applies the same NULL fallback after scanning both values.
+func (r *DashboardQuery) SelectRawDataColumns() bool {
+	return r.UseHistoryTable() && r.AllowFallback
+}
+
 type LibraryPanelQuery struct {
 	OrgID int64
 	UID   string // to select a single dashboard
