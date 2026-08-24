@@ -5,21 +5,40 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// enableRulerSyncAPIFlag flips the global OpenFeature provider so
+// rulerSyncAPIEnabled reports true for the duration of the test. Mirrors the
+// external Alertmanager sync tests' own flag setup; restores the no-op
+// provider on cleanup since this is process-global state.
+func enableRulerSyncAPIFlag(t *testing.T) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAlertingSyncExternalRuler: {
+			DefaultVariant: "on",
+			Variants:       map[string]any{"on": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+}
 
 // --- fakes ---
 
@@ -103,10 +122,14 @@ func (f fakeNamespaceStore) GetNamespaceChildren(_ context.Context, _ string, _ 
 }
 
 type fakeDatasourceGetter struct {
-	ds *datasources.DataSource
+	ds        *datasources.DataSource
+	requested *[]string // optional: records every requested UID, in order
 }
 
 func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	if f.requested != nil {
+		*f.requested = append(*f.requested, q.UID)
+	}
 	// Return a datasource carrying the requested UID.
 	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
 }
@@ -140,6 +163,17 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
 	}
+}
+
+// newTestSyncerWithConfigClient is newTestSyncer plus a wired Config
+// k8s-client (and namespace mapper), so the API path (resolveExternalRulerUIDForOrg's
+// Config branch, writeStatus, recordNotConfigured) is reachable in tests.
+func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
+	t.Helper()
+	s := newTestSyncer(t, fetch, rs)
+	s.clientGenerator = cs
+	s.namespaceMapper = cs.nsMapper
+	return s
 }
 
 func upstreamGroup(name, alert string) RulerConfig {
@@ -377,4 +411,104 @@ func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
 	s.SyncOrg(context.Background(), 1)
 
 	assert.Empty(t, perms.got, "permissions are only set when the folder is first created")
+}
+
+func TestSyncOrg_FromConfigAPI(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1, "sync applies when the API path resolves a datasource UID")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "sync outcome is written to the Config resource")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionTypeExternalRulerSynced, st.Conditions[0].Type)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusTrue, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonSyncSucceeded, st.Conditions[0].Reason)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginApi, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "from-config", "")
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.settings.ExternalRulerUID = "from-ini"
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	assert.Equal(t, "from-ini", *st.ExternalRulerSync.DatasourceUid, "the ini override wins over the Config spec value")
+	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginIni, *st.ExternalRulerSync.Origin)
+}
+
+func TestSyncOrg_NotConfiguredSeedsSingletonWhenFlagOn(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient() // no spec seeded for org 1
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls, "no ruler fetch when nothing is configured")
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the singleton is seeded so it reliably exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, alertingrulesv0alpha1.ConfigConditionStatusUnknown, st.Conditions[0].Status)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
+}
+
+func TestSyncOrg_APIPathUnreachableWithoutFlag(t *testing.T) {
+	// Flag left off (no enableRulerSyncAPIFlag call): the API path must not be
+	// touched at all, even though a client is wired.
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	rs := &fakeRuleService{}
+	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Zero(t, fetch.calls)
+	assert.Zero(t, cs.getCallCount(1), "the Config resource is never even read when the flag is off")
+}
+
+func TestSyncOrg_TargetDatasourceFromConfig(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "tds1")
+	rs := &fakeRuleService{}
+	var requested []string
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	assert.ElementsMatch(t, []string{"ds1", "tds1"}, requested, "both the query and the distinct target datasource are resolved")
+}
+
+func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
+	enableRulerSyncAPIFlag(t)
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "") // no targetDatasourceUid
+	rs := &fakeRuleService{}
+	var requested []string
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, rs)
+	s.datasources = fakeDatasourceGetter{ds: &datasources.DataSource{Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}, requested: &requested}
+
+	s.SyncOrg(context.Background(), 1)
+
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, []string{"ds1"}, requested, "target defaults to the query datasource: only one lookup")
 }

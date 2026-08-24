@@ -187,36 +187,44 @@ func rulerSyncAPIEnabled(ctx context.Context) bool {
 }
 
 // resolveExternalRulerUIDForOrg returns the datasource UID to use for external
-// ruler sync for the given org and where it came from. The operator-level
-// ExternalRulerUID ini setting takes precedence over the per-org value and,
-// unlike the API path, requires no feature flag — pre-existing, always-on
-// behavior that must not regress. The per-org value is read from the rules
-// Config k8s resource and is gated by the alerting.syncExternalRuler flag; if
-// its client can't be constructed the sync fails for this tick rather than
-// falling back to anything. Returns ("", "", nil) when the API path isn't even
-// reachable (flag off, or no client wired) — callers should treat that as "not
-// configured, nothing to report" rather than seeding Config status.
-func (s *ExternalRulerSyncer) resolveExternalRulerUIDForOrg(ctx context.Context, orgID int64) (string, externalSyncOrigin, error) {
-	if uid := s.settings.ExternalRulerUID; uid != "" {
-		return uid, originIni, nil
+// ruler sync for the given org, the recording-rules target datasource UID
+// (defaulting to the query UID when unset), and where the query UID came from.
+// The operator-level ExternalRulerUID ini setting takes precedence over the
+// per-org value and, unlike the API path, requires no feature flag —
+// pre-existing, always-on behavior that must not regress; the ini path has no
+// target override, so the target is always the query datasource there. The
+// per-org value is read from the rules Config k8s resource and is gated by the
+// alerting.syncExternalRuler flag; if its client can't be constructed the sync
+// fails for this tick rather than falling back to anything. Returns
+// ("", "", "", nil) when the API path isn't even reachable (flag off, or no
+// client wired) — callers should treat that as "not configured, nothing to
+// report" rather than seeding Config status.
+func (s *ExternalRulerSyncer) resolveExternalRulerUIDForOrg(ctx context.Context, orgID int64) (uid, targetUID string, origin externalSyncOrigin, err error) {
+	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
+		return iniUID, iniUID, originIni, nil
 	}
 	if !rulerSyncAPIEnabled(ctx) || s.clientGenerator == nil {
-		return "", "", nil
+		return "", "", "", nil
 	}
 
 	c, err := s.resolveCfgClient()
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
 	cfg, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			return "", originAPI, nil
+			return "", "", originAPI, nil
 		}
-		return "", "", err
+		return "", "", "", err
 	}
-	return externalRulerSyncDatasourceUIDFromConfig(cfg), originAPI, nil
+	uid = externalRulerSyncDatasourceUIDFromConfig(cfg)
+	targetUID = externalRulerSyncTargetDatasourceUIDFromConfig(cfg)
+	if targetUID == "" {
+		targetUID = uid
+	}
+	return uid, targetUID, originAPI, nil
 }
 
 // writeStatus upserts the org's Config.status using compute(prev), creating the
@@ -330,7 +338,7 @@ func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
 // Config resource) resolves a non-empty datasource UID. Used by the convert
 // API to reject manual rule imports while sync owns the org's rules.
 func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
-	uid, _, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
+	uid, _, _, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
 	if err != nil {
 		return false, err
 	}
@@ -344,7 +352,7 @@ func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int6
 // unrelated folders are still allowed. If the root folder doesn't exist yet
 // nothing is managed, so this returns false (allow).
 func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error) {
-	uid, _, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
+	uid, _, _, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
 	if err != nil {
 		return false, err
 	}
@@ -389,7 +397,7 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		}
 	}()
 
-	uid, origin, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
+	uid, targetUID, origin, err := s.resolveExternalRulerUIDForOrg(ctx, orgID)
 	if err != nil {
 		s.logger.Warn("Failed to resolve external ruler UID", "org_id", orgID, "error", err)
 		return
@@ -421,9 +429,17 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	// Alertmanager sync's input-time check. The operator-set ini datasource is
 	// trusted here (as the AM ini path is).
 	//
-	// Recording rules write to the same datasource they are queried from unless
-	// spec.externalRulerSync.targetDatasourceUid overrides it (API path only).
-	targetDS := s.resolveTargetDatasource(svcCtx, orgID, origin, ds)
+	// Recording rules write to the target datasource; it defaults to the query
+	// datasource (targetUID == uid on both the ini path and an unset API spec
+	// field), so only resolve a second datasource when one is distinctly set.
+	targetDS := ds
+	if targetUID != uid {
+		targetDS, err = s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: targetUID, OrgID: orgID})
+		if err != nil {
+			s.recordFailure(ctx, orgID, orgIDStr, uid, origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: fmt.Errorf("target datasource %q: %w", targetUID, err)})
+			return
+		}
+	}
 
 	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
 	if err != nil {
@@ -584,11 +600,4 @@ func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, or
 	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
 	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
 	s.recordSyncResult(ctx, orgID, uid, origin, syncErr)
-}
-
-// resolveTargetDatasource returns the datasource recording rules should write
-// to. Defaults to the query datasource; the API path can override this via
-// spec.externalRulerSync.targetDatasourceUid.
-func (s *ExternalRulerSyncer) resolveTargetDatasource(_ context.Context, _ int64, _ externalSyncOrigin, ds *datasources.DataSource) *datasources.DataSource {
-	return ds
 }

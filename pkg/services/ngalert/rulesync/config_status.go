@@ -147,3 +147,15 @@ func externalRulerSyncDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Config) s
 	}
 	return *c.Spec.ExternalRulerSync.DatasourceUid
 }
+
+// externalRulerSyncTargetDatasourceUIDFromConfig returns the configured
+// recording-rules target datasource UID or "" when any level in the nested
+// optional chain is unset (callers default to the query datasource).
+func externalRulerSyncTargetDatasourceUIDFromConfig(c *alertingrulesv0alpha1.Config) string {
+	if c == nil ||
+		c.Spec.ExternalRulerSync == nil ||
+		c.Spec.ExternalRulerSync.TargetDatasourceUid == nil {
+		return ""
+	}
+	return *c.Spec.ExternalRulerSync.TargetDatasourceUid
+}
