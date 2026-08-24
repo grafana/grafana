@@ -691,6 +691,78 @@ describe('MultiCombobox', () => {
     });
   });
 
+  describe('highlightFirstOption', () => {
+    const options = [
+      { label: 'apple', value: 'apple' },
+      { label: 'apricot', value: 'apricot' },
+      { label: 'banana', value: 'banana' },
+    ];
+
+    // downshift leaves the highlight at -1, and Enter on nothing selects nothing. Pinned because it is
+    // what every consumer that does not opt in relies on: Enter in a filter should not take a match.
+    it('selects nothing on Enter by default', async () => {
+      const onChange = jest.fn();
+      render(<MultiCombobox options={options} value={[]} onChange={onChange} />);
+      const input = screen.getByRole('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.keyboard('{enter}');
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('commits the first match on Enter when asked to', async () => {
+      const onChange = jest.fn();
+      render(<MultiCombobox options={options} value={[]} onChange={onChange} highlightFirstOption />);
+      const input = screen.getByRole('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      await user.keyboard('{enter}');
+
+      expect(onChange).toHaveBeenCalledWith([{ label: 'apple', value: 'apple' }]);
+    });
+
+    /**
+     * The reason the prop exists. `createCustomValue` unshifts the typed value to the front of the
+     * list, so highlighting the first option is what makes a brand new value reachable by typing it and
+     * pressing Enter - no arrow key in between.
+     */
+    it('commits a typed custom value on Enter', async () => {
+      const onChange = jest.fn();
+      render(<MultiCombobox options={options} value={[]} onChange={onChange} createCustomValue highlightFirstOption />);
+      const input = screen.getByRole('combobox');
+
+      await user.click(input);
+      await user.type(input, 'durian');
+      await user.keyboard('{enter}');
+
+      expect(onChange).toHaveBeenCalledWith([{ label: 'durian', value: 'durian', description: 'Use custom value' }]);
+    });
+
+    // How a tag picker uses the two together: type, Enter, and the field is ready for the next one.
+    it('clears the field afterwards when paired with clearSearchOnSelect', async () => {
+      render(
+        <MultiCombobox
+          options={options}
+          value={[]}
+          onChange={jest.fn()}
+          createCustomValue
+          highlightFirstOption
+          clearSearchOnSelect
+        />
+      );
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'durian');
+      await user.keyboard('{enter}');
+
+      expect(input).toHaveValue('');
+    });
+  });
+
   describe('clearSearchOnSelect', () => {
     const options = [
       { label: 'apple', value: 'apple' },

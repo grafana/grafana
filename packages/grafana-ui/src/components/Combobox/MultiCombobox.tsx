@@ -37,6 +37,18 @@ interface MultiComboboxBaseProps<T extends string | number>
    * keeping the search is what lets you tick several matches from one query.
    */
   clearSearchOnSelect?: boolean;
+  /**
+   * Highlights the first option as the list changes, so Enter commits it without arrowing down first.
+   * Combobox already behaves this way; this is how a typed `createCustomValue` becomes reachable from
+   * the keyboard, since the custom row is unshifted to the front of the list.
+   *
+   * Off by default: highlighting nothing is the safer resting state for a filter, where Enter usually
+   * means "submit the thing I am filtering" rather than "take the first match".
+   *
+   * Not for use with `enableAllOption`, which puts its own row first - Enter would then select or
+   * deselect everything.
+   */
+  highlightFirstOption?: boolean;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -60,6 +72,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     maxWidth,
     isClearable,
     clearSearchOnSelect = false,
+    highlightFirstOption = false,
     createCustomValue = false,
     customValueDescription,
     'aria-labelledby': ariaLabelledBy,
@@ -192,6 +205,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
+    // downshift resets the highlight to this on every input change, which is what makes Enter commit
+    // what was just typed rather than needing an ArrowDown first. Left undefined otherwise, so the
+    // default stays downshift's own -1: nothing highlighted, and Enter selects nothing.
+    defaultHighlightedIndex: highlightFirstOption ? 0 : undefined,
     isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
