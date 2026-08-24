@@ -49,14 +49,16 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({ ...mockDS, getRef: () => {} }),
     getList: ({ variables }: { variables: boolean }) => (variables ? [mockDS, mockVariable] : [mockDS]),
-    getInstanceSettings: (...args: unknown[]) => mockGetInstanceSettings(...args),
+    getInstanceSettings: (ref?: DataSourceRef | string | null) => mockGetInstanceSettings(ref),
   }),
 }));
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(() => Promise.resolve({ ...mockDS, getRef: () => {} })),
-  getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
+  getDataSourceInstanceSettings: jest.fn((ref?: DataSourceRef | string | null) =>
+    Promise.resolve(mockGetInstanceSettings(ref))
+  ),
 }));
 
 describe('QueryGroup', () => {
