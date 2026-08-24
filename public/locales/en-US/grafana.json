@@ -6023,6 +6023,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "Comparison color mode",
+        "compare-color-mode-description": "Colors the difference between the two time ranges in the tooltip. Standard colors an increase green, inverted colors it red, and same as value reuses the series color.",
+        "compare-color-mode-inverted": "Inverted",
+        "compare-color-mode-same-as-value": "Same as value",
+        "compare-color-mode-standard": "Standard",
         "compare-day-before": "Day before",
         "compare-month-before": "Month before",
         "compare-week-before": "Week before",
