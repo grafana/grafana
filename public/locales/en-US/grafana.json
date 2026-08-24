@@ -12893,7 +12893,20 @@
       "delete-confirm-title": "Delete block?",
       "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
-      "duplicate": "Duplicate block"
+      "duplicate": "Duplicate block",
+      "markdown": {
+        "aria-label-editor": "Markdown",
+        "format-bold": "B",
+        "format-italic": "I",
+        "format-strikethrough": "S",
+        "tooltip-bold": "Bold",
+        "tooltip-bulleted-list": "Bulleted list",
+        "tooltip-code": "Code",
+        "tooltip-italic": "Italic",
+        "tooltip-link": "Link",
+        "tooltip-numbered-list": "Numbered list",
+        "tooltip-strikethrough": "Strikethrough"
+      }
     },
     "errors": {
       "entity": "Notebook",
@@ -12919,6 +12932,7 @@
       "move-block": "Move block",
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
+      "split-block": "Split block",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
     },

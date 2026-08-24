@@ -18,7 +18,7 @@ import { useNotebooksList } from '../list/useNotebooksList';
 // Notebook schema types come from this module and nowhere else, so the eventual stable-v2
 // migration only has to change that one seam.
 import { defaultSpec as defaultNotebookSpec } from '../types';
-import { notebookViewUrl } from '../urls';
+import { notebookEditUrl } from '../urls';
 
 export function NotebooksListPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
@@ -71,7 +71,9 @@ export function NotebooksListPage() {
       }).unwrap();
 
       if (created.metadata.name) {
-        navigate(notebookViewUrl(created.metadata.name));
+        // A freshly created notebook is empty and exists only to be written into, so land in edit
+        // mode directly rather than the view a reader would otherwise see first.
+        navigate(notebookEditUrl(created.metadata.name));
       } else {
         // The notebook was persisted but we have nowhere to send the user, so say so rather than
         // leaving the click looking like it did nothing.
