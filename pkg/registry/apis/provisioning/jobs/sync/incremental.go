@@ -198,8 +198,12 @@ func applyIncrementalChanges(
 			// README.md/.keep/.gitignore are normal; a delete of an unsafe path was never a synced resource.
 			if change.Action != repository.FileActionDeleted &&
 				!errors.Is(err, resources.ErrUnsupportedFileExtension) && !errors.Is(err, safepath.ErrHiddenPath) {
+				// FileActionIgnored is explicitly excluded from error counting
+				// (see jobProgressRecorder.Record) -- using it here would make
+				// this failure invisible to the job's own pass/fail state.
 				progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
-					WithAction(repository.FileActionIgnored).
+					WithAction(change.Action).
+					WithPreviousPath(change.PreviousPath).
 					WithError(&resources.UnsupportedPathError{Paths: []resources.UnsupportedPath{{Path: change.Path, Err: err}}}).
 					Build())
 				continue
