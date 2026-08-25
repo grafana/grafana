@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -23,23 +24,30 @@ func (f *fakeStoredLister) ListStored(context.Context) ([]*ssomodels.SSOSettings
 }
 
 type fakeWriter struct {
-	upserts map[string]string // section|key -> value
+	upserts    map[string]string // section|key -> value
+	namespaces map[string]bool   // namespaces resolved from the write context
 }
 
-func (f *fakeWriter) Upsert(_ context.Context, s *settingsvc.Setting) error {
+func (f *fakeWriter) Upsert(ctx context.Context, s *settingsvc.Setting) error {
 	f.upserts[s.Section+"|"+s.Key] = s.Value
+	ns, _ := request.NamespaceFrom(ctx)
+	f.namespaces[ns] = true
 	return nil
 }
 
 func (f *fakeWriter) Delete(context.Context, string, string) error { return nil }
+
+func newFakeWriter() *fakeWriter {
+	return &fakeWriter{upserts: map[string]string{}, namespaces: map[string]bool{}}
+}
 
 func TestSSOSettingsBackfill(t *testing.T) {
 	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
 		{Provider: "github", Settings: map[string]any{"client_id": "abc", "client_secret": "topsecret"}},
 		{Provider: "ldap", Settings: map[string]any{"config": map[string]any{"servers": []any{}}}},
 	}}
-	writer := &fakeWriter{upserts: map[string]string{}}
-	b := &SSOSettingsBackfill{reader: reader, writer: writer, log: log.New("test")}
+	writer := newFakeWriter()
+	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
 
 	require.NoError(t, b.backfill(context.Background()))
 
@@ -50,9 +58,25 @@ func TestSSOSettingsBackfill(t *testing.T) {
 	assert.Len(t, writer.upserts, 2)
 }
 
+// TestSSOSettingsBackfill_WritesUnderConfiguredNamespace guards the namespace
+// regression: the writer resolves the tenant from the context, and the backfill
+// runs on a bare background context, so it must attach the configured namespace
+// before writing. Without it every write lands under the empty namespace.
+func TestSSOSettingsBackfill_WritesUnderConfiguredNamespace(t *testing.T) {
+	reader := &fakeStoredLister{settings: []*ssomodels.SSOSettings{
+		{Provider: "github", Settings: map[string]any{"client_id": "abc"}},
+	}}
+	writer := newFakeWriter()
+	b := &SSOSettingsBackfill{reader: reader, writer: writer, namespace: "stacks-11", log: log.New("test")}
+
+	require.NoError(t, b.backfill(context.Background()))
+
+	assert.Equal(t, map[string]bool{"stacks-11": true}, writer.namespaces)
+}
+
 func TestSSOSettingsBackfill_PropagatesReadError(t *testing.T) {
 	reader := &fakeStoredLister{err: errors.New("boom")}
-	b := &SSOSettingsBackfill{reader: reader, writer: &fakeWriter{upserts: map[string]string{}}, log: log.New("test")}
+	b := &SSOSettingsBackfill{reader: reader, writer: newFakeWriter(), namespace: "stacks-11", log: log.New("test")}
 
 	require.Error(t, b.backfill(context.Background()))
 }
