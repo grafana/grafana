@@ -45,12 +45,12 @@ describe('ColorValueEditor', () => {
     expect(screen.getByRole('button', { name: 'Select color' })).toHaveAttribute('type', 'button');
   });
 
-  it('opens the color picker from the keyboard via the color name', async () => {
+  it.each(['{Enter}', '[Space]'] as const)('opens the color picker from the keyboard with %s', async (key) => {
     const user = userEvent.setup();
     render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
 
     screen.getByRole('button', { name: '#ff0000' }).focus();
-    await user.keyboard('{Enter}');
+    await user.keyboard(key);
 
     expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
