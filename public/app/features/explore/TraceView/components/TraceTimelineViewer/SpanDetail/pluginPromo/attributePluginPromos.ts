@@ -95,30 +95,32 @@ export function getAttributePluginPromos(): AttributePluginPromo[] {
  * Picks up to {@link MAX_ATTRIBUTE_PLUGIN_PROMOS} attribute keys to promote.
  * Walks promos in priority order and assigns at most one key per inactive plugin
  * so a span with many matching attrs does not become a wall of promo tips.
+ * Returns the promo that claimed each key so overlapping matchers (e.g. service.*)
+ * keep their assignment instead of collapsing to the first matching promo.
  */
 export function selectAttributeKeysForPromos(
   attributeKeys: readonly string[],
   inactivePluginIds: ReadonlySet<string>,
   promos: readonly AttributePluginPromo[],
   maxPromos = MAX_ATTRIBUTE_PLUGIN_PROMOS
-): Set<string> {
-  const selectedKeys = new Set<string>();
+): Map<string, AttributePluginPromo> {
+  const selectedPromos = new Map<string, AttributePluginPromo>();
 
   for (const promo of promos) {
-    if (selectedKeys.size >= maxPromos) {
+    if (selectedPromos.size >= maxPromos) {
       break;
     }
     if (!inactivePluginIds.has(promo.pluginId)) {
       continue;
     }
 
-    const matchingKey = attributeKeys.find((key) => !selectedKeys.has(key) && promo.match(key));
+    const matchingKey = attributeKeys.find((key) => !selectedPromos.has(key) && promo.match(key));
     if (matchingKey) {
-      selectedKeys.add(matchingKey);
+      selectedPromos.set(matchingKey, promo);
     }
   }
 
-  return selectedKeys;
+  return selectedPromos;
 }
 
 export type AttributePluginPromoGetter = (attributeKey: string) => AttributePluginPromo | undefined;
@@ -158,20 +160,12 @@ export function useAttributePluginPromoGetter(attributeKeys: readonly string[] =
     return inactive;
   }, [appMetas, metasLoading, promos]);
 
-  const allowedAttributeKeys = useMemo(() => {
+  const promosByAttributeKey = useMemo(() => {
     if (!inactivePluginIds) {
       return undefined;
     }
     return selectAttributeKeysForPromos(attributeKeys, inactivePluginIds, promos);
   }, [attributeKeys, inactivePluginIds, promos]);
 
-  return useCallback(
-    (attributeKey: string) => {
-      if (!inactivePluginIds || !allowedAttributeKeys?.has(attributeKey)) {
-        return undefined;
-      }
-      return promos.find((promo) => inactivePluginIds.has(promo.pluginId) && promo.match(attributeKey));
-    },
-    [allowedAttributeKeys, inactivePluginIds, promos]
-  );
+  return useCallback((attributeKey: string) => promosByAttributeKey?.get(attributeKey), [promosByAttributeKey]);
 }

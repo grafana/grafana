@@ -207,6 +207,19 @@ describe('useAttributePluginPromoGetter', () => {
     expect(result.current('service.namespace')).toBeUndefined();
   });
 
+  it('assigns overlapping service keys to different inactive plugins', async () => {
+    mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
+
+    const keys = ['service.name', 'service.version', 'db.system'];
+    const { result } = renderHook(() => useAttributePluginPromoGetter(keys));
+
+    await waitFor(() => {
+      expect(result.current('service.name')?.pluginId).toBe('grafana-asserts-app');
+    });
+    expect(result.current('service.version')?.pluginId).toBe('grafana-app-observability-app');
+    expect(result.current('db.system')?.pluginId).toBe('grafana-dbo11y-app');
+  });
+
   it('returns no promo on on-prem', async () => {
     config.namespace = 'default';
     mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
@@ -240,7 +253,25 @@ describe('selectAttributeKeysForPromos', () => {
       promos
     );
 
-    expect([...selected]).toEqual(['service.name', 'db.system', 'session.id']);
+    expect([...selected.keys()]).toEqual(['service.name', 'db.system', 'session.id']);
+    expect(selected.get('service.name')?.pluginId).toBe('grafana-asserts-app');
+    expect(selected.get('db.system')?.pluginId).toBe('grafana-dbo11y-app');
+    expect(selected.get('session.id')?.pluginId).toBe('grafana-kowalski-app');
+  });
+
+  it('maps a second overlapping service key to App O11y, not Knowledge Graph', () => {
+    const promos = getAttributePluginPromos();
+    const inactive = new Set(promos.map((promo) => promo.pluginId));
+
+    const selected = selectAttributeKeysForPromos(
+      ['service.name', 'service.version', 'db.system'],
+      inactive,
+      promos
+    );
+
+    expect(selected.get('service.name')?.pluginId).toBe('grafana-asserts-app');
+    expect(selected.get('service.version')?.pluginId).toBe('grafana-app-observability-app');
+    expect(selected.get('db.system')?.pluginId).toBe('grafana-dbo11y-app');
   });
 
   it('skips active plugins and fills remaining slots from lower-priority promos', () => {
@@ -253,6 +284,9 @@ describe('selectAttributeKeysForPromos', () => {
       promos
     );
 
-    expect([...selected]).toEqual(['db.system', 'service.name', 'k8s.pod.name']);
+    expect([...selected.keys()]).toEqual(['db.system', 'service.name', 'k8s.pod.name']);
+    expect(selected.get('service.name')?.pluginId).toBe('grafana-app-observability-app');
+    expect(selected.get('db.system')?.pluginId).toBe('grafana-dbo11y-app');
+    expect(selected.get('k8s.pod.name')?.pluginId).toBe('grafana-k8s-app');
   });
 });
