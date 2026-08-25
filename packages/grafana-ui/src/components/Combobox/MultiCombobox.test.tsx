@@ -807,6 +807,50 @@ describe('MultiCombobox', () => {
       expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
+    // Pins the behaviour, not the gate on the clear: downshift skips onStateChange entirely here, so
+    // removing that gate does not fail this on its own.
+    it('leaves the search alone when Enter selects nothing', async () => {
+      const onChange = jest.fn();
+      render(<MultiCombobox options={options} value={[]} onChange={onChange} clearSearchOnSelect />);
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ap');
+      // No arrowdown: nothing is highlighted, since highlightFirstOption is off.
+      await user.keyboard('{enter}');
+
+      expect(onChange).not.toHaveBeenCalled();
+      expect(input).toHaveValue('ap');
+      // Still filtered, rather than restored to the whole library.
+      expect(screen.queryByRole('option', { name: 'banana' })).not.toBeInTheDocument();
+    });
+
+    // 'cherry' sits at index 0 while filtered and 'apple' at 0 once the list is whole, so a held
+    // highlight would make the second Enter take apple.
+    it('does not leave the highlight pointing into the list it just replaced', async () => {
+      const onChange = jest.fn();
+      render(
+        <MultiCombobox
+          options={[...options, { label: 'cherry', value: 'cherry' }]}
+          value={[]}
+          onChange={onChange}
+          clearSearchOnSelect
+        />
+      );
+      const input = screen.getByRole<HTMLInputElement>('combobox');
+
+      await user.click(input);
+      await user.type(input, 'ch');
+      await user.keyboard('{arrowdown}{enter}');
+      expect(onChange).toHaveBeenCalledWith([{ label: 'cherry', value: 'cherry' }]);
+
+      await waitFor(() => expect(input).toHaveValue(''));
+      onChange.mockClear();
+      await user.keyboard('{enter}');
+
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
     it('drops the custom-value row once the value it offered has been committed', async () => {
       const onChange = jest.fn();
       render(<MultiCombobox options={options} value={[]} onChange={onChange} createCustomValue clearSearchOnSelect />);

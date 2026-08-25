@@ -227,12 +227,17 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.ItemClick:
+        case useCombobox.stateChangeTypes.ItemClick: {
+          // Holding the highlight only makes sense while the list stays the same; clearing the search
+          // rebuilds it, so the held index would address a different option.
+          const willClearSearch = clearSearchOnSelect && state.inputValue !== '' && Boolean(changes.selectedItem);
+
           return {
             ...changes,
             isOpen: true,
-            highlightedIndex: state.highlightedIndex,
+            highlightedIndex: willClearSearch ? changes.highlightedIndex : state.highlightedIndex,
           };
+        }
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
         default:
@@ -290,7 +295,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           // rather than useOptions' resetSearch because it also reloads an unfiltered async list;
           // for a plain options array the two are the same. Clearing the search is also what drops
           // the createCustomValue row, which is right once the value it offered has been committed.
-          if (clearSearchOnSelect && inputValue !== '') {
+          // Gated on a selection, so clearing stays tied to what was selected rather than to Enter.
+          if (clearSearchOnSelect && newSelectedItem && inputValue !== '') {
             setInputValue('');
             updateOptions('');
           }
