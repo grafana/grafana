@@ -114,19 +114,13 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-// watchNamespace returns the namespace the RuleSequence informer should watch.
-// In cloud each instance serves one stack namespace and its storage identity is
-// scoped to it, so an all-namespace watch is rejected as a mismatch; on-prem
-// (no stack ID) returns "" to watch all namespaces.
-
-// newExternalRulerSyncDatasourceValidator builds the admission check for the
-// Config kind's spec.externalRulerSync.datasourceUid: requires the sync feature
-// flag, rejects writes while the operator ini override is set, verifies the
-// datasource is a Prometheus datasource that isn't vanilla Prometheus, and
-// probes the ruler config API so a datasource that can't be synced is rejected
-// at write time. Mirrors the Alertmanager sync datasource validator. The probe
-// reuses rulesync's own RulerFetcher, routed through the same datasource proxy
-// service (transport, auth and egress validation) as the sync worker itself.
+// Requires the sync feature flag, rejects writes while the operator ini
+// override is set, verifies the datasource is a Prometheus datasource that
+// isn't vanilla Prometheus, and probes the ruler config API so a datasource
+// that can't be synced is rejected at write time. Mirrors the Alertmanager
+// sync datasource validator. The probe reuses rulesync's own RulerFetcher,
+// routed through the same datasource proxy service (transport, auth and
+// egress validation) as the sync worker itself.
 func newExternalRulerSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService, proxy *datasourceproxy.DataSourceProxyService) func(ctx context.Context, uid string) error {
 	fetcher := rulesync.NewRulerFetcher(proxy, log.New("ngalert.rulesync.admission"))
 	return func(ctx context.Context, uid string) error {
@@ -172,6 +166,10 @@ func newExternalRulerSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.Da
 	}
 }
 
+// watchNamespace returns the namespace the RuleSequence informer should watch.
+// In cloud each instance serves one stack namespace and its storage identity is
+// scoped to it, so an all-namespace watch is rejected as a mismatch; on-prem
+// (no stack ID) returns "" to watch all namespaces.
 func watchNamespace(cfg *setting.Cfg) string {
 	if cfg == nil || cfg.StackID == "" {
 		return ""

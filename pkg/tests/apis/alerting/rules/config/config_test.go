@@ -31,8 +31,7 @@ var singletonID = resource.Identifier{
 	Name:      alertingrulesv0alpha1.ConfigSingletonName,
 }
 
-// configGVR is the GroupVersionResource for the rules-app Config kind, used by
-// the raw dynamic client below.
+// configGVR is used by the raw dynamic client below.
 var configGVR = schema.GroupVersionResource{
 	Group:    alertingrulesv0alpha1.GroupVersion.Group,
 	Version:  alertingrulesv0alpha1.GroupVersion.Version,
@@ -65,10 +64,11 @@ func newConfigClient(t *testing.T, user apis.User) *alertingrulesv0alpha1.Config
 	return client
 }
 
-// rawConfigClient returns a dynamic client for Config in the default namespace.
-// Unlike the generated ConfigClient, the dynamic client's Update issues a direct
-// PUT without first GETting the object, so it can exercise the server-side
-// create-on-update (upsert) path for a not-yet-existing singleton.
+// rawConfigClient returns a dynamic client for Config in the default
+// namespace. Unlike the generated ConfigClient, the dynamic client's Update
+// issues a direct PUT without first GETting the object, so it can exercise
+// the server-side create-on-update (upsert) path for a not-yet-existing
+// singleton.
 func rawConfigClient(t *testing.T, user apis.User) dynamic.ResourceInterface {
 	t.Helper()
 	return user.ResourceClient(t, configGVR).Namespace(apis.DefaultNamespace)
@@ -88,9 +88,8 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingr
 	return out, nil
 }
 
-// newConfig builds a Config resource with the given name. ExternalRulerSync is
-// left unset, which is always valid (clearing/omitting is never rejected by the
-// admission validator).
+// ExternalRulerSync is left unset, which is always valid (clearing/omitting
+// is never rejected by the admission validator).
 func newConfig(name string) *alertingrulesv0alpha1.Config {
 	return &alertingrulesv0alpha1.Config{
 		TypeMeta: v1.TypeMeta{

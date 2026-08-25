@@ -171,7 +171,7 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 }
 
 // newTestSyncerWithConfigClient is newTestSyncer plus a wired Config
-// k8s-client (and namespace mapper), so the API path (resolveExternalRulerUIDForOrg's
+// k8s-client (and namespace mapper), so the API path (resolveExternalRulerConfig's
 // Config branch, writeStatus, recordNotConfigured) is reachable in tests.
 func newTestSyncerWithConfigClient(t *testing.T, cs *fakeConfigClient, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
 	t.Helper()
@@ -353,7 +353,7 @@ func TestIsManagedFolder(t *testing.T) {
 func TestRun_StopsOnContextCancel(t *testing.T) {
 	// Run always starts the poll loop now: sync can be enabled per-org via the
 	// rules Config resource even when external_ruler_uid is unset, and only a
-	// per-org tick (resolveExternalRulerUIDForOrg) can tell which. Run itself
+	// per-org tick (resolveExternalRulerConfig) can tell which. Run itself
 	// must still exit cleanly on cancellation regardless.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
 	s.settings.AdminConfigPollInterval = time.Minute // long enough that ctx.Done() always wins the select first

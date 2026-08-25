@@ -99,7 +99,6 @@ func (f *fakeConfigClient) setErr(orgID int64, err error) {
 	f.getErr[f.nsMapper(orgID)] = err
 }
 
-// getCallCount reports how many Get calls the worker made for orgID.
 func (f *fakeConfigClient) getCallCount(orgID int64) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()

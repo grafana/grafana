@@ -146,12 +146,11 @@ func NewExternalRulerSyncer(
 	}
 }
 
-// resolveCfgClient lazily builds and caches the rules Config client. Built
-// lazily (not in NewExternalRulerSyncer) because the ClientGenerator blocks
-// until the apiserver is ready, which would deadlock during DI. The successful
-// client is cached, but construction failures are NOT: the next call retries,
-// so a transient apiserver-not-ready at the first tick doesn't disable the API
-// sync path until the process restarts.
+// Built lazily (not in NewExternalRulerSyncer) because the ClientGenerator
+// blocks until the apiserver is ready, which would deadlock during DI. The
+// successful client is cached, but construction failures are NOT: the next
+// call retries, so a transient apiserver-not-ready at the first tick doesn't
+// disable the API sync path until the process restarts.
 func (s *ExternalRulerSyncer) resolveCfgClient() (*alertingrulesv0alpha1.ConfigClient, error) {
 	s.cfgClientMu.Lock()
 	defer s.cfgClientMu.Unlock()
@@ -251,11 +250,11 @@ func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, or
 	}, nil
 }
 
-// writeStatus upserts the org's Config.status using compute(prev), creating the
-// resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
-// logged). Unchanged status produces no physical write (unified storage
-// dedup). Skipped entirely when no k8s client is wired (test paths / installs
-// without the apiserver client available at this point).
+// Creates the Config resource if it doesn't exist yet. Optimistic via
+// RetryOnConflict; best-effort (failures are logged). Unchanged status
+// produces no physical write (unified storage dedup). Skipped entirely when
+// no k8s client is wired (test paths / installs without the apiserver client
+// available at this point).
 func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) {
 	if s.clientGenerator == nil {
 		return
@@ -312,8 +311,7 @@ func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64,
 	})
 }
 
-// recordPromotionCommitted writes the terminal PromotionCommitted status once
-// the org's synced rules have been promoted to native rules (sync stops).
+// Sync does not run again for this org afterward.
 func (s *ExternalRulerSyncer) recordPromotionCommitted(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin) {
 	now := time.Now()
 	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
