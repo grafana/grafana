@@ -263,7 +263,10 @@ func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64,
 		}
 
 		if len(tagsDelete) != 0 {
-			if _, err := sess.MustCols("annotation_id", "tag_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
+			// MustCols only covers annotation_id: including tag_id would force the bean's
+			// zero TagID into the WHERE clause as "AND tag_id = 0", matching nothing.
+			// annotation_id stays listed so a zero ID can never widen this to every row.
+			if _, err := sess.MustCols("annotation_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
 				return err
 			}
 		}

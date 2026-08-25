@@ -459,6 +459,20 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.Equal(t, []string{"newtag1", "newtag3"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
+
+			// items[0].Tags is read back from the denormalized annotation.tags column, so
+			// it cannot catch stale rows left behind in the annotation_tag join table.
+			// GetTags reads that join table, so newtag2 must no longer be reachable.
+			var linkedTags []string
+			err = sql.WithDbSession(context.Background(), func(dbSession *db.Session) error {
+				return dbSession.SQL(
+					"SELECT tag.key FROM annotation_tag JOIN tag ON tag.id = annotation_tag.tag_id WHERE annotation_tag.annotation_id = ?",
+					annotationId,
+				).Find(&linkedTags)
+			})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, []string{"newtag1", "newtag3"}, linkedTags,
+				"replaced tags must be deleted from annotation_tag, not just from annotation.tags")
 		})
 
 		t.Run("Can update annotations with data", func(t *testing.T) {
