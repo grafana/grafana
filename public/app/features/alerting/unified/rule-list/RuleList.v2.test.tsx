@@ -9,11 +9,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
-import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
+import { addPlugin, setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
+import { pluginMeta } from '../testSetup/plugins';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
 import { loadDefaultSavedSearch } from './filter/useSavedSearches';
@@ -79,69 +81,69 @@ describe('RuleListPage v2', () => {
 
     // Wait for the lazy-loaded RulesFilterV2 (Suspense) to settle before asserting
     await waitFor(() => expect(ui.searchInput.get()).toBeInTheDocument());
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when invalid view parameter is provided', () => {
+  it('should show grouped view when invalid view parameter is provided', async () => {
     render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=invalid'],
       },
     });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present', () => {
+  it('should show list view when "view=list" URL parameter is present', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when only group filter is applied', () => {
+  it('should show grouped view when only group filter is applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when only namespace filter is applied', () => {
+  it('should show grouped view when only namespace filter is applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when both group and namespace filters are applied', () => {
+  it('should show grouped view when both group and namespace filters are applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when group and namespace filters are combined with other filter types', () => {
+  it('should show list view when group and namespace filters are combined with other filter types', async () => {
     render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global state:firing'] },
     });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when view parameter is empty', () => {
+  it('should show grouped view when view parameter is empty', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view='] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when search parameter is empty', () => {
+  it('should show grouped view when search parameter is empty', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search='] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
@@ -154,33 +156,33 @@ describe('RuleListPage v2', () => {
     { filterType: 'labels', searchQuery: 'label:team=backend' },
     { filterType: 'ruleHealth', searchQuery: 'health:error' },
     { filterType: 'contactPoint', searchQuery: 'contactPoint:slack' },
-  ])('should show list view when %s filter is applied', ({ filterType, searchQuery }) => {
+  ])('should show list view when %s filter is applied', async ({ filterType, searchQuery }) => {
     render(<RuleListPage />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with group filter', () => {
+  it('should show list view when "view=list" URL parameter is present with group filter', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with namespace filter', () => {
+  it('should show list view when "view=list" URL parameter is present with namespace filter', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with both group and namespace filters', () => {
+  it('should show list view when "view=list" URL parameter is present with both group and namespace filters', async () => {
     render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 });
@@ -211,22 +213,22 @@ describe('RuleListActions', () => {
     { permissions: [AccessControlAction.AlertingRuleCreate] },
     { permissions: [AccessControlAction.AlertingRuleExternalWrite] },
     { permissions: [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite] },
-  ])('should show "New alert rule" button when the user has $permissions permissions', ({ permissions }) => {
+  ])('should show "New alert rule" button when the user has $permissions permissions', async ({ permissions }) => {
     grantUserPermissions(permissions);
 
     render(<RuleListActions />);
 
-    expect(ui.newRuleButton.get()).toBeInTheDocument();
+    expect(await ui.newRuleButton.find()).toBeInTheDocument();
     expect(ui.moreButton.get()).toBeInTheDocument();
   });
 
-  it('should not show "New alert rule" button when user has no permissions to create rules', () => {
+  it('should not show "New alert rule" button when user has no permissions to create rules', async () => {
     grantUserPermissions([]);
 
     render(<RuleListActions />);
 
+    expect(await ui.moreButton.find()).toBeInTheDocument();
     expect(ui.newRuleButton.query()).not.toBeInTheDocument();
-    expect(ui.moreButton.get()).toBeInTheDocument();
   });
 
   it('should only show New alert rule for export when the user has view Grafana rules permission', async () => {
@@ -533,14 +535,14 @@ describe('RuleListPage v2 - View switching', () => {
     const { user } = render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
 
     // Click the "Grouped" view button
     const groupedButton = await ui.modeSelector.grouped.find();
     await user.click(groupedButton);
 
     // Should preserve both filters and switch to grouped view
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
 
     // Verify filters are preserved
@@ -555,14 +557,14 @@ describe('RuleListPage v2 - View switching', () => {
         initialEntries: ['/?view=list&search=group:cpu-usage namespace:global state:firing rule:"test"'],
       },
     });
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
 
     // Click the "Grouped" view button
     const groupedButton = await ui.modeSelector.grouped.find();
     await user.click(groupedButton);
 
     // Should clear all filters because other filters are present
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
 
     // Verify all filters are cleared
@@ -651,5 +653,60 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
     });
 
     expect(ui.searchInput.get()).toHaveValue('');
+  });
+});
+
+describe('RuleListActions with the Prometheus Alerting plugin', () => {
+  const ui = {
+    newRuleButton: byRole('link', { name: /^new alert rule$/i }),
+    moreButton: byRole('button', { name: /more/i }),
+    moreMenu: byRole('menu'),
+    menuOptions: {
+      newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
+      newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    grantUserRole(OrgRole.Viewer);
+    setupDataSources(
+      mockDataSource({
+        name: 'Prometheus-enabled',
+        uid: 'prometheus-enabled',
+        type: 'prometheus',
+        jsonData: { manageAlerts: true },
+      })
+    );
+    addPlugin(pluginMeta[SupportedPlugin.PrometheusAlerting]);
+  });
+
+  it('stops offering to create a data source recording rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
+
+    const { user } = render(<RuleListActions />);
+
+    await user.click(await ui.moreButton.find());
+    const menu = await ui.moreMenu.find();
+
+    expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+  });
+
+  it('hides "New alert rule" from someone who could only ever create a data source managed one', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+    render(<RuleListActions />);
+
+    expect(await ui.moreButton.find()).toBeInTheDocument();
+    expect(ui.newRuleButton.query()).not.toBeInTheDocument();
+  });
+
+  it('still offers "New alert rule" to someone who can create Grafana managed rules', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+    render(<RuleListActions />);
+
+    expect(await ui.newRuleButton.find()).toBeInTheDocument();
   });
 });
