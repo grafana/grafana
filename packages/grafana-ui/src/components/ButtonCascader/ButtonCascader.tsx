@@ -3,14 +3,33 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Button } from '../Button/Button';
+import { type IconName } from '../../types/icon';
+import { Button, type ButtonProps } from '../Button/Button';
 import { TreeSelectBase } from '../Cascader/TreeSelectImplementation';
 import { type CascaderOption } from '../Cascader/types';
 import { Icon } from '../Icon/Icon';
 
-import { type ButtonCascaderProps, type CascaderFieldNames } from './types';
+export interface CascaderFieldNames<Option> {
+  label?: keyof Option;
+  value?: keyof Option;
+  children?: keyof Option;
+}
 
-export type { ButtonCascaderProps, CascaderFieldNames } from './types';
+export interface ButtonCascaderProps {
+  options: CascaderOption[];
+  children: string;
+  icon?: IconName;
+  disabled?: boolean;
+  value?: string[];
+  fieldNames?: CascaderFieldNames<CascaderOption>;
+  loadData?: (selectedOptions: CascaderOption[]) => void;
+  onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
+  onPopupVisibleChange?: (visible: boolean) => void;
+  className?: string;
+  variant?: ButtonProps['variant'];
+  buttonProps?: Omit<ButtonProps, 'children'>;
+  hideDownIcon?: boolean;
+}
 
 function isCascaderOptionArray(value: CascaderOption[keyof CascaderOption]): value is CascaderOption[] {
   return Array.isArray(value);

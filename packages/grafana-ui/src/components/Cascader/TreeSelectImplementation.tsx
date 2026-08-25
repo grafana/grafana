@@ -37,7 +37,7 @@ import { Portal } from '../Portal/Portal';
 
 import { TREE_ROOT_ID, type TreeSelectData, type TreeSelectNode } from './TreeSelect.data';
 import { getTreeSelectStyles } from './TreeSelect.styles';
-import { type CascaderOption } from './types';
+import { type CascaderOption, type CascaderProps } from './types';
 
 interface TreeSelectTriggerProps {
   ref: RefCallback<HTMLButtonElement>;
@@ -47,33 +47,14 @@ interface TreeSelectTriggerProps {
   'aria-haspopup': 'tree';
 }
 
-export interface TreeSelectProps {
-  separator?: string;
-  placeholder?: string;
-  options: CascaderOption[];
-  onSelect(value: string): void;
-  width?: number;
-  initialValue?: string;
-  allowCustomValue?: boolean;
-  formatCreateLabel?: (value: string) => string;
-  displayAllSelectedLevels?: boolean;
-  onBlur?: () => void;
-  autoFocus?: boolean;
-  alwaysOpen?: boolean;
-  disabled?: boolean;
-  id?: string;
-  isClearable?: boolean;
-  'data-testid'?: string;
-}
+export type TreeSelectProps = Omit<CascaderProps, 'changeOnSelect' | 'hideActiveLevelLabel'>;
 
 interface SelectedValue {
   value: string;
   label: string;
 }
 
-export interface TreeSelectBaseProps extends TreeSelectProps {
-  changeOnSelect?: boolean;
-  hideActiveLevelLabel?: boolean;
+export interface TreeSelectBaseProps extends CascaderProps {
   valuePath?: string[];
   onChangePath?: (values: string[], options: CascaderOption[]) => void;
   loadData?: (options: CascaderOption[]) => void;
@@ -387,6 +368,8 @@ export const TreeSelectBase = memo(
                       id={menuId}
                       role="tree"
                       aria-label={t('grafana-ui.tree-select.tree-label', 'Available options')}
+                      aria-busy="true"
+                      tabIndex={-1}
                       className={styles.tree}
                     >
                       <div className={styles.empty}>
