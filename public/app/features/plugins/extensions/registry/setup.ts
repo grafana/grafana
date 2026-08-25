@@ -2,7 +2,7 @@
 import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
-import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
+import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
@@ -56,7 +56,7 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
         title: 'Create alert from panel',
         description: 'Modal to create an alert rule from panel data',
-        component: CreateAlertFromPanelExposedComponent,
+        component: CreateAlertFromPanelExposedComponentLazy,
       },
       {
         id: PluginExtensionExposedComponents.OpenQueryLibraryV1,
