@@ -75,14 +75,15 @@ export function NotebookCellRenderer({
 }
 
 // A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
-// While editing, a panel with a single, unsophisticated query (the shape a query-first "Query" block
-// produces — see NotebookLayoutManager's buildQueryPanel) also gets an inline query editor above it.
+// While editing, a panel with no transformations (the shape a query-first "Query" block produces —
+// see NotebookLayoutManager's buildQueryPanel) also gets an inline query editor above it, one row per
+// query — see PanelQueryEditor.
 function PanelCell({ panel, isEditing }: { panel: VizPanel; isEditing: boolean }) {
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isSimpleQueryPanel(panel) && <PanelQueryEditor panel={panel} />}
+      {isEditing && isUntransformedQueryPanel(panel) && <PanelQueryEditor panel={panel} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>
@@ -90,16 +91,16 @@ function PanelCell({ panel, isEditing }: { panel: VizPanel; isEditing: boolean }
   );
 }
 
-function isSimpleQueryPanel(panel: VizPanel): boolean {
+// Transformations sit between the queries and what's on screen, so editing the raw queries here
+// wouldn't reflect (or let the reader touch) what actually reaches the panel — that needs a real,
+// transformation-aware editor, not this lightweight one.
+function isUntransformedQueryPanel(panel: VizPanel): boolean {
   const queryRunner = getQueryRunnerFor(panel);
   if (!queryRunner) {
     return false;
   }
 
-  const hasTransformations =
-    panel.state.$data instanceof SceneDataTransformer && panel.state.$data.state.transformations.length > 0;
-
-  return queryRunner.state.queries.length <= 1 && !hasTransformations;
+  return !(panel.state.$data instanceof SceneDataTransformer && panel.state.$data.state.transformations.length > 0);
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.

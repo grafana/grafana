@@ -12941,6 +12941,7 @@
         "tooltip-strikethrough": "Strikethrough"
       },
       "query": {
+        "add": "Add query",
         "run": "Run query"
       }
     },

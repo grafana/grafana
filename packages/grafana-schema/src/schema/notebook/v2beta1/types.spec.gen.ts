@@ -77,8 +77,8 @@ export type NotebookElement = CellKind | V2PanelKind | LibraryPanelKind;
 export const defaultNotebookElement = (): NotebookElement => (defaultCellKind());
 
 /**
- * A cell holds non-panel narrative content (markdown text, code, an ad hoc query) in a notebook
- * layout. Panel cells are not represented here — they reuse V2PanelKind.
+ * A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
+ * Panel cells are not represented here — they reuse V2PanelKind.
  */
 export interface CellKind {
 	kind: "Cell";
@@ -144,63 +144,6 @@ export interface CodeCellContentSpec {
 export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
 	language: "",
 	code: "",
-});
-
-export interface PanelQueryKind {
-	kind: "PanelQuery";
-	spec: PanelQuerySpec;
-}
-
-export const defaultPanelQueryKind = (): PanelQueryKind => ({
-	kind: "PanelQuery",
-	spec: defaultPanelQuerySpec(),
-});
-
-export interface PanelQuerySpec {
-	query: DataQueryKind;
-	refId: string;
-	hidden: boolean;
-}
-
-export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
-	query: defaultDataQueryKind(),
-	refId: "A",
-	hidden: false,
-});
-
-export interface DataQueryKind {
-	kind: "DataQuery";
-	group: string;
-	version: string;
-	labels?: Record<string, string>;
-	// New type for datasource reference
-	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
-	datasource?: {
-		name?: string;
-	};
-	spec: Record<string, any>;
-}
-
-export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "DataQuery",
-	group: "",
-	version: "v0",
-	spec: {},
-});
-
-export interface QueryOptionsSpec {
-	timeFrom?: string;
-	timeTo?: string;
-	maxDataPoints?: number;
-	timeShift?: string;
-	queryCachingTTL?: number;
-	interval?: string;
-	cacheTimeout?: string;
-	hideTimeOverride?: boolean;
-	timeCompare?: string;
-}
-
-export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
 });
 
 /**
@@ -274,6 +217,48 @@ export const defaultV2QueryGroupSpec = (): V2QueryGroupSpec => ({
 	queryOptions: defaultQueryOptionsSpec(),
 });
 
+export interface PanelQueryKind {
+	kind: "PanelQuery";
+	spec: PanelQuerySpec;
+}
+
+export const defaultPanelQueryKind = (): PanelQueryKind => ({
+	kind: "PanelQuery",
+	spec: defaultPanelQuerySpec(),
+});
+
+export interface PanelQuerySpec {
+	query: DataQueryKind;
+	refId: string;
+	hidden: boolean;
+}
+
+export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
+	query: defaultDataQueryKind(),
+	refId: "A",
+	hidden: false,
+});
+
+export interface DataQueryKind {
+	kind: "DataQuery";
+	group: string;
+	version: string;
+	labels?: Record<string, string>;
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string;
+	};
+	spec: Record<string, any>;
+}
+
+export const defaultDataQueryKind = (): DataQueryKind => ({
+	kind: "DataQuery",
+	group: "",
+	version: "v0",
+	spec: {},
+});
+
 /**
  * Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
  */
@@ -337,6 +322,21 @@ export const defaultMatcherScope = (): MatcherScope => ("series");
 export type DataTopic = "series" | "annotations" | "alertStates";
 
 export const defaultDataTopic = (): DataTopic => ("series");
+
+export interface QueryOptionsSpec {
+	timeFrom?: string;
+	timeTo?: string;
+	maxDataPoints?: number;
+	timeShift?: string;
+	queryCachingTTL?: number;
+	interval?: string;
+	cacheTimeout?: string;
+	hideTimeOverride?: boolean;
+	timeCompare?: string;
+}
+
+export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
+});
 
 export interface VizConfigKind {
 	kind: "VizConfig";
