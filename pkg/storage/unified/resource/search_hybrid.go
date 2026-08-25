@@ -218,10 +218,7 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 		Limit:  int64(len(uids)),
 		Fields: []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
 	})
-	if err == nil && resp != nil && resp.Error != nil {
-		err = grpcErrorFromErrorResult(resp.Error)
-	}
-	if err != nil || resp == nil {
+	if err := searchCallError(resp, err); err != nil {
 		s.log.Warn("hybrid search: managed-by resolution failed", "err", err)
 		return
 	}
@@ -337,7 +334,7 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 // the call succeeded.
 func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 	if err != nil {
-		if res := ErrorResultFromGRPCDetails(err); res != nil {
+		if res := errorResultFromGRPCDetails(err); res != nil {
 			return errors.Join(grpcErrorFromErrorResult(res), err)
 		}
 		return err

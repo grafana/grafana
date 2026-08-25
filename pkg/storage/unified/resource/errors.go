@@ -83,13 +83,28 @@ func IsResourceVersionExpired(err error) bool {
 	if apierrors.IsResourceExpired(err) || apierrors.IsGone(err) {
 		return true
 	}
-	if res := ErrorResultFromGRPCDetails(err); res != nil {
+	if res := errorResultFromGRPCDetails(err); res != nil {
 		return res.Code == http.StatusGone || res.Reason == string(metav1.StatusReasonExpired)
 	}
 	return false
 }
 
-func ErrorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
+// ErrorFromResponse resolves the outcome of a unified storage call — which
+// reports failure either through a transport error or through a response that
+// embeds an ErrorResult — into a single error, so callers need one error
+// branch. The transport error is returned untouched to keep its gRPC status,
+// cancellation semantics and errors.Is/As chain intact; a response-embedded
+// result is converted to a typed Kubernetes error. Callers that need the
+// structured view can recover it with AsErrorResult on the returned error.
+// Returns nil only when the call fully succeeded.
+func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+	if err != nil {
+		return err
+	}
+	return GetError(respErr)
+}
+
+func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
 	if !ok || st == nil {
 		return nil
@@ -179,7 +194,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 
 	// Structured results attached to a gRPC error keep their reason/code across
 	// the wire, so prefer them over the generic mapping below.
-	if res := ErrorResultFromGRPCDetails(err); res != nil {
+	if res := errorResultFromGRPCDetails(err); res != nil {
 		return res
 	}
 

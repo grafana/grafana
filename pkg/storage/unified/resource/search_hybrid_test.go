@@ -644,6 +644,22 @@ func TestHybridSearch_LexicalEmbeddedErrorCodes(t *testing.T) {
 	}
 }
 
+func TestHybridSearch_LexicalGRPCDetailsErrorCode(t *testing.T) {
+	st, err := status.New(codes.Internal, "wrapper").WithDetails(
+		&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "lexical failure"},
+	)
+	require.NoError(t, err)
+
+	s, idx, _ := newHybridTestServer(nil, &fakeVectorBackend{})
+	idx.err = st.Err()
+
+	_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Unavailable, status.Code(err))
+}
+
 // recordingRateLimiter satisfies vector.RateLimiter and records whether it
 // was consulted.
 type recordingRateLimiter struct {
