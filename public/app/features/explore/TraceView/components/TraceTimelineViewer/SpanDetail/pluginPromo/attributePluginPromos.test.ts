@@ -263,11 +263,7 @@ describe('selectAttributeKeysForPromos', () => {
     const promos = getAttributePluginPromos();
     const inactive = new Set(promos.map((promo) => promo.pluginId));
 
-    const selected = selectAttributeKeysForPromos(
-      ['service.name', 'service.version', 'db.system'],
-      inactive,
-      promos
-    );
+    const selected = selectAttributeKeysForPromos(['service.name', 'service.version', 'db.system'], inactive, promos);
 
     expect(selected.get('service.name')?.pluginId).toBe('grafana-asserts-app');
     expect(selected.get('service.version')?.pluginId).toBe('grafana-app-observability-app');
