@@ -32,4 +32,26 @@ describe('ColorValueEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
+
+  it('exposes the color name as a button so keyboard users can open the picker', () => {
+    render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
+
+    expect(screen.getByRole('button', { name: '#ff0000' })).toHaveAttribute('type', 'button');
+  });
+
+  it('exposes the placeholder as a button when no color is set', () => {
+    render(<ColorValueEditor value={undefined} onChange={jest.fn()} details />);
+
+    expect(screen.getByRole('button', { name: 'Select color' })).toHaveAttribute('type', 'button');
+  });
+
+  it('opens the color picker from the keyboard via the color name', async () => {
+    const user = userEvent.setup();
+    render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
+
+    screen.getByRole('button', { name: '#ff0000' }).focus();
+    await user.keyboard('{Enter}');
+
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+  });
 });
