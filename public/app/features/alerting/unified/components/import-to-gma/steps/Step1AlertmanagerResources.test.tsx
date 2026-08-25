@@ -7,11 +7,9 @@ import { act, render, screen, testWithFeatureToggles, waitFor } from 'test/test-
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
-import {
-  setupAdminConfigGet,
-  setupAlertmanagersStatus,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import { setupAutoSyncConfig } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -543,7 +541,7 @@ describe('Step1AlertmanagerResources', () => {
 
       it('is rendered for admins on the datasource source', () => {
         grantUserRole('Admin');
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
         render(
           <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
@@ -556,7 +554,7 @@ describe('Step1AlertmanagerResources', () => {
 
       it('disables Policy Tree Name and skips the dry-run once checked', async () => {
         grantUserRole('Admin');
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
         const user = userEvent.setup();
         const onTriggerDryRun = jest.fn();
@@ -578,7 +576,7 @@ describe('Step1AlertmanagerResources', () => {
 
       it('narrows the data source list to Mimir/Cortex once checked, clearing an incompatible selection', async () => {
         grantUserRole('Admin');
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
         const user = userEvent.setup();
 
@@ -600,7 +598,7 @@ describe('Step1AlertmanagerResources', () => {
 
       it('does not clear an already-valid selection while the datasource list is still loading', async () => {
         grantUserRole('Admin');
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         let resolveDatasources = (_response: unknown) => {};
         const datasourcesResponse = new Promise((resolve) => {
           resolveDatasources = resolve;

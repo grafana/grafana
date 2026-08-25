@@ -129,11 +129,20 @@ function Wizard() {
 // Blocks the whole import flow while auto-sync is active. Mirrors how the menu entry point (useImportEntrypointState) gates the same action.
 export function ImportWizardGate() {
   const { isActive, isLoading } = useIsAutoSyncActive();
+  // Frozen on first resolution, not live: this only gates *entry*. Enabling auto-sync mid-wizard
+  // (handleConfirmImport's own save) flips isActive via the same Config cache the mutation
+  // invalidates — without freezing, that unmounts the wizard out from under its own in-flight submit.
+  const [gateActive, setGateActive] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!isLoading && gateActive === null) {
+      setGateActive(isActive);
+    }
+  }, [isLoading, isActive, gateActive]);
 
-  if (isLoading) {
+  if (isLoading || gateActive === null) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
   }
-  if (isActive) {
+  if (gateActive) {
     return <AutoSyncActiveBlock />;
   }
   return <Wizard />;
@@ -219,7 +228,11 @@ function ImportWizardContent() {
 
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
-  const { save: saveAutoSync } = useAutoSyncConfiguration();
+  const {
+    save: saveAutoSync,
+    isReady: isAutoSyncReady,
+    notReadyMessage: autoSyncNotReadyMessage,
+  } = useAutoSyncConfiguration();
   const notifyApp = useAppNotification();
 
   const formAPI = useForm<ImportFormValues>({
@@ -374,6 +387,18 @@ function ImportWizardContent() {
       // Mutually exclusive: Auto-sync only applies to the datasource source, so at most one of
       // these branches runs.
       if (willEnableAutoSync) {
+        // Humans can't create the Config singleton, so a not-yet-seeded one means saveAutoSync
+        // would silently fail after the user already confirmed — bail out with the real reason
+        // instead of the generic error, matching the settings page's isReady gate.
+        if (!isAutoSyncReady) {
+          setImportStatus('error');
+          trackImportToGMAError({ notificationsSource: trackedNotificationsSource });
+          notifyApp.error(
+            t('alerting.import-to-gma.autosync-not-ready-title', 'Auto-sync is still initializing'),
+            autoSyncNotReadyMessage
+          );
+          return;
+        }
         const enabled = await saveAutoSync(values.notificationsDatasourceUID, { silent: true });
         if (!enabled) {
           setImportStatus('error');
@@ -485,7 +510,16 @@ function ImportWizardContent() {
         stringifyErrorLike(err)
       );
     }
-  }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
+  }, [
+    getValues,
+    importNotifications,
+    importRules,
+    rulesFromDatasource,
+    saveAutoSync,
+    isAutoSyncReady,
+    autoSyncNotReadyMessage,
+    notifyApp,
+  ]);
 
   const handleCancelConfirm = useCallback(() => {
     // Only allow closing if not importing
