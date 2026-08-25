@@ -2,8 +2,6 @@ package vector
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -219,25 +217,4 @@ END $$;`))
 			ALTER TABLE vector_backfill_jobs ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
 		`))
 
-	// Retro-fit the FTS index onto external partitions created before it
-	// existed. Per-partition failures are warnings, never startup blockers;
-	// EnsureResourcePartition retries on writes.
-	mg.AddMigration("add fts index to external embeddings partitions",
-		migrator.NewRawSQLMigration("").Postgres(fmt.Sprintf(`
-			DO $$
-			DECLARE pk TEXT;
-			BEGIN
-				FOR pk IN SELECT partition_key FROM embedding_collections WHERE is_external LOOP
-					IF to_regclass('embeddings_' || pk) IS NOT NULL THEN
-						BEGIN
-							EXECUTE format(
-								'CREATE INDEX IF NOT EXISTS %%I ON %%I USING GIN (%s)',
-								'embeddings_' || pk || '_fts_idx', 'embeddings_' || pk);
-						EXCEPTION WHEN OTHERS THEN
-							RAISE WARNING 'fts index on embeddings_%%: %%', pk, SQLERRM;
-						END;
-					END IF;
-				END LOOP;
-			END $$;
-		`, strings.ReplaceAll(ftsIndexExpr, "'", "''"))))
 }

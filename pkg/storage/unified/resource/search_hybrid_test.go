@@ -1318,20 +1318,32 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	idx.mu.Unlock()
 }
 
-func TestHybridSearch_ExternalSkipsSemanticBatchCheck(t *testing.T) {
-	// A deny-all access client must not drop external results.
+func TestHybridSearch_ExternalAuthzFiltersBothLegs(t *testing.T) {
+	// Each leg authz-filters its own hits, so a deny-all client drops
+	// lexical-only hits too, not just the semantic leg's rows.
 	backend := externalBackend(
 		vector.VectorSearchResult{UID: "u1", Title: "T1", Subresource: "chunk/0", Content: "c1", Score: 0.1},
 	)
+	lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{
+		{UID: "lexonly", Title: "Lex Only", Subresource: "chunk/0", Content: "c"},
+	}}
 	s, _, _ := newHybridTestServer(lexTableResponse(), backend, authlib.FixedAccessClient(false))
-	s.externalLexical = &fakeLexicalSearcher{}
+	s.externalLexical = lexical
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "q",
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.Results, 1)
-	assert.Equal(t, "u1", resp.Results[0].Key.Name)
+	assert.Empty(t, resp.Results)
+
+	// Allow-all keeps both.
+	s, _, _ = newHybridTestServer(lexTableResponse(), backend)
+	s.externalLexical = lexical
+	resp, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
 }
 
 func TestHybridSearch_ExternalWithoutSearcherStaysRejected(t *testing.T) {

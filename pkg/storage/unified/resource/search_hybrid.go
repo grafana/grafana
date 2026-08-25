@@ -141,7 +141,21 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			if err != nil {
 				return fmt.Errorf("lexical leg: %w", err)
 			}
-			lex = lexicalHitsFromLexical(hits)
+			items := make([]vector.VectorSearchResult, len(hits))
+			for i, h := range hits {
+				items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
+			}
+			allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, items)
+			if err != nil {
+				return fmt.Errorf("authz batch check: %w", err)
+			}
+			kept := hits[:0]
+			for _, h := range hits {
+				if allowed[vectorAuthzKey{h.UID, h.Folder}] {
+					kept = append(kept, h)
+				}
+			}
+			lex = lexicalHitsFromLexical(kept)
 			return nil
 		}
 		lexResp, err := s.Search(gctx, hybridLexicalRequest(req, depth))
@@ -166,12 +180,6 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			dense, depth, vectorFilters...)
 		if err != nil {
 			return fmt.Errorf("vector backend: %w", err)
-		}
-		// External rows skip per-result authz (namespace guard is the
-		// tenant boundary), like VectorSearch.
-		if coll.IsExternal {
-			sem = results
-			return nil
 		}
 		allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, results)
 		if err != nil {
