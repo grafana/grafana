@@ -21,12 +21,15 @@ const TRASH_QUERY_KIND = 'TrashQuery';
 /** The version the Recently deleted UI talks to. Matches the rest of the deleted-dashboard code. */
 const DASHBOARD_API_VERSION = 'v1beta1';
 
-/** The only fields a trash document carries. Anything else is rejected with 422. */
+/**
+ * The fields a trash document carries that this code reads. Anything outside the trash field
+ * set is rejected with 422. `deleted_rv` is also always returned, since the server appends it,
+ * but nothing here consumes it: restore re-fetches the object rather than submitting a version.
+ */
 export const TRASH_FIELD_TITLE = 'title';
 export const TRASH_FIELD_FOLDER = 'folder';
 export const TRASH_FIELD_DELETED_BY = 'deleted_by';
 export const TRASH_FIELD_DELETION_TIME = 'deletion_time';
-export const TRASH_FIELD_DELETED_RV = 'deleted_rv';
 
 interface TextPredicate {
   value: string;
@@ -40,7 +43,7 @@ interface FilterPredicate {
 }
 
 /** Exactly one property may be set; the set one names the node's type. */
-export interface WhereNode {
+interface WhereNode {
   and?: WhereNode[];
   text?: TextPredicate;
   filter?: FilterPredicate;
@@ -81,7 +84,7 @@ export interface TrashItem {
   fields?: Record<string, unknown>;
 }
 
-export interface TrashResults {
+interface TrashResults {
   metadata: {
     continue?: string;
     totalHits: number;

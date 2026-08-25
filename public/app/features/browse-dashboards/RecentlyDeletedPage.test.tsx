@@ -3,7 +3,7 @@ import type AutoSizer from 'react-virtualized-auto-sizer';
 import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { store } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
@@ -22,6 +22,7 @@ jest.mock('./api/useRecentlyDeletedStateManager');
 jest.mock('../search/service/deletedDashboardsCache', () => ({
   deletedDashboardsCache: {
     getAsTable: jest.fn(),
+    isTrashUnavailable: jest.fn().mockReturnValue(false),
   },
 }));
 
@@ -37,6 +38,10 @@ const mockUseRecentlyDeletedStateManager = useRecentlyDeletedStateManager as jes
 >;
 const mockGetAsTable = deletedDashboardsCache.getAsTable as jest.MockedFunction<
   typeof deletedDashboardsCache.getAsTable
+>;
+
+const mockIsTrashUnavailable = deletedDashboardsCache.isTrashUnavailable as jest.MockedFunction<
+  typeof deletedDashboardsCache.isTrashUnavailable
 >;
 
 function buildTable(count: number, metadata: Partial<ListMeta> = {}): TableResponse {
@@ -159,5 +164,38 @@ describe('RecentlyDeletedPage banner integration', () => {
 
     expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
     expect(mockGetAsTable).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('RecentlyDeletedPage when trash is unavailable', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetAsTable.mockResolvedValue(EMPTY_TABLE_RESPONSE);
+    config.featureToggles.recentlyDeletedViaTrash = true;
+  });
+
+  afterEach(() => {
+    config.featureToggles.recentlyDeletedViaTrash = false;
+    mockIsTrashUnavailable.mockReturnValue(false);
+  });
+
+  it('replaces the empty state, so the page does not also claim nothing was deleted', async () => {
+    mockIsTrashUnavailable.mockReturnValue(true);
+    publishSearchState(defaultSearchState(buildSearchResult(1)));
+
+    render();
+
+    expect(await screen.findByRole('alert', { name: /temporarily unavailable/i })).toBeInTheDocument();
+    expect(screen.queryByText(/haven't deleted any dashboards/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the normal empty state when trash is available', async () => {
+    mockIsTrashUnavailable.mockReturnValue(false);
+    publishSearchState(defaultSearchState(buildSearchResult(2)));
+
+    render();
+
+    expect(await screen.findByText(/haven't deleted any dashboards/i)).toBeInTheDocument();
+    expect(screen.queryByRole('alert', { name: /temporarily unavailable/i })).not.toBeInTheDocument();
   });
 });

@@ -27,7 +27,7 @@ import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, filterSearchResults } from './utils';
 
 /** The query the Recently deleted page can express, whichever backend serves it. */
-export interface DeletedDashboardsQuery {
+interface DeletedDashboardsQuery {
   query?: string;
   tag?: string[];
   sort?: string;

@@ -30,6 +30,7 @@ const RecentlyDeletedPage = memo(() => {
   const hasSelection = useHasSelection();
 
   const viaTrash = Boolean(config.featureToggles.recentlyDeletedViaTrash);
+  const trashUnavailable = viaTrash && deletedDashboardsCache.isTrashUnavailable();
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
   const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
@@ -50,17 +51,6 @@ const RecentlyDeletedPage = memo(() => {
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
         <DeletedDashboardsLimitBanner resultToken={searchState.result} />
-        {/* An empty list otherwise reads as "nothing was deleted", which is the wrong answer. */}
-        {viaTrash && searchState.result && deletedDashboardsCache.isTrashUnavailable() && (
-          <Alert
-            severity="warning"
-            title={t('recently-deleted.unavailable.title', 'Recently deleted is temporarily unavailable')}
-          >
-            <Trans i18nKey="recently-deleted.unavailable.body">
-              The list of deleted dashboards is still being prepared. Try again in a few minutes.
-            </Trans>
-          </Alert>
-        )}
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
@@ -98,7 +88,23 @@ const RecentlyDeletedPage = memo(() => {
                 height={height}
                 searchStateManager={stateManager}
                 searchState={searchState}
-                emptyState={<RecentlyDeletedEmptyState searchState={searchState} />}
+                // Trash being unavailable produces an empty result, which would otherwise
+                // read as "nothing was deleted" — the wrong answer, so it replaces the
+                // empty state rather than sitting above it.
+                emptyState={
+                  trashUnavailable ? (
+                    <Alert
+                      severity="warning"
+                      title={t('recently-deleted.unavailable.title', 'Recently deleted is temporarily unavailable')}
+                    >
+                      <Trans i18nKey="recently-deleted.unavailable.body">
+                        The list of deleted dashboards is still being prepared. Try again in a few minutes.
+                      </Trans>
+                    </Alert>
+                  ) : (
+                    <RecentlyDeletedEmptyState searchState={searchState} />
+                  )
+                }
               />
             )}
           </AutoSizer>
