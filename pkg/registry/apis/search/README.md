@@ -76,7 +76,7 @@ search: {
 
 Kind-level, and note the colon: `search: { ... }`. Brace shorthand is not valid CUE here. Definition: `#KindSearch` in the app SDK's `codegen/cuekind/def.cue`.
 
-`endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash authorizes on a different rule that has not been reviewed yet, and it is off deployment-wide today anyway (`enable_trash_api` defaults to `false`).
+`endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash decides access from a different rule, and only some kinds are allowed to serve it (see [Other things worth knowing](#other-things-worth-knowing)).
 
 The opt-out works today and keeps working after the field requirement is dropped.
 
@@ -249,6 +249,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
 - **405 Method Not Allowed**: the kind is served, but has no search endpoint. It declares no search fields, it opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
+- **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
 
 ## 7. Authorization
 
@@ -263,7 +264,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is off today**, so declaring search fields gets you `/search` only. That is expected to change: `/trash` is planned to be on by default, and kinds that do not want it will need `trash: false`. Worth knowing now if a deleted-items list would be wrong for your kind.
+- **Trash is limited to dashboards today**, so declaring search fields gets you `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 

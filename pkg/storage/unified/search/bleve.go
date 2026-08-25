@@ -2515,10 +2515,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
-		// An index built before deleted documents were being kept holds none, so trash
-		// would read as empty when it is really unavailable until the index rebuilds.
-		if !b.keepsDeletedDocuments && b.wantsDeletedDocuments {
-			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
+		// An index that does not keep deleted documents cannot distinguish an empty
+		// trash from unavailable trash, so fail instead of returning a misleading result.
+		if !b.keepsDeletedDocuments {
+			message := "trash is not available for this resource because indexing deleted documents is disabled"
+			if b.wantsDeletedDocuments {
+				message = "trash is not available for this resource until its search index has been rebuilt"
+			}
+			return nil, resource.NewServiceUnavailableError(message)
 		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t

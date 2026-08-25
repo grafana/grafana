@@ -55,8 +55,8 @@ func TestBuild_NothingMountedWhenOffOrUnusable(t *testing.T) {
 	assert.Nil(t, Build(false, true, nil, nil, b, nil), "no client, trash on")
 }
 
-// Trash authorizes on a rule that has not been reviewed yet, so turning search on
-// must not expose it.
+// The two endpoints are switched separately, so turning one on must not turn the
+// other on.
 func TestBuild_SearchAndTrashAreIndependent(t *testing.T) {
 	newBuilders := func() []builder.APIGroupBuilder {
 		return []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{
@@ -106,10 +106,11 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 		assert.Empty(t, paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil)))
 	})
 
-	t.Run("one field, gets both endpoints", func(t *testing.T) {
+	// Fields alone do not grant trash: playlists are not in trashAllowlist.
+	t.Run("one field, gets the search endpoint", func(t *testing.T) {
 		fields := []app.ManifestVersionKindSearchField{{Name: "interval", Path: "spec.interval", Type: "string"}}
 		got := paths(BuildFromManifests(playlists(fields), true, true, nil, fakeClient{}, builders, nil))
-		assert.ElementsMatch(t, []string{"playlists/search", "playlists/trash"}, got[gv.String()])
+		assert.Equal(t, []string{"playlists/search"}, got[gv.String()])
 	})
 }
 
@@ -266,6 +267,37 @@ func TestBuild_EnrolledKindsAreListedHere(t *testing.T) {
 	}, names)
 }
 
+// A kind gaining /trash should fail this test rather than ship unnoticed.
+func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
+	got := paths(Build(true, true, nil, fakeClient{},
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: allServedGroupVersions(t)}}, nil))
+
+	resources := map[string]bool{}
+	for _, ps := range got {
+		for _, p := range ps {
+			name, endpoint, _ := strings.Cut(p, "/")
+			if endpoint == "trash" {
+				resources[name] = true
+			}
+		}
+	}
+	names := make([]string, 0, len(resources))
+	for r := range resources {
+		names = append(names, r)
+	}
+
+	assert.ElementsMatch(t, []string{"dashboards"}, names)
+}
+
+// Folders are enrolled for search but are not in trashAllowlist.
+func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
+	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "folder.grafana.app", Version: "v1"}}}
+
+	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
+
+	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
+}
+
 // Declining one endpoint must leave the other alone.
 func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 	gv := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
@@ -352,7 +384,8 @@ func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testin
 
 		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{})
 		require.NoError(t, err)
-		assert.ElementsMatch(t, []string{"todos/search", "todos/trash"}, paths(routes)[gv.String()])
+		// No trash: ext app kinds are not in trashAllowlist.
+		assert.Equal(t, []string{"todos/search"}, paths(routes)[gv.String()])
 	})
 
 	t.Run("nothing mounted for a group version the caller does not serve", func(t *testing.T) {
