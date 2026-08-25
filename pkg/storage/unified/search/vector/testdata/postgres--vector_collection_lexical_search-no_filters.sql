@@ -20,7 +20,7 @@ SELECT
     AND "namespace" = 'stacks-123'
     AND "model"     = 'text-embedding-005'
     AND "ts" @@ websearch_to_tsquery('english', 'mimir "high latency" -staging')
-    AND querytree(websearch_to_tsquery('english', 'mimir "high latency" -staging')) NOT IN ('T', '')
+    AND websearch_to_tsquery('english', 'mimir "high latency" -staging')::text ~ '(^|[ (&|])'''
     ORDER BY "uid", "rank" DESC
     ) AS best
     WHERE "rank" > 0

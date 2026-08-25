@@ -1049,6 +1049,11 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 		assert.Empty(t, search("the -staging"))
 	})
 
+	t.Run("or-negation keeps positive matches", func(t *testing.T) {
+		// 'cpu' | !'stage' isn't indexable, but the cpu docs must still hit.
+		assert.Equal(t, []string{"r1"}, uids(search("CPU OR -staging")))
+	})
+
 	t.Run("rows without metadata are searchable", func(t *testing.T) {
 		// Metadata is optional on external writes; a NULL must not fail the
 		// row scan on either leg.

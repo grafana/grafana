@@ -20,7 +20,7 @@ SELECT
     AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
     AND {{ .Ident "model" }}     = {{ .Arg .Model }}
     AND {{ .Ident "ts" }} @@ websearch_to_tsquery('english', {{ .Arg .Query }})
-    AND querytree(websearch_to_tsquery('english', {{ .Arg .Query }})) NOT IN ('T', '')
+    AND websearch_to_tsquery('english', {{ .Arg .Query }})::text ~ '(^|[ (&|])'''
     {{ if .UIDFilter }}
     AND {{ .Ident "uid" }} IN ({{ .ArgList .UIDFilterSlice }})
     {{ end }}

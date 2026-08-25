@@ -20,7 +20,7 @@ SELECT
     AND "namespace" = 'stacks-123'
     AND "model"     = 'text-embedding-005'
     AND "ts" @@ websearch_to_tsquery('english', 'cpu')
-    AND querytree(websearch_to_tsquery('english', 'cpu')) NOT IN ('T', '')
+    AND websearch_to_tsquery('english', 'cpu')::text ~ '(^|[ (&|])'''
     AND ("metadata" @> '{"folderUid":"f1"}' OR "metadata" @> '{"folderUid":["f1"]}')
     AND ("metadata" @> '{"kind":"alert_rule"}' OR "metadata" @> '{"kind":["alert_rule"]}')
     ORDER BY "uid", "rank" DESC
