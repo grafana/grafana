@@ -28,6 +28,7 @@ const TRASH_QUERY_KIND = 'TrashQuery';
  */
 export const TRASH_FIELD_TITLE = 'title';
 export const TRASH_FIELD_FOLDER = 'folder';
+export const TRASH_FIELD_TAGS = 'tags';
 export const TRASH_FIELD_DELETED_BY = 'deleted_by';
 export const TRASH_FIELD_DELETION_TIME = 'deletion_time';
 
@@ -43,7 +44,7 @@ interface FilterPredicate {
 }
 
 /** Exactly one property may be set; the set one names the node's type. */
-interface WhereNode {
+export interface WhereNode {
   and?: WhereNode[];
   text?: TextPredicate;
   filter?: FilterPredicate;

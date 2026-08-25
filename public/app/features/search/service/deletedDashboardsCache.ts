@@ -18,18 +18,24 @@ import {
   TRASH_FIELD_DELETED_BY,
   TRASH_FIELD_DELETION_TIME,
   TRASH_FIELD_FOLDER,
+  TRASH_FIELD_TAGS,
   TRASH_FIELD_TITLE,
   type SortField,
   type TrashItem,
   type TrashQuery,
+  type WhereNode,
 } from './trashSearchApi';
 import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, filterSearchResults } from './utils';
 
-/** The query the Recently deleted page can express, whichever backend serves it. */
+/**
+ * The query the Recently deleted page can express, whichever backend serves it.
+ *
+ * `tags` rather than `tag`, because that is what the search state manager puts in a SearchQuery.
+ */
 interface DeletedDashboardsQuery {
   query?: string;
-  tag?: string[];
+  tags?: string[];
   sort?: string;
 }
 
@@ -73,15 +79,40 @@ function isTrashEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, false);
 }
 
+/**
+ * The fields to ask for. The server's default set omits tags, and naming any field replaces
+ * that default, so every field the UI reads has to be listed. `deleted_rv` is appended by the
+ * server whatever we ask for.
+ */
+const TRASH_RETURN_FIELDS = [
+  TRASH_FIELD_TITLE,
+  TRASH_FIELD_FOLDER,
+  TRASH_FIELD_TAGS,
+  TRASH_FIELD_DELETED_BY,
+  TRASH_FIELD_DELETION_TIME,
+];
+
 /** Builds the request body for one page of a Recently deleted query. */
 function buildTrashQuery(query: DeletedDashboardsQuery, continueToken: string | undefined, limit: number): TrashQuery {
+  // "*" is how the page spells "everything", but the endpoint would treat it as a literal.
   const text = query.query?.trim();
   const sort = query.sort ? TRASH_SORT_FIELDS[query.sort] : undefined;
 
+  const leaves: WhereNode[] = [];
+  if (text && text !== '*') {
+    leaves.push({ text: { value: text, fields: [TRASH_FIELD_TITLE] } });
+  }
+  if (query.tags?.length) {
+    leaves.push({ filter: { field: TRASH_FIELD_TAGS, operator: 'In', values: query.tags } });
+  }
+
+  // The endpoint takes a single leaf or a single `and` of leaves, so only wrap when there are two.
+  const where = leaves.length === 1 ? leaves[0] : leaves.length > 1 ? { and: leaves } : undefined;
+
   return {
-    // "*" is how the page spells "everything", but the endpoint would treat it as a literal.
-    ...(text && text !== '*' ? { where: { text: { value: text, fields: [TRASH_FIELD_TITLE] } } } : {}),
+    ...(where ? { where } : {}),
     ...(sort ? { sort: [sort] } : {}),
+    fields: TRASH_RETURN_FIELDS,
     limit: Math.min(limit, TRASH_PAGE_SIZE),
     ...(continueToken ? { continue: continueToken } : {}),
   };
@@ -476,12 +507,7 @@ function readString(item: TrashItem, name: string): string | undefined {
   return typeof value === 'string' && value !== '' ? value : undefined;
 }
 
-/**
- * Converts a trash result item to the SearchHit shape the deleted dashboards view renders.
- *
- * Tags are always empty: a trash document does not index them, so there is nothing to show
- * and nothing to filter on.
- */
+/** Converts a trash result item to the SearchHit shape the deleted dashboards view renders. */
 function trashItemToSearchResult(item: TrashItem, deletedByDisplayMap: Map<string, string>): SearchHit {
   const field: Record<string, string | number> = {};
 
@@ -498,13 +524,14 @@ function trashItemToSearchResult(item: TrashItem, deletedByDisplayMap: Map<strin
   }
 
   const folder = readString(item, TRASH_FIELD_FOLDER) ?? 'general';
+  const tags = item.fields?.[TRASH_FIELD_TAGS];
 
   return {
     resource: 'dashboards',
     name: item.resource.name,
     title: readString(item, TRASH_FIELD_TITLE) ?? '',
     folder,
-    tags: [],
+    tags: Array.isArray(tags) ? tags.filter((tag): tag is string => typeof tag === 'string') : [],
     field,
     url: '',
   };

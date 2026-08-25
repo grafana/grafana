@@ -65,8 +65,6 @@ const RecentlyDeletedPage = memo(() => {
         ) : (
           <ActionRow
             state={searchState}
-            // A trash result carries no tags, so there is nothing to offer or filter on.
-            showTagFilter={!viaTrash}
             getTagOptions={stateManager.getTagOptions}
             getSortOptions={stateManager.getSortOptions}
             sortPlaceholder={getGrafanaSearcher().sortPlaceholder}

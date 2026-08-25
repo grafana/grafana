@@ -1,6 +1,5 @@
 import { type SelectableValue, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import {
   RECENTLY_DELETED_SORT_VALUES,
@@ -65,13 +64,10 @@ export class TrashStateManager extends SearchStateManager {
 
   // Get tags from deleted dashboards cache
   getTagOptions = async (): Promise<TermCount[]> => {
-    // A trash document does not index tags, so the list cannot be built from the results.
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, false)) {
-      return [];
-    }
-
     try {
-      const deletedHits = await deletedDashboardsCache.get();
+      // Unfiltered, so the options cover everything in trash rather than the current results.
+      // Trash rejects facets, so counting the rows is the only way to build this.
+      const deletedHits = await deletedDashboardsCache.search({});
       const tagCounts = new Map<string, number>();
 
       deletedHits.forEach((hit) => {

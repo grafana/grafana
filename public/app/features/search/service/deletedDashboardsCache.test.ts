@@ -709,6 +709,7 @@ describe('deletedDashboardsCache with the trash flag on', () => {
       fields: {
         title: `Dashboard ${name}`,
         folder: 'my-folder',
+        tags: ['infra', 'prod'],
         deleted_by: 'user:alice',
         deletion_time: 1700000000000,
         deleted_rv: '1800000000000000000',
@@ -740,10 +741,55 @@ describe('deletedDashboardsCache with the trash flag on', () => {
         name: 'dash-1',
         title: 'Dashboard dash-1',
         folder: 'my-folder',
-        tags: [],
+        tags: ['infra', 'prod'],
         field: { deletionTimestamp: new Date(1700000000000).toISOString(), deletedBy: 'Alice' },
       }),
     ]);
+  });
+
+  it('asks for tags explicitly, since the server leaves them out by default', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({});
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({ fields: expect.arrayContaining(['tags']) })
+    );
+  });
+
+  it('sends a tag filter to the server rather than filtering in the browser', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['infra'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['infra'] } } })
+    );
+  });
+
+  it('combines a text query and a tag filter into a single and', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ query: 'cpu', tags: ['infra', 'prod'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          and: [
+            { text: { value: 'cpu', fields: ['title'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['infra', 'prod'] } },
+          ],
+        },
+      })
+    );
+  });
+
+  it('skips non-string entries in the tags field', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1', { tags: ['ok', 42, null] })]));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(result[0].tags).toEqual(['ok']);
   });
 
   it('treats the empty and wildcard queries as "everything"', async () => {
