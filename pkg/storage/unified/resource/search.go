@@ -2358,8 +2358,8 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 
 // buildDeletedDocument builds the document for an object that is in the trash.
 // Trash serves a fixed field set, so the kind's builder is skipped: it would only
-// add live-only fields, at about twice the cost. Its title comes from the same
-// FindTitle, so trash and live search agree.
+// add live-only fields, at about twice the cost. Title and tags come from the same
+// place live search reads them, so the two agree.
 //
 // Fields are listed rather than cleared, so a field added to IndexableDocument
 // later cannot reach trash documents by accident.
@@ -2383,6 +2383,14 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 
 		IsDeleted: new(true),
 		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// Tags come from the marker's spec, which is the whole object as it was, so this
+	// costs no extra read. A spec that is missing or not an object leaves them unset,
+	// exactly as it leaves the title falling back to the name.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+		}
 	}
 	// The deletion marker records the deleting user as the last updater, which is
 	// also what listFromTrash reads, so both trash views name the same user.
