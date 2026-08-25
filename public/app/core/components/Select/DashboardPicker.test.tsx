@@ -45,6 +45,18 @@ describe('DashboardPicker', () => {
         })
       );
     });
+
+    it('should render an unknown current value that can be cleared when clearable', async () => {
+      const onChange = jest.fn();
+      const { user } = render(
+        <DashboardPicker value="unknown-dashboard-uid" isClearable onChange={onChange} showUnknown />
+      );
+
+      await screen.findByText('Unknown dashboard (unknown-dashboard-uid)');
+      await user.click(await screen.findByRole('button', { name: 'Clear value' }));
+
+      expect(onChange).toHaveBeenCalledWith(undefined);
+    });
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
