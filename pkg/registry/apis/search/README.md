@@ -76,7 +76,7 @@ search: {
 
 Kind-level, and note the colon: `search: { ... }`. Brace shorthand is not valid CUE here. Definition: `#KindSearch` in the app SDK's `codegen/cuekind/def.cue`.
 
-`endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash authorizes on a different rule that has not been reviewed yet, and it is off deployment-wide today anyway (`enable_trash_api` defaults to `false`).
+`endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash decides access from a different rule, and only some kinds are allowed to serve it (see [Other things worth knowing](#other-things-worth-knowing)).
 
 The opt-out works today and keeps working after the field requirement is dropped.
 
@@ -263,7 +263,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is off today**, so declaring search fields gets you `/search` only. That is expected to change: `/trash` is planned to be on by default, and kinds that do not want it will need `trash: false`. Worth knowing now if a deleted-items list would be wrong for your kind.
+- **Trash is limited to dashboards today**, so declaring search fields gets you `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
