@@ -32,18 +32,6 @@ interface MultiComboboxBaseProps<T extends string | number>
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;
   enableAllOption?: boolean;
-  /**
-   * Clears the search text and unfilters the list once an option is selected. Off by default, because
-   * keeping the search is what lets users tick several matches from one query.
-   */
-  clearSearchOnSelect?: boolean;
-  /**
-   * Highlights the first option as the list changes, so Enter commits it without arrowing down first.
-   *
-   * Off by default. Not for use with `enableAllOption`, which puts its own row first - Enter would then select or
-   * deselect everything.
-   */
-  highlightFirstOption?: boolean;
 }
 
 export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
@@ -66,8 +54,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     minWidth,
     maxWidth,
     isClearable,
-    clearSearchOnSelect = false,
-    highlightFirstOption = false,
     createCustomValue = false,
     customValueDescription,
     'aria-labelledby': ariaLabelledBy,
@@ -200,10 +186,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     inputId: id,
     inputValue,
     selectedItem: null,
-    // downshift resets the highlight to this on every input change, which is what makes Enter commit
-    // what was just typed rather than needing an ArrowDown first. Left undefined otherwise, so the
-    // default stays downshift's own -1: nothing highlighted, and Enter selects nothing.
-    defaultHighlightedIndex: highlightFirstOption ? 0 : undefined,
+    defaultHighlightedIndex: 0,
     isItemDisabled: (item) => !!item?.infoOption,
     stateReducer: (state, actionAndChanges) => {
       const { type } = actionAndChanges;
@@ -222,17 +205,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.ItemClick: {
-          // Holding the highlight only makes sense while the list stays the same; clearing the search
-          // rebuilds it, so the held index would address a different option.
-          const willClearSearch = clearSearchOnSelect && state.inputValue !== '' && Boolean(changes.selectedItem);
-
+        case useCombobox.stateChangeTypes.ItemClick:
           return {
             ...changes,
             isOpen: true,
-            highlightedIndex: willClearSearch ? changes.highlightedIndex : state.highlightedIndex,
+            highlightedIndex: state.highlightedIndex,
           };
-        }
         case useCombobox.stateChangeTypes.InputBlur:
           setInputValue('');
         default:
@@ -285,16 +263,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             addSelectedItem(newSelectedItem);
           }
 
-          // Done here rather than in the reducer: that is meant to be pure, and `inputValue` is a
-          // controlled prop, so an inputValue returned from the reducer is inert. updateOptions('')
-          // rather than useOptions' resetSearch because it also reloads an unfiltered async list;
-          // for a plain options array the two are the same. Clearing the search is also what drops
-          // the createCustomValue row, which is right once the value it offered has been committed.
-          // Gated on a selection, so clearing stays tied to what was selected rather than to Enter.
-          if (clearSearchOnSelect && newSelectedItem && inputValue !== '') {
-            setInputValue('');
-            updateOptions('');
-          }
           break;
         case useCombobox.stateChangeTypes.InputChange:
           // setInputValue is intentionally NOT called here. It is called synchronously in the
