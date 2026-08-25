@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import {
   AnnoKeyFolder,
@@ -10,10 +11,73 @@ import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/compone
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { dispatch } from 'app/types/store';
 
-import { getMessageFromError } from '../../../core/utils/errors';
+import { getMessageFromError, getStatusFromError } from '../../../core/utils/errors';
 
+import {
+  fetchTrashPage,
+  TRASH_FIELD_DELETED_BY,
+  TRASH_FIELD_DELETION_TIME,
+  TRASH_FIELD_FOLDER,
+  TRASH_FIELD_TITLE,
+  type SortField,
+  type TrashItem,
+  type TrashQuery,
+} from './trashSearchApi';
 import { type SearchHit } from './unified';
-import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
+import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, filterSearchResults } from './utils';
+
+/** The query the Recently deleted page can express, whichever backend serves it. */
+export interface DeletedDashboardsQuery {
+  query?: string;
+  tag?: string[];
+  sort?: string;
+}
+
+/**
+ * Server page size. The endpoint caps a page at 500, so asking for more just gets clamped.
+ * Pages are followed up to DELETED_DASHBOARDS_LIMIT rows.
+ */
+const TRASH_PAGE_SIZE = 500;
+
+/**
+ * Ceiling on how many requests one query may make. Rows fetched cannot bound the loop on its
+ * own: the endpoint is allowed to answer a short or empty page and still hand back a token, so
+ * a token that never clears would otherwise keep the loop going. Two pages cover the row
+ * ceiling; the rest is room for short pages.
+ */
+const MAX_TRASH_PAGES = 8;
+
+/**
+ * The UI's sort values mapped onto trash fields. `deletedby-*` sorts on the deleter's UID
+ * rather than their display name, because the name is resolved in the browser and the server
+ * has never seen it.
+ */
+const TRASH_SORT_FIELDS: Record<string, SortField> = {
+  'alpha-asc': { field: TRASH_FIELD_TITLE, direction: 'asc' },
+  'alpha-desc': { field: TRASH_FIELD_TITLE, direction: 'desc' },
+  'deleted-asc': { field: TRASH_FIELD_DELETION_TIME, direction: 'asc' },
+  'deleted-desc': { field: TRASH_FIELD_DELETION_TIME, direction: 'desc' },
+  'deletedby-asc': { field: TRASH_FIELD_DELETED_BY, direction: 'asc' },
+  'deletedby-desc': { field: TRASH_FIELD_DELETED_BY, direction: 'desc' },
+};
+
+function isTrashEnabled(): boolean {
+  return Boolean(config.featureToggles.recentlyDeletedViaTrash);
+}
+
+/** Builds the request body for one page of a Recently deleted query. */
+function buildTrashQuery(query: DeletedDashboardsQuery, continueToken: string | undefined, limit: number): TrashQuery {
+  const text = query.query?.trim();
+  const sort = query.sort ? TRASH_SORT_FIELDS[query.sort] : undefined;
+
+  return {
+    // "*" is how the page spells "everything", but the endpoint would treat it as a literal.
+    ...(text && text !== '*' ? { where: { text: { value: text, fields: [TRASH_FIELD_TITLE] } } } : {}),
+    ...(sort ? { sort: [sort] } : {}),
+    limit: Math.min(limit, TRASH_PAGE_SIZE),
+    ...(continueToken ? { continue: continueToken } : {}),
+  };
+}
 
 /**
  * Caches the deleted-dashboards `TableResponse` and the resolved deleter display names.
@@ -28,6 +92,26 @@ class DeletedDashboardsCache {
   private tableCache: TableResponse | null = null;
   private tablePromise: Promise<TableResponse> | null = null;
   private displayNameCache: Map<string, string> = new Map();
+  /** Trash results per query, since the server does the filtering and each query is its own list. */
+  private trashCache: Map<string, TrashItem[]> = new Map();
+  /** Dashboards restored this session. The trash index may still list them for a moment. */
+  private restoredUids: Set<string> = new Set();
+  /** Set when the server says trash exists but cannot be served yet. */
+  private trashUnavailable = false;
+
+  /**
+   * The deleted dashboards matching `query`, already filtered and sorted.
+   *
+   * With the flag off the whole list is fetched and the browser filters it. With the flag on
+   * the server does both, so the two paths can return different sets — see the feature flag's
+   * description.
+   */
+  async search(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
+    if (!isTrashEnabled()) {
+      return filterSearchResults(await this.get(), query);
+    }
+    return this.searchTrash(query);
+  }
 
   async get(): Promise<SearchHit[]> {
     const table = await this.getAsTable();
@@ -62,12 +146,29 @@ class DeletedDashboardsCache {
     }
   }
 
+  /**
+   * Whether the last trash fetch failed because the server cannot serve trash yet, rather than
+   * because nothing is deleted. The two are otherwise indistinguishable to the user.
+   */
+  isTrashUnavailable(): boolean {
+    return this.trashUnavailable;
+  }
+
   clear(): void {
     this.tableCache = null;
     this.tablePromise = null;
+    this.trashCache.clear();
+    this.trashUnavailable = false;
+    // Deleting a dashboard clears the cache, and a dashboard restored earlier may be among
+    // the deleted ones again, so the suppression list must not outlive the cached results.
+    this.restoredUids.clear();
   }
 
   removeItems(uids: string[]): void {
+    for (const uid of uids) {
+      this.restoredUids.add(uid);
+    }
+
     if (!this.tableCache) {
       return;
     }
@@ -76,6 +177,68 @@ class DeletedDashboardsCache {
       ...this.tableCache,
       rows: this.tableCache.rows.filter((row) => !uidSet.has(row.object.metadata.name)),
     };
+  }
+
+  private async searchTrash(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
+    const key = JSON.stringify({ query: query.query ?? '', sort: query.sort ?? '' });
+
+    let items = this.trashCache.get(key);
+    if (!items) {
+      const fetched = await this.fetchTrash(query);
+      // A failure is not cached: an index being rebuilt becomes available on its own, and
+      // caching the empty list would leave the page stuck until the next delete or restore.
+      if (fetched === null) {
+        return [];
+      }
+      items = fetched;
+      this.trashCache.set(key, items);
+    }
+
+    const uids = new Set<string>();
+    for (const item of items) {
+      const uid = readString(item, TRASH_FIELD_DELETED_BY);
+      if (uid) {
+        uids.add(uid);
+      }
+    }
+    // Resolved per call, not cached with the items, so DELETED_BY_UNKNOWN entries recover
+    // once an IAM lookup succeeds.
+    const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
+
+    return items
+      .filter((item) => !this.restoredUids.has(item.resource.name))
+      .map((item) => trashItemToSearchResult(item, deletedByDisplayMap));
+  }
+
+  /**
+   * Follows `continue` until the result set is exhausted or DELETED_DASHBOARDS_LIMIT rows are in
+   * hand. Returns null if the fetch failed, which the caller must not confuse with no results.
+   */
+  private async fetchTrash(query: DeletedDashboardsQuery): Promise<TrashItem[] | null> {
+    try {
+      const items: TrashItem[] = [];
+      let continueToken: string | undefined;
+      let pages = 0;
+
+      do {
+        const response = await fetchTrashPage(
+          buildTrashQuery(query, continueToken, DELETED_DASHBOARDS_LIMIT - items.length)
+        );
+        items.push(...(response.items ?? []));
+        continueToken = response.metadata?.continue;
+        pages++;
+      } while (items.length < DELETED_DASHBOARDS_LIMIT && continueToken && pages < MAX_TRASH_PAGES);
+
+      this.trashUnavailable = false;
+      return items;
+    } catch (error) {
+      // 503 is the one failure the server distinguishes for us: trash is on, but this index
+      // has not been rebuilt to hold deleted documents. Anything else, including a server
+      // that does not serve the endpoint at all, reads as an empty list.
+      this.trashUnavailable = getStatusFromError(error) === 503;
+      console.error('Failed to fetch deleted dashboards from the trash endpoint:', error);
+      return null;
+    }
   }
 
   private async fetchTable(): Promise<TableResponse> {
@@ -277,4 +440,44 @@ function tableToSearchResult(table: TableResponse, deletedByDisplayMap?: Map<str
       url: '',
     };
   });
+}
+
+/** Reads one string field off a trash item. Absent fields are omitted by the server. */
+function readString(item: TrashItem, name: string): string | undefined {
+  const value = item.fields?.[name];
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+/**
+ * Converts a trash result item to the SearchHit shape the deleted dashboards view renders.
+ *
+ * Tags are always empty: a trash document does not index them, so there is nothing to show
+ * and nothing to filter on.
+ */
+function trashItemToSearchResult(item: TrashItem, deletedByDisplayMap: Map<string, string>): SearchHit {
+  const field: Record<string, string | number> = {};
+
+  // The endpoint reports the deletion time as unix millis; the rest of the UI expects the
+  // same ISO string the object metadata carries.
+  const deletionTime = item.fields?.[TRASH_FIELD_DELETION_TIME];
+  if (typeof deletionTime === 'number') {
+    field.deletionTimestamp = new Date(deletionTime).toISOString();
+  }
+
+  const deletedByUid = readString(item, TRASH_FIELD_DELETED_BY);
+  if (deletedByUid) {
+    field.deletedBy = deletedByDisplayMap.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
+  }
+
+  const folder = readString(item, TRASH_FIELD_FOLDER) ?? 'general';
+
+  return {
+    resource: 'dashboards',
+    name: item.resource.name,
+    title: readString(item, TRASH_FIELD_TITLE) ?? '',
+    folder,
+    tags: [],
+    field,
+    url: '',
+  };
 }

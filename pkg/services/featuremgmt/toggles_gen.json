@@ -5745,6 +5745,21 @@
     },
     {
       "metadata": {
+        "name": "recentlyDeletedViaTrash",
+        "resourceVersion": "1787642659770",
+        "creationTimestamp": "2026-08-25T07:24:19Z"
+      },
+      "spec": {
+        "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "recentlyViewedDashboards",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-12-10T16:28:19Z"

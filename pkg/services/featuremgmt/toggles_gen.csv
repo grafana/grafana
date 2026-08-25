@@ -294,6 +294,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
+2026-08-25,recentlyDeletedViaTrash,experimental,@grafana/search-and-storage,false,false,true
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-12,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-05-22,react19,GA,@grafana/grafana-frontend-platform,false,false,false

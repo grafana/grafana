@@ -3,12 +3,15 @@ import { memo, useEffect } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
+
+import { deletedDashboardsCache } from '../search/service/deletedDashboardsCache';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
@@ -25,6 +28,8 @@ const RecentlyDeletedPage = memo(() => {
 
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
+
+  const viaTrash = Boolean(config.featureToggles.recentlyDeletedViaTrash);
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
   const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
@@ -45,6 +50,17 @@ const RecentlyDeletedPage = memo(() => {
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
         <DeletedDashboardsLimitBanner resultToken={searchState.result} />
+        {/* An empty list otherwise reads as "nothing was deleted", which is the wrong answer. */}
+        {viaTrash && searchState.result && deletedDashboardsCache.isTrashUnavailable() && (
+          <Alert
+            severity="warning"
+            title={t('recently-deleted.unavailable.title', 'Recently deleted is temporarily unavailable')}
+          >
+            <Trans i18nKey="recently-deleted.unavailable.body">
+              The list of deleted dashboards is still being prepared. Try again in a few minutes.
+            </Trans>
+          </Alert>
+        )}
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
@@ -59,6 +75,8 @@ const RecentlyDeletedPage = memo(() => {
         ) : (
           <ActionRow
             state={searchState}
+            // A trash result carries no tags, so there is nothing to offer or filter on.
+            showTagFilter={!viaTrash}
             getTagOptions={stateManager.getTagOptions}
             getSortOptions={stateManager.getSortOptions}
             sortPlaceholder={getGrafanaSearcher().sortPlaceholder}

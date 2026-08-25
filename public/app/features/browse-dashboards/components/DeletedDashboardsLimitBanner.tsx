@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -21,10 +22,16 @@ interface Props {
 }
 
 export function DeletedDashboardsLimitBanner({ resultToken }: Props) {
-  const { value: data } = useAsync(() => deletedDashboardsCache.getAsTable(), [resultToken]);
+  const viaTrash = Boolean(config.featureToggles.recentlyDeletedViaTrash);
+  const { value: data } = useAsync(
+    () => (viaTrash ? Promise.resolve(undefined) : deletedDashboardsCache.getAsTable()),
+    [resultToken, viaTrash]
+  );
   const [dismissed, setDismissed] = useState<boolean>(() => store.getObject(DISMISS_STORAGE_KEY) === true);
 
-  if (!data || dismissed) {
+  // The trash endpoint returns one page of matches at a time, so the count this banner
+  // compares against no longer describes how many dashboards are being held.
+  if (!data || dismissed || viaTrash) {
     return null;
   }
 

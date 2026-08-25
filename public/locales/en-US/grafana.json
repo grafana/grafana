@@ -15215,6 +15215,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards is still being prepared. Try again in a few minutes.",
+      "title": "Recently deleted is temporarily unavailable"
     }
   },
   "recentlyDeleted": {

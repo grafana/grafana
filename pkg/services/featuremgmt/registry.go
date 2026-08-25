@@ -2536,6 +2536,15 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "recentlyDeletedViaTrash",
+			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyFrontend: true},
+		},
+		{
 			Name:            "deletedFolderResourceCleanup",
 			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
 			Stage:           FeatureStageExperimental,

@@ -1,9 +1,11 @@
+import { config } from '@grafana/runtime';
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
 import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { dispatch } from 'app/types/store';
 
 import { deletedDashboardsCache, resolveDeletedByDisplayMap } from './deletedDashboardsCache';
+import { fetchTrashPage, type TrashItem } from './trashSearchApi';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -25,6 +27,12 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: jest.fn(),
 }));
 
+jest.mock('./trashSearchApi', () => ({
+  ...jest.requireActual('./trashSearchApi'),
+  fetchTrashPage: jest.fn(),
+}));
+
+const mockFetchTrashPage = fetchTrashPage as jest.MockedFunction<typeof fetchTrashPage>;
 const mockInitiate = iamAPIv0alpha1.endpoints.getDisplayMapping.initiate as unknown as jest.Mock;
 const mockDispatch = dispatch as unknown as jest.Mock;
 
@@ -673,5 +681,160 @@ describe('DeletedDashboardsCache', () => {
     const result = await deletedDashboardsCache.get();
     expect(result).toHaveLength(1);
     expect(getDashboardAPI).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('deletedDashboardsCache with recentlyDeletedViaTrash', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    deletedDashboardsCache.clear();
+    config.featureToggles.recentlyDeletedViaTrash = true;
+    mockInitiate.mockReturnValue('initiate-thunk');
+    mockDispatch.mockReturnValue(
+      mockSubscription({
+        data: makeDisplayList([{ identity: { type: 'user', name: 'alice' }, displayName: 'Alice' }]),
+      })
+    );
+  });
+
+  afterEach(() => {
+    config.featureToggles.recentlyDeletedViaTrash = false;
+    deletedDashboardsCache.clear();
+  });
+
+  function makeItem(name: string, overrides: Record<string, unknown> = {}): TrashItem {
+    return {
+      resource: { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', name },
+      fields: {
+        title: `Dashboard ${name}`,
+        folder: 'my-folder',
+        deleted_by: 'user:alice',
+        deletion_time: 1700000000000,
+        deleted_rv: '1800000000000000000',
+        ...overrides,
+      },
+    };
+  }
+
+  function page(items: TrashItem[], continueToken?: string) {
+    return {
+      metadata: { totalHits: items.length, totalHitsRelation: 'eq' as const, continue: continueToken },
+      items,
+    };
+  }
+
+  it('asks the server for the text query and the sort, and resolves the deleter', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    const result = await deletedDashboardsCache.search({ query: 'cpu', sort: 'deleted-desc' });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { text: { value: 'cpu', fields: ['title'] } },
+        sort: [{ field: 'deletion_time', direction: 'desc' }],
+      })
+    );
+    expect(result).toEqual([
+      expect.objectContaining({
+        name: 'dash-1',
+        title: 'Dashboard dash-1',
+        folder: 'my-folder',
+        tags: [],
+        field: { deletionTimestamp: new Date(1700000000000).toISOString(), deletedBy: 'Alice' },
+      }),
+    ]);
+  });
+
+  it('treats the empty and wildcard queries as "everything"', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([]));
+
+    await deletedDashboardsCache.search({ query: '*' });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(expect.not.objectContaining({ where: expect.anything() }));
+  });
+
+  it('follows the continue token until the server runs out of pages', async () => {
+    mockFetchTrashPage
+      .mockResolvedValueOnce(page([makeItem('dash-1')], 'next'))
+      .mockResolvedValueOnce(page([makeItem('dash-2')]));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+    expect(mockFetchTrashPage).toHaveBeenLastCalledWith(expect.objectContaining({ continue: 'next' }));
+    expect(result.map((hit) => hit.name)).toEqual(['dash-1', 'dash-2']);
+  });
+
+  it('caches per query, so changing the query refetches but repeating it does not', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ query: 'cpu' });
+    await deletedDashboardsCache.search({ query: 'cpu' });
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+
+    await deletedDashboardsCache.search({ query: 'memory' });
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('hides restored dashboards until the next cache clear', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1'), makeItem('dash-2')]));
+
+    await deletedDashboardsCache.search({});
+    deletedDashboardsCache.removeItems(['dash-1']);
+
+    const afterRestore = await deletedDashboardsCache.search({});
+    expect(afterRestore.map((hit) => hit.name)).toEqual(['dash-2']);
+
+    deletedDashboardsCache.clear();
+    const afterClear = await deletedDashboardsCache.search({});
+    expect(afterClear.map((hit) => hit.name)).toEqual(['dash-1', 'dash-2']);
+  });
+
+  it('stops paging when the server keeps offering a token but no rows', async () => {
+    // The endpoint may answer an empty page and still hand back a token, so the row count
+    // cannot end the loop on its own.
+    mockFetchTrashPage.mockResolvedValue(page([], 'never-clears'));
+
+    const result = await deletedDashboardsCache.search({});
+
+    expect(result).toEqual([]);
+    expect(mockFetchTrashPage.mock.calls.length).toBeLessThanOrEqual(8);
+  });
+
+  it('reports trash unavailable on 503, and retries rather than caching the failure', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: { message: 'rebuilding' } });
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(true);
+
+    // Same query again: the index may have finished rebuilding, so it must ask again.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-1')]));
+    const retry = await deletedDashboardsCache.search({});
+
+    expect(retry.map((hit) => hit.name)).toEqual(['dash-1']);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+
+    consoleError.mockRestore();
+  });
+
+  it('does not report unavailable for failures other than 503', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValue({ status: 404, data: {} });
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('returns an empty list when the endpoint fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetchTrashPage.mockRejectedValue(new Error('trash is off'));
+
+    await expect(deletedDashboardsCache.search({})).resolves.toEqual([]);
+
+    consoleError.mockRestore();
   });
 });

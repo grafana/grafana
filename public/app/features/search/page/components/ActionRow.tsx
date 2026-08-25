@@ -29,6 +29,8 @@ interface ActionRowProps {
   state: SearchState;
   showStarredFilter?: boolean;
   showLayout?: boolean;
+  /** Off for result sets that carry no tags, where the filter would only ever be empty. */
+  showTagFilter?: boolean;
   sortPlaceholder?: string;
 
   onLayoutChange: (layout: SearchLayout) => void;
@@ -59,6 +61,7 @@ export const ActionRow = ({
   state,
   showStarredFilter,
   showLayout,
+  showTagFilter = true,
   sortPlaceholder,
   onLayoutChange,
   onSortChange,
@@ -85,7 +88,9 @@ export const ActionRow = ({
   return (
     <Stack justifyContent="space-between" alignItems="center" wrap={true}>
       <Stack alignItems="center" wrap={true}>
-        <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        {showTagFilter && (
+          <TagFilter isClearable={false} tags={state.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        )}
         {onOwnerReferenceChange && (
           <OwnersFilter values={state.ownerReference ?? []} onChange={onOwnerReferenceChange} />
         )}
