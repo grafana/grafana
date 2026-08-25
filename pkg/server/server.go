@@ -156,7 +156,10 @@ func (s *Server) Run() error {
 		return err
 	}
 	s.notifySystemd("READY=1")
-	stopCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
+	// Detach from the request-scoped context so a Shutdown call that cancels
+	// ctx does not abort the await below before modules have had a chance to
+	// stop (see hairyhenderson review on PR #131352).
+	stopCtx := trace.ContextWithSpan(context.WithoutCancel(ctx), trace.SpanFromContext(ctx))
 	return s.managerAdapter.AwaitTerminated(stopCtx)
 }
 

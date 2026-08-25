@@ -321,17 +321,19 @@ func (s *ModuleServer) Run() error {
 	// failing during startup must abort the start instead of being
 	// acknowledged first.
 	//
-	// Both waits use a background context because Shutdown cancels
-	// s.context: an aborted wait would make Run return and close
-	// shutdownFinished while modules are still stopping.
+	// StartAsync uses s.context so Shutdown cancellation propagates to module startup.
+	// The lifecycle waits use a WithoutCancel-wrapped context so that a Shutdown
+	// cancel does not make Run return and close shutdownFinished while modules
+	// are still stopping (see hairyhenderson review on PR #131352).
+	waitCtx := context.WithoutCancel(s.context)
 	if err := m.StartAsync(s.context); err != nil {
 		return err
 	}
-	if err := m.AwaitRunning(context.Background()); err != nil {
+	if err := m.AwaitRunning(waitCtx); err != nil {
 		return err
 	}
 	s.notifySystemd("READY=1")
-	return m.AwaitTerminated(context.Background())
+	return m.AwaitTerminated(waitCtx)
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {
