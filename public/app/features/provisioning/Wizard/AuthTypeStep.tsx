@@ -8,6 +8,7 @@ import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@gr
 import { type ConnectionSpec, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { toConnectionType } from '../utils/connectionData';
 import { isGitHubBased, supportsConnections } from '../utils/repositoryTypes';
 
 import { AppConnectionFields } from './AppConnectionFields';
@@ -75,15 +76,9 @@ const getAuthTypeOptions = (
         },
       ];
 
-  const appType = repoType === 'githubEnterprise' ? 'githubEnterprise' : 'github';
-  const oauthType =
-    repoType === 'githubEnterprise'
-      ? 'githubEnterpriseOAuth'
-      : repoType === 'gitlab'
-        ? 'gitlabOAuth'
-        : repoType === 'bitbucket'
-          ? 'bitbucketOAuth'
-          : 'githubOAuth';
+  const provider = supportsConnections(repoType) ? repoType : 'github';
+  const appType = toConnectionType(provider, 'app');
+  const oauthType = toConnectionType(provider, 'oauth');
 
   return options.filter(
     ({ id }) =>

@@ -36,28 +36,22 @@ function sweepStaleOAuthStates() {
   }
 }
 
+const OAUTH_TO_PROVIDER = {
+  githubOAuth: 'github',
+  githubEnterpriseOAuth: 'githubEnterprise',
+  gitlabOAuth: 'gitlab',
+  bitbucketOAuth: 'bitbucket',
+} as const;
+
 export function isOAuthConnectionType(type?: string): type is OAuthConnectionType {
-  return (
-    type === 'githubOAuth' || type === 'githubEnterpriseOAuth' || type === 'gitlabOAuth' || type === 'bitbucketOAuth'
-  );
+  return type != null && type in OAUTH_TO_PROVIDER;
 }
 
 // OAuth app connections talk to the same provider as their app-based counterparts
 export function connectionProviderType(
   type?: ConnectionSpec['type']
 ): 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | undefined {
-  switch (type) {
-    case 'githubOAuth':
-      return 'github';
-    case 'githubEnterpriseOAuth':
-      return 'githubEnterprise';
-    case 'gitlabOAuth':
-      return 'gitlab';
-    case 'bitbucketOAuth':
-      return 'bitbucket';
-    default:
-      return type;
-  }
+  return isOAuthConnectionType(type) ? OAUTH_TO_PROVIDER[type] : type;
 }
 
 export function buildOAuthAuthorizeUrl(
@@ -97,6 +91,13 @@ export function buildOAuthAuthorizeUrl(
   return textUtil.sanitizeUrl(`${authorizeUrl}?${params.toString()}`);
 }
 
+// Notifies the tab that started the authorization (see onOAuthAuthorizationComplete).
+function broadcastCompletion(name: string, error?: string) {
+  const channel = new BroadcastChannel(COMPLETION_CHANNEL);
+  channel.postMessage({ name, error });
+  channel.close();
+}
+
 // Reports a failed authorization (e.g. the user denied consent) back to the
 // waiting tab so it does not stay stuck on the pending state.
 export function failOAuthAuthorization(state: string, error: string): { name: string; popup?: boolean } | undefined {
@@ -108,9 +109,7 @@ export function failOAuthAuthorization(state: string, error: string): { name: st
   store.delete(key);
 
   const { name, popup } = JSON.parse(raw);
-  const channel = new BroadcastChannel(COMPLETION_CHANNEL);
-  channel.postMessage({ name, error });
-  channel.close();
+  broadcastCompletion(name, error);
 
   return { name, popup };
 }
@@ -148,9 +147,7 @@ export async function completeOAuthAuthorization(
       t('provisioning.connection-oauth.error-authorize-failed', 'Failed to complete authorization');
   }
 
-  const channel = new BroadcastChannel(COMPLETION_CHANNEL);
-  channel.postMessage({ name, error });
-  channel.close();
+  broadcastCompletion(name, error);
 
   return { name, popup, error };
 }

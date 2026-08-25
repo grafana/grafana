@@ -1,6 +1,5 @@
-import { type Path, type UseFormSetError } from 'react-hook-form';
+import { type Path } from 'react-hook-form';
 
-import { isFetchError } from '@grafana/runtime';
 import { type ErrorDetails, type StatusCause, type Status } from 'app/api/clients/provisioning/v0alpha1';
 import { extractStatusCauses } from 'app/api/utils';
 
@@ -176,24 +175,4 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
 
   const errors = extractFormErrors(data);
   return mapErrorsToField(errors, fieldMap, { allowPartial: true });
-};
-
-/**
- * Map a request error onto connection form fields.
- * Returns true when at least one field error was set.
- */
-export const setConnectionFormErrors = (error: unknown, setError: UseFormSetError<ConnectionFormData>): boolean => {
-  if (!isFetchError(error)) {
-    return false;
-  }
-
-  const formErrors = getConnectionFormErrors(error.data);
-  if (formErrors.length === 0) {
-    return false;
-  }
-
-  for (const [field, errorMessage] of formErrors) {
-    setError(field, errorMessage);
-  }
-  return true;
 };

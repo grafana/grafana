@@ -8,7 +8,7 @@ import { extractErrorMessage } from 'app/api/utils';
 import { type ConnectionFormData } from '../types';
 import { connectionSpecFromForm } from '../utils/connectionData';
 import { isOAuthConnectionType } from '../utils/connectionOAuth';
-import { extractFormErrors, setConnectionFormErrors } from '../utils/getFormErrors';
+import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useInvalidateConnectionList } from './useConnectionList';
 import { useCreateOrUpdateConnection } from './useCreateOrUpdateConnection';
@@ -107,14 +107,16 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
 }
 
 function errorResult(error: unknown, setError: UseFormSetError<ConnectionFormData>): SaveConnectionResult {
-  if (setConnectionFormErrors(error, setError)) {
+  if (!isFetchError(error)) {
+    return { status: 'error', fieldErrors: false, message: extractErrorMessage(error) };
+  }
+  const fieldErrors = getConnectionFormErrors(error.data);
+  for (const [field, errorMessage] of fieldErrors) {
+    setError(field, errorMessage);
+  }
+  if (fieldErrors.length > 0) {
     return { status: 'error', fieldErrors: true };
   }
-  if (isFetchError(error)) {
-    const detail = extractFormErrors(error.data).find((e) => e.detail)?.detail;
-    if (detail) {
-      return { status: 'error', fieldErrors: false, message: detail };
-    }
-  }
-  return { status: 'error', fieldErrors: false, message: extractErrorMessage(error) };
+  const detail = extractFormErrors(error.data).find((e) => e.detail)?.detail;
+  return { status: 'error', fieldErrors: false, message: detail || extractErrorMessage(error) };
 }

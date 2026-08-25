@@ -69,22 +69,20 @@ export function useOAuthAuthorization(onComplete: (connectionName: string, error
     tabRef.current = null;
   }, []);
 
-  const authorize = useCallback(({ type, clientID, name, serverUrl }: AuthorizeParams): boolean => {
-    const url = buildOAuthAuthorizeUrl(type, clientID, name, serverUrl, { popup: true });
-    if (!tabRef.current || tabRef.current.closed) {
-      tabRef.current = window.open('', '_blank');
-      if (tabRef.current) {
-        tabRef.current.opener = null;
+  const authorize = useCallback(
+    ({ type, clientID, name, serverUrl }: AuthorizeParams): boolean => {
+      const url = buildOAuthAuthorizeUrl(type, clientID, name, serverUrl, { popup: true });
+      openTab();
+      if (!tabRef.current) {
+        return false;
       }
-    }
-    if (!tabRef.current) {
-      return false;
-    }
-    tabRef.current.location.href = url;
-    setPendingName(name);
-    setIsPending(true);
-    return true;
-  }, []);
+      tabRef.current.location.href = url;
+      setPendingName(name);
+      setIsPending(true);
+      return true;
+    },
+    [openTab]
+  );
 
   const cancel = useCallback(() => {
     setPendingName(undefined);

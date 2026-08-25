@@ -14,7 +14,7 @@ export function AppInstruction({ type }: { type: ConnectionFormData['type'] }) {
 
 const githubAppDocsUrl = 'https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app';
 
-const GITLAB_SCOPES = ['api'];
+const GITLAB_SCOPE = 'api';
 
 const docsUrls: Record<OAuthConnectionType, string> = {
   githubOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
@@ -78,11 +78,9 @@ function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
     >
       {type === 'gitlabOAuth' && (
         <ul className={styles.scopeList}>
-          {GITLAB_SCOPES.map((scope) => (
-            <li key={scope}>
-              <span className={styles.scope}>{scope}</span>
-            </li>
-          ))}
+          <li>
+            <span className={styles.scope}>{GITLAB_SCOPE}</span>
+          </li>
         </ul>
       )}
 

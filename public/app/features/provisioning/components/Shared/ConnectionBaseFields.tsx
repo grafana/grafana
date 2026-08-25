@@ -6,7 +6,7 @@ import { Field, Input, Stack } from '@grafana/ui';
 
 import { type ConnectionFormData } from '../../types';
 
-export interface ConnectionBaseFieldsProps {
+interface ConnectionBaseFieldsProps {
   /** Whether fields are required. Depends if we are in edit mode or not. */
   required?: boolean;
   type: ConnectionFormData['type'];

@@ -14002,8 +14002,7 @@
     "connection-options": {
       "loading": "Loading...",
       "no-repos": "No repositories",
-      "repos-truncated_one": "{{shown}} +{{count}} more",
-      "repos-truncated_other": "{{shown}} +{{count}} more"
+      "repos-truncated": "{{shown}} +{{remaining}} more"
     },
     "connections": {
       "add-connection": "Add connection",
