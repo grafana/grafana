@@ -3961,3 +3961,183 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		require.IsType(t, &NoopPruner{}, backend.historyPruner)
 	})
 }
+
+func TestKvStorageBackend_ListEventsSince(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writeEvent := func(name string) int64 {
+		rv, err := backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      name,
+			},
+			Value:     objectToJSONBytes(t, testObj),
+			Object:    metaAccessor,
+			ObjectOld: metaAccessor,
+		})
+		require.NoError(t, err)
+		return rv
+	}
+
+	rv1 := writeEvent("resource-1")
+	rv2 := writeEvent("resource-2")
+	rv3 := writeEvent("resource-3")
+
+	collect := func(sinceRV int64) []int64 {
+		var rvs []int64
+		for event, err := range backend.ListEventsSince(ctx, sinceRV) {
+			require.NoError(t, err)
+			// Replay events are metadata-only; the server reads the value lazily.
+			require.Nil(t, event.Value)
+			rvs = append(rvs, event.ResourceVersion)
+		}
+		return rvs
+	}
+
+	// Only settled events are replayable, so wait for the writes above to fall
+	// outside the (1ms) settle window before asserting on them.
+	require.Eventually(t, func() bool {
+		return len(collect(0)) == 3
+	}, time.Second, 5*time.Millisecond)
+
+	// Events are returned in ascending order, and sinceRV is exclusive.
+	assert.Equal(t, []int64{rv1, rv2, rv3}, collect(0))
+	assert.Equal(t, []int64{rv2, rv3}, collect(rv1))
+	assert.Empty(t, collect(rv3))
+}
+
+// TestKvStorageBackend_ListEventsSince_SkipsUnsettled makes sure events still
+// inside the settle window are not replayed: they may have concurrent, lower-RV
+// writes in flight, so replaying them could advance a watch past an event that
+// has not landed yet. The settled broadcaster stream delivers them instead.
+func TestKvStorageBackend_ListEventsSince_SkipsUnsettled(t *testing.T) {
+	backend := setupTestStorageBackend(t, withSettleDelay(time.Hour))
+	ctx := context.Background()
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	_, err = backend.WriteEvent(ctx, WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "recent-resource",
+		},
+		Value:     objectToJSONBytes(t, testObj),
+		Object:    metaAccessor,
+		ObjectOld: metaAccessor,
+	})
+	require.NoError(t, err)
+
+	var rvs []int64
+	for event, err := range backend.ListEventsSince(ctx, 0) {
+		require.NoError(t, err)
+		rvs = append(rvs, event.ResourceVersion)
+	}
+	assert.Empty(t, rvs, "events inside the settle window must not be replayed")
+}
+
+func TestKvStorageBackend_CanReplayFrom(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	now := time.Now()
+	saveEvent := func(name string, rv int64) {
+		require.NoError(t, backend.eventStore.Save(ctx, Event{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resources",
+			Name:            name,
+			ResourceVersion: rv,
+			Action:          DataActionCreated,
+		}))
+	}
+
+	// An empty store has nothing to replay.
+	require.NoError(t, backend.CanReplayFrom(ctx, snowflakeFromTime(now.Add(-2*time.Hour))))
+
+	recentRV := snowflakeFromTime(now.Add(-time.Minute))
+	saveEvent("recent-resource", recentRV)
+
+	// Inside the replay window (younger than half the retention period), events
+	// are guaranteed to still be there.
+	require.NoError(t, backend.CanReplayFrom(ctx, recentRV))
+
+	// Older than the replay window: events written after it may already have been
+	// pruned, so the resume is refused.
+	oldRV := snowflakeFromTime(now.Add(-2 * time.Hour))
+	err := backend.CanReplayFrom(ctx, oldRV)
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
+
+	err = backend.CanReplayFrom(ctx, 1)
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
+
+	// rv ahead of the latest write: there is nothing to replay, so it is allowed
+	// regardless of age.
+	require.NoError(t, backend.CanReplayFrom(ctx, recentRV+1))
+}
+
+func TestKvStorageBackend_MaxEventReplayAge(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+
+	// Half the retention period.
+	assert.Equal(t, 30*time.Minute, backend.maxEventReplayAge())
+
+	backend.eventRetentionPeriod = 8 * time.Minute
+	assert.Equal(t, 4*time.Minute, backend.maxEventReplayAge())
+}
+
+func TestKvStorageBackend_EventRetentionPeriodMinimum(t *testing.T) {
+	// A retention below the minimum is ignored in favour of the default.
+	belowMin := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+		o.EventRetentionPeriod = time.Minute
+	})
+	assert.Equal(t, defaultEventRetentionPeriod, belowMin.eventRetentionPeriod)
+
+	// A retention at or above the minimum is honoured as configured.
+	honoured := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+		o.EventRetentionPeriod = 20 * time.Minute
+	})
+	assert.Equal(t, 20*time.Minute, honoured.eventRetentionPeriod)
+}
+
+func TestKvStorageBackend_ListEventsSince_DoesNotReadValues(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// An event whose object value was never written to the data store.
+	rv := snowflakeFromTime(time.Now().Add(-time.Hour))
+	require.NoError(t, backend.eventStore.Save(ctx, Event{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            "valueless-resource",
+		ResourceVersion: rv,
+		Action:          DataActionCreated,
+	}))
+
+	var events []*WrittenEvent
+	for event, err := range backend.ListEventsSince(ctx, 0) {
+		require.NoError(t, err)
+		events = append(events, event)
+	}
+
+	require.Len(t, events, 1)
+	assert.Equal(t, rv, events[0].ResourceVersion)
+	assert.Nil(t, events[0].Value, "replay must not read object values")
+}

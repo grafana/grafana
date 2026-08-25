@@ -35,7 +35,7 @@ export function NotebookAddBlockDivider({ index, onAdd, className }: Props) {
     <div className={cx(styles.divider, className, isMenuOpen && styles.revealed)}>
       <span className={styles.line} />
       <Dropdown
-        overlay={<NotebookBlockTypeMenu index={index} onAdd={onAdd} />}
+        overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, index)} />}
         placement="bottom-start"
         onVisibleChange={setIsMenuOpen}
       >
@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    padding: theme.spacing(2, 0),
+    padding: theme.spacing(1, 0),
     opacity: 0,
     '&:hover, &:focus-within': {
       opacity: 1,

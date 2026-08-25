@@ -21,6 +21,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,6 +68,7 @@ type AppPluginRunnerOptions struct {
 type AppPluginAPIBuilder struct {
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
+	clientV3Loader  v3.ClientV3Loader
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
@@ -84,6 +86,7 @@ type AppPluginAPIBuilder struct {
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
+	clientV3Loader v3.ClientV3Loader,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -94,6 +97,7 @@ func NewAppPluginAPIBuilder(
 	return &AppPluginAPIBuilder{
 		pluginJSON:      plugin.JSONData,
 		client:          client,
+		clientV3Loader:  clientV3Loader,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
@@ -109,6 +113,7 @@ func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	contextProvider PluginContextWrapper,
+	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
@@ -150,6 +155,7 @@ func RegisterAPIService(
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
+			clientV3Loader,
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
