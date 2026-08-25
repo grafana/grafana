@@ -199,11 +199,15 @@ export function QueryCoauthoring({
       return;
     }
     cancelIdentification();
+    const generationId = ++generationIdRef.current;
 
     let submittedContext: QueryEditorCoauthoringContextV1;
     try {
       submittedContext = await readContext();
     } catch {
+      return;
+    }
+    if (generationId !== generationIdRef.current) {
       return;
     }
 
@@ -212,7 +216,6 @@ export function QueryCoauthoring({
 
     setSubmittedIterationCount((count) => count + 1);
 
-    const generationId = ++generationIdRef.current;
     setProposal(undefined);
     setFallback(undefined);
     setClarification(undefined);

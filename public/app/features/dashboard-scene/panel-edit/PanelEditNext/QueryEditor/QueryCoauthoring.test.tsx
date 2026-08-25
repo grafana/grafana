@@ -404,6 +404,50 @@ describe('QueryCoauthoring', () => {
     expect(screen.queryByText(/late explanation/i)).not.toBeInTheDocument();
   });
 
+  it('does not start generation after dismissal wins the context-read race', async () => {
+    const { dismissInvocation, onPreview } = await setup();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Describe a query change' }), {
+      target: { value: 'Use increase' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Coauthor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    await act(async () => Promise.resolve());
+
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+  });
+
+  it('does not start generation after unmount wins the context-read race', async () => {
+    const { unmount } = await setup();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Describe a query change' }), {
+      target: { value: 'Use increase' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Coauthor' }));
+    unmount();
+    await act(async () => Promise.resolve());
+
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('lets only the latest overlapping submission continue after context reading', async () => {
+    await setup();
+    const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+    fireEvent.change(prompt, { target: { value: 'Use increase' } });
+
+    fireEvent.keyDown(prompt, { key: 'Enter' });
+    fireEvent.keyDown(prompt, { key: 'Enter' });
+    await act(async () => Promise.resolve());
+
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Should I preserve the current range?'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue in Assistant chat' }));
+
+    expect(mockOpenAssistant.mock.calls[0][0].context[0].node.data.data.intentHistory).toEqual(['Use increase']);
+  });
+
   it('shows an explicit dismissal path when Assistant is unavailable', async () => {
     mockAssistantAvailable = false;
     const { user, dismissInvocation, readInvocation } = await setup(0, false);
