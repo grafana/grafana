@@ -41,8 +41,10 @@ type changeInfo struct {
 	// Files we tried to read
 	Changes []fileChangeInfo
 
-	// More files changed than we processed
-	SkippedFiles int
+	// UnprocessedFiles is how many changed files Evaluate never got to -- e.g.
+	// because the job's context was canceled/expired partway through a large
+	// PR. Zero means every file in the diff was evaluated.
+	UnprocessedFiles int
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
@@ -140,11 +142,10 @@ func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts p
 
 	logger := logging.FromContext(ctx)
 
-	for i, change := range changes {
-		// process maximum 10 files
-		if i >= 10 {
-			info.SkippedFiles = len(changes) - i
-			logger.Info("skipping remaining files", "count", info.SkippedFiles)
+	for _, change := range changes {
+		if ctx.Err() != nil {
+			info.UnprocessedFiles = len(changes) - len(info.Changes)
+			logger.Error("stopping pull request evaluation early", "reason", ctx.Err(), "processed", len(info.Changes), "unprocessed", info.UnprocessedFiles)
 			break
 		}
 
