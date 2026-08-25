@@ -413,6 +413,7 @@ func TestRenameResourceFile(t *testing.T) {
 	t.Run("old file parse error, byte-identical rename, still skips strict validation", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
 		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
@@ -430,20 +431,25 @@ func TestRenameResourceFile(t *testing.T) {
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
 
-		newParsed := &ParsedResource{
-			Obj:  newObj,
-			Meta: newMeta,
-			GVK:  dashboardGVK,
-			Repo: testRepoInfo(),
-		}
-		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		existingObj := managedGrafanaObj("new-uid", "default", nil)
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).Return(existingObj, nil)
+		mockClient.On("Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything).
+			Return(newObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		name, _, _, _, err := mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
-		require.Error(t, err, "write step is expected to fail (no client)")
-		require.True(t, newParsed.SkipStrictValidation,
-			"a byte-identical rename off an unparseable old path must still skip strict validation, same as a same-identity rename")
+		require.Error(t, err, "old resource may need manual cleanup")
+		require.Equal(t, "new-uid", name)
+		mockClient.AssertCalled(t, "Update", mock.Anything, newObj, metav1.UpdateOptions{FieldValidation: "Ignore"}, mock.Anything)
 	})
 
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {

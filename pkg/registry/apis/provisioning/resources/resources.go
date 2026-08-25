@@ -231,6 +231,10 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	return fileName, len(body), nil
 }
 
+func shouldSkipStrictValidation(oldHash, newHash string) bool {
+	return oldHash != "" && oldHash == newHash
+}
+
 // WriteResourceOption configures optional behavior for resource write operations.
 type WriteResourceOption func(*writeResourceConfig)
 
@@ -281,7 +285,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// file, the spec is unchanged — only metadata (path, folder) differs. Skip
 	// strict validation so the unchanged spec is not rejected by rules introduced
 	// after the resource was first persisted (e.g. legacy dashboards).
-	if cfg.existingHash != "" && cfg.existingHash == fileInfo.Hash {
+	if shouldSkipStrictValidation(cfg.existingHash, fileInfo.Hash) {
 		parsed.SkipStrictValidation = true
 	}
 
@@ -462,7 +466,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// with writing the new resource anyway: the rename's whole point is the new
 		// path, and it must not be held hostage by the old, now-irrelevant one. The
 		// old resource is left for manual cleanup instead of silently disappearing.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
 		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
@@ -495,7 +499,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// Rename-with-edits (different hashes) keeps strict validation: the
 		// new content is a real change and any validation failure must be
 		// surfaced rather than silently admitted.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
 	}
