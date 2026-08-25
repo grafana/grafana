@@ -26,6 +26,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -64,7 +65,7 @@ type RepositoryController struct {
 	healthChecker     *RepositoryHealthChecker
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
-	processFn         func(key string) error
+	processFn         func(ctx context.Context, key string) error
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
@@ -330,7 +331,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		rc.processed.RecordProcessed(trigger)
 	}
 
-	err := rc.processFn(key)
+	err := rc.processFn(ctx, key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
@@ -672,9 +673,9 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 }
 
 //nolint:gocyclo
-func (rc *RepositoryController) process(key string) error {
+func (rc *RepositoryController) process(ctx context.Context, key string) error {
 	logger := rc.logger.With("key", key)
-	ctx := logging.Context(context.Background(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -690,6 +691,12 @@ func (rc *RepositoryController) process(key string) error {
 	case err != nil:
 		return err
 	}
+
+	// Continue the trace of whatever last wrote this repository (the request
+	// that changed its spec, or created it) so a spec-change or resync-driven
+	// sync job traces back to that request instead of a disconnected root.
+	// A no-op if the object carries no trace annotation.
+	ctx = apptracing.ExtractParent(ctx, obj.Annotations)
 
 	logger = logger.With(
 		"namespace", namespace,

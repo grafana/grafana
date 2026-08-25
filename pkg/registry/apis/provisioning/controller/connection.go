@@ -17,7 +17,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -69,6 +71,7 @@ type ConnectionController struct {
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
+	tracer         tracing.Tracer
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -80,6 +83,7 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
@@ -99,6 +103,7 @@ func NewConnectionController(
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
 		drainTimeout:      drainTimeout,
+		tracer:            tracer,
 	}
 
 	cc.processFn = cc.process
@@ -260,6 +265,14 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Error("getting connection", "error", err)
 		return err
 	}
+
+	// Continue the trace of whatever last wrote this connection (the request
+	// that changed its spec, or created it) so this reconcile traces back to
+	// that request instead of a disconnected root. A no-op if the object
+	// carries no trace annotation.
+	ctx = apptracing.ExtractParent(ctx, conn.Annotations)
+	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.process_connection")
+	defer span.End()
 
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)

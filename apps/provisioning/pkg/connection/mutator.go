@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -50,6 +51,12 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 			c.Secure.Token = common.InlineSecureValue{Remove: true}
 		}
 	}
+
+	// Stamp the caller's trace context so a later reconcile of this connection
+	// (in a different operator process) can continue the trace that last wrote
+	// it, instead of starting a disconnected root. A no-op if ctx carries no
+	// live span.
+	c.Annotations = apptracing.Annotate(ctx, c.Annotations)
 
 	return m.factory.Mutate(ctx, c)
 }

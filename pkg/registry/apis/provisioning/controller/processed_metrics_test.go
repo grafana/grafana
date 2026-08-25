@@ -104,7 +104,7 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 				drainTimeout: 5 * time.Second,
 				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
 				keyFunc:      repoKeyFunc,
-				processFn: func(string) error {
+				processFn: func(context.Context, string) error {
 					close(processedDone)
 					return nil
 				},
@@ -153,7 +153,7 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	rc.enqueueRepository = rc.enqueue
 
 	var enqueuedDuringFlight atomic.Bool
-	rc.processFn = func(string) error {
+	rc.processFn = func(context.Context, string) error {
 		// On the first reconcile, a live update (bumped RV) arrives while the key
 		// is in flight — the classic self-induced status update — marking it dirty.
 		if enqueuedDuringFlight.CompareAndSwap(false, true) {
@@ -192,7 +192,7 @@ func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
 		logger:    logging.DefaultLogger.With("logger", "test"),
 		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
 		keyFunc:   repoKeyFunc,
-		processFn: func(string) error {
+		processFn: func(context.Context, string) error {
 			close(processedDone)
 			return nil
 		},

@@ -17,6 +17,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -187,6 +188,13 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		attribute.String("job.repository", claimedJob.Spec.Repository),
 		attribute.String("job.action", string(claimedJob.Spec.Action)),
 	)
+
+	// Continue the trace of whatever created this job (an HTTP request, a
+	// webhook, or a controller-driven sync) rather than the claim operation
+	// above: the object -- and its trace annotation -- only became available
+	// once the claim succeeded. Everything from here on, including the
+	// process_job span, becomes part of that original trace.
+	ctx = withJobTraceParent(ctx, claimedJob)
 
 	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
 	// Incidentally, this also limits our permissions to only the namespace of the job.
@@ -430,6 +438,15 @@ func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.
 		return ctx
 	}
 	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
+}
+
+// withJobTraceParent continues the trace that created this job, via the
+// traceparent annotation stamped by Insert (see apptracing.Annotate), so job
+// execution shows up as part of that trace rather than a disconnected root.
+// A no-op if the job carries no trace annotation (e.g. it was created from a
+// context without a live span).
+func withJobTraceParent(ctx context.Context, job *provisioning.Job) context.Context {
+	return apptracing.ExtractParent(ctx, job.Annotations)
 }
 
 func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecorder) error {
