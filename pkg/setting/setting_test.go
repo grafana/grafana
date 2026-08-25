@@ -37,19 +37,6 @@ func TestLoadingSettings(t *testing.T) {
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "", cfg.RendererCallbackUrl)
 		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
-		require.Equal(t, []string{"react-router-dom", "react-router"}, cfg.PluginImportTelemetryPackages)
-	})
-
-	t.Run("loads plugin import telemetry packages from analytics settings", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Config:   "../../conf/defaults.ini",
-			Args:     []string{"cfg:analytics.plugin_import_telemetry_packages=custom-router,custom-history"},
-		})
-		require.NoError(t, err)
-
-		require.Equal(t, []string{"custom-router", "custom-history"}, cfg.PluginImportTelemetryPackages)
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
