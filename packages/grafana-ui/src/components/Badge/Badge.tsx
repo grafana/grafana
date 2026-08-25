@@ -70,7 +70,12 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   let bgColor = '';
   let textColor = '';
 
-  if (theme.isDark) {
+  if (theme.flags.visualDesignRefresh && color !== 'brand') {
+    const tokens = theme.components.badge[color];
+    bgColor = tokens.background;
+    borderColor = tokens.border;
+    textColor = tokens.text;
+  } else if (theme.isDark) {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
     borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).lighten(15).toString();
