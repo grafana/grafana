@@ -5,8 +5,8 @@ option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service. Reads of external collections skip server-side
-// per-result access checks; the caller is responsible for authz post-filtering of results.
+// Reads go through the search service and are RBAC-checked per result; folder-scoped
+// resources (per the authz mapper) are checked against each row's folder.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
@@ -32,6 +32,7 @@ message EmbeddingInput {
   string content = 3;      // document content to embed (required)
   bytes metadata = 4;      // JSON object, max 4 KiB
   string title = 5;        // human-readable display title, returned in search results (required)
+  string folder = 6;       // parent folder UID; folder-scoped resources are denied at read time without it
 }
 
 // Plain upsert: inserts or overwrites exactly the (uid, subresource) rows in the batch.

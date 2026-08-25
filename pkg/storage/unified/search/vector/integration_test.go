@@ -1001,16 +1001,16 @@ func TestIntegrationVectorMetadataOnlyRefresh(t *testing.T) {
 
 	orig := Vector{
 		Namespace: "ns-meta", Resource: testResource, UID: "meta-uid",
-		Title: "Before", Subresource: "chunk/1", Content: "hello",
+		Title: "Before", Subresource: "chunk/1", Content: "hello", Folder: "fold-old",
 		Metadata: json.RawMessage(`{"embeddedAt":1}`), Embedding: makeEmbedding(0.1, 0.1), Model: testModel,
 	}
 	require.NoError(t, backend.Upsert(ctx, []Vector{orig}))
 	// (test lives in package vector, so Vector/VectorMeta are unqualified)
 
-	// metadataOnly rewrite: title+metadata change, embedding and content stay.
+	// metadataOnly rewrite: title/folder/metadata change, embedding and content stay.
 	err := backend.UpsertReplaceSubresources(ctx, "ns-meta", testModel, testResource, "meta-uid",
 		nil,
-		[]VectorMeta{{Subresource: "chunk/1", Title: "After", Metadata: json.RawMessage(`{"embeddedAt":2}`)}},
+		[]VectorMeta{{Subresource: "chunk/1", Title: "After", Folder: "fold-new", Metadata: json.RawMessage(`{"embeddedAt":2}`)}},
 		[]string{"chunk/1"})
 	require.NoError(t, err)
 
@@ -1018,11 +1018,12 @@ func TestIntegrationVectorMetadataOnlyRefresh(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{"chunk/1": "hello"}, content, "content untouched")
 
-	// Row-level check: title/metadata updated, embedding unchanged.
+	// Row-level check: title/folder/metadata updated, embedding unchanged.
 	rows, err := backend.Search(ctx, "ns-meta", testModel, testResource, makeEmbedding(0.1, 0.1), 5)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 	require.Equal(t, "After", rows[0].Title)
+	require.Equal(t, "fold-new", rows[0].Folder, "folder moves land without re-embed")
 	require.JSONEq(t, `{"embeddedAt":2}`, string(rows[0].Metadata))
 }
 

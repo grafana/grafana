@@ -6874,6 +6874,11 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
