@@ -123,7 +123,6 @@ The following data sources are built into Grafana and capture their upstream tra
 - **SQL and other database data sources**, such as MySQL, PostgreSQL, Microsoft SQL Server, and MongoDB. These communicate over a database wire protocol instead of HTTP, so there's no HTTP exchange to record.
 - **Amazon CloudWatch.** Queries go through the AWS SDK, which doesn't use the instrumented HTTP client that capture depends on.
 
-
 ## Limitations
 
 As an experimental feature, on-demand data source diagnostics currently has the following limitations:
