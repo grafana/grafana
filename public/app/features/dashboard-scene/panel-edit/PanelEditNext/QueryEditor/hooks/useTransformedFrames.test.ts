@@ -146,7 +146,10 @@ describe('useTransformedFrames', () => {
     expect(unsubscribe).toHaveBeenCalled();
   });
 
-  it('returns the new frames rather than the previous output while a transform is in flight', () => {
+  it('holds what this pipeline last produced while the next replay is in flight', () => {
+    // The replay lands a render after the frames it belongs to. Falling back to the untransformed
+    // frames over that gap shows the pre-pipeline shape, which an editor reports on as though the
+    // panel had it — an Organize editor flips to "only works with a single frame" on every refresh.
     const nextFrames = makeFrames(['c']);
 
     const { result, rerender } = renderHook(({ data }: { data: DataFrame[] }) => useTransformedFrames(configs, data), {
@@ -159,9 +162,25 @@ describe('useTransformedFrames', () => {
     mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
     act(() => rerender({ data: nextFrames }));
 
-    // Not `emitted`: those frames came out of the previous query, and a caller pairing them with
-    // this query's metadata configures its editors against a shape that never existed.
-    expect(result.current).toBe(nextFrames);
+    expect(result.current).toBe(emitted);
+    expect(result.current).not.toBe(nextFrames);
+  });
+
+  it('drops what it was holding when the pipeline itself changes', () => {
+    // A different set of configs is a different shape, so the previous output is not a stand-in for
+    // it the way the same pipeline's last output is.
+    const otherConfigs: TransformationConfigs = [{ id: 'reduce', options: {} }];
+
+    const { result, rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useTransformedFrames(c, frames), {
+      initialProps: { c: configs },
+    });
+
+    expect(result.current).toBe(emitted);
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ c: otherConfigs }));
+
+    expect(result.current).toBe(frames);
   });
 
   describe('when the transformations fail', () => {

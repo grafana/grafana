@@ -87,16 +87,16 @@ function useStableArray<T>(value: T[]): T[] {
  * Empty `configs` returns `frames` itself — same reference, no subscription — which is both the fast
  * path and what lets "nothing precedes this transformation" be answered without a render.
  *
- * What comes back is always derived from the `configs` and `frames` passed on this render, never
- * from an earlier pair. `transformDataFrame` resolves asynchronously for every standard
- * transformation, so there is a render between a new query landing and its output arriving; holding
- * the previous output across it would hand a caller frames from the last query to pair with this
- * query's metadata, and editors configure their rows from that pairing. The input frames are
- * returned instead — untransformed, but from the generation the caller is asking about.
+ * `transformDataFrame` resolves asynchronously for every standard transformation, so a new query
+ * always lands a render before its output does. What this pipeline last produced stands in over that
+ * gap: it is stale by one query, but it is the shape the editors are built to read. The
+ * untransformed frames are not — they are the pre-pipeline shape, and an editor reading them reports
+ * on a frame the panel never had.
  *
- * A replay that fails resolves the same way, and records that it did, so a broken transformation
- * settles on the untransformed frames rather than leaving every later render looking like one that
- * is still waiting.
+ * A change to `configs` is a different pipeline, so nothing is held across it.
+ *
+ * A replay that fails settles on the untransformed frames and records that it did, rather than
+ * leaving every later render looking like one that is still waiting.
  */
 export function useTransformedFrames(configs: TransformationConfigs, frames: DataFrame[]): DataFrame[] {
   const stableConfigs = useStableArray(configs);
@@ -109,7 +109,7 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
     }
 
     let subscription: Subscription | undefined;
-    const settle = (result: DataFrame[]) => setTransformed({ configs: stableConfigs, frames: stableFrames, result });
+    const settle = (result: DataFrame[]) => setTransformed({ configs: stableConfigs, result });
     const fail = (err: unknown) => {
       logTransformationFailure(err);
       settle(stableFrames);
@@ -138,14 +138,19 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
     return stableFrames;
   }
 
-  const isCurrent = transformed?.configs === stableConfigs && transformed?.frames === stableFrames;
+  // Held across a data change, dropped across a pipeline change. `transformDataFrame` resolves a
+  // render later than the frames it belongs to, so every query leaves a render with no output yet.
+  // Falling back to the untransformed frames there shows a shape the pipeline never produces — an
+  // Organize editor reads them and flips to "only works with a single frame" on every refresh. What
+  // the same pipeline last produced is the right shape, so it stands in until the new one lands.
+  // Output from a *different* pipeline is not held: that shape is genuinely gone.
+  const isThisPipeline = transformed?.configs === stableConfigs;
 
-  return isCurrent ? transformed.result : stableFrames;
+  return isThisPipeline ? transformed.result : stableFrames;
 }
 
 interface TransformedFrames {
   configs: TransformationConfigs;
-  frames: DataFrame[];
   result: DataFrame[];
 }
 
