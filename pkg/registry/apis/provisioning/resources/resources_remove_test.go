@@ -410,6 +410,42 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Empty(t, folderName, "old resource's identity is unknown, so no folder cleanup signal can be produced")
 	})
 
+	t.Run("old file parse error, byte-identical rename, still skips strict validation", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old&path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "old&path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).
+			Return(nil, fmt.Errorf("resource validation failed: path contains invalid characters"))
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json", Hash: "same-hash"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+
+		newParsed := &ParsedResource{
+			Obj:  newObj,
+			Meta: newMeta,
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		_, _, _, _, err = mgr.RenameResourceFile(context.Background(), "old&path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+
+		require.Error(t, err, "write step is expected to fail (no client)")
+		require.True(t, newParsed.SkipStrictValidation,
+			"a byte-identical rename off an unparseable old path must still skip strict validation, same as a same-identity rename")
+	})
+
 	t.Run("folder name empty when resource does not exist in grafana", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)

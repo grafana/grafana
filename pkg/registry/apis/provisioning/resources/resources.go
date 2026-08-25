@@ -462,6 +462,9 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// with writing the new resource anyway: the rename's whole point is the new
 		// path, and it must not be held hostage by the old, now-irrelevant one. The
 		// old resource is left for manual cleanup instead of silently disappearing.
+		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+			newParsed.SkipStrictValidation = true
+		}
 		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 		if err != nil {
 			return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
