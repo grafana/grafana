@@ -991,7 +991,6 @@ type HybridSearchResult struct {
 	// Folder display title, resolved fresh at query time from the folder
 	// index (one batched lookup per request). Empty for the root folder or
 	// when resolution fails — best-effort display data, never an error.
-	// managed_by_* are always empty for external collections.
 	FolderTitle string `protobuf:"bytes,6,opt,name=folder_title,json=folderTitle,proto3" json:"folder_title,omitempty"`
 	// Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
 	// With a reranker configured this is the calibrated cross-encoder relevance (roughly
@@ -1004,8 +1003,9 @@ type HybridSearchResult struct {
 	// content = title and no metadata so rerankers always have text.
 	// Only the best chunk influences score.
 	Chunks []*HybridSearchChunk `protobuf:"bytes,5,rep,name=chunks,proto3" json:"chunks,omitempty"`
-	// Manager kind. Empty when unmanaged, or when resolution for a
-	// semantic-only hit fails — best-effort display data, never an error.
+	// Manager kind. Empty when unmanaged, for external collections, or when
+	// resolution for a semantic-only hit fails — best-effort display data,
+	// never an error.
 	ManagedByKind string `protobuf:"bytes,7,opt,name=managed_by_kind,json=managedByKind,proto3" json:"managed_by_kind,omitempty"`
 	// Manager identity, alongside managed_by_kind.
 	ManagedById   string `protobuf:"bytes,8,opt,name=managed_by_id,json=managedById,proto3" json:"managed_by_id,omitempty"`
