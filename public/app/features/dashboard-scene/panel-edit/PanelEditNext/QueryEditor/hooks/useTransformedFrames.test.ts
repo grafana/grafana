@@ -18,9 +18,12 @@ jest.mock('@grafana/data', () => ({
   transformDataFrame: jest.fn(),
 }));
 
+/** Mutable, so a test can move a variable the way the dashboard's variable picker does. */
+let envValue = 'prod';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, 'prod') }),
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, envValue) }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -29,8 +32,10 @@ describe('useTransformedFrames', () => {
   const frames = makeFrames(['a', 'b']);
   const emitted = makeFrames(['transformed']);
   const configs: TransformationConfigs = [{ id: 'organize', options: {} }];
+  const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
 
   beforeEach(() => {
+    envValue = 'prod';
     jest.clearAllMocks();
     mockTransformDataFrame.mockReturnValue(
       new Observable((subscriber) => {
@@ -74,8 +79,6 @@ describe('useTransformedFrames', () => {
     // The pipeline interpolates configs before it runs them, and `transformDataFrame` skips its own
     // pass whenever a scene is active — which, in the panel editor, is always. Forwarding the raw
     // config replays a transformation matching on the literal `$env` that the panel never ran.
-    const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
-
     renderHook(() => useTransformedFrames(withVariable, frames));
 
     expect(mockTransformDataFrame).toHaveBeenCalledWith(
@@ -83,6 +86,68 @@ describe('useTransformedFrames', () => {
       frames,
       expect.any(Object)
     );
+  });
+
+  it('re-resolves and re-runs when a variable moves, though the configs are the same objects', () => {
+    // The panel's pipeline reprocesses on a variable change, so the editor has to as well. Nothing
+    // it can compare by identity moves: `useTransformations` rebuilds its array around the same
+    // Scene state entries, and those still hold the literal `$env`. Only the resolved options move.
+    const { rerender } = renderHook(() => useTransformedFrames(withVariable, frames));
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(
+      [{ id: 'filterByValue', options: { value: 'prod' } }],
+      frames,
+      expect.any(Object)
+    );
+
+    envValue = 'staging';
+    act(() => rerender());
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(
+      [{ id: 'filterByValue', options: { value: 'staging' } }],
+      frames,
+      expect.any(Object)
+    );
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(2);
+  });
+
+  it('holds the previous output across a variable change rather than dropping to the frames', () => {
+    // A variable change is the same list of transformations, so what it last produced is still the
+    // shape the editors read — the same reason a new query holds rather than falling back.
+    const { result, rerender } = renderHook(() => useTransformedFrames(withVariable, frames));
+
+    expect(result.current).toBe(emitted);
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    envValue = 'staging';
+    act(() => rerender());
+
+    expect(result.current).toBe(emitted);
+  });
+
+  it('does not re-run when the variable resolves to what it did before', () => {
+    // Interpolation runs every render now, so an unchanged resolution has to compare equal or the
+    // replay resubscribes on every emission the panel makes.
+    const { rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useTransformedFrames(c, frames), {
+      initialProps: { c: [...withVariable] },
+    });
+
+    act(() => rerender({ c: [...withVariable] }));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-run when a caller rebuilds an array around the same custom operator', () => {
+    // Interpolation leaves operators untouched, so identity is what "unchanged" means for them.
+    const operator = jest.fn();
+
+    const { rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useTransformedFrames(c, frames), {
+      initialProps: { c: [operator] },
+    });
+
+    act(() => rerender({ c: [operator] }));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
   });
 
   it('leaves custom operators alone, as the pipeline does', () => {

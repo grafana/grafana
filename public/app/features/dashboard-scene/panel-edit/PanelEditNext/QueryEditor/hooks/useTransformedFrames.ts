@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import { type Subscription } from 'rxjs';
 
@@ -45,7 +46,7 @@ function getTransformationContext(): DataTransformContext {
  */
 function interpolateConfigs(configs: TransformationConfigs): TransformationConfigs {
   return configs.map((config) => {
-    if (typeof config !== 'object' || 'operator' in config) {
+    if (!isInterpolatable(config)) {
       return config;
     }
 
@@ -60,6 +61,35 @@ function interpolateConfigs(configs: TransformationConfigs): TransformationConfi
 }
 
 /**
+ * A plain config object, whose options are data this can resolve — as opposed to a custom operator,
+ * which holds its options in a closure.
+ */
+function isInterpolatable(config: TransformationConfigs[number]): config is DataTransformerConfig {
+  return typeof config === 'object' && !('operator' in config);
+}
+
+/**
+ * Whether two configs resolve to the same transformation. Custom operators are compared by
+ * identity, which is what "unchanged" means for something interpolation passes through untouched.
+ */
+function isSameConfig(a: TransformationConfigs[number], b: TransformationConfigs[number]): boolean {
+  return isInterpolatable(a) && isInterpolatable(b) ? isEqual(a, b) : Object.is(a, b);
+}
+
+/**
+ * The configs with their variables resolved, held stable until the values they resolve to change.
+ *
+ * Resolving during render rather than inside the replay's effect is what lets the replay follow a
+ * variable. A variable change re-renders the editor — the panel's transformer reprocesses and pushes
+ * new state, and `useTransformations` rebuilds its array around the same entries — but the config
+ * objects in Scene state still hold the literal `$var`. The resolved options are the only thing that
+ * moves, so they are the only thing an effect can key on.
+ */
+function useInterpolatedConfigs(configs: TransformationConfigs): TransformationConfigs {
+  return useStableArray(interpolateConfigs(configs), isSameConfig);
+}
+
+/**
  * Returns the previous array whenever `value` holds the same elements in the same order.
  *
  * Callers rebuild these arrays every time the panel emits — `useTransformations` memoizes on
@@ -67,11 +97,11 @@ function interpolateConfigs(configs: TransformationConfigs): TransformationConfi
  * held in Scene state. Comparing identity alone would resubscribe on every emission, and an array
  * built fresh each render would resubscribe without end.
  */
-function useStableArray<T>(value: T[]): T[] {
+function useStableArray<T>(value: T[], isSame: (a: T, b: T) => boolean = Object.is): T[] {
   const stable = useRef(value);
 
   // Safe during render: a repeated render derives the same reference.
-  if (!compareArrayValues(stable.current, value, Object.is)) {
+  if (!compareArrayValues(stable.current, value, isSame)) {
     stable.current = value;
   }
 
@@ -104,6 +134,7 @@ function useStableArray<T>(value: T[]): T[] {
 export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame[]): FrameReplay {
   const stableConfigs = useStableArray(configs);
   const stableFrames = useStableArray(frames);
+  const interpolatedConfigs = useInterpolatedConfigs(stableConfigs);
   const [transformed, setTransformed] = useState<TransformedFrames | undefined>(undefined);
 
   useEffect(() => {
@@ -122,11 +153,7 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
     };
 
     try {
-      subscription = transformDataFrame(
-        interpolateConfigs(stableConfigs),
-        stableFrames,
-        getTransformationContext()
-      ).subscribe({
+      subscription = transformDataFrame(interpolatedConfigs, stableFrames, getTransformationContext()).subscribe({
         next: settle,
         error: fail,
       });
@@ -138,7 +165,9 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
     }
 
     return () => subscription?.unsubscribe();
-  }, [stableConfigs, stableFrames]);
+    // Keyed on the resolved options, so a variable change re-runs the replay, and on `stableConfigs`
+    // too, so an edit that happens to resolve the same way still counts as a new pipeline.
+  }, [interpolatedConfigs, stableConfigs, stableFrames]);
 
   if (stableConfigs.length === 0) {
     // An empty pipeline produces its input, so there is no gap for anything to stand in over.
@@ -150,7 +179,9 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
   // Falling back to the untransformed frames there shows a shape the pipeline never produces — an
   // Organize editor reads them and flips to "only works with a single frame" on every refresh. What
   // the same pipeline last produced is the right shape, so it stands in until the new one lands.
-  // Output from a *different* pipeline is not held: that shape is genuinely gone.
+  // Output from a *different* pipeline is not held: that shape is genuinely gone. A variable change
+  // is not one of those — the user's list of transformations is unchanged, so its last output still
+  // stands in while the re-resolved replay runs.
   const isThisPipeline = transformed?.configs === stableConfigs;
 
   return isThisPipeline
