@@ -21,9 +21,9 @@ weight: 200
 On-demand data source diagnostics is an [experimental](https://grafana.com/docs/release-life-cycle/#experimental) feature that helps you share troubleshooting evidence with Grafana Labs Technical Support. The feature is disabled by default. To switch it on, refer to [Enable the feature toggle](#enable-the-feature-toggle).
 {{< /admonition >}}
 
-When a panel returns an error, no data, or data that looks wrong, Grafana Labs Technical Support needs to know what your data source actually returned. In Grafana Cloud, you can grant support access to your stack and let an engineer investigate the unexpected behavior live. In a self-managed instance, that isn't possible, because support has no way to reach your environment. A diagnostic bundle closes that gap: you collect the evidence yourself and share it with support.
+When a panel returns an error, no data, or data that looks wrong, Grafana Labs Technical Support needs to know what your data source actually returned. In Grafana Cloud, you can grant support access to your stack and let an engineer investigate the unexpected behavior live. In a self-managed instance, that isn't possible, because support has no way to reach your environment. With a diagnostic bundle, you collect the evidence yourself and send it to support.
 
-When you generate a diagnostic bundle, Grafana re-runs the panel's queries with traffic capture active and packages the result as a single `.tar.gz` file containing the requests and responses exchanged with your data source, the data the data source plugin returned to Grafana, the panel and dashboard configuration, and other useful metadata.
+When you generate a diagnostic bundle, Grafana re-runs the panel's queries with traffic capture active and packages the result as a single `.tar.gz` file containing the requests and responses exchanged with your data source, the data the data source plugin returned to Grafana, the panel and dashboard configuration, and metadata about the capture.
 
 {{< admonition type="warning" >}}
 A diagnostic bundle records upstream traffic and error messages verbatim, without redaction. Request headers, query parameters, request and response bodies, and error text are all stored as they occurred, so a bundle can contain authentication tokens, passwords, and the contents of the data your queries returned.
@@ -105,8 +105,6 @@ A single-panel bundle contains the following files:
 
 A dashboard bundle contains a `panels/<id>-<title>/` directory holding those files for each panel, plus a `manifest.json` recording when the bundle was generated, how many panels ran, and the data sources, sizes, and any errors for each panel.
 
-`panel.json` and `dashboard.json` describe how Grafana fetches and renders your data. Every other file records what happened during the capture.
-
 ## Data source support for capturing upstream traffic
 
 `traffic.har` is usually the most valuable file in the bundle, and it isn't available for every data source. Grafana still generates the rest of the bundle when upstream traffic can't be captured, and `querydata.json` still shows what the data source plugin returned.
@@ -133,20 +131,20 @@ As an experimental feature, on-demand data source diagnostics currently has the 
 
 - **Queries run as you.** Because you generate the bundle as a server administrator, a failure that depends on the affected user's identity, such as per-user OAuth forwarding or row-level database permissions, might not reproduce. If a specific user is affected, say so in your ticket.
 
-- **Only panel and dashboard queries are captured.** Failures in the variable picker, in a data source's **Save & test** button, in annotation queries, or during alert rule evaluation don't appear in a bundle.
+- A bundle captures panel and dashboard queries only. Failures in the variable picker, in a data source's **Save & test** button, in annotation queries, or during alert rule evaluation don't appear.
 
-- **Data beyond the data source isn't captured.** Server-side expressions and panel transformations are recorded as configuration in `panel.json`, not as the data flowing between them. If `querydata.json` looks correct but the panel doesn't, the cause lies in that configuration.
+- Server-side expressions and panel transformations are recorded as configuration in `panel.json`, not as the data flowing between them. If `querydata.json` looks correct but the panel doesn't, the cause lies in that configuration.
 
-- **Large responses might be trimmed, and, less commonly, generation might fail outright.** These are two different limits:
-  - `querydata.json` is capped at 1 GiB for a single panel and 1.5 GiB across a whole-dashboard bundle. A response over that limit isn't dropped without trace: it's replaced by a summary that records what was left out, and the rest of the bundle still generates. For a dashboard bundle, once the shared 1.5 GiB budget is used up, the remaining panels' query data is skipped, and the reason is recorded in `manifest.json`.
+- **Large responses might be trimmed.** Less commonly, generation fails outright. The following limits apply:
+  - `querydata.json` is capped at 1 GiB for a single panel and 1.5 GiB across a whole-dashboard bundle. A response over that limit is replaced by a summary that records what was left out, and the rest of the bundle still generates. For a dashboard bundle, once the shared 1.5 GiB budget is used up, the remaining panels' query data is skipped, and the reason is recorded in `manifest.json`.
   - `traffic.har` is limited to 64 MiB per request or response body and 256 MiB of retained traffic per panel. A body over the per-body limit is kept as a truncated prefix, and its entry reports `bodySize: -1` with the actual size in `content.size`. When a panel's traffic exceeds the per-panel limit, further entries keep their headers, sizes, and timings but omit the body text.
-  - Generating a bundle can fail outright, rather than trim, if the entire request to Grafana -- the queries, panel and dashboard JSON, and, for a single panel, the frames your browser is holding for it -- exceeds 100 MiB. This is uncommon in practice: it takes an unusually large payload from the browser itself, not just a large data source response.
+  - Generating a bundle can fail outright, rather than trim, if the whole request to Grafana exceeds 100 MiB. That request includes the queries, the panel and dashboard JSON, and, for a single panel, the frames your browser is holding. This is uncommon: it takes an unusually large payload from the browser itself, which a large data source response alone doesn't produce.
 
-  If you hit either limit, or a bundle takes unreasonably long to generate, reproduce the problem on a minimal setup instead of the original dashboard:
+  If you hit one of these limits, or a bundle takes unreasonably long to generate, reproduce the problem on a minimal setup instead of the original dashboard:
   - Use a temporary panel or dashboard holding only the misbehaving panel.
   - Narrow the time range to the shortest window that still reproduces the problem. Fewer returned data points means a smaller bundle and a faster capture.
 
-  A smaller, reproducible setup is also easier for Grafana Labs Technical Support to work with.
+  If you generate the bundle from a reduced dashboard, say so in your ticket. A smaller, reproducible setup is also easier for Grafana Labs Technical Support to work with.
 
 ## Related documentation
 
