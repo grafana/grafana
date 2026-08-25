@@ -2650,6 +2650,9 @@
         "text-provisioned": "Provisioned"
       }
     },
+    "proxied-alerting-route": {
+      "text-loading": "Loading…"
+    },
     "query-and-expressions-step": {
       "add-query": "Add query",
       "body-queries-expressions-configured": "Create at least one query or expression to be alerted on",
