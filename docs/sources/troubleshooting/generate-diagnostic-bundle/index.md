@@ -10,7 +10,7 @@ labels:
   products:
     - enterprise
     - oss
-menutitle: Generate a diagnostic bundle
+menutitle: Data sources diagnostic bundle
 title: Generate a data source diagnostic bundle to send to Grafana Labs support
 weight: 200
 ---
