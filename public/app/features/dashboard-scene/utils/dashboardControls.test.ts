@@ -1,5 +1,10 @@
-import { type DataQuery, type DataSourceApi, type DataSourceJsonData } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+} from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import {
   defaultDataQueryKind,
@@ -17,13 +22,15 @@ import {
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
+  getDataSourceInstanceSettings: jest.fn(),
 }));
 
 jest.mock('../serialization/layoutSerializers/utils', () => ({
   getRuntimePanelDataSource: jest.fn(),
 }));
 
-const getDataSourceInstanceMock = getDataSourceInstance as jest.MockedFunction<typeof getDataSourceInstance>;
+const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
+const getDataSourceInstanceSettingsMock = jest.mocked(getDataSourceInstanceSettings);
 
 // Helper to create a mock datasource instance
 const createMockDatasource = (
@@ -101,6 +108,7 @@ const mockLink1: DashboardLink = {
 describe('dashboardControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    getDataSourceInstanceSettingsMock.mockResolvedValue({ uid: 'test-ds-uid' } as DataSourceInstanceSettings);
   });
 
   describe('loadDefaultControlsShared$', () => {
@@ -158,12 +166,10 @@ describe('dashboardControls', () => {
       });
     });
 
-    it('should continue emitting from other datasources when one fails to load', (done) => {
+    it('should skip a missing datasource without warning and still emit from others', (done) => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const refs: DataSourceRef[] = [
-        { uid: 'ds-fail', type: 'broken' },
-        { uid: 'ds-ok', type: 'prometheus' },
-      ];
+      const missingRef: DataSourceRef = { uid: 'ds-missing', type: 'broken' };
+      const okRef: DataSourceRef = { uid: 'ds-ok', type: 'prometheus' };
 
       const mockDs = createMockDatasource({
         uid: 'ds-ok',
@@ -172,20 +178,23 @@ describe('dashboardControls', () => {
         getDefaultLinks: undefined,
       });
 
-      getDataSourceInstanceMock.mockImplementation(async (ref) => {
-        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === 'ds-fail') {
-          throw new Error('Datasource not found');
+      getDataSourceInstanceSettingsMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && 'uid' in ref && ref.uid === missingRef.uid) {
+          return undefined;
         }
-        return mockDs;
+        return { uid: 'ds-ok' } as DataSourceInstanceSettings;
       });
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
       const events: DefaultControlEvent[] = [];
 
-      loadDefaultControlsShared$(refs).subscribe({
+      loadDefaultControlsShared$([missingRef, okRef]).subscribe({
         next: (event) => events.push(event),
         complete: () => {
           expect(events).toHaveLength(1);
           expect(events[0].type).toBe('variables');
+          expect(getDataSourceInstanceMock).toHaveBeenCalledTimes(1);
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(okRef);
           expect(warnSpy).not.toHaveBeenCalled();
           warnSpy.mockRestore();
           done();
@@ -193,10 +202,10 @@ describe('dashboardControls', () => {
       });
     });
 
-    it('should warn when datasource load fails for a reason other than not found', (done) => {
+    it('should warn when a registered datasource fails to load, even if the error mentions not found', (done) => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const refs: DataSourceRef[] = [{ uid: 'ds-fail', type: 'broken' }];
-      const loadError = new Error('plugin import failed');
+      const loadError = new Error('Loading chunk 42 failed (404 Not Found)');
 
       getDataSourceInstanceMock.mockRejectedValue(loadError);
 

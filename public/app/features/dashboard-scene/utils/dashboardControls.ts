@@ -1,7 +1,7 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -63,23 +63,22 @@ function sortLinks(a: DashboardLink, b: DashboardLink): number {
 }
 
 async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<DefaultControlEvent>) {
-  let ds: DataSourceApi;
+  // Default controls are opportunistic; a missing datasource is a skip, not a failure.
+  // Ask the settings cache first so plugin-load errors (e.g. "module not found") are
+  // not mistaken for a missing datasource.
+  if (!(await getDataSourceInstanceSettings(ref))) {
+    return;
+  }
 
+  let ds: DataSourceApi;
   try {
     ds = await getDataSourceInstance(ref);
   } catch (e) {
-    // Default controls are opportunistic; a missing datasource is a skip, not a failure.
-    if (!isDatasourceNotFoundError(e)) {
-      console.warn('Failed to load datasource', ref, e);
-    }
+    console.warn('Failed to load datasource', ref, e);
     return;
   }
 
   await Promise.all([emitDefaultVariables(ds, subscriber), emitDefaultLinks(ds, subscriber)]);
-}
-
-function isDatasourceNotFoundError(error: unknown): boolean {
-  return error instanceof Error && /not found/i.test(error.message);
 }
 
 async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
