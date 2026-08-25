@@ -53,7 +53,7 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell panel={panel} isEditing={isEditing} />;
+    return <PanelCell panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   if (narrative) {
@@ -77,13 +77,15 @@ export function NotebookCellRenderer({
 // A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
 // While editing, a panel with no transformations (the shape a query-first "Query" block produces —
 // see NotebookLayoutManager's buildQueryPanel) also gets an inline query editor above it, one row per
-// query — see PanelQueryEditor.
-function PanelCell({ panel, isEditing }: { panel: VizPanel; isEditing: boolean }) {
+// query — see PanelQueryEditor. `autoFocus` (the same "this cell was just inserted or converted" signal
+// narrative cells use to grab the caret) opens that editor immediately instead of leaving a
+// freshly-added block collapsed behind a chevron the reader has to know to click.
+function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing: boolean; autoFocus?: boolean }) {
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isUntransformedQueryPanel(panel) && <PanelQueryEditor panel={panel} />}
+      {isEditing && isUntransformedQueryPanel(panel) && <PanelQueryEditor panel={panel} autoFocus={autoFocus} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>

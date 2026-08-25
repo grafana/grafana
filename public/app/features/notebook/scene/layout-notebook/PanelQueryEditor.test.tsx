@@ -27,6 +27,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onRunQuery,
     onAddQuery,
     onRemoveQuery,
+    isOpen,
   }: {
     dataSource: DataSourceInstanceSettings;
     query: DataQuery;
@@ -35,10 +36,12 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onRunQuery: () => void;
     onAddQuery: (query: DataQuery) => void;
     onRemoveQuery: (query: DataQuery) => void;
+    isOpen?: boolean;
   }) => (
     <div data-testid={`row-${query.refId}`}>
       <span data-testid={`resolved-datasource-${query.refId}`}>{dataSource.uid}</span>
       <span data-testid={`current-query-${query.refId}`}>{JSON.stringify(query)}</span>
+      <span data-testid={`is-open-${query.refId}`}>{String(Boolean(isOpen))}</span>
       <button onClick={() => onChange({ ...query, expr: 'up' } as DataQuery)}>edit query {query.refId}</button>
       {onChangeDataSource && (
         <button
@@ -167,6 +170,20 @@ describe('PanelQueryEditor', () => {
     expect(runner.state.datasource).toEqual({ uid: 'picked-uid', type: 'picked-type' });
   });
 
+  it('opens the row once a datasource is picked for the first time', async () => {
+    resolvedSettings = undefined;
+    const panel = buildPanel();
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const pickButton = await screen.findByRole('button', { name: 'pick a datasource' });
+    // Only resolves *after* the picker has had its chance to render — this mock has no per-ref
+    // control, only a single global on/off switch.
+    resolvedSettings = { uid: 'picked-uid', type: 'picked-type', name: 'picked' };
+
+    await user.click(pickButton);
+
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
+  });
+
   it('preserves refId and hide when the query editor reports an edit', async () => {
     const panel = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
@@ -252,6 +269,25 @@ describe('PanelQueryEditor', () => {
     const { container } = render(<PanelQueryEditor panel={panel} />);
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  describe('row collapse state', () => {
+    it('starts collapsed by default', async () => {
+      const panel = buildPanel();
+      render(<PanelQueryEditor panel={panel} />);
+
+      expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
+    });
+
+    // autoFocus is true right after this cell was just inserted or converted — see
+    // NotebookCellRenderer's own doc comment. Opening the row automatically then means the reader who
+    // just added the block sees its editor immediately, instead of having to know to click a chevron.
+    it('starts open when the cell was just added or converted', async () => {
+      const panel = buildPanel();
+      render(<PanelQueryEditor panel={panel} autoFocus />);
+
+      expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
+    });
   });
 
   describe('multiple queries', () => {

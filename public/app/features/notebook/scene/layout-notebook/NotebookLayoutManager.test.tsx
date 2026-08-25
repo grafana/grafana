@@ -226,7 +226,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Query' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
   });
 
@@ -279,7 +279,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Query' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
 
     // Regular typing (anything but a lone "/") never opens the menu — it is just markdown text.

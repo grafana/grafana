@@ -13,6 +13,8 @@ import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface Props {
   panel: VizPanel;
+  /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
+  autoFocus?: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel }: Props) {
+export function PanelQueryEditor({ panel, autoFocus }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
@@ -84,6 +86,7 @@ export function PanelQueryEditor({ panel }: Props) {
           data={panelData}
           range={range}
           onRunQuery={runQuery}
+          startOpen={autoFocus}
         />
       ))}
     </Stack>

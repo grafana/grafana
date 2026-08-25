@@ -12912,7 +12912,7 @@
       "label": "Add block",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
-      "query": "Query"
+      "visualization": "Visualization"
     },
     "cell": {
       "code": {

@@ -415,9 +415,7 @@ const dataLinkSchema = z.object({
   targetBlank: z.boolean().optional(),
 });
 
-// Exported for reuse by the notebook schema (public/app/features/notebook/schema/notebookSpecSchema.ts),
-// whose Query cell content reuses this same dashboard-shared query shape rather than restating it.
-export const panelQueryKindSchema = z.object({
+const panelQueryKindSchema = z.object({
   kind: z.literal('PanelQuery'),
   spec: z.object({
     query: dataQueryKindSchema,
@@ -443,8 +441,7 @@ const transformationKindSchema = z.object({
   }),
 }) satisfies z.ZodType<TransformationKind>;
 
-// Exported for the same reason as panelQueryKindSchema above.
-export const queryOptionsSpecSchema = z.object({
+const queryOptionsSpecSchema = z.object({
   timeFrom: z.string().optional(),
   maxDataPoints: z.number().optional(),
   timeShift: z.string().optional(),
