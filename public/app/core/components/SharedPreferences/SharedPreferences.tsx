@@ -24,7 +24,7 @@ import {
 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
 
-import { DashboardPicker } from '../Select/DashboardPicker';
+import { DashboardPicker, GLOBAL_HOME_DASHBOARD_UID } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
@@ -106,7 +106,12 @@ export const SharedPreferences = memo((props: Props) => {
     if (nextHomeDashboardUID !== previousHomeDashboardUID) {
       homeDashboardChanged({
         preferenceType: props.preferenceType,
-        action: nextHomeDashboardUID ? 'set' : 'cleared',
+        action:
+          nextHomeDashboardUID === GLOBAL_HOME_DASHBOARD_UID
+            ? 'set_global_home'
+            : nextHomeDashboardUID
+              ? 'set'
+              : 'cleared',
       });
     }
 
@@ -209,6 +214,7 @@ export const SharedPreferences = memo((props: Props) => {
               value={state.homeDashboardUID}
               onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
+              includeGlobalHomeOption
               isClearable={true}
               placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}
               inputId="home-dashboard-select"

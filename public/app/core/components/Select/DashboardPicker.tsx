@@ -2,6 +2,7 @@ import debounce from 'debounce-promise';
 import { forwardRef, useCallback, useEffect, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -13,12 +14,23 @@ import { type DashboardDTO } from 'app/types/dashboard';
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
+  /** Offer a reserved "Global Home" entry that stops the user > team > org home dashboard fallback. */
+  includeGlobalHomeOption?: boolean;
 }
 
 export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
   Pick<DashboardDTO['meta'], 'folderUid' | 'folderTitle'>;
 
 const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
+
+// Reserved homeDashboardUID value; must equal pref.GlobalHomeDashboardUID in the Go backend.
+export const GLOBAL_HOME_DASHBOARD_UID = 'global-home';
+
+const getGlobalHomeOption = (): SelectableValue<DashboardPickerDTO> => ({
+  value: { uid: GLOBAL_HOME_DASHBOARD_UID, name: t('dashboard-picker.global-home-option', 'Global Home') },
+  label: t('dashboard-picker.global-home-option', 'Global Home'),
+  icon: 'home-alt',
+});
 
 async function findDashboards(query = '') {
   const result = await getGrafanaSearcher().search({ query, kind: ['dashboard'], limit: 100 });
@@ -42,13 +54,29 @@ const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
 export const DashboardPicker = forwardRef<HTMLElement, Props>(
-  ({ value, onChange, placeholder = 'Select dashboard', noOptionsMessage = 'No dashboards found', ...props }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      placeholder = 'Select dashboard',
+      noOptionsMessage = 'No dashboards found',
+      includeGlobalHomeOption,
+      ...props
+    },
+    ref
+  ) => {
     const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
 
     // This is required because the async select does not match the raw uid value
     // We can not use a simple Select because the dashboard search should not return *everything*
     useEffect(() => {
       if (!value || value === current?.value?.uid) {
+        return;
+      }
+
+      if (includeGlobalHomeOption && value === GLOBAL_HOME_DASHBOARD_UID) {
+        // The sentinel is not a real dashboard; don't fetch it.
+        setCurrent(getGlobalHomeOption());
         return;
       }
 
@@ -84,7 +112,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       })();
       // we don't need to rerun this effect every time `current` changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value]);
+    }, [value, includeGlobalHomeOption]);
 
     const onPicked = useCallback(
       (sel: SelectableValue<DashboardPickerDTO>) => {
@@ -94,9 +122,17 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       [onChange, setCurrent]
     );
 
+    const loadOptionsWithGlobalHome = useCallback(async (query = '') => {
+      const options = await getDashboards(query);
+      const globalHome = getGlobalHomeOption();
+      return !query || globalHome.label!.toLowerCase().includes(query.toLowerCase())
+        ? [globalHome, ...options]
+        : options;
+    }, []);
+
     return (
       <AsyncSelect
-        loadOptions={getDashboards}
+        loadOptions={includeGlobalHomeOption ? loadOptionsWithGlobalHome : getDashboards}
         onChange={onPicked}
         placeholder={placeholder}
         noOptionsMessage={noOptionsMessage}

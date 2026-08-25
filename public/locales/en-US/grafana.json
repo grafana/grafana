@@ -6868,6 +6868,9 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "global-home-option": "Global Home"
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
