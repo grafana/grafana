@@ -1,8 +1,9 @@
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 
-import { TransformationEditorRenderer } from './TransformationEditorRenderer';
+import { TransformationEditorPanel, TransformationEditorRenderer } from './TransformationEditorRenderer';
+import { NO_CONFIGS } from './hooks/useTransformedFrames';
 import { renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -23,8 +24,15 @@ jest.mock('./TransformationHelpDisplay', () => ({
   TransformationHelpDisplay: () => <div data-testid="transformation-help-display" />,
 }));
 
+let debugDisplayThrows = false;
+
 jest.mock('./TransformationDebugDisplay', () => ({
-  TransformationDebugDisplay: () => <div data-testid="transformation-debug-display" />,
+  TransformationDebugDisplay: () => {
+    if (debugDisplayThrows) {
+      throw new Error('the debug drawer could not describe this transformation');
+    }
+    return <div data-testid="transformation-debug-display" />;
+  },
 }));
 
 const mockTransformation: DataTransformerInfo = {
@@ -51,6 +59,57 @@ function makeTransformation(registryItem: TransformerRegistryItem | undefined): 
 }
 
 describe('TransformationEditorRenderer', () => {
+  afterEach(() => {
+    debugDisplayThrows = false;
+  });
+
+  it('lets a supplemental display recover when another transformation is selected', () => {
+    // `ErrorBoundary` clears its error only when one of its dependencies changes. Without one, a
+    // display that threw stays on the alert for the rest of its life — and nothing here unmounts it,
+    // so the user cannot get it back by reselecting or by closing the drawer.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    debugDisplayThrows = true;
+
+    const panel = (transformation: Transformation) => (
+      <TransformationEditorPanel
+        transformation={transformation}
+        transformations={[transformation]}
+        systemTransformations={NO_CONFIGS}
+        updateTransformation={jest.fn()}
+        showSupplementalDisplays
+      />
+    );
+
+    const { rerender } = render(panel(makeTransformation(mockRegistryItem)));
+
+    expect(screen.queryByTestId('transformation-debug-display')).not.toBeInTheDocument();
+
+    debugDisplayThrows = false;
+    rerender(panel({ ...makeTransformation(mockRegistryItem), transformId: 'another-transform' }));
+
+    expect(screen.getByTestId('transformation-debug-display')).toBeInTheDocument();
+
+    consoleError.mockRestore();
+  });
+
+  it('keeps the editor up when a supplemental display cannot render', () => {
+    // All three displays replay the pipeline to describe it, over frames and options a dashboard
+    // supplies. Bounding them separately is what keeps a throw in one from taking the editor — the
+    // part the user is actually working in — down with it.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    debugDisplayThrows = true;
+
+    renderWithQueryEditorProvider(<TransformationEditorRenderer />, {
+      selectedTransformation: makeTransformation(mockRegistryItem),
+    });
+
+    expect(screen.getByTestId('transformation-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('transformation-filter-display')).toBeInTheDocument();
+    expect(screen.queryByTestId('transformation-debug-display')).not.toBeInTheDocument();
+
+    consoleError.mockRestore();
+  });
+
   it('renders nothing when no transformation is selected', () => {
     // The renderer is mounted regardless of selection state, so it must guard against
     // rendering the editor when nothing is selected (e.g. on initial load or after deselection).

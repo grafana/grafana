@@ -12,9 +12,12 @@ jest.mock('@grafana/data', () => ({
   transformDataFrame: jest.fn(),
 }));
 
+/** Mutable, so a test can pick what the filter's variable resolves to. */
+let envValue = 'keep';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v }),
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, envValue) }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -54,6 +57,7 @@ describe('useTransformationDebugData', () => {
   const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
 
   beforeEach(() => {
+    envValue = 'keep';
     jest.clearAllMocks();
   });
 
@@ -210,6 +214,62 @@ describe('useTransformationDebugData', () => {
     rerender();
 
     expect(result.current).toBe(first);
+  });
+
+  it('admits frames by the filter as the pipeline resolved it, not by the literal variable', () => {
+    // The filter runs ahead of the transformation, and the pipeline interpolates it along with the
+    // rest of the config — so the replay does too. A matcher built from the raw config narrows the
+    // displayed input by a `$var` that never reached `transformDataFrame`, hiding frames the
+    // transformation was handed.
+    const filteredTransformation = {
+      ...transformations[1],
+      transformConfig: { id: 'organize', options: {}, filter: { id: 'byName', options: '$env' } },
+    };
+
+    respondByConfig({ joinByField: makeFrames(['keep', 'drop']), organize: makeFrames(['organized']) });
+
+    const { result } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: filteredTransformation,
+        transformations: [transformations[0], filteredTransformation],
+        systemTransformations: NO_CONFIGS,
+        data,
+        isActive: true,
+      })
+    );
+
+    expect(result.current.input.map(({ name }) => name)).toEqual(['keep']);
+  });
+
+  it('shows the input unnarrowed when the resolved filter cannot be built into a matcher', () => {
+    // `byName` runs its option through `stringToJsRegex`, which throws on a `/`-prefixed string that
+    // is not a complete `/pattern/flags` — a variable resolving to a path is enough. The pipeline's
+    // own call to `getFrameMatchers` sits behind the replay's error handling, but this one runs
+    // during render, where a throw reaches the error boundary and takes the drawer with it.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    envValue = '/var/log';
+
+    const filteredTransformation = {
+      ...transformations[1],
+      transformConfig: { id: 'organize', options: {}, filter: { id: 'byName', options: '$env' } },
+    };
+
+    respondByConfig({ joinByField: makeFrames(['keep', 'drop']), organize: makeFrames(['organized']) });
+
+    const { result } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: filteredTransformation,
+        transformations: [transformations[0], filteredTransformation],
+        systemTransformations: NO_CONFIGS,
+        data,
+        isActive: true,
+      })
+    );
+
+    expect(result.current.input.map(({ name }) => name)).toEqual(['keep', 'drop']);
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('filter'), expect.any(Error));
+
+    consoleError.mockRestore();
   });
 
   it('admits only the frames the debugged transformation’s own filter matches', () => {
