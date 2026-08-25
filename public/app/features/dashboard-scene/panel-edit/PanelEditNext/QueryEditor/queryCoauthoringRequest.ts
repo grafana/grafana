@@ -22,6 +22,7 @@ import {
 } from './queryCoauthoringPrompts';
 
 type PreparedQuery = Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
+const MAX_INVALID_PROPOSAL_REPAIR_ATTEMPTS = 1;
 
 export interface QueryCoauthoringRequestError {
   message: string;
@@ -54,16 +55,24 @@ export function createQueryCoauthoringRequest({
   let rejectedTerminalProposal: 'unchanged' | 'stale' | undefined;
   let acceptedTerminalToolCallCount = 0;
   let rejectedInvalidProposalCount = 0;
+  let invalidProposalRepairExhausted = false;
   let terminalCallbackHandled = false;
 
   const proposalTool = createTool(
     async (input: QueryProposal) => {
       if (isCurrent()) {
+        if (invalidProposalRepairExhausted) {
+          return 'The query proposal is invalid and no further repair attempts are available.';
+        }
         const prepared = adapter.prepareProposal(invocationId, input.proposedQuery);
         if (prepared.status !== 'ready') {
           if (prepared.reason === 'invalid') {
             rejectedInvalidProposalCount++;
-            throw new Error(buildInvalidProposalRepairMessage(context));
+            if (rejectedInvalidProposalCount <= MAX_INVALID_PROPOSAL_REPAIR_ATTEMPTS) {
+              throw new Error(buildInvalidProposalRepairMessage(context));
+            }
+            invalidProposalRepairExhausted = true;
+            return 'The query proposal is invalid and no further repair attempts are available.';
           }
           acceptedTerminalToolCallCount++;
           rejectedTerminalProposal = prepared.reason;
@@ -130,15 +139,16 @@ export function createQueryCoauthoringRequest({
     }
     terminalCallbackHandled = true;
     if (acceptedTerminalToolCallCount === 0) {
+      if (rejectedInvalidProposalCount > 0) {
+        return { status: 'error', error: { message: invalidQueryResponseMessage(context), retryable: true } };
+      }
       const message = normalizeClarificationMessage(completionText);
       if (message) {
         return message.length > MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH
           ? { status: 'fallback', fallback: { reason: message.slice(0, 500) } }
           : { status: 'clarification', message };
       }
-      return rejectedInvalidProposalCount > 0
-        ? { status: 'error', error: { message: invalidQueryResponseMessage(context), retryable: true } }
-        : { status: 'error', error: { message: requestFailedMessage(), retryable: true } };
+      return { status: 'error', error: { message: requestFailedMessage(), retryable: true } };
     }
     if (acceptedTerminalToolCallCount !== 1) {
       return { status: 'error', error: { message: multipleResponsesMessage(), retryable: true } };

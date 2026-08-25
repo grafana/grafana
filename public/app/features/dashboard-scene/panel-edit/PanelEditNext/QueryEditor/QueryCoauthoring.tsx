@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
@@ -68,7 +68,6 @@ interface Props {
 }
 
 const ITERATION_NUDGE_THRESHOLD = 3;
-const PROMPT_MESSAGE_ID = 'query-coauthoring-prompt-message';
 
 export function QueryCoauthoring({
   adapter,
@@ -114,12 +113,14 @@ export function QueryCoauthoring({
   const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
   const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
   const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
+  const promptMessageId = useId();
   const availableHeight = useQueryCoauthoringViewport(portalTarget);
   const generationIdRef = useRef(0);
   const submittedIntentsRef = useRef<string[]>([]);
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
+  const containerRef = useRef<HTMLDivElement>(null);
   const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
   onRevertPreviewRef.current = onRevertPreview;
 
@@ -306,28 +307,35 @@ export function QueryCoauthoring({
         }),
       ],
     });
+    dismiss();
   };
 
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (feedback) {
-          closeFeedback();
-        } else {
-          dismiss();
-        }
+      if (event.key !== 'Escape') {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (feedback) {
+        closeFeedback();
+      } else {
+        dismiss();
       }
     };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown, true);
-    };
+
+    container.addEventListener('keydown', onKeyDown);
+    return () => container.removeEventListener('keydown', onKeyDown);
   }, [closeFeedback, dismiss, feedback]);
 
   return createPortal(
     <div
+      ref={containerRef}
       className={styles.container}
       role="dialog"
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
@@ -404,7 +412,7 @@ export function QueryCoauthoring({
                     : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
                 }
               >
-                <Text id={PROMPT_MESSAGE_ID} variant="body">
+                <Text id={promptMessageId} variant="body">
                   {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
                 </Text>
               </div>
@@ -436,7 +444,7 @@ export function QueryCoauthoring({
                   ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                   : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
               }
-              ariaDescribedBy={context && !isIdentifying ? PROMPT_MESSAGE_ID : undefined}
+              ariaDescribedBy={context && !isIdentifying ? promptMessageId : undefined}
               actionLabel={
                 clarification
                   ? t('query-editor-coauthoring.continue', 'Continue')

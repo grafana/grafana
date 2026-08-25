@@ -52,7 +52,6 @@ export function QueryCoauthoringFeedback({ feedback, onClose }: Props) {
           ? t('query-editor-coauthoring.feedback-positive-title', 'What went well?')
           : t('query-editor-coauthoring.feedback-negative-title', 'What went wrong?')
       }
-      closeOnEscape={false}
       onDismiss={onClose}
     >
       <Stack direction="column" gap={2}>

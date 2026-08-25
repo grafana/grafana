@@ -84,6 +84,29 @@ describe('QueryCoauthoringPromptInput', () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it('does not submit with Enter while text composition is active', () => {
+    const onSubmit = jest.fn();
+    render(
+      <QueryCoauthoringPromptInput
+        value="Use increase"
+        placeholder={initialPrompt.placeholder}
+        ariaLabel={initialPrompt.ariaLabel}
+        actionLabel={initialPrompt.actionLabel}
+        disabled={false}
+        onChange={jest.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    const eventWasNotCancelled = fireEvent.keyDown(screen.getByRole('textbox', { name: initialPrompt.ariaLabel }), {
+      key: 'Enter',
+      isComposing: true,
+    });
+
+    expect(eventWasNotCancelled).toBe(true);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('restores focus after programmatic focus theft when semantic reading completes', () => {
     const { rerender } = renderPrompt(initialPrompt);
     const prompt = screen.getByRole('textbox', { name: initialPrompt.ariaLabel });

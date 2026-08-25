@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { type LoadingState } from '@grafana/data';
 import { SceneDataTransformer, SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -24,10 +26,12 @@ export function startQueryPreview(
   proposedQuery: DataQuery
 ): QueryPreview | undefined {
   const queryRunner = getPanelQueryRunner(panel);
-  if (!queryRunner || !queryRunner.state.queries.some((query) => query.refId === originalRefId)) {
+  const baselineQuery = queryRunner?.state.queries.find((query) => query.refId === originalRefId);
+  if (!queryRunner || !baselineQuery) {
     return undefined;
   }
 
+  const baselineQueries = queryRunner.state.queries;
   const baselineData = queryRunner.state.data;
   const previewRunner = queryRunner.clone({
     key: undefined,
@@ -40,10 +44,35 @@ export function startQueryPreview(
   });
   let disposed = false;
   const stateListeners = new Set<(state: LoadingState) => void>();
+  let canonicalQuerySubscription: ReturnType<typeof queryRunner.subscribeToState> | undefined;
   const subscription = previewRunner.subscribeToState((state, previousState) => {
     if (state.data !== previousState.data && state.data) {
       queryRunner.setState({ data: state.data });
       stateListeners.forEach((listener) => listener(state.data!.state));
+    }
+  });
+
+  const dispose = () => {
+    if (disposed) {
+      return;
+    }
+    disposed = true;
+    stateListeners.clear();
+    subscription.unsubscribe();
+    canonicalQuerySubscription?.unsubscribe();
+    previewRunner.cancelQuery();
+    queryRunner.setState({ data: baselineData });
+    panel.setState({ $behaviors: panel.state.$behaviors?.filter((behavior) => behavior !== previewRunner) });
+    previewRunner.clearParent();
+  };
+
+  canonicalQuerySubscription = queryRunner.subscribeToState((state, previousState) => {
+    if (state.queries === previousState.queries) {
+      return;
+    }
+
+    if (!isEqual(state.queries, baselineQueries)) {
+      dispose();
     }
   });
 
@@ -52,18 +81,7 @@ export function startQueryPreview(
   previewRunner.runQueries();
 
   return {
-    dispose: () => {
-      if (disposed) {
-        return;
-      }
-      disposed = true;
-      stateListeners.clear();
-      subscription.unsubscribe();
-      previewRunner.cancelQuery();
-      queryRunner.setState({ data: baselineData });
-      panel.setState({ $behaviors: panel.state.$behaviors?.filter((behavior) => behavior !== previewRunner) });
-      previewRunner.clearParent();
-    },
+    dispose,
     subscribeToState: (listener) => {
       stateListeners.add(listener);
       const currentState = previewRunner.state.data?.state;

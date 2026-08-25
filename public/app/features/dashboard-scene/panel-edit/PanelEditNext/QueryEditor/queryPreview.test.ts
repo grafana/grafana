@@ -81,6 +81,59 @@ describe('startQueryPreview', () => {
     expect(previewStateListener).toHaveBeenCalledWith(LoadingState.Done);
   });
 
+  it('disposes before a canonical query change can run and preserves the newer result', () => {
+    const queryRunner = new SceneQueryRunner({ queries: [queryA, queryB] });
+    const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+    const baselineData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
+    const previewData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
+    const canonicalData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
+    queryRunner.setState({ data: baselineData });
+    const preview = startQueryPreview(panel, 'A', proposedQuery)!;
+    const previewRunner = panel.state.$behaviors?.find(
+      (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
+    )!;
+
+    previewRunner.setState({ data: previewData });
+    expect(queryRunner.state.data).toBe(previewData);
+
+    queryRunner.setState({ queries: [{ ...queryA, hide: true }, queryB] });
+    queryRunner.setState({ data: canonicalData });
+    preview.dispose();
+    previewRunner.setState({ data: previewData });
+
+    expect(panel.state.$behaviors).not.toContain(previewRunner);
+    expect(queryRunner.state.data).toBe(canonicalData);
+  });
+
+  it('keeps the preview when the canonical query is replaced by an equal clone', () => {
+    const queryRunner = new SceneQueryRunner({ queries: [queryA, queryB] });
+    const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+    const preview = startQueryPreview(panel, 'A', proposedQuery)!;
+    const previewRunner = panel.state.$behaviors?.find(
+      (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
+    )!;
+
+    queryRunner.setState({ queries: [{ ...queryA }, queryB] });
+
+    expect(panel.state.$behaviors).toContain(previewRunner);
+    expect(previewRunner.parent).toBe(panel);
+    preview.dispose();
+  });
+
+  it('disposes when a sibling canonical query changes', () => {
+    const queryRunner = new SceneQueryRunner({ queries: [queryA, queryB] });
+    const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+    startQueryPreview(panel, 'A', proposedQuery)!;
+    const previewRunner = panel.state.$behaviors?.find(
+      (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
+    )!;
+
+    queryRunner.setState({ queries: [queryA, { ...queryB, hide: true }] });
+
+    expect(panel.state.$behaviors).not.toContain(previewRunner);
+    expect(previewRunner.parent).toBeUndefined();
+  });
+
   it('rejects a proposal for a query outside the canonical runner', () => {
     const queryRunner = new SceneQueryRunner({ queries: [queryA] });
     const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });

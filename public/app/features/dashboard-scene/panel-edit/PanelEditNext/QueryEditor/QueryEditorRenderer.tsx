@@ -47,6 +47,7 @@ interface QueryEditorPanelProps {
 
 interface CoauthoringPreviewTransaction {
   baseline: DataQuery;
+  baselineQueries: DataQuery[];
   queryKey: string;
 }
 
@@ -85,6 +86,8 @@ export function QueryEditorPanel({
   const [coauthoringAdapter, setCoauthoringAdapter] = useState<QueryEditorCoauthoringAdapterV1>();
   const queryRef = useRef(query);
   queryRef.current = query;
+  const queriesRef = useRef(queries);
+  queriesRef.current = queries;
   const coauthoringPreviewTransactionRef = useRef<CoauthoringPreviewTransaction | undefined>(undefined);
   const coauthoringProposalRef = useRef<DataQuery | undefined>(undefined);
   const coauthoringPreviewRef = useRef<QueryPreview | undefined>(undefined);
@@ -132,6 +135,16 @@ export function QueryEditorPanel({
     };
   }, [clearCoauthoringPreviewTransaction, coauthoringIdentity]);
 
+  useEffect(() => {
+    const transaction = coauthoringPreviewTransactionRef.current;
+    if (!transaction || isEqual(queries, transaction.baselineQueries)) {
+      return;
+    }
+
+    clearCoauthoringPreviewTransaction();
+    coauthoringAdapter?.dismiss();
+  }, [clearCoauthoringPreviewTransaction, coauthoringAdapter, queries]);
+
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
@@ -175,6 +188,7 @@ export function QueryEditorPanel({
       }
       coauthoringPreviewTransactionRef.current = transaction ?? {
         baseline,
+        baselineQueries: queriesRef.current,
         queryKey: coauthoringIdentity,
       };
       coauthoringPreviewRef.current = preview;

@@ -150,6 +150,9 @@ export function QueryCoauthoringPromptInput({
 
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.currentTarget.value);
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (!disabled) {

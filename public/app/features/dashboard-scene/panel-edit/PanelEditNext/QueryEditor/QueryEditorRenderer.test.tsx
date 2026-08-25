@@ -375,10 +375,46 @@ describe('QueryEditorRenderer', () => {
     rerender(renderPanel(queryA, [queryA, queryB]));
     expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
 
+    const equalQueryClone = { ...queryA };
+    rerender(renderPanel(equalQueryClone, [equalQueryClone, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
+    expect(disposePreview).toHaveBeenCalledTimes(1);
+    expect(dismiss).not.toHaveBeenCalled();
+
+    const externallyChangedQuery = { ...queryA, hide: true };
+    rerender(renderPanel(externallyChangedQuery, [externallyChangedQuery, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+    expect(disposePreview).toHaveBeenCalledTimes(2);
+    expect(dismiss).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      hostResult = coauthoringProps.accept(proposedQuery);
+    });
+    expect(hostResult).toBe(false);
+    expect(updateQuery).not.toHaveBeenCalled();
+
+    rerender(renderPanel(queryA, [queryA, queryB]));
+    act(() => {
+      hostResult = coauthoringProps.preview(proposedQuery);
+    });
+    expect(hostResult).toBe(true);
+
+    const externallyChangedSibling = { ...queryB, hide: true };
+    rerender(renderPanel(queryA, [queryA, externallyChangedSibling]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+    expect(disposePreview).toHaveBeenCalledTimes(3);
+    expect(dismiss).toHaveBeenCalledTimes(2);
+
+    rerender(renderPanel(queryA, [queryA, queryB]));
+    act(() => {
+      hostResult = coauthoringProps.preview(proposedQuery);
+    });
+    expect(hostResult).toBe(true);
+
     const firstManualEdit = { ...queryA, legendFormat: 'manual' };
     act(() => changeFromEditor!(firstManualEdit));
     expect(runQueries).toHaveBeenCalledTimes(1);
-    expect(dismiss).toHaveBeenCalledTimes(1);
+    expect(dismiss).toHaveBeenCalledTimes(3);
     expect(updateQuery).toHaveBeenLastCalledWith(firstManualEdit, 'A');
 
     const laterManualEdit = { ...queryA, legendFormat: 'manual-later' };
