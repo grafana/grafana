@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useId, useMemo, useState } from 'react';
+import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,8 +11,11 @@ import { blockId } from './blockId';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useMetricCatalog } from './data/useMetricCatalog';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
+import { type MetricSelection } from './types';
 
 interface Props {
+  /** The owning card's query, named back to the explorer so it knows whose row was selected. */
+  refId: string;
   /**
    * The card's datasource, as primitives rather than a `DataSourceRef`, because this component is the
    * `memo()` boundary: the explorer above rebuilds its card descriptors on every keystroke in a query
@@ -22,6 +25,13 @@ interface Props {
   dsUid?: string;
   dsType?: string;
   timeRange: TimeRange;
+  /** Name of the metric the detail panel is showing, if it belongs to this list. */
+  selectedMetric?: string;
+  /**
+   * Hands over the whole catalog entry rather than the name, so the panel needs no request of its
+   * own. Must be stable, or the `memo()` above stops earning its keep.
+   */
+  onSelectMetric: (selection: MetricSelection) => void;
 }
 
 /**
@@ -32,10 +42,18 @@ interface Props {
  * names. Searching is the catalog hook's job, not this component's: the list being searched is the
  * whole datasource's catalog, which this component never holds.
  *
- * A row expands to its label keys and a label key to its values. One metric and one label at a time:
- * every open row holds a request open, and both lists are unbounded.
+ * A row's chevron expands it to its label keys and a label key to its values. One metric and one label
+ * at a time: every open row holds a request open, and both lists are unbounded. The row's name is a
+ * separate control, selecting the metric for the sidebar's detail panel.
  */
-export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange }: Props) {
+export const MetricsList = memo(function MetricsList({
+  refId,
+  dsUid,
+  dsType,
+  timeRange,
+  selectedMetric,
+  onSelectMetric,
+}: Props) {
   const styles = useStyles2(getStyles);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -64,6 +82,21 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
   // a ref object without one identity change per render turning into a refetch.
   const dsRef = useMemo<DataSourceRef>(() => ({ uid: dsUid, type: dsType }), [dsUid, dsType]);
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
+
+  // Rows are handed a name, so the entry is looked up here. Through a ref, not a dependency:
+  // `metrics` is a fresh array on every keystroke, which would undo `MetricRow`'s `memo()`.
+  const metricsRef = useRef(metrics);
+  metricsRef.current = metrics;
+
+  const selectMetric = useCallback(
+    (name: string) => {
+      const metric = metricsRef.current.find((candidate) => candidate.name === name);
+      if (metric) {
+        onSelectMetric({ refId, dsUid, metric });
+      }
+    },
+    [onSelectMetric, refId, dsUid]
+  );
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also
   // the datasource and the range. An offset into the old list means nothing in the new one.
@@ -105,7 +138,14 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
 
               return (
                 <li key={metric.name}>
-                  <MetricRow name={metric.name} expanded={expanded} labelsId={labelsId} onToggle={toggleMetric} />
+                  <MetricRow
+                    name={metric.name}
+                    expanded={expanded}
+                    selected={metric.name === selectedMetric}
+                    labelsId={labelsId}
+                    onToggle={toggleMetric}
+                    onSelect={selectMetric}
+                  />
                   {expanded && (
                     <MetricLabels
                       id={labelsId}

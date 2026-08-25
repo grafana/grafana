@@ -239,10 +239,6 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
-	// FlagCanvasExternalPlugin
-	// Load Canvas panel from an external plugin instead of the bundled core plugin
-	FlagCanvasExternalPlugin = "canvasExternalPlugin"
-
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -379,6 +375,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzUserPermissions
+	// Route user permission snapshots through the AuthZ service.
+	FlagAuthzUserPermissions = "authz.userPermissions"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -498,6 +498,14 @@ const (
 	// FlagTeamHttpHeadersFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests
 	FlagTeamHttpHeadersFromAppPlatform = "teamHttpHeadersFromAppPlatform"
+
+	// FlagTeamHttpHeadersFromAppPlatformST
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana
+	FlagTeamHttpHeadersFromAppPlatformST = "teamHttpHeadersFromAppPlatformST"
+
+	// FlagTeamHttpHeadersFromAppPlatformMT
+	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
+	FlagTeamHttpHeadersFromAppPlatformMT = "teamHttpHeadersFromAppPlatformMT"
 
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
@@ -793,6 +801,14 @@ const (
 	// FlagKubernetesUsersRedirectNoFallback
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
+
+	// FlagKubernetesAuthInfoApi
+	// Enables auth info APIs in the app platform
+	FlagKubernetesAuthInfoApi = "kubernetesAuthInfoApi"
+
+	// FlagKubernetesAuthInfoRedirect
+	// Redirects the requests of the auth info service to the app platform APIs
+	FlagKubernetesAuthInfoRedirect = "kubernetesAuthInfoRedirect"
 
 	// FlagApppluginsLoadAppManifest
 	// Load app manifest when loading plugin definitions

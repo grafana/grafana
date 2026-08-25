@@ -285,7 +285,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.components.dropdown.background,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z1,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z1,
     position: 'relative',
     top: '2px',
   }),

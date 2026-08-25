@@ -2861,13 +2861,31 @@ func resolveFieldName(fields resource.SearchableDocumentFields, key string) stri
 
 // isReservedTopLevelField reports whether key is a standard field or an internal
 // top-level variant (title_phrase/title_ngram) that must never be prefixed.
+//
+// The declarations and the column set do not cover the same names, so both are
+// consulted: managedBy is declared for faceting and has no column because it is
+// not stored, while rv has a column and no declaration.
 func isReservedTopLevelField(key string) bool {
 	switch key {
 	case resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_TITLE_NGRAM:
 		return true
 	}
+	if declaredTopLevelNames[key] {
+		return true
+	}
 	return resource.StandardSearchFields().Field(key) != nil
 }
+
+var declaredTopLevelNames = func() map[string]bool {
+	names := map[string]bool{}
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	return names
+}()
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
@@ -2956,8 +2974,8 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	if strings.Contains(req.Query, "*") {
 		// Wildcard query is expensive, should be used with caution.
 		// When QueryFields is set, search across each named field (only Name is
-		// used; Type and Boost are ignored because bleve wildcards don't support
-		// analyzers or meaningful relevance scoring).
+		// used; Boost is ignored because bleve wildcards don't support analyzers
+		// or meaningful relevance scoring).
 		// When QueryFields is empty, default to title.
 		if len(req.QueryFields) > 0 {
 			for _, field := range req.QueryFields {
@@ -3074,7 +3092,6 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 			out = append(out, titleQueryFields()...)
 			continue
 		}
-		// Type is dropped: the query comes from the field's mapping.
 		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
 			Name:  resolveFieldName(b.fields, f.Name),
 			Boost: f.Boost,

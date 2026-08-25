@@ -18,7 +18,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot InfluxDB data source issues
 weight: 700
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # Troubleshoot InfluxDB data source issues
@@ -73,6 +73,35 @@ The following errors occur when Grafana can't establish or maintain a connection
 1. Verify the hostname is resolvable from the network where the PDC agent is running.
 1. If the error appeared suddenly without configuration changes, check the [Grafana Cloud status page](https://status.grafana.com/) for active incidents.
 
+### PDC connection stops working after certificate renewal fails
+
+**Symptoms:**
+
+- A previously working PDC-connected data source stops working
+- The PDC agent logs show errors renewing or signing the SSH certificate
+- Queries fail with SOCKS proxy connection errors
+
+**Cause:** The PDC agent uses a Grafana Cloud API token to periodically renew its SSH certificate. If the token is incorrect, has expired, or has been deleted, certificate renewal fails and the connection stops working when the current certificate expires.
+
+**Solution:**
+
+1. Check the PDC agent logs for authentication or certificate signing errors.
+1. Verify the API token in the PDC agent configuration is valid. If the token has expired or been deleted, generate a new one from your PDC connection page in Grafana Cloud and update the agent configuration.
+1. Restart the PDC agent after updating the token.
+1. Refer to [Troubleshoot PDC issues](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/troubleshooting/) for agent error codes, log interpretation, and token management guidance.
+
+### TLS certificate errors
+
+**Error message:** `x509: certificate signed by unknown authority` or similar TLS verification errors
+
+**Cause:** InfluxDB presents a TLS certificate that isn't signed by a certificate authority (CA) that the Grafana server trusts. This is common with self-signed certificates and internal corporate certificate authorities. TLS verification applies end to end, so this error also occurs when you connect through PDC.
+
+**Solution:**
+
+1. The InfluxDB data source supports TLS configuration for each data source instance. In the data source settings, expand **Auth and TLS/SSL Settings**, enable **CA cert**, and paste your CA certificate. Refer to [Auth and TLS/SSL settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/#auth-and-tlsssl-settings) for details.
+1. If your InfluxDB server requires client certificates, enable **TLS client auth** and provide the server name, client certificate, and client key.
+1. As a last resort, you can enable **Skip TLS verify** to bypass certificate validation. Grafana doesn't recommend this for production use because it disables protection against man-in-the-middle attacks.
+
 ### Request timed out
 
 **Error message:** `context deadline exceeded` or `request timeout` or `dial tcp <IP>:<port>: i/o timeout`
@@ -96,10 +125,11 @@ The following errors occur when there are issues with authentication credentials
 
 **Error message:** "401 Unauthorized" or "authorization failed"
 
-**Cause:** The authentication credentials are invalid or missing.
+**Cause:** The authentication credentials are invalid or missing. Transient network issues can also surface as authentication errors even when your credentials are valid.
 
 **Solution:**
 
+1. If the error is intermittent or appeared without a configuration change, wait a few minutes and retry **Save & test** to rule out a transient network issue before rotating credentials.
 1. Verify that the token or password is correct in the data source configuration.
 1. For Flux and SQL, ensure the token has not expired.
 1. For InfluxQL with InfluxDB 2.x, verify the token is set as an `Authorization` header with the value `Token <your-token>`.
@@ -201,7 +231,7 @@ Each query language uses a different API endpoint. If you select the wrong langu
 - `net::ERR_ABORTED` on proxy requests
 - The InfluxDB plugin attempts direct browser-to-InfluxDB connections
 
-**Cause:** You're running an outdated version of Grafana. Browser access mode was removed in Grafana 9.2.0, and older versions may attempt direct browser connections that violate CSP policies.
+**Cause:** You're running an outdated version of Grafana. Browser access mode was removed in Grafana 9.2.0, and older versions may attempt direct browser connections that violate CSP policies. Current versions of the data source support only server (proxy) access, where the Grafana server sends all queries to InfluxDB and the browser never connects to InfluxDB directly.
 
 **Solution:**
 
@@ -461,6 +491,47 @@ If you need the same query in both a dashboard panel and an alert rule, maintain
 1. Check that the alert evaluation time range contains data. Alerts use a fixed time range, not the dashboard's time picker.
 1. Verify the data source connection is working by clicking **Save & test** in the data source settings.
 
+## Template variable errors
+
+The following issues occur when using template variables with InfluxDB queries.
+
+### Variable drop-down shows stale or historical values
+
+**Cause:** Metadata queries such as `SHOW TAG VALUES` return values from the entire retention period, not just the dashboard time range. Hosts or sensors that stopped reporting long ago still appear in the drop-down.
+
+**Solution:**
+
+1. Add a time condition to the variable query, such as `WHERE $timeFilter` for InfluxQL or `WHERE $__timeFilter(time)` for SQL.
+1. Set the variable's **Refresh** option to **On time range change**.
+1. Refer to [Scope variables to the dashboard time range](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/#scope-variables-to-the-dashboard-time-range) for examples.
+
+### Multi-select variable breaks the query
+
+**Cause:** When a variable has the **Multi-value** or **Include all value** option enabled, Grafana interpolates the selected values as a regular expression group, such as `(server1|server2)`. Queries that compare with `=` or that don't wrap the variable in a regular expression fail or return no data.
+
+**Solution:**
+
+1. For InfluxQL, use the `=~` operator and wrap the variable in a regular expression: `"hostname" =~ /^$host$/`.
+1. For SQL, use the `IN` operator: `host IN ($host)`.
+1. Refer to [Choose a variable syntax](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/#choose-a-variable-syntax) for working examples.
+
+### Variable values are escaped unexpectedly
+
+**Cause:** Grafana escapes special characters in variable values when the variable is multi-value or used inside a regular expression. Custom variable values that intentionally contain special characters, such as paths or expressions, arrive at InfluxDB modified.
+
+**Solution:**
+
+Use the `raw` format option, such as `${path:raw}`, to interpolate the literal value without escaping. Refer to [Prevent unwanted value escaping](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/#prevent-unwanted-value-escaping) for details.
+
+### Variable drop-down contains a blank or duplicate entry
+
+**Cause:** The variable query returns duplicate values. Grafana deduplicates results, but depending on the plugin version, duplicates can surface as a blank entry in the drop-down.
+
+**Solution:**
+
+1. Update the variable query to return unique values. For SQL, use `SELECT DISTINCT`. For InfluxQL, `SHOW` metadata queries already return unique values, so check for duplicates across retention policies.
+1. Alternatively, use the variable's **Regex** option to filter the results.
+
 ## Other common issues
 
 The following issues don't produce specific error messages but are commonly encountered during day-to-day use.
@@ -472,12 +543,13 @@ The following issues don't produce specific error messages but are commonly enco
 - Dashboard panels display "data source \<UID\> was not found"
 - Manually re-running queries in the panel editor works after you select the data source again
 
-**Cause:** Dashboard panels reference an old or deleted data source UID. This happens when a data source is deleted and recreated, since the new data source gets a different UID.
+**Cause:** Dashboard panels reference an old or deleted data source UID. This happens when a data source is deleted and recreated, since the new data source gets a different UID. Dashboard schema migrations can also leave panels with invalid data source references, so verify your panels after a dashboard is migrated to a new schema version.
 
 **Solution:**
 
-1. Edit each affected panel and reselect the correct InfluxDB data source from the data source drop-down.
-1. Click **Apply** to save each panel.
+1. Find the current UID of your InfluxDB data source. Navigate to **Connections** > **Data sources**, open the data source, and copy the UID from the page URL.
+1. To find every stale reference at once, open the dashboard's JSON model from the dashboard settings and search for the UID shown in the panel error message.
+1. Fix the references by editing each affected panel and selecting the correct InfluxDB data source from the drop-down again, or by replacing the stale UID in the JSON model and saving the dashboard.
 1. To avoid this issue, update existing data sources instead of deleting and recreating them.
 
 ### 404 Not Found when sending Telegraf metrics to Grafana Cloud
@@ -505,6 +577,40 @@ The following issues don't produce specific error messages but are commonly enco
 1. For SQL, verify the `$__timeFilter(time)` macro is included so the query uses the dashboard time range.
 1. For InfluxQL, verify the retention policy contains data for the selected time range.
 
+### Numeric values stored as strings display a blank panel
+
+**Symptoms:**
+
+- Time series panels show no data even though the query returns results
+- Values appear in the table view but can't be graphed
+
+**Cause:** InfluxDB sets a field's data type when the field is first written. If numeric values were written as strings, for example quoted in line protocol, InfluxDB returns them as strings and Grafana can't graph them. This is a data issue in InfluxDB, not in Grafana.
+
+**Solution:**
+
+1. As a workaround, add the [Convert field type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#convert-field-type) transformation to the panel and convert the field to **Number**.
+1. To fix the root cause, correct the data type at write time. InfluxDB can't change the type of an existing field, so you may need to write the data to a new field or measurement.
+1. In older Grafana versions, the **Convert field type** transformation converted null values to zeros. Current versions preserve null values. If you see nulls displayed as zeros after conversion, upgrade Grafana.
+
+### Panel values differ between view and edit mode
+
+**Cause:** Grafana calculates the query interval (`$__interval`) from the time range and the maximum number of data points, which is based on the panel's width. A panel rendered in edit mode has a different width than in the dashboard view, so queries that group by `time($__interval)` can aggregate into different bucket sizes and display different values. Both results are correct. They're aggregated at different resolutions.
+
+**Solution:**
+
+1. To make values consistent, set a fixed **Min interval** or **Max data points** value in the panel's query options.
+1. Alternatively, use an explicit interval in the query, such as `GROUP BY time(1m)` instead of `GROUP BY time($__interval)`.
+
+### Legend or tooltip colors don't match the series
+
+**Cause:** The query returns multiple series with the same name. This commonly happens when a query doesn't group by the tags that differentiate series, or when an alias hides the distinguishing information. Grafana assigns colors and tooltip values by series name, so duplicate names cause the legend and hover tooltip to display mismatched colors or values.
+
+**Solution:**
+
+1. Group by the tags that make each series unique, such as `GROUP BY "hostname"`.
+1. Use alias patterns such as `$tag_hostname` in the **ALIAS** field so each series has a unique display name. Refer to [Alias patterns](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/query-editor/#alias-patterns) for details.
+1. Use the panel inspector to confirm each returned series has a distinct name.
+
 ### Slow query performance
 
 **Cause:** Queries take a long time to execute.
@@ -519,6 +625,23 @@ The following issues don't produce specific error messages but are commonly enco
 1. For Flux, use `aggregateWindow()` to downsample data before visualization.
 1. Consider using continuous queries or tasks to pre-aggregate data.
 
+### InfluxDB receives a high volume of queries from Grafana
+
+**Symptoms:**
+
+- Unexpected query load on your InfluxDB server
+- You're unsure whether the traffic originates from Grafana
+
+**Cause:** Every panel on a dashboard sends its queries to InfluxDB each time the dashboard refreshes. Query volume scales with the number of panels, the number of queries per panel, the refresh interval, and the number of people viewing the dashboard at the same time. For example, a dashboard with 20 panels refreshing every 10 seconds generates at least 120 queries per minute for each viewer.
+
+**Solution:**
+
+1. Increase the dashboard refresh interval or turn off auto-refresh where it isn't needed.
+1. Reduce the number of panels and queries per dashboard.
+1. Increase the **Min time interval** setting to reduce the resolution of each query.
+1. In Grafana Enterprise and Grafana Cloud, enable [query caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching) so identical queries within the cache window are served from cache instead of hitting InfluxDB.
+1. To confirm whether traffic originates from your Grafana Cloud instance, compare the source IP addresses against the [Grafana Cloud allowlist](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/allow-list/).
+
 ### Data appears delayed or missing recent points
 
 **Cause:** The visualization doesn't show the most recent data.
@@ -531,6 +654,10 @@ The following issues don't produce specific error messages but are commonly enco
 1. Check for clock synchronization issues between Grafana and InfluxDB.
 
 ## Enable debug logging
+
+{{< admonition type="caution" >}}
+InfluxDB plugin versions earlier than 13.1.0 could write API tokens to Grafana server logs in plain text at default log levels. Before troubleshooting with logs, upgrade to plugin version 13.1.0 or later. Treat log files as sensitive, and rotate any tokens that may have been exposed.
+{{< /admonition >}}
 
 To capture detailed error information for troubleshooting:
 
@@ -551,10 +678,11 @@ If you've tried the solutions in this guide and still encounter issues:
 
 1. Check the [InfluxDB documentation](https://docs.influxdata.com/) for API-specific guidance.
 1. Review the [Grafana community forums](https://community.grafana.com/) for similar issues.
-1. Review [InfluxDB data source issues on GitHub](https://github.com/grafana/grafana/issues?q=is%3Aissue+influxdb) for known bugs.
+1. Review [InfluxDB data source issues on GitHub](https://github.com/grafana/grafana-influxdb-datasource/issues) for known bugs.
 1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
    - Grafana version
+   - InfluxDB data source plugin version, found on the **Administration > Plugins** page
    - InfluxDB version and product (OSS, Cloud, Enterprise)
    - Query language (Flux, InfluxQL, or SQL)
    - Error messages (redact sensitive information)
