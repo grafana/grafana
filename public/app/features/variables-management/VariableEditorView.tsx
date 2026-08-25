@@ -292,10 +292,10 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
-          allowGlobalScope
+          allowGlobalScope || folderUid === ''
             ? t(
                 'variables-management.editor.folder-description',
-                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
+                'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)'
               )
             : t(
                 'variables-management.editor.folder-description-folder-only',

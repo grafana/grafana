@@ -29,17 +29,27 @@ jest.mock('./useCanManageGlobalVariables', () => ({
   useCanManageGlobalVariables: () => false,
 }));
 
+const customSpec = {
+  kind: 'CustomVariable',
+  spec: { name: 'env', query: 'dev,prod' },
+} as unknown as VariableSpec;
+
 const folderVariable: Variable = {
   metadata: {
     name: 'env--folder-a',
     annotations: { [AnnoKeyFolder]: 'folder-a' },
   },
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  spec: {
-    kind: 'CustomVariable',
-    spec: { name: 'env', query: 'dev,prod' },
-  } as unknown as VariableSpec,
+  spec: customSpec,
 };
+
+const globalVariable: Variable = {
+  metadata: { name: 'env' },
+  spec: customSpec,
+};
+
+const globalFolderHelp =
+  'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)';
+const folderOnlyHelp = 'Scope the variable to a folder you can edit';
 
 describe('VariableEditorView delete action', () => {
   afterEach(() => {
@@ -62,5 +72,29 @@ describe('VariableEditorView delete action', () => {
     render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
 
     expect(await screen.findByRole('button', { name: 'Delete' })).toBeDisabled();
+  });
+});
+
+describe('VariableEditorView folder help', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('describes root when inspecting a global variable without root rights', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(<VariableEditorView source={globalVariable} onBack={jest.fn()} />);
+
+    expect(await screen.findByText(globalFolderHelp)).toBeInTheDocument();
+    expect(screen.queryByText(folderOnlyHelp)).not.toBeInTheDocument();
+  });
+
+  it('does not mention root when inspecting a folder-scoped variable without root rights', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
+
+    expect(await screen.findByText(folderOnlyHelp)).toBeInTheDocument();
+    expect(screen.queryByText(globalFolderHelp)).not.toBeInTheDocument();
   });
 });
