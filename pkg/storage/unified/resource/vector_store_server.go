@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // maxWriteBatch caps inputs per upsert and uids per delete. The proto
@@ -25,6 +26,11 @@ const maxWriteBatch = 500
 
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
+
+// maxFilterValues caps total $in/$nin values in a filter. Each value expands
+// to a few SQL parameters, so this keeps a filter well under Postgres's 65535
+// parameter limit instead of failing as Internal at execution.
+const maxFilterValues = 1000
 
 // maxKeyFieldLen mirrors the VARCHAR(256) width of the uid and subresource
 // columns — reject before spending an embedding on a row Postgres will bounce.
@@ -39,6 +45,7 @@ type vectorWriteStore interface {
 	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []vector.Vector, metadataOnly []vector.VectorMeta, desired []string) error
 	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error)
 	DeleteRows(ctx context.Context, namespace, model, resource string, sel vector.DeleteSelector) (int64, bool, error)
+	UpdateMetadata(ctx context.Context, namespace, resource string, f *filter.Filter, set json.RawMessage, unset []string) (int64, error)
 	WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error
 }
 
@@ -169,6 +176,36 @@ func (s *VectorStoreServer) authorize(ctx context.Context, namespace, group, res
 	return nil
 }
 
+// parseFilter parses, rejects an empty filter, and bounds the value count so a
+// huge $in can't exceed Postgres's parameter limit at execution time.
+func parseFilter(raw []byte) (*filter.Filter, error) {
+	f, err := filter.Parse(raw)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+	}
+	if f == nil {
+		return nil, status.Error(codes.InvalidArgument, "filter must not be empty")
+	}
+	if n := filter.ValueCount(f); n > maxFilterValues {
+		return nil, status.Errorf(codes.InvalidArgument, "filter has too many values: %d > %d", n, maxFilterValues)
+	}
+	return f, nil
+}
+
+// validateMetadataObject rejects metadata that is valid JSON but not a
+// top-level object. The filter dialect and metadata patches operate on object
+// keys, so arrays/scalars/null could never behave per the contract.
+func validateMetadataObject(raw []byte) error {
+	var v any
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return fmt.Errorf("metadata is not valid JSON")
+	}
+	if _, ok := v.(map[string]any); !ok {
+		return fmt.Errorf("metadata must be a JSON object")
+	}
+	return nil
+}
+
 // validateInputs enforces the per-input contract. When requireUID is
 // non-empty (UpsertSubresources), every input's uid must be empty or equal
 // to it.
@@ -197,8 +234,8 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: title is required", i)
 		case len(in.Metadata) > maxMetadataBytes:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata exceeds %d bytes", i, maxMetadataBytes)
-		case len(in.Metadata) > 0 && !json.Valid(in.Metadata):
-			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata is not valid JSON", i)
+		case len(in.Metadata) > 0 && validateMetadataObject(in.Metadata) != nil:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: %v", i, validateMetadataObject(in.Metadata))
 		}
 	}
 	return nil
@@ -401,7 +438,12 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		sel.All = true
 		sel.Limit = deleteAllPageSize
 	case *resourcepb.VectorDeleteRequest_Filter:
-		return nil, status.Error(codes.Unimplemented, "filter deletes ship with the metadata filter dialect")
+		f, err := parseFilter(sl.Filter)
+		if err != nil {
+			return nil, err
+		}
+		sel.Filter = f
+		sel.Limit = deleteAllPageSize
 	default:
 		return nil, status.Error(codes.InvalidArgument, "a selector is required")
 	}
@@ -415,12 +457,47 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
-// UpdateMetadata ships with the metadata filter dialect.
 func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.VectorUpdateMetadataRequest) (resp *resourcepb.VectorUpdateMetadataResponse, retErr error) {
 	defer s.observe("update_metadata", time.Now(), &retErr)
 
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
-	return nil, status.Error(codes.Unimplemented, "UpdateMetadata ships with the metadata filter dialect")
+
+	f, err := parseFilter(req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	if len(req.Set) == 0 && len(req.Unset) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "at least one of set or unset is required")
+	}
+	// The 4 KiB cap is checked on the incoming patch only, not the merged
+	// result: it's a soft limit (search-response size), an oversized row is
+	// harmless, and unbounded growth needs a caller repeatedly adding distinct
+	// keys — not worth a per-row size guard that would silently skip updates.
+	if len(req.Set) > 0 {
+		if err := validateMetadataObject(req.Set); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "set: %v", err)
+		}
+		if len(req.Set) > maxMetadataBytes {
+			return nil, status.Errorf(codes.InvalidArgument, "set exceeds %d bytes", maxMetadataBytes)
+		}
+	}
+
+	// A collection resolve (not ensure): UpdateMetadata never provisions.
+	coll, found, err := s.store.ResolveCollection(ctx, req.Group, req.Resource)
+	if err != nil {
+		return nil, writeStatusError(ctx, err, "resolve collection")
+	}
+	if !found || !coll.IsExternal {
+		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
+	}
+
+	updated, err := s.store.UpdateMetadata(ctx, req.Namespace, coll.PartitionKey, f, req.Set, req.Unset)
+	if err != nil {
+		s.log.Error("vector store: update metadata", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, writeStatusError(ctx, err, "update metadata")
+	}
+	s.countRows("update_metadata", req.Group, req.Resource, updated)
+	return &resourcepb.VectorUpdateMetadataResponse{Updated: updated}, nil
 }

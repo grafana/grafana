@@ -450,3 +450,75 @@ func TestMapperRegistry_Settings(t *testing.T) {
 	assert.Equal(t, "settings:uid:", mapping.Prefix())
 	assert.False(t, mapping.HasFolderSupport())
 }
+
+func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	t.Run("action-shaped subresource gets the dynamic delegation translation", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "users.roles:add")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "users.roles:add", action)
+		assert.Equal(t, "permissions:type:delegate", m.Scope("delegate"))
+		assert.True(t, m.SkipWildcard())
+		assert.Empty(t, m.ActionSets(utils.VerbPatch))
+	})
+
+	t.Run("group-qualified action subresource is accepted", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "dashboard.grafana.app/dashboards:get")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "dashboard.grafana.app/dashboards:get", action)
+	})
+
+	t.Run("plain subresource names are not captured", func(t *testing.T) {
+		// A real subresource (e.g. status or search) is not action-shaped and
+		// must fall through to normal handling instead of being treated as a
+		// delegated action.
+		_, ok := reg.Get("iam.grafana.app", "permissions", "status")
+		assert.False(t, ok)
+	})
+}
+
+func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+	assert.Nil(t, reg.ResourceMappings("unknown.grafana.app"))
+}
+
+func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mappings := reg.ResourceMappings("dashboard.grafana.app")
+	require.NotEmpty(t, mappings)
+
+	byAPIResource := make(map[string]Mapping, len(mappings))
+	for _, rm := range mappings {
+		require.NotEmpty(t, rm.APIResource)
+		require.NotNil(t, rm.Mapping)
+		byAPIResource[rm.APIResource] = rm.Mapping
+	}
+
+	assert.Contains(t, byAPIResource, "dashboards")
+	assert.Contains(t, byAPIResource, "librarypanels")
+	assert.Contains(t, byAPIResource, "dashboards/annotations")
+	assert.Contains(t, byAPIResource, "notebooks")
+	assert.Contains(t, byAPIResource, "variables")
+
+	dashboards, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
+	require.True(t, ok)
+	assert.Equal(t, dashboards.Prefix(), byAPIResource["dashboards"].Prefix())
+	assert.Equal(t, "dashboards:uid:", byAPIResource["dashboards"].Prefix())
+
+	libraryPanels, ok := reg.Get("dashboard.grafana.app", "librarypanels", "")
+	require.True(t, ok)
+	assert.Equal(t, libraryPanels.Prefix(), byAPIResource["librarypanels"].Prefix())
+
+	annotations, ok := reg.Get("dashboard.grafana.app", "dashboards", "annotations")
+	require.True(t, ok)
+	assert.Equal(t, annotations.Prefix(), byAPIResource["dashboards/annotations"].Prefix())
+	action, ok := byAPIResource["dashboards/annotations"].Action(utils.VerbGet)
+	assert.True(t, ok)
+	assert.Equal(t, "annotations:read", action)
+}
