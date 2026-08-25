@@ -112,14 +112,6 @@ export interface DSReferencesMapping {
   annotations: Map<string, string | undefined>;
 }
 
-/**
- * `copyTags` only describes whether a copy inherits the tags of the dashboard it was copied from.
- * A new dashboard has no source, so its tags are the ones the user just set and must be kept.
- */
-function shouldDropTags(options: SaveDashboardAsOptions) {
-  return !options.isNew && options.copyTags === false;
-}
-
 export class V1DashboardSerializer
   implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
 {
@@ -191,7 +183,7 @@ export class V1DashboardSerializer
       uid: '',
       title: options.title || '',
       description: options.description || undefined,
-      tags: shouldDropTags(options) ? [] : saveModel.tags,
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 
@@ -426,7 +418,7 @@ export class V2DashboardSerializer
       ...saveModel,
       title: options.title || '',
       description: options.description || '',
-      tags: shouldDropTags(options) ? [] : saveModel.tags,
+      tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
 

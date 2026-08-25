@@ -412,25 +412,11 @@ describe('DashboardSceneSerializer', () => {
     });
 
     describe('getSaveAsModel', () => {
-      it('keeps the tags set on a new dashboard even though copyTags is false', () => {
+      it('drops the tags when copyTags is false', () => {
         const serializer = new V1DashboardSerializer();
         const dashboard = setup({ tags: ['my-tag'] });
 
         const saveAsModel = serializer.getSaveAsModel(dashboard, {
-          isNew: true,
-          copyTags: false,
-          title: 'I am a new dashboard',
-        });
-
-        expect(saveAsModel.tags).toEqual(['my-tag']);
-      });
-
-      it('drops the source tags when copying an existing dashboard with copyTags false', () => {
-        const serializer = new V1DashboardSerializer();
-        const dashboard = setup({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboard, {
-          isNew: false,
           copyTags: false,
           title: 'hello Copy',
         });
@@ -438,12 +424,11 @@ describe('DashboardSceneSerializer', () => {
         expect(saveAsModel.tags).toEqual([]);
       });
 
-      it('carries the source tags over when copying an existing dashboard with copyTags true', () => {
+      it('keeps the tags when copyTags is true', () => {
         const serializer = new V1DashboardSerializer();
         const dashboard = setup({ tags: ['my-tag'] });
 
         const saveAsModel = serializer.getSaveAsModel(dashboard, {
-          isNew: false,
           copyTags: true,
           title: 'hello Copy',
         });
@@ -856,36 +841,22 @@ describe('DashboardSceneSerializer', () => {
         };
       });
 
-      it('keeps the tags set on a new dashboard even though copyTags is false', () => {
+      it('drops the tags when copyTags is false', () => {
         const dashboardWithTags = setupV2({ tags: ['my-tag'] });
 
         const saveAsModel = serializer.getSaveAsModel(dashboardWithTags, {
           ...baseOptions,
-          isNew: true,
-          copyTags: false,
-        });
-
-        expect(saveAsModel.tags).toEqual(['my-tag']);
-      });
-
-      it('drops the source tags when copying an existing dashboard with copyTags false', () => {
-        const dashboardWithTags = setupV2({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboardWithTags, {
-          ...baseOptions,
-          isNew: false,
           copyTags: false,
         });
 
         expect(saveAsModel.tags).toEqual([]);
       });
 
-      it('carries the source tags over when copying an existing dashboard with copyTags true', () => {
+      it('keeps the tags when copyTags is true', () => {
         const dashboardWithTags = setupV2({ tags: ['my-tag'] });
 
         const saveAsModel = serializer.getSaveAsModel(dashboardWithTags, {
           ...baseOptions,
-          isNew: false,
           copyTags: true,
         });
 

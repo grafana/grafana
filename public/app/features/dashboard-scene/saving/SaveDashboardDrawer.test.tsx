@@ -381,6 +381,63 @@ describe('SaveDashboardDrawer', () => {
     });
   });
 
+  describe('Tags', () => {
+    it('Should send the tags set on a new dashboard before its first save', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ version: 0, tags: ['my-tag'] });
+      });
+
+      openAndRender();
+      expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
+      // The switch is only meaningful for copies, and its absence is why the default matters.
+      expect(screen.queryByLabelText('Copy tags')).not.toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual(['my-tag']);
+    });
+
+    it('Should drop the source tags when saving a copy with Copy tags off', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ tags: ['my-tag'] });
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual([]);
+    });
+
+    it('Should keep the source tags when saving a copy with Copy tags on', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      act(() => {
+        dashboard.setState({ tags: ['my-tag'] });
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Copy tags'));
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual(['my-tag']);
+    });
+  });
+
   describe('Template save flows', () => {
     afterEach(() => {
       registerSaveAsTemplateForm(null as unknown as Parameters<typeof registerSaveAsTemplateForm>[0]);
