@@ -31,7 +31,8 @@ const (
 //
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service and are RBAC-checked per result (against each row's folder).
+// Reads go through the search service and are RBAC-checked per result; folder-scoped
+// resources (per the authz mapper) are checked against each row's folder.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
@@ -105,7 +106,8 @@ func (c *vectorStoreClient) UpdateMetadata(ctx context.Context, in *VectorUpdate
 //
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service and are RBAC-checked per result (against each row's folder).
+// Reads go through the search service and are RBAC-checked per result; folder-scoped
+// resources (per the authz mapper) are checked against each row's folder.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
