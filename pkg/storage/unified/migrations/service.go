@@ -45,7 +45,15 @@ func ProvideUnifiedStorageMigrationService(
 	registry *MigrationRegistry,
 	gcGate *resource.GCGate,
 ) contract.UnifiedStorageMigrationService {
-	lockingEnabled := cfg.Raw.Section("unified_storage").Key("migration_locking").MustBool(true)
+	// Fall back to the [database] migration_locking setting when [unified_storage]
+	// does not explicitly configure it, so that a single migration_locking=false in
+	// the database section also disables source-table locking (fixes #131361).
+	var lockingEnabled bool
+	if unifiedSec := cfg.Raw.Section("unified_storage"); unifiedSec.HasKey("migration_locking") {
+		lockingEnabled = unifiedSec.Key("migration_locking").MustBool(true)
+	} else {
+		lockingEnabled = cfg.Raw.Section("database").Key("migration_locking").MustBool(true)
+	}
 	if !lockingEnabled {
 		logger.Warn("unified_storage.migration_locking is disabled; source tables are NOT locked " +
 			"during migration and legacy tables are NOT renamed. Concurrent writes may be missed " +
