@@ -7,6 +7,8 @@ import { extractErrorMessage, getAPINamespace } from 'app/api/utils';
 import { CONNECTIONS_URL } from '../constants';
 import { type OAuthConnectionType } from '../types';
 
+import { getServerOrigin } from './git';
+
 const AUTHORIZE_URLS: Record<Exclude<OAuthConnectionType, 'githubEnterpriseOAuth'>, string> = {
   githubOAuth: 'https://github.com/login/oauth/authorize',
   gitlabOAuth: 'https://gitlab.com/oauth/authorize',
@@ -85,7 +87,8 @@ export function buildOAuthAuthorizeUrl(
 
   const authorizeUrl =
     type === 'githubEnterpriseOAuth'
-      ? `${(serverUrl ?? '').replace(/\/+$/, '')}/login/oauth/authorize`
+      ? // GHES hosts its OAuth endpoints at the server root; drop any path (e.g. /api/v3)
+        `${getServerOrigin(serverUrl) || (serverUrl ?? '').replace(/\/+$/, '')}/login/oauth/authorize`
       : AUTHORIZE_URLS[type];
 
   return textUtil.sanitizeUrl(`${authorizeUrl}?${params.toString()}`);

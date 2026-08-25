@@ -123,7 +123,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
-  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
+  const emailWebhookDisabled = type === 'bitbucket' && !usesConnection && !watch('email')?.trim();
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
@@ -310,7 +310,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.emailConfig && (
+            {gitFields.emailConfig && !usesConnection && (
               <Field
                 noMargin
                 label={gitFields.emailConfig.label}

@@ -66,4 +66,10 @@ describe('buildOAuthAuthorizeUrl', () => {
     expect(url).toContain('scope=api');
     expect(url).not.toContain('read_user');
   });
+
+  it('drops any path from the GHES server URL when building the authorize URL', () => {
+    const url = buildOAuthAuthorizeUrl('githubEnterpriseOAuth', 'client', 'conn', 'https://ghe.example.com/api/v3');
+
+    expect(url.startsWith('https://ghe.example.com/login/oauth/authorize?')).toBe(true);
+  });
 });

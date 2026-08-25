@@ -129,7 +129,17 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
     };
   }
 
-  if (data.webhook?.disabled) {
+  // Connection reference for providers that support app connections. The
+  // connection name is only available for the app flows; prefer
+  // data.connectionName over the parameter for consistency.
+  const finalConnectionName = supportsConnections(data.type) ? data.connectionName || connectionName : undefined;
+
+  // Bitbucket PAT API calls authenticate with the Atlassian account email; without
+  // it (and without a connection) webhooks cannot be registered, so force them off
+  // to match the disabled state the UI shows.
+  const forceWebhookDisabled = data.type === 'bitbucket' && !finalConnectionName && !data.email?.trim();
+
+  if (data.webhook?.disabled || forceWebhookDisabled) {
     spec.webhook = { disabled: true };
   } else if (data.webhook?.baseUrl) {
     spec.webhook = { baseUrl: data.webhook.baseUrl };
@@ -174,14 +184,8 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       break;
   }
 
-  // Add connection reference at spec level for providers that support app
-  // connections. The connection name is only available for the app flows;
-  // prefer data.connectionName over the parameter for consistency.
-  if (supportsConnections(data.type)) {
-    const finalConnectionName = data.connectionName || connectionName;
-    if (finalConnectionName) {
-      spec.connection = { name: finalConnectionName };
-    }
+  if (finalConnectionName) {
+    spec.connection = { name: finalConnectionName };
   }
 
   // We need to deep clone the data, so it doesn't become immutable

@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { Field, Input, Stack } from '@grafana/ui';
 
 import { type ConnectionFormData } from '../../types';
+import { validateHttpUrl } from '../../utils/validators';
 
 interface ConnectionBaseFieldsProps {
   /** Whether fields are required. Depends if we are in edit mode or not. */
@@ -77,6 +78,7 @@ export function ConnectionBaseFields({ required = true, type }: ConnectionBaseFi
             data-testid={selectors.pages.Provisioning.ConnectionForm.serverUrlInput}
             {...register('serverUrl', {
               required: requiredValidation,
+              validate: validateHttpUrl,
             })}
             // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
             placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"

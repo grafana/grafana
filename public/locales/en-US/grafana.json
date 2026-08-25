@@ -14758,6 +14758,7 @@
     },
     "validation": {
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
+      "invalid-url": "Enter a valid URL including the scheme, e.g. https://ghe.example.com",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
     "warning-title-default": "Warning",

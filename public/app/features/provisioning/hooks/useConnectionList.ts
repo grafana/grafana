@@ -24,11 +24,13 @@ export function useConnectionList(options: ListConnectionApiArg | typeof skipTok
   return [sortedItems, query.isLoading, query.error, query.refetch] as const;
 }
 
-// Returns a callback that refetches every connection list in the app
+// Returns a callback that refetches every connection-derived query in the app:
+// the list plus per-connection repositories/status. Those endpoints provide the
+// type-only 'Connection' tag, which an id-specific invalidation would skip.
 export function useInvalidateConnectionList() {
   const dispatch = useDispatch();
 
   return useCallback(() => {
-    dispatch(provisioningAPIv0alpha1.util.invalidateTags([{ type: 'Connection', id: 'LIST' }]));
+    dispatch(provisioningAPIv0alpha1.util.invalidateTags(['Connection']));
   }, [dispatch]);
 }

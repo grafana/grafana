@@ -35,7 +35,7 @@ export const FinishStep = memo(function FinishStep() {
     'repository.email',
   ]);
 
-  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
+  const emailWebhookDisabled = githubAuthType === 'pat' && type === 'bitbucket' && !email?.trim();
 
   const isGitBased = isGitProvider(type);
 

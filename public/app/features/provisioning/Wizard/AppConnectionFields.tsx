@@ -101,7 +101,7 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
               </Trans>
             </Alert>
           )}
-          {connections.length > 0 && (
+          {!hasNoConnections && (
             <Field
               noMargin
               label={t('provisioning.wizard.oauth-app-connection-label', 'Connection')}

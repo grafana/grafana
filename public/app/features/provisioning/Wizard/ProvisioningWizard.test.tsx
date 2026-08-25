@@ -451,6 +451,21 @@ describe('ProvisioningWizard', () => {
 
       expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeEnabled();
     });
+
+    it('blocks submit with a connection error when the connection list fails to load', async () => {
+      server.use(http.get(`${BASE}/connections`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      const mockSubmitData = setupMockSubmitData();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Defaults: GitHub App auth with "Choose an existing app" mode.
+      expect(await screen.findByText('Failed to load connections')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+
+      expect(await screen.findByText('Connection is required')).toBeInTheDocument();
+      expect(mockSubmitData).not.toHaveBeenCalled();
+    });
   });
 
   describe('Repository Reconciliation', () => {
