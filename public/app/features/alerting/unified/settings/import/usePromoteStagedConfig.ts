@@ -1,11 +1,12 @@
-import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types/store';
 
 import { logError } from '../../Analytics';
-import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { ALERTMANAGER_PROVIDED_ENTITY_TAGS, alertmanagerApi } from '../../api/alertmanagerApi';
+import { CONFIG_SINGLETON_NAME, configApi, useAutoSyncConfigQuery } from '../../api/configApi';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { deriveSyncSource } from '../../utils/autoSync';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { type StagedExtraConfig } from './stagedConfig';
@@ -14,6 +15,9 @@ interface UsePromoteStagedConfigResult {
   onConfirm: () => Promise<void>;
   isSubmitting: boolean;
 }
+
+/** Distinguishes *why* auto-sync isn't cleanly off after a promote, since each cause needs different copy. */
+type PromoteSyncOutcome = 'cleared' | 'not-cleared' | 'ini-managed';
 
 /**
  * Promotes a staged Alertmanager config into the live one, then — for auto-sync-managed configs —
@@ -28,34 +32,76 @@ export function usePromoteStagedConfig(
   const notifyApp = useAppNotification();
   const dispatch = useDispatch();
   const [promote, { isLoading: isPromoting }] = convertToGMAApi.usePromoteAlertmanagerConfigMutation();
-  const [updateAlertingConfiguration, { isLoading: isClearingAutoSync }] =
-    alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
+  const [updateConfig, { isLoading: isClearingAutoSync }] = configApi.useUpdateConfigMutation();
+  const { currentData: configResource } = useAutoSyncConfigQuery();
 
   const isSubmitting = isPromoting || isClearingAutoSync;
 
   /**
    * The sync worker stops on its own once it sees the merge committed, but the configured datasource
-   * UID stays on the org config — which keeps auto-sync reported as active and keeps the convert API
-   * rejecting notification imports. Clearing it is what actually ends the sync.
+   * UID stays on the org Config — which keeps auto-sync reported as active and keeps the convert API
+   * rejecting notification imports. Clearing it is what actually ends the sync — except for an
+   * ini-managed org, where spec is dormant and this clear can never stop it (see `resolveSyncOutcome`).
    *
    * Reports failure rather than throwing: it runs after an irreversible merge, so it must not be
    * mistaken for a failed promote.
    */
   const clearAutoSync = async (): Promise<boolean> => {
     try {
-      await updateAlertingConfiguration({
-        // Backend convention: empty string clears the configured UID.
-        external_alertmanager_uid: '',
-        notificationOptions: { showErrorAlert: false },
+      await updateConfig({
+        name: CONFIG_SINGLETON_NAME,
+        patch: [{ op: 'add', path: '/spec/externalAlertmanagerSync', value: {} }],
       }).unwrap();
-      // The UID lives in a different RTKQ slice than the Config resource useIsAutoSyncActive reads,
-      // so tag invalidation doesn't cross over on its own.
-      dispatch(notificationsAPI.util.invalidateTags(['Config']));
+      // updateConfig only invalidates 'Config', in a different RTKQ slice than alertmanagerApi;
+      // clearing sync rewrites the Alertmanager entities the worker had been importing.
+      dispatch(alertmanagerApi.util.invalidateTags([...ALERTMANAGER_PROVIDED_ENTITY_TAGS]));
       return true;
     } catch (err) {
       logError(new Error(stringifyErrorLike(err)));
       return false;
     }
+  };
+
+  // Clearing the spec never stops an ini-managed sync — spec is dormant there — so a successful
+  // clear isn't enough on its own to call auto-sync off; deriveSyncSource's status read is.
+  const resolveSyncOutcome = async (): Promise<PromoteSyncOutcome> => {
+    if (!(await clearAutoSync())) {
+      return 'not-cleared';
+    }
+    return deriveSyncSource(configResource).isIniManaged ? 'ini-managed' : 'cleared';
+  };
+
+  const reportSyncOutcome = (outcome: PromoteSyncOutcome) => {
+    if (outcome === 'cleared') {
+      notifyApp.success(
+        t('alerting.settings.import.promote.success-title', 'Configuration promoted'),
+        t('alerting.settings.import.promote.success-body', 'The imported resources were merged into your live config.')
+      );
+      return;
+    }
+    if (outcome === 'not-cleared') {
+      notifyApp.warning(
+        t(
+          'alerting.settings.import.promote.sync-not-cleared-title',
+          'Configuration promoted, but auto-sync is still configured'
+        ),
+        t(
+          'alerting.settings.import.promote.sync-not-cleared-body',
+          'The auto-sync setting could not be cleared. Disable auto-sync in Alerting settings to import notification resources again.'
+        )
+      );
+      return;
+    }
+    notifyApp.warning(
+      t(
+        'alerting.settings.import.promote.sync-ini-managed-title',
+        'Configuration promoted, but auto-sync is still active'
+      ),
+      t(
+        'alerting.settings.import.promote.sync-ini-managed-body',
+        'Grafana keeps syncing from the datasource set in grafana.ini. Remove that key to stop the sync and import notification resources again.'
+      )
+    );
   };
 
   const onConfirm = async () => {
@@ -71,23 +117,7 @@ export function usePromoteStagedConfig(
     }
 
     // The merge has landed by this point, so nothing below may report the promote as failed.
-    if (isSyncManaged && !(await clearAutoSync())) {
-      notifyApp.warning(
-        t(
-          'alerting.settings.import.promote.sync-not-cleared-title',
-          'Configuration promoted, but auto-sync is still configured'
-        ),
-        t(
-          'alerting.settings.import.promote.sync-not-cleared-body',
-          'Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.'
-        )
-      );
-    } else {
-      notifyApp.success(
-        t('alerting.settings.import.promote.success-title', 'Configuration promoted'),
-        t('alerting.settings.import.promote.success-body', 'The imported resources were merged into your live config.')
-      );
-    }
+    reportSyncOutcome(isSyncManaged ? await resolveSyncOutcome() : 'cleared');
     onDismiss();
   };
 
