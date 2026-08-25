@@ -1,5 +1,5 @@
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260618065901-6befdbcb3cf6 h1:kcpQNPyadaMvi8O9qkIRbkLAGiQr1RO1RUbrLms43XQ=
-cuelabs.dev/go/oci/ociregistry v0.0.0-20260618065901-6befdbcb3cf6/go.mod h1:WjmQxb+W6nVNCgj8nXrF24lIz95AHwnSl36tpjDZSU8=
+cuelabs.dev/go/oci/ociregistry v0.0.0-20260717083115-5eb5795f322a h1:xR7A97ML6U+DHDgXjs1qv0fkss7N/EC2kbFzrH4mg/A=
+cuelabs.dev/go/oci/ociregistry v0.0.0-20260717083115-5eb5795f322a/go.mod h1:WjmQxb+W6nVNCgj8nXrF24lIz95AHwnSl36tpjDZSU8=
 cuelang.org/go v0.11.1 h1:pV+49MX1mmvDm8Qh3Za3M786cty8VKPWzQ1Ho4gZRP0=
 cuelang.org/go v0.11.1/go.mod h1:PBY6XvPUswPPJ2inpvUozP9mebDVTXaeehQikhZPBz0=
 github.com/andybalholm/brotli v1.2.2 h1:HzTuoo2ErYQqf5qvcJInB8uvqSVxRttzkFexPWtnceM=
@@ -117,8 +117,8 @@ github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 h1:jKXYY/6zw
 github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 h1:kGigNSum3b7XJjemhtDMPko6IW5PBJLxoASR+Qzo6Rc=
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745/go.mod h1:dLUEt5k1Zv21//kvSk8ZR4kXjCq5oALBLu2LupLhj5k=
-github.com/grafana/grafana-app-sdk v0.57.1 h1:NByZNqKzfqzkFAY/OSyn3IZ9j9662jOKWxCawU5+Zcc=
-github.com/grafana/grafana-app-sdk v0.57.1/go.mod h1:1uXg+hlJH1girIjWv59B/sQBDHZ1Im5zcWth2j6nL08=
+github.com/grafana/grafana-app-sdk v0.59.0 h1:Fjuvjo1VhsvqrawYKI3ryJCandt1eL7LPwF1xRNAf+o=
+github.com/grafana/grafana-app-sdk v0.59.0/go.mod h1:o9Blbhrsbdfmeix1pdLkh7dIjNniQooWuFApHDLhOOA=
 github.com/grafana/grafana-app-sdk/logging v0.59.0 h1:94kc/3jESJuu2uqlqCYIsSl/zIsY3P5xQP/7Q8N0T6k=
 github.com/grafana/grafana-app-sdk/logging v0.59.0/go.mod h1:YL+dFVw92Us2TNoeJbqUOhEEyl1DLdCGaTSwMXMMnJs=
 github.com/grafana/grafana-plugin-sdk-go v0.296.4 h1:3+sYR2lmdb+sIk3m/eA9/lY8sztbhFyGf+6he8nwKuM=
@@ -231,10 +231,10 @@ github.com/prometheus/common v0.70.1 h1:1HvjP4D5oL3t8RsPlwxA9onvvStjtIHYE5XuuwOi
 github.com/prometheus/common v0.70.1/go.mod h1:VdFUQDMZK3VLkurFUVhia6uys/0suUp86TJz5qbJRhc=
 github.com/prometheus/procfs v0.21.1 h1:GljZCt+zSTS+NZq88cyQ1LjZ+RCHp3uVuabBWA5+OJI=
 github.com/prometheus/procfs v0.21.1/go.mod h1:aB55Cww9pdSJVHk0hUf0inxWyyjPogFIjmHKYgMKmtY=
-github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5 h1:Mckui8l+Wqz2Ve7XQvsE8SbHNmDWu8NA7Xce5NFJ/kM=
-github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
-github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
-github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
+github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc h1:60QHVeAiwsBBrlOuCYJXJqogSU+j/TWYH9KTGlwz7iY=
+github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc/go.mod h1:JSbkp0BviKovYYt9XunS95M3mLPibE9bGg+Y95DsEEY=
+github.com/rogpeppe/go-internal v1.16.0 h1:O9DK+vNMDVGLr2BeZqmpLeMjiMNkuXfcqntWbZV6S5g=
+github.com/rogpeppe/go-internal v1.16.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
