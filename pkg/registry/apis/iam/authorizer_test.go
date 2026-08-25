@@ -87,6 +87,82 @@ func newTestAuthInfo() types.AuthInfo {
 	)
 }
 
+func TestTeamLBACRuleAuthorizer(t *testing.T) {
+	baseCalled := false
+	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		baseCalled = true
+		return authorizer.DecisionAllow, "", nil
+	})
+	authz := newTeamLBACRuleAuthorizer(base)
+	forSubject := authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "get",
+		APIGroup:        "iam.grafana.app",
+		Resource:        "teamlbacrules",
+		Subresource:     "for-subject",
+		Namespace:       "default",
+		Name:            "prometheus.datasource-a",
+	}
+
+	t.Run("denies a request without an authenticated identity", func(t *testing.T) {
+		decision, reason, err := authz.Authorize(context.Background(), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "for-subject requires an authenticated service identity", reason)
+	})
+
+	t.Run("allows the internal Grafana service permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app:*"}},
+		})
+		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("allows an MT service with TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teamlbacrules:get"}},
+		})
+		decision, _, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+	})
+
+	t.Run("denies a service without TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{Permissions: []string{"iam.grafana.app/teams:get"}},
+		})
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "calling service lacks TeamLBACRule read permission", reason)
+	})
+
+	t.Run("denies a user even with delegated TeamLBACRule read permission", func(t *testing.T) {
+		authInfo := authn.NewIDTokenAuthInfo(
+			authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{"iam.grafana.app/teamlbacrules:get"}},
+			},
+			&authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{Type: types.TypeUser}},
+		)
+		decision, reason, err := authz.Authorize(types.WithAuthInfo(context.Background(), authInfo), forSubject)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Equal(t, "for-subject only accepts direct service calls", reason)
+	})
+
+	t.Run("keeps base CRUD delegated to its existing authorizer", func(t *testing.T) {
+		baseCalled = false
+		baseGet := forSubject
+		baseGet.Subresource = ""
+		decision, _, err := authz.Authorize(context.Background(), baseGet)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.True(t, baseCalled)
+	})
+}
+
 // TestAuthorizerCheckRequest verifies that each authorizer builds the correct
 // CheckRequest when its custom subresources are accessed.
 func TestAuthorizerCheckRequest(t *testing.T) {

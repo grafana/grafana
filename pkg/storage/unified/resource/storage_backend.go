@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -43,6 +44,7 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
+	minEventRetentionPeriod           = 10 * time.Minute
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
@@ -378,7 +380,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	eventStore := newEventStore(kv)
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
-	if eventRetentionPeriod <= 0 {
+	if eventRetentionPeriod < minEventRetentionPeriod {
+		if eventRetentionPeriod > 0 {
+			logger.Warn("configured event_retention_period is below the minimum; falling back to the default",
+				"configured", eventRetentionPeriod, "minimum", minEventRetentionPeriod, "default", defaultEventRetentionPeriod)
+		}
 		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
 
@@ -1561,10 +1567,11 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
-	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
-	defer iter.stop()
 
-	if err := cb(iter); err != nil {
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	defer it.stop()
+
+	if err := cb(it); err != nil {
 		return 0, err
 	}
 
@@ -1572,13 +1579,31 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+	objs := batchGetResourceKeys(ctx, ds, keys)
+	if keysOnly {
+		// The data key already carries namespace/name/rv/folder, so the value
+		// read is skipped entirely rather than fetched and discarded.
+		objs = keysAsDataObjs(keys)
+	}
+	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
+		keysOnly:         keysOnly,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+// keysAsDataObjs adapts keys to the iterator's item type without reading values.
+func keysAsDataObjs(keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		for key, err := range keys {
+			if !yield(DataObj{Key: key}, err) || err != nil {
+				return
+			}
+		}
 	}
 }
 
@@ -1617,6 +1642,7 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
+	keysOnly         bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1653,9 +1679,11 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.value, i.err = readAndClose(i.currentDataObj.Value)
-	if i.err != nil {
-		return false
+	if !i.keysOnly {
+		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		if i.err != nil {
+			return false
+		}
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
@@ -2479,6 +2507,106 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 	return true
 }
 
+// eventToWrittenEvent maps an event-store entry to a metadata-only WrittenEvent.
+// The object value is intentionally left nil: the resource server materialises
+// it lazily (via ReadResource) before sending to the client, so we don't read
+// from the database objects that would otherwise be discarded.
+func eventToWrittenEvent(event Event) *WrittenEvent {
+	var t resourcepb.WatchEvent_Type
+	switch event.Action {
+	case DataActionCreated:
+		t = resourcepb.WatchEvent_ADDED
+	case DataActionUpdated:
+		t = resourcepb.WatchEvent_MODIFIED
+	case DataActionDeleted:
+		t = resourcepb.WatchEvent_DELETED
+	}
+
+	return &WrittenEvent{
+		Key: &resourcepb.ResourceKey{
+			Namespace: event.Namespace,
+			Group:     event.Group,
+			Resource:  event.Resource,
+			Name:      event.Name,
+		},
+		Type:            t,
+		Folder:          event.Folder,
+		ResourceVersion: event.ResourceVersion,
+		PreviousRV:      event.PreviousRV,
+		Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
+	}
+}
+
+// maxEventReplayAge is how far back a watch may be resumed from: half the event
+// retention period. Staying strictly below the retention period leaves a margin
+// so the pruner cannot delete events in the range we are about to replay.
+func (k *kvStorageBackend) maxEventReplayAge() time.Duration {
+	return k.eventRetentionPeriod / 2
+}
+
+func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) error {
+	latest, err := k.eventStore.LastEventKey(ctx)
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil // no events at all
+	case err != nil:
+		return err
+	case sinceRV >= latest.ResourceVersion:
+		// Nothing was written after sinceRV, so there is nothing to replay.
+		return nil
+	}
+
+	if ResourceVersionTime(sinceRV).Before(time.Now().Add(-k.maxEventReplayAge())) {
+		return NewResourceVersionExpiredError(sinceRV)
+	}
+	return nil
+}
+
+// ListEventsSince returns metadata-only write events with a resource version
+// greater than sinceRV, in ascending resource version order. It reads straight
+// from the event store, so it is only complete for resource versions that are still
+// within the event retention period (see EventRetentionPeriod).
+//
+// Only events older than the settle window (now - SettleDelay) are returned.
+// Writes are not globally ordered without a hard lock, so a recent event may
+// still have a concurrent, lower-RV write that has not landed in the store yet.
+// To get the writes past (now - SettleDelay) the caller must subscribe to the watch stream
+// BEFORE calling ListEventsSince
+func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) iter.Seq2[*WrittenEvent, error] {
+	return func(yield func(*WrittenEvent, error) bool) {
+		ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListEventsSince", trace.WithAttributes(
+			attribute.Int64("sinceRV", sinceRV),
+		))
+		defer span.End()
+
+		// Snapshot the settle frontier once so a slow replay keeps a stable upper
+		// bound; events past it are the broadcaster's responsibility.
+		settledRV := snowflakeFromTime(time.Now().Add(-k.watchOpts.SettleDelay))
+
+		for event, err := range k.eventStore.ListSince(ctx, sinceRV, SortOrderAsc) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if event.ResourceVersion <= sinceRV {
+				continue
+			}
+			// Ascending order: once we reach the unsettled window everything left
+			// is also unsettled, so stop and let the broadcaster deliver the rest.
+			if event.ResourceVersion > settledRV {
+				return
+			}
+			// Events written as part of a bulk update are not streamed to watchers.
+			if event.PreviousRV < 0 {
+				continue
+			}
+			if !yield(eventToWrittenEvent(event), nil) {
+				return
+			}
+		}
+	}
+}
+
 // GetResourceStats returns resource stats within the storage backend.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStats", trace.WithAttributes(
@@ -2787,6 +2915,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					Key:    req.Key,
 					Action: req.Action,
 					Error:  fmt.Sprintf("failed to save resource: invalid data key: %s", err),
+				})
+				continue
+			}
+
+			if errs := validation.IsReservedName(dataKey.Name); errs != nil {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  fmt.Sprintf("failed to save resource: %s", errs[0]),
 				})
 				continue
 			}

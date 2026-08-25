@@ -1490,6 +1490,10 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
+export type GitHubEnterpriseOAuthConnectionConfig = {
+  /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
+  serverUrl: string;
+};
 export type ConnectionOAuthConfig = {
   /** The OAuth app client ID */
   clientID: string;
@@ -1499,7 +1503,7 @@ export type ConnectionWebhookConfig = {
   disabled?: boolean;
 };
 export type ConnectionSpec = {
-  /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
+  /** Bitbucket connection configuration Only applicable when provider is "bitbucketOAuth" */
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
@@ -1507,6 +1511,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
+  /** GitHub Enterprise Server OAuth app connection configuration Only applicable when provider is "githubEnterpriseOAuth" */
+  githubEnterpriseOAuth?: GitHubEnterpriseOAuthConnectionConfig;
   /** OAuth app configuration shared by all OAuth app providers */
   oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
@@ -1514,11 +1520,13 @@ export type ConnectionSpec = {
   /** The connection provider type
     
     Possible enum values:
-     - `"bitbucket"`
+     - `"bitbucketOAuth"`
      - `"github"`
      - `"githubEnterprise"`
-     - `"gitlab"` */
-  type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
+     - `"githubEnterpriseOAuth"`
+     - `"githubOAuth"`
+     - `"gitlabOAuth"` */
+  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -1959,6 +1967,8 @@ export type GitLabRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** RepoID is the GitLab project's immutable numeric ID. Resolved and set automatically whenever URL is set or changed; it survives a project transfer/move even if the project's path changes. Read-only: it is always system-derived and never taken from client-supplied input. */
+  repoID?: string;
   /** The repository URL (e.g. `https://gitlab.com/example/test`). */
   url?: string;
 };
@@ -2290,6 +2300,15 @@ export type RepositoryViewList = {
   allowedTargets?: ('folder' | 'folderless' | 'instance')[];
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
+  /** AvailableConnectionTypes is the list of connection types supported in this instance */
+  availableConnectionTypes?: (
+    | 'bitbucketOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth'
+  )[];
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
   /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */

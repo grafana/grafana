@@ -317,10 +317,6 @@
         window.__grafanaAssetSriChecksEnabled = true;
       [[end]]
 
-      [[if .NewPreferencesPage]]
-        window.__grafanaNewPreferencesPage = true;
-      [[end]]
-
       [[if .OFREPRootUrlEnabled]]
         window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
@@ -364,7 +360,7 @@
       };
 
       [[if .Assets.ContentDeliveryURL]]
-        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]';
       [[end]]
       [[if .Nonce]]
         window.nonce = '[[.Nonce]]';
