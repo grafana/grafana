@@ -147,7 +147,7 @@ As an experimental feature, on-demand data source diagnostics currently has the 
 
   If you generate the bundle from a reduced dashboard, note that in your ticket. A smaller, reproducible setup is also easier for Grafana Labs Technical Support to work with.
 
-## Related documentation
+## Related resources
 
 - [Send a panel to Grafana Labs support](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/troubleshooting/send-panel-to-grafana-support/)
 - [Generate a HAR capture to send to Grafana Labs support](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/troubleshooting/har-captures/)
