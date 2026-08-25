@@ -110,6 +110,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
       Boolean(form.clientSecret) ||
       form.clientID !== data?.spec?.oauth?.clientID ||
       (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl) ||
+      (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
       reauthorizeRef.current);
 
   useEffect(() => {

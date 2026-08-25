@@ -34,6 +34,7 @@ import { useConnectionList } from '../hooks/useConnectionList';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
+import { connectionTypesForProvider } from '../utils/connectionData';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
@@ -106,12 +107,19 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // Reuses the same RTK Query cache entry as useConnectionOptions.
   const [allConnections] = useConnectionList(usesConnection ? {} : skipToken);
   const referencedConnectionType = allConnections?.find((c) => c.metadata?.name === connectionName)?.spec?.type;
+  // The referenced connection may have been deleted; fall back to every connection kind
+  // for this provider so a replacement can be picked.
+  const connectionTypes = referencedConnectionType
+    ? [referencedConnectionType]
+    : supportsConnections(type)
+      ? connectionTypesForProvider(type)
+      : [];
 
   const {
     options: connectionOptions,
     isLoading: connectionsLoading,
     connections,
-  } = useConnectionOptions(usesConnection, referencedConnectionType);
+  } = useConnectionOptions(usesConnection, connectionTypes);
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);

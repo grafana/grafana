@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type Connection, type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -34,7 +35,7 @@ const gitlabConnection: Connection = {
   },
 };
 
-function buildRepository(withConnection: boolean): Repository {
+function buildRepository(withConnection: boolean, connectionName = 'gitlab-conn'): Repository {
   return {
     metadata: { name: 'repo-1' },
     spec: {
@@ -43,7 +44,7 @@ function buildRepository(withConnection: boolean): Repository {
       sync: { enabled: false, target: 'folder', intervalSeconds: 60 },
       workflows: [],
       gitlab: { url: 'https://gitlab.com/g/r', branch: 'main' },
-      ...(withConnection ? { connection: { name: 'gitlab-conn' } } : {}),
+      ...(withConnection ? { connection: { name: connectionName } } : {}),
     },
   };
 }
@@ -66,5 +67,14 @@ describe('ConfigForm', () => {
 
     expect(await screen.findByPlaceholderText('glpat-xxxxxxxxxxxxxxxxxxx')).toBeInTheDocument();
     expect(screen.queryByText('Connection')).not.toBeInTheDocument();
+  });
+
+  it('offers replacement connections for the provider when the referenced connection is missing', async () => {
+    mockComboboxRect();
+    const { user } = setup(buildRepository(true, 'gone-conn'));
+
+    expect(await screen.findByText('Connection')).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: /Connection/ }));
+    expect(await screen.findByRole('option', { name: /GitLab OAuth/ })).toBeInTheDocument();
   });
 });

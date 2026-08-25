@@ -60,10 +60,10 @@ function setup(options: SetupOptions = {}) {
 
 describe('ConnectionForm', () => {
   describe('Rendering - Create Mode', () => {
-    it('should render all form fields', () => {
+    it('should render all form fields', async () => {
       setup();
 
-      expect(screen.getByLabelText(/^Provider/)).toBeInTheDocument();
+      expect(await screen.findByLabelText(/^Provider/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Title/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^Description/)).toBeInTheDocument();
       expect(screen.getByLabelText(/^GitHub App ID/)).toBeInTheDocument();
@@ -81,7 +81,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      const providerField = screen.getByLabelText(/^Provider/);
+      const providerField = await screen.findByLabelText(/^Provider/);
       await waitFor(() => {
         expect(providerField).toBeEnabled();
       });
@@ -94,9 +94,10 @@ describe('ConnectionForm', () => {
       expect(await screen.findByLabelText(/^Custom server URL/)).toBeInTheDocument();
     });
 
-    it('should render Save button', () => {
+    it('should render Save button', async () => {
       setup();
 
+      await screen.findByLabelText(/^Provider/);
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
     });
 
@@ -168,6 +169,7 @@ describe('ConnectionForm', () => {
     it('should show required error and not submit when fields are empty', async () => {
       const { user } = setup();
 
+      await screen.findByLabelText(/^Provider/);
       const saveButton = screen.getByRole('button', { name: /^save$/i });
       await user.click(saveButton);
 
@@ -180,7 +182,7 @@ describe('ConnectionForm', () => {
     it('should show validation error for private key containing hidden characters', async () => {
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.click(screen.getByLabelText(/^Private Key \(PEM\)/));
@@ -209,7 +211,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -281,7 +283,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -306,7 +308,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -330,7 +332,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), '-----BEGIN RSA PRIVATE KEY-----');
@@ -354,7 +356,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'invalid-key');
@@ -373,7 +375,7 @@ describe('ConnectionForm', () => {
 
       const { user } = setup();
 
-      await user.type(screen.getByLabelText(/^Title/), 'My GitHub App');
+      await user.type(await screen.findByLabelText(/^Title/), 'My GitHub App');
       await user.type(screen.getByLabelText(/^GitHub App ID/), '123456');
       await user.type(screen.getByLabelText(/^GitHub Installation ID/), '12345678');
       await user.type(screen.getByLabelText(/^Private Key \(PEM\)/), 'some-valid-key');

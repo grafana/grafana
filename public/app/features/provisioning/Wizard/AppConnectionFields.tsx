@@ -44,7 +44,7 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
     isLoading,
     connections,
     error: connectionListError,
-  } = useConnectionOptions(true, connectionType);
+  } = useConnectionOptions(true, [connectionType]);
 
   const hasNoConnections = !isLoading && !connectionListError && connections.length === 0;
 

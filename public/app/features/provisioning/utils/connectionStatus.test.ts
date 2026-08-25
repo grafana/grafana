@@ -46,4 +46,22 @@ describe('isConnectionPending', () => {
   it('is pending when Ready is Unknown and the token is newer than the last health check', () => {
     expect(isConnectionPending(buildStatus('Unknown', 3, 2))).toBe(true);
   });
+
+  it('is pending when not Ready with a token but no health status', () => {
+    // Older backends can omit health even though the generated type requires it.
+    const status = {
+      observedGeneration: 1,
+      conditions: [
+        {
+          type: 'Ready',
+          status: 'False',
+          reason: 'HealthCheck',
+          message: '',
+          lastTransitionTime: '2024-01-01T00:00:00Z',
+        },
+      ],
+      token: { lastUpdated: 3 },
+    } as ConnectionStatus;
+    expect(isConnectionPending(status)).toBe(true);
+  });
 });

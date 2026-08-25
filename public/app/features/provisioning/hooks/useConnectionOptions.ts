@@ -14,12 +14,16 @@ import { useConnectionList } from './useConnectionList';
 
 export function useConnectionOptions(
   enabled: boolean,
-  connectionType?: GitHubBasedConnectionType | OAuthConnectionType
+  connectionTypes: Array<GitHubBasedConnectionType | OAuthConnectionType>
 ) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
+  // Key on contents, not array identity: an unstable array would re-run the memo
+  // every render and cascade into useAsync refetching repos.
+  const typesKey = connectionTypes.join('|');
   const githubConnections = useMemo(
-    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
-    [connections, connectionType]
+    () => connections?.filter((c) => c.spec?.type && connectionTypes.includes(c.spec.type)) ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [connections, typesKey]
   );
 
   // Only fetch repos for ready connections

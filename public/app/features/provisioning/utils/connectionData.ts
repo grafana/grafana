@@ -16,6 +16,14 @@ export function toConnectionType(provider: ConnectionProvider, kind: 'app' | 'oa
   return provider === 'gitlab' ? 'gitlabOAuth' : 'bitbucketOAuth';
 }
 
+// All connection kinds (app and OAuth) that can serve repositories of this provider.
+// gitlab/bitbucket have no app kind, so both lookups return the same OAuth type.
+export function connectionTypesForProvider(provider: ConnectionProvider): Array<ConnectionFormData['type']> {
+  const app = toConnectionType(provider, 'app');
+  const oauth = toConnectionType(provider, 'oauth');
+  return app === oauth ? [app] : [app, oauth];
+}
+
 export function getConnectionFormDefaults(type: string | undefined, data?: Connection): ConnectionFormData {
   const base = {
     title: data?.spec?.title || '',
