@@ -19,8 +19,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
-	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -553,7 +553,7 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	// process eventually claims and executes it (possibly on a different pod,
 	// reached via NATS) can continue this trace instead of starting a
 	// disconnected root. A no-op if ctx carries no live span.
-	annotations := apptracing.Annotate(ctx, webhookAttributionFromContext(ctx))
+	annotations := utils.SetTraceContext(ctx, webhookAttributionFromContext(ctx))
 
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

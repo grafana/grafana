@@ -17,8 +17,8 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -441,12 +441,12 @@ func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.
 }
 
 // withJobTraceParent continues the trace that created this job, via the
-// traceparent annotation stamped by Insert (see apptracing.Annotate), so job
-// execution shows up as part of that trace rather than a disconnected root.
-// A no-op if the job carries no trace annotation (e.g. it was created from a
-// context without a live span).
+// traceparent annotation stamped by Insert (see utils.SetTraceContext), so
+// job execution shows up as part of that trace rather than a disconnected
+// root. A no-op if the job carries no trace annotation (e.g. it was created
+// from a context without a live span).
 func withJobTraceParent(ctx context.Context, job *provisioning.Job) context.Context {
-	return apptracing.ExtractParent(ctx, job.Annotations)
+	return utils.ExtractTraceContext(ctx, job.Annotations)
 }
 
 func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecorder) error {

@@ -9,7 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // AdmissionMutator handles mutation for Repository resources
@@ -68,7 +68,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	// (in a different operator process) can continue the trace that last wrote
 	// it, instead of starting a disconnected root. A no-op if ctx carries no
 	// live span.
-	r.Annotations = apptracing.Annotate(ctx, r.Annotations)
+	r.Annotations = utils.SetTraceContext(ctx, r.Annotations)
 
 	// Extra mutators from factory
 	if err := m.factory.Mutate(ctx, r, a.GetOldObject()); err != nil {

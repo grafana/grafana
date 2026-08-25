@@ -17,8 +17,8 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -270,7 +270,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	// that changed its spec, or created it) so this reconcile traces back to
 	// that request instead of a disconnected root. A no-op if the object
 	// carries no trace annotation.
-	ctx = apptracing.ExtractParent(ctx, conn.Annotations)
+	ctx = utils.ExtractTraceContext(ctx, conn.Annotations)
 	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.process_connection")
 	defer span.End()
 

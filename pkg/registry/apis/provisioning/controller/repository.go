@@ -26,8 +26,8 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -696,7 +696,7 @@ func (rc *RepositoryController) process(ctx context.Context, key string) error {
 	// that changed its spec, or created it) so a spec-change or resync-driven
 	// sync job traces back to that request instead of a disconnected root.
 	// A no-op if the object carries no trace annotation.
-	ctx = apptracing.ExtractParent(ctx, obj.Annotations)
+	ctx = utils.ExtractTraceContext(ctx, obj.Annotations)
 
 	logger = logger.With(
 		"namespace", namespace,

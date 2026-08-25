@@ -1,4 +1,4 @@
-package tracing
+package utils
 
 import (
 	"context"
@@ -10,17 +10,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func TestAnnotate_NoSpan(t *testing.T) {
-	got := Annotate(context.Background(), map[string]string{"existing": "value"})
+func TestSetTraceContext_NoSpan(t *testing.T) {
+	got := SetTraceContext(context.Background(), map[string]string{"existing": "value"})
 	assert.Equal(t, map[string]string{"existing": "value"}, got)
 }
 
-func TestAnnotate_NilAnnotations(t *testing.T) {
-	got := Annotate(context.Background(), nil)
+func TestSetTraceContext_NilAnnotations(t *testing.T) {
+	got := SetTraceContext(context.Background(), nil)
 	assert.Nil(t, got)
 }
 
-func TestAnnotateAndExtractParent_RoundTrip(t *testing.T) {
+func TestSetAndExtractTraceContext_RoundTrip(t *testing.T) {
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
 
@@ -28,24 +28,24 @@ func TestAnnotateAndExtractParent_RoundTrip(t *testing.T) {
 	defer span.End()
 	wantTraceID := span.SpanContext().TraceID()
 
-	annotations := Annotate(ctx, nil)
-	require.Contains(t, annotations, AnnoTraceParent)
+	annotations := SetTraceContext(ctx, nil)
+	require.Contains(t, annotations, AnnoKeyTraceParent)
 
-	extracted := ExtractParent(context.Background(), annotations)
+	extracted := ExtractTraceContext(context.Background(), annotations)
 	sc := trace.SpanContextFromContext(extracted)
 	require.True(t, sc.IsValid())
 	assert.Equal(t, wantTraceID, sc.TraceID())
 	assert.True(t, sc.IsRemote())
 }
 
-func TestExtractParent_NoAnnotation(t *testing.T) {
+func TestExtractTraceContext_NoAnnotation(t *testing.T) {
 	ctx := context.Background()
-	got := ExtractParent(ctx, nil)
+	got := ExtractTraceContext(ctx, nil)
 	assert.Equal(t, ctx, got)
 }
 
-func TestExtractParent_InvalidTraceparent(t *testing.T) {
+func TestExtractTraceContext_InvalidTraceparent(t *testing.T) {
 	ctx := context.Background()
-	got := ExtractParent(ctx, map[string]string{AnnoTraceParent: "not-a-valid-traceparent"})
+	got := ExtractTraceContext(ctx, map[string]string{AnnoKeyTraceParent: "not-a-valid-traceparent"})
 	assert.Equal(t, ctx, got)
 }
