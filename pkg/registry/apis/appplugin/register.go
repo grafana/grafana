@@ -156,7 +156,7 @@ func RegisterAPIService(
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
 				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
-					logging.FromContext(ctx).Warn("invalid app plugin id: %s", jsonData.ID)
+					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
 				return true
@@ -204,15 +204,15 @@ func RegisterAPIService(
 // GetGroupVersions returns the served versions, preferred version first.
 // The settings kind is registered in every version so it is always reachable.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	fallback := []schema.GroupVersion{{
+	settingsGV := schema.GroupVersion{
 		Group:   b.pluginJSON.ID,
 		Version: apppluginV0.VERSION,
-	}}
-	if b.manifest == nil || len(b.manifest.Versions) == 0 {
-		return fallback
+	}
+	if b.manifest == nil {
+		return []schema.GroupVersion{settingsGV}
 	}
 
-	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
+	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions)+1)
 	for _, v := range b.manifest.Versions {
 		if !v.Served {
 			continue
@@ -226,6 +226,14 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 		} else {
 			gvs = append(gvs, gv)
 		}
+	}
+	// Adding a manifest must not move a plugin's existing settings API, so
+	// v0alpha1 is served alongside the manifest versions unless the manifest
+	// declares it. Last, so it never becomes the preferred version. This also
+	// keeps the list non-empty: a group with no versions fails InstallSchema
+	// (SetVersionPriority requires exactly one group) and aborts startup.
+	if !slices.Contains(gvs, settingsGV) {
+		gvs = append(gvs, settingsGV)
 	}
 	return gvs
 }
@@ -336,7 +344,13 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 						return err
 					}
 
+					// Without this, a kind whose plural shadows the settings resource
+					// (or an earlier kind) would silently replace it in the map.
 					resource := store.DefaultQualifiedResource.Resource
+					if _, taken := storage[resource]; taken {
+						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
+							kind.Kind, gv.String(), resource)
+					}
 					storage[resource] = store
 
 					if store.hasStatus {

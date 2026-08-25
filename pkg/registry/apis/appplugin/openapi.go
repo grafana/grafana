@@ -212,7 +212,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 			name := kindOpenAPIName(gvk)
 			ref := spec.MustCreateRef("#/components/schemas/" + name)
 			base := root + "namespaces/{namespace}/" + strings.ToLower(kind.Plural)
-			if kind.Scope == "Cluster" {
+			if kind.Scope == clusterScope {
 				base = root + strings.ToLower(kind.Plural)
 			}
 

@@ -7,6 +7,12 @@ import (
 )
 
 // ClientV3 provides the services negotiated through plugin protocol v3.
+// It will evolve as the v3 interface gets exercised with real usage.
+//
+// V2 and V3 share the same distribution+packaging methods, however in V3:
+// 1. All implementations are required to be multi-tenant safe
+// 2. No requests contain pluginContext (the root plugin configuration)
+// 3. The v3 client does not include the expansive middleware that exists for v2
 type ClientV3 interface {
 	pluginv3.AdmissionServiceClient
 	pluginv3.ConversionServiceClient

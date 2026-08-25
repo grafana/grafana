@@ -2,6 +2,8 @@ package appplugin
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,8 @@ import (
 // Manifest APIs use the plugin ID as their group.
 const thingAPIVersion = testAppID + "/v1"
 
+// The manifest declares only v1, but a plugin's settings API must keep working
+// after a manifest ships, so v0alpha1 is served alongside the manifest versions.
 func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -96,6 +100,60 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 							},
 							"subresource": "status",
 							"verbs": [
+								"get",
+								"patch",
+								"update"
+							]
+						}
+					],
+					"verbs": [
+						"create",
+						"delete",
+						"deletecollection",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch"
+					]
+				}
+			]
+		},
+		{
+			"version": "v0alpha1",
+			"freshness": "Current",
+			"resources": [
+				{
+					"resource": "app",
+					"responseKind": {
+						"group": "",
+						"kind": "Settings",
+						"version": ""
+					},
+					"scope": "Namespaced",
+					"singularResource": "app",
+					"subresources": [
+						{
+							"responseKind": {
+								"group": "",
+								"kind": "HealthCheckResult",
+								"version": ""
+							},
+							"subresource": "health",
+							"verbs": [
+								"get"
+							]
+						},
+						{
+							"responseKind": {
+								"group": "",
+								"kind": "Status",
+								"version": ""
+							},
+							"subresource": "resources",
+							"verbs": [
+								"create",
+								"delete",
 								"get",
 								"patch",
 								"update"
@@ -211,4 +269,39 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 	disco, err := helper.GetGroupVersionInfoJSON(testAppID)
 	require.NoError(t, err)
 	require.Contains(t, disco, `"resource": "things"`)
+}
+
+// TestIntegrationPluginManifestKindRoutes covers routes a manifest declares on a
+// kind. They mount as subresources of one object and dispatch to the plugin's v3
+// route service.
+func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelperWithManifest(t, rest.Mode5)
+	client := helper.NewDiscoveryClient().RESTClient()
+	ctx := context.Background()
+
+	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppID + "/v1").DoRaw(ctx)
+	require.NoError(t, err)
+
+	// Parsed rather than string-matched: a failed Contains on the whole spec is
+	// unreadable.
+	var doc struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &doc))
+
+	prefix := "/apis/" + testAppID + "/v1/namespaces/{namespace}/things"
+	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
+	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
+
+	// The test plugin has no v3 backend, so the route reports unavailable.
+	// A 404 would mean it never got mounted.
+	result := client.Get().
+		AbsPath("/apis/" + testAppID + "/v1/namespaces/default/things/thing-1/reload").
+		Do(ctx)
+
+	var statusCode int
+	result.StatusCode(&statusCode)
+	require.Equal(t, http.StatusServiceUnavailable, statusCode)
 }

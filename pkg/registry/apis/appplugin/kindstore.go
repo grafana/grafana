@@ -26,6 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
+// clusterScope is the manifest value for kinds that live outside a namespace.
+const clusterScope = "Cluster"
+
 // kindStore applies a manifest kind's storage and REST strategies.
 type kindStore struct {
 	*registry.Store
@@ -55,9 +58,15 @@ func newKindStore(
 	opts *builder.APIGroupOptions,
 	defs map[string]common.OpenAPIDefinition,
 ) (*kindStore, error) {
+	// The manifest loader defaults plural to kind+"s", but a manifest built in
+	// code can omit it, and an empty resource name registers an unreachable path.
+	if kind.Plural == "" {
+		return nil, fmt.Errorf("kind %s is missing a plural name", gvk.Kind)
+	}
+
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
 	listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
-	clusterScoped := kind.Scope == "Cluster"
+	clusterScoped := kind.Scope == clusterScope
 
 	keyFunc := grafanaregistry.NamespaceKeyFunc(gr)
 	if clusterScoped {
@@ -85,7 +94,7 @@ func newKindStore(
 	folder := (kind.FolderScoped == nil || *kind.FolderScoped) && !clusterScoped
 	opts.StorageOptsRegister(gr, apistore.StorageOptions{
 		EnableFolderSupport:  folder,
-		RequireFolder:        folder,
+		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
 		Scheme:               opts.Scheme,
 	})
