@@ -22,6 +22,17 @@ For this PanelEditNext experiment, Core passes the optional `unstable_queryEdito
 
 Before a second datasource adapter is added, promote a reviewed, generalized interface into `@grafana/data`; do not copy this private prop or either repository's local contract. The same promotion review is required before query coauthoring graduates from this experiment to a supported plugin extension point.
 
+## Internal modules
+
+`QueryCoauthoring` remains the transaction owner and render shell. Its internal implementation is split by responsibility:
+
+- `useQueryCoauthoringInvocation` owns atomic invocation loading, baseline synchronization, semantic identification, and cancellation.
+- `createQueryCoauthoringRequest` owns Assistant tools and converts completion callbacks into typed clarification, fallback, proposal, ignored, or error outcomes.
+- `useQueryCoauthoringViewport` owns portal measurement and viewport/scroll observation.
+- `QueryCoauthoringViews` owns the presentational states.
+
+These are private implementation modules, not datasource extension seams. The datasource-facing interface remains `QueryEditorCoauthoringAdapterV1`.
+
 ## Preview invariant
 
 Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Accept. `startQueryPreview` clones the canonical runner, replaces only the selected query in the clone, and projects the clone's `PanelData` back into the canonical runner. Preview status comes directly from the clone because projected scene updates may batch away an intermediate loading state. Saving, sharing, query-library actions, and other query serializers continue to see the baseline query during preview.

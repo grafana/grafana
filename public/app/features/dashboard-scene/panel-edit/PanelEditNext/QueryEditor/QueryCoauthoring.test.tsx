@@ -556,6 +556,57 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
   });
 
+  it('reverts an active preview when the invocation changes', async () => {
+    const { user, onRevertPreview, queryCoauthoringProps, rerender } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    await act(async () => {
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} invocationId="2" />);
+      await Promise.resolve();
+    });
+
+    expect(onRevertPreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels an in-flight request when the invocation changes and ignores its late proposal', async () => {
+    const { user, stagePreview, onPreview, queryCoauthoringProps, rerender } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    const cancelCalls = mockCancel.mock.calls.length;
+
+    await act(async () => {
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} invocationId="2" />);
+      await Promise.resolve();
+    });
+
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    stagePreview.mockClear();
+    onPreview.mockClear();
+
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+  });
+
   it('reverts and re-runs the baseline query when a proposal is dismissed', async () => {
     const { user, onPreview, onRevertPreview } = await setup();
 

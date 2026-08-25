@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { createAssistantContextItem, createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
@@ -29,32 +29,20 @@ import {
   buildAssistantHandoffInstructions,
   buildAssistantHandoffPrompt,
   buildCoauthoringSystemPrompt,
-  buildIdentificationPrompt,
-  buildIdentificationSystemPrompt,
-  buildInvalidProposalRepairMessage,
-  buildProposalToolDescription,
-  invalidQueryResponseMessage,
-  MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH,
-  multipleResponsesMessage,
-  normalizeClarificationMessage,
-  normalizeSelectionExplanation,
   type QueryFallback,
   type QueryProposal,
-  requestFailedMessage,
   selectionSummary,
-  staleQueryResponseMessage,
-  unchangedQueryResponseMessage,
-  validateFallback,
-  validateProposal,
 } from './queryCoauthoringPrompts';
+import {
+  createQueryCoauthoringRequest,
+  type QueryCoauthoringRequestError,
+  type QueryCoauthoringRequestOutcome,
+} from './queryCoauthoringRequest';
+import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
+import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
 
 interface QueryClarification {
   message: string;
-}
-
-interface QueryCoauthoringError {
-  message: string;
-  retryable: boolean;
 }
 
 interface PreparedQueryProposal extends QueryProposal {
@@ -79,7 +67,6 @@ interface Props {
   timeRange?: { from: number; to: number };
 }
 
-const VIEWPORT_MARGIN = 8;
 const ITERATION_NUDGE_THRESHOLD = 3;
 const PROMPT_MESSAGE_ID = 'query-coauthoring-prompt-message';
 
@@ -101,44 +88,40 @@ export function QueryCoauthoring({
     openAssistant: openAvailableAssistant,
   } = useAssistant();
   const {
-    generate: identifySelection,
-    isGenerating: isIdentifying,
-    cancel: cancelIdentification,
-    reset: resetIdentification,
-  } = useInlineAssistant();
+    cancelIdentification,
+    clear: clearInvocation,
+    context,
+    contextError,
+    isIdentifying,
+    loadContext,
+    readContext,
+    selectionExplanation,
+  } = useQueryCoauthoringInvocation({
+    adapter,
+    invocationId,
+    isAssistantAvailable,
+    datasourceType,
+    timeRange,
+    onBaseline,
+  });
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const [context, setContext] = useState<QueryEditorCoauthoringContextV1>();
-  const [contextError, setContextError] = useState(false);
-  const [selectionExplanation, setSelectionExplanation] = useState<string>();
   const [intent, setIntent] = useState('');
   const [proposal, setProposal] = useState<PreparedQueryProposal>();
   const [fallback, setFallback] = useState<StagedFallback>();
   const [clarification, setClarification] = useState<QueryClarification>();
-  const [error, setError] = useState<QueryCoauthoringError>();
+  const [error, setError] = useState<QueryCoauthoringRequestError>();
   const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
   const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
   const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
-  const [availableHeight, setAvailableHeight] = useState<number>();
+  const availableHeight = useQueryCoauthoringViewport(portalTarget);
   const generationIdRef = useRef(0);
-  const identificationIdRef = useRef(0);
-  const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1> | undefined>(undefined);
   const submittedIntentsRef = useRef<string[]>([]);
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
-  const onBaselineRef = useRef(onBaseline);
   const onRevertPreviewRef = useRef(onRevertPreview);
-  const identifySelectionRef = useRef(identifySelection);
-  const cancelIdentificationRef = useRef(cancelIdentification);
-  const datasourceTypeRef = useRef(datasourceType);
-  const timeRangeRef = useRef(timeRange);
   const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
   onRevertPreviewRef.current = onRevertPreview;
-  onBaselineRef.current = onBaseline;
-  identifySelectionRef.current = identifySelection;
-  cancelIdentificationRef.current = cancelIdentification;
-  datasourceTypeRef.current = datasourceType;
-  timeRangeRef.current = timeRange;
 
   const revertQueryPreview = useCallback(() => {
     if (!previewActiveRef.current) {
@@ -150,15 +133,10 @@ export function QueryCoauthoring({
 
   const clearSession = useCallback(() => {
     generationIdRef.current++;
-    identificationIdRef.current++;
-    cancelIdentification();
-    resetIdentification();
+    clearInvocation();
     cancel();
     reset();
     revertQueryPreview();
-    setContext(undefined);
-    setContextError(false);
-    setSelectionExplanation(undefined);
     setIntent('');
     setProposal(undefined);
     setFallback(undefined);
@@ -167,10 +145,9 @@ export function QueryCoauthoring({
     setFeedback(undefined);
     setSubmittedIterationCount(0);
     setIterationNudgeDismissed(false);
-    contextPromiseRef.current = undefined;
     submittedIntentsRef.current = [];
     promptUserGestureRef.current = false;
-  }, [cancel, cancelIdentification, reset, resetIdentification, revertQueryPreview]);
+  }, [cancel, clearInvocation, reset, revertQueryPreview]);
 
   const closeFeedback = useCallback(() => {
     setFeedback(undefined);
@@ -181,140 +158,19 @@ export function QueryCoauthoring({
     adapter.dismiss();
   }, [adapter, clearSession]);
 
-  const loadContext = useCallback(() => {
-    setContext(undefined);
-    setContextError(false);
-    const contextPromise = adapter.readInvocation(invocationId).then(({ baseline, context }) => {
-      if (!onBaselineRef.current(baseline)) {
-        throw new Error('The query coauthoring baseline is no longer current.');
-      }
-      return context;
-    });
-    contextPromiseRef.current = contextPromise;
-    void contextPromise.then(
-      (nextContext) => {
-        if (contextPromiseRef.current === contextPromise) {
-          setContext(nextContext);
-        }
-      },
-      () => {
-        if (contextPromiseRef.current === contextPromise) {
-          setContextError(true);
-        }
-      }
-    );
-  }, [adapter, invocationId]);
-
-  useEffect(() => {
-    if (!context || !isAssistantAvailable) {
-      return;
-    }
-
-    const identificationState = identificationIdRef;
-    const identificationId = ++identificationState.current;
-    const fallbackExplanation = selectionSummary(context);
-    const identificationDatasourceType = datasourceTypeRef.current;
-    const identificationTimeRange = timeRangeRef.current;
-    setSelectionExplanation(undefined);
-    void identifySelectionRef.current({
-      origin: 'grafana/panel-edit-next/query-coauthoring/identify',
-      agentName: 'query-coauthor-intent',
-      agentId: 'grafana.query.coauthor.identify.v1',
-      prompt: buildIdentificationPrompt(context),
-      systemPrompt: buildIdentificationSystemPrompt(
-        context,
-        identificationDatasourceType,
-        identificationTimeRange ? { from: identificationTimeRange.from, to: identificationTimeRange.to } : undefined
-      ),
-      onComplete: (completionText) => {
-        if (identificationId === identificationIdRef.current) {
-          setSelectionExplanation(normalizeSelectionExplanation(completionText, fallbackExplanation));
-        }
-      },
-      onError: () => {
-        if (identificationId === identificationIdRef.current) {
-          setSelectionExplanation(fallbackExplanation);
-        }
-      },
-    });
-
-    return () => {
-      identificationState.current++;
-      cancelIdentificationRef.current();
-    };
-  }, [context, isAssistantAvailable]);
-
   useEffect(() => {
     if (!isAssistantAvailable) {
       return;
     }
 
     const generationId = generationIdRef;
-    const identificationId = identificationIdRef;
-    loadContext();
 
     return () => {
       generationId.current++;
-      identificationId.current++;
-      cancelIdentification();
       cancel();
       revertQueryPreview();
     };
-  }, [cancel, cancelIdentification, isAssistantAvailable, loadContext, revertQueryPreview]);
-
-  useLayoutEffect(() => {
-    const updateAvailableHeight = () => {
-      const anchorTop = Math.max(portalTarget.getBoundingClientRect().top, 0);
-      setAvailableHeight(Math.max(window.innerHeight - anchorTop - VIEWPORT_MARGIN, 0));
-    };
-
-    let firstSettleFrame: number | undefined;
-    let secondSettleFrame: number | undefined;
-    const cancelSettle = () => {
-      if (firstSettleFrame !== undefined) {
-        cancelAnimationFrame(firstSettleFrame);
-        firstSettleFrame = undefined;
-      }
-      if (secondSettleFrame !== undefined) {
-        cancelAnimationFrame(secondSettleFrame);
-        secondSettleFrame = undefined;
-      }
-    };
-    const settleAvailableHeight = () => {
-      cancelSettle();
-      firstSettleFrame = requestAnimationFrame(() => {
-        firstSettleFrame = undefined;
-        updateAvailableHeight();
-        secondSettleFrame = requestAnimationFrame(() => {
-          secondSettleFrame = undefined;
-          updateAvailableHeight();
-        });
-      });
-    };
-    const resizeObserver = new ResizeObserver(() => {
-      updateAvailableHeight();
-      settleAvailableHeight();
-    });
-    const updateForViewportChange = (event: Event) => {
-      if (event.type === 'scroll' && event.target instanceof Node && portalTarget.contains(event.target)) {
-        return;
-      }
-      updateAvailableHeight();
-      settleAvailableHeight();
-    };
-
-    updateAvailableHeight();
-    settleAvailableHeight();
-    resizeObserver.observe(portalTarget);
-    window.addEventListener('resize', updateForViewportChange);
-    window.addEventListener('scroll', updateForViewportChange, true);
-    return () => {
-      resizeObserver.disconnect();
-      cancelSettle();
-      window.removeEventListener('resize', updateForViewportChange);
-      window.removeEventListener('scroll', updateForViewportChange, true);
-    };
-  }, [portalTarget]);
+  }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview]);
 
   const stop = () => {
     generationIdRef.current++;
@@ -331,24 +187,12 @@ export function QueryCoauthoring({
     if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
       return;
     }
-    identificationIdRef.current++;
     cancelIdentification();
 
     let submittedContext: QueryEditorCoauthoringContextV1;
     try {
-      if (context) {
-        submittedContext = context;
-      } else if (contextPromiseRef.current) {
-        submittedContext = await contextPromiseRef.current;
-      } else {
-        const invocation = await adapter.readInvocation(invocationId);
-        if (!onBaselineRef.current(invocation.baseline)) {
-          throw new Error('The query coauthoring baseline is no longer current.');
-        }
-        submittedContext = invocation.context;
-      }
+      submittedContext = await readContext();
     } catch {
-      setContextError(true);
       return;
     }
 
@@ -358,86 +202,47 @@ export function QueryCoauthoring({
     setSubmittedIterationCount((count) => count + 1);
 
     const generationId = ++generationIdRef.current;
-    let submittedProposal: QueryProposal | undefined;
-    let submittedPrepared: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }> | undefined;
-    let submittedFallback: QueryFallback | undefined;
-    let rejectedTerminalProposal: 'unchanged' | 'stale' | undefined;
-    let acceptedTerminalToolCallCount = 0;
-    let rejectedInvalidProposalCount = 0;
-    let terminalCallbackHandled = false;
-
     setProposal(undefined);
     setFallback(undefined);
     setClarification(undefined);
     setError(undefined);
 
-    const proposalTool = createTool(
-      async (input: QueryProposal) => {
-        if (generationId === generationIdRef.current) {
-          const prepared = adapter.prepareProposal(invocationId, input.proposedQuery);
-          if (prepared.status !== 'ready') {
-            if (prepared.reason === 'invalid') {
-              rejectedInvalidProposalCount++;
-              throw new Error(buildInvalidProposalRepairMessage(submittedContext));
-            }
-            acceptedTerminalToolCallCount++;
-            rejectedTerminalProposal = prepared.reason;
-            return prepared.reason === 'stale'
-              ? 'The query proposal is no longer current.'
-              : 'The query proposal does not change the current query.';
-          }
-          acceptedTerminalToolCallCount++;
-          submittedProposal = input;
-          submittedPrepared = prepared;
-        }
-        return 'The query proposal was received.';
-      },
-      {
-        name: 'submit_query_proposal',
-        description: buildProposalToolDescription(submittedContext),
-        inputSchema: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['proposedQuery', 'why'],
-          properties: {
-            proposedQuery: { type: 'string', minLength: 1, maxLength: 20_000 },
-            why: {
-              type: 'array',
-              minItems: 1,
-              maxItems: 5,
-              items: { type: 'string', minLength: 1, maxLength: 500 },
-            },
-          },
-        },
-        validate: validateProposal,
+    const request = createQueryCoauthoringRequest({
+      adapter,
+      invocationId,
+      context: submittedContext,
+      isCurrent: () => generationId === generationIdRef.current,
+    });
+    const handleOutcome = (outcome: QueryCoauthoringRequestOutcome) => {
+      if (outcome.status === 'ignored') {
+        return;
       }
-    );
-    proposalTool.strict = true;
-
-    const fallbackTool = createTool(
-      async (input: QueryFallback) => {
-        if (generationId === generationIdRef.current) {
-          acceptedTerminalToolCallCount++;
-          submittedFallback = input;
-        }
-        return 'The Assistant handoff was received.';
-      },
-      {
-        name: 'request_assistant_handoff',
-        description:
-          'Use this only when the requested change necessarily requires capabilities beyond this query editor, other queries, data sources, or panel changes, or the user explicitly asks to inspect live data. Keep ambiguous changes to the current query inline by asking one concise clarification question.',
-        inputSchema: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['reason'],
-          properties: {
-            reason: { type: 'string', minLength: 1, maxLength: 500 },
-          },
-        },
-        validate: validateFallback,
+      if (outcome.status === 'clarification') {
+        setIntent('');
+        setClarification({ message: outcome.message });
+        return;
       }
-    );
-    fallbackTool.strict = true;
+      if (outcome.status === 'fallback') {
+        setFallback({ ...outcome.fallback, context: submittedContext });
+        return;
+      }
+      if (outcome.status === 'error') {
+        setError(outcome.error);
+        return;
+      }
+      if (!onPreview(outcome.prepared.query)) {
+        setError({
+          message: t(
+            'query-editor-coauthoring.error-preview-failed',
+            'The query proposal could not be previewed. Try again.'
+          ),
+          retryable: true,
+        });
+        return;
+      }
+      previewActiveRef.current = true;
+      setProposal({ ...outcome.proposal, context: submittedContext, prepared: outcome.prepared });
+    };
 
     await generate({
       origin: 'grafana/panel-edit-next/query-coauthoring',
@@ -445,68 +250,9 @@ export function QueryCoauthoring({
       agentId: 'grafana.query.coauthor.v1',
       prompt: trimmedIntent,
       systemPrompt: buildCoauthoringSystemPrompt(submittedContext, datasourceType, timeRange),
-      tools: [proposalTool, fallbackTool],
-      onComplete: (completionText) => {
-        if (generationId !== generationIdRef.current || terminalCallbackHandled) {
-          return;
-        }
-        terminalCallbackHandled = true;
-        if (acceptedTerminalToolCallCount === 0) {
-          const message = normalizeClarificationMessage(completionText);
-          if (message) {
-            if (message.length > MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH) {
-              setFallback({ reason: message.slice(0, 500), context: submittedContext });
-            } else {
-              setIntent('');
-              setClarification({ message });
-            }
-          } else if (rejectedInvalidProposalCount > 0) {
-            setError({ message: invalidQueryResponseMessage(submittedContext), retryable: true });
-          } else {
-            setError({ message: requestFailedMessage(), retryable: true });
-          }
-          return;
-        }
-        if (acceptedTerminalToolCallCount !== 1) {
-          setError({ message: multipleResponsesMessage(), retryable: true });
-          return;
-        }
-        if (rejectedTerminalProposal) {
-          setError({
-            message:
-              rejectedTerminalProposal === 'stale' ? staleQueryResponseMessage() : unchangedQueryResponseMessage(),
-            retryable: rejectedTerminalProposal === 'unchanged',
-          });
-          return;
-        }
-        if (submittedFallback) {
-          setFallback({ ...submittedFallback, context: submittedContext });
-          return;
-        }
-        if (!submittedProposal || !submittedPrepared) {
-          setError({ message: invalidQueryResponseMessage(submittedContext), retryable: true });
-          return;
-        }
-
-        if (!onPreview(submittedPrepared.query)) {
-          setError({
-            message: t(
-              'query-editor-coauthoring.error-preview-failed',
-              'The query proposal could not be previewed. Try again.'
-            ),
-            retryable: true,
-          });
-          return;
-        }
-        previewActiveRef.current = true;
-        setProposal({ ...submittedProposal, context: submittedContext, prepared: submittedPrepared });
-      },
-      onError: () => {
-        if (generationId === generationIdRef.current && !terminalCallbackHandled) {
-          terminalCallbackHandled = true;
-          setError({ message: requestFailedMessage(), retryable: true });
-        }
-      },
+      tools: request.tools,
+      onComplete: (completionText) => handleOutcome(request.complete(completionText)),
+      onError: () => handleOutcome(request.fail()),
     });
   };
 
