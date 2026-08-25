@@ -784,7 +784,7 @@ var (
 		{
 			Name:        "secretsKeeperUI",
 			Description: "Enable the Secrets Keeper management UI for configuring external secret storage",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -792,7 +792,7 @@ var (
 		{
 			Name:        "grafana.secretsReferenceValueUI",
 			Description: "Enable referencing an existing secret in an active keeper when creating a secure value",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -1474,6 +1474,22 @@ var (
 			Description: "Use the Kubernetes TeamLBACRule API for team HTTP headers on datasource query requests",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "teamHttpHeadersFromAppPlatformST",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -2267,7 +2283,7 @@ var (
 		{
 			Name:         "secretsManagementAppPlatformAwsKeeper",
 			Description:  "Enables the creation of keepers that manage secrets stored on AWS secrets manager",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:        grafanaOperatorExperienceSquad,
@@ -3287,6 +3303,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 			HideFromDocs: true,
+		},
+		{
+			Name:        "grafana.dashboardAutoGridDefault",
+			Description: "Uses auto grid as the default layout for new dashboards",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

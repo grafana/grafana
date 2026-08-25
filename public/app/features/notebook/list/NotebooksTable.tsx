@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { memo, type ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
@@ -19,6 +19,7 @@ import {
 } from '@grafana/ui';
 
 import { canEditNotebooks } from '../permissions';
+import { getNeutralTagListStyle } from '../tagColors';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
@@ -248,8 +249,8 @@ const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: stri
 
 // Module scope so useStyles2 can memoize — it keys its cache on the function's identity, so an
 // inline arrow would rebuild the styles on every render of every row.
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   // TagList centers its tags by default; in a table column they need to line up with the header.
-  tagList: css({ justifyContent: 'flex-start' }),
+  tagList: cx(getNeutralTagListStyle(theme), css({ justifyContent: 'flex-start' })),
   nowrap: css({ whiteSpace: 'nowrap' }),
 });
