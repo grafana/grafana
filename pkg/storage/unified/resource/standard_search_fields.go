@@ -82,12 +82,14 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are unix-millis timestamps, mapped as numeric bleve
-		// fields and stored so retrieve returns the value in search results. They
-		// are retrieve-only: filtering would need range queries, which the search
-		// API does not support (and exact-millisecond equality is not a useful
-		// query), and sort would first require every index to carry the numeric
-		// mapping.
+		// created and updated are unix-millis timestamps. They are stored so search
+		// results can return them, but a retrieve-only non-string field is not
+		// indexed, so they cannot be filtered, sorted or used in a range query.
+		//
+		// Giving them filter (which is what a range query needs) or sort would index
+		// them, changing the index-affecting hash and rebuilding every kind's index.
+		// That is worth doing once someone needs to query on a timestamp; exact
+		// equality to the millisecond is not a useful query on its own.
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,

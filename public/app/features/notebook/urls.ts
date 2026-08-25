@@ -24,6 +24,16 @@ export function notebookViewUrl(uid: string): string {
 }
 
 /**
+ * The same destination in edit mode, for router-based navigation (`useNavigate`) — a freshly created
+ * notebook is empty and exists only to be written into, so creation lands here rather than on the
+ * view route a reader would otherwise see first. `notebookEditHref` below is the equivalent for
+ * consumers that render a plain `<a>` instead of navigating through the router.
+ */
+export function notebookEditUrl(uid: string): string {
+  return `${notebookViewUrl(uid)}?${NOTEBOOK_EDIT_PARAM}=${NOTEBOOK_EDIT_PARAM_ON}`;
+}
+
+/**
  * The same destination for consumers that render a plain `<a>` and so never see the router —
  * `LinkButton`, for one. `createHref` applies the sub-path and carries `orgId`; notebooks are
  * org-scoped, so a link without it opens whichever org the reader happens to be in.

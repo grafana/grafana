@@ -16,6 +16,8 @@ You use feature toggles, also known as feature flags, to enable or disable featu
 
 This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation](../#feature_toggles). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
+Experimental feature toggles are listed in the respective feature's documentation only.
+
 For more information about feature release stages, refer to [Release life cycle for Grafana Labs](https://grafana.com/docs/release-life-cycle/) and [Manage feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/#manage-feature-toggles).
 
 ## General availability feature toggles
@@ -95,6 +97,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
 | `timeComparison`                   | Enables time comparison option in supported panels                                                                             |
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
+| `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
+| `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
 | `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |

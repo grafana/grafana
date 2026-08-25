@@ -576,7 +576,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: false,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(0);
@@ -590,7 +589,6 @@ describe('TableNG hooks', () => {
           columnWidths: [],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
@@ -619,7 +617,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
-          sortColumns: [],
         });
       });
 
@@ -654,12 +651,13 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [],
           showTypeIcons: false,
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 86, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65,
+      // floor - 1 = 64.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 64, modifiedFields[0], -1, 22);
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -685,7 +683,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100],
           enabled: true,
           typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          sortColumns: [{ columnKey: 'Longer name that needs wrapping', direction: 'ASC' }],
           showTypeIcons: true,
         });
       });
@@ -702,7 +699,6 @@ describe('TableNG hooks', () => {
           columnWidths: [100, 100, 100, 100],
           enabled: true,
           typographyCtx,
-          sortColumns: [],
         });
       });
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
