@@ -139,7 +139,7 @@ export function createQueryCoauthoringRequest({
     }
     terminalCallbackHandled = true;
     if (acceptedTerminalToolCallCount === 0) {
-      if (rejectedInvalidProposalCount > 0) {
+      if (invalidProposalRepairExhausted) {
         return { status: 'error', error: { message: invalidQueryResponseMessage(context), retryable: true } };
       }
       const message = normalizeClarificationMessage(completionText);
@@ -148,7 +148,9 @@ export function createQueryCoauthoringRequest({
           ? { status: 'fallback', fallback: { reason: message.slice(0, 500) } }
           : { status: 'clarification', message };
       }
-      return { status: 'error', error: { message: requestFailedMessage(), retryable: true } };
+      return rejectedInvalidProposalCount > 0
+        ? { status: 'error', error: { message: invalidQueryResponseMessage(context), retryable: true } }
+        : { status: 'error', error: { message: requestFailedMessage(), retryable: true } };
     }
     if (acceptedTerminalToolCallCount !== 1) {
       return { status: 'error', error: { message: multipleResponsesMessage(), retryable: true } };

@@ -122,6 +122,16 @@ export function QueryCoauthoring({
   const onRevertPreviewRef = useRef(onRevertPreview);
   const containerRef = useRef<HTMLDivElement>(null);
   const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
+  const shouldShowIterationNudge =
+    showIterationNudge &&
+    !iterationNudgeDismissed &&
+    Boolean(context) &&
+    Boolean(clarification) &&
+    !isGenerating &&
+    !proposal &&
+    !fallback &&
+    !error &&
+    !contextError;
   onRevertPreviewRef.current = onRevertPreview;
 
   const revertQueryPreview = useCallback(() => {
@@ -379,7 +389,7 @@ export function QueryCoauthoring({
         !fallback &&
         !error &&
         !contextError &&
-        (!showIterationNudge || iterationNudgeDismissed || !context) && (
+        !shouldShowIterationNudge && (
           <>
             <QueryCoauthoringHeader onClose={dismiss} pulse={!context || isIdentifying}>
               {!context || isIdentifying ? (
@@ -425,7 +435,7 @@ export function QueryCoauthoring({
         !fallback &&
         !error &&
         !contextError &&
-        (!showIterationNudge || iterationNudgeDismissed || !context) && (
+        !shouldShowIterationNudge && (
           <>
             <QueryCoauthoringPromptInput
               key={clarification ? `clarification-${submittedIterationCount}` : 'initial'}
@@ -505,7 +515,7 @@ export function QueryCoauthoring({
           </Stack>
         </>
       )}
-      {isAssistantAvailable && context && showIterationNudge && !iterationNudgeDismissed && !proposal && !fallback && (
+      {isAssistantAvailable && shouldShowIterationNudge && (
         <QueryCoauthoringIterationNudge
           onContinueHere={() => setIterationNudgeDismissed(true)}
           onContinueInAssistant={() => continueInAssistant()}

@@ -1052,6 +1052,45 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByText('Breaks the request rate down by handler.')).toBeInTheDocument();
   });
 
+  it('accepts a clarification after the first invalid proposal', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockReturnValueOnce({ status: 'rejected', reason: 'invalid' });
+
+    await user.type(screen.getByRole('textbox'), 'Break this down by route/handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await expect(
+      request.tools[0].invoke({
+        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+        why: ['Breaks the result down by handler.'],
+      })
+    ).rejects.toThrow(/invalid PromQL/i);
+    act(() => request.onComplete('Should I group by handler, route, or both?'));
+
+    expect(screen.getByText('Should I group by handler, route, or both?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+  });
+
+  it('reports an invalid proposal when Assistant stops before repairing it', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockReturnValueOnce({ status: 'rejected', reason: 'invalid' });
+
+    await user.type(screen.getByRole('textbox'), 'Break this down by handler');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await expect(
+      request.tools[0].invoke({
+        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+        why: ['Breaks the result down by handler.'],
+      })
+    ).rejects.toThrow(/invalid PromQL/i);
+    act(() => request.onComplete(''));
+
+    expect(screen.getByText(/could not produce valid PromQL after trying to repair/i)).toBeInTheDocument();
+  });
+
   it('stops accepting invalid proposals after one PromQL repair attempt', async () => {
     const { user, stagePreview } = await setup();
     stagePreview.mockReturnValue({ status: 'rejected', reason: 'invalid' });
@@ -1389,6 +1428,35 @@ describe('QueryCoauthoring', () => {
     ]);
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+  });
+
+  it('keeps a failed third request separate from the iteration nudge', async () => {
+    const { user } = await setup();
+
+    for (let iteration = 0; iteration < 3; iteration++) {
+      const prompt = screen.getByRole('textbox', {
+        name: iteration === 0 ? 'Describe a query change' : 'Add extra detail',
+      });
+      await user.type(prompt, `Iteration ${iteration + 1}`);
+      await user.click(screen.getByRole('button', { name: iteration === 0 ? 'Coauthor' : 'Continue' }));
+      act(() => {
+        if (iteration < 2) {
+          mockGenerate.mock.calls[iteration][0].onComplete(`Could you clarify iteration ${iteration + 1}?`);
+        } else {
+          mockGenerate.mock.calls[iteration][0].onError(new Error('request failed'));
+        }
+      });
+    }
+
+    expect(screen.getByText(/could not build a query proposal/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Working on something big\?/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+
+    expect(screen.queryByText(/could not build a query proposal/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Working on something big\?/)).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Iteration 3');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
   });
 
   it('uses a concise fallback draft without an empty intent history', () => {
