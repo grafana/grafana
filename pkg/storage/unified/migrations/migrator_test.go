@@ -368,7 +368,7 @@ var migrationIDsToDefault = map[string]bool{
 	shorturlsID:            true,
 	datasourceID:           false,
 	starsID:                false,
-	preferencesID:          false,
+	preferencesID:          true,
 	snapshotsID:            false,
 }
 

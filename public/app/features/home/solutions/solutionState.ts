@@ -11,6 +11,8 @@ export interface SolutionState {
   kubernetes: SignalStatus;
   /** Span metrics prove App Observability use. Unlike core signals, `unknown` does not blank recommendations. */
   spanMetrics: SignalStatus;
+  /** Gates only the Synthetics card; like spanMetrics, 'unknown' never blanks recommendations. */
+  synthetics: SignalStatus;
 }
 
 /** A settled signal: whether data is flowing, and the datasource that proved it. */
