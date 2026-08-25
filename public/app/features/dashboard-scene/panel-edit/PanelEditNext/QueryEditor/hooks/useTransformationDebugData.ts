@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type DataFrame, getFrameMatchers } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, type FrameMatcher, getFrameMatchers } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
@@ -20,6 +20,29 @@ interface TransformationDebugData {
 
 /** Stable identity, so a closed drawer does not re-render everything reading this. */
 const NO_DEBUG_DATA: TransformationDebugData = { input: [], output: [] };
+
+/**
+ * The matcher for the filter as the replay ran it, or nothing if that filter cannot be built into
+ * one.
+ *
+ * `getFrameMatchers` throws on a matcher id it does not know, and `byName` runs its option through
+ * `stringToJsRegex`, which throws on a `/`-prefixed string that is not a complete `/pattern/flags` —
+ * a variable resolving to a path is enough. The pipeline's own call sits behind the replay's error
+ * handling; this one runs during render, where a throw would take the drawer down with it, so a
+ * filter that cannot be built shows the input unnarrowed instead.
+ */
+function frameMatcherFor(config: DataTransformerConfig | undefined): FrameMatcher | undefined {
+  if (!config?.filter?.options) {
+    return undefined;
+  }
+
+  try {
+    return getFrameMatchers(config.filter);
+  } catch (err) {
+    console.error('Failed to build a transformation filter for the panel editor', err);
+    return undefined;
+  }
+}
 
 /**
  * Replays the pipeline around the selected transformation for the debug view: input is everything
@@ -70,8 +93,7 @@ export function useTransformationDebugData({
     // applies that filter itself, so only the displayed input is narrowed here — and by the filter
     // the replay ran, not the one the config holds: a `$var` in it resolves before either sees it.
     const [ranConfig] = ranConfigs;
-    const filter = isInterpolatable(ranConfig) ? ranConfig.filter : undefined;
-    const matcher = filter?.options ? getFrameMatchers(filter) : undefined;
+    const matcher = frameMatcherFor(isInterpolatable(ranConfig) ? ranConfig : undefined);
 
     return {
       input: matcher ? inputFrames.filter((frame) => matcher(frame)) : inputFrames,
