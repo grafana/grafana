@@ -802,6 +802,51 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     expect(mockFetchTrashPage.mock.calls.length).toBeLessThanOrEqual(8);
   });
 
+  it('shares one fetch between concurrent identical queries', async () => {
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementation(async () => {
+      await gate;
+      return page([makeItem('dash-1')]);
+    });
+
+    const first = deletedDashboardsCache.search({});
+    const second = deletedDashboardsCache.search({});
+    release(undefined);
+
+    const [a, b] = await Promise.all([first, second]);
+
+    expect(a.map((hit) => hit.name)).toEqual(['dash-1']);
+    expect(b.map((hit) => hit.name)).toEqual(['dash-1']);
+    // One page fetched, not two: the second caller joined the in-flight request.
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not repopulate the cache when clear() lands mid-fetch', async () => {
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementationOnce(async () => {
+      await gate;
+      return page([makeItem('stale')]);
+    });
+
+    const inFlight = deletedDashboardsCache.search({});
+    deletedDashboardsCache.clear();
+    release(undefined);
+    await inFlight;
+
+    // The cleared entry must not have been written back, so the next call refetches.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('fresh')]));
+    const after = await deletedDashboardsCache.search({});
+
+    expect(after.map((hit) => hit.name)).toEqual(['fresh']);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
   it('reports trash unavailable on 503, and retries rather than caching the failure', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: { message: 'rebuilding' } });

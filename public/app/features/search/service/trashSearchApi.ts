@@ -1,6 +1,9 @@
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { getBackendSrv } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
+import {
+  DASHBOARD_API_GROUP,
+  dashboardAPIVersionResolver,
+} from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 
 /**
  * Client for `POST .../dashboards/trash`, the per-kind deleted-items endpoint mounted by
@@ -17,9 +20,6 @@ import { getAPIBaseURL } from 'app/api/utils';
 
 const SEARCH_API_VERSION = 'search.grafana.app/v0alpha1';
 const TRASH_QUERY_KIND = 'TrashQuery';
-
-/** The version the Recently deleted UI talks to. Matches the rest of the deleted-dashboard code. */
-const DASHBOARD_API_VERSION = 'v1beta1';
 
 /**
  * The fields a trash document carries that this code reads. Anything outside the trash field
@@ -94,8 +94,11 @@ interface TrashResults {
 }
 
 /** Fetches one page of deleted dashboards. */
-export function fetchTrashPage(query: TrashQuery): Promise<TrashResults> {
-  const url = `${getAPIBaseURL(DASHBOARD_API_GROUP, DASHBOARD_API_VERSION)}/dashboards/trash`;
+export async function fetchTrashPage(query: TrashQuery): Promise<TrashResults> {
+  // The endpoint is mounted on every served version of the kind, so ask which one this server
+  // serves rather than naming a version that it may have dropped. Resolution is cached.
+  const { v1 } = await dashboardAPIVersionResolver.resolve();
+  const url = `${getAPIBaseURL(DASHBOARD_API_GROUP, v1)}/dashboards/trash`;
   return getBackendSrv().post<TrashResults>(url, {
     apiVersion: SEARCH_API_VERSION,
     kind: TRASH_QUERY_KIND,

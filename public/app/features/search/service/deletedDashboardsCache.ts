@@ -93,8 +93,13 @@ class DeletedDashboardsCache {
   private tableCache: TableResponse | null = null;
   private tablePromise: Promise<TableResponse> | null = null;
   private displayNameCache: Map<string, string> = new Map();
-  /** Trash results per query, since the server does the filtering and each query is its own list. */
-  private trashCache: Map<string, TrashItem[]> = new Map();
+  /**
+   * In-flight or settled trash fetch per query, since the server does the filtering and each
+   * query is its own list. The promise is stored at request start, not the resolved rows, so
+   * concurrent identical queries share one fetch and a `clear()` mid-fetch cannot be undone by
+   * a late write.
+   */
+  private trashCache: Map<string, Promise<TrashItem[] | null>> = new Map();
   /** Dashboards restored this session. The trash index may still list them for a moment. */
   private restoredUids: Set<string> = new Set();
   /** Set when the server says trash exists but cannot be served yet. */
@@ -183,16 +188,22 @@ class DeletedDashboardsCache {
   private async searchTrash(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
     const key = JSON.stringify({ query: query.query ?? '', sort: query.sort ?? '' });
 
-    let items = this.trashCache.get(key);
-    if (!items) {
-      const fetched = await this.fetchTrash(query);
-      // A failure is not cached: an index being rebuilt becomes available on its own, and
-      // caching the empty list would leave the page stuck until the next delete or restore.
-      if (fetched === null) {
-        return [];
+    let pending = this.trashCache.get(key);
+    if (!pending) {
+      pending = this.fetchTrash(query);
+      this.trashCache.set(key, pending);
+    }
+
+    const items = await pending;
+
+    // A failure is not cached: an index being rebuilt becomes available on its own, and keeping
+    // the empty list would leave the page stuck until the next delete or restore. Only drop the
+    // entry if it is still ours, so a clear() that already replaced it is left alone.
+    if (items === null) {
+      if (this.trashCache.get(key) === pending) {
+        this.trashCache.delete(key);
       }
-      items = fetched;
-      this.trashCache.set(key, items);
+      return [];
     }
 
     const uids = new Set<string>();
