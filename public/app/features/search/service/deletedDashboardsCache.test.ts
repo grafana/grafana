@@ -767,6 +767,29 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     );
   });
 
+  it('does not serve an unfiltered result to a tag-filtered query', async () => {
+    // The tag options are built from an unfiltered fetch, so that entry is usually already
+    // cached by the time a tag is picked. Sharing a key with it ignores the filter entirely.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('untagged'), makeItem('tagged')]));
+    const all = await deletedDashboardsCache.search({});
+    expect(all).toHaveLength(2);
+
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('tagged')]));
+    const filtered = await deletedDashboardsCache.search({ tags: ['infra'] });
+
+    expect(filtered.map((hit) => hit.name)).toEqual(['tagged']);
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares one cache entry for the same tags in a different order', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['a', 'b'] });
+    await deletedDashboardsCache.search({ tags: ['b', 'a'] });
+
+    expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
+  });
+
   it('combines a text query and a tag filter into a single and', async () => {
     mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
 

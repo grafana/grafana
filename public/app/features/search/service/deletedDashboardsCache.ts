@@ -224,7 +224,14 @@ class DeletedDashboardsCache {
   }
 
   private async searchTrash(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
-    const key = JSON.stringify({ query: query.query ?? '', sort: query.sort ?? '' });
+    // Every part of the query the server sees belongs in the key. Leaving one out serves a
+    // result for a different query, which looks exactly like the filter being ignored. Tags are
+    // sorted so the same set picked in a different order shares one entry.
+    const key = JSON.stringify({
+      query: query.query ?? '',
+      sort: query.sort ?? '',
+      tags: [...(query.tags ?? [])].sort(),
+    });
 
     let pending = this.trashCache.get(key);
     if (!pending) {
