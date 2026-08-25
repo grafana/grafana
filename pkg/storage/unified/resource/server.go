@@ -951,6 +951,9 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 	if errs := validation.IsValidGrafanaName(obj.GetName()); errs != nil {
 		return nil, NewBadRequestError(errs[0])
 	}
+	if errs := validation.IsReservedName(obj.GetName()); errs != nil {
+		return nil, NewBadRequestError(errs[0])
+	}
 
 	// For folder moves, we need to check permissions on both folders
 	if s.isFolderMove(event) {
