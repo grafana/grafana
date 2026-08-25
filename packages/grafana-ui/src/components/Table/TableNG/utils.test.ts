@@ -58,6 +58,7 @@ import {
   predicateByName,
   prepareSparklineValue,
   rendersAsJson,
+  reorderColumnKeys,
   shouldTextOverflow,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
@@ -3205,6 +3206,29 @@ describe('TableNG utils', () => {
       { name: 'geo w/ invalid format', input: { valueIdx: 0, field: geoFieldInvalid, formatGeometry } },
     ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
       expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
+    });
+  });
+
+  describe('reorderColumnKeys', () => {
+    const keys = ['time', 'level', 'msg'];
+
+    it.each([
+      { desc: 'a column dropped to the left', source: 'msg', target: 'time', expected: ['msg', 'time', 'level'] },
+      { desc: 'a column dropped to the right', source: 'time', target: 'msg', expected: ['level', 'msg', 'time'] },
+      {
+        desc: 'a column dropped on its neighbour',
+        source: 'time',
+        target: 'level',
+        expected: ['level', 'time', 'msg'],
+      },
+      { desc: 'a column dropped on itself', source: 'level', target: 'level', expected: ['time', 'level', 'msg'] },
+    ])('puts $desc in place', ({ source, target, expected }) => {
+      expect(reorderColumnKeys(keys, source, target)).toEqual(expected);
+    });
+
+    it('returns the given order when a key is unknown, so a stale drag changes nothing', () => {
+      expect(reorderColumnKeys(keys, 'gone', 'time')).toBe(keys);
+      expect(reorderColumnKeys(keys, 'time', 'gone')).toBe(keys);
     });
   });
 });

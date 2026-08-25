@@ -815,6 +815,27 @@ export function isSortableField(field: Field): boolean {
   return field.config.custom?.sortable !== false;
 }
 
+/* ------------------------- Data grid column ordering ------------------------ */
+/**
+ * @internal
+ * The column order after dropping `sourceKey` onto `targetKey`, which is how the grid reports a
+ * drag. Returns the input when either key is unknown, so a drag that raced a data change cannot
+ * scramble the order.
+ */
+export function reorderColumnKeys(keys: string[], sourceKey: string, targetKey: string): string[] {
+  const sourceIndex = keys.indexOf(sourceKey);
+  const targetIndex = keys.indexOf(targetKey);
+
+  if (sourceIndex === -1 || targetIndex === -1) {
+    return keys;
+  }
+
+  const reordered = [...keys];
+  reordered.splice(targetIndex, 0, ...reordered.splice(sourceIndex, 1));
+
+  return reordered;
+}
+
 /**
  * @internal
  */

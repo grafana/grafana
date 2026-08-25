@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -982,6 +982,42 @@ describe('TableNG', () => {
 
       expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
       expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');
+    });
+  });
+
+  describe('Column reordering', () => {
+    it('leaves headers undraggable when the host cannot persist an order', () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      for (const header of container.querySelectorAll('[role="columnheader"]')) {
+        expect(header).not.toHaveAttribute('draggable');
+      }
+    });
+
+    it('reports the whole new order by display name when a header is dropped on another', () => {
+      const onColumnReorder = jest.fn();
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onColumnReorder={onColumnReorder}
+        />
+      );
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveAttribute('draggable', 'true');
+
+      // The grid reports a drag as (source, target); the host wants the resolved order instead
+      const dataTransfer = { setDragImage: jest.fn(), dropEffect: 'none' };
+      fireEvent.dragStart(headers[1], { dataTransfer });
+      fireEvent.drop(headers[0], { dataTransfer });
+
+      expect(onColumnReorder).toHaveBeenCalledTimes(1);
+      expect(onColumnReorder).toHaveBeenCalledWith(['Column B', 'Column A']);
     });
   });
 

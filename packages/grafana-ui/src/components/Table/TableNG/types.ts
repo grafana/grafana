@@ -121,6 +121,8 @@ interface BaseTableProps {
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
+  /** Called with the full new column order, by field display name. Absence disables column dragging. */
+  onColumnReorder?: (displayNames: string[]) => void;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];

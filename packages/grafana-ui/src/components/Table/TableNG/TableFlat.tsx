@@ -45,6 +45,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  reorderColumnKeys,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -71,6 +72,7 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onColumnReorder,
     onColumnResize,
     onSortByChange,
     showTypeIcons,
@@ -268,6 +270,9 @@ export function TableFlat(props: TableNGProps) {
       maxRowHeight,
       disableKeyboardEvents,
       disableSanitizeHtml,
+      // The flag, not the callback: hosts pass an inline handler, which would otherwise rebuild
+      // every column on every render
+      draggableColumns: onColumnReorder != null,
       showTypeIcons,
       timeRange,
     }),
@@ -285,6 +290,7 @@ export function TableFlat(props: TableNGProps) {
       maxRowHeight,
       disableKeyboardEvents,
       disableSanitizeHtml,
+      onColumnReorder,
       setFilter,
       showTypeIcons,
       timeRange,
@@ -317,6 +323,17 @@ export function TableFlat(props: TableNGProps) {
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
+      onColumnsReorder={
+        onColumnReorder &&
+        ((sourceKey, targetKey) =>
+          onColumnReorder(
+            reorderColumnKeys(
+              columns.map((column) => column.key),
+              sourceKey,
+              targetKey
+            )
+          ))
+      }
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
         if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {

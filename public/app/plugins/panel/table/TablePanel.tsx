@@ -10,7 +10,7 @@ import {
   useCommonTableProps,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import { getCurrentFrameIndex, onColumnReorder, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 
@@ -39,6 +39,9 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  // Absent outside dashboards, with the feature off, or for a user who cannot edit - which is what
+  // takes the drag handles away rather than letting a drag fail silently
+  const { transformations, onTransformationsChange } = panelContext;
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const enableSharedCrosshair = useTableSharedCrosshair();
@@ -76,6 +79,11 @@ export function TablePanel(props: Props) {
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
+      }
+      onColumnReorder={
+        transformations && onTransformationsChange
+          ? (displayNames) => onColumnReorder(displayNames, transformations, onTransformationsChange)
+          : undefined
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       timeRange={timeRange}
