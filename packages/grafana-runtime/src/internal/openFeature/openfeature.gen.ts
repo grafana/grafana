@@ -59,6 +59,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Let panels author user-editable transformations */
+  GrafanaAdHocTransformations: "grafana.adHocTransformations",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
@@ -444,6 +446,17 @@ export const useFlagFlameGraphWithCallTree = (options?: ReactFlagEvaluationOptio
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Let panels author user-editable transformations
+ *
+ * **Details:**
+ * - flag key: `grafana.adHocTransformations`
+ * - default value: `false`
+ */
+export const useFlagGrafanaAdHocTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.adHocTransformations", false, options).value;
 };
 
 /**

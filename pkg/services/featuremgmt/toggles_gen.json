@@ -2852,6 +2852,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.adHocTransformations",
+        "resourceVersion": "1787690577581",
+        "creationTimestamp": "2026-08-25T20:42:57Z"
+      },
+      "spec": {
+        "description": "Let panels author user-editable transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1782832293915",
         "creationTimestamp": "2026-05-22T09:03:04Z",

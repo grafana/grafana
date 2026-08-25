@@ -1,20 +1,38 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   type AdHocVariableModel,
   CoreApp,
   EventBusSrv,
+  getDefaultTimeRange,
   type GroupByVariableModel,
+  LoadingState,
   type Scope,
+  standardTransformersRegistry,
+  toDataFrame,
   type VariableModel,
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import {
+  GroupByVariable,
+  SceneDataNode,
+  type SceneDataTransformer,
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  SceneQueryRunner,
+} from '@grafana/scenes';
+import { type DataTransformerConfig } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { activateFullSceneTree } from '../utils/test-utils';
+import { findVizPanelByKey, getDataTransformerFor, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
@@ -565,6 +583,175 @@ describe('setDashboardPanelContext', () => {
       expect(variable.state.filters).toEqual([]);
     });
   });
+
+  describe('ad-hoc transformations', () => {
+    /** Puts `level` in front of `time`, so a run is visible in the output field order. */
+    const reorder: DataTransformerConfig = {
+      id: 'organize',
+      options: { indexByName: { level: 0, time: 1, msg: 2 }, excludeByName: {}, renameByName: {} },
+    };
+
+    beforeAll(() => {
+      standardTransformersRegistry.setInit(getStandardTransformers);
+    });
+
+    function stubAdHocFlag(enabled: boolean) {
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaAdHocTransformations ? enabled : defaultValue
+      );
+    }
+
+    function buildScene(options: SceneOptions = {}) {
+      const scene = buildTestScene({ dashboardCanEdit: true, ...options });
+
+      return { ...scene, transformer: getDataTransformerFor(scene.vizPanel)! };
+    }
+
+    /** Stands a data node in for the query runner, so the pipeline has frames without a datasource. */
+    function feedFrames(transformer: SceneDataTransformer) {
+      transformer.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Done,
+            series: [
+              toDataFrame({
+                fields: [
+                  { name: 'time', values: [1] },
+                  { name: 'level', values: ['info'] },
+                  { name: 'msg', values: ['hello'] },
+                ],
+              }),
+            ],
+            timeRange: getDefaultTimeRange(),
+          },
+        }),
+      });
+    }
+
+    /** Field names of the first output frame. */
+    const fieldNames = (transformer: SceneDataTransformer) =>
+      transformer.state.data?.series[0]?.fields.map((f) => f.name);
+
+    it.each([
+      { desc: 'the feature flag is off', enabled: false, dashboardCanEdit: true },
+      { desc: 'the dashboard cannot be edited', enabled: true, dashboardCanEdit: false },
+    ])('leaves both members undefined when $desc', ({ enabled, dashboardCanEdit }) => {
+      stubAdHocFlag(enabled);
+
+      const { context } = buildScene({ dashboardCanEdit });
+
+      expect(context.transformations).toBeUndefined();
+      expect(context.onTransformationsChange).toBeUndefined();
+    });
+
+    it("reads the panel's saved transformations", () => {
+      stubAdHocFlag(true);
+
+      const { context } = buildScene({ panelTransformations: [reorder] });
+
+      expect(context.transformations).toEqual([reorder]);
+    });
+
+    it('returns undefined once the panel provider is no longer a transformer', () => {
+      stubAdHocFlag(true);
+      const { context, vizPanel } = buildScene();
+
+      expect(context.transformations).toEqual([]);
+
+      // The context is built once and cached on the panel while `$data` can be replaced under it, as
+      // picking a datasource for a new panel does
+      vizPanel.setState({ $data: new SceneQueryRunner({ queries: [{ refId: 'A' }], runQueriesMode: 'manual' }) });
+
+      expect(context.transformations).toBeUndefined();
+    });
+
+    it('applies a written transformation to the frames the panel renders', async () => {
+      stubAdHocFlag(true);
+      const { context, transformer } = buildScene();
+      feedFrames(transformer);
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toEqual(['time', 'level', 'msg']);
+      });
+
+      context.onTransformationsChange!([reorder]);
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toEqual(['level', 'time', 'msg']);
+      });
+      expect(context.transformations).toEqual([reorder]);
+    });
+
+    it("keeps another origin's transformation out of the read and running after a write", async () => {
+      stubAdHocFlag(true);
+      const { context, transformer } = buildScene();
+      feedFrames(transformer);
+      // A provider registering concrete entries, which is what would end up sharing state.transformations
+      transformer.setSystemTransformations({
+        origin: 'test',
+        append: [{ id: 'organize', options: { excludeByName: { msg: true }, renameByName: {} } }],
+      });
+      activateFullSceneTree(transformer);
+
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toEqual(['time', 'level']);
+      });
+      expect(context.transformations).toEqual([]);
+
+      context.onTransformationsChange!([reorder]);
+
+      // Reordered by the write, and `msg` is still dropped by the other origin's entry
+      await waitFor(() => {
+        expect(fieldNames(transformer)).toEqual(['level', 'time']);
+      });
+      expect(context.transformations).toEqual([reorder]);
+      expect(transformer.state.transformations).toHaveLength(2);
+    });
+
+    it('returns the same array across reads and a new one after a write', () => {
+      stubAdHocFlag(true);
+      const { context } = buildScene({ panelTransformations: [reorder] });
+
+      // A panel using this as an effect dep re-runs the effect on every render if the identity churns
+      const first = context.transformations;
+
+      expect(context.transformations).toBe(first);
+
+      context.onTransformationsChange!([]);
+
+      expect(context.transformations).toEqual([]);
+      expect(context.transformations).not.toBe(first);
+    });
+
+    it('makes the dashboard dirty and lands the config in the save model', () => {
+      stubAdHocFlag(true);
+      const { context, scene, vizPanel } = buildScene();
+      const events: SceneObjectStateChangedEvent[] = [];
+      vizPanel.subscribeToEvent(SceneObjectStateChangedEvent, (event) => events.push(event));
+
+      context.onTransformationsChange!([reorder]);
+
+      const writes = events.filter((event) =>
+        Object.prototype.hasOwnProperty.call(event.payload.partialUpdate ?? {}, 'transformations')
+      );
+
+      expect(writes).toHaveLength(1);
+      expect(DashboardSceneChangeTracker.isUpdatingPersistedState(writes[0])).toBe(true);
+      expect(transformSceneToSaveModel(scene).panels?.[0]).toMatchObject({ transformations: [reorder] });
+    });
+
+    it('writes nothing when the list matches the one already configured', () => {
+      stubAdHocFlag(true);
+      const { context, vizPanel } = buildScene({ panelTransformations: [reorder] });
+      const events: SceneObjectStateChangedEvent[] = [];
+      vizPanel.subscribeToEvent(SceneObjectStateChangedEvent, (event) => events.push(event));
+
+      context.onTransformationsChange!([{ ...reorder, options: { ...reorder.options } }]);
+
+      expect(events).toEqual([]);
+    });
+  });
 });
 
 interface SceneOptions {
@@ -577,6 +764,7 @@ interface SceneOptions {
   existingGroupByVariable?: boolean;
   groupByDatasourceUid?: string;
   panelDatasourceUndefined?: boolean;
+  panelTransformations?: DataTransformerConfig[];
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -626,6 +814,7 @@ function buildTestScene(options: SceneOptions) {
           id: 4,
           datasource: { uid: 'my-ds-uid', type: 'prometheus' },
           targets: [],
+          transformations: options.panelTransformations,
         },
       ],
       templating: {

@@ -96,6 +96,7 @@ declare module "@openfeature/core" {
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
+    | "grafana.adHocTransformations"
     | "tracesDrilldown.useValueTypeFiltering"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault";

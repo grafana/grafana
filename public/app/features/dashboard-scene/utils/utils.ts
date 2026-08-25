@@ -266,6 +266,24 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 }
 
 /**
+ * The panel's own transformer, the provider that holds `state.transformations`. Uses the same lookup
+ * as {@link getQueryRunnerFor} — the object's own `$data`, else its parent's — and stops there, so a
+ * caller gets the panel's transformations rather than those of a provider shared higher up the graph.
+ *
+ * Returns undefined for a panel whose data does not run through a transformer, which is what a
+ * caller offering a write should treat as "not available here" rather than an error.
+ */
+export function getDataTransformerFor(sceneObject: SceneObject | undefined): SceneDataTransformer | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+
+  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
+
+  return dataProvider instanceof SceneDataTransformer ? dataProvider : undefined;
+}
+
+/**
  * The provider holding untransformed results. A `SceneDataTransformer` keeps its own output in
  * `state.data`, which makes it the one provider that cannot be read directly; it carries its source
  * in `$data`.
