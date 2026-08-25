@@ -70,6 +70,12 @@ type sqlVectorCollectionUpsertRequest struct {
 	Embedding any // pgvector.HalfVector
 }
 
+// ComputeTS gates the stored tsvector to external rows; internal rows
+// keep NULL (bleve is their lexical index).
+func (r *sqlVectorCollectionUpsertRequest) ComputeTS() bool {
+	return isExternalPartitionKey(r.Resource)
+}
+
 func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")

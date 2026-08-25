@@ -42,6 +42,25 @@ func TestVectorQueries(t *testing.T) {
 						Embedding: pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
 					},
 				},
+				{
+					Name: "external_with_ts",
+					Data: &sqlVectorCollectionUpsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "alertrules_external",
+						Vector: &Vector{
+							Namespace:   "stacks-123",
+							Resource:    "alertrules_external",
+							UID:         "rule-1",
+							Title:       "CPU Alert",
+							Subresource: "chunk/0",
+							Content:     "cpu usage high",
+							Metadata:    json.RawMessage(`{"kind":"alert_rule"}`),
+							Embedding:   []float32{0.1, 0.2, 0.3},
+							Model:       "text-embedding-005",
+						},
+						Embedding: pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
+					},
+				},
 			},
 			sqlVectorCollectionLexicalSearch: {
 				{

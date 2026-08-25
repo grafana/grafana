@@ -14,12 +14,12 @@ SELECT
         "subresource",
         "content",
         "metadata",
-        ts_rank_cd(to_tsvector('english', "content"), websearch_to_tsquery('english', 'cpu')) AS "rank"
+        ts_rank_cd("ts", websearch_to_tsquery('english', 'cpu')) AS "rank"
     FROM embeddings
     WHERE "resource"  = 'alertrules_external'
     AND "namespace" = 'stacks-123'
     AND "model"     = 'text-embedding-005'
-    AND to_tsvector('english', "content") @@ websearch_to_tsquery('english', 'cpu')
+    AND "ts" @@ websearch_to_tsquery('english', 'cpu')
     AND "uid" IN ('u1', 'u2')
     ORDER BY "uid", "rank" DESC
     ) AS best

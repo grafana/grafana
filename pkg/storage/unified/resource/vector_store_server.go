@@ -28,7 +28,7 @@ const maxWriteBatch = 500
 const maxMetadataBytes = 4096
 
 // maxContentBytes keeps content's tsvector under Postgres's 1 MiB limit
-// (the external partitions' FTS index computes one per row).
+// (the write path stores one per external row).
 const maxContentBytes = 128 * 1024
 
 // maxFilterValues caps total $in/$nin values in a filter. Each value expands

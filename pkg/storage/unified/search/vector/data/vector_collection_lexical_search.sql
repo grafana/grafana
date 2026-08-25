@@ -14,12 +14,12 @@ SELECT
         {{ .Ident "subresource" }},
         {{ .Ident "content" }},
         {{ .Ident "metadata" }},
-        ts_rank_cd(to_tsvector('english', {{ .Ident "content" }}), websearch_to_tsquery('english', {{ .Arg .Query }})) AS {{ .Ident "rank" }}
+        ts_rank_cd({{ .Ident "ts" }}, websearch_to_tsquery('english', {{ .Arg .Query }})) AS {{ .Ident "rank" }}
     FROM embeddings
     WHERE {{ .Ident "resource" }}  = {{ .Arg .Resource }}
     AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
     AND {{ .Ident "model" }}     = {{ .Arg .Model }}
-    AND to_tsvector('english', {{ .Ident "content" }}) @@ websearch_to_tsquery('english', {{ .Arg .Query }})
+    AND {{ .Ident "ts" }} @@ websearch_to_tsquery('english', {{ .Arg .Query }})
     {{ if .UIDFilter }}
     AND {{ .Ident "uid" }} IN ({{ .ArgList .UIDFilterSlice }})
     {{ end }}

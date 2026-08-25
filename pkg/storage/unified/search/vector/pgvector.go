@@ -666,11 +666,11 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	}
 	leaf := subtreeName(resource) // embeddings_<resource>
 	idx := leaf + "_metadata_idx"
-	// Only external partitions get the FTS index (bleve is the internal
-	// lexical index). Name budget: 11+39+8 = 58 < 63.
+	// Only external partitions index ts (bleve is the internal lexical
+	// index). Name budget: 11+39+7 = 57 < 63.
 	ftsIdx := ""
 	if isExternalPartitionKey(resource) {
-		ftsIdx = leaf + "_fts_idx"
+		ftsIdx = leaf + "_ts_idx"
 	}
 
 	// Fast path: skip the lock + DDL only when leaf and all indexes exist,
@@ -712,22 +712,15 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
 	}
 	if ftsIdx != "" {
-		// Non-fatal: this runs on the write path and lexical search works
-		// without the index (just unindexed). Retried on the next write.
 		if _, err := conn.ExecContext(ctx, fmt.Sprintf(
-			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (%s)`,
-			ftsIdx, leaf, ftsIndexExpr,
+			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (ts)`,
+			ftsIdx, leaf,
 		)); err != nil {
-			b.log.Warn("create fts index failed; lexical search on this collection stays unindexed",
-				"index", ftsIdx, "err", err)
+			return fmt.Errorf("create ts index on %s: %w", leaf, err)
 		}
 	}
 	return nil
 }
-
-// ftsIndexExpr must match the lexical template's predicate exactly or the
-// planner won't use the index.
-const ftsIndexExpr = "to_tsvector('english', content)"
 
 // isExternalPartitionKey relies on EnsureCollection: external keys always
 // get the suffix, internal keys carrying it are rejected.

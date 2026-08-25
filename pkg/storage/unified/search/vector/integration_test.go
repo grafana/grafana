@@ -909,12 +909,12 @@ func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
 	// Idempotent: a second call (fast path) is a no-op, no error.
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
 
-	// Internal partitions never get the FTS index.
+	// Internal partitions never get the ts index.
 	var hasFTS bool
 	require.NoError(t, engine.DB().QueryRowContext(ctx,
 		`SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = $1 AND relkind = 'i')`,
-		leaf+"_fts_idx").Scan(&hasFTS))
-	assert.False(t, hasFTS, "internal partitions must not get an FTS index")
+		leaf+"_ts_idx").Scan(&hasFTS))
+	assert.False(t, hasFTS, "internal partitions must not get a ts index")
 }
 
 func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
@@ -924,48 +924,27 @@ func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
 	const res = "testpartition_external"
 	leaf := subtreeName(res)
 	idx := leaf + "_metadata_idx"
-	ftsIdx := leaf + "_fts_idx"
+	ftsIdx := leaf + "_ts_idx"
 	drop := func() { _, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf)) }
 	drop()
 	t.Cleanup(drop)
 
-	// External partitions get partition + metadata index + FTS index.
+	// External partitions get partition + metadata index + ts index.
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
 	ready, err := pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	require.NoError(t, err)
-	assert.True(t, ready, "external partition with metadata and FTS indexes")
+	assert.True(t, ready, "external partition with metadata and ts indexes")
 
-	// Retro-fits partitions created before the FTS index existed.
+	// Retro-fits partitions created before the ts index existed.
 	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
 	require.NoError(t, err)
 	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	require.NoError(t, err)
-	require.False(t, ready, "missing FTS index must not report ready")
+	require.False(t, ready, "missing ts index must not report ready")
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
 	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	require.NoError(t, err)
-	assert.True(t, ready, "missing FTS index recreated on retry")
-
-	// A row over the 1MiB tsvector limit fails the index build; must warn,
-	// not wedge writes. Insert needs the index dropped or the INSERT fails.
-	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
-	require.NoError(t, err)
-	var sb strings.Builder
-	for i := 0; i < 200000; i++ {
-		fmt.Fprintf(&sb, "w%d ", i)
-	}
-	emb := "[" + strings.TrimSuffix(strings.Repeat("0,", 1024), ",") + "]"
-	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(
-		`INSERT INTO %s (resource, namespace, model, uid, title, subresource, content, embedding)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, '%s'::halfvec)`, leaf, emb),
-		res, "integration-test", "m", "oversized", "t", "", sb.String())
-	require.NoError(t, err)
-
-	require.NoError(t, backend.EnsureResourcePartition(ctx, res),
-		"failed FTS index build must not block the write path")
-	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
-	require.NoError(t, err)
-	assert.False(t, ready, "readiness stays false so creation is retried later")
+	assert.True(t, ready, "missing ts index recreated on retry")
 }
 
 func TestIntegrationEnsureCollectionRejectsReservedSuffix(t *testing.T) {
@@ -1068,6 +1047,20 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 		// Pure negation would match nearly every row at rank 0.
 		assert.Empty(t, search("-staging"))
 		assert.Empty(t, search("the -staging"))
+	})
+
+	t.Run("legacy rows without ts are invisible", func(t *testing.T) {
+		// Rows written before the ts column exist with ts NULL; they don't
+		// match until rewritten by an upsert.
+		emb := "[" + strings.TrimSuffix(strings.Repeat("0,", 1024), ",") + "]"
+		_, err := engine.DB().ExecContext(ctx, fmt.Sprintf(
+			`INSERT INTO %s (resource, namespace, model, uid, title, subresource, content, embedding)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, '%s'::halfvec)`, leaf, emb),
+			extRes, ns, testModel, "legacy", "t", "", "mimir legacy row")
+		require.NoError(t, err)
+		for _, h := range search("mimir") {
+			assert.NotEqual(t, "legacy", h.UID)
+		}
 	})
 
 	t.Run("uid filter", func(t *testing.T) {
