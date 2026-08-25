@@ -890,7 +890,6 @@
       "close": "Kapat",
       "create": "Oluştur",
       "delete": "Sil",
-      "deleting": "Siliniyor...",
       "edit": "Düzenle",
       "export": "Dışa aktar",
       "export-all": "Tümünü dışa aktar",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} yönlendirme"
       },
       "delete": {
-        "confirm": "Evet, politikayı sil",
-        "warning-1": "Bu bildirim politikası silindiğinde kalıcı olarak kaldırılacaktır.",
-        "warning-2": "Bu politikayı silmek istediğinizden emin misiniz?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Bu işlem <1>{{routeName}}</1> bildirim politikasını kalıcı olarak kaldıracaktır.",
-        "title-delete-notification-policy": "Bildirim politikasını sil"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Yönlendirmeleri virgülle ayrılmış bir eşleştirici listesi kullanarak filtreleyin, ör.<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
@@ -2546,7 +2543,9 @@
         "reset": "Sıfırla",
         "resetting": "Sıfırlanıyor...",
         "title-delete-notification-policy": "Bildirim politikasını sil",
-        "title-reset-notification-policy": "Bildirim politikasını sıfırla"
+        "title-reset-notification-policy": "Bildirim politikasını sıfırla",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Bildirim politikalarınız güncellenirken lütfen bekleyin.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Bildirim politikasını sil"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Panel, metin ve kod hücrelerinden oluşan dikey bir sıra",
       "name": "Defter",
       "pill": "Yayımlanmış Not Defteri",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Zaman"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Mevcut sorgular ve zaman aralığı için birim bilgisi mevcut değil."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} metriğini daralt",
       "error": "Metrikler yüklenemedi",
@@ -8754,6 +8761,7 @@
       "loading-values": "Değerler yükleniyor...",
       "no-metrics": "Metrik bulunamadı",
       "search-placeholder": "Metrik ara",
+      "show-metric-details": "",
       "show-more": "Daha fazla göster",
       "show-more-metrics": "Daha fazla metrik göster",
       "show-more-values": "Daha fazla değer göster",
@@ -11272,6 +11280,13 @@
       "show": "Göster",
       "switch": "Öneriler seçilen çözüme göre belirlenir",
       "switchSolution": "Çözümü değiştir",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Yığınınız için öneriler"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Bu kaynak, {{repoType}} içindeki dalın gerisinde.",
       "branch-targets": "",
       "delete-from-branch": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar bu kaynağı görmeye devam edecektir",
+      "move-from-branch": "",
       "not-saved": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar yapılandırılmış varsayılan dala kaydedilen mevcut sürümü görmeye devam edecektir",
       "open-in-repo-button": "Şurada aç: {{repoType}}",
       "open-pull-request-in-repo": "Şurada çekme isteği aç: {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "{{repoType}} içindeki bir dalda yeni bir kaynak oluşturuldu.",
     "title-deleted-resource-in-branch": "{{repoType}} içindeki bir dalda bir kaynak silindi.",
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "{{repoType}} içindeki bir dalda bir kaynak güncellendi."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

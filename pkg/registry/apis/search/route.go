@@ -11,11 +11,10 @@ import (
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns these endpoints
-// on. Search is on by default, trash is not.
+// on. Both are on by default.
 //
-// Trash has its own key rather than sharing ConfigKey. It authorizes on a
-// different rule -- folder admin, or whoever deleted the object -- that has not been
-// reviewed yet, and a deployment may well turn search on for live search alone.
+// Trash has its own key rather than sharing ConfigKey, because a deployment may
+// want search on for live search alone.
 const (
 	ConfigSection  = "grafana-apiserver"
 	ConfigKey      = "enable_search_api"

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -951,6 +952,44 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
 		}
 	})
+}
+
+func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
+	tests := []struct {
+		name                  string
+		wantsDeletedDocuments bool
+		message               string
+	}{
+		{
+			name:    "indexing is disabled",
+			message: "trash is not available for this resource because indexing deleted documents is disabled",
+		},
+		{
+			name:                  "index is awaiting rebuild",
+			wantsDeletedDocuments: true,
+			message:               "trash is not available for this resource until its search index has been rebuilt",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			idx := &bleveIndex{
+				fields:                resource.StandardSearchFields(),
+				searchFields:          newKindSearchFields(nil, "", "", nil),
+				wantsDeletedDocuments: tc.wantsDeletedDocuments,
+			}
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{},
+				Limit:     10,
+				IsDeleted: true,
+			}, nil, false, nil)
+
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+			assert.Equal(t, tc.message, errResult.Message)
+		})
+	}
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
