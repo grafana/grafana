@@ -164,23 +164,56 @@ In the previous examples, forecast alerts detect potential future situations: th
 1. The alert does not look for a future threshold breach. Instead, it compares the current value with the forecast range and alerts when the actual value falls outside the forecast range.
 2. The forecast acts as an **adaptive baseline**. While a standard alert rule evaluates the signal against a fixed threshold, a forecast-based alert rule evaluates the signal against the forecast, which can change over time based on seasonal patterns.
 
-{{< figure src="/media/docs/alerting/forecast-deviation-alert.svg" alt="A forecast-based alert rule can evaluate the signal against the forecast." >}}
+{{< figure src="/media/docs/alerting/forecast-deviation-alert-v3.svg" alt="A forecast-based alert rule can evaluate the signal against the forecast." >}}
 
-The alert rule can then compare the current signal (`:actual`) with the upper forecast bound (`:predicted{ml_forecast="yhat_upper"}`) to detect unexpectedly high values:
+For alerting, each forecast produces an [anomalous metric](/docs/grafana-cloud/ai-tools/machine-learning/forecasting/detect-anomalies/#the-anomalous-metric) (`<forecast_metric_name>:anomalous`) that returns `0` when the actual value is within the prediction interval. You can use this metric directly in a forecast alert:
+
 
 ```promql
-<forecast_metric_name>:actual > ignoring (ml_forecast)
-<forecast_metric_name>:predicted{ml_forecast="yhat_upper"}
+# Fires when the actual value is outside the prediction interval
+<forecast_metric_name>:anomalous
 ```
 
-This pattern is useful when a signal varies over time and a fixed threshold would miss meaningful deviations or generate alerts during normal changes in behavior.
+#### Alert only on unexpectedly high values
+
+You can also configure an alert to fire only when the actual value exceeds the predicted upper bound.
+
+{{< figure src="/media/docs/alerting/forecast-deviation-alert-v2.svg" alt="A forecast-based alert rule configured to fire only for unexpectedly high values." >}}
+
+In this case, the alert rule can also query `<forecast_metric_name>:anomalous`, which returns `1` when the actual value is above the upper bound and `-1` when it is below the lower bound:
+
+```promql
+<forecast_metric_name>:anomalous == 1
+```
+
+
+Alternatively, you can compare the actual value directly with the predicted upper bound:
+
+```promql
+<forecast_metric_name>:actual >
+ignoring (ml_forecast) <forecast_metric_name>:predicted{ml_forecast="yhat_upper"}
+```
+
+{{< admonition type="tip" >}}
+You can explore a similar [alert example in Grafana Play](https://play.grafana.org/alerting/grafana/qp_rec_ratio_below_predicted/view?tab=query&tech=docs&pg=alerting-examples&plcmt=callout-tip&cta=forecast-outside-range-alert-example).
+{{< /admonition >}}
+
+
+{{< admonition type="note" >}}
+
+**Adaptive alerts** are useful when a signal varies over time and a fixed threshold would miss meaningful deviations or generate alerts during normal changes in behavior.
 
 For example, the traffic might be higher during business hours and lower overnight. Comparing the current value with the forecast range adapts to these recurring patterns.
 
+{{< /admonition >}}
+
+
 ### Learn more
+
 
 For more information about forecasting and alerting with Grafana Cloud Machine Learning, refer to:
 
 - [Get started with forecasting](https://grafana.com/docs/grafana-cloud/ai-tools/dynamic-alerting/forecasting/)
 - [Alerting on forecasts](https://grafana.com/docs/grafana-cloud/ai-tools/dynamic-alerting/forecasting/query-and-alerting/)
 - [Forecasting examples](https://grafana.com/docs/grafana-cloud/ai-tools/dynamic-alerting/forecasting/examples)
+
