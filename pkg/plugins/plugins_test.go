@@ -10,7 +10,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -50,10 +52,23 @@ func (c *backendClientV3) ClientV3(context.Context) (v3.ClientV3, bool) {
 	return c.client, c.client != nil
 }
 
+var _ v3.ClientV3 = (*fakeClientV3)(nil)
+
 type fakeClientV3 struct{}
 
-func (*fakeClientV3) IsHealthy(context.Context) error {
-	return nil
+// AdmissionReview implements [v3.ClientV3].
+func (f *fakeClientV3) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionReviewRequest, opts ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+	panic("unimplemented")
+}
+
+// CallRoute implements [v3.ClientV3].
+func (f *fakeClientV3) CallRoute(ctx context.Context, in *pluginv3.CallRouteRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	panic("unimplemented")
+}
+
+// ConvertObjects implements [v3.ClientV3].
+func (f *fakeClientV3) ConvertObjects(ctx context.Context, in *pluginv3.ConvertObjectsRequest, opts ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
+	panic("unimplemented")
 }
 
 func Test_ReadPluginJSON(t *testing.T) {
