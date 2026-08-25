@@ -48,7 +48,7 @@ const globalVariable: Variable = {
 };
 
 const globalFolderHelp =
-  'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)';
+  'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)';
 const folderOnlyHelp = 'Scope the variable to a folder you can edit';
 
 describe('VariableEditorView delete action', () => {
