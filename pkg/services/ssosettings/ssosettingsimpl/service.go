@@ -653,7 +653,7 @@ func (s *Service) mergeSSOSettingsMTAuthoritative(dbSettings, systemSettings *mo
 
 	return &models.SSOSettings{
 		Provider: systemSettings.Provider,
-		Source:   systemSettings.Source,
+		Source:   dbSettings.Source, // overrides exist -> DB, not the MT fallback's System
 		Settings: settings,
 		Created:  dbSettings.Created,
 		Updated:  dbSettings.Updated,
