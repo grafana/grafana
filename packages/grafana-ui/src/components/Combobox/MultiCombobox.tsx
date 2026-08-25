@@ -34,18 +34,13 @@ interface MultiComboboxBaseProps<T extends string | number>
   enableAllOption?: boolean;
   /**
    * Clears the search text and unfilters the list once an option is selected. Off by default, because
-   * keeping the search is what lets you tick several matches from one query.
+   * keeping the search is what lets users tick several matches from one query.
    */
   clearSearchOnSelect?: boolean;
   /**
    * Highlights the first option as the list changes, so Enter commits it without arrowing down first.
-   * Combobox already behaves this way; this is how a typed `createCustomValue` becomes reachable from
-   * the keyboard, since the custom row is unshifted to the front of the list.
    *
-   * Off by default: highlighting nothing is the safer resting state for a filter, where Enter usually
-   * means "submit the thing I am filtering" rather than "take the first match".
-   *
-   * Not for use with `enableAllOption`, which puts its own row first - Enter would then select or
+   * Off by default. Not for use with `enableAllOption`, which puts its own row first - Enter would then select or
    * deselect everything.
    */
   highlightFirstOption?: boolean;

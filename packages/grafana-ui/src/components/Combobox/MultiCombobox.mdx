@@ -15,25 +15,6 @@ Use the prop `enableAllOption` to show the "All" option.
 - If no filtering is applied, selecting "All" will select all options, returning the same array as the `options` prop.
 - With filtering, selecting "All" will choose the filtered subset of options.
 
-## Clearing the search after a selection
-
-By default the typed search is kept after an option is selected, so several matches from one query can
-be ticked in a row. Pass `clearSearchOnSelect` when a selection should instead empty the field and
-restore the unfiltered list — useful where each selection is its own thought rather than one of a batch,
-and where `createCustomValue` would otherwise leave the committed text sitting in the input.
-
-## Committing with Enter
-
-Nothing is highlighted when the menu opens, so Enter selects nothing until an arrow key moves through
-the list — which is the right resting state for a filter, where Enter usually means "submit the thing I
-am filtering". Pass `highlightFirstOption` where the opposite is wanted: the first option stays
-highlighted as the list changes, so Enter takes it. Together with `createCustomValue` that is what lets a
-brand new value be typed and committed without touching the arrow keys, since the custom row sits at the
-front of the list.
-
-Not for use with `enableAllOption`, which puts its own row first — Enter would then select or deselect
-everything.
-
 ## Props
 
 <ArgTypes of={MultiCombobox} />
