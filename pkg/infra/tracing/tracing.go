@@ -234,6 +234,20 @@ func (ots *TracingService) disableFileExporter(err error) (tracerProvider, error
 }
 
 func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
+	base, err := ots.initBaseSampler()
+	if err != nil {
+		return nil, err
+	}
+	// Drop spans for high-frequency operational endpoints (profiling, health,
+	// metrics) regardless of the configured sampler. These carry no diagnostic
+	// value and distort latency signals — /debug/pprof/profile in particular
+	// intentionally blocks for its sample window (e.g. seconds=14), which would
+	// otherwise surface as a multi-second server span and trip latency-based
+	// tail sampling.
+	return newInfraEndpointFilterSampler(base), nil
+}
+
+func (ots *TracingService) initBaseSampler() (tracesdk.Sampler, error) {
 	switch ots.cfg.Sampler {
 	case "const", "":
 		if ots.cfg.SamplerParam >= 1 {
@@ -436,6 +450,78 @@ func (rl *rateLimiter) ShouldSample(p tracesdk.SamplingParameters) tracesdk.Samp
 }
 
 func (rl *rateLimiter) Description() string { return rl.description }
+
+// untracedServerPaths are exact request paths whose server spans are dropped.
+var untracedServerPaths = map[string]struct{}{
+	"/metrics": {},
+	"/healthz": {},
+	"/readyz":  {},
+	"/livez":   {},
+}
+
+// untracedServerPathPrefixes are request path prefixes whose server spans are
+// dropped. /debug/pprof covers profile/trace/heap/etc., all of which are pulled
+// on a schedule (e.g. by Alloy) and add only noise to traces.
+var untracedServerPathPrefixes = []string{
+	"/debug/pprof",
+}
+
+// pathAttributeKeys are the span attributes that may carry the request path.
+// Grafana runs otelhttp with duplicated semconv, so both the legacy http.target
+// and the stable url.path can be present at span start.
+var pathAttributeKeys = map[attribute.Key]struct{}{
+	semconv.HTTPTargetKey:       {}, // "http.target" (may include a query string)
+	attribute.Key("url.path"):   {},
+	attribute.Key("http.route"): {},
+}
+
+// infraEndpointFilterSampler drops server spans for operational endpoints
+// (profiling, health, metrics) and delegates every other decision to the
+// configured sampler. Filtering at the sampler covers all otelhttp layers at
+// once — including the API server's nested handler-chain tracing — so a single
+// hook keeps these endpoints out of traces process-wide.
+type infraEndpointFilterSampler struct {
+	inner tracesdk.Sampler
+}
+
+func newInfraEndpointFilterSampler(inner tracesdk.Sampler) *infraEndpointFilterSampler {
+	return &infraEndpointFilterSampler{inner: inner}
+}
+
+func (s *infraEndpointFilterSampler) ShouldSample(p tracesdk.SamplingParameters) tracesdk.SamplingResult {
+	if p.Kind == trace.SpanKindServer && isUntracedServerPath(p.Attributes) {
+		return tracesdk.SamplingResult{
+			Decision:   tracesdk.Drop,
+			Tracestate: trace.SpanContextFromContext(p.ParentContext).TraceState(),
+		}
+	}
+	return s.inner.ShouldSample(p)
+}
+
+func (s *infraEndpointFilterSampler) Description() string {
+	return fmt.Sprintf("InfraEndpointFilterSampler{%s}", s.inner.Description())
+}
+
+func isUntracedServerPath(attrs []attribute.KeyValue) bool {
+	for _, a := range attrs {
+		if _, ok := pathAttributeKeys[a.Key]; !ok {
+			continue
+		}
+		path := a.Value.AsString()
+		if i := strings.IndexByte(path, '?'); i >= 0 {
+			path = path[:i]
+		}
+		if _, ok := untracedServerPaths[path]; ok {
+			return true
+		}
+		for _, prefix := range untracedServerPathPrefixes {
+			if strings.HasPrefix(path, prefix) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	spanCtx := trace.SpanContextFromContext(ctx)
