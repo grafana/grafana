@@ -273,6 +273,37 @@
         }
       }
     },
+    "/dashboards/trash": {
+      "post": {
+        "tags": ["Search"],
+        "description": "List deleted Dashboard resources in a namespace.",
+        "operationId": "listDashboardTrashV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A TrashQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A TrashResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboards/{name}": {
       "get": {
         "tags": ["Dashboard"],
@@ -3042,6 +3073,70 @@
           "value": {
             "type": "string",
             "default": ""
+          }
+        }
+      },
+      "TrashQuery": {
+        "description": "TrashQuery is the request body for POST .../{resource}/trash. It is a deliberately smaller subset of SearchQuery: trash documents index only the standard fields, so there is no labelSelector and no faceting. Field references are restricted to the fixed trash field set.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
+      "TrashResults": {
+        "description": "TrashResults is the response body for POST .../{resource}/trash. It has the same item shape as SearchResults but never carries facets.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/ResultsMetadata"
           }
         }
       },
