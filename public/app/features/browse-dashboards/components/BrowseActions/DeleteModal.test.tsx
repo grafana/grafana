@@ -85,7 +85,7 @@ describe('browse-dashboards DeleteModal', () => {
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 
-  it('warns that the selected folder contains other resources', async () => {
+  it('warns that the selected folder contains resources', async () => {
     render(
       <DeleteModal
         {...defaultProps}
@@ -101,7 +101,7 @@ describe('browse-dashboards DeleteModal', () => {
     );
 
     expect(
-      await screen.findByRole('alert', { name: /contains other resources that will be deleted/i })
+      await screen.findByRole('alert', { name: /contains resources that will be deleted/i })
     ).toBeInTheDocument();
   });
 });
