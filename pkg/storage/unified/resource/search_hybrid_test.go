@@ -1339,6 +1339,42 @@ func TestHybridSearch_ExternalResolvesFolderTitles(t *testing.T) {
 	idx.mu.Unlock()
 }
 
+func TestHybridSearch_ExternalDualLegHitKeepsLexicalChunk(t *testing.T) {
+	// The lexical-matched chunk may not be among the semantic leg's
+	// retained chunks; it must still ship (deduped by subresource) so the
+	// text that produced the match reaches the caller.
+	backend := externalBackend(
+		vector.VectorSearchResult{UID: "both", Title: "T", Subresource: "chunk/0", Content: "semantic text", Score: 0.1},
+		vector.VectorSearchResult{UID: "same", Title: "S", Subresource: "chunk/0", Content: "shared", Score: 0.2},
+	)
+	lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{
+		{UID: "both", Title: "T", Subresource: "chunk/7", Content: "exact keyword text"},
+		{UID: "same", Title: "S", Subresource: "chunk/0", Content: "shared"},
+	}}
+	s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+	s.externalLexical = lexical
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+
+	for _, r := range resp.Results {
+		switch r.Key.Name {
+		case "both":
+			// Semantic chunks first (rerank input unchanged), lexical appended.
+			require.Len(t, r.Chunks, 2)
+			assert.Equal(t, "chunk/0", r.Chunks[0].Subresource)
+			assert.Equal(t, "chunk/7", r.Chunks[1].Subresource)
+			assert.Equal(t, "exact keyword text", r.Chunks[1].Content)
+		case "same":
+			// Same subresource on both legs: no duplicate.
+			require.Len(t, r.Chunks, 1)
+		}
+	}
+}
+
 func TestHybridSearch_ExternalAuthzFiltersBothLegs(t *testing.T) {
 	// Each leg authz-filters its own hits, so a deny-all client drops
 	// lexical-only hits too, not just the semantic leg's rows.

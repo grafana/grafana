@@ -566,13 +566,11 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 
 	out := make([]*resourcepb.HybridSearchResult, 0, len(fused))
 	for _, r := range fused {
-		// Rerankers need text: stored best chunk, else synthesized title.
-		if len(r.Chunks) == 0 {
-			if c, ok := lexChunks[r.Key.Name]; ok {
-				r.Chunks = []*resourcepb.HybridSearchChunk{c}
-			} else {
-				r.Chunks = []*resourcepb.HybridSearchChunk{{Content: r.Title}}
-			}
+		if c, ok := lexChunks[r.Key.Name]; ok {
+			appendLexicalChunk(r, c)
+		} else if len(r.Chunks) == 0 {
+			// Rerankers need text: synthesize a title chunk.
+			r.Chunks = []*resourcepb.HybridSearchChunk{{Content: r.Title}}
 		}
 		out = append(out, r)
 	}
@@ -583,6 +581,23 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		return out[i].Key.Name < out[j].Key.Name
 	})
 	return out
+}
+
+// appendLexicalChunk ensures the lexical-matched chunk ships even when the
+// semantic leg retained different chunks: appended after them (so the
+// reranker still scores the semantic-best chunk), deduped by subresource,
+// evicting the last semantic chunk when at the cap.
+func appendLexicalChunk(r *resourcepb.HybridSearchResult, c *resourcepb.HybridSearchChunk) {
+	for _, existing := range r.Chunks {
+		if existing.Subresource == c.Subresource {
+			return
+		}
+	}
+	if len(r.Chunks) >= maxChunksPerHybridResult {
+		r.Chunks[len(r.Chunks)-1] = c
+		return
+	}
+	r.Chunks = append(r.Chunks, c)
 }
 
 // titleFromChunkMetadata prefers the chunk metadata's resource-level
