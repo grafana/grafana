@@ -120,6 +120,7 @@ function QueryCoauthoringAdapterSurface({
 
   return (
     <QueryCoauthoring
+      key={snapshot.invocationId}
       adapter={adapter}
       invocationId={snapshot.invocationId}
       portalTarget={snapshot.portalTarget}

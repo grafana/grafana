@@ -571,11 +571,12 @@ describe('QueryCoauthoring', () => {
     });
 
     await act(async () => {
-      rerender(<QueryCoauthoring {...queryCoauthoringProps} invocationId="2" />);
+      rerender(<QueryCoauthoring key="2" {...queryCoauthoringProps} invocationId="2" />);
       await Promise.resolve();
     });
 
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
   });
 
   it('cancels an in-flight request when the invocation changes and ignores its late proposal', async () => {
@@ -587,7 +588,7 @@ describe('QueryCoauthoring', () => {
     const cancelCalls = mockCancel.mock.calls.length;
 
     await act(async () => {
-      rerender(<QueryCoauthoring {...queryCoauthoringProps} invocationId="2" />);
+      rerender(<QueryCoauthoring key="2" {...queryCoauthoringProps} invocationId="2" />);
       await Promise.resolve();
     });
 

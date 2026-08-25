@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState as mockUseState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -11,13 +12,15 @@ import {
 } from './internalCoauthoringContract';
 
 let mockThrowSessionRender = false;
+let mockSessionInstanceId = 0;
 
 jest.mock('./QueryCoauthoring', () => ({
   QueryCoauthoring: ({ invocationId }: { invocationId: string }) => {
+    const [instanceId] = mockUseState(() => ++mockSessionInstanceId);
     if (mockThrowSessionRender) {
       throw new Error('session render failed');
     }
-    return <div data-testid="query-coauthoring-session">{invocationId}</div>;
+    return <div data-testid="query-coauthoring-session">{`${invocationId}:${instanceId}`}</div>;
   },
 }));
 
@@ -66,6 +69,7 @@ function renderSurface(adapter: QueryEditorCoauthoringAdapterV1) {
 describe('QueryCoauthoringSurface', () => {
   afterEach(() => {
     mockThrowSessionRender = false;
+    mockSessionInstanceId = 0;
   });
 
   it('renders the Core toolbar in the editor-provided target and invokes the adapter', async () => {
@@ -93,7 +97,24 @@ describe('QueryCoauthoringSurface', () => {
     act(() => publish({ mode: 'invoked', invocationId: 'invocation-1', portalTarget }));
 
     expect(screen.queryByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)).not.toBeInTheDocument();
-    expect(screen.getByTestId('query-coauthoring-session')).toHaveTextContent('invocation-1');
+    expect(screen.getByTestId('query-coauthoring-session')).toHaveTextContent('invocation-1:1');
+  });
+
+  it('remounts the Core session when the adapter publishes a new invocation', () => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter, publish } = createAdapter({
+      mode: 'invoked',
+      invocationId: 'invocation-1',
+      portalTarget,
+    });
+
+    renderSurface(adapter);
+    expect(screen.getByTestId('query-coauthoring-session')).toHaveTextContent('invocation-1:1');
+
+    act(() => publish({ mode: 'invoked', invocationId: 'invocation-2', portalTarget }));
+
+    expect(screen.getByTestId('query-coauthoring-session')).toHaveTextContent('invocation-2:2');
   });
 
   it('recovers when the same adapter publishes a later session after a render failure', () => {
