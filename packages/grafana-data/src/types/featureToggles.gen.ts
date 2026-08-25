@@ -455,6 +455,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables RBAC for playlists
+  * @default false
+  */
+  playlistsRBAC?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default true
   */

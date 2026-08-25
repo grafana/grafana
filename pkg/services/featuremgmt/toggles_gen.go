@@ -323,9 +323,9 @@ const (
 	// Enables the dedicated Saved queries page and its navigation entry
 	FlagGrafanaSavedQueriesPage = "grafana.savedQueriesPage"
 
-	// FlagGrafanaPlaylistsRBAC
+	// FlagPlaylistsRBAC
 	// Enables RBAC for playlists
-	FlagGrafanaPlaylistsRBAC = "grafana.playlistsRBAC"
+	FlagPlaylistsRBAC = "playlistsRBAC"
 
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions

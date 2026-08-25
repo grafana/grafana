@@ -16,14 +16,14 @@ describe('canWritePlaylists', () => {
   beforeEach(() => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
-    setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: false });
+    setTestFlags({ [FlagKeys.PlaylistsRBAC]: false });
   });
 
   afterEach(() => {
     setTestFlags({});
   });
 
-  describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
+  describe('with playlistsRBAC toggle off (legacy)', () => {
     it('returns true when user is an editor', () => {
       (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
       expect(canWritePlaylists()).toBe(true);
@@ -34,9 +34,9 @@ describe('canWritePlaylists', () => {
     });
   });
 
-  describe('with grafana.playlistsRBAC toggle on', () => {
+  describe('with playlistsRBAC toggle on', () => {
     beforeEach(() => {
-      setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
+      setTestFlags({ [FlagKeys.PlaylistsRBAC]: true });
     });
 
     it('returns true when user has playlists:write', () => {

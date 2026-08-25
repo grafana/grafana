@@ -46,7 +46,7 @@ func TestIntegrationPlaylist(t *testing.T) {
 		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true, // do not start extra port 6443
 			DisableAnonymous:     true,
-			EnableFeatureToggles: []string{"grafana.playlistsRBAC"},
+			EnableFeatureToggles: []string{"playlistsRBAC"},
 		}))
 
 		// The accepted verbs will change when dual write is enabled

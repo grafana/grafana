@@ -40,7 +40,7 @@ describe('PlaylistPage', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
     (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = false;
-    setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: false });
+    setTestFlags({ [FlagKeys.PlaylistsRBAC]: false });
   });
 
   describe('when mounted without a playlist', () => {
@@ -54,9 +54,9 @@ describe('PlaylistPage', () => {
       expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
     });
 
-    describe('with grafana.playlistsRBAC toggle on', () => {
+    describe('with playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
+        setTestFlags({ [FlagKeys.PlaylistsRBAC]: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -81,7 +81,7 @@ describe('PlaylistPage', () => {
       });
     });
 
-    describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
+    describe('with playlistsRBAC toggle off (legacy)', () => {
       describe('and user is an editor', () => {
         it('then create playlist button should not be disabled', async () => {
           (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
@@ -133,9 +133,9 @@ describe('PlaylistPage', () => {
       expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
 
-    describe('with grafana.playlistsRBAC toggle on', () => {
+    describe('with playlistsRBAC toggle on', () => {
       beforeEach(() => {
-        setTestFlags({ [FlagKeys.GrafanaPlaylistsRBAC]: true });
+        setTestFlags({ [FlagKeys.PlaylistsRBAC]: true });
       });
 
       describe('and user has playlists:write', () => {
@@ -166,7 +166,7 @@ describe('PlaylistPage', () => {
       });
     });
 
-    describe('with grafana.playlistsRBAC toggle off (legacy)', () => {
+    describe('with playlistsRBAC toggle off (legacy)', () => {
       describe('and user is an editor', () => {
         it('then all playlist buttons should appear', async () => {
           jest.mocked(contextSrv.hasPermission).mockReturnValue(false);

@@ -11,7 +11,7 @@
 //	testdata/kinds/<name>.json:
 //	  {
 //	    "folderScoped": false,                 // does sync stamp a grafana.app/folder annotation?
-//	    "featureFlags": ["grafana.playlistsRBAC"],     // extra feature toggles the kind needs (often none)
+//	    "featureFlags": ["playlistsRBAC"],     // extra feature toggles the kind needs (often none)
 //	    "manifest": { "apiVersion": "...", "kind": "...", "metadata": {...}, "spec": {...} }
 //	  }
 package resourcekinds
@@ -45,7 +45,7 @@ var kindsFS embed.FS
 type kindSpec struct {
 	// FolderScoped reports whether sync stamps a grafana.app/folder annotation on the resource.
 	FolderScoped bool `json:"folderScoped"`
-	// FeatureFlags are extra feature toggles the kind needs (raw toggle names, e.g. "grafana.playlistsRBAC").
+	// FeatureFlags are extra feature toggles the kind needs (raw toggle names, e.g. "playlistsRBAC").
 	FeatureFlags []string `json:"featureFlags"`
 	// Manifest is a sample resource manifest; the harness patches its name and spec.title per instance.
 	Manifest json.RawMessage `json:"manifest"`

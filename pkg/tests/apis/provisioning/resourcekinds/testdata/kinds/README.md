@@ -10,7 +10,7 @@ delete/move jobs — against a new kind. No Go changes are required.
 ```json
 {
   "folderScoped": false,
-  "featureFlags": ["grafana.playlistsRBAC"],
+  "featureFlags": ["playlistsRBAC"],
   "manifest": {
     "apiVersion": "playlist.grafana.app/v1",
     "kind": "Playlist",
@@ -27,6 +27,6 @@ delete/move jobs — against a new kind. No Go changes are required.
   resource (the kind is declared with the `:folder` capability). Folder-scoped kinds are synced
   inside a subdirectory so the folder annotation is exercised.
 - **`featureFlags`** — extra feature toggles the kind's apiserver/authorizer needs (raw toggle
-  names). Often empty; playlists need `grafana.playlistsRBAC`.
+  names). Often empty; playlists need `playlistsRBAC`.
 
 The file name (without `.json`) is the kind's label, used in subtest names and repository names.

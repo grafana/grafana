@@ -9,7 +9,7 @@ import { type SearchQuery } from '../search/service/types';
 import { type PlaylistItemUI } from './types';
 
 export function canWritePlaylists(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPlaylistsRBAC, false)
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)
     : contextSrv.isEditor;
 }

@@ -111,7 +111,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
 2026-07-14,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
-2026-08-21,grafana.playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
+2026-05-22,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-05-22,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-05-22,newSavedQueriesExperience,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false

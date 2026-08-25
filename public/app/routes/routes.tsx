@@ -520,7 +520,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
-      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPlaylistsRBAC, false)
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
         : undefined,
       component: SafeDynamicImport(
