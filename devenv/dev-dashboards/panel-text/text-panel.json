@@ -456,7 +456,7 @@
           {
             "kind": "GridLayoutItem",
             "spec": {
-              "x": 0,
+              "x": 12,
               "y": 16,
               "width": 12,
               "height": 8,
