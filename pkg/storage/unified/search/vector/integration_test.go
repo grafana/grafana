@@ -935,8 +935,7 @@ func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ready, "external partition with metadata and FTS indexes")
 
-	// Heals a missing FTS index: covers partitions created before the FTS
-	// index existed (retro-fit on next write).
+	// Retro-fits partitions created before the FTS index existed.
 	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
 	require.NoError(t, err)
 	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
@@ -947,10 +946,8 @@ func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, ready, "missing FTS index recreated on retry")
 
-	// A legacy row whose tsvector exceeds Postgres's 1MiB limit fails the
-	// index build; that must degrade to a warning, never wedge writes.
-	// (Insert with the index dropped — with it present even the INSERT
-	// fails, which is exactly the wedge this guards against.)
+	// A row over the 1MiB tsvector limit fails the index build; must warn,
+	// not wedge writes. Insert needs the index dropped or the INSERT fails.
 	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
 	require.NoError(t, err)
 	var sb strings.Builder
@@ -974,8 +971,7 @@ func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
 func TestIntegrationEnsureCollectionRejectsReservedSuffix(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
-	// An internal resource sanitizing to *_external would be misclassified
-	// by everything keyed on the suffix (FTS indexing, kind inference).
+	// Internal *_external keys would be misclassified as external.
 	_, err := backend.EnsureCollection(ctx, "reserved.test.grafana.app", "foo_external", false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "reserved partition key")
@@ -990,8 +986,7 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 	pg := backend.(*pgvectorBackend)
 
 	const ns = "integration-test"
-	// Provision through the real write-path flow: catalog row + partition
-	// (+ FTS index, since the collection is external).
+	// Provision via the real write-path flow (catalog row + partition + FTS index).
 	coll, err := backend.EnsureCollection(ctx, "lexint.test.grafana.app", "lexint", true)
 	require.NoError(t, err)
 	extRes := coll.PartitionKey
@@ -1070,8 +1065,7 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 	})
 
 	t.Run("negation-only query matches nothing", func(t *testing.T) {
-		// A pure-negation tsquery would otherwise match nearly every row at
-		// rank 0, flooding the leg with arbitrary uids.
+		// Pure negation would match nearly every row at rank 0.
 		assert.Empty(t, search("-staging"))
 		assert.Empty(t, search("the -staging"))
 	})

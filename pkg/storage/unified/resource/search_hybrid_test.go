@@ -265,8 +265,7 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		assert.Contains(t, err.Error(), contains)
 	}
 
-	// Key-allowlist and kind-specific checks moved to
-	// validateHybridSearchFilters (they run post-resolution).
+	// Kind-specific key checks live in validateHybridSearchFilters.
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}}
 	assert.Nil(t, validateHybridSearchRequest(r))
@@ -1293,8 +1292,7 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	assert.Equal(t, "both", resp.Results[0].Key.Name)
 	assert.InDelta(t, 1.0/61+1.0/61, resp.Results[0].Score, 1e-12)
 
-	// lexical-only hits carry their stored best chunk, not a synthesized
-	// title chunk — the reranker needs real text.
+	// Lexical-only hits carry their stored chunk, not a synthesized title.
 	for _, r := range resp.Results {
 		if r.Key.Name == "lexonly" {
 			require.Len(t, r.Chunks, 1)
@@ -1312,8 +1310,7 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	assert.Equal(t, 20, lexical.gotQ.Limit)
 	lexical.mu.Unlock()
 
-	// The external path must never touch bleve: no lexical Search, no
-	// folder-title lookup, no managed-by lookup.
+	// External must never touch bleve.
 	idx.mu.Lock()
 	assert.Nil(t, idx.gotReq)
 	assert.Nil(t, idx.gotFolderReq)
@@ -1322,8 +1319,7 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 }
 
 func TestHybridSearch_ExternalSkipsSemanticBatchCheck(t *testing.T) {
-	// External reads skip per-result authz (caller post-filters), mirroring
-	// VectorSearch; a deny-all access client must not drop results.
+	// A deny-all access client must not drop external results.
 	backend := externalBackend(
 		vector.VectorSearchResult{UID: "u1", Title: "T1", Subresource: "chunk/0", Content: "c1", Score: 0.1},
 	)
@@ -1339,8 +1335,7 @@ func TestHybridSearch_ExternalSkipsSemanticBatchCheck(t *testing.T) {
 }
 
 func TestHybridSearch_ExternalWithoutSearcherStaysRejected(t *testing.T) {
-	// No LexicalSearcher wired (non-postgres backends) → the historical
-	// rejection is preserved.
+	// No searcher wired (non-postgres backends) keeps the old rejection.
 	s, _, _ := newHybridTestServer(lexTableResponse(), externalBackend())
 	s.externalLexical = nil
 
@@ -1431,8 +1426,7 @@ func TestHybridSearch_ExternalFilters(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-		// Internal collections hit the same Postgres parameter limit on the
-		// semantic leg; the cap is universal.
+		// Cap is universal — internal hits the same parameter limit.
 		s, _, _ = newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
 		_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 			Key: validKey(), Query: "q",

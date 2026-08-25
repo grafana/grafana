@@ -98,15 +98,11 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, status.Error(codes.NotFound, "collection not found")
 	}
 
-	// External collections have no bleve index; their lexical leg needs a
-	// LexicalSearcher (pgvector FTS). Without one the fused contract can't
-	// hold, preserving the historical rejection.
+	// External collections need a LexicalSearcher; without one keep the old rejection.
 	if coll.IsExternal && s.externalLexical == nil {
 		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 	}
-	// Kind-specific filter validation needs the resolved collection, and
-	// must precede the rate check so rejected requests don't burn the
-	// shared per-tenant budget.
+	// Before the rate check so rejected requests don't burn budget.
 	if err := validateHybridSearchFilters(req, coll.IsExternal); err != nil {
 		return nil, err
 	}
@@ -122,8 +118,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		embedText = req.SemanticQuery
 	}
 
-	// Both legs consume the same translated filters so neither can match
-	// rows the other excludes.
+	// Both legs get the same translated filters.
 	var vectorFilters []vector.SearchFilter
 	if coll.IsExternal {
 		vectorFilters = hybridExternalFilters(req.Filters)
@@ -173,9 +168,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		if err != nil {
 			return fmt.Errorf("vector backend: %w", err)
 		}
-		// External rows have no per-result authz; the namespace guard above
-		// is the tenant boundary and callers post-filter (mirrors
-		// VectorSearch).
+		// External rows skip per-result authz (namespace guard is the
+		// tenant boundary), like VectorSearch.
 		if coll.IsExternal {
 			sem = results
 			return nil
@@ -209,9 +203,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		fused = fused[:limit]
 	}
 
-	// Independent lookups over disjoint fields; run concurrently. Both
-	// query bleve indexes, so external collections skip them entirely
-	// (their rows carry no folder and no manager fields anyway).
+	// Independent lookups over disjoint fields; run concurrently.
+	// Both query bleve, so external collections skip them.
 	if !coll.IsExternal {
 		eg, egCtx := errgroup.WithContext(ctx)
 		eg.Go(func() error {
@@ -460,16 +453,13 @@ type lexicalHit struct {
 	managerKind string
 	managerID   string
 
-	// Best-matching chunk, populated only by the external (FTS) leg. The
-	// bleve leg carries no chunk text; those hits fall back to a
-	// synthesized title chunk in fuseRRF.
+	// Best chunk, only set by the external leg; bleve hits get a
+	// synthesized title chunk in fuseRRF instead.
 	chunkSubresource string
 	chunkContent     string
 	chunkMetadata    []byte
 }
 
-// lexicalHitsFromLexical adapts the external leg's hits to the fusion
-// input shape.
 func lexicalHitsFromLexical(hits []vector.LexicalHit) []lexicalHit {
 	out := make([]lexicalHit, 0, len(hits))
 	for _, h := range hits {
@@ -508,9 +498,8 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 	}
 
 	fromLex := lexicalUIDSet(lex)
-	// Lexical best chunks are held aside rather than appended: a hit found
-	// by both legs gets the same rows from the semantic leg, so appending
-	// here would duplicate chunks.
+	// Held aside, not appended: a both-legs hit gets the same chunks from
+	// the semantic leg.
 	lexChunks := make(map[string]*resourcepb.HybridSearchChunk, len(lex))
 	for i, h := range lex {
 		r := get(h.uid)
@@ -554,9 +543,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 
 	out := make([]*resourcepb.HybridSearchResult, 0, len(fused))
 	for _, r := range fused {
-		// Rerankers score content, so hits found only by the lexical leg
-		// still need text: prefer the stored best chunk, fall back to a
-		// synthesized title chunk.
+		// Rerankers need text: stored best chunk, else synthesized title.
 		if len(r.Chunks) == 0 {
 			if c, ok := lexChunks[r.Key.Name]; ok {
 				r.Chunks = []*resourcepb.HybridSearchChunk{c}
@@ -721,34 +708,23 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 		}
 		totalValues += len(f.Values)
 	}
-	// Each value expands to a few SQL parameters on the semantic leg;
-	// mirror the write path's cap so a filter can't approach Postgres's
-	// parameter limit (which would surface as Internal at execution).
+	// Values become SQL parameters; mirror the write path's cap.
 	if totalValues > maxFilterValues {
 		return reqErr(fmt.Sprintf("too many filter values: %d > %d", totalValues, maxFilterValues))
 	}
 	return nil
 }
 
-// validateHybridSearchFilters applies the per-collection-kind filter
-// contract. It runs after collection resolution, so a NotFound for an
-// unknown collection precedes any bad-filter-key InvalidArgument.
-//
-// Internal collections keep the closed allowlist: every key is enforced
-// natively by BOTH legs (bleve fields + vector columns/metadata), so
-// filtering never degrades either leg's recall. External collections
-// have no allowlist — both legs query the same embeddings table, where
-// "uid" is a first-class column and any other key is JSONB metadata
-// containment.
+// validateHybridSearchFilters applies the per-kind filter contract after
+// collection resolution: internal = closed allowlist enforced natively by
+// both legs; external = any metadata key (both legs share one table).
 func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal bool) error {
 	reqErr := func(msg string) error {
 		return status.Error(codes.InvalidArgument, msg)
 	}
 	if isExternal {
 		for _, f := range req.Filters {
-			// External rows never populate the folder column (the write API
-			// has no folder field), so this filter would silently match
-			// nothing — reject until external writes carry folders.
+			// External rows have no folder; reject rather than match nothing.
 			if f.Key == "folder" {
 				return reqErr(`filter "folder" is not supported for external collections; filter on a metadata key instead`)
 			}
@@ -859,10 +835,8 @@ func hybridVectorFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
 	return out
 }
 
-// hybridExternalFilters maps requirements onto the external contract:
-// keys pass through verbatim — "uid" is a first-class column, anything
-// else is metadata containment ("folder" was already rejected by
-// validation).
+// hybridExternalFilters passes keys through verbatim: "uid" is a column,
+// anything else is metadata containment.
 func hybridExternalFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
 	out := make([]vector.SearchFilter, 0, len(reqs))
 	for _, f := range reqs {

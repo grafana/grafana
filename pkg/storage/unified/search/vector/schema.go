@@ -219,12 +219,9 @@ END $$;`))
 			ALTER TABLE vector_backfill_jobs ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
 		`))
 
-	// Retro-fit the FTS expression index (HybridSearch's lexical leg) onto
-	// external partitions created before it existed. New partitions get it in
-	// EnsureResourcePartition; the to_regclass guard skips catalog rows whose
-	// leaf DDL previously failed. Per-partition failures (e.g. a legacy row
-	// whose content exceeds the 1MiB tsvector limit) are warnings, never
-	// startup blockers — EnsureResourcePartition keeps retrying on writes.
+	// Retro-fit the FTS index onto external partitions created before it
+	// existed. Per-partition failures are warnings, never startup blockers;
+	// EnsureResourcePartition retries on writes.
 	mg.AddMigration("add fts index to external embeddings partitions",
 		migrator.NewRawSQLMigration("").Postgres(fmt.Sprintf(`
 			DO $$

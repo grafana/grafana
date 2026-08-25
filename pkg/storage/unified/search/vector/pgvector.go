@@ -666,18 +666,15 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	}
 	leaf := subtreeName(resource) // embeddings_<resource>
 	idx := leaf + "_metadata_idx"
-	// External partitions also get an FTS expression index for HybridSearch's
-	// lexical leg; internal partitions never pay its maintenance cost (bleve
-	// is their lexical index). Name budget: 11+39+8 = 58 < 63.
+	// Only external partitions get the FTS index (bleve is the internal
+	// lexical index). Name budget: 11+39+8 = 58 < 63.
 	ftsIdx := ""
 	if isExternalPartitionKey(resource) {
 		ftsIdx = leaf + "_fts_idx"
 	}
 
-	// Fast path: skip the lock + DDL only when the leaf and ALL its indexes
-	// exist. Checking indexes too lets a retry finish a prior attempt that
-	// created the leaf but failed before an index — and retrofits the FTS
-	// index onto external partitions created before it existed.
+	// Fast path: skip the lock + DDL only when leaf and all indexes exist,
+	// so retries and pre-FTS external partitions pick up missing indexes.
 	ready, err := b.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	if err != nil {
 		return fmt.Errorf("check partition %s: %w", leaf, err)
@@ -715,12 +712,9 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
 	}
 	if ftsIdx != "" {
-		// Best-effort: FTS queries stay correct without the index (the
-		// predicate is recomputed per row), and a legacy row predating the
-		// content cap can exceed Postgres's 1MiB tsvector limit and fail the
-		// build — failing the call here would wedge every write to the
-		// collection. Readiness keeps reporting false, so creation is
-		// retried on later writes.
+		// Best-effort: queries stay correct unindexed, and a legacy row over
+		// the 1MiB tsvector limit would otherwise wedge every write.
+		// Readiness stays false, so creation retries on later writes.
 		if _, err := conn.ExecContext(ctx, fmt.Sprintf(
 			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (%s)`,
 			ftsIdx, leaf, ftsIndexExpr,
@@ -732,14 +726,12 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	return nil
 }
 
-// ftsIndexExpr is the external partitions' FTS index expression. It must
-// match the lexical search template's predicate exactly ('english'
-// included) or the planner won't use the index.
+// ftsIndexExpr must match the lexical template's predicate exactly or the
+// planner won't use the index.
 const ftsIndexExpr = "to_tsvector('english', content)"
 
-// isExternalPartitionKey reports whether a partition key belongs to an
-// external collection. EnsureCollection guarantees the suffix for external
-// keys and rejects internal resources that would sanitize to it.
+// isExternalPartitionKey relies on EnsureCollection: external keys always
+// get the suffix, internal keys carrying it are rejected.
 func isExternalPartitionKey(resource string) bool {
 	return strings.HasSuffix(resource, "_external")
 }

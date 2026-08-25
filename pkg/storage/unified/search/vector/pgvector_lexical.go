@@ -13,9 +13,8 @@ import (
 
 var _ LexicalSearcher = (*pgvectorBackend)(nil)
 
-// searchFilterPredicates maps SearchFilters onto the query templates'
-// column and metadata predicates. Both the semantic and lexical search
-// paths share it so filter semantics can't diverge between legs.
+// searchFilterPredicates maps SearchFilters onto template predicates;
+// shared by both legs so filter semantics can't diverge.
 func searchFilterPredicates(filters []SearchFilter) (uids, folders []string, groups []MetadataFilterGroup) {
 	for _, f := range filters {
 		switch f.Field {
@@ -42,11 +41,8 @@ func searchFilterPredicates(filters []SearchFilter) (uids, folders []string, gro
 	return uids, folders, groups
 }
 
-// LexicalSearch runs postgres full-text search over the collection's
-// stored content: websearch_to_tsquery parses the query (AND words,
-// OR, -exclusion, "phrases"; a stopword-only query matches nothing),
-// ts_rank_cd ranks matching chunks, and DISTINCT ON keeps the best
-// chunk per uid.
+// LexicalSearch runs postgres FTS over stored content:
+// websearch_to_tsquery + ts_rank_cd, best chunk per uid.
 func (b *pgvectorBackend) LexicalSearch(ctx context.Context, q LexicalQuery) (hits []LexicalHit, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.LexicalSearch")
 	defer func() {
@@ -64,10 +60,8 @@ func (b *pgvectorBackend) LexicalSearch(ctx context.Context, q LexicalQuery) (hi
 		attribute.Int("filter_count", len(q.Filters)),
 	)
 
-	// No validateResource here: HybridSearch always passes a
-	// freshly-resolved Collection.PartitionKey, the value is only ever a
-	// query parameter (never interpolated), and an unknown key just prunes
-	// to zero rows — the extra catalog roundtrip bought nothing.
+	// No validateResource: Resource is a freshly-resolved partition key,
+	// used only as a query parameter.
 	req := &sqlVectorCollectionLexicalSearchRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Resource:    q.Resource,

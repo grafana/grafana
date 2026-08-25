@@ -27,11 +27,8 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
-// maxContentBytes bounds a single input's content. Postgres tsvectors cap
-// at 1 MiB, so an unbounded content would make the external partitions'
-// FTS index reject the write with an opaque error; 128 KiB is far above
-// any real chunk (writers chunk at ~512 tokens) while staying well clear
-// of the limit.
+// maxContentBytes keeps content's tsvector under Postgres's 1 MiB limit
+// (the external partitions' FTS index computes one per row).
 const maxContentBytes = 128 * 1024
 
 // maxFilterValues caps total $in/$nin values in a filter. Each value expands

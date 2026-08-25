@@ -448,9 +448,7 @@ type MetadataFilterGroup struct {
 }
 
 // vectorSearchFilterArgs are the filter predicates shared by the semantic
-// and lexical search templates; embedding one struct in both requests
-// keeps the two legs' filter SQL structurally identical. nil/empty means
-// no filter on that field.
+// and lexical templates so the legs can't diverge. nil/empty = no filter.
 type vectorSearchFilterArgs struct {
 	UIDValues            []string
 	FolderValues         []string

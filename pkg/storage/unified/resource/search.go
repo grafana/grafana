@@ -349,9 +349,7 @@ type searchServer struct {
 	log           log.Logger
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
-	// externalLexical serves HybridSearch's lexical leg for external
-	// collections (internal collections use the bleve index). nil means
-	// external hybrid search is unsupported.
+	// Lexical leg for external collections (internal use bleve); nil = unsupported.
 	externalLexical vector.LexicalSearcher
 	embedder        *embedder.Embedder
 	reranker        *rerank.Reranker
@@ -487,8 +485,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
 	}
 
-	// The pgvector backend doubles as the FTS lexical searcher; other
-	// backends leave external hybrid search unsupported.
+	// pgvector doubles as the FTS lexical searcher.
 	if lex, ok := vectorBackend.(vector.LexicalSearcher); ok {
 		s.externalLexical = lex
 	}
