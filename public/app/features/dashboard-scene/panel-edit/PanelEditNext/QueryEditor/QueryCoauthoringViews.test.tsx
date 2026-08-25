@@ -65,6 +65,25 @@ describe('QueryCoauthoringPromptInput', () => {
     cancelAnimationFrameSpy.mockRestore();
   });
 
+  it('does not submit with Enter while the action is disabled', () => {
+    const onSubmit = jest.fn();
+    render(
+      <QueryCoauthoringPromptInput
+        value="Use increase"
+        placeholder={initialPrompt.placeholder}
+        ariaLabel={initialPrompt.ariaLabel}
+        actionLabel={initialPrompt.actionLabel}
+        disabled
+        onChange={jest.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    fireEvent.keyDown(screen.getByRole('textbox', { name: initialPrompt.ariaLabel }), { key: 'Enter' });
+
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('restores focus after programmatic focus theft when semantic reading completes', () => {
     const { rerender } = renderPrompt(initialPrompt);
     const prompt = screen.getByRole('textbox', { name: initialPrompt.ariaLabel });

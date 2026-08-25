@@ -1,6 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
 import {
@@ -77,7 +79,9 @@ describe('QueryCoauthoringSurface', () => {
     await user.click(screen.getByRole('button', { name: /Explain or modify/ }));
 
     expect(adapter.invoke).toHaveBeenCalledTimes(1);
-    expect(portalTarget).toContainElement(screen.getByTestId('query-coauthoring-selection-toolbar'));
+    expect(portalTarget).toContainElement(
+      screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+    );
   });
 
   it('replaces the toolbar with the Core session when the adapter publishes an invocation', () => {
@@ -88,7 +92,7 @@ describe('QueryCoauthoringSurface', () => {
     renderSurface(adapter);
     act(() => publish({ mode: 'invoked', invocationId: 'invocation-1', portalTarget }));
 
-    expect(screen.queryByTestId('query-coauthoring-selection-toolbar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)).not.toBeInTheDocument();
     expect(screen.getByTestId('query-coauthoring-session')).toHaveTextContent('invocation-1');
   });
 
@@ -113,7 +117,67 @@ describe('QueryCoauthoringSurface', () => {
       mockThrowSessionRender = false;
       act(() => publish({ mode: 'selection', portalTarget: nextTarget }));
 
-      expect(nextTarget).toContainElement(screen.getByTestId('query-coauthoring-selection-toolbar'));
+      expect(nextTarget).toContainElement(
+        screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('contains an initial snapshot failure and recovers after a later publication', () => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter, publish } = createAdapter({ mode: 'hidden' });
+    let snapshotReady = false;
+    const recoveredSnapshot = { mode: 'selection', portalTarget } as const;
+    adapter.getSnapshot = jest.fn(() => {
+      if (!snapshotReady) {
+        throw new Error('snapshot failed');
+      }
+      return recoveredSnapshot;
+    });
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+    try {
+      const { revert } = renderSurface(adapter);
+
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+      snapshotReady = true;
+      act(() => publish({ mode: 'selection', portalTarget }));
+
+      expect(portalTarget).toContainElement(
+        screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('contains an adapter subscription failure and recovers after a later publication', () => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter, publish } = createAdapter({ mode: 'hidden' });
+    const subscribe = adapter.subscribe;
+    adapter.subscribe = jest
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('subscription failed');
+      })
+      .mockImplementation(subscribe);
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+    try {
+      const { revert } = renderSurface(adapter);
+
+      expect(revert).toHaveBeenCalledTimes(1);
+      expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+      act(() => publish({ mode: 'selection', portalTarget }));
+
+      expect(portalTarget).toContainElement(
+        screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+      );
     } finally {
       consoleError.mockRestore();
     }

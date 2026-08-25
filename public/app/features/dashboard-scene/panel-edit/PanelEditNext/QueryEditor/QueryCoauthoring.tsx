@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 
 import { createAssistantContextItem, createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -41,12 +42,19 @@ import {
   type QueryProposal,
   requestFailedMessage,
   selectionSummary,
+  staleQueryResponseMessage,
+  unchangedQueryResponseMessage,
   validateFallback,
   validateProposal,
 } from './queryCoauthoringPrompts';
 
 interface QueryClarification {
   message: string;
+}
+
+interface QueryCoauthoringError {
+  message: string;
+  retryable: boolean;
 }
 
 interface PreparedQueryProposal extends QueryProposal {
@@ -107,7 +115,7 @@ export function QueryCoauthoring({
   const [proposal, setProposal] = useState<PreparedQueryProposal>();
   const [fallback, setFallback] = useState<StagedFallback>();
   const [clarification, setClarification] = useState<QueryClarification>();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<QueryCoauthoringError>();
   const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
   const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
   const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
@@ -353,8 +361,9 @@ export function QueryCoauthoring({
     let submittedProposal: QueryProposal | undefined;
     let submittedPrepared: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }> | undefined;
     let submittedFallback: QueryFallback | undefined;
+    let rejectedTerminalProposal: 'unchanged' | 'stale' | undefined;
     let acceptedTerminalToolCallCount = 0;
-    let rejectedProposalCount = 0;
+    let rejectedInvalidProposalCount = 0;
     let terminalCallbackHandled = false;
 
     setProposal(undefined);
@@ -367,8 +376,15 @@ export function QueryCoauthoring({
         if (generationId === generationIdRef.current) {
           const prepared = adapter.prepareProposal(invocationId, input.proposedQuery);
           if (prepared.status !== 'ready') {
-            rejectedProposalCount++;
-            throw new Error(buildInvalidProposalRepairMessage(submittedContext));
+            if (prepared.reason === 'invalid') {
+              rejectedInvalidProposalCount++;
+              throw new Error(buildInvalidProposalRepairMessage(submittedContext));
+            }
+            acceptedTerminalToolCallCount++;
+            rejectedTerminalProposal = prepared.reason;
+            return prepared.reason === 'stale'
+              ? 'The query proposal is no longer current.'
+              : 'The query proposal does not change the current query.';
           }
           acceptedTerminalToolCallCount++;
           submittedProposal = input;
@@ -444,15 +460,23 @@ export function QueryCoauthoring({
               setIntent('');
               setClarification({ message });
             }
-          } else if (rejectedProposalCount > 0) {
-            setError(invalidQueryResponseMessage(submittedContext));
+          } else if (rejectedInvalidProposalCount > 0) {
+            setError({ message: invalidQueryResponseMessage(submittedContext), retryable: true });
           } else {
-            setError(requestFailedMessage());
+            setError({ message: requestFailedMessage(), retryable: true });
           }
           return;
         }
         if (acceptedTerminalToolCallCount !== 1) {
-          setError(multipleResponsesMessage());
+          setError({ message: multipleResponsesMessage(), retryable: true });
+          return;
+        }
+        if (rejectedTerminalProposal) {
+          setError({
+            message:
+              rejectedTerminalProposal === 'stale' ? staleQueryResponseMessage() : unchangedQueryResponseMessage(),
+            retryable: rejectedTerminalProposal === 'unchanged',
+          });
           return;
         }
         if (submittedFallback) {
@@ -460,14 +484,18 @@ export function QueryCoauthoring({
           return;
         }
         if (!submittedProposal || !submittedPrepared) {
-          setError(invalidQueryResponseMessage(submittedContext));
+          setError({ message: invalidQueryResponseMessage(submittedContext), retryable: true });
           return;
         }
 
         if (!onPreview(submittedPrepared.query)) {
-          setError(
-            t('query-editor-coauthoring.error-preview-failed', 'The query proposal could not be previewed. Try again.')
-          );
+          setError({
+            message: t(
+              'query-editor-coauthoring.error-preview-failed',
+              'The query proposal could not be previewed. Try again.'
+            ),
+            retryable: true,
+          });
           return;
         }
         previewActiveRef.current = true;
@@ -476,7 +504,7 @@ export function QueryCoauthoring({
       onError: () => {
         if (generationId === generationIdRef.current && !terminalCallbackHandled) {
           terminalCallbackHandled = true;
-          setError(requestFailedMessage());
+          setError({ message: requestFailedMessage(), retryable: true });
         }
       },
     });
@@ -487,9 +515,13 @@ export function QueryCoauthoring({
       return;
     }
     if (!onAccept(proposal.prepared.query)) {
-      setError(
-        t('query-editor-coauthoring.error-accept-failed', 'The query proposal could not be accepted. Try again.')
-      );
+      setError({
+        message: t(
+          'query-editor-coauthoring.error-accept-failed',
+          'The query proposal could not be accepted. Try again.'
+        ),
+        retryable: true,
+      });
       return;
     }
 
@@ -618,7 +650,7 @@ export function QueryCoauthoring({
             {context && !isIdentifying && (
               <div
                 className={styles.body}
-                data-testid="query-coauthoring-scroll-body"
+                data-testid={selectors.components.QueryEditorCoauthoring.container}
                 role="region"
                 aria-label={
                   clarification
@@ -705,11 +737,13 @@ export function QueryCoauthoring({
             </Text>
           </QueryCoauthoringHeader>
           <Stack direction="column" gap={1}>
-            <Alert severity="error" title={error} />
+            <Alert severity="error" title={error.message} />
             <Stack gap={1} justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={() => setError(undefined)}>
-                <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
-              </Button>
+              {error.retryable && (
+                <Button size="sm" variant="secondary" onClick={() => setError(undefined)}>
+                  <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
+                </Button>
+              )}
               <Button size="sm" variant="secondary" onClick={dismiss}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>

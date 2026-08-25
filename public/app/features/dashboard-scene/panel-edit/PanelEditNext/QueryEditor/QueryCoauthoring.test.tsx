@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { type DataQuery } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import {
@@ -480,7 +481,7 @@ describe('QueryCoauthoring', () => {
     });
 
     const details = screen.getByRole('region', { name: 'Query proposal details' });
-    expect(details).toBe(screen.getByTestId('query-coauthoring-scroll-body'));
+    expect(details).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
     expect(details.children[0]).toHaveStyle({ flex: '0 0 auto' });
     expect(details.children[1]).toHaveStyle({ flex: '0 0 auto' });
     expect(within(details).getAllByLabelText(/^Original expression$/)).toHaveLength(4);
@@ -686,7 +687,7 @@ describe('QueryCoauthoring', () => {
       y: 440,
       toJSON: () => undefined,
     });
-    fireEvent.scroll(screen.getByTestId('query-coauthoring-scroll-body'));
+    fireEvent.scroll(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
 
     expect(dialog).toHaveStyle({ maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px` });
   });
@@ -859,7 +860,7 @@ describe('QueryCoauthoring', () => {
     expect(onPreview).not.toHaveBeenCalled();
   });
 
-  it('rejects a stale proposal reported by the adapter', async () => {
+  it('terminates a stale proposal with an accurate outcome', async () => {
     const { user, stagePreview, onAccept, onPreview } = await setup();
     stagePreview.mockReturnValueOnce({ status: 'rejected', reason: 'stale' });
 
@@ -872,13 +873,37 @@ describe('QueryCoauthoring', () => {
         proposedQuery: 'increase(http_requests_total[5m])',
         why: ['Returns the increase over the selected range.'],
       })
-    ).rejects.toThrow();
+    ).resolves.toBe('The query proposal is no longer current.');
 
     act(() => request.onComplete(''));
 
     expect(stagePreview).toHaveBeenCalledTimes(1);
     expect(onPreview).not.toHaveBeenCalled();
     expect(onAccept).not.toHaveBeenCalled();
+    expect(screen.getByText(/highlighted query changed before the suggestion was ready/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+  });
+
+  it('reports an unchanged proposal without treating it as invalid syntax', async () => {
+    const { user, stagePreview, onPreview } = await setup();
+    stagePreview.mockReturnValueOnce({ status: 'rejected', reason: 'unchanged' });
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await expect(
+      request.tools[0].invoke({
+        proposedQuery: 'rate(http_requests_total[5m])',
+        why: ['Keeps the existing request rate.'],
+      })
+    ).resolves.toBe('The query proposal does not change the current query.');
+
+    act(() => request.onComplete(''));
+
+    expect(onPreview).not.toHaveBeenCalled();
+    expect(screen.getByText(/returned the current query without changes/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
   it('treats an empty completion without a terminal tool result as a request failure', async () => {
@@ -1150,7 +1175,7 @@ describe('QueryCoauthoring', () => {
     act(() => mockGenerate.mock.calls[0][0].onComplete(longClarification));
 
     const message = screen.getByRole('region', { name: 'Clarification message' });
-    expect(message).toBe(screen.getByTestId('query-coauthoring-scroll-body'));
+    expect(message).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
     expect(message).toHaveTextContent(/aggregate by method/);
     expect(within(message).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(message).queryByRole('button')).not.toBeInTheDocument();

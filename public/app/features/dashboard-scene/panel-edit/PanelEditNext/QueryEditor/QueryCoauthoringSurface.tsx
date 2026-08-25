@@ -3,6 +3,7 @@ import { Component, type MouseEvent, type ReactNode, useSyncExternalStore } from
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -22,48 +23,67 @@ interface Props {
 
 export function QueryCoauthoringSurface({ adapter, onBaseline }: Props) {
   const host = useQueryCoauthoringHost();
-  const snapshot = useSyncExternalStore(adapter.subscribe, adapter.getSnapshot, adapter.getSnapshot);
 
   return (
     <QueryCoauthoringFailureBoundary
       adapter={adapter}
-      snapshotKey={getSnapshotKey(snapshot)}
       onFailure={() => {
         host.revert();
         adapter.dismiss();
       }}
     >
-      <QueryCoauthoringAdapterSurface adapter={adapter} onBaseline={onBaseline} snapshot={snapshot} />
+      <QueryCoauthoringAdapterSubscriber adapter={adapter} onBaseline={onBaseline} />
     </QueryCoauthoringFailureBoundary>
   );
 }
 
 class QueryCoauthoringFailureBoundary extends Component<
-  { adapter: object; children: ReactNode; onFailure: () => void; snapshotKey: string },
+  { adapter: QueryEditorCoauthoringAdapterV1; children: ReactNode; onFailure: () => void },
   { failed: boolean }
 > {
   state = { failed: false };
+  private unsubscribeRecovery?: VoidFunction;
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
   componentDidCatch() {
+    this.unsubscribeRecovery?.();
+    try {
+      this.unsubscribeRecovery = this.props.adapter.subscribe(() => {
+        this.unsubscribeRecovery?.();
+        this.unsubscribeRecovery = undefined;
+        this.setState({ failed: false });
+      });
+    } catch {
+      this.unsubscribeRecovery = undefined;
+    }
     this.props.onFailure();
   }
 
-  componentDidUpdate(previousProps: Readonly<{ adapter: object; snapshotKey: string }>) {
-    if (
-      (previousProps.adapter !== this.props.adapter || previousProps.snapshotKey !== this.props.snapshotKey) &&
-      this.state.failed
-    ) {
+  componentDidUpdate(previousProps: Readonly<{ adapter: QueryEditorCoauthoringAdapterV1 }>) {
+    if (previousProps.adapter !== this.props.adapter && this.state.failed) {
+      this.unsubscribeRecovery?.();
+      this.unsubscribeRecovery = undefined;
       this.setState({ failed: false });
     }
+  }
+
+  componentWillUnmount() {
+    this.unsubscribeRecovery?.();
   }
 
   render() {
     return this.state.failed ? null : this.props.children;
   }
+}
+
+function QueryCoauthoringAdapterSubscriber(props: Props) {
+  const { adapter } = props;
+  const snapshot = useSyncExternalStore(adapter.subscribe, adapter.getSnapshot, adapter.getSnapshot);
+
+  return <QueryCoauthoringAdapterSurface {...props} snapshot={snapshot} />;
 }
 
 function QueryCoauthoringAdapterSurface({
@@ -81,7 +101,7 @@ function QueryCoauthoringAdapterSurface({
   if (snapshot.mode === 'selection') {
     const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
     return createPortal(
-      <div className={styles.toolbarSurface} data-testid="query-coauthoring-selection-toolbar">
+      <div className={styles.toolbarSurface} data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}>
         <Button
           fill="text"
           icon="ai-sparkle"
@@ -112,10 +132,6 @@ function QueryCoauthoringAdapterSurface({
       timeRange={host.timeRange}
     />
   );
-}
-
-function getSnapshotKey(snapshot: QueryEditorCoauthoringSnapshotV1): string {
-  return snapshot.mode === 'invoked' ? `invoked:${snapshot.invocationId}` : snapshot.mode;
 }
 
 function getStyles(theme: GrafanaTheme2) {

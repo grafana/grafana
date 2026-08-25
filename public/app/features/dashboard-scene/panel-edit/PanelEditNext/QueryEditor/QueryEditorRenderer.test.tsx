@@ -12,6 +12,7 @@ import {
   type PanelData,
   type TestDataSourceResponse,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -220,7 +221,9 @@ describe('QueryEditorRenderer', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Explain or modify/ }));
 
     expect(adapter.invoke).toHaveBeenCalledTimes(1);
-    expect(portalTarget).toContainElement(screen.getByTestId('query-coauthoring-selection-toolbar'));
+    expect(portalTarget).toContainElement(
+      screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+    );
 
     view.unmount();
     portalTarget.remove();

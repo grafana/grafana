@@ -274,6 +274,20 @@ export function invalidQueryResponseMessage(context: QueryEditorCoauthoringConte
   );
 }
 
+export function unchangedQueryResponseMessage(): string {
+  return t(
+    'query-editor-coauthoring.unchanged-query-response',
+    'Assistant returned the current query without changes. Try again or add more detail.'
+  );
+}
+
+export function staleQueryResponseMessage(): string {
+  return t(
+    'query-editor-coauthoring.stale-query-response',
+    'The highlighted query changed before the suggestion was ready. Dismiss and highlight it again.'
+  );
+}
+
 export function requestFailedMessage(): string {
   return t('query-editor-coauthoring.request-failed', 'Assistant could not build a query proposal. Try again.');
 }

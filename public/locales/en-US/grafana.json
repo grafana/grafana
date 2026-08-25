@@ -15006,9 +15006,11 @@
     "selection-ready": "The selection is part of this {{language}} query.",
     "selection-whole-query": "The complete {{language}} query is selected for coauthoring.",
     "selection-with-type": "{{name}} is a {{type}} {{kind}}.",
+    "stale-query-response": "The highlighted query changed before the suggestion was ready. Dismiss and highlight it again.",
     "stop": "Stop",
     "submit": "Coauthor",
     "suggestion-updated": "Suggestion updated",
+    "unchanged-query-response": "Assistant returned the current query without changes. Try again or add more detail.",
     "unsaved-safe": "Any unsaved panel edits will not be lost.",
     "working-focus": "Query focus"
   },

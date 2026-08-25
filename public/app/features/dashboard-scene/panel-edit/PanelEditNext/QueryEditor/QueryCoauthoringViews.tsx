@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode, useEffect, useRef } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
 
@@ -151,7 +152,9 @@ export function QueryCoauthoringPromptInput({
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      onSubmit();
+      if (!disabled) {
+        onSubmit();
+      }
     }
   };
 
@@ -305,7 +308,7 @@ export function QueryCoauthoringProposal({
       </QueryCoauthoringHeader>
       <div
         className={styles.scrollBody}
-        data-testid="query-coauthoring-scroll-body"
+        data-testid={selectors.components.QueryEditorCoauthoring.container}
         role="region"
         aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
       >
