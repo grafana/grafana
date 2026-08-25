@@ -39,25 +39,20 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(Boolean(startOpen));
 
-  const changeQuery = (updated: DataQuery) => {
+  const onChangeQuery = (updated: DataQuery) => {
     setQueryRunnerQueries(
       queryRunner,
       queries.map((q, i) => (i === index ? updated : q))
     );
   };
 
-  // Opens the row on any datasource change, not just the first one — picking a datasource for the
-  // first time (via the bare picker below) and switching it later (via QueryEditorRow's own header
-  // picker, always visible whether the row is collapsed or not) both leave the reader looking at a
-  // now-stale or now-absent query for the new datasource; they shouldn't also have to find and click
-  // a chevron to see it.
-  const changeDataSource = (settings: DataSourceInstanceSettings) => {
-    changeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
+  const onChangeDataSource = (settings: DataSourceInstanceSettings) => {
+    onChangeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
     setIsOpen(true);
   };
 
   if (!dsSettings) {
-    return <DataSourcePicker current={query.datasource} onChange={changeDataSource} />;
+    return <DataSourcePicker current={query.datasource} onChange={onChangeDataSource} />;
   }
 
   return (
@@ -69,8 +64,8 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
         id={query.refId}
         index={index}
         dataSource={dsSettings}
-        onChangeDataSource={changeDataSource}
-        onChange={changeQuery}
+        onChangeDataSource={onChangeDataSource}
+        onChange={onChangeQuery}
         onRunQuery={onRunQuery}
         onAddQuery={(copy) => setQueryRunnerQueries(queryRunner, addQuery(queries, copy))}
         onRemoveQuery={(target) => {
@@ -85,7 +80,9 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
         range={range}
         collapsable
         isOpen={isOpen}
-        onQueryOpenChanged={(open) => setIsOpen(Boolean(open))}
+        onQueryOpenChanged={() => {
+          setIsOpen(true);
+        }}
       />
     </div>
   );
