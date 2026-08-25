@@ -1,7 +1,10 @@
-import { useState } from 'react';
-
 import { t, Trans } from '@grafana/i18n';
-import { FlagKeys, getLocalStorageProvider, getOFREPWebProvider } from '@grafana/runtime/internal';
+import {
+  FlagKeys,
+  getLocalStorageProvider,
+  getOFREPWebProvider,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
 import { Alert, Button, Stack } from '@grafana/ui';
 
 import { stylesToggled } from '../../analytics/main';
@@ -12,15 +15,12 @@ const VISUAL_REFRESH_FLAG = FlagKeys.GrafanaVisualDesignRefresh;
  * Lets the user opt in or out of the visual design refresh, but only while it's being rolled out.
  */
 export function VisualRefreshInfo() {
-  // Read the rollout flag from the OFREP provider directly rather than the client, so the local
-  // storage override (set by the buttons below) doesn't hide the alert once the user opts out.
+  // Read the rollout flag from the OFREP provider directly
+  // This controls whether the alert is shown at all, and is not affected by the local storage override below.
   const evaluation = getOFREPWebProvider().flagCache[VISUAL_REFRESH_FLAG];
   const isAvailable = !!evaluation && 'value' in evaluation && evaluation.value === true;
 
-  const override = getLocalStorageProvider().getFlags()[VISUAL_REFRESH_FLAG];
-  const [showVisualRefresh, setShowVisualRefresh] = useState(
-    override === undefined ? isAvailable : override === 'true'
-  );
+  const showVisualRefresh = useFlagGrafanaVisualDesignRefresh();
 
   if (!isAvailable) {
     return null;
@@ -29,7 +29,6 @@ export function VisualRefreshInfo() {
   const handleShowVisualRefresh = (force: boolean) => {
     stylesToggled({ value: force });
     getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force });
-    setShowVisualRefresh(force);
   };
 
   return (
