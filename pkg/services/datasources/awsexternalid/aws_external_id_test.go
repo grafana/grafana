@@ -21,12 +21,12 @@ func callBeforeSave(t *testing.T, ftOn bool, uid, stack string, existing, jsonDa
 	BeforeSave(t.Context(), uid, cfg, existing, jsonData)
 }
 
-func beforeEnsure(t *testing.T, uid, stack string, jsonData *simplejson.Json, allowGenerate bool) {
-	callBeforeSave(t, allowGenerate, uid, stack, nil, jsonData)
+func beforeSaveCreate(t *testing.T, uid, stack string, jsonData *simplejson.Json, ftOn bool) {
+	callBeforeSave(t, ftOn, uid, stack, nil, jsonData)
 }
 
-func beforePreserve(t *testing.T, uid, stack string, existing, updated *simplejson.Json, allowGenerate bool) {
-	callBeforeSave(t, allowGenerate, uid, stack, existing, updated)
+func beforeSaveUpdate(t *testing.T, uid, stack string, existing, updated *simplejson.Json, ftOn bool) {
+	callBeforeSave(t, ftOn, uid, stack, existing, updated)
 }
 
 func TestBeforeSave_clearsPayloadExternalIDs(t *testing.T) {
@@ -57,22 +57,26 @@ func TestBeforeSave_clearsPayloadExternalIDs(t *testing.T) {
 }
 
 func TestBuildGrafanaExternalID(t *testing.T) {
-	id := buildGrafanaExternalID("stack123", "P7DC3E4760")
-	assert.True(t, isValidGrafanaExternalID(id, "stack123", "P7DC3E4760"))
-	assert.False(t, isValidGrafanaExternalID(id, "otherstack", "P7DC3E4760"))
-	assert.False(t, isValidGrafanaExternalID(id, "stack123", "OTHERUID"))
-	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760", "stack123", "P7DC3E4760"))                  // no hex suffix
-	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760-abcd", "stack123", "P7DC3E4760"))             // short
-	assert.False(t, isValidGrafanaExternalID("stack123-P7DC3E4760-gggggggggggggggg", "stack123", "P7DC3E4760")) // non-hex
+	const stack, uid = "stack123", "P7DC3E4760"
+	id := buildGrafanaExternalID(stack, uid)
+	assert.True(t, isValidGrafanaExternalID(id, stack, uid))
+	assert.NotEqual(t, id, buildGrafanaExternalID(stack, uid)) // fresh hex suffix each mint
+}
 
-	id2 := buildGrafanaExternalID("stack123", "P7DC3E4760")
-	assert.NotEqual(t, id, id2) // fresh hex suffix each mint
+func TestIsValidGrafanaExternalID(t *testing.T) {
+	const stack, uid = "stack123", "P7DC3E4760"
+	id := buildGrafanaExternalID(stack, uid)
+	assert.True(t, isValidGrafanaExternalID(id, stack, uid))
+	assert.False(t, isValidGrafanaExternalID(id, "otherstack", uid))
+	assert.False(t, isValidGrafanaExternalID(id, stack, "OTHERUID"))
+	assert.False(t, isValidGrafanaExternalID(stack+"-"+uid, stack, uid))                     // no hex suffix
+	assert.False(t, isValidGrafanaExternalID(stack+"-"+uid+"-abcd", stack, uid))             // short
+	assert.False(t, isValidGrafanaExternalID(stack+"-"+uid+"-gggggggggggggggg", stack, uid)) // non-hex
 }
 
 func TestIsValidGrafanaExternalID_dashesInStackAndUID(t *testing.T) {
 	stack, uid := "stacks-abc-1", "my-ds-uid"
-	id := buildGrafanaExternalID(stack, uid)
-	assert.True(t, isValidGrafanaExternalID(id, stack, uid))
+	assert.True(t, isValidGrafanaExternalID(buildGrafanaExternalID(stack, uid), stack, uid))
 }
 
 func TestIsValidGrafanaExternalID_regexMetacharacters(t *testing.T) {
@@ -83,31 +87,34 @@ func TestIsValidGrafanaExternalID_regexMetacharacters(t *testing.T) {
 	assert.False(t, isValidGrafanaExternalID("stackX12-dsuid-0123456789abcdef", stack, uid))
 }
 
-func TestEnsureGrafanaExternalID(t *testing.T) {
+func TestBeforeSave_create(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
+	stolen := stack + "-otherUid"
 
 	t.Run("mints for new GAR datasources and sets mode true", func(t *testing.T) {
 		jd := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
-		beforeEnsure(t, uid, stack, jd, true)
+		beforeSaveCreate(t, uid, stack, jd, true)
 		assert.True(t, isValidGrafanaExternalID(jd.Get(grafanaExternalIDJSONKey).MustString(), stack, uid))
 		assert.True(t, jd.Get(usePerDatasourceExternalIDJSONKey).MustBool())
 	})
 
-	t.Run("stack mode does not mint and discards client ID on create", func(t *testing.T) {
-		empty := simplejson.NewFromAny(map[string]any{
+	t.Run("stack mode does not mint", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: false,
 		})
-		beforeEnsure(t, uid, stack, empty, true)
-		assert.Empty(t, empty.Get(grafanaExternalIDJSONKey).MustString())
+		beforeSaveCreate(t, uid, stack, jd, true)
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
+	})
 
-		dormant := simplejson.NewFromAny(map[string]any{
+	t.Run("stack mode discards a client ID rather than leaving it dormant", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: false,
 			grafanaExternalIDJSONKey:          buildGrafanaExternalID(stack, uid),
 		})
-		beforeEnsure(t, uid, stack, dormant, true)
-		assert.Empty(t, dormant.Get(grafanaExternalIDJSONKey).MustString())
+		beforeSaveCreate(t, uid, stack, jd, true)
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
 	t.Run("discards client-supplied ID and mints a new one", func(t *testing.T) {
@@ -117,35 +124,26 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 			usePerDatasourceExternalIDJSONKey: true,
 			grafanaExternalIDJSONKey:          pasted,
 		})
-		beforeEnsure(t, uid, stack, jd, true)
+		beforeSaveCreate(t, uid, stack, jd, true)
 		got := jd.Get(grafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
 		assert.NotEqual(t, pasted, got)
 	})
 
-	t.Run("scrubs stolen IDs even when FT is off or auth is not GAR", func(t *testing.T) {
-		stolen := stack + "-otherUid"
-
-		ftOff := simplejson.NewFromAny(map[string]any{
-			"authType":               grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey: stolen,
-		})
-		beforeEnsure(t, uid, stack, ftOff, false)
-		assert.Empty(t, ftOff.Get(grafanaExternalIDJSONKey).MustString())
-
-		keys := simplejson.NewFromAny(map[string]any{
+	t.Run("scrubs a stolen ID on non-GAR auth and leaves externalId alone", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
 			"authType":               "keys",
 			"externalId":             "cross-account",
 			grafanaExternalIDJSONKey: stolen,
 		})
-		beforeEnsure(t, uid, stack, keys, true)
-		assert.Empty(t, keys.Get(grafanaExternalIDJSONKey).MustString())
-		assert.Equal(t, "cross-account", keys.Get("externalId").MustString())
+		beforeSaveCreate(t, uid, stack, jd, true)
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
+		assert.Equal(t, "cross-account", jd.Get("externalId").MustString())
 	})
 
 	t.Run("does not mint when FT is off", func(t *testing.T) {
 		jd := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
-		beforeEnsure(t, uid, stack, jd, false)
+		beforeSaveCreate(t, uid, stack, jd, false)
 		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
@@ -154,15 +152,23 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 			"authType":               grafanaAssumeRoleAuthType,
 			grafanaExternalIDJSONKey: buildGrafanaExternalID(stack, uid),
 		})
-		beforeEnsure(t, uid, "", jd, true)
+		beforeSaveCreate(t, uid, "", jd, true)
+		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("does not mint when the UID is unknown", func(t *testing.T) {
+		// A UID is half of what binds an ID to this datasource, so there is nothing
+		// meaningful to mint without one.
+		jd := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveCreate(t, "", stack, jd, true)
 		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
 	t.Run("two creates mint different hex suffixes for the same stack and uid", func(t *testing.T) {
 		a := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
 		b := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
-		beforeEnsure(t, uid, stack, a, true)
-		beforeEnsure(t, uid, stack, b, true)
+		beforeSaveCreate(t, uid, stack, a, true)
+		beforeSaveCreate(t, uid, stack, b, true)
 		idA := a.Get(grafanaExternalIDJSONKey).MustString()
 		idB := b.Get(grafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(idA, stack, uid))
@@ -171,7 +177,7 @@ func TestEnsureGrafanaExternalID(t *testing.T) {
 	})
 }
 
-func TestPreserveGrafanaExternalID(t *testing.T) {
+func TestBeforeSave_update(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
 	wantID := buildGrafanaExternalID(stack, uid)
 	stolen := stack + "-otherUid"
@@ -215,7 +221,7 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 					grafanaExternalIDJSONKey:          wantID,
 				})
 				updated := simplejson.NewFromAny(tc.updated)
-				beforePreserve(t, uid, stack, existing, updated, true)
+				beforeSaveUpdate(t, uid, stack, existing, updated, true)
 				assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
 				modeSet, modeOn := usePerDatasourceExternalID(updated)
 				assert.Equal(t, tc.wantModeSet, modeSet)
@@ -231,7 +237,7 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 			grafanaExternalIDJSONKey:          wantID,
 		})
 		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
-		beforePreserve(t, uid, "", existing, updated, true)
+		beforeSaveUpdate(t, uid, "", existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
 		assert.True(t, updated.Get(usePerDatasourceExternalIDJSONKey).MustBool())
 	})
@@ -242,26 +248,26 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 			"authType":               grafanaAssumeRoleAuthType,
 			grafanaExternalIDJSONKey: stolen,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("does not re-apply an invalid stored ID or auto-migrate legacy GAR", func(t *testing.T) {
-		badStored := garExisting(stolen)
-		updatedOmit := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
-		beforePreserve(t, uid, stack, badStored, updatedOmit, true)
-		assert.Empty(t, updatedOmit.Get(grafanaExternalIDJSONKey).MustString())
+	t.Run("does not re-apply an invalid stored ID", func(t *testing.T) {
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, uid, stack, garExisting(stolen), updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
 
-		legacy := garExisting("")
-		ordinary := simplejson.NewFromAny(map[string]any{
+	t.Run("does not auto-migrate legacy GAR on an ordinary update", func(t *testing.T) {
+		updated := simplejson.NewFromAny(map[string]any{
 			"authType":      grafanaAssumeRoleAuthType,
 			"assumeRoleArn": "arn:aws:iam::123:role/x",
 		})
-		beforePreserve(t, uid, stack, legacy, ordinary, true)
-		assert.Empty(t, ordinary.Get(grafanaExternalIDJSONKey).MustString())
+		beforeSaveUpdate(t, uid, stack, garExisting(""), updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("mints instead of adopting client ID when stored ID is invalid", func(t *testing.T) {
+	t.Run("legacy GAR opting in mints a fresh ID rather than adopting the client's", func(t *testing.T) {
 		existing := garExisting("")
 		clientPaste := buildGrafanaExternalID(stack, uid)
 		updated := simplejson.NewFromAny(map[string]any{
@@ -269,7 +275,7 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 			usePerDatasourceExternalIDJSONKey: true,
 			grafanaExternalIDJSONKey:          clientPaste,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		got := updated.Get(grafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
 		assert.NotEqual(t, clientPaste, got)
@@ -283,87 +289,130 @@ func TestPreserveGrafanaExternalID(t *testing.T) {
 			usePerDatasourceExternalIDJSONKey: true,
 			grafanaExternalIDJSONKey:          other,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("mints when legacy GAR opts in", func(t *testing.T) {
-		existing := garExisting("")
-		updated := simplejson.NewFromAny(map[string]any{
-			"authType":                        grafanaAssumeRoleAuthType,
-			usePerDatasourceExternalIDJSONKey: true,
-		})
-		beforePreserve(t, uid, stack, existing, updated, true)
-		assert.True(t, isValidGrafanaExternalID(updated.Get(grafanaExternalIDJSONKey).MustString(), stack, uid))
-	})
-
-	t.Run("auth switch into GAR mints unless stack mode is requested", func(t *testing.T) {
+	t.Run("auth switch into GAR mints", func(t *testing.T) {
 		keys := simplejson.NewFromAny(map[string]any{
 			"authType":   "keys",
 			"externalId": "cross-account-id",
 		})
-
-		mint := simplejson.NewFromAny(map[string]any{
+		updated := simplejson.NewFromAny(map[string]any{
 			"authType":   grafanaAssumeRoleAuthType,
 			"externalId": "cross-account-id",
 		})
-		beforePreserve(t, uid, stack, keys, mint, true)
-		assert.True(t, isValidGrafanaExternalID(mint.Get(grafanaExternalIDJSONKey).MustString(), stack, uid))
-		assert.Equal(t, "cross-account-id", mint.Get("externalId").MustString())
+		beforeSaveUpdate(t, uid, stack, keys, updated, true)
+		assert.True(t, isValidGrafanaExternalID(updated.Get(grafanaExternalIDJSONKey).MustString(), stack, uid))
+		assert.Equal(t, "cross-account-id", updated.Get("externalId").MustString())
+	})
 
-		stackMode := simplejson.NewFromAny(map[string]any{
+	t.Run("auth switch into GAR does not mint when stack mode is requested", func(t *testing.T) {
+		keys := simplejson.NewFromAny(map[string]any{
+			"authType":   "keys",
+			"externalId": "cross-account-id",
+		})
+		updated := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			usePerDatasourceExternalIDJSONKey: false,
 			"externalId":                      "cross-account-id",
 		})
-		beforePreserve(t, uid, stack, keys, stackMode, true)
-		assert.Empty(t, stackMode.Get(grafanaExternalIDJSONKey).MustString())
+		beforeSaveUpdate(t, uid, stack, keys, updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("leaving GAR clears ID only when FT on", func(t *testing.T) {
-		existing := garExisting(wantID)
+	t.Run("leaving GAR clears the ID when FT on", func(t *testing.T) {
+		updated := simplejson.NewFromAny(map[string]any{"authType": "keys"})
+		beforeSaveUpdate(t, uid, stack, garExisting(wantID), updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
 
-		ftOn := simplejson.NewFromAny(map[string]any{"authType": "keys"})
-		beforePreserve(t, uid, stack, existing, ftOn, true)
-		assert.Empty(t, ftOn.Get(grafanaExternalIDJSONKey).MustString())
+	t.Run("leaving GAR keeps the stored ID when FT off", func(t *testing.T) {
+		updated := simplejson.NewFromAny(map[string]any{"authType": "keys"})
+		beforeSaveUpdate(t, uid, stack, garExisting(wantID), updated, false)
+		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
 
-		ftOff := simplejson.NewFromAny(map[string]any{"authType": "keys"})
-		beforePreserve(t, uid, stack, existing, ftOff, false)
-		assert.Equal(t, wantID, ftOff.Get(grafanaExternalIDJSONKey).MustString())
+	t.Run("keeps the stored ID when the UID is unknown", func(t *testing.T) {
+		// The stored ID cannot be validated without a UID, and a save must not wipe a
+		// previously minted value on the strength of a check it could not run.
+		existing := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+			grafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, "", stack, existing, updated, true)
+		assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
+		assert.True(t, updated.Get(usePerDatasourceExternalIDJSONKey).MustBool())
+	})
+
+	t.Run("does not mint on switch into GAR when the stack ID is empty", func(t *testing.T) {
+		// No stored ID to fall back on, so this reaches the mint decision rather than the
+		// restore. Minting here would build an ID with an empty stack prefix.
+		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, uid, "", existing, updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("does not mint on switch into GAR when the UID is unknown", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, "", stack, existing, updated, true)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("FT off does not mint on auth switch into GAR", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
+		updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("FT off does not mint when legacy GAR opts in", func(t *testing.T) {
+		updated := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+		})
+		beforeSaveUpdate(t, uid, stack, garExisting(""), updated, false)
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 }
 
-// TestEnsureGrafanaExternalID_SigV4 covers create-time mint/scrub for SigV4 datasources
+// TestBeforeSave_createSigV4 covers create-time mint/scrub for SigV4 datasources
 // (e.g. OpenSearch) that signal Grafana Assume Role via sigV4AuthType instead of authType.
 // Per the design, SigV4 GAR uses the sigV4-prefixed key pair exclusively; unprefixed keys
 // must never be set for this path.
-func TestEnsureGrafanaExternalID_SigV4(t *testing.T) {
+func TestBeforeSave_createSigV4(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
 
 	t.Run("mints sigV4 keys for new SigV4 GAR datasources and does not touch native keys", func(t *testing.T) {
 		jd := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
-		beforeEnsure(t, uid, stack, jd, true)
+		beforeSaveCreate(t, uid, stack, jd, true)
 		assert.True(t, isValidGrafanaExternalID(jd.Get(sigV4GrafanaExternalIDJSONKey).MustString(), stack, uid))
 		assert.True(t, jd.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, jd.Get(grafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, jd.Get(usePerDatasourceExternalIDJSONKey).Interface())
 	})
 
-	t.Run("stack mode does not mint and discards client sigV4 ID on create", func(t *testing.T) {
-		empty := simplejson.NewFromAny(map[string]any{
+	t.Run("stack mode does not mint sigV4 keys", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 		})
-		beforeEnsure(t, uid, stack, empty, true)
-		assert.Empty(t, empty.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		beforeSaveCreate(t, uid, stack, jd, true)
+		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+	})
 
-		dormant := simplejson.NewFromAny(map[string]any{
+	t.Run("stack mode discards a client sigV4 ID rather than leaving it dormant", func(t *testing.T) {
+		jd := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 			sigV4GrafanaExternalIDJSONKey:          buildGrafanaExternalID(stack, uid),
 		})
-		beforeEnsure(t, uid, stack, dormant, true)
-		assert.Empty(t, dormant.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		beforeSaveCreate(t, uid, stack, jd, true)
+		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 	})
 
 	t.Run("discards client-supplied sigV4 ID and mints a new one", func(t *testing.T) {
@@ -373,7 +422,7 @@ func TestEnsureGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
 			sigV4GrafanaExternalIDJSONKey:          pasted,
 		})
-		beforeEnsure(t, uid, stack, jd, true)
+		beforeSaveCreate(t, uid, stack, jd, true)
 		got := jd.Get(sigV4GrafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
 		assert.NotEqual(t, pasted, got)
@@ -387,14 +436,14 @@ func TestEnsureGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4GrafanaExternalIDJSONKey: stolen,
 		})
 		// FT off: scrub happens regardless, but no remint should occur, so the field stays empty.
-		beforeEnsure(t, uid, stack, jd, false)
+		beforeSaveCreate(t, uid, stack, jd, false)
 		assert.Empty(t, jd.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 	})
 }
 
-// TestPreserveGrafanaExternalID_SigV4 covers update-time preserve/scrub/clear for the SigV4
-// (sigV4AuthType) path, mirroring TestPreserveGrafanaExternalID's native coverage.
-func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
+// TestBeforeSave_updateSigV4 covers update-time preserve/scrub/clear for the SigV4
+// (sigV4AuthType) path, mirroring TestBeforeSave_update's native coverage.
+func TestBeforeSave_updateSigV4(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
 	wantID := buildGrafanaExternalID(stack, uid)
 
@@ -405,7 +454,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4GrafanaExternalIDJSONKey:          wantID,
 		})
 		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
@@ -423,7 +472,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
 			sigV4GrafanaExternalIDJSONKey:          other,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
@@ -434,7 +483,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4GrafanaExternalIDJSONKey: wantID,
 		})
 		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
@@ -446,7 +495,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4GrafanaExternalIDJSONKey:          wantID,
 		})
 		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
@@ -463,7 +512,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4GrafanaExternalIDJSONKey: wantID,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
@@ -477,7 +526,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4GrafanaExternalIDJSONKey: wantID,
 		})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
@@ -486,7 +535,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 
 	t.Run("FT off omit-auth restores SigV4 mode even when native mode key is set", func(t *testing.T) {
 		// Cross-namespace restore must gate on the SigV4 mode key, not the native one that
-		// externalIDKeys(updated) would select when sigV4AuthType is omitted.
+		// externalIDKeysFor(updated) would select when sigV4AuthType is omitted.
 		existing := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
@@ -495,7 +544,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		updated := simplejson.NewFromAny(map[string]any{
 			usePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
@@ -510,27 +559,29 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 		})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.False(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("auth switch into SigV4 GAR mints unless stack mode is requested", func(t *testing.T) {
+	t.Run("auth switch into SigV4 GAR mints", func(t *testing.T) {
 		keys := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
+		updated := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
+		beforeSaveUpdate(t, uid, stack, keys, updated, true)
+		assert.True(t, isValidGrafanaExternalID(updated.Get(sigV4GrafanaExternalIDJSONKey).MustString(), stack, uid))
+		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
 
-		mint := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: grafanaAssumeRoleAuthType})
-		beforePreserve(t, uid, stack, keys, mint, true)
-		assert.True(t, isValidGrafanaExternalID(mint.Get(sigV4GrafanaExternalIDJSONKey).MustString(), stack, uid))
-		assert.True(t, mint.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
-		assert.Empty(t, mint.Get(grafanaExternalIDJSONKey).MustString())
-
-		stackMode := simplejson.NewFromAny(map[string]any{
+	t.Run("auth switch into SigV4 GAR does not mint when stack mode is requested", func(t *testing.T) {
+		keys := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
+		updated := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 		})
-		beforePreserve(t, uid, stack, keys, stackMode, true)
-		assert.Empty(t, stackMode.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		beforeSaveUpdate(t, uid, stack, keys, updated, true)
+		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 	})
 
 	t.Run("legacy SigV4 GAR opts in and mints", func(t *testing.T) {
@@ -539,7 +590,7 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 		assert.True(t, isValidGrafanaExternalID(updated.Get(sigV4GrafanaExternalIDJSONKey).MustString(), stack, uid))
 		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
@@ -550,76 +601,75 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 // the namespace its datasource does not use, to steer the mint or restore onto the wrong key
 // pair. Payload IDs are always dropped, so what these cover is that the datasource ends up
 // with the ID the server chose, under the keys it actually reads.
-func TestPreserveGrafanaExternalID_CrossNamespace(t *testing.T) {
+func TestBeforeSave_updateCrossNamespace(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
 
 	t.Run("empty sigV4AuthType does not redirect a native mint onto the SigV4 keys", func(t *testing.T) {
-		stolen := buildGrafanaExternalID(stack, uid)
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
 		updated := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			sigV4AuthTypeJSONKey:              "",
-			grafanaExternalIDJSONKey:          stolen,
+			grafanaExternalIDJSONKey:          injected,
 			usePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 
 		got := updated.Get(grafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
-		assert.NotEqual(t, stolen, got)
+		assert.NotEqual(t, injected, got)
 		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("empty sigV4AuthType still scrubs stolen native ID when FT off", func(t *testing.T) {
-		stolen := buildGrafanaExternalID(stack, uid)
+	t.Run("empty sigV4AuthType still drops the injected native ID when FT off", func(t *testing.T) {
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
 		updated := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			sigV4AuthTypeJSONKey:              "",
-			grafanaExternalIDJSONKey:          stolen,
+			grafanaExternalIDJSONKey:          injected,
 			usePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("decoy non-GAR sigV4AuthType clears stolen native ID and mints SigV4 namespace", func(t *testing.T) {
-		stolen := buildGrafanaExternalID(stack, uid)
+	t.Run("decoy non-GAR sigV4AuthType drops the injected native ID and mints on the SigV4 keys", func(t *testing.T) {
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
 		updated := simplejson.NewFromAny(map[string]any{
 			"authType":                        grafanaAssumeRoleAuthType,
 			sigV4AuthTypeJSONKey:              "keys",
-			grafanaExternalIDJSONKey:          stolen,
+			grafanaExternalIDJSONKey:          injected,
 			usePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 
-		assert.NotEqual(t, stolen, updated.Get(grafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 		assert.True(t, isValidGrafanaExternalID(updated.Get(sigV4GrafanaExternalIDJSONKey).MustString(), stack, uid))
 	})
 
-	t.Run("switch into SigV4 GAR clears stolen native ID", func(t *testing.T) {
-		stolen := buildGrafanaExternalID(stack, uid)
+	t.Run("switch into SigV4 GAR drops the injected native ID", func(t *testing.T) {
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey:               stolen,
+			grafanaExternalIDJSONKey:               injected,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 		got := updated.Get(sigV4GrafanaExternalIDJSONKey).MustString()
 		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
-		assert.NotEqual(t, stolen, got)
+		assert.NotEqual(t, injected, got)
 	})
 
-	t.Run("SigV4 GAR update clears stolen native ID while preserving stored sigV4 ID", func(t *testing.T) {
+	t.Run("SigV4 GAR update drops the injected native ID and keeps the stored sigV4 ID", func(t *testing.T) {
 		wantID := buildGrafanaExternalID(stack, uid)
-		stolen := buildGrafanaExternalID(stack, uid)
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
@@ -627,18 +677,18 @@ func TestPreserveGrafanaExternalID_CrossNamespace(t *testing.T) {
 		})
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:          grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey:      stolen,
-			sigV4GrafanaExternalIDJSONKey: stolen,
+			grafanaExternalIDJSONKey:      injected,
+			sigV4GrafanaExternalIDJSONKey: injected,
 		})
-		beforePreserve(t, uid, stack, existing, updated, true)
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
 
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("FT off SigV4 GAR update still clears stolen native ID", func(t *testing.T) {
+	t.Run("FT off SigV4 GAR update still drops the injected native ID", func(t *testing.T) {
 		wantID := buildGrafanaExternalID(stack, uid)
-		stolen := buildGrafanaExternalID(stack, uid)
+		injected := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
@@ -646,9 +696,9 @@ func TestPreserveGrafanaExternalID_CrossNamespace(t *testing.T) {
 		})
 		updated := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:     grafanaAssumeRoleAuthType,
-			grafanaExternalIDJSONKey: stolen,
+			grafanaExternalIDJSONKey: injected,
 		})
-		beforePreserve(t, uid, stack, existing, updated, false)
+		beforeSaveUpdate(t, uid, stack, existing, updated, false)
 
 		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
