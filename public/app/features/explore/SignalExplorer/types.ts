@@ -9,3 +9,13 @@ export interface MetricInfo {
   help?: string;
   unit?: string;
 }
+
+/**
+ * The metric the sidebar's detail panel is showing. Carried by value so the panel costs no request,
+ * and tagged with the card it came from, whose catalog is the only one it is true of.
+ */
+export interface MetricSelection {
+  refId: string;
+  dsUid?: string;
+  metric: MetricInfo;
+}

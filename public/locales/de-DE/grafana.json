@@ -890,7 +890,6 @@
       "close": "Schließen",
       "create": "Erstellen",
       "delete": "Löschen",
-      "deleting": "Wird gelöscht …",
       "edit": "Bearbeiten",
       "export": "Exportieren",
       "export-all": "Alles exportieren",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} Routen"
       },
       "delete": {
-        "confirm": "Ja, Richtlinie löschen",
-        "warning-1": "Wenn Sie diese Benachrichtigungsrichtlinie löschen, wird sie dauerhaft entfernt.",
-        "warning-2": "Möchten Sie diese Richtlinie wirklich löschen?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Durch diese Aktion wird die Benachrichtigungsrichtlinie <1>{{routeName}}</1> dauerhaft entfernt.",
-        "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtern Sie Routen und trennen Sie die Matchers durch Kommata, z. B.:<1>Schweregrad=kritisch, Region=EMEA</1>",
       "generated-policies": "Automatisch generierte Richtlinien",
@@ -2546,7 +2543,9 @@
         "reset": "Zurücksetzen",
         "resetting": "Wird zurückgesetzt …",
         "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen",
-        "title-reset-notification-policy": "Benachrichtigungsrichtlinie zurücksetzen"
+        "title-reset-notification-policy": "Benachrichtigungsrichtlinie zurücksetzen",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Bitte warten Sie, während wir Ihre Benachrichtigungsrichtlinien aktualisieren.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
       "pill": "Veröffentlichtes Notizbuch",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Zeit"
     },
     "on-create-new-row": {
@@ -7038,6 +7040,9 @@
       "name-json-values": "JSON",
       "selection-options": "Auswahloptionen"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Zurück zur Liste",
       "label-icon": "Symbol",
@@ -7817,9 +7822,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Diese Variable wird von anderen Variablen oder Dashboards referenziert.",
       "content-variable-not-referenced-other-variables-dashboard": "Diese Variable wird nicht von anderen Variablen oder Dashboards referenziert.",
       "content-variable-referenced-other-variables-dashboard": "Diese Variable wird von anderen Variablen oder Dashboards referenziert."
-    },
-    "variable-controls": {
-      "add-variable": "Variable hinzufügen"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Für die aktuellen Abfragen und den aktuellen Zeitbereich sind keine Volumeninformationen verfügbar."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} einklappen",
       "error": "Die Metriken konnten nicht geladen werden",
@@ -8754,6 +8761,7 @@
       "loading-values": "Werte werden geladen …",
       "no-metrics": "Keine Metriken gefunden",
       "search-placeholder": "Metriken suchen",
+      "show-metric-details": "",
       "show-more": "Mehr anzeigen",
       "show-more-metrics": "Weitere Metriken anzeigen",
       "show-more-values": "Weitere Werte anzeigen",
@@ -9147,6 +9155,7 @@
     "json": {
       "cancel-button": "Abbrechen",
       "copy-button": "In die Zwischenablage kopieren",
+      "dashboard-definition": "",
       "download-button": "Datei herunterladen",
       "download-successful_toast_message": "Ihre JSON-Datei wurde heruntergeladen",
       "export-format": "Format",
@@ -11271,6 +11280,13 @@
       "show": "Anzeigen",
       "switch": "Die Empfehlungen folgen der ausgewählten Lösung",
       "switchSolution": "Lösung wechseln",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Empfehlungen für Ihren Stack"
     },
     "solutions": {
@@ -11327,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12893,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12919,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13691,16 +13735,19 @@
       "behind-branch-text": "Diese Ressource ist hinter dem Branch in {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen diese Ressource weiterhin, bis dieser Branch zusammengeführt wird",
+      "move-from-branch": "",
       "not-saved": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen weiterhin die aktuelle Version, die im konfigurierten Standard-Branch gespeichert ist, bis dieser Branch zusammengeführt wird",
       "open-in-repo-button": "Öffnen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-Request öffnen in {{repoType}}",
       "update-from-branch": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen weiterhin die aktuelle Version, bis dieser Branch zusammengeführt wird",
       "view-in-repo-button": "Zeigen Sie es in {{repoType}} an, um die letzten Änderungen zu sehen.",
-      "view-pull-request-in-repo": "Pull-Request anzeigen in {{repoType}}"
+      "view-pull-request-in-repo": "Pull-Request anzeigen in {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Eine neue Ressource wurde in einem Branch in {{repoType}} erstellt.",
     "title-deleted-resource-in-branch": "Eine Ressource wurde in einem Branch in {{repoType}} gelöscht.",
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Eine Ressource wurde in einem Branch in {{repoType}} aktualisiert."
   },
   "provisioning": {
@@ -16275,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
