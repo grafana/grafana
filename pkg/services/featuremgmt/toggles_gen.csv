@@ -308,7 +308,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
 2026-08-12,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-05-22,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
-2026-05-22,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,true
+2026-05-22,logsTablePanelNG,GA,@grafana/observability-logs,false,false,true
 2026-05-22,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-22,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-05-22,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
