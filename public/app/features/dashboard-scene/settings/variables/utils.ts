@@ -258,6 +258,7 @@ export async function getVariableScene(type: EditableVariableType, initialState:
     case 'adhoc':
       return new AdHocFiltersVariable({
         ...initialState,
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? { enableGroupBy: true } : {}),
       });
     case 'groupby':
       return new GroupByVariable(initialState);

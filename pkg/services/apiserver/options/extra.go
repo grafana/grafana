@@ -27,9 +27,8 @@ type ExtraOptions struct {
 	EnableSearchAPI bool
 
 	// EnableTrashAPI is the flag equivalent of [grafana-apiserver]
-	// enable_trash_api. Separate from EnableSearchAPI because trash authorizes on a
-	// different rule that has not been reviewed yet, so enabling search must not
-	// expose it.
+	// enable_trash_api. Separate from EnableSearchAPI so a deployment can turn one
+	// endpoint off without the other.
 	EnableTrashAPI bool
 }
 
@@ -39,6 +38,7 @@ func NewExtraOptions() *ExtraOptions {
 		Verbosity:       0,
 		RequestTimeout:  10 * time.Minute,
 		EnableSearchAPI: true,
+		EnableTrashAPI:  true,
 	}
 }
 
