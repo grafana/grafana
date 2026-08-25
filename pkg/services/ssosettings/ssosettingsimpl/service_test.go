@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/setting/settingtest"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
@@ -2661,7 +2662,7 @@ func setupTestEnv(t *testing.T, isLicensingEnabled, keepFallbackStratergies bool
 	svc := ProvideService(
 		cfg,
 		mustConfigProvider(t, cfg),
-		&dbtest.FakeDB{},
+		legacysql.NewDatabaseProvider(&dbtest.FakeDB{}),
 		accessControl,
 		routing.NewRouteRegister(),
 		featureManager,
