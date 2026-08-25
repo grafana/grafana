@@ -51,19 +51,23 @@ function getStyles(theme: GrafanaTheme2) {
       },
 
       '& .json-markup-bool': {
-        color: autoColor(theme, 'firebrick'),
+        color: theme.colors.text.primary,
       },
 
       '& .json-markup-string': {
-        color: autoColor(theme, 'teal'),
+        color: theme.colors.text.primary,
+        // Auto-linked http(s) values stay teal; plugin/resource links stay blue via KeyValuesTable
+        '& a': {
+          color: autoColor(theme, 'teal'),
+        },
       },
 
       '& .json-markup-null': {
-        color: autoColor(theme, 'teal'),
+        color: theme.colors.text.primary,
       },
 
       '& .json-markup-number': {
-        color: autoColor(theme, 'blue', 'black'),
+        color: theme.colors.text.primary,
       },
     }),
   };

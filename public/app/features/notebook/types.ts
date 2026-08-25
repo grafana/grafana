@@ -11,6 +11,7 @@
 import {
   defaultCodeCellContentKind as generatedDefaultCodeCellContentKind,
   defaultLibraryPanelKind as generatedDefaultLibraryPanelKind,
+  defaultMarkdownCellContentKind as generatedDefaultMarkdownCellContentKind,
   defaultSpec as generatedDefaultSpec,
   defaultV2PanelKind,
   type CellContentKind as GeneratedCellContentKind,
@@ -40,4 +41,5 @@ export type Spec = GeneratedSpec;
 
 export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
+export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellContentKind;
 export const defaultSpec = generatedDefaultSpec;
