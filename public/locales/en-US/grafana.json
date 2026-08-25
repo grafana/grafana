@@ -6874,6 +6874,11 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
@@ -12949,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "Are you sure you want to delete \"{{title}}\"?",
+      "confirm": "Delete",
+      "error": "Failed to delete notebook",
+      "in-progress": "Deleting...",
+      "success": "Notebook deleted",
+      "title": "Delete"
+    },
     "export": {
       "copied": "Notebook copied as Markdown",
       "copy-markdown": "Copy as Markdown",
@@ -13012,7 +13025,8 @@
     "view": {
       "copy-link": "Copy link",
       "mode-edit": "Edit",
-      "mode-view": "View"
+      "mode-view": "View",
+      "more-actions": "More actions"
     }
   },
   "notifications": {
