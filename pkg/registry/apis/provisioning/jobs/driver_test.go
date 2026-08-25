@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,6 +19,8 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func newConflictError() error {
@@ -597,5 +601,61 @@ func TestWithJobAuthorSignature(t *testing.T) {
 			ctx := withJobAuthorSignature(context.Background(), job)
 			assert.Equal(t, tt.expected, repository.GetAuthorSignature(ctx))
 		})
+	}
+}
+
+// TestWithJobTraceParent_NoAnnotation verifies a job with no trace annotation
+// leaves ctx untouched: there is no parent to bridge to.
+func TestWithJobTraceParent_NoAnnotation(t *testing.T) {
+	d := &jobProcessor{}
+	ctx := context.Background()
+	job := &provisioning.Job{}
+
+	got, span := d.withJobTraceParent(ctx, job)
+
+	assert.Equal(t, ctx, got)
+	assert.False(t, span.SpanContext().IsValid())
+}
+
+// TestWithJobTraceParent_BridgesRemoteParentIntoARealSpan is a regression test
+// for a bug where withJobTraceParent reconstructed the annotation into a bare
+// remote trace.SpanContext (via utils.ExtractTraceContext) without starting a
+// real span. Per the OpenTelemetry API, a context carrying only a remote
+// SpanContext (trace.ContextWithRemoteSpanContext) wraps a non-recording span
+// with no TracerProvider of its own -- so every downstream tracing.Start call
+// in this package, which resolves its provider from the current span in ctx,
+// stayed a silent no-op even though a parent trace existed. This asserts the
+// fix: withJobTraceParent must itself produce a real, exported, correctly
+// parented span, and everything nested under it (via the package-level
+// tracing.Start helper) must inherit a real TracerProvider too.
+func TestWithJobTraceParent_BridgesRemoteParentIntoARealSpan(t *testing.T) {
+	exporter := tracetest.NewInMemoryExporter()
+	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(sdktrace.NewSimpleSpanProcessor(exporter)))
+	d := &jobProcessor{tracer: tracer}
+
+	// Simulate the trace that created the job.
+	annotations := utils.SetTraceContext(func() context.Context {
+		ctx, span := tracer.Start(context.Background(), "originating-request")
+		defer span.End()
+		return ctx
+	}(), nil)
+	require.Contains(t, annotations, utils.AnnoKeyTraceParent)
+
+	job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Annotations: annotations}}
+	ctx, jobSpan := d.withJobTraceParent(context.Background(), job)
+	require.True(t, jobSpan.SpanContext().IsValid(), "withJobTraceParent must produce a real span, not just a remote SpanContext")
+
+	// A nested tracing.Start call (as used throughout this package) must see a
+	// real TracerProvider via the current span in ctx, not silently no-op.
+	_, nested := tracing.Start(ctx, "provisioning.jobs.process_job")
+	assert.True(t, nested.SpanContext().IsValid(), "nested tracing.Start must produce a real span once withJobTraceParent has bridged the trace")
+	nested.End()
+	jobSpan.End()
+
+	spans := exporter.GetSpans()
+	require.Len(t, spans, 3, "originating request, the bridge span, and the nested span must all export")
+	traceID := spans[0].SpanContext.TraceID()
+	for _, s := range spans {
+		assert.Equal(t, traceID, s.SpanContext.TraceID(), "every span must belong to the same trace as the originating request")
 	}
 }

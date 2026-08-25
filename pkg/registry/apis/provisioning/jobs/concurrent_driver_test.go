@@ -25,7 +25,7 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGett
 		store, repoGetter, history,
 		prometheus.NewRegistry(),
 		metrics,
-		false, // natsBacked
+		nil, false, // natsBacked
 		workers...,
 	)
 	require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 		time.Minute, 30*time.Second, 30*time.Second,
 		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(), nil,
-		false,
+		nil, false,
 	)
 	require.ErrorContains(t, err, "numDrivers")
 }
@@ -70,7 +70,7 @@ func TestConcurrentJobDriver_WorkerQueueSizeGauge(t *testing.T) {
 		1,
 		time.Minute, 30*time.Second, 30*time.Second,
 		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
-		reg, nil, false,
+		reg, nil, nil, false,
 	)
 	require.NoError(t, err)
 
