@@ -70,9 +70,8 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 	t.Run("should override FSFrontendSettings fields from settings service", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey:           "base-write-key",
-				RudderstackDataPlaneUrl:       "https://base-dataplane.example.com",
-				PluginImportTelemetryPackages: []string{"base-router"},
+				RudderstackWriteKey:     "base-write-key",
+				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
 			},
 		}
 
@@ -86,7 +85,6 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
-		assert.Equal(t, []string{"tenant-router", "tenant-history"}, config.PluginImportTelemetryPackages)
 	})
 
 	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
@@ -160,13 +158,11 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 	t.Run("with full frontend settings enabled, applies rudderstack overrides to FullFrontendSettings", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey:           "legacy-write-key",
-				PluginImportTelemetryPackages: []string{"legacy-router"},
+				RudderstackWriteKey: "legacy-write-key",
 			},
 			FullFrontendSettings: &dtos.FrontendSettingsDTO{
-				RudderstackWriteKey:           "base-write-key",
-				RudderstackDataPlaneUrl:       "https://base-dataplane.example.com",
-				PluginImportTelemetryPackages: []string{"base-router"},
+				RudderstackWriteKey:     "base-write-key",
+				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
 			},
 		}
 
@@ -174,18 +170,15 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
-		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), true)
 
 		// Overrides land on the full settings object when the flag is enabled.
 		assert.Equal(t, "tenant-write-key", config.FullFrontendSettings.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.FullFrontendSettings.RudderstackDataPlaneUrl)
-		assert.Equal(t, []string{"tenant-router", "tenant-history"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 
 		// The legacy FSFrontendSettings field is left untouched when the flag is enabled.
 		assert.Equal(t, "legacy-write-key", config.RudderstackWriteKey)
-		assert.Equal(t, []string{"legacy-router"}, config.PluginImportTelemetryPackages)
 	})
 
 	// When the flag is enabled the middleware always builds FullFrontendSettings before
