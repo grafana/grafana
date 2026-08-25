@@ -152,11 +152,8 @@ func parseAuthzExemptions(values []string) (groupResource, error) {
 	return exemptions, nil
 }
 
-// extGroupSuffix marks K8s-native CRD groups, which are always forwarded to the authz service.
-const extGroupSuffix = ".ext.grafana.app"
-
 func alwaysEnforced(group, resource string) bool {
-	if strings.HasSuffix(group, extGroupSuffix) {
+	if strings.HasSuffix(group, ".ext.grafana.app") {
 		return true
 	}
 	_, ok := rbacAllowlist[group][resource]
