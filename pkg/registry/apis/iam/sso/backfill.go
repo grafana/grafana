@@ -41,29 +41,34 @@ type SSOSettingsBackfill struct {
 }
 
 func ProvideSSOSettingsBackfill(reader *ssosettingsimpl.Service, lock *serverlock.ServerLockService, cfg *setting.Cfg) (*SSOSettingsBackfill, error) {
+	b := &SSOSettingsBackfill{
+		reader: reader,
+		lock:   lock,
+		cfg:    cfg,
+		// Instance-global; the background context carries no namespace of its own.
+		namespace: grafanarequest.GetNamespaceMapper(cfg)(1),
+		log:       log.New("ssosettings.backfill"),
+	}
+
+	// No settings service (default/on-prem): stay disabled, don't fail startup.
 	client, err := NewSettingsClient(cfg)
 	if err != nil {
-		return nil, err
+		b.log.Debug("MT-Settings client unavailable, SSO settings backfill disabled", "error", err)
+		return b, nil
 	}
 	writer, ok := client.(settingsvc.Writer)
 	if !ok {
 		return nil, fmt.Errorf("settings client does not implement the writer interface")
 	}
-	return &SSOSettingsBackfill{
-		reader: reader,
-		writer: writer,
-		lock:   lock,
-		cfg:    cfg,
-		// SSO settings are instance-global; the org-1 namespace maps to the
-		// instance tenant. The writer runs on a background context, so the
-		// namespace must come from config rather than a request.
-		namespace: grafanarequest.GetNamespaceMapper(cfg)(1),
-		log:       log.New("ssosettings.backfill"),
-	}, nil
+	b.writer = writer
+	return b, nil
 }
 
 // IsDisabled implements registry.CanBeDisabled.
 func (s *SSOSettingsBackfill) IsDisabled() bool {
+	if s.writer == nil {
+		return true
+	}
 	enabled, _ := openfeature.NewDefaultClient().BooleanValue(context.Background(),
 		featuremgmt.FlagGrafanaSsoSettingsToMTSettings, false, openfeature.EvaluationContext{})
 	if !enabled {
