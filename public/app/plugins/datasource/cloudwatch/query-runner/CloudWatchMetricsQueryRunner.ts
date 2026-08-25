@@ -175,7 +175,8 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
     scopedVars: ScopedVars,
     range?: TimeRange
   ): CloudWatchMetricsQuery {
-    const queryIntervalMs = query.interval ? rangeUtil.intervalToMs(query.interval) : 0;
+    const isValidDuration = query.interval && /^-?\d+(?:\.\d+)?(ms|[Mwdhmsy])?$/.test(query.interval);
+    const queryIntervalMs = isValidDuration ? rangeUtil.intervalToMs(query.interval!) : 0;
     const intervalMs = Math.max(Number(scopedVars?.__interval_ms?.value) || 60000, queryIntervalMs);
     const intervalSeconds = Math.round(intervalMs / 1000);
     const interval = `${intervalSeconds}s`;

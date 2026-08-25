@@ -646,6 +646,29 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
     });
 
+    it('ignores an invalid query-level interval instead of throwing', () => {
+      const { runner, templateService } = setupMockedMetricsQueryRunner();
+      const query = {
+        ...validMetricSearchBuilderQuery,
+        promqlExpression: '$__interval,$__rate_interval',
+        interval: 'not-a-duration',
+      };
+
+      expect(() =>
+        runner.interpolateMetricsQueryVariables(query, {
+          __interval_ms: { text: '15000', value: 15000 },
+        })
+      ).not.toThrow();
+
+      expect(templateService.replace).toHaveBeenCalledWith(
+        '$__interval,$__rate_interval',
+        expect.objectContaining({
+          __interval: { text: '15s', value: '15s' },
+          __interval_ms: { text: 15000, value: 15000 },
+        })
+      );
+    });
+
     it('synthesizes $__range / $__range_s / $__range_ms from the provided range', () => {
       const { runner, templateService } = setupMockedMetricsQueryRunner();
       const query = { ...validMetricSearchBuilderQuery, promqlExpression: '$__range' };
