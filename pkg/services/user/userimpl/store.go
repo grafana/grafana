@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"text/template"
 	"time"
@@ -41,11 +42,6 @@ type sqlStore struct {
 	sql    legacysql.LegacyDatabaseProvider
 	logger log.Logger
 	cfg    *setting.Cfg
-}
-
-// quoteTable resolves a table name and quotes it for use in raw SQL.
-func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
-	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 func ProvideStore(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) sqlStore {
@@ -691,6 +687,138 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 	})
 }
 
+type searchUserJoin struct {
+	Operator  string
+	Table     string
+	Alias     string
+	Condition string
+}
+
+type searchUserInFilter struct {
+	Condition string
+	Values    []any
+}
+
+type searchUserWhereFilter struct {
+	Condition string
+	Params    any
+	HasParams bool
+}
+
+type searchUsersQuery struct {
+	sqltemplate.SQLTemplate
+	UserTable     string
+	UserAuthTable string
+	Joins         []searchUserJoin
+	OrgID         int64
+	AccessAll     bool
+	AccessUserIDs []any
+	QueryPattern  string
+	IsDisabled    *bool
+	AuthModule    string
+	InFilters     []searchUserInFilter
+	WhereFilters  []searchUserWhereFilter
+	OrderBy       string
+	Limit         int
+	Offset        int
+}
+
+func (q searchUsersQuery) IsDisabledValue() bool {
+	return q.IsDisabled != nil && *q.IsDisabled
+}
+
+func (q searchUsersQuery) Validate() error {
+	for _, filter := range q.WhereFilters {
+		if filter.Condition == "" {
+			return fmt.Errorf("search filter condition must not be empty")
+		}
+	}
+	return nil
+}
+
+func searchInFilterArgs(params any) []any {
+	if params == nil {
+		return []any{nil}
+	}
+
+	value := reflect.ValueOf(params)
+	if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
+		return []any{params}
+	}
+
+	args := make([]any, value.Len())
+	for i := range args {
+		args[i] = value.Index(i).Interface()
+	}
+	return args
+}
+
+func newSearchUserWhereFilter(condition string, params any) (searchUserWhereFilter, error) {
+	if !strings.Contains(condition, "?") {
+		if params != nil {
+			return searchUserWhereFilter{}, fmt.Errorf("search filter condition has no placeholder for its value")
+		}
+		return searchUserWhereFilter{Condition: condition}, nil
+	}
+	_, suffix, _ := strings.Cut(condition, "?")
+	if strings.Contains(suffix, "?") {
+		return searchUserWhereFilter{}, fmt.Errorf("search filter condition must have one placeholder")
+	}
+
+	return searchUserWhereFilter{
+		Condition: condition,
+		Params:    params,
+		HasParams: true,
+	}, nil
+}
+
+func (q searchUsersQuery) WhereSQL(filter searchUserWhereFilter) string {
+	if !filter.HasParams {
+		return filter.Condition
+	}
+	prefix, suffix, _ := strings.Cut(filter.Condition, "?")
+	return prefix + q.Arg(filter.Params) + suffix
+}
+
+func buildSearchUserFilters(dbHelper *legacysql.LegacyDatabaseHelper, filters []user.Filter) ([]searchUserJoin, []searchUserInFilter, []searchUserWhereFilter, error) {
+	joins := make([]searchUserJoin, 0)
+	inFilters := make([]searchUserInFilter, 0)
+	whereFilters := make([]searchUserWhereFilter, 0)
+
+	for _, filter := range filters {
+		if join := filter.JoinCondition(); join != nil {
+			joins = append(joins, searchUserJoin{
+				Operator:  join.Operator,
+				Table:     dbHelper.Table(join.Table),
+				Alias:     join.Table,
+				Condition: join.Params,
+			})
+		}
+
+		if in := filter.InCondition(); in != nil {
+			values := searchInFilterArgs(in.Params)
+			inFilters = append(inFilters, searchUserInFilter{
+				Condition: in.Condition,
+				Values:    values,
+			})
+		}
+
+		if where := filter.WhereCondition(); where != nil {
+			params := where.Params
+			if timestamp, ok := params.(time.Time); ok {
+				params = legacysql.NewDBTime(timestamp.In(dbHelper.DB.GetEngine().DatabaseTZ))
+			}
+			queryFilter, err := newSearchUserWhereFilter(where.Condition, params)
+			if err != nil {
+				return nil, nil, nil, err
+			}
+			whereFilters = append(whereFilters, queryFilter)
+		}
+	}
+
+	return joins, inFilters, whereFilters, nil
+}
+
 func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	result := user.SearchUserQueryResult{
 		Users: make([]*user.UserSearchHitDTO, 0),
@@ -701,126 +829,94 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		whereConditions := make([]string, 0)
-		whereParams := make([]any, 0)
-		userTable := dbHelper.Table("user")
-		userAuthTable := dbHelper.Table("user_auth")
-		qUserAuth := quoteTable(dbHelper, "user_auth")
-		sess := dbSess.Table(userTable).Alias("u")
-
-		whereConditions = append(whereConditions, "u.is_service_account = ?")
-		whereParams = append(whereParams, dbHelper.DB.GetDialect().BooleanValue(false))
-
-		// Join with only most recent auth module
-		joinCondition := `(
-		SELECT id from ` + qUserAuth + ` AS user_auth
-			WHERE user_auth.user_id = u.id
-			ORDER BY user_auth.created DESC `
-		joinCondition = "user_auth.id=" + joinCondition + dbHelper.DB.GetDialect().Limit(1) + ")"
-		sess.Join("LEFT", []string{userAuthTable, "user_auth"}, joinCondition)
-		if query.OrgID > 0 {
-			whereConditions = append(whereConditions, "org_id = ?")
-			whereParams = append(whereParams, query.OrgID)
-		}
-
 		// user only sees the users for which it has read permissions
 		acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
 		if err != nil {
 			return err
 		}
-		whereConditions = append(whereConditions, acFilter.Where)
-		whereParams = append(whereParams, acFilter.Args...)
 
-		if query.Query != "" {
-			emailSql, emailArg := dbHelper.DB.GetDialect().LikeOperator("email", true, query.Query, true)
-			nameSql, nameArg := dbHelper.DB.GetDialect().LikeOperator("name", true, query.Query, true)
-			loginSql, loginArg := dbHelper.DB.GetDialect().LikeOperator("login", true, query.Query, true)
-			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", emailSql, nameSql, loginSql))
-			whereParams = append(whereParams, emailArg, nameArg, loginArg)
-		}
-
-		if query.IsDisabled != nil {
-			whereConditions = append(whereConditions, "is_disabled = ?")
-			whereParams = append(whereParams, query.IsDisabled)
-		}
-
-		if query.AuthModule != "" {
-			whereConditions = append(whereConditions, `auth_module=?`)
-			whereParams = append(whereParams, query.AuthModule)
-		}
-
-		if len(whereConditions) > 0 {
-			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-		}
-
-		for _, filter := range query.Filters {
-			if jc := filter.JoinCondition(); jc != nil {
-				sess.Join(jc.Operator, []string{dbHelper.Table(jc.Table), jc.Table}, jc.Params)
-			}
-			if ic := filter.InCondition(); ic != nil {
-				sess.In(ic.Condition, ic.Params)
-			}
-			if wc := filter.WhereCondition(); wc != nil {
-				sess.Where(wc.Condition, wc.Params)
-			}
-		}
-
-		if query.Limit > 0 {
-			offset := query.Limit * (query.Page - 1)
-			sess.Limit(query.Limit, offset)
-		}
-
-		sess.Cols("u.id", "u.uid", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module", "u.is_provisioned", "u.created")
-
-		if len(query.SortOpts) > 0 {
-			for i := range query.SortOpts {
-				for j := range query.SortOpts[i].Filter {
-					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
-				}
-			}
-		} else {
-			sess.Asc("u.login", "u.email")
-		}
-
-		if err := sess.Find(&result.Users); err != nil {
+		accessAll := strings.TrimSpace(acFilter.Where) == "1 = 1"
+		joins, inFilters, whereFilters, err := buildSearchUserFilters(dbHelper, query.Filters)
+		if err != nil {
 			return err
 		}
 
-		// get total
-		user := user.User{}
-		countSess := dbSess.Table(userTable).Alias("u")
-
-		// Join with user_auth table if users filtered by auth_module
-		if query.AuthModule != "" {
-			countSess.Join("LEFT", []string{userAuthTable, "user_auth"}, joinCondition)
-		}
-
-		if len(whereConditions) > 0 {
-			countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
-		}
-
-		for _, filter := range query.Filters {
-			if jc := filter.JoinCondition(); jc != nil {
-				countSess.Join(jc.Operator, []string{dbHelper.Table(jc.Table), jc.Table}, jc.Params)
-			}
-			if ic := filter.InCondition(); ic != nil {
-				countSess.In(ic.Condition, ic.Params)
-			}
-			if wc := filter.WhereCondition(); wc != nil {
-				countSess.Where(wc.Condition, wc.Params)
+		sorts := make([]string, 0)
+		for i := range query.SortOpts {
+			for j := range query.SortOpts[i].Filter {
+				sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
 			}
 		}
+		if len(sorts) == 0 {
+			sorts = []string{"u.login ASC", "u.email ASC"}
+		}
 
-		count, err := countSess.Count(&user)
-		result.TotalCount = count
+		searchQuery := searchUsersQuery{
+			SQLTemplate:   sqltemplate.New(dbHelper.DialectForDriver()),
+			UserTable:     dbHelper.Table("user"),
+			UserAuthTable: dbHelper.Table("user_auth"),
+			Joins:         joins,
+			OrgID:         query.OrgID,
+			AccessAll:     accessAll,
+			AccessUserIDs: acFilter.Args,
+			QueryPattern:  searchQueryPattern(query.Query),
+			IsDisabled:    query.IsDisabled,
+			InFilters:     inFilters,
+			WhereFilters:  whereFilters,
+			OrderBy:       strings.Join(sorts, ", "),
+			AuthModule:    query.AuthModule,
+		}
+		if query.Limit > 0 {
+			searchQuery.Limit = query.Limit
+			searchQuery.Offset = searchUserOffset(query.Limit, query.Page)
+		}
+
+		rawSQL, err := renderUserQuery(searchUsersTemplate, searchQuery)
+		if err != nil {
+			return err
+		}
+		if err := dbSess.SQL(rawSQL, searchQuery.GetArgs()...).Find(&result.Users); err != nil {
+			return err
+		}
+
+		searchQuery.Reset()
+		countSQL, err := renderUserQuery(countSearchUsersTemplate, searchQuery)
+		if err != nil {
+			return err
+		}
+		var countResult struct {
+			Count int64
+		}
+		if _, err := dbSess.SQL(countSQL, searchQuery.GetArgs()...).Get(&countResult); err != nil {
+			return err
+		}
+		result.TotalCount = countResult.Count
 
 		for _, user := range result.Users {
 			user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
 		}
 
-		return err
+		return nil
 	})
 	return &result, err
+}
+
+func searchUserOffset(limit, page int) int {
+	if page > 0 {
+		offset := limit * (page - 1)
+		if offset < 0 {
+			return 0
+		}
+		return offset
+	}
+	return 0
+}
+
+func searchQueryPattern(query string) string {
+	if query == "" {
+		return ""
+	}
+	return "%" + query + "%"
 }
 
 func renderUserQuery(tmpl *template.Template, query sqltemplate.SQLTemplate) (string, error) {

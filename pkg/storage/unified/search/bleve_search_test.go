@@ -352,7 +352,6 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 				{
 					Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-					Type:  resourcepb.QueryFieldType_TEXT,
 					Boost: 1,
 				},
 			},
@@ -926,7 +925,7 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		return &resourcepb.ResourceSearchRequest{
 			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 			Query:       text,
-			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Boost: 1}},
 			Limit:       100000,
 		}
 	}
@@ -944,8 +943,9 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1282,10 +1282,11 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  true,
+		PostRankAuthz:         cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),

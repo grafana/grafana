@@ -10,6 +10,13 @@ import { defaultSpec as defaultNotebookSpec } from '../types';
 import { NotebookRowMenu } from './NotebookRowMenu';
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({ useLazyGetNotebookQuery: jest.fn() }));
+
+// Also stubbed because the notebook header now reads its tag options from a facet on this module, and
+// it calls injectEndpoints on the real client as it loads - which the mock above does not provide.
+// The list page's own tests stub it for the same reason.
+jest.mock('./notebookSearchApi', () => ({
+  useNotebookFieldFacetQuery: jest.fn(),
+}));
 jest.mock('../export/downloadMarkdown', () => ({ downloadMarkdown: jest.fn() }));
 
 const mockUseLazyGetNotebookQuery = jest.mocked(useLazyGetNotebookQuery);

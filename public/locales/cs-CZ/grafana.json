@@ -900,7 +900,6 @@
       "close": "Zavřít",
       "create": "Vytvořit",
       "delete": "Odstranit",
-      "deleting": "Probíhá odstraňování…",
       "edit": "Upravit",
       "export": "Exportovat",
       "export-all": "Exportovat vše",
@@ -2527,13 +2526,13 @@
         "route-count_other": "{{count}} tras"
       },
       "delete": {
-        "confirm": "Ano, odstranit zásadu",
-        "warning-1": "Odstraněním těchto zásad oznamování dojde k jejich trvalému odebrání.",
-        "warning-2": "Určitě chcete zásady odstranit?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Tato akce trvale odebere zásadu oznamování <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Odstranit zásadu oznamování"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtrujte trasy pomocí seznamu odpovídajících osob oddělených čárkami, např.:<1>závažnost = kritická, region = EMEA</1>",
       "generated-policies": "Automaticky generované zásady",
@@ -2580,7 +2579,11 @@
         "reset": "Obnovit",
         "resetting": "Obnovování…",
         "title-delete-notification-policy": "Odstranit zásadu oznamování",
-        "title-reset-notification-policy": "Obnovit zásadu oznamování"
+        "title-reset-notification-policy": "Obnovit zásadu oznamování",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Počkejte prosím, aktualizujeme vaše zásady oznamování.",
@@ -3890,7 +3893,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Odstranit zásadu oznamování"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6098,6 +6101,9 @@
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
       "pill": "Zveřejněný poznámkový blok",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Čas"
     },
     "on-create-new-row": {
@@ -8858,6 +8864,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Sbalit {{name}}",
       "error": "Metriky se nepodařilo načíst",
@@ -8870,6 +8881,7 @@
       "loading-values": "Načítání hodnot…",
       "no-metrics": "Nebyly nalezeny žádné metriky",
       "search-placeholder": "Hledat metriky",
+      "show-metric-details": "",
       "show-more": "Zobrazit více",
       "show-more-metrics": "Zobrazit více metrik",
       "show-more-values": "Zobrazit více hodnot",
@@ -11420,6 +11432,13 @@
       "show": "Zobrazit",
       "switch": "Doporučení se řídí vybraným řešením",
       "switchSolution": "Přepnout řešení",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Doporučení pro váš stack"
     },
     "solutions": {
@@ -11500,6 +11519,24 @@
         "stats-hosts_few": "",
         "stats-hosts_many": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_few": "",
+        "checks_many": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_few": "",
+        "failing_many": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -13090,7 +13127,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -13116,6 +13166,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13892,6 +13943,7 @@
       "behind-branch-text": "Tento zdroj je za větví v úložišti {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí tento zdroj, dokud nebude tato větev sloučena",
+      "move-from-branch": "",
       "not-saved": "Zbytek uživatelů Grafany ve vaší organizaci bude i nadále vidět aktuální verzi uloženou do nakonfigurované výchozí větve, dokud nebude tato větev sloučena",
       "open-in-repo-button": "Otevřít v úložišti {{repoType}}",
       "open-pull-request-in-repo": "Otevřít žádost o stažení v úložišti {{repoType}}",
@@ -13903,6 +13955,7 @@
     "title-created-branch-in-repo": "Ve větvi úložiště {{repoType}} byl vytvořen nový zdroj.",
     "title-deleted-resource-in-branch": "Ve větvi úložiště {{repoType}} byl odstraněn zdroj.",
     "title-loaded-pull-request-in-repo": "Tento zdroj je načten z větve, kterou jste právě vytvořili v úložišti {{repoType}}, a je viditelný pouze pro vás",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Ve větvi úložiště {{repoType}} byl aktualizován zdroj."
   },
   "provisioning": {
@@ -16537,6 +16590,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
