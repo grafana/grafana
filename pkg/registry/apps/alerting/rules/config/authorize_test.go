@@ -37,8 +37,9 @@ func attrs(verb, subresource string) authorizer.AttributesRecord {
 }
 
 const (
-	idHuman = "human" // an authenticated end user
-	idNone  = "none"  // no requester in context
+	idHuman   = "human"   // an authenticated end user
+	idService = "service" // the in-process service identity
+	idNone    = "none"    // no requester in context
 )
 
 func ctxFor(t *testing.T, kind string) context.Context {
@@ -48,6 +49,9 @@ func ctxFor(t *testing.T, kind string) context.Context {
 		return identity.WithRequester(context.Background(), &identity.StaticRequester{
 			Type: types.TypeUser, UserID: 1, UserUID: "1", OrgID: 1,
 		})
+	case idService:
+		ctx, _ := identity.WithServiceIdentity(context.Background(), 1)
+		return ctx
 	case idNone:
 		return context.Background()
 	default:
@@ -59,6 +63,7 @@ func ctxFor(t *testing.T, kind string) context.Context {
 func TestAuthorize(t *testing.T) {
 	cases := []struct {
 		name        string
+		id          string
 		verb        string
 		subresource string
 		resource    string // override; defaults to configs
@@ -69,20 +74,23 @@ func TestAuthorize(t *testing.T) {
 		wantReason  string
 	}{
 		// Reads (get/list/watch) gate on the read action; decision follows RBAC.
-		{name: "read get permitted", verb: "get", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
-		{name: "read get denied", verb: "get", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionDeny},
-		{name: "read list permitted", verb: "list", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
-		{name: "read watch permitted", verb: "watch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "read get permitted", id: idHuman, verb: "get", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "read get denied", id: idHuman, verb: "get", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionDeny},
+		{name: "read list permitted", id: idHuman, verb: "list", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "read watch permitted", id: idHuman, verb: "watch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
 
-		// create/patch/update all gate on the update action — unlike the
-		// notifications Config, there is no service-identity-only carve-out for
-		// create: the singleton must be creatable via the API (see the doc
-		// comment on Authorize).
-		{name: "create permitted", verb: "create", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
-		{name: "create denied", verb: "create", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
-		{name: "update permitted", verb: "update", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
-		{name: "update denied", verb: "update", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
-		{name: "patch permitted", verb: "patch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+		// patch/update gate on the update action.
+		{name: "update permitted", id: idHuman, verb: "update", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+		{name: "update denied", id: idHuman, verb: "update", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
+		{name: "patch permitted", id: idHuman, verb: "patch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+
+		// create is service-identity only: the singleton is seeded automatically,
+		// so humans/GitOps are denied (without consulting RBAC) and update the
+		// seeded object instead. The service identity (the seeder) is gated on
+		// the update permission like any other write.
+		{name: "human create denied even with update", id: idHuman, verb: "create", rbac: true, want: authorizer.DecisionDeny, wantReason: "Config is a singleton seeded automatically; it cannot be created via the API"},
+		{name: "service create permitted with update", id: idService, verb: "create", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+		{name: "service create denied without update", id: idService, verb: "create", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
 
 		// /status: reads gate on read, writes on the status-update action.
 		{name: "status get permitted", verb: "get", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
@@ -113,7 +121,10 @@ func TestAuthorize(t *testing.T) {
 				a.Resource = tc.resource
 			}
 
-			id := idHuman
+			id := tc.id
+			if id == "" {
+				id = idHuman
+			}
 			if tc.noRequester {
 				id = idNone
 			}
