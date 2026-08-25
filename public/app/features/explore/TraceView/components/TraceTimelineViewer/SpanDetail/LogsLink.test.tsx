@@ -1180,21 +1180,32 @@ describe('isDrilldownContext', () => {
     ['grafana-lokiexplore-app', false],
     [undefined, false],
   ])('app %s → %s when the URL is not a drilldown app', (app, expected) => {
-    jest.spyOn(locationService, 'getLocation').mockReturnValue({ pathname: '/explore' } as Location);
+    jest.spyOn(locationService, 'getLocation').mockReturnValue({
+      pathname: '/explore',
+      search: '',
+      state: undefined,
+      hash: '',
+    });
     expect(isDrilldownContext(app)).toBe(expected);
   });
 
   it('treats the standalone Traces Drilldown URL as drilldown when panel context is unset', () => {
-    jest
-      .spyOn(locationService, 'getLocation')
-      .mockReturnValue({ pathname: '/a/grafana-exploretraces-app/explore' } as Location);
+    jest.spyOn(locationService, 'getLocation').mockReturnValue({
+      pathname: '/a/grafana-exploretraces-app/explore',
+      search: '',
+      state: undefined,
+      hash: '',
+    });
     expect(isDrilldownContext(undefined)).toBe(true);
   });
 
   it('treats the standalone Logs Drilldown URL as drilldown when panel context is unset', () => {
-    jest
-      .spyOn(locationService, 'getLocation')
-      .mockReturnValue({ pathname: '/a/grafana-lokiexplore-app/explore' } as Location);
+    jest.spyOn(locationService, 'getLocation').mockReturnValue({
+      pathname: '/a/grafana-lokiexplore-app/explore',
+      search: '',
+      state: undefined,
+      hash: '',
+    });
     expect(isDrilldownContext(undefined)).toBe(true);
   });
 });
