@@ -61,9 +61,13 @@ export function TransformationEditorPanel({
   // recognise — and `TransformationEditor` already bounds the plugin editor it renders for the same
   // reason. Without these, a throw in any one of them takes the whole editor down with it rather
   // than the part that could not render.
+  //
+  // Each depends on the selected transformation, because `ErrorBoundary` clears its error only when a
+  // dependency changes. With none, a display that threw once would keep showing the alert for the
+  // rest of its life — including for a transformation it could describe perfectly well.
   return (
     <>
-      <ErrorBoundaryAlert boundaryName="transformation-filter">
+      <ErrorBoundaryAlert boundaryName="transformation-filter" dependencies={[transformation.transformId]}>
         <TransformationFilterEditor
           transformation={transformation}
           transformations={transformations}
@@ -78,12 +82,12 @@ export function TransformationEditorPanel({
         transformation={transformation}
       />
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-help">
+        <ErrorBoundaryAlert boundaryName="transformation-help" dependencies={[transformation.transformId]}>
           <TransformationHelpDisplay />
         </ErrorBoundaryAlert>
       )}
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-debug">
+        <ErrorBoundaryAlert boundaryName="transformation-debug" dependencies={[transformation.transformId]}>
           <TransformationDebugDisplay />
         </ErrorBoundaryAlert>
       )}

@@ -1,8 +1,8 @@
-import { screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 
-import { TransformationEditorRenderer } from './TransformationEditorRenderer';
+import { TransformationEditorPanel, TransformationEditorRenderer } from './TransformationEditorRenderer';
 import { renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -60,6 +60,34 @@ function makeTransformation(registryItem: TransformerRegistryItem | undefined): 
 describe('TransformationEditorRenderer', () => {
   afterEach(() => {
     debugDisplayThrows = false;
+  });
+
+  it('lets a supplemental display recover when another transformation is selected', () => {
+    // `ErrorBoundary` clears its error only when one of its dependencies changes. Without one, a
+    // display that threw stays on the alert for the rest of its life — and nothing here unmounts it,
+    // so the user cannot get it back by reselecting or by closing the drawer.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    debugDisplayThrows = true;
+
+    const panel = (transformation: Transformation) => (
+      <TransformationEditorPanel
+        transformation={transformation}
+        transformations={[transformation]}
+        updateTransformation={jest.fn()}
+        showSupplementalDisplays
+      />
+    );
+
+    const { rerender } = render(panel(makeTransformation(mockRegistryItem)));
+
+    expect(screen.queryByTestId('transformation-debug-display')).not.toBeInTheDocument();
+
+    debugDisplayThrows = false;
+    rerender(panel({ ...makeTransformation(mockRegistryItem), transformId: 'another-transform' }));
+
+    expect(screen.getByTestId('transformation-debug-display')).toBeInTheDocument();
+
+    consoleError.mockRestore();
   });
 
   it('keeps the editor up when a supplemental display cannot render', () => {
