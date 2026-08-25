@@ -398,9 +398,7 @@ func TestMapperRegistry_AlertRules(t *testing.T) {
 	}
 }
 
-// TestMapperRegistry_AssistantAlertRules verifies the assistant's external
-// alert-rule embedding collection authorizes exactly like the native rule
-// kinds: folder-scoped alert.rules:* actions with folder action-set support.
+// TestMapperRegistry_AssistantAlertRules verifies the assistant's external collection authorizes like the native rule kinds.
 func TestMapperRegistry_AssistantAlertRules(t *testing.T) {
 	reg := NewMapperRegistry()
 

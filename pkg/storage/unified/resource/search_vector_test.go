@@ -699,9 +699,7 @@ func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 }
 
 func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
-	// Legacy external collections (group without the *.ext.grafana.app
-	// suffix) skip per-result authz — the caller post-filters — so every
-	// row comes back even when the access client would deny everything.
+	// Legacy external collections (non-*.ext.grafana.app group) skip per-result authz: the caller post-filters.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
 		results: []vector.VectorSearchResult{
@@ -722,9 +720,7 @@ func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
 }
 
 func TestVectorSearch_ExtGroupExternalCollectionEnforcesAuthz(t *testing.T) {
-	// External collections in *.ext.grafana.app groups get the same
-	// per-result checks as internal resources: rows are batch-checked
-	// against their folder and denied rows are filtered out.
+	// *.ext.grafana.app external collections are batch-checked per result like internal resources.
 	const extGroup = "assistant.alertrules.ext.grafana.app"
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: extGroup, Resource: "alertrules", PartitionKey: "alertrules_external", IsExternal: true},

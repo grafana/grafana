@@ -880,11 +880,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// External rows in *.ext.grafana.app groups get the same per-result
-	// checks as internal resources — the authz service maps those groups
-	// (rows must carry their parent folder for folder-scoped kinds).
-	// Legacy external collections predate that contract, so per-result
-	// checks are skipped and the caller does its own post-filtering.
 	enforced := vectorResultAuthzEnforced(coll)
 	var allowed map[vectorAuthzKey]bool
 	if enforced {
@@ -1079,11 +1074,7 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 // parent (e.g. dashboard panels) share a single batch-check entry.
 type vectorAuthzKey struct{ uid, folder string }
 
-// vectorResultAuthzEnforced reports whether per-result authz checks run for a
-// collection's search results. Internal collections always check; external
-// ones only when their group follows the *.ext.grafana.app convention the
-// authz service maps. Legacy external collections rely on caller-side
-// post-filtering instead.
+// vectorResultAuthzEnforced is false only for legacy external collections (non-*.ext.grafana.app), which rely on caller post-filtering.
 func vectorResultAuthzEnforced(coll vector.Collection) bool {
 	return !coll.IsExternal || strings.HasSuffix(coll.Group, extGroupSuffix)
 }
