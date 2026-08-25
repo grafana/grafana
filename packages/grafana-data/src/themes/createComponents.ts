@@ -18,9 +18,9 @@ interface TagColors {
 }
 
 const badgeColorTokens = z.object({
-  text: z.string(),
-  background: z.string(),
-  border: z.string(),
+  text: z.string().optional(),
+  background: z.string().optional(),
+  border: z.string().optional(),
 });
 
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
