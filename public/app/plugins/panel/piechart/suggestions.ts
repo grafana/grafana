@@ -51,7 +51,7 @@ export const piechartSuggestionsSupplier: VisualizationSuggestionsSupplier<Optio
   // we're filtering out data which has more than 30 slices or less than 2, and we're also
   // determining whether the reduce options should be set based on the data summary.
   if (dataSummary.hasFieldType(FieldType.string) && dataSummary.frameCount === 1) {
-    if (dataSummary.rowCountTotal > SLICE_MAX && dataSummary.rowCountTotal < SLICE_MIN) {
+    if (dataSummary.rowCountTotal > SLICE_MAX || dataSummary.rowCountTotal < SLICE_MIN) {
       return;
     }
 

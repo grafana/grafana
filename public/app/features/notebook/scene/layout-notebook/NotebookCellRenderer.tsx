@@ -4,11 +4,13 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, useStyles2 } from '@grafana/ui';
+import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
+import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -51,7 +53,7 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell panel={panel} />;
+    return <PanelCell panel={panel} isEditing={isEditing} />;
   }
 
   if (narrative) {
@@ -73,14 +75,31 @@ export function NotebookCellRenderer({
 }
 
 // A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
-function PanelCell({ panel }: { panel: VizPanel }) {
+// While editing, a panel with a single, unsophisticated query (the shape a query-first "Query" block
+// produces — see NotebookLayoutManager's buildQueryPanel) also gets an inline query editor above it.
+function PanelCell({ panel, isEditing }: { panel: VizPanel; isEditing: boolean }) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.panel}>
-      <panel.Component model={panel} />
-    </div>
+    <Stack direction="column" gap={1}>
+      {isEditing && isSimpleQueryPanel(panel) && <PanelQueryEditor panel={panel} />}
+      <div className={styles.panel}>
+        <panel.Component model={panel} />
+      </div>
+    </Stack>
   );
+}
+
+function isSimpleQueryPanel(panel: VizPanel): boolean {
+  const queryRunner = getQueryRunnerFor(panel);
+  if (!queryRunner) {
+    return false;
+  }
+
+  const hasTransformations =
+    panel.state.$data instanceof SceneDataTransformer && panel.state.$data.state.transformations.length > 0;
+
+  return queryRunner.state.queries.length <= 1 && !hasTransformations;
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.

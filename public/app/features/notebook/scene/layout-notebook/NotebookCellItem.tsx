@@ -29,8 +29,11 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   // DashboardLayoutItem for the panel editor to open and apply edits.
   public readonly isDashboardLayoutItem = true;
 
+  // Clears `content` alongside `body` to actively hold the "never both" invariant above — the
+  // deserializer's own panel cells never have content to begin with, but NotebookLayoutManager's
+  // convertCellToPanel calls this on a cell that does (turning a narrative cell into a panel one).
   public setElementBody(body: VizPanel) {
-    this.setState({ body });
+    this.setState({ body, content: undefined });
   }
 
   /**

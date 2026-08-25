@@ -12,9 +12,10 @@ import {
   defaultCodeCellContentKind as generatedDefaultCodeCellContentKind,
   defaultLibraryPanelKind as generatedDefaultLibraryPanelKind,
   defaultMarkdownCellContentKind as generatedDefaultMarkdownCellContentKind,
-  defaultQueryCellContentKind as generatedDefaultQueryCellContentKind,
   defaultSpec as generatedDefaultSpec,
   defaultV2PanelKind,
+  defaultV2PanelSpec,
+  defaultVizConfigKind,
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
   type CodeCellContentKind as GeneratedCodeCellContentKind,
@@ -23,7 +24,6 @@ import {
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
   type PanelQueryKind as GeneratedPanelQueryKind,
-  type QueryCellContentKind as GeneratedQueryCellContentKind,
   type Spec as GeneratedSpec,
   type V2PanelKind as GeneratedPanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
@@ -41,11 +41,26 @@ export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
 export type PanelQueryKind = GeneratedPanelQueryKind;
-export type QueryCellContentKind = GeneratedQueryCellContentKind;
 export type Spec = GeneratedSpec;
 
 export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellContentKind;
-export const defaultQueryCellContentKind = generatedDefaultQueryCellContentKind;
 export const defaultSpec = generatedDefaultSpec;
+
+/**
+ * What the "Query" block type inserts: a real Panel element (not a bespoke cell kind), so a
+ * notebook-authored query ends up on the same model as a panel added from a Dashboard or Explore —
+ * see NotebookLayoutManager's buildCellFor. Starts with no datasource/query chosen (buildVizPanelState
+ * seeds a single empty query) and defaults to a timeseries visualization, matching the line-graph
+ * default the old Explore-style query cell used. Picking a different viz type is future work.
+ */
+export function defaultQueryPanelKind(): PanelKind {
+  return {
+    kind: 'Panel',
+    spec: {
+      ...defaultV2PanelSpec(),
+      vizConfig: { ...defaultVizConfigKind(), group: 'timeseries' },
+    },
+  };
+}

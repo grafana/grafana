@@ -102,7 +102,7 @@ export const defaultCellSpec = (): CellSpec => ({
  * Pluggable cell content discriminated by `kind`. New content types are added
  * by extending this union with another <Name>CellContentKind member.
  */
-export type CellContentKind = MarkdownCellContentKind | CodeCellContentKind | QueryCellContentKind;
+export type CellContentKind = MarkdownCellContentKind | CodeCellContentKind;
 
 export const defaultCellContentKind = (): CellContentKind => (defaultMarkdownCellContentKind());
 
@@ -144,34 +144,6 @@ export interface CodeCellContentSpec {
 export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
 	language: "",
 	code: "",
-});
-
-/**
- * An ad hoc, Explore-like query: pick a datasource, write a query, run it, see a graph. Unlike a
- * V2PanelKind, results are never persisted here — only the query itself, so re-opening a notebook
- * never re-triggers a datasource call on its own. `query`/`queryOptions` reuse the same shared
- * dashboard leaf types the panel chain below does (see its own comment on that).
- */
-export interface QueryCellContentKind {
-	kind: "Query";
-	spec: QueryCellContentSpec;
-}
-
-export const defaultQueryCellContentKind = (): QueryCellContentKind => ({
-	kind: "Query",
-	spec: defaultQueryCellContentSpec(),
-});
-
-export interface QueryCellContentSpec {
-	query: PanelQueryKind;
-	queryOptions?: QueryOptionsSpec;
-	// How the graph draws the result — mirrors Explore's own ExploreGraphStyle. Omitted means the
-	// cell has never had one chosen; the UI falls back to the same default Explore itself uses.
-	graphStyle?: "lines" | "bars" | "points" | "stacked_lines" | "stacked_bars";
-}
-
-export const defaultQueryCellContentSpec = (): QueryCellContentSpec => ({
-	query: defaultPanelQueryKind(),
 });
 
 export interface PanelQueryKind {

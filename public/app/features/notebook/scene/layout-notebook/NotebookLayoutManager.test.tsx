@@ -85,11 +85,11 @@ jest.mock('@grafana/ui/unstable', () => {
   };
 });
 
-// QueryCell pulls in datasource-picker/query-editor/panel-renderer machinery with its own dedicated
-// coverage in QueryCell.test.tsx — this file only cares whether inserting one lands the right
-// content on the manager, not whether the cell itself renders correctly.
-jest.mock('./cells/QueryCell', () => ({
-  QueryCell: () => <div data-testid="query-cell-stub" />,
+// PanelQueryEditor pulls in datasource-picker/query-editor machinery with its own dedicated coverage
+// in PanelQueryEditor.test.tsx — this file only cares whether inserting or converting a cell into a
+// panel lands the right VizPanel on the manager, not whether the inline editor itself renders.
+jest.mock('./PanelQueryEditor', () => ({
+  PanelQueryEditor: () => <div data-testid="panel-query-editor-stub" />,
 }));
 
 import { NotebookCellItem } from './NotebookCellItem';
@@ -497,11 +497,6 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
     }
 
-    async function pickQuery(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
-      await user.click(trigger);
-      await user.click(screen.getByRole('menuitem', { name: 'Query' }));
-    }
-
     // The trailing empty cell every notebook always has is a markdown cell in its own right, not a
     // button — typing "/" into it opens the same menu the dividers open by clicking "Add block", but
     // picking a type from it converts *that* cell in place (see NotebookCellRenderer's handlePick)
@@ -528,27 +523,23 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
-    // Query cells reuse the dashboard's own generic query shape (see defaultQueryCellContentKind) —
-    // this just checks the "/" menu actually seeds one, the same way it does for Code.
-    it('inserts an empty query cell where the divider offered it', async () => {
-      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+    // Query inserts a real Panel VizPanel (see NotebookLayoutManager's buildQueryPanel), not narrative
+    // content — this just checks the "/" menu actually builds one, defaulted to a timeseries viz with
+    // no datasource chosen yet, the same starting point buildVizPanelState gives any other Panel element
+    // with no persisted query.
+    // Called directly rather than through renderManager: a real Panel body cell renders a genuine
+    // VizPanel (see PanelCell in NotebookCellRenderer), which needs plugin-registry machinery this
+    // suite doesn't set up — same reason the old Query cell's own rendering had its own dedicated test
+    // file rather than being exercised here. This file only cares whether the divider lands the right
+    // cell on the manager.
+    it('inserts a query panel cell where the divider offered it', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
 
-      await pickQuery(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+      manager.addCell('query', 1);
 
-      expect(cellNames(manager)).toEqual(['a', 'query-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({
-        kind: 'Query',
-        spec: {
-          query: {
-            kind: 'PanelQuery',
-            spec: {
-              query: { kind: 'DataQuery', group: '', version: 'v0', spec: {} },
-              refId: 'A',
-              hidden: false,
-            },
-          },
-        },
-      });
+      expect(cellNames(manager)).toEqual(['a', 'query-1', 'b']);
+      expect(manager.state.cells[1].state.content).toBeUndefined();
+      expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
     });
 
     // The divider after the trailing empty cell is offering to insert *past* it. Inserting after
@@ -598,6 +589,29 @@ describe('NotebookLayoutManager', () => {
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+    });
+
+    // Query converts the cell into a panel (body), not content — a distinct code path from the
+    // content-diffing one every other type above goes through (see NotebookLayoutManager's
+    // convertCellToPanel). Called directly rather than through the "/" menu UI, for the same reason
+    // 'inserts a query panel cell' above is: a real Panel body cell renders a genuine VizPanel, which
+    // needs plugin-registry machinery this suite doesn't set up. The "always one more empty block
+    // ready" invariant (a fresh cell appended once the trailing one stops being empty markdown) is the
+    // live renderer's own bootstrap effect, exercised for other conversions above through the UI;
+    // convertCellToPanel doesn't own that behavior, so it isn't re-asserted here.
+    it('converts the trailing cell into a panel, rather than leaving it narrative content', () => {
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+
+      manager.convertCell(trailing, 'query');
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+      expect(trailing.state.content).toBeUndefined();
+      expect(trailing.state.body?.state.pluginId).toBe('timeseries');
     });
 
     // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
@@ -1111,6 +1125,24 @@ describe('NotebookLayoutManager', () => {
       history.redo();
       expect(manager.state.cells[2]).toBe(added);
       expect(cellNames(manager)).toEqual(['a', 'b', addedName, 'paragraph-1']);
+    });
+
+    // Query builds a body (VizPanel), not content — kept separate from the it.each above, which
+    // asserts on `added?.state.content`, a shape Query's own cell never has.
+    it('undoes and redoes adding a query block', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a']));
+
+      const added = manager.addCell('query', 1);
+
+      expect(history.state.undoLabel).toBe('Add block');
+      expect(added?.state.content).toBeUndefined();
+      expect(added?.state.body?.state.pluginId).toBe('timeseries');
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(added);
     });
 
     // Enter's "split into a new block" gesture. Undoing only removes the split-off cell here — the

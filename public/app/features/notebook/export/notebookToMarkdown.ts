@@ -96,10 +96,6 @@ function cellContentToMarkdown(content: CellContentKind): string {
     return content.spec.text;
   }
 
-  if (content.kind === 'Query') {
-    return fence(JSON.stringify(describeQuery(content.spec.query), null, 2), 'json');
-  }
-
   return fence(content.spec.code, content.spec.language);
 }
 

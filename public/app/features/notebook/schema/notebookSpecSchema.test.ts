@@ -54,44 +54,19 @@ describe('validateNotebookSpec', () => {
     expect(validateNotebookSpec(spec())).toMatchObject({ success: true, errors: [], warnings: [] });
   });
 
-  it('accepts markdown, code, query, panel and library panel elements', () => {
+  it('accepts markdown, code, panel and library panel elements', () => {
     const result = validateNotebookSpec(
       spec({
         elements: {
           md: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '# hi' } } } },
           code: { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language: 'promql', code: 'up' } } } },
-          query: {
-            kind: 'Cell',
-            spec: {
-              content: {
-                kind: 'Query',
-                spec: {
-                  query: {
-                    kind: 'PanelQuery',
-                    spec: {
-                      query: {
-                        kind: 'DataQuery',
-                        group: 'prometheus',
-                        version: 'v0',
-                        datasource: { name: 'gdev-prometheus' },
-                        spec: { expr: 'up' },
-                      },
-                      refId: 'A',
-                      hidden: false,
-                    },
-                  },
-                  queryOptions: { maxDataPoints: 500 },
-                },
-              },
-            },
-          },
           panel: PANEL,
           lib: { kind: 'LibraryPanel', spec: { id: 2, title: 'Shared', libraryPanel: { name: 'cpu', uid: 'lp-1' } } },
         },
         layout: {
           kind: 'NotebookLayout',
           spec: {
-            cells: ['md', 'code', 'query', 'panel', 'lib'].map((name) => ({
+            cells: ['md', 'code', 'panel', 'lib'].map((name) => ({
               kind: 'NotebookLayoutItem',
               spec: { element: { kind: 'ElementReference', name }, source: 'user' },
             })),

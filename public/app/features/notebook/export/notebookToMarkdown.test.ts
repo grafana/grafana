@@ -17,33 +17,6 @@ function codeElement(code: string, language: string): NotebookElement {
   return { kind: 'Cell', spec: { content: { kind: 'Code', spec: { code, language } } } };
 }
 
-function queryElement(expr: string, group: string, datasourceName?: string): NotebookElement {
-  return {
-    kind: 'Cell',
-    spec: {
-      content: {
-        kind: 'Query',
-        spec: {
-          query: {
-            kind: 'PanelQuery',
-            spec: {
-              refId: 'A',
-              hidden: false,
-              query: {
-                kind: 'DataQuery',
-                group,
-                version: 'v0',
-                ...(datasourceName ? { datasource: { name: datasourceName } } : {}),
-                spec: { expr },
-              },
-            },
-          },
-        },
-      },
-    },
-  };
-}
-
 function buildSpec(
   elements: Record<string, NotebookElement>,
   cellNames: string[],
@@ -201,25 +174,6 @@ describe('notebookToMarkdown', () => {
       const spec = buildSpec({ q: codeElement('`x`'.repeat(200000), 'text') }, ['q']);
 
       expect(() => notebookToMarkdown(spec, META)).not.toThrow();
-    });
-
-    // A Query cell has no markdown form either, and no universal "language" the way Code does — so
-    // it is described the same structured way a panel's queries already are (see describeQuery).
-    it('describes a query cell the same structured way a panel query is described', () => {
-      const spec = buildSpec({ q: queryElement('up == 0', 'prometheus', 'gdev-prometheus') }, ['q']);
-
-      const markdown = notebookToMarkdown(spec, META);
-
-      expect(markdown).toContain('"refId": "A"');
-      expect(markdown).toContain('"datasource": "gdev-prometheus"');
-      expect(markdown).toContain('"type": "prometheus"');
-      expect(markdown).toContain('"expr": "up == 0"');
-    });
-
-    it('omits the datasource field entirely for a query cell that never picked one', () => {
-      const spec = buildSpec({ q: queryElement('up', '') }, ['q']);
-
-      expect(notebookToMarkdown(spec, META)).not.toContain('"datasource"');
     });
 
     it('emits an element referenced by two layout items twice', () => {
