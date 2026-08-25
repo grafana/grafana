@@ -6,9 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { UnitPicker } from './UnitPicker';
 
 describe('UnitPicker', () => {
-  it('exposes the UnitPicker e2e selectors', () => {
+  it('exposes the UnitPicker container data-testid', () => {
     render(<UnitPicker onChange={() => {}} />);
     expect(screen.getByTestId(selectors.components.UnitPicker.container)).toBeInTheDocument();
+  });
+
+  it('exposes the combobox state', () => {
+    render(<UnitPicker onChange={() => {}} />);
     const input = screen.getByRole('combobox');
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute('aria-expanded', 'false');
