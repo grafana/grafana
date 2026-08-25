@@ -11,6 +11,12 @@ import (
 
 var ErrPrefNotFound = errors.New("preference not found")
 
+// GlobalHomeDashboardUID is a reserved homeDashboardUID value meaning the owner
+// explicitly chose the global home page: the user > team > org preference
+// fallback stops, and the instance default home applies. It is never a real
+// dashboard UID.
+const GlobalHomeDashboardUID = "global-home"
+
 type Preference struct {
 	ID      int64   `xorm:"pk autoincr 'id'" db:"id"`
 	OrgID   int64   `xorm:"org_id" db:"org_id"`

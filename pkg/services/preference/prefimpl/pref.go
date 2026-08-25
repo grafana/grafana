@@ -82,6 +82,12 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		}
 	}
 
+	// An explicit "global home" choice stops the user > team > org fallback;
+	// resolving it to empty applies the instance default home downstream.
+	if res.HomeDashboardUID == pref.GlobalHomeDashboardUID {
+		res.HomeDashboardUID = ""
+	}
+
 	return res, err
 }
 
