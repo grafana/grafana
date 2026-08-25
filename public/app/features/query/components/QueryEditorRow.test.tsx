@@ -3,7 +3,7 @@ import { type PropsWithChildren } from 'react';
 
 import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
@@ -583,6 +583,10 @@ describe('QueryEditorRow', () => {
     afterEach(() => {
       mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
       mockReplace.mockImplementation((target?: string) => target ?? '');
+      jest.mocked(getDataSourceInstance).mockImplementation((...args: unknown[]) => mockGet(...args));
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockImplementation((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args)));
     });
 
     it('hides the plugin editor immediately when the query datasource changes', async () => {
@@ -627,6 +631,42 @@ describe('QueryEditorRow', () => {
       expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
 
       expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+    });
+
+    it('retries loading after both instance lookups fail when the query datasource changes', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid?: unknown) => {
+        if (uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        };
+      });
+
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }} />
+      );
+
+      await waitFor(() => {
+        expect(getDataSourceInstance).toHaveBeenCalled();
+      });
+      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'recovered-ds', type: 'prometheus' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
     });
   });
 

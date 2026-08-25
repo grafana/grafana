@@ -14,7 +14,6 @@ import {
   getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { SafeSerializableSceneObject, type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
@@ -23,6 +22,7 @@ import { trackReorder } from 'app/features/dashboard-scene/panel-edit/PanelEditN
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRow } from './QueryEditorRow';
+import { getQueryDataSourceIdentity } from './queryDataSourceIdentity';
 
 export interface Props {
   // The query configuration
@@ -329,7 +329,7 @@ function QueryEditorRowWithResolvedDataSource({
   // QueryEditorRows render, and `query.datasource` is often an inline object.
   // `interpolatedUid` is required too — `${ds}` and the scene key stay the same when
   // the variable's value changes, but instance settings (type, meta, jsonData) do not.
-  const interpolatedUid = interpolatedDatasourceUid(query.datasource, scopedVars);
+  const interpolatedUid = getQueryDataSourceIdentity(query.datasource, scopedVars);
   const datasourceKey = stableKey(query.datasource);
   const varsKey = scopedVarsKey(scopedVars);
   // Stamp the interpolated identity onto the fetch so a variable change cannot reuse
@@ -350,48 +350,57 @@ function QueryEditorRowWithResolvedDataSource({
 
   const currentQuerySettings = value && value.interpolatedUid === interpolatedUid ? value.settings : undefined;
   const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings);
-  if (!dataSourceSettings) {
-    return null;
-  }
 
+  // Always render the row so `@hello-pangea/dnd` indices stay contiguous. Returning null
+  // here skips a Draggable and also hides deleted-datasource queries with no recovery path.
   return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
 }
 
 /**
- * A query with its own datasource ref must not inherit the group's settings until that
- * lookup returns. Mixed group settings are the panel mixer, not the query's datasource —
- * using them as a stand-in feeds Mixed into the row header and plugin context.
+ * A query with its own datasource ref must not inherit Mixed group settings — those are
+ * the panel mixer, not the query's datasource. When the lookup is pending or fails, keep
+ * a placeholder so the row stays visible and the user can reassign or delete the query.
  */
 export function resolveRowDataSourceSettings(
   queryDatasource: DataQuery['datasource'],
   querySettings: DataSourceInstanceSettings | undefined,
   groupSettings: DataSourceInstanceSettings
-): DataSourceInstanceSettings | undefined {
+): DataSourceInstanceSettings {
   if (!queryDatasource) {
     return groupSettings;
   }
   if (querySettings) {
     return querySettings;
   }
-  return groupSettings.meta.mixed ? undefined : groupSettings;
+  if (!groupSettings.meta.mixed) {
+    return groupSettings;
+  }
+  return notFoundSettings(queryDatasource, groupSettings);
 }
 
-function interpolatedDatasourceUid(datasource: DataQuery['datasource'], scopedVars?: ScopedVars): string | undefined {
-  if (datasource == null) {
-    return undefined;
-  }
-  const uid = typeof datasource === 'string' ? datasource : datasource.uid;
-  if (!uid) {
-    return undefined;
-  }
-  if (!uid.includes('$')) {
-    return uid;
-  }
-  return getTemplateSrv().replace(uid, scopedVars, firstVariableValue);
-}
+/**
+ * Stand-in settings for a mixed-panel query whose datasource could not be resolved.
+ * Name is the raw uid — `DataSourcePicker` already labels an unresolvable current
+ * ref as `<uid> - not found`, so we must not append that suffix here.
+ */
+function notFoundSettings(
+  queryDatasource: DataQuery['datasource'],
+  groupSettings: DataSourceInstanceSettings
+): DataSourceInstanceSettings {
+  const uid = typeof queryDatasource === 'string' ? queryDatasource : (queryDatasource?.uid ?? '');
+  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
 
-function firstVariableValue<T>(value: T | T[]): T {
-  return Array.isArray(value) ? value[0] : value;
+  return {
+    ...groupSettings,
+    uid,
+    name: uid,
+    type: type || groupSettings.type,
+    meta: {
+      ...groupSettings.meta,
+      mixed: false,
+    },
+    rawRef: undefined,
+  };
 }
 
 function stableKey(value: unknown): string {

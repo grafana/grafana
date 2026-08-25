@@ -596,6 +596,7 @@ describe('QueryEditorRows', () => {
         mixed: true,
         expectQuerySettings: false,
         expectGroup: true,
+        expectNotFound: false,
       },
       {
         name: 'uses resolved query settings on a mixed panel',
@@ -604,14 +605,16 @@ describe('QueryEditorRows', () => {
         mixed: true,
         expectQuerySettings: true,
         expectGroup: false,
+        expectNotFound: false,
       },
       {
-        name: 'does not use mixed group settings while query settings are missing',
+        name: 'uses a not-found placeholder instead of mixed group settings when query settings are missing',
         queryDatasource: { uid: 'prom' },
         hasQuerySettings: false,
         mixed: true,
         expectQuerySettings: false,
         expectGroup: false,
+        expectNotFound: true,
       },
       {
         name: 'falls back to non-mixed group settings when query settings are missing',
@@ -620,8 +623,9 @@ describe('QueryEditorRows', () => {
         mixed: false,
         expectQuerySettings: false,
         expectGroup: true,
+        expectNotFound: false,
       },
-    ])('$name', ({ queryDatasource, hasQuerySettings, mixed, expectQuerySettings, expectGroup }) => {
+    ])('$name', ({ queryDatasource, hasQuerySettings, mixed, expectQuerySettings, expectGroup, expectNotFound }) => {
       const groupSettings = mockDataSource(
         { name: mixed ? MIXED_DATASOURCE_NAME : 'Prometheus', uid: mixed ? MIXED_DATASOURCE_NAME : 'prom' },
         { mixed }
@@ -634,12 +638,15 @@ describe('QueryEditorRows', () => {
         expect(result).toBe(resolved);
       } else if (expectGroup) {
         expect(result).toBe(groupSettings);
-      } else {
-        expect(result).toBeUndefined();
+      } else if (expectNotFound) {
+        expect(result).not.toBe(groupSettings);
+        expect(result.uid).toBe('prom');
+        expect(result.name).toBe('prom');
+        expect(result.meta.mixed).toBe(false);
       }
     });
 
-    it('does not fall back to mixed group settings when query datasource resolution fails', async () => {
+    it('keeps a mixed-panel row visible when query datasource resolution fails', async () => {
       jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(undefined);
 
       const mixedSettings = mockDataSource(
@@ -655,11 +662,31 @@ describe('QueryEditorRows', () => {
         />
       );
 
-      await waitFor(() => {
-        expect(getDataSourceInstanceSettings).toHaveBeenCalled();
-      });
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(screen.queryByText(MIXED_DATASOURCE_NAME)).not.toBeInTheDocument();
+    });
 
-      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
+    it.each([
+      { name: 'legacy expression uid', uid: '-100', settingsUid: '__expr__' },
+      { name: 'default datasource uid', uid: 'default', settingsUid: 'prom-uid' },
+    ])('renders a mixed-panel row for a $name', async ({ uid, settingsUid }) => {
+      const resolvedSettings = mockDataSource({ name: 'Prometheus', uid: settingsUid, type: 'prometheus' });
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(resolvedSettings);
+
+      const mixedSettings = mockDataSource(
+        { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME },
+        { mixed: true }
+      );
+
+      render(
+        <QueryEditorRows
+          {...baseProps}
+          dsSettings={mixedSettings}
+          queries={[{ refId: 'A', datasource: { uid, type: 'prometheus' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
     });
   });
 });

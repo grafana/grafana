@@ -21,7 +21,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getTemplateSrv, renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
@@ -46,6 +46,7 @@ import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
 import { pinScrollIntoView } from './pinScrollIntoView';
+import { getQueryDataSourceIdentity } from './queryDataSourceIdentity';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -113,6 +114,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   private hasStartedScrollIntoView = false;
   private cancelScrollPin?: () => void;
   private dsLoadInFlight = false;
+  /** Last identity `loadDatasource` tried. Sync so `componentDidUpdate` does not re-enter after a failed load. */
+  private lastAttemptedIdentifier?: string | null;
 
   state: State<TQuery> = {
     datasource: null,
@@ -169,47 +172,42 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    * editor mounted against the new query.
    */
   getDataSourceIdentifier(): string | undefined {
-    const queryDataSource = this.props.query.datasource;
-    if (queryDataSource) {
-      const uid = typeof queryDataSource === 'string' ? queryDataSource : queryDataSource.uid;
-      if (uid?.includes('$')) {
-        return getTemplateSrv().replace(uid, this.props.scopedVars, firstVariableValue);
-      }
-      return uid ?? this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
-    }
-
-    return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
+    return getQueryDataSourceIdentity(this.props.query.datasource, this.props.scopedVars, this.props.dataSource);
   }
 
   async loadDatasource() {
+    const identifier = this.getDataSourceIdentifier();
+    this.lastAttemptedIdentifier = identifier;
     this.dsLoadInFlight = true;
     this.setState({ isDatasourceLoading: true });
 
-    const identifier = this.getDataSourceIdentifier();
-    let datasource: DataSourceApi;
-    const interpolatedUID = await this.getInterpolatedDataSourceUID();
-
     try {
-      datasource = await getDataSourceInstance(interpolatedUID);
-    } catch (error) {
-      // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
-      datasource = await getDataSourceInstance();
-    }
+      let datasource: DataSourceApi;
+      const interpolatedUID = await this.getInterpolatedDataSourceUID();
 
-    if (typeof this.props.onDataSourceLoaded === 'function') {
-      this.props.onDataSourceLoaded(datasource);
-    }
+      try {
+        datasource = await getDataSourceInstance(interpolatedUID);
+      } catch {
+        // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
+        datasource = await getDataSourceInstance();
+      }
 
-    this.dsLoadInFlight = false;
-    this.setState({
-      datasource: datasource as unknown as DataSourceApi<TQuery>,
-      queriedDataSourceIdentifier: identifier,
-      isDatasourceLoading: false,
-    });
+      this.props.onDataSourceLoaded?.(datasource);
+      this.setState({
+        datasource: datasource as unknown as DataSourceApi<TQuery>,
+        queriedDataSourceIdentifier: identifier,
+      });
+    } catch {
+      // Record the identity we tried so we don't immediately retry the same one, but
+      // still clear the in-flight flags below so a later identity change can reload.
+      this.setState({ queriedDataSourceIdentifier: identifier });
+    } finally {
+      this.dsLoadInFlight = false;
+      this.setState({ isDatasourceLoading: false });
+    }
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -237,8 +235,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       return;
     }
 
-    // check if we need to load another datasource
-    if (datasource && queriedDataSourceIdentifier !== this.getDataSourceIdentifier()) {
+    // Reload when the query's datasource identity changes. Compare against the
+    // last attempted identity (sync) rather than state — a failed lookup leaves
+    // `queriedDataSourceIdentifier` stale until setState flushes, which would
+    // otherwise re-enter loadDatasource in a loop.
+    if (this.lastAttemptedIdentifier !== this.getDataSourceIdentifier()) {
       this.loadDatasource();
     }
   }
@@ -688,10 +689,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       </div>
     );
   }
-}
-
-function firstVariableValue<T>(value: T | T[]): T {
-  return Array.isArray(value) ? value[0] : value;
 }
 
 /**
