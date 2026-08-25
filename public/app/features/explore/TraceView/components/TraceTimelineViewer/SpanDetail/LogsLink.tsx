@@ -244,9 +244,10 @@ function useHasLogs(
     if (!match) {
       return linkModel;
     }
-    const drilldownPath = inDrilldown && dynamicTraceToLogsEnabled
-      ? pluginLinks.find((link) => link.pluginId === LOGS_DRILLDOWN_APP_ID)?.path
-      : undefined;
+    const drilldownPath =
+      inDrilldown && dynamicTraceToLogsEnabled
+        ? pluginLinks.find((link) => link.pluginId === LOGS_DRILLDOWN_APP_ID)?.path
+        : undefined;
     return rewriteLinkForMatch(linkModel, match, drilldownPath);
   }, [dynamicTraceToLogsEnabled, inDrilldown, linkModel, match, pluginLinks]);
 
