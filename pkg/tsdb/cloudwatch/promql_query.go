@@ -48,6 +48,15 @@ func resolveStepSeconds(q backend.DataQuery, minStep string) float64 {
 	return step
 }
 
+func interpolatePromQLVariables(expr string, q backend.DataQuery, minStep string) string {
+	calculatedStep, err := prommodels.CalculatePrometheusInterval(minStep, "", q.Interval.Milliseconds(), 0, q, intervalv2.NewCalculator())
+	if err != nil {
+		calculatedStep = q.Interval
+	}
+	timeRange := q.TimeRange.To.Sub(q.TimeRange.From)
+	return prommodels.InterpolateVariables(expr, q.Interval, calculatedStep, minStep, "", timeRange)
+}
+
 type prometheusRangeSeries struct {
 	Metric     map[string]string `json:"metric"`
 	Values     [][]interface{}   `json:"values"`
@@ -120,10 +129,12 @@ func (ds *DataSource) executePromQLQuery(ctx context.Context, req *backend.Query
 			region = ds.Settings.Region
 		}
 
+		expression := interpolatePromQLVariables(model.PromqlExpression, q, model.Interval)
+
 		if instant, _ := model.effectiveModes(); instant {
-			resp.Responses[q.RefID] = ds.executePromQLInstant(ctx, region, model.PromqlExpression, q, q.RefID)
+			resp.Responses[q.RefID] = ds.executePromQLInstant(ctx, region, expression, q, q.RefID)
 		} else {
-			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, model.PromqlExpression, model.Interval, q)
+			resp.Responses[q.RefID] = ds.executePromQLRange(ctx, region, expression, model.Interval, q)
 		}
 	}
 

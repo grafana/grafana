@@ -97,6 +97,32 @@ describe('CloudWatchMetricsQueryRunner', () => {
       });
     });
 
+    it('leaves fields.config.interval unset when no period is present, instead of NaN', async () => {
+      const resultsFromBEQuery = {
+        data: {
+          results: {
+            a: {
+              refId: 'a',
+              series: [{ target: 'up', datapoints: [[1, 2]] }],
+            },
+          },
+        },
+      };
+      const { runner, timeRange, request, queryMock } = setupMockedMetricsQueryRunner({
+        response: toDataQueryResponse(resultsFromBEQuery),
+      });
+
+      const observable = runner.performTimeSeriesQuery(
+        { ...request, targets: [validMetricSearchCodeQuery], range: timeRange },
+        queryMock
+      );
+
+      await expect(observable).toEmitValuesWith((received) => {
+        const response = received[0];
+        expect(response.data[0].fields[0].config.interval).toBeUndefined();
+      });
+    });
+
     it('should enrich the error message for throttling errors', async () => {
       const partialQuery: CloudWatchMetricsQuery = {
         metricQueryType: MetricQueryType.Search,

@@ -312,3 +312,21 @@ func TestResolveStepSeconds(t *testing.T) {
 		assert.Equal(t, want.Seconds(), resolveStepSeconds(q, ""))
 	})
 }
+
+func TestInterpolatePromQLVariables(t *testing.T) {
+	t.Run("expands $__rate_interval, $__interval, and $__range using the calculated step", func(t *testing.T) {
+		q := rangeQuery(time.Hour, 1500, 0)
+		got := interpolatePromQLVariables("rate(x[$__rate_interval]) offset $__range and $__interval", q, "5m")
+
+		assert.Contains(t, got, "rate(x[")
+		assert.NotContains(t, got, "$__rate_interval")
+		assert.NotContains(t, got, "$__range")
+		assert.NotContains(t, got, "$__interval")
+	})
+
+	t.Run("leaves an expression with no macros unchanged", func(t *testing.T) {
+		q := rangeQuery(time.Hour, 1500, 0)
+		got := interpolatePromQLVariables("up", q, "")
+		assert.Equal(t, "up", got)
+	})
+}

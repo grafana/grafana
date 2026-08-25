@@ -228,8 +228,11 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {
             if (field.type === FieldType.time) {
-              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals
-              field.config.interval = frame.meta?.custom?.period * 1000;
+              // field.config.interval is populated in order for Grafana to fill in null values at frame intervals.
+              const period = frame.meta?.custom?.period;
+              if (typeof period === 'number') {
+                field.config.interval = period * 1000;
+              }
             }
           });
         });
