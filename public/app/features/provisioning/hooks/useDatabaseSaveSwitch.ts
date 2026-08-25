@@ -100,11 +100,13 @@ export function useDatabaseSaveSwitch({
       databaseSwitchSnapshot: { gitMeta, wasNew: isNewDashboard, uid: dashboard.state.uid },
     });
 
-    // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
-    // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.
-    if (repoDataStatus !== RepoViewStatus.Error) {
-      dashboard.setState({ meta: { ...meta, folderUid: undefined, folderTitle: undefined, k8s: undefined } });
-    }
+    // A dead end never resolved a repository, so its folder may be a plain one worth keeping
+    dashboard.setState({
+      meta:
+        repoDataStatus === RepoViewStatus.Error
+          ? { ...meta, k8s: undefined }
+          : { ...meta, folderUid: undefined, folderTitle: undefined, k8s: undefined },
+    });
   }, [dashboard, drawer, isNewDashboard, repoDataStatus]);
 
   const switchToGit = useCallback(() => {

@@ -54,6 +54,8 @@ export interface Props extends SaveProvisionedDashboardProps {
   canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
+  /** A folder pick is still resolving, so the defaults below still describe the previous folder */
+  isReresolving?: boolean;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -66,6 +68,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  isReresolving,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -648,7 +651,13 @@ export function SaveProvisionedDashboardForm({
               type="submit"
               data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
               disabled={
-                request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating || isCreatingFolder
+                request.isLoading ||
+                readOnly ||
+                !isDirtyState ||
+                isSubmitting ||
+                isValidating ||
+                isCreatingFolder ||
+                isReresolving
               }
             >
               {request.isLoading || isSubmitting || isValidating

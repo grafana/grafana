@@ -101,13 +101,16 @@ describe('useDatabaseSaveSwitch', () => {
     });
   });
 
-  it('keeps the picked folder when the git flow has already dead-ended', () => {
-    const dashboard = createDashboard({ folderUid: 'unmanaged-folder' });
+  it('keeps the picked folder but drops the annotations when the git flow has already dead-ended', () => {
+    const dashboard = createDashboard({
+      folderUid: 'unmanaged-folder',
+      k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } },
+    });
     const { result } = setup({ dashboard, repository: undefined, repoDataStatus: RepoViewStatus.Error });
 
     act(() => result.current.switchToDatabase());
 
-    expect(dashboard.setState).not.toHaveBeenCalled();
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'unmanaged-folder', k8s: undefined } });
   });
 
   it('restores the git meta on switch-back, and only once', () => {

@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
@@ -9,7 +9,11 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { useDatabaseSaveSwitch } from '../../hooks/useDatabaseSaveSwitch';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
-import { getIsNewDashboardSave, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import {
+  getIsNewDashboardSave,
+  useProvisionedDashboardData,
+  type ProvisionedDashboardData,
+} from '../../hooks/useProvisionedDashboardData';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -23,8 +27,17 @@ export interface SaveProvisionedDashboardProps {
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
   const { meta } = dashboard.useState();
+  const resolvedData = useProvisionedDashboardData(dashboard, saveAsCopy);
+
+  // Hold the last settled result across a folder pick, or the spinner would unmount the form that is
+  // already up and drop what the user typed into it
+  const settledData = useRef<ProvisionedDashboardData | undefined>(undefined);
+  const isReresolving = resolvedData.repoDataStatus === RepoViewStatus.Loading && Boolean(settledData.current);
+  if (!isReresolving) {
+    settledData.current = resolvedData;
+  }
   const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    useProvisionedDashboardData(dashboard, saveAsCopy);
+    settledData.current ?? resolvedData;
 
   // Same check the data hook does, read from meta directly: the hook reports isNew as false
   // whenever the repository is not Ready, which is when the escape hatch is needed most
@@ -69,6 +82,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
           canPushToConfiguredBranch={canPushToConfiguredBranch}
           readOnly={readOnly}
           saveAsCopy={saveAsCopy}
+          isReresolving={isReresolving}
         />
       </ProvisionedFormGate>
       {canSwitch && (

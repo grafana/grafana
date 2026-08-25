@@ -216,6 +216,32 @@ describe('SaveProvisionedDashboard', () => {
     expect(screen.getByRole('button', { name: /git repository/i })).toBeInTheDocument();
   });
 
+  it('does not render the form while the first repository lookup is in flight', () => {
+    setup({ defaultValues: null, repository: undefined, repoDataStatus: RepoViewStatus.Loading });
+
+    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+  });
+
+  it('keeps the provisioned form mounted while a folder pick re-resolves the repository', () => {
+    const { rerender, props } = setup();
+
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+
+    // Picking a folder the folder query has not cached puts the lookup back into loading
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    // Unmounting for a spinner would drop the comment, path and workflow the user set
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+  });
+
   it('restores the git-flow folder when switching back from the database form', async () => {
     const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
     const { user } = setup({}, { dashboard });

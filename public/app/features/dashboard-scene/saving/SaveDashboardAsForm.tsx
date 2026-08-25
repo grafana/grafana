@@ -118,6 +118,27 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }:
     }
   }, [drawer, formValues.title, formValues.description]);
 
+  const folderSelectionIdRef = useRef(0);
+  const onFolderChange = useCallback(
+    async (uid: string | undefined, title: string | undefined) => {
+      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
+      const selectionId = ++folderSelectionIdRef.current;
+      setValue('folder', { uid, title });
+      // The database escape hatch stays unmanaged whatever folder is picked
+      const provisionedMeta = drawer?.state.saveToDatabase ? {} : await getProvisionedMeta(uid);
+      if (selectionId !== folderSelectionIdRef.current) {
+        return;
+      }
+      // folderTitle goes with folderUid, or the diff tab and a remounted picker keep naming the old folder
+      dashboard.setState({
+        meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta), folderTitle: title },
+      });
+      // Re-validate title when folder changes to check for duplicates in new folder
+      trigger('title');
+    },
+    [dashboard, drawer, setValue, trigger]
+  );
+
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       setValue('title', e.target.value, { shouldDirty: true });
@@ -258,18 +279,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }:
         </Field>
 
         <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker
-            onChange={async (uid: string | undefined, title: string | undefined) => {
-              setValue('folder', { uid, title });
-              const provisionedMeta = await getProvisionedMeta(uid);
-              dashboard.setState({
-                meta: nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta),
-              });
-              // Re-validate title when folder changes to check for duplicates in new folder
-              trigger('title');
-            }}
-            value={formValues.folder?.uid}
-          />
+          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
         </Field>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>
