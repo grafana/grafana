@@ -255,11 +255,7 @@ export function isKubernetesAttribute(key: string): boolean {
 
 /** Returns true when an attribute key matches Frontend Observability session / app attributes. */
 export function isFrontendObservabilityAttribute(key: string): boolean {
-  return (
-    matchesPrefixes(key, ['browser', 'device', 'session', 'gf.feo11y']) ||
-    key === 'app_id' ||
-    key === 'app_name'
-  );
+  return matchesPrefixes(key, ['browser', 'device', 'session', 'gf.feo11y']) || key === 'app_id' || key === 'app_name';
 }
 
 /** Returns true when an attribute key is linked from Knowledge Graph service entity extensions. */
