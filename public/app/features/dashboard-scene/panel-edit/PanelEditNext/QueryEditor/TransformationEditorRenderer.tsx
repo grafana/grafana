@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type DataTransformerConfig, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
 
 import {
   useActionsContext,
@@ -56,22 +56,37 @@ export function TransformationEditorPanel({
     );
   }
 
+  // Each display is bounded on its own. All three replay the pipeline to describe it — over frames
+  // and options a dashboard supplies, through registry lookups that throw on what they do not
+  // recognise — and `TransformationEditor` already bounds the plugin editor it renders for the same
+  // reason. Without these, a throw in any one of them takes the whole editor down with it rather
+  // than the part that could not render.
   return (
     <>
-      <TransformationFilterEditor
-        transformation={transformation}
-        transformations={transformations}
-        queryData={data}
-        onUpdate={updateTransformation}
-      />
+      <ErrorBoundaryAlert boundaryName="transformation-filter">
+        <TransformationFilterEditor
+          transformation={transformation}
+          transformations={transformations}
+          queryData={data}
+          onUpdate={updateTransformation}
+        />
+      </ErrorBoundaryAlert>
       <TransformationEditor
         key={transformation.transformId}
         inputData={inputData}
         onUpdate={updateTransformation}
         transformation={transformation}
       />
-      {showSupplementalDisplays && <TransformationHelpDisplay />}
-      {showSupplementalDisplays && <TransformationDebugDisplay />}
+      {showSupplementalDisplays && (
+        <ErrorBoundaryAlert boundaryName="transformation-help">
+          <TransformationHelpDisplay />
+        </ErrorBoundaryAlert>
+      )}
+      {showSupplementalDisplays && (
+        <ErrorBoundaryAlert boundaryName="transformation-debug">
+          <TransformationDebugDisplay />
+        </ErrorBoundaryAlert>
+      )}
     </>
   );
 }

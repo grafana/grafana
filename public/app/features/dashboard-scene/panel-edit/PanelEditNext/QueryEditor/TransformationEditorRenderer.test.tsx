@@ -23,8 +23,15 @@ jest.mock('./TransformationHelpDisplay', () => ({
   TransformationHelpDisplay: () => <div data-testid="transformation-help-display" />,
 }));
 
+let debugDisplayThrows = false;
+
 jest.mock('./TransformationDebugDisplay', () => ({
-  TransformationDebugDisplay: () => <div data-testid="transformation-debug-display" />,
+  TransformationDebugDisplay: () => {
+    if (debugDisplayThrows) {
+      throw new Error('the debug drawer could not describe this transformation');
+    }
+    return <div data-testid="transformation-debug-display" />;
+  },
 }));
 
 const mockTransformation: DataTransformerInfo = {
@@ -51,6 +58,28 @@ function makeTransformation(registryItem: TransformerRegistryItem | undefined): 
 }
 
 describe('TransformationEditorRenderer', () => {
+  afterEach(() => {
+    debugDisplayThrows = false;
+  });
+
+  it('keeps the editor up when a supplemental display cannot render', () => {
+    // All three displays replay the pipeline to describe it, over frames and options a dashboard
+    // supplies. Bounding them separately is what keeps a throw in one from taking the editor — the
+    // part the user is actually working in — down with it.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    debugDisplayThrows = true;
+
+    renderWithQueryEditorProvider(<TransformationEditorRenderer />, {
+      selectedTransformation: makeTransformation(mockRegistryItem),
+    });
+
+    expect(screen.getByTestId('transformation-editor')).toBeInTheDocument();
+    expect(screen.getByTestId('transformation-filter-display')).toBeInTheDocument();
+    expect(screen.queryByTestId('transformation-debug-display')).not.toBeInTheDocument();
+
+    consoleError.mockRestore();
+  });
+
   it('renders nothing when no transformation is selected', () => {
     // The renderer is mounted regardless of selection state, so it must guard against
     // rendering the editor when nothing is selected (e.g. on initial load or after deselection).

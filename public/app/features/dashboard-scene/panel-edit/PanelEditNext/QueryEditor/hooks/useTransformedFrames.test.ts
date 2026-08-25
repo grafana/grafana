@@ -150,6 +150,25 @@ describe('useTransformedFrames', () => {
     expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
   });
 
+  it('reports a config whose variables cannot be resolved, once, and replays it as written', () => {
+    // A variable value can carry characters that do not survive the JSON round trip. Replaying the
+    // config as written beats dropping the transformation, but silently doing so is a transformation
+    // matching on a literal `$var` with nothing to explain it. Resolving runs every render, so the
+    // report has to not repeat itself.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    envValue = '"';
+    const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
+
+    const { rerender } = renderHook(() => useTransformedFrames(withVariable, frames));
+    act(() => rerender());
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(withVariable, frames, expect.any(Object));
+    expect(consoleError).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('filterByValue'), expect.any(Error));
+
+    consoleError.mockRestore();
+  });
+
   it('leaves custom operators alone, as the pipeline does', () => {
     // Their options are captured in a closure, so there is nothing here to resolve.
     const operator = jest.fn();

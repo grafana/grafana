@@ -36,6 +36,12 @@ function getTransformationContext(): DataTransformContext {
 }
 
 /**
+ * Configs already reported as unresolvable, so resolving on every render does not repeat the report.
+ * Keyed on the object Scene state holds, so an edit to the transformation reports afresh.
+ */
+const reportedUnresolvable = new WeakSet<DataTransformerConfig>();
+
+/**
  * Resolves variables in transformation options the way the panel's pipeline does before it runs
  * them, because `transformDataFrame` will not: it skips interpolation while a scene is active, and
  * `SceneDataTransformer` compensates by interpolating the configs first. Replaying without this
@@ -52,9 +58,16 @@ function interpolateConfigs(configs: TransformationConfigs): TransformationConfi
 
     try {
       return JSON.parse(getTemplateSrv().replace(JSON.stringify(config)));
-    } catch {
+    } catch (err) {
       // A variable value can carry characters that do not survive the round trip. The pipeline has
       // the same exposure; running the config uninterpolated beats dropping the transformation.
+      // Reported, because the symptom is an editor quietly describing a transformation that matches
+      // on the literal `$var`, which is indistinguishable from the editor simply being wrong.
+      if (!reportedUnresolvable.has(config)) {
+        reportedUnresolvable.add(config);
+        console.error(`Failed to resolve variables in the "${config.id}" transformation for the panel editor`, err);
+      }
+
       return config;
     }
   });
