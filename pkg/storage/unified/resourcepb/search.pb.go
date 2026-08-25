@@ -991,7 +991,7 @@ type HybridSearchResult struct {
 	// Folder display title, resolved fresh at query time from the folder
 	// index (one batched lookup per request). Empty for the root folder or
 	// when resolution fails — best-effort display data, never an error.
-	// Like folder and managed_by_*, always empty for external collections.
+	// managed_by_* are always empty for external collections.
 	FolderTitle string `protobuf:"bytes,6,opt,name=folder_title,json=folderTitle,proto3" json:"folder_title,omitempty"`
 	// Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
 	// With a reranker configured this is the calibrated cross-encoder relevance (roughly

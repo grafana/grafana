@@ -1318,6 +1318,30 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	idx.mu.Unlock()
 }
 
+func TestHybridSearch_ExternalResolvesFolderTitles(t *testing.T) {
+	// External rows can carry folder uids; folder titles resolve like any
+	// other kind. managedBy stays skipped (no bleve index for the kind).
+	backend := externalBackend(
+		vector.VectorSearchResult{UID: "u1", Title: "T1", Subresource: "chunk/0", Content: "c1", Score: 0.1, Folder: "f1"},
+	)
+	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+	s.externalLexical = &fakeLexicalSearcher{}
+	idx.folderResp = lexTableResponse([3]string{"f1", "Folder One", ""})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "Folder One", resp.Results[0].FolderTitle)
+
+	idx.mu.Lock()
+	assert.NotNil(t, idx.gotFolderReq)
+	assert.Nil(t, idx.gotReq, "lexical leg must not touch bleve")
+	assert.Nil(t, idx.gotManagedByReq, "managedBy must not touch bleve")
+	idx.mu.Unlock()
+}
+
 func TestHybridSearch_ExternalAuthzFiltersBothLegs(t *testing.T) {
 	// Each leg authz-filters its own hits, so a deny-all client drops
 	// lexical-only hits too, not just the semantic leg's rows.

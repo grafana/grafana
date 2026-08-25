@@ -712,9 +712,8 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
 	}
 	if ftsIdx != "" {
-		// Best-effort: queries stay correct unindexed, and a legacy row over
-		// the 1MiB tsvector limit would otherwise wedge every write.
-		// Readiness stays false, so creation retries on later writes.
+		// Non-fatal: this runs on the write path and lexical search works
+		// without the index (just unindexed). Retried on the next write.
 		if _, err := conn.ExecContext(ctx, fmt.Sprintf(
 			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (%s)`,
 			ftsIdx, leaf, ftsIndexExpr,

@@ -211,19 +211,19 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 
 	// Independent lookups over disjoint fields; run concurrently.
-	// Both query bleve, so external collections skip them.
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		s.resolveFolderTitles(egCtx, req.Key.Namespace, fused)
+		return nil
+	})
+	// resolveManagedBy queries the kind's own bleve index; external kinds have none.
 	if !coll.IsExternal {
-		eg, egCtx := errgroup.WithContext(ctx)
-		eg.Go(func() error {
-			s.resolveFolderTitles(egCtx, req.Key.Namespace, fused)
-			return nil
-		})
 		eg.Go(func() error {
 			s.resolveManagedBy(egCtx, req.Key, lexicalUIDSet(lex), fused)
 			return nil
 		})
-		_ = eg.Wait() // both are best-effort and never return an error
 	}
+	_ = eg.Wait() // both are best-effort and never return an error
 
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
 }
