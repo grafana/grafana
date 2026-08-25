@@ -86,8 +86,15 @@ var PathRewriters = []filters.PathRewriter{
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
+	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// Runs inside DefaultBuildHandlerChain so RequestInfo and the resource-named
+		// request span are available: marks watch spans so long-running watch
+		// connections can be told apart from GET/LIST and filtered out downstream,
+		// and records how long the watch takes to establish.
+		handler = filters.WithWatchInstrumentation(handler, watchMetrics.observeEstablishment)
 
 		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
 		// and injects it into the k8s audit event context (used for audit log suppression).
