@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { forwardRef, useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -46,6 +46,7 @@ const getDashboards = debounce(findDashboards, 250, { leading: true });
 export const DashboardPicker = forwardRef<HTMLElement, Props>(
   ({ value, onChange, placeholder, noOptionsMessage, showUnknown, ...props }, ref) => {
     const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
+    const abortRef = useRef<AbortController | null>(null);
 
     // This is required because the async select does not match the raw uid value
     // We can not use a simple Select because the dashboard search should not return *everything*
@@ -53,6 +54,14 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       if (!value || value === current?.value?.uid) {
         return;
       }
+
+      const abortController = new AbortController();
+      abortRef.current = abortController;
+      const setCurrentIfLatest = (next: SelectableValue<DashboardPickerDTO>) => {
+        if (!abortController.signal.aborted) {
+          setCurrent(next);
+        }
+      };
 
       (async () => {
         // value was manually changed from outside or we are rendering for the first time.
@@ -62,7 +71,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
           const dto = await api.getDashboardDTO(value, undefined);
 
           if (isDashboardV2Resource(dto)) {
-            setCurrent({
+            setCurrentIfLatest({
               value: {
                 uid: dto.metadata.name,
                 name: dto.spec.title,
@@ -73,7 +82,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
             });
           } else {
             if (dto.dashboard) {
-              setCurrent({
+              setCurrentIfLatest({
                 value: {
                   uid: dto.dashboard.uid,
                   name: dto.dashboard.title,
@@ -87,7 +96,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
         } catch {
           if (showUnknown) {
             const name = t('dashboard-picker.unknown-dashboard', 'Unknown dashboard ({{uid}})', { uid: value });
-            setCurrent({
+            setCurrentIfLatest({
               value: {
                 uid: value,
                 name,
@@ -97,12 +106,17 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
           }
         }
       })();
+
+      return () => {
+        abortController.abort();
+      };
       // we don't need to rerun this effect every time `current` changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value, showUnknown]);
 
     const onPicked = useCallback(
       (sel: SelectableValue<DashboardPickerDTO>) => {
+        abortRef.current?.abort();
         setCurrent(sel);
         onChange?.(sel?.value);
       },
