@@ -237,14 +237,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   dragging: css({
     opacity: 0.9,
-    backgroundColor: theme.colors.background.primary,
-    borderRadius: theme.shape.radius.default,
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    // The dragged frame doesn't need the wider gutter hit-box (the handle and hover bridge are already
-    // hidden via affordancesHidden), and without this its own background/shadow would visibly bleed
-    // into the gutter while it floats.
-    paddingLeft: 0,
-    marginLeft: 0,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      zIndex: -1,
+      pointerEvents: 'none',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: theme.spacing(4),
+      [theme.breakpoints.up('md')]: {
+        left: theme.spacing(7),
+      },
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+    },
   }),
   affordancesHidden: css({
     [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
@@ -254,11 +262,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   actionsHoverBridge: css({
     position: 'absolute',
     bottom: '100%',
-    left: theme.spacing(4),
+    // Starts at the frame's own left edge, covering the gutter/handle column above it too — not just
+    // the span the actions bar itself occupies. Without that, the top-left corner of the widened hit-box
+    // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
+    // pointer has to drift right past the gutter before the actions bar appears.
+    left: 0,
+    width: theme.spacing(12),
     [theme.breakpoints.up('md')]: {
-      left: theme.spacing(7),
+      width: theme.spacing(15),
     },
-    width: theme.spacing(8),
     height: theme.spacing(4),
     pointerEvents: 'auto',
   }),

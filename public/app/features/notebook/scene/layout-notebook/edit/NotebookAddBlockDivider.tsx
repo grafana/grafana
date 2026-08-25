@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    padding: theme.spacing(1, 0),
+    padding: theme.spacing(2, 0),
     opacity: 0,
     '&:hover, &:focus-within': {
       opacity: 1,
