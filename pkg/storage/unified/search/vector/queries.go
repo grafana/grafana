@@ -3,7 +3,6 @@ package vector
 import (
 	"database/sql"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"text/template"
@@ -444,7 +443,9 @@ type sqlVectorCollectionSearchResponse struct {
 	Content     string
 	Score       float64
 	Folder      string
-	Metadata    json.RawMessage
+	// []byte, not json.RawMessage: only *[]byte scans a NULL without error,
+	// and metadata is optional on external rows.
+	Metadata []byte
 }
 
 // MetadataFilterGroup is one filter rendered as OR-ed JSONB containments:
@@ -512,8 +513,9 @@ type sqlVectorCollectionLexicalSearchResponse struct {
 	Folder      string
 	Subresource string
 	Content     string
-	Metadata    json.RawMessage
-	Rank        float64
+	// See sqlVectorCollectionSearchResponse.Metadata.
+	Metadata []byte
+	Rank     float64
 }
 
 type sqlVectorCollectionLexicalSearchRequest struct {

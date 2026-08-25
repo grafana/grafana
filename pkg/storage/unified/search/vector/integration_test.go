@@ -1049,6 +1049,22 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 		assert.Empty(t, search("the -staging"))
 	})
 
+	t.Run("rows without metadata are searchable", func(t *testing.T) {
+		// Metadata is optional on external writes; a NULL must not fail the
+		// row scan on either leg.
+		noMeta := row("r5", "chunk/0", "windows kubelet flapping", "")
+		noMeta.Metadata = nil
+		require.NoError(t, backend.Upsert(ctx, []Vector{noMeta}))
+		hits := search("kubelet")
+		require.Equal(t, []string{"r5"}, uids(hits))
+		assert.Nil(t, hits[0].Metadata)
+
+		semHits, err := pg.Search(ctx, ns, testModel, extRes, makeEmbedding(0.1, 0.2), 10,
+			SearchFilter{Field: "uid", Values: []string{"r5"}})
+		require.NoError(t, err)
+		require.Len(t, semHits, 1)
+	})
+
 	t.Run("legacy rows without ts are invisible", func(t *testing.T) {
 		// Rows written before the ts column exist with ts NULL; they don't
 		// match until rewritten by an upsert.
