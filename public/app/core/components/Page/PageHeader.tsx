@@ -69,6 +69,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       display: 'flex',
       flexDirection: 'row',
+      alignSelf: 'flex-start',
+      alignItems: 'center',
       gap: theme.spacing(1),
     }),
     titleSubtitleContainer: css({
