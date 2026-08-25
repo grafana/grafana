@@ -134,6 +134,9 @@ for i in "${!PACKAGES[@]}"; do
     fi
 done
 
+# Reindex after filtering so packages with tests are distributed consecutively.
+PACKAGES=("${PACKAGES[@]}")
+
 for i in "${!PACKAGES[@]}"; do
     if (( (i % m) + 1 != n )); then
         unset 'PACKAGES[i]'
