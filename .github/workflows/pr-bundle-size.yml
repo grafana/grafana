@@ -48,86 +48,30 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout base commit
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          persist-credentials: false
-
-      - name: Set up Node.js for base commit
-        uses: ./.github/actions/setup-node
-
-      - name: Restore base frontend build
-        id: base-cache
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
-        with:
-          key: "e2e-build-frontend-v2-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
-
-      - name: Install base dependencies
-        if: steps.base-cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/yarn-install
-
-      - name: Build base frontend
-        if: steps.base-cache.outputs.cache-hit != 'true'
-        env:
-          NO_SOURCEMAP: '1'
-        run: make build-js
-
-      - name: Save base frontend build
-        if: steps.base-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
-        with:
-          key: ${{ steps.base-cache.outputs.cache-primary-key }}
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
-
-      - name: Record base bundle sizes
-        run: yarn bundle-size:stats > "$RUNNER_TEMP/base-bundle-sizes.txt"
-
       - name: Checkout PR commit
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - name: Set up Node.js for PR commit
-        uses: ./.github/actions/setup-node
-
-      - name: Restore PR frontend build
-        id: pr-cache
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      - name: Checkout base commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          key: "e2e-build-frontend-v2-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
 
-      - name: Install PR dependencies
-        if: steps.pr-cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/yarn-install
-
-      - name: Build PR frontend
-        if: steps.pr-cache.outputs.cache-hit != 'true'
-        env:
-          NO_SOURCEMAP: '1'
-        run: make build-js
-
-      - name: Save PR frontend build
-        if: steps.pr-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      - name: Restore or build base frontend
+        uses: ./.github/actions/build-frontend
         with:
-          key: ${{ steps.pr-cache.outputs.cache-primary-key }}
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
+          working-directory: base
+
+      - name: Record base bundle sizes
+        working-directory: base
+        run: yarn bundle-size:stats > "$RUNNER_TEMP/base-bundle-sizes.txt"
+
+      - name: Restore or build PR frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Record PR bundle sizes
         run: yarn bundle-size:stats > "$RUNNER_TEMP/pr-bundle-sizes.txt"

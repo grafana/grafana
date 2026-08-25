@@ -124,14 +124,8 @@ jobs:
           ref: ${{ needs.check.outputs.head-sha }}
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        uses: ./.github/actions/yarn-install
-
-      - name: Build frontend
-        run: yarn build
+      - name: Restore or build frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4

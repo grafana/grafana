@@ -1,0 +1,51 @@
+name: Build frontend
+
+description: Restores or builds the Grafana frontend production assets.
+
+inputs:
+  working-directory:
+    description: Repository directory to build, relative to the workspace.
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Restore frontend build
+      id: cache
+      uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      with:
+        key: "frontend-build-v1-${{ inputs.working-directory }}-${{ runner.os }}-${{ hashFiles(format('{0}/yarn.lock', inputs.working-directory), format('{0}/package.json', inputs.working-directory), format('{0}/packages/**', inputs.working-directory), format('{0}/public/**', inputs.working-directory), format('{0}/scripts/webpack/**', inputs.working-directory), format('{0}/scripts/rspack/**', inputs.working-directory), format('{0}/scripts/cli/env-util.ts', inputs.working-directory), format('!{0}/**/*.test.ts', inputs.working-directory), format('!{0}/**/*.test.tsx', inputs.working-directory), format('{0}/tsconfig.json', inputs.working-directory), format('{0}/.browserslistrc', inputs.working-directory), format('{0}/nx.json', inputs.working-directory), format('{0}/project.json', inputs.working-directory), format('{0}/.nvmrc', inputs.working-directory), format('{0}/Makefile', inputs.working-directory), '.github/actions/build-frontend/action.yml') }}"
+        path: |
+          ${{ inputs.working-directory }}/public/build
+          ${{ inputs.working-directory }}/public/build-swagger
+          ${{ inputs.working-directory }}/public/app/plugins/*/*/dist
+
+    - name: Set up Node.js
+      uses: ./.github/actions/setup-node
+      with:
+        cwd: ${{ inputs.working-directory }}
+
+    - name: Install yarn dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: ./.github/actions/yarn-install
+      with:
+        cwd: ${{ inputs.working-directory }}
+
+    - name: Build frontend
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        NO_SOURCEMAP: '1'
+      run: make build-js
+
+    - name: Save frontend build
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
+      with:
+        key: ${{ steps.cache.outputs.cache-primary-key }}
+        path: |
+          ${{ inputs.working-directory }}/public/build
+          ${{ inputs.working-directory }}/public/build-swagger
+          ${{ inputs.working-directory }}/public/app/plugins/*/*/dist
