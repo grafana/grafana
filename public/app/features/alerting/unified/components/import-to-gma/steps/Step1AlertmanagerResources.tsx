@@ -32,7 +32,7 @@ import { useAutoSyncConfiguration } from '../../settings/useAutoSyncConfiguratio
 import { type ImportFormValues } from '../ImportToGMA';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
-import { getNotificationsSourceOptions, isRulesForcedSkipped } from '../Wizard/steps';
+import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
 import { type DryRunValidationResult } from '../types';
 
 import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
@@ -94,7 +94,7 @@ export function Step1Content({
   ]);
 
   // Auto-sync mirrors the source directly, skipping Policy Tree Name and the dry-run.
-  const autoSyncActive = isRulesForcedSkipped(autoSyncNotificationsEnabled ?? false, notificationsSource);
+  const autoSyncActive = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
 
   const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
 
@@ -289,7 +289,7 @@ export function Step1Content({
                     labelWidth={30}
                     tooltip={t(
                       'alerting.import-to-gma.step1.autosync-tooltip',
-                      'Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.'
+                      'Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.'
                     )}
                   >
                     <InlineSwitch
