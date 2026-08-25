@@ -10,11 +10,7 @@ import { Registry, type RegistryType, type PluginExtensionConfigs } from './Regi
 
 const logPrefix = 'Could not register exposed component. Reason:';
 
-// The registry stores components with different prop contracts but never renders them itself.
-// `never` accepts those contracts without pretending the erased registry can safely supply props.
-type RegisteredExposedComponentProps = never;
-
-export type ExposedComponentRegistryItem<Props = RegisteredExposedComponentProps> = {
+export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
   description?: string;
@@ -23,7 +19,7 @@ export type ExposedComponentRegistryItem<Props = RegisteredExposedComponentProps
 
 export class ExposedComponentsRegistry extends Registry<
   ExposedComponentRegistryItem,
-  PluginExtensionExposedComponentConfig<RegisteredExposedComponentProps>
+  PluginExtensionExposedComponentConfig
 > {
   constructor(
     apps: AppPluginConfig[],
@@ -37,10 +33,7 @@ export class ExposedComponentsRegistry extends Registry<
 
   mapToRegistry(
     registry: RegistryType<ExposedComponentRegistryItem>,
-    {
-      pluginId,
-      configs,
-    }: PluginExtensionConfigs<PluginExtensionExposedComponentConfig<RegisteredExposedComponentProps>>
+    { pluginId, configs }: PluginExtensionConfigs<PluginExtensionExposedComponentConfig>
   ): RegistryType<ExposedComponentRegistryItem> {
     if (!configs) {
       return registry;

@@ -2,11 +2,7 @@ import { css } from '@emotion/css';
 import { Component, type MouseEvent, type ReactNode, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  type GrafanaTheme2,
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringSnapshotV1,
-} from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Button, useStyles2 } from '@grafana/ui';
@@ -14,6 +10,10 @@ import { getModKey } from 'app/core/utils/browser';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringSnapshotV1,
+} from './internalCoauthoringContract';
 
 interface Props {
   adapter: QueryEditorCoauthoringAdapterV1;

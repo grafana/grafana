@@ -2,13 +2,13 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import {
-  type DataQuery,
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringContextV1,
-} from '@grafana/data';
+import { type DataQuery } from '@grafana/data';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringContextV1,
+} from './internalCoauthoringContract';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,

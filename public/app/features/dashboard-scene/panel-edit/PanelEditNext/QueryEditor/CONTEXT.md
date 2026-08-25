@@ -14,7 +14,13 @@ The query row owns the coauthoring transaction:
 - the temporary panel-data preview
 - accept, discard, and manual-edit cancellation
 
-The datasource query editor registers a row-scoped `QueryEditorCoauthoringAdapterV1`. The adapter reports editor facts and constructs datasource-specific context and typed proposals. It does not render Core UI or stage an editor-specific preview.
+The Prometheus query editor registers a row-scoped `QueryEditorCoauthoringAdapterV1`. The adapter reports editor facts and constructs PromQL-specific context and typed proposals. It does not render Core UI or stage an editor-specific preview.
+
+## Private seam
+
+For this PanelEditNext experiment, Core passes the optional `unstable_queryEditorCoauthoringV1` prop only to the `prometheus` plugin type. Amazon Managed Service for Prometheus remains outside this experiment even though it reuses Prometheus editor modules. The interface is private to this paired Core and Prometheus implementation: each repository keeps a structurally identical copy rather than publishing an experimental contract from `@grafana/data`. An older Core omits the prop, and an older Prometheus plugin ignores it, so mixed versions degrade to the ordinary query editor.
+
+Before a second datasource adapter is added, promote a reviewed, generalized interface into `@grafana/data`; do not copy this private prop or either repository's local contract. The same promotion review is required before query coauthoring graduates from this experiment to a supported plugin extension point.
 
 ## Preview invariant
 

@@ -66,26 +66,6 @@ describe('ExposedComponentsRegistry', () => {
     });
   });
 
-  it('should register components with required props', async () => {
-    const id = `${pluginId}/with-required-props/v1`;
-    const registry = await createRegistry();
-    const Component = ({ message }: { message: string }) => React.createElement('div', null, message);
-
-    registry.register({
-      pluginId,
-      configs: [
-        {
-          id,
-          title: 'Required props',
-          component: Component,
-        },
-      ],
-    });
-
-    const state = await registry.getState();
-    expect(state[id].component).toBe(Component);
-  });
-
   it('should be possible to register multiple exposed components at one time', async () => {
     const pluginId = 'grafana-basic-app';
     const id1 = `${pluginId}/hello-world1/v1`;

@@ -1,10 +1,12 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type QueryEditorCoauthoringAdapterV1, type QueryEditorCoauthoringSnapshotV1 } from '@grafana/data';
-
 import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringSnapshotV1,
+} from './internalCoauthoringContract';
 
 let mockThrowSessionRender = false;
 

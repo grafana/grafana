@@ -1,12 +1,15 @@
 import { cx } from '@emotion/css';
 import { type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode, useEffect, useRef } from 'react';
 
-import { type QueryEditorCoauthoringChangeV1, type QueryEditorCoauthoringContextV1 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
+import {
+  type QueryEditorCoauthoringChangeV1,
+  type QueryEditorCoauthoringContextV1,
+} from './internalCoauthoringContract';
 import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {

@@ -2,11 +2,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom';
 
 import { createAssistantContextItem, createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
-import {
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringContextV1,
-  type QueryEditorCoauthoringProposalResultV1,
-} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -23,6 +18,11 @@ import {
   QueryCoauthoringProposal,
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringContextV1,
+  type QueryEditorCoauthoringProposalResultV1,
+} from './internalCoauthoringContract';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,

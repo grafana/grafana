@@ -327,6 +327,7 @@ describe('usePluginComponent()', () => {
       configs: [
         {
           ...exposedComponentConfig,
+          // @ts-expect-error - The registry shouldn't be used this way
           component: (props: Props) => {
             if (props.override) {
               props.a.b.c = 'baz';
@@ -382,6 +383,7 @@ describe('usePluginComponent()', () => {
       configs: [
         {
           ...exposedComponentConfig,
+          // @ts-expect-error - The registry shouldn't be used this way
           component: (props: Props) => {
             if (props.override) {
               props.a.b.c = 'baz';

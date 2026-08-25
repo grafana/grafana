@@ -9,8 +9,6 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringRegistrationV1,
   type TestDataSourceResponse,
 } from '@grafana/data';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -22,6 +20,10 @@ import { QueryEditorType } from '../constants';
 import { type QueryCoauthoringHost, useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 import { QueryEditorProvider } from './QueryEditorContext';
 import { QueryEditorPanel, QueryEditorRenderer, synchronizeCoauthoringBaselineQuery } from './QueryEditorRenderer';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
+} from './internalCoauthoringContract';
 import {
   ds1SettingsMock,
   mockActions,
@@ -123,15 +125,15 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('does not enable query coauthoring when the feature flag is disabled', () => {
-    function CapabilityQueryEditor(props: { queryEditorCoauthoring?: object }) {
-      expect(props.queryEditorCoauthoring).toBeUndefined();
+    function CapabilityQueryEditor(props: { query: DataQuery; unstable_queryEditorCoauthoringV1?: object }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toBeUndefined();
       return <div data-testid="capability-query-editor" />;
     }
 
     renderRenderer(queryA, {
       selectedQueryDsData: {
         datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
-        dsSettings: ds1SettingsMock,
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
       },
     });
 
@@ -141,19 +143,40 @@ describe('QueryEditorRenderer', () => {
   it('provides the datasource coauthoring registrar when the feature flag is enabled', () => {
     mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
 
-    function CapabilityQueryEditor(props: { queryEditorCoauthoring?: object }) {
-      expect(props.queryEditorCoauthoring).toBeDefined();
+    function CapabilityQueryEditor(props: {
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toEqual({ register: expect.any(Function) });
       return <div data-testid="capability-query-editor" />;
     }
 
     renderRenderer(queryA, {
       selectedQueryDsData: {
         datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
-        dsSettings: ds1SettingsMock,
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
       },
     });
 
     expect(screen.getByTestId('capability-query-editor')).toBeInTheDocument();
+  });
+
+  it('does not offer the private coauthoring seam to a second datasource', () => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+
+    function OtherDatasourceQueryEditor(props: { query: DataQuery; unstable_queryEditorCoauthoringV1?: object }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toBeUndefined();
+      return <div data-testid="other-datasource-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: OtherDatasourceQueryEditor }),
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    expect(screen.getByTestId('other-datasource-query-editor')).toBeInTheDocument();
   });
 
   it('registers the row-scoped adapter and renders its selection trigger in Core', async () => {
@@ -171,18 +194,19 @@ describe('QueryEditorRenderer', () => {
     };
 
     function CapabilityQueryEditor({
-      queryEditorCoauthoring,
+      unstable_queryEditorCoauthoringV1,
     }: {
-      queryEditorCoauthoring?: QueryEditorCoauthoringRegistrationV1;
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
     }) {
-      useEffect(() => queryEditorCoauthoring?.register(adapter), [queryEditorCoauthoring]);
+      useEffect(() => unstable_queryEditorCoauthoringV1?.register(adapter), [unstable_queryEditorCoauthoringV1]);
       return <div data-testid="capability-query-editor" />;
     }
 
     const view = renderRenderer(queryA, {
       selectedQueryDsData: {
         datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
-        dsSettings: ds1SettingsMock,
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
       },
     });
 

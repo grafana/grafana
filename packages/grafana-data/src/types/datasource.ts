@@ -526,84 +526,6 @@ export interface LegacyMetricFindQueryOptions {
   variable?: { name: string };
 }
 
-/** @alpha */
-export interface QueryEditorCoauthoringRangeV1 {
-  from: number;
-  to: number;
-}
-
-/** @alpha */
-export interface QueryEditorCoauthoringMetadataV1 {
-  kind: string;
-  name: string;
-  attributes?: Record<string, string | string[]>;
-}
-
-/** @alpha */
-export interface QueryEditorCoauthoringLanguageV1 {
-  id: string;
-  displayName: string;
-  /**
-   * Static, datasource-owned guidance for editing this query language.
-   * This must not contain user-authored query text or dynamically loaded metadata.
-   */
-  guidance?: string[];
-}
-
-/** @alpha */
-export interface QueryEditorCoauthoringContextV1 {
-  revision: string;
-  query: string;
-  focusRanges: QueryEditorCoauthoringRangeV1[];
-  language: QueryEditorCoauthoringLanguageV1;
-  metadata: QueryEditorCoauthoringMetadataV1[];
-}
-
-/** @alpha */
-export interface QueryEditorCoauthoringChangeV1 {
-  id: string;
-  original: string;
-  proposed: string;
-  kind?: string;
-  focus?: 'inside' | 'outside' | 'mixed';
-}
-
-/** @alpha */
-export type QueryEditorCoauthoringSnapshotV1 =
-  | { mode: 'hidden' }
-  | { mode: 'selection'; portalTarget: HTMLElement }
-  | { mode: 'invoked'; invocationId: string; portalTarget: HTMLElement };
-
-/** @alpha */
-export interface QueryEditorCoauthoringInvocationV1<TQuery extends DataQuery = DataQuery> {
-  baseline: TQuery;
-  context: QueryEditorCoauthoringContextV1;
-}
-
-/** @alpha */
-export type QueryEditorCoauthoringProposalResultV1<TQuery extends DataQuery = DataQuery> =
-  | {
-      status: 'ready';
-      query: TQuery;
-      changes: QueryEditorCoauthoringChangeV1[];
-    }
-  | { status: 'rejected'; reason: 'invalid' | 'unchanged' | 'stale' };
-
-/** @alpha */
-export interface QueryEditorCoauthoringAdapterV1<TQuery extends DataQuery = DataQuery> {
-  getSnapshot(): QueryEditorCoauthoringSnapshotV1;
-  subscribe(listener: VoidFunction): VoidFunction;
-  invoke(): void;
-  readInvocation(invocationId: string): Promise<QueryEditorCoauthoringInvocationV1<TQuery>>;
-  prepareProposal(invocationId: string, source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
-  dismiss(): void;
-}
-
-/** @alpha */
-export interface QueryEditorCoauthoringRegistrationV1<TQuery extends DataQuery = DataQuery> {
-  register(adapter: QueryEditorCoauthoringAdapterV1<TQuery>): VoidFunction;
-}
-
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -613,8 +535,6 @@ export interface QueryEditorProps<
   datasource: DSType;
   query: TVQuery;
   onRunQuery: () => void;
-  /** @alpha */
-  queryEditorCoauthoring?: QueryEditorCoauthoringRegistrationV1<TVQuery>;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   onAddQuery?: (query: TQuery) => void;

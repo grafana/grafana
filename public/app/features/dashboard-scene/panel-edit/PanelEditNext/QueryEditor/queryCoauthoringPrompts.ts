@@ -1,5 +1,6 @@
-import { type QueryEditorCoauthoringContextV1 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+
+import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 
 export interface QueryProposal {
   proposedQuery: string;

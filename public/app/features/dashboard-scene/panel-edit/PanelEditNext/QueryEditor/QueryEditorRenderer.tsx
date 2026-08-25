@@ -8,8 +8,6 @@ import {
   DataSourcePluginContextProvider,
   LoadingState,
   type PanelData,
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringRegistrationV1,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -21,7 +19,14 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import {
+  type InternalQueryEditorCoauthoringPropsV1,
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
+} from './internalCoauthoringContract';
 import { type QueryPreview } from './queryPreview';
+
+const PROMETHEUS_DATASOURCE_TYPE = 'prometheus';
 
 interface QueryDatasourceData {
   datasource?: DataSourceApi;
@@ -309,6 +314,12 @@ export function QueryEditorPanel({
   }
 
   const { datasource, dsSettings } = queryDsData;
+  const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
+    unstable_queryEditorCoauthoringV1:
+      coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE
+        ? coauthoringRegistration
+        : undefined,
+  };
   const editorQuery = coauthoringProposal?.refId === query.refId ? coauthoringProposal : query;
   const editorQueries = coauthoringProposal
     ? queries.map((candidate) => (candidate.refId === coauthoringProposal.refId ? coauthoringProposal : candidate))
@@ -321,6 +332,7 @@ export function QueryEditorPanel({
           <ErrorBoundaryAlert boundaryName="query-editor-renderer">
             <QueryEditorComponent
               key={coauthoringIdentity}
+              {...internalCoauthoringProps}
               app={CoreApp.PanelEditor}
               data={filteredData}
               datasource={datasource}
@@ -330,7 +342,6 @@ export function QueryEditorPanel({
               queries={editorQueries}
               query={editorQuery}
               range={filteredData?.timeRange}
-              queryEditorCoauthoring={coauthoringEnabled ? coauthoringRegistration : undefined}
             />
             {coauthoringAdapter && (
               <QueryCoauthoringSurface adapter={coauthoringAdapter} onBaseline={synchronizeCoauthoringBaseline} />
