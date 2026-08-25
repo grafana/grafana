@@ -151,7 +151,7 @@ describe('decorateSystemJSInstantiate', () => {
     mockLogInfo.mockClear();
   });
 
-  it('reports monitored imports with the plugin ID without changing their values', async () => {
+  it('reports shared dependency imports with the plugin ID without changing their values', async () => {
     let importedUseHistory: (() => string) | undefined;
     let Switch: (() => string) | undefined;
     let router: System.Module | undefined;
@@ -209,6 +209,14 @@ describe('decorateSystemJSInstantiate', () => {
           pluginId: 'acme-panel',
           dependencyName: 'react-router-dom',
           importName: 'Switch',
+        },
+      ],
+      [
+        'Plugin accessed shared dependency import',
+        {
+          pluginId: 'acme-panel',
+          dependencyName: 'react-router-dom',
+          importName: 'Routes',
         },
       ],
     ]);

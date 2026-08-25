@@ -13,11 +13,14 @@ import { sharedDependenciesMap } from './sharedDependencies';
 import { type SystemJSRegistration, type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
 
-const monitoredSharedDependencyImports: Record<string, Record<string, true>> = {
-  'react-router-dom': {
-    Switch: true,
-    useHistory: true,
-  },
+const monitoredSharedDependencies: Record<string, true> = {
+  'react-router-dom': true,
+  'react-router': true,
+};
+
+const ignoredInteropExports: Record<string, true> = {
+  __esModule: true,
+  __useDefault: true,
 };
 
 const reportedSharedDependencyImports = new Set<string>();
@@ -73,8 +76,8 @@ export function initSystemJSHooks() {
   systemJSPrototype.onload = decorateSystemJsOnload;
 }
 
-// Named imports only exist as property reads inside compiled System.register setters.
-// Proxy the namespace at that boundary to retain the importing plugin's identity.
+// Compiled System.register setters expose named imports as namespace property reads.
+// Wrapping that namespace preserves both the import name and the importing plugin ID.
 export async function decorateSystemJSInstantiate(
   this: SystemJSWithLoaderHooks,
   originalInstantiate: SystemJSWithLoaderHooks['instantiate'],
@@ -83,22 +86,15 @@ export async function decorateSystemJSInstantiate(
   meta?: unknown
 ): Promise<SystemJSRegistration | undefined> {
   const registration = await originalInstantiate.call(this, url, firstParentUrl, meta);
-  console.log('[systemjs] instantiate ' + url, { this: this, url, firstParentUrl, meta, registration });
   const pluginId = extractCacheKeyFromPath(url);
   if (!registration || !pluginId) {
     return registration;
   }
 
   const [dependencies, declare, metadata] = registration;
-  if (!dependencies.some((dependency) => monitoredSharedDependencyImports[dependency])) {
+  if (!dependencies.some((dependency) => monitoredSharedDependencies[dependency])) {
     return registration;
   }
-
-  console.log('[systemjs] instantiate has a monitored dependency, wrapping setters for pluginId: ' + pluginId, {
-    dependencies,
-    declare,
-    metadata,
-  });
 
   return [
     dependencies,
@@ -110,9 +106,9 @@ export async function decorateSystemJSInstantiate(
 
       for (let index = 0; index < dependencies.length; index++) {
         const dependencyName = dependencies[index];
-        const monitoredImports = monitoredSharedDependencyImports[dependencyName];
+        const isMonitoredDependency = monitoredSharedDependencies[dependencyName];
         const setter = declaration.setters[index];
-        if (!monitoredImports || !setter) {
+        if (!isMonitoredDependency || !setter) {
           continue;
         }
 
@@ -120,7 +116,7 @@ export async function decorateSystemJSInstantiate(
         declaration.setters[index] = function (dependency) {
           dependencyProxy ??= new Proxy(dependency, {
             get(target, property, receiver) {
-              if (typeof property === 'string' && monitoredImports[property]) {
+              if (typeof property === 'string' && !ignoredInteropExports[property]) {
                 reportSharedDependencyImport(pluginId, dependencyName, property);
               }
               return Reflect.get(target, property, receiver);
