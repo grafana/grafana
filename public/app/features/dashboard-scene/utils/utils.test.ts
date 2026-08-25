@@ -22,12 +22,14 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 
+import { createPanelDataTransformer } from './createPanelDataTransformer';
 import { activateFullSceneTree } from './test-utils';
 import {
   isValidLibraryPanelRef,
   hasLibraryPanelsInV1Dashboard,
   getLayoutForObject,
   forceRenderChildren,
+  getDataTransformerFor,
 } from './utils';
 
 setPluginImportUtils({
@@ -546,6 +548,42 @@ describe('utils', () => {
 
       expect(layout).toBe(autoGrid);
       expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+  });
+
+  describe('getDataTransformerFor', () => {
+    // Manual mode keeps the runner from issuing real requests; these tests only care about which
+    // provider the lookup lands on.
+    const buildTransformer = () =>
+      createPanelDataTransformer({
+        $data: new SceneQueryRunner({ queries: [{ refId: 'A' }], runQueriesMode: 'manual' }),
+        transformations: [{ id: 'organize', options: {} }],
+      });
+
+    it("returns the transformer holding the panel's own transformations", () => {
+      const transformer = buildTransformer();
+      const panel = new VizPanel({ pluginId: 'timeseries', $data: transformer });
+
+      expect(getDataTransformerFor(panel)).toBe(transformer);
+    });
+
+    it('falls back to the provider on the grid item, as a repeated panel has', () => {
+      const transformer = buildTransformer();
+      const item = new DashboardGridItem({ body: new VizPanel({ pluginId: 'timeseries' }), $data: transformer });
+
+      expect(getDataTransformerFor(item.state.body)).toBe(transformer);
+    });
+
+    it('returns undefined for a panel running its own queries untransformed, even below a transformer', () => {
+      const panel = new VizPanel({
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [{ refId: 'A' }], runQueriesMode: 'manual' }),
+      });
+      const item = new DashboardGridItem({ body: panel, $data: buildTransformer() });
+
+      // The point of the narrow lookup: a write must land on the panel's own transformations, never
+      // on a provider it happens to sit under
+      expect(getDataTransformerFor(item.state.body)).toBeUndefined();
     });
   });
 });

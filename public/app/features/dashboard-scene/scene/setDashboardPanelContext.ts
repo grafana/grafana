@@ -2,24 +2,35 @@ import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataF
 import { reportInteraction } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
+import {
+  AdHocFiltersVariable,
+  dataLayers,
+  isSystemTransformation,
+  sceneGraph,
+  type SceneDataTransformation,
+  sceneUtils,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type DataSourceRef, type DataTransformerConfig } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
+import { filterDataTransformerConfigs } from '../panel-edit/PanelEditNext/QueryEditor/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import {
   getDashboardSceneFor,
+  getDataTransformerFor,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
   isNewPanelQueryErrorsUIEnabled,
 } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
+import { adHocTransformationsEnabled } from './systemTransformations';
 
 export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelContext) {
   const dashboard = getDashboardSceneFor(vizPanel);
@@ -203,6 +214,27 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
   };
 
+  // Gated at build time rather than per call: both members are absent when this dashboard cannot
+  // take the write, which is how a panel knows not to render the affordance at all.
+  if (adHocTransformationsEnabled() && dashboard.canEditDashboard()) {
+    // Read on access, like `app` above: the context is built once and cached on the VizPanel while
+    // the transformation list changes underneath it.
+    Object.defineProperty(context, 'transformations', {
+      enumerable: true,
+      configurable: true,
+      get: () => {
+        const transformer = getDataTransformerFor(vizPanel);
+        return transformer ? asConfigs(transformer.state.transformations) : undefined;
+      },
+    });
+
+    context.onTransformationsChange = (transformations) => {
+      // setUserTransformations rather than setState: it reprocesses the pipeline itself, and it drops
+      // origin-tagged entries from the array it is handed instead of letting a caller persist one.
+      getDataTransformerFor(vizPanel)?.setUserTransformations(transformations);
+    };
+  }
+
   context.canExecuteActions = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     return dashboard.canEditDashboard();
@@ -220,6 +252,31 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
   }
+}
+
+/** Keyed on the state array, which scenes replaces on every write. */
+const configsByTransformations = new WeakMap<SceneDataTransformation[], DataTransformerConfig[]>();
+
+/**
+ * The panel's transformations in the shape `PanelContext.transformations` promises: configs only,
+ * since a panel can do nothing with a custom operator, and nothing carrying an origin, which belongs
+ * to the provider that registered it and is never persisted.
+ *
+ * Memoized because the getter is read on every render: a panel using the value as an effect dep, or
+ * comparing it to decide whether to re-derive, needs repeat reads between writes to be the same array.
+ */
+function asConfigs(transformations: SceneDataTransformation[]): DataTransformerConfig[] {
+  const cached = configsByTransformations.get(transformations);
+
+  if (cached) {
+    return cached;
+  }
+
+  const configs = filterDataTransformerConfigs(transformations.filter((t) => !isSystemTransformation(t)));
+
+  configsByTransformations.set(transformations, configs);
+
+  return configs;
 }
 
 /**

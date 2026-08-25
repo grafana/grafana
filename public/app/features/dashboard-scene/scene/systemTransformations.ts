@@ -23,6 +23,15 @@ export function pluginTransformationsEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false);
 }
 
+/**
+ * Whether panels may author transformations of their own. Independent of
+ * {@link pluginTransformationsEnabled}: those are the plugin's read-only ones, these are the user's,
+ * written from a gesture and saved with the dashboard.
+ */
+export function adHocTransformationsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaAdHocTransformations, false);
+}
+
 /** Keyed on what scenes returned, which is memoized per pass — see {@link getResolvedSystemTransformations}. */
 const unwrappedByResolved = new WeakMap<ResolvedSceneTransformations, ResolvedSystemTransformations>();
 
