@@ -885,7 +885,6 @@
       "close": "Tutup",
       "create": "Buat",
       "delete": "Hapus",
-      "deleting": "Menghapus...",
       "edit": "Edit",
       "export": "Ekspor",
       "export-all": "Ekspor semua",
@@ -2479,13 +2478,10 @@
         "route-count_other": "{{count}} rute"
       },
       "delete": {
-        "confirm": "Ya, hapus kebijakan",
-        "warning-1": "Menghapus kebijakan pemberitahuan ini akan menghapusnya secara permanen.",
-        "warning-2": "Apa Anda yakin ingin menghapus kebijakan ini?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Tindakan ini akan menghapus kebijakan notifikasi <1>{{routeName}}</1> secara permanen.",
-        "title-delete-notification-policy": "Hapus kebijakan notifikasi"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filter rute menggunakan daftar pencocok yang dipisahkan koma, misalnya:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Kebijakan yang dibuat otomatis",
@@ -2529,7 +2525,8 @@
         "reset": "Atur Ulang",
         "resetting": "Mengatur ulang...",
         "title-delete-notification-policy": "Hapus kebijakan notifikasi",
-        "title-reset-notification-policy": "Atur ulang kebijakan notifikasi"
+        "title-reset-notification-policy": "Atur ulang kebijakan notifikasi",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Harap tunggu sementara kami memperbarui kebijakan pemberitahuan Anda.",
@@ -3803,7 +3800,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Hapus kebijakan pemberitahuan"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -5978,6 +5975,9 @@
       "description": "Urutan vertikal panel, teks, dan sel kode",
       "name": "Buku catatan",
       "pill": "Buku catatan yang Dipublikasikan",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Waktu"
     },
     "on-create-new-row": {
@@ -8684,6 +8684,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Tidak ada informasi volume yang tersedia untuk kueri dan rentang waktu saat ini."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Ciutkan {{name}}",
       "error": "Gagal memuat metrik",
@@ -8696,6 +8701,7 @@
       "loading-values": "Memuat nilai...",
       "no-metrics": "Tidak ada metrik yang ditemukan",
       "search-placeholder": "Cari metrik",
+      "show-metric-details": "",
       "show-more": "Tampilkan lebih banyak",
       "show-more-metrics": "Tampilkan lebih banyak metrik",
       "show-more-values": "Tampilkan lebih banyak nilai",
@@ -11198,6 +11204,13 @@
       "show": "Tampilkan",
       "switch": "Rekomendasi mengikuti solusi yang dipilih",
       "switchSolution": "Ganti solusi",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Rekomendasi untuk stack Anda"
     },
     "solutions": {
@@ -11242,6 +11255,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12821,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12822,6 +12860,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13592,6 +13631,7 @@
       "behind-branch-text": "Sumber daya ini berada di belakang cabang di {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Pengguna Grafana lainnya di organisasi Anda masih akan melihat sumber daya ini hingga cabang ini digabungkan",
+      "move-from-branch": "",
       "not-saved": "Pengguna Grafana lainnya di organisasi Anda masih akan melihat versi saat ini yang disimpan ke cabang default yang dikonfigurasi hingga cabang ini digabungkan",
       "open-in-repo-button": "Buka di {{repoType}}",
       "open-pull-request-in-repo": "Buka permintaan penarikan di {{repoType}}",
@@ -13603,6 +13643,7 @@
     "title-created-branch-in-repo": "Sumber daya baru telah dibuat di cabang di {{repoType}}.",
     "title-deleted-resource-in-branch": "Sumber daya telah dihapus di cabang di {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Sumber daya ini dimuat dari cabang yang baru saja Anda buat di {{repoType}} dan hanya dapat dilihat oleh Anda",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Sumber daya telah diperbarui di cabang di {{repoType}}."
   },
   "provisioning": {
@@ -16147,6 +16188,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

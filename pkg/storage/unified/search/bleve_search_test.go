@@ -3,6 +3,7 @@ package search_test
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log"
 	"slices"
@@ -943,8 +944,9 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1281,10 +1283,11 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  true,
+		PostRankAuthz:         cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -3337,6 +3340,97 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 				require.Nil(t, res.Error)
 			})
 		}
+	})
+}
+
+// tags are indexed on deleted documents too, so trash can show them and narrow by
+// one. Unlike the trash-only fields this reuses the standard tags mapping every
+// index already has, so the round trip is what needs proving: a field with no
+// column definition is dropped from the response without complaint.
+func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	deleted := func(name, title string, tags []string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
+				},
+				Title: title, Name: name, Tags: tags,
+				IsDeleted: new(true),
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			deleted("prod-only", "Alpha one", []string{"prod"}),
+			deleted("prod-and-team", "Alpha two", []string{"prod", "team-a"}),
+			deleted("untagged", "Alpha three", nil),
+			// A live document with the same tag, to prove the trash scope still applies.
+			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
+				},
+				Title: "Alpha live", Name: "live", Tags: []string{"prod"},
+			}},
+		}})
+	})
+
+	tagFilter := func(op selection.Operator, values ...string) *resourcepb.ResourceSearchRequest {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_TAGS,
+			Operator: string(op),
+			Values:   values,
+		}}
+		return q
+	}
+
+	t.Run("filtering by one tag", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.In, "prod"), []string{"prod-only", "prod-and-team"})
+	})
+
+	// One of the two documents carries this tag, so a passing filter cannot be the
+	// scope clause alone.
+	t.Run("filtering by a second tag on the same document", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.In, "team-a"), []string{"prod-and-team"})
+	})
+
+	t.Run("excluding a tag", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.NotIn, "prod"), []string{"untagged"})
+	})
+
+	t.Run("returning the values", func(t *testing.T) {
+		q := tagFilter(selection.In, "prod", "team-a")
+		q.Fields = []string{resource.SEARCH_FIELD_TAGS}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Columns, 1, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
+
+		rows := res.Results.Rows
+		require.Len(t, rows, 2)
+		require.Equal(t, "prod-and-team", rows[0].Key.Name)
+		// An array column is JSON, unlike the scalar trash columns.
+		var tags []string
+		require.NoError(t, json.Unmarshal(rows[0].Cells[0], &tags))
+		require.ElementsMatch(t, []string{"prod", "team-a"}, tags)
+	})
+
+	// tags is a standard field, so unlike deleted_by it stays usable on live search.
+	t.Run("live search still filters on tags", func(t *testing.T) {
+		q := tagFilter(selection.In, "prod")
+		q.IsDeleted = false
+		checkSearchQueryUnordered(t, index, q, []string{"live"})
 	})
 }
 
