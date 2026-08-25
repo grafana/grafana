@@ -16,6 +16,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -32,6 +33,8 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
   /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
   onCancel?: () => void;
+  /** Carries title/description across a swap to another save form; omit outside the save drawer. */
+  drawer?: SaveDashboardDrawer;
 }
 
 /**
@@ -67,14 +70,15 @@ export function nextMetaAfterSaveAsFolderChange(
   };
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }: Props) {
   const { changedSaveModel } = changeInfo;
+  const draft = drawer?.saveFormDraft;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
-      title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
-      description: changedSaveModel.description ?? '',
+      title: draft?.title ?? (changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`),
+      description: draft?.description ?? changedSaveModel.description ?? '',
       folder: {
         uid: dashboard.state.meta.folderUid,
         title: dashboard.state.meta.folderTitle,
@@ -105,6 +109,14 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
       }
     };
   }, []);
+
+  // Park what is typed as it changes rather than on unmount: React renders the form that takes
+  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
+  useEffect(() => {
+    if (drawer) {
+      drawer.saveFormDraft = { title: formValues.title, description: formValues.description };
+    }
+  }, [drawer, formValues.title, formValues.description]);
 
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

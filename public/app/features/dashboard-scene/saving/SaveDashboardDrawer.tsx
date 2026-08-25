@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
@@ -37,7 +39,21 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean; uid?: string };
 }
 
+/** Title and description typed into a save form, so a form swap can hand them to the next one */
+export interface SaveFormDraft {
+  title?: string;
+  description?: string;
+}
+
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
+  /**
+   * Deliberately not scene state: a folder pick can change which save form applies, and each form
+   * keeps title/description in its own local form state, so the draft outlives the swap here. It is
+   * only read when a form mounts and written when one unmounts, so making it reactive would just
+   * re-render the drawer on every swap.
+   */
+  public saveFormDraft: SaveFormDraft | undefined;
+
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
     const changeInfo = dashboard.getDashboardChanges();
@@ -92,7 +108,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const { isProvisioned: isProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(dashboard, saveAsCopy);
+  const { isProvisioned: resolvedIsProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(
+    dashboard,
+    saveAsCopy
+  );
+  // A folder pick re-runs the repository lookup, so hold the last settled answer while the next one
+  // is in flight: unmounting the form that is already up would drop what the user typed into it
+  const settledIsProvisionedNG = useRef<boolean | undefined>(undefined);
+  if (!isResolvingRepo) {
+    settledIsProvisionedNG.current = resolvedIsProvisionedNG;
+  }
+  const isProvisionedNG = settledIsProvisionedNG.current ?? resolvedIsProvisionedNG;
+  // Only the first lookup has nothing to hold, so it is the only one that may show a spinner
+  const isFirstRepoResolve = isResolvingRepo && settledIsProvisionedNG.current === undefined;
 
   const tabs = (
     <TabsBar>
@@ -173,12 +201,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       );
     }
 
-    if (isResolvingRepo) {
+    if (isFirstRepoResolve) {
       return <Spinner />;
     }
 
     if (saveAsCopy || changeInfo.isNew) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} />;
+      return (
+        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} drawer={model} />
+      );
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {

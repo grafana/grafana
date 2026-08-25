@@ -22,12 +22,13 @@ export interface SaveProvisionedDashboardProps {
 }
 
 export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAsCopy }: SaveProvisionedDashboardProps) {
+  const { meta } = dashboard.useState();
   const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
 
-  // Same check the data hook does, read straight from meta: the hook reports isNew as false
+  // Same check the data hook does, read from meta directly: the hook reports isNew as false
   // whenever the repository is not Ready, which is when the escape hatch is needed most
-  const isNewDashboard = getIsNewDashboardSave(dashboard.state.meta, saveAsCopy);
+  const isNewDashboard = getIsNewDashboardSave(meta, saveAsCopy);
 
   const { saveToDatabase, canSwitch, switchToDatabase, switchToGit } = useDatabaseSaveSwitch({
     dashboard,
@@ -42,7 +43,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   if (saveToDatabase) {
     return (
       <Stack direction="column" gap={2}>
-        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />
+        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={drawer} />
         <SwitchSaveTargetButton onClick={switchToGit}>
           <Trans i18nKey="dashboard-scene.save-provisioned-dashboard.save-to-git">Save to Git repository instead</Trans>
         </SwitchSaveTargetButton>

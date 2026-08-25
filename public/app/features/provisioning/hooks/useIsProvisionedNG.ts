@@ -3,6 +3,7 @@ import { config } from '@grafana/runtime';
 import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
+import { getIsNewDashboardSave } from './useProvisionedDashboardData';
 
 export interface ProvisionedNGState {
   isProvisioned: boolean;
@@ -14,9 +15,10 @@ export function useIsProvisionedNG(dashboard: DashboardScene, saveAsCopy?: boole
   // Subscribed here rather than read off state, so the lookup re-resolves when the save form
   // changes the folder without relying on the caller to subscribe
   const { uid, meta } = dashboard.useState();
-  // Both identities must be absent: a stored dashboard resolves its repository from its own
-  // annotations, so it must not trigger a folder or folderless lookup
-  const isNewDashboard = !uid && !meta.k8s?.name;
+  // Built on the shared predicate so it cannot drift from the other save paths. The extra uid
+  // term is this hook's own: a stored dashboard resolves its repository from its own annotations,
+  // so neither identity may be present before a folder or folderless lookup is triggered
+  const isNewDashboard = !uid && getIsNewDashboardSave(meta);
   // A save-as copy writes a new file, so it resolves the folder/root like a new dashboard: the
   // source's own annotations describe where the source lives, not where the copy is headed
   const isNewSave = isNewDashboard || Boolean(saveAsCopy);

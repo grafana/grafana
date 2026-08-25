@@ -38,8 +38,10 @@ function createDashboard({
   k8s,
   initialMeta = {},
 }: { folderUid?: string; uid?: string; k8s?: DashboardMeta['k8s']; initialMeta?: DashboardMeta } = {}) {
+  const state = { meta: { folderUid, uid, k8s } };
   return {
-    state: { meta: { folderUid, uid, k8s } },
+    state,
+    useState: () => state,
     setState: jest.fn(),
     getInitialState: () => ({ meta: initialMeta }),
   } as unknown as DashboardScene;

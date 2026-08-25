@@ -54,7 +54,10 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedNG', () => {
 });
 
 jest.mock('app/features/provisioning/components/Dashboards/SaveProvisionedDashboard', () => ({
-  SaveProvisionedDashboard: () => <div data-testid="save-provisioned-dashboard" />,
+  // Renders the parked draft so a swap can assert the form taking over sees it on its first render
+  SaveProvisionedDashboard: ({ drawer }: { drawer: SaveDashboardDrawer }) => (
+    <div data-testid="save-provisioned-dashboard">{drawer.saveFormDraft?.title}</div>
+  ),
 }));
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
@@ -418,6 +421,66 @@ describe('SaveDashboardDrawer', () => {
       expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
     });
 
+    it('keeps the typed-in save form mounted when a folder pick re-runs the lookup', async () => {
+      let repoState = { isProvisioned: false, isLoading: false };
+      jest.mocked(useIsProvisionedNG).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Typed title');
+
+      // Picking a folder restarts the lookup against a cold cache
+      repoState = { isProvisioned: false, isLoading: true };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'some-folder' } });
+      });
+
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue(
+        'Typed title'
+      );
+    });
+
+    it('keeps the provisioned form mounted when a folder pick re-runs the lookup', async () => {
+      let repoState = { isProvisioned: true, isLoading: false };
+      jest.mocked(useIsProvisionedNG).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+
+      repoState = { isProvisioned: false, isLoading: true };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'some-folder' } });
+      });
+
+      expect(screen.getByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    });
+
+    it('swaps to the provisioned form once a folder pick settles on a repository', async () => {
+      let repoState = { isProvisioned: false, isLoading: false };
+      jest.mocked(useIsProvisionedNG).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(
+        await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
+      ).toBeInTheDocument();
+
+      repoState = { isProvisioned: true, isLoading: false };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'provisioned-folder' } });
+      });
+
+      expect(screen.getByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+    });
+
     it('still renders the diff while the lookup is in flight', async () => {
       jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: false, isLoading: true });
 
@@ -428,6 +491,61 @@ describe('SaveDashboardDrawer', () => {
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
       expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
+    });
+  });
+
+  describe('Typed input across form swaps', () => {
+    afterEach(() => {
+      const { useIsProvisionedNG: actual } = jest.requireActual('app/features/provisioning/hooks/useIsProvisionedNG');
+      jest.mocked(useIsProvisionedNG).mockImplementation(actual);
+    });
+
+    it('carries the typed title from the database form to the provisioned form and back', async () => {
+      let repoState = { isProvisioned: false, isLoading: false };
+      jest.mocked(useIsProvisionedNG).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Typed title');
+
+      // The picked folder turns out to be provisioned, so the Git form takes over
+      repoState = { isProvisioned: true, isLoading: false };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'provisioned-folder' } });
+      });
+      expect(screen.getByTestId('save-provisioned-dashboard')).toHaveTextContent('Typed title');
+
+      // ...and picking an unmanaged folder hands the save back to the database form
+      repoState = { isProvisioned: false, isLoading: false };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'unmanaged-folder' } });
+      });
+
+      expect(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue(
+        'Typed title'
+      );
+    });
+
+    it('keeps the typed title across a trip through the Changes tab', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: false, isLoading: false });
+
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ title: 'New title' });
+      openAndRender({ saveAsCopy: true });
+
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Typed title');
+
+      await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
+      await userEvent.click(screen.getByRole('tab', { name: /Details/ }));
+
+      expect(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue(
+        'Typed title'
+      );
     });
   });
 

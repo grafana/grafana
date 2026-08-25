@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -89,7 +89,19 @@ export function SaveProvisionedDashboardForm({
       mountedRef.current = false;
     };
   }, []);
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
+  // Seeded from the draft the previous save form parked on the drawer: a folder pick can swap
+  // which form applies, and title/description live in each form's own state. Read once, so the
+  // draft this form keeps parking as it is typed doesn't feed back into the reset below
+  const draftRef = useRef(drawer.saveFormDraft);
+  const seededDefaultValues = useMemo(
+    () => ({
+      ...defaultValues,
+      title: draftRef.current?.title ?? defaultValues.title,
+      description: draftRef.current?.description ?? defaultValues.description,
+    }),
+    [defaultValues]
+  );
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues: seededDefaultValues });
   const [createFolder] = useCreateRepositoryFilesWithPathMutation();
 
   const {
@@ -116,6 +128,7 @@ export function SaveProvisionedDashboardForm({
   const [workflow, ref] = watch(['workflow', 'ref']);
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
+  const description = watch('description');
 
   // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
   useEffect(() => {
@@ -127,8 +140,14 @@ export function SaveProvisionedDashboardForm({
   // Update the form if default values change. keepDirtyValues so a background refetch
   // (e.g. cache invalidation after creating a folder) doesn't wipe fields the user changed.
   useEffect(() => {
-    reset(defaultValues, { keepDirtyValues: true });
-  }, [defaultValues, reset]);
+    reset(seededDefaultValues, { keepDirtyValues: true });
+  }, [seededDefaultValues, reset]);
+
+  // Park what is typed as it changes rather than on unmount: React renders the form that takes
+  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
+  useEffect(() => {
+    drawer.saveFormDraft = { title, description };
+  }, [drawer, title, description]);
 
   const templateVars: CommitTemplateVars = {
     action: isNew ? 'create' : 'update',

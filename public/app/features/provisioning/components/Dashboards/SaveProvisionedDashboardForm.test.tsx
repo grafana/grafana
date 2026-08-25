@@ -2053,4 +2053,31 @@ describe('SaveProvisionedDashboardForm branch name template', () => {
     await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
     expect(branch).toHaveAttribute('readonly');
   });
+
+  describe('save form draft', () => {
+    it('seeds title, description and filename from the draft parked on the drawer', async () => {
+      setup({
+        drawer: {
+          onClose: jest.fn(),
+          saveFormDraft: { title: 'Draft title', description: 'Draft description' },
+        } as unknown as SaveDashboardDrawer,
+      });
+
+      expect(await screen.findByRole('textbox', { name: /title/i })).toHaveValue('Draft title');
+      expect(screen.getByRole('textbox', { name: /description/i })).toHaveValue('Draft description');
+      await waitFor(() => expect(screen.getByRole('textbox', { name: /filename/i })).toHaveValue('draft-title.json'));
+    });
+
+    it('parks what is typed on the drawer while still mounted, so a form swap can read it', async () => {
+      const { user, props } = setup();
+
+      const titleInput = await screen.findByRole('textbox', { name: /title/i });
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Typed title');
+
+      await waitFor(() =>
+        expect(props.drawer.saveFormDraft).toEqual({ title: 'Typed title', description: 'Test Description' })
+      );
+    });
+  });
 });
