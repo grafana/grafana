@@ -57,20 +57,13 @@ function formatSignedBytes(bytes) {
 }
 
 async function main() {
+  // Usage: checkBundleSize.mjs <base-stats> <current-stats> <max-increase-bytes>
   const [basePath, currentPath, maxIncreaseArgument] = process.argv.slice(2);
   const maxIncrease = Number(maxIncreaseArgument);
 
-  if (!basePath || !currentPath || !Number.isSafeInteger(maxIncrease) || maxIncrease < 0) {
-    throw new Error('Usage: checkBundleSize.mjs <base-stats> <current-stats> <max-increase-bytes>');
-  }
-
-  const [baseContents, currentContents] = await Promise.all([
-    readFile(basePath, 'utf8'),
-    readFile(currentPath, 'utf8'),
-  ]);
   const comparisons = compareBundleSizes(
-    parseBundleSizes(baseContents),
-    parseBundleSizes(currentContents),
+    parseBundleSizes(await readFile(basePath, 'utf8')),
+    parseBundleSizes(await readFile(currentPath, 'utf8')),
     maxIncrease
   );
 
