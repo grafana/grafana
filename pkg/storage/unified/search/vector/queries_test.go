@@ -59,14 +59,27 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "with_uid_filter",
 					Data: &sqlVectorCollectionLexicalSearchRequest{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Resource:    "alertrules_external",
-						Namespace:   "stacks-123",
-						Model:       "text-embedding-005",
-						Query:       "cpu",
-						Limit:       40,
-						UIDValues:   []string{"u1", "u2"},
-						Response:    &sqlVectorCollectionLexicalSearchResponse{},
+						SQLTemplate:            mocks.NewTestingSQLTemplate(),
+						Resource:               "alertrules_external",
+						Namespace:              "stacks-123",
+						Model:                  "text-embedding-005",
+						Query:                  "cpu",
+						Limit:                  40,
+						vectorSearchFilterArgs: vectorSearchFilterArgs{UIDValues: []string{"u1", "u2"}},
+						Response:               &sqlVectorCollectionLexicalSearchResponse{},
+					},
+				},
+				{
+					Name: "with_folder_filter",
+					Data: &sqlVectorCollectionLexicalSearchRequest{
+						SQLTemplate:            mocks.NewTestingSQLTemplate(),
+						Resource:               "alertrules_external",
+						Namespace:              "stacks-123",
+						Model:                  "text-embedding-005",
+						Query:                  "cpu",
+						Limit:                  40,
+						vectorSearchFilterArgs: vectorSearchFilterArgs{FolderValues: []string{"f1", "f2"}},
+						Response:               &sqlVectorCollectionLexicalSearchResponse{},
 					},
 				},
 				{
@@ -78,10 +91,10 @@ func TestVectorQueries(t *testing.T) {
 						Model:       "text-embedding-005",
 						Query:       "cpu",
 						Limit:       40,
-						MetadataFilterGroups: []MetadataFilterGroup{
+						vectorSearchFilterArgs: vectorSearchFilterArgs{MetadataFilterGroups: []MetadataFilterGroup{
 							{JSONs: []string{`{"folderUid":"f1"}`, `{"folderUid":["f1"]}`}},
 							{JSONs: []string{`{"kind":"alert_rule"}`, `{"kind":["alert_rule"]}`}},
-						},
+						}},
 						Response: &sqlVectorCollectionLexicalSearchResponse{},
 					},
 				},
@@ -412,14 +425,14 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "with uid filter",
 					Data: &sqlVectorCollectionSearchRequest{
-						SQLTemplate:    mocks.NewTestingSQLTemplate(),
-						Resource:       "dashboards",
-						Namespace:      "stacks-123",
-						Model:          "text-embedding-005",
-						QueryEmbedding: []float32{0.1, 0.2, 0.3},
-						Limit:          10,
-						UIDValues:      []string{"dash-1", "dash-2"},
-						Response:       &sqlVectorCollectionSearchResponse{},
+						SQLTemplate:            mocks.NewTestingSQLTemplate(),
+						Resource:               "dashboards",
+						Namespace:              "stacks-123",
+						Model:                  "text-embedding-005",
+						QueryEmbedding:         []float32{0.1, 0.2, 0.3},
+						Limit:                  10,
+						vectorSearchFilterArgs: vectorSearchFilterArgs{UIDValues: []string{"dash-1", "dash-2"}},
+						Response:               &sqlVectorCollectionSearchResponse{},
 					},
 				},
 				{
@@ -431,13 +444,15 @@ func TestVectorQueries(t *testing.T) {
 						Model:          "text-embedding-005",
 						QueryEmbedding: []float32{0.1, 0.2, 0.3},
 						Limit:          5,
-						UIDValues:      []string{"dash-1"},
-						FolderValues:   []string{"folder-a", "folder-b"},
-						// Two groups: OR within a group, AND across groups. JSON
-						// pairs mirror pgvector.Search's scalar+array shapes.
-						MetadataFilterGroups: []MetadataFilterGroup{
-							{JSONs: []string{`{"datasourceUid":"ds1"}`, `{"datasourceUid":["ds1"]}`, `{"datasourceUid":"ds2"}`, `{"datasourceUid":["ds2"]}`}},
-							{JSONs: []string{`{"language":"promql"}`, `{"language":["promql"]}`}},
+						vectorSearchFilterArgs: vectorSearchFilterArgs{
+							UIDValues:    []string{"dash-1"},
+							FolderValues: []string{"folder-a", "folder-b"},
+							// Two groups: OR within a group, AND across groups. JSON
+							// pairs mirror pgvector.Search's scalar+array shapes.
+							MetadataFilterGroups: []MetadataFilterGroup{
+								{JSONs: []string{`{"datasourceUid":"ds1"}`, `{"datasourceUid":["ds1"]}`, `{"datasourceUid":"ds2"}`, `{"datasourceUid":["ds2"]}`}},
+								{JSONs: []string{`{"language":"promql"}`, `{"language":["promql"]}`}},
+							},
 						},
 						Response: &sqlVectorCollectionSearchResponse{},
 					},

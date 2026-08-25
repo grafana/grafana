@@ -946,6 +946,43 @@ func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
 	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	require.NoError(t, err)
 	assert.True(t, ready, "missing FTS index recreated on retry")
+
+	// A legacy row whose tsvector exceeds Postgres's 1MiB limit fails the
+	// index build; that must degrade to a warning, never wedge writes.
+	// (Insert with the index dropped — with it present even the INSERT
+	// fails, which is exactly the wedge this guards against.)
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
+	require.NoError(t, err)
+	var sb strings.Builder
+	for i := 0; i < 200000; i++ {
+		fmt.Fprintf(&sb, "w%d ", i)
+	}
+	emb := "[" + strings.TrimSuffix(strings.Repeat("0,", 1024), ",") + "]"
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(
+		`INSERT INTO %s (resource, namespace, model, uid, title, subresource, content, embedding)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, '%s'::halfvec)`, leaf, emb),
+		res, "integration-test", "m", "oversized", "t", "", sb.String())
+	require.NoError(t, err)
+
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res),
+		"failed FTS index build must not block the write path")
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
+	require.NoError(t, err)
+	assert.False(t, ready, "readiness stays false so creation is retried later")
+}
+
+func TestIntegrationEnsureCollectionRejectsReservedSuffix(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// An internal resource sanitizing to *_external would be misclassified
+	// by everything keyed on the suffix (FTS indexing, kind inference).
+	_, err := backend.EnsureCollection(ctx, "reserved.test.grafana.app", "foo_external", false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "reserved partition key")
+
+	_, err = backend.EnsureCollection(ctx, "reserved.test.grafana.app", "foo-external", false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "reserved partition key")
 }
 
 func TestIntegrationVectorLexicalSearch(t *testing.T) {
@@ -1030,6 +1067,13 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 
 	t.Run("stopword-only query matches nothing without error", func(t *testing.T) {
 		assert.Empty(t, search("the of and"))
+	})
+
+	t.Run("negation-only query matches nothing", func(t *testing.T) {
+		// A pure-negation tsquery would otherwise match nearly every row at
+		// rank 0, flooding the leg with arbitrary uids.
+		assert.Empty(t, search("-staging"))
+		assert.Empty(t, search("the -staging"))
 	})
 
 	t.Run("uid filter", func(t *testing.T) {

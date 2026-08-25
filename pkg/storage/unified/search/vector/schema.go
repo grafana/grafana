@@ -2,6 +2,8 @@ package vector
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -220,20 +222,25 @@ END $$;`))
 	// Retro-fit the FTS expression index (HybridSearch's lexical leg) onto
 	// external partitions created before it existed. New partitions get it in
 	// EnsureResourcePartition; the to_regclass guard skips catalog rows whose
-	// leaf DDL previously failed. The expression must match the lexical
-	// search template's predicate exactly ('english' included).
+	// leaf DDL previously failed. Per-partition failures (e.g. a legacy row
+	// whose content exceeds the 1MiB tsvector limit) are warnings, never
+	// startup blockers — EnsureResourcePartition keeps retrying on writes.
 	mg.AddMigration("add fts index to external embeddings partitions",
-		migrator.NewRawSQLMigration("").Postgres(`
+		migrator.NewRawSQLMigration("").Postgres(fmt.Sprintf(`
 			DO $$
 			DECLARE pk TEXT;
 			BEGIN
 				FOR pk IN SELECT partition_key FROM embedding_collections WHERE is_external LOOP
 					IF to_regclass('embeddings_' || pk) IS NOT NULL THEN
-						EXECUTE format(
-							'CREATE INDEX IF NOT EXISTS %I ON %I USING GIN (to_tsvector(''english'', content))',
-							'embeddings_' || pk || '_fts_idx', 'embeddings_' || pk);
+						BEGIN
+							EXECUTE format(
+								'CREATE INDEX IF NOT EXISTS %%I ON %%I USING GIN (%s)',
+								'embeddings_' || pk || '_fts_idx', 'embeddings_' || pk);
+						EXCEPTION WHEN OTHERS THEN
+							RAISE WARNING 'fts index on embeddings_%%: %%', pk, SQLERRM;
+						END;
 					END IF;
 				END LOOP;
 			END $$;
-		`))
+		`, strings.ReplaceAll(ftsIndexExpr, "'", "''"))))
 }

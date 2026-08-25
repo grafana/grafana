@@ -31,6 +31,7 @@ SELECT
     {{ end }}
     ORDER BY {{ .Ident "uid" }}, {{ .Ident "rank" }} DESC
     ) AS best
+    WHERE {{ .Ident "rank" }} > 0
     ORDER BY {{ .Ident "rank" }} DESC, {{ .Ident "uid" }} ASC
     LIMIT {{ .Arg .Limit }}
 ;

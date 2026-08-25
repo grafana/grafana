@@ -23,6 +23,7 @@ SELECT
     AND "uid" IN ('u1', 'u2')
     ORDER BY "uid", "rank" DESC
     ) AS best
+    WHERE "rank" > 0
     ORDER BY "rank" DESC, "uid" ASC
     LIMIT 40
 ;

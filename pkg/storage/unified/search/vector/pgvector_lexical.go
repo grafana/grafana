@@ -64,10 +64,10 @@ func (b *pgvectorBackend) LexicalSearch(ctx context.Context, q LexicalQuery) (hi
 		attribute.Int("filter_count", len(q.Filters)),
 	)
 
-	if err := b.validateResource(ctx, q.Resource); err != nil {
-		return nil, err
-	}
-
+	// No validateResource here: HybridSearch always passes a
+	// freshly-resolved Collection.PartitionKey, the value is only ever a
+	// query parameter (never interpolated), and an unknown key just prunes
+	// to zero rows — the extra catalog roundtrip bought nothing.
 	req := &sqlVectorCollectionLexicalSearchRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Resource:    q.Resource,

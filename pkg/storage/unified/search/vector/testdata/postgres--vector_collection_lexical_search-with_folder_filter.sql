@@ -20,8 +20,7 @@ SELECT
     AND "namespace" = 'stacks-123'
     AND "model"     = 'text-embedding-005'
     AND to_tsvector('english', "content") @@ websearch_to_tsquery('english', 'cpu')
-    AND ("metadata" @> '{"folderUid":"f1"}' OR "metadata" @> '{"folderUid":["f1"]}')
-    AND ("metadata" @> '{"kind":"alert_rule"}' OR "metadata" @> '{"kind":["alert_rule"]}')
+    AND "folder" IN ('f1', 'f2')
     ORDER BY "uid", "rank" DESC
     ) AS best
     WHERE "rank" > 0

@@ -715,21 +715,31 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
 	}
 	if ftsIdx != "" {
-		// The expression must match the lexical search template's predicate
-		// exactly ('english' included) or the planner won't use the index.
+		// Best-effort: FTS queries stay correct without the index (the
+		// predicate is recomputed per row), and a legacy row predating the
+		// content cap can exceed Postgres's 1MiB tsvector limit and fail the
+		// build — failing the call here would wedge every write to the
+		// collection. Readiness keeps reporting false, so creation is
+		// retried on later writes.
 		if _, err := conn.ExecContext(ctx, fmt.Sprintf(
-			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (to_tsvector('english', content))`,
-			ftsIdx, leaf,
+			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (%s)`,
+			ftsIdx, leaf, ftsIndexExpr,
 		)); err != nil {
-			return fmt.Errorf("create fts index on %s: %w", leaf, err)
+			b.log.Warn("create fts index failed; lexical search on this collection stays unindexed",
+				"index", ftsIdx, "err", err)
 		}
 	}
 	return nil
 }
 
+// ftsIndexExpr is the external partitions' FTS index expression. It must
+// match the lexical search template's predicate exactly ('english'
+// included) or the planner won't use the index.
+const ftsIndexExpr = "to_tsvector('english', content)"
+
 // isExternalPartitionKey reports whether a partition key belongs to an
 // external collection. EnsureCollection guarantees the suffix for external
-// keys and internal keys can never carry it.
+// keys and rejects internal resources that would sanitize to it.
 func isExternalPartitionKey(resource string) bool {
 	return strings.HasSuffix(resource, "_external")
 }

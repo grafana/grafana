@@ -1416,20 +1416,46 @@ func TestHybridSearch_ExternalFilters(t *testing.T) {
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 
-	t.Run("too many filter values rejected", func(t *testing.T) {
-		s, _, _ := newHybridTestServer(lexTableResponse(), externalBackend())
-		s.externalLexical = &fakeLexicalSearcher{}
-
+	t.Run("too many filter values rejected on both kinds", func(t *testing.T) {
 		values := make([]string, maxFilterValues+1)
 		for i := range values {
 			values[i] = fmt.Sprintf("v%d", i)
 		}
+
+		s, _, _ := newHybridTestServer(lexTableResponse(), externalBackend())
+		s.externalLexical = &fakeLexicalSearcher{}
 		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 			Key: validKey(), Query: "q",
 			Filters: []*resourcepb.Requirement{{Key: "labels", Operator: "in", Values: values}},
 		})
 		require.Error(t, err)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+		// Internal collections hit the same Postgres parameter limit on the
+		// semantic leg; the cap is universal.
+		s, _, _ = newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+		_, err = s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+			Filters: []*resourcepb.Requirement{{Key: "uid", Operator: "in", Values: values}},
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("invalid filter key does not consume rate budget", func(t *testing.T) {
+		limiter := &recordingRateLimiter{}
+		s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
+		s.rateLimiter = limiter
+		s.rateLimitPerTenant = 100
+		s.rateLimitWindow = time.Minute
+
+		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+			Key: validKey(), Query: "q",
+			Filters: []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}},
+		})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.False(t, limiter.called, "invalid-filter request must not consume rate budget")
 	})
 
 	t.Run("internal collections keep the closed allowlist", func(t *testing.T) {

@@ -90,12 +90,6 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !types.NamespaceMatches(user.GetNamespace(), req.Key.Namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
-	// Hybrid embeds a query, so it draws from the same per-tenant budget
-	// as VectorSearch.
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
-		return nil, err
-	}
-
 	coll, allowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
 	if err != nil {
 		return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
@@ -110,7 +104,16 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if coll.IsExternal && s.externalLexical == nil {
 		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 	}
+	// Kind-specific filter validation needs the resolved collection, and
+	// must precede the rate check so rejected requests don't burn the
+	// shared per-tenant budget.
 	if err := validateHybridSearchFilters(req, coll.IsExternal); err != nil {
+		return nil, err
+	}
+
+	// Hybrid embeds a query, so it draws from the same per-tenant budget
+	// as VectorSearch.
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -697,6 +700,7 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	// Duplicate keys would diverge between legs: the lexical leg ANDs
 	// repeated requirements while the vector backend keeps the last one.
 	seen := make(map[string]struct{}, len(req.Filters))
+	totalValues := 0
 	for _, f := range req.Filters {
 		if f.Key == "" {
 			return reqErr("filter key must not be empty")
@@ -715,6 +719,13 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 		if len(f.Values) == 0 {
 			return reqErr(fmt.Sprintf("filter %q has no values", f.Key))
 		}
+		totalValues += len(f.Values)
+	}
+	// Each value expands to a few SQL parameters on the semantic leg;
+	// mirror the write path's cap so a filter can't approach Postgres's
+	// parameter limit (which would surface as Internal at execution).
+	if totalValues > maxFilterValues {
+		return reqErr(fmt.Sprintf("too many filter values: %d > %d", totalValues, maxFilterValues))
 	}
 	return nil
 }
@@ -734,7 +745,6 @@ func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal
 		return status.Error(codes.InvalidArgument, msg)
 	}
 	if isExternal {
-		totalValues := 0
 		for _, f := range req.Filters {
 			// External rows never populate the folder column (the write API
 			// has no folder field), so this filter would silently match
@@ -742,13 +752,6 @@ func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal
 			if f.Key == "folder" {
 				return reqErr(`filter "folder" is not supported for external collections; filter on a metadata key instead`)
 			}
-			totalValues += len(f.Values)
-		}
-		// Each value expands to a few SQL parameters on each leg; mirror the
-		// write path's cap so a filter can't approach Postgres's parameter
-		// limit.
-		if totalValues > maxFilterValues {
-			return reqErr(fmt.Sprintf("too many filter values: %d > %d", totalValues, maxFilterValues))
 		}
 		return nil
 	}

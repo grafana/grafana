@@ -447,6 +447,32 @@ type MetadataFilterGroup struct {
 	JSONs []string // e.g. `{"datasource_uids":["ds1"]}`
 }
 
+// vectorSearchFilterArgs are the filter predicates shared by the semantic
+// and lexical search templates; embedding one struct in both requests
+// keeps the two legs' filter SQL structurally identical. nil/empty means
+// no filter on that field.
+type vectorSearchFilterArgs struct {
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
+}
+
+func (r *vectorSearchFilterArgs) UIDFilter() bool {
+	return len(r.UIDValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) UIDFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDValues)
+}
+
+func (r *vectorSearchFilterArgs) FolderFilter() bool {
+	return len(r.FolderValues) > 0
+}
+
+func (r *vectorSearchFilterArgs) FolderFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.FolderValues)
+}
+
 type sqlVectorCollectionSearchRequest struct {
 	sqltemplate.SQLTemplate
 	Resource       string
@@ -456,10 +482,7 @@ type sqlVectorCollectionSearchRequest struct {
 	Limit          int64
 	Response       *sqlVectorCollectionSearchResponse
 
-	// nil/empty means no filter on that field.
-	UIDValues            []string
-	FolderValues         []string
-	MetadataFilterGroups []MetadataFilterGroup
+	vectorSearchFilterArgs
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {
@@ -477,22 +500,6 @@ func (r *sqlVectorCollectionSearchRequest) Results() (*sqlVectorCollectionSearch
 	// allocates a fresh []byte for Metadata.
 	cp := *r.Response
 	return &cp, nil
-}
-
-func (r *sqlVectorCollectionSearchRequest) UIDFilter() bool {
-	return len(r.UIDValues) > 0
-}
-
-func (r *sqlVectorCollectionSearchRequest) UIDFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.UIDValues)
-}
-
-func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
-	return len(r.FolderValues) > 0
-}
-
-func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.FolderValues)
 }
 
 type sqlVectorCollectionLexicalSearchResponse struct {
@@ -514,10 +521,7 @@ type sqlVectorCollectionLexicalSearchRequest struct {
 	Limit     int64
 	Response  *sqlVectorCollectionLexicalSearchResponse
 
-	// nil/empty means no filter on that field.
-	UIDValues            []string
-	FolderValues         []string
-	MetadataFilterGroups []MetadataFilterGroup
+	vectorSearchFilterArgs
 }
 
 func (r *sqlVectorCollectionLexicalSearchRequest) Validate() error {
@@ -538,22 +542,6 @@ func (r *sqlVectorCollectionLexicalSearchRequest) Results() (*sqlVectorCollectio
 	// allocates a fresh []byte for Metadata.
 	cp := *r.Response
 	return &cp, nil
-}
-
-func (r *sqlVectorCollectionLexicalSearchRequest) UIDFilter() bool {
-	return len(r.UIDValues) > 0
-}
-
-func (r *sqlVectorCollectionLexicalSearchRequest) UIDFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.UIDValues)
-}
-
-func (r *sqlVectorCollectionLexicalSearchRequest) FolderFilter() bool {
-	return len(r.FolderValues) > 0
-}
-
-func (r *sqlVectorCollectionLexicalSearchRequest) FolderFilterSlice() reflect.Value {
-	return reflect.ValueOf(r.FolderValues)
 }
 
 type sqlQueryCacheGetResponse struct {
