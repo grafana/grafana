@@ -49,13 +49,14 @@ export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellConten
 export const defaultSpec = generatedDefaultSpec;
 
 /**
- * What the "Query" block type inserts: a real Panel element (not a bespoke cell kind), so a
- * notebook-authored query ends up on the same model as a panel added from a Dashboard or Explore —
- * see NotebookLayoutManager's buildCellFor. Starts with no datasource/query chosen (buildVizPanelState
- * seeds a single empty query) and defaults to a timeseries visualization, matching the line-graph
- * default the old Explore-style query cell used. Picking a different viz type is future work.
+ * What the "Visualization" block type inserts: a real Panel element (not a bespoke cell kind), so a
+ * notebook-authored visualization ends up on the same model as a panel added from a Dashboard or
+ * Explore — see NotebookLayoutManager's buildCellFor. Starts with no datasource/query chosen
+ * (buildVizPanelState seeds a single empty query) and defaults to a timeseries visualization,
+ * matching the line-graph default the old Explore-style query cell used. Picking a different viz
+ * type is future work.
  */
-export function defaultQueryPanelKind(): PanelKind {
+export function defaultVisualizationPanelKind(): PanelKind {
   return {
     kind: 'Panel',
     spec: {

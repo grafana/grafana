@@ -4,7 +4,7 @@ import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } f
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
-import { defaultQueryPanelKind } from 'app/features/notebook/types';
+import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { NotebookScene } from '../NotebookScene';
 
@@ -99,15 +99,15 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 /**
- * A real Panel VizPanel, built the same way NotebookLayoutManager's buildQueryPanel does — parented
- * under a scene that carries a $timeRange, since PanelQueryEditor reads the panel's own SceneQueryRunner
- * and the shared time range straight off the scene graph rather than through props.
+ * A real Panel VizPanel, built the same way NotebookLayoutManager's buildVisualizationPanel does —
+ * parented under a scene that carries a $timeRange, since PanelQueryEditor reads the panel's own
+ * SceneQueryRunner and the shared time range straight off the scene graph rather than through props.
  *
  * `queries`, when given, fully replaces the panel's single default query — one partial per row,
  * each assigned its own refId (A, B, C, ...) so multi-row tests can address a specific one.
  */
 function buildPanel(queries?: Array<Record<string, unknown>>) {
-  const panel = new VizPanel(buildVizPanelState(defaultQueryPanelKind(), 1));
+  const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
   if (queries) {
     const runner = getQueryRunnerFor(panel)!;
     const base = runner.state.queries[0];

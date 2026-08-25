@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Menu } from '@grafana/ui';
 
 /** The block types the add-block menu offers. Insertion itself belongs to edit mode. */
-export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'query' | 'visualization';
+export type NotebookBlockType = 'heading' | 'paragraph' | 'code' | 'visualization';
 
 interface Props {
   /**
@@ -33,7 +33,7 @@ export function NotebookBlockTypeMenu({ onPick }: Props) {
       <Menu.Item
         icon="graph-bar"
         label={t('notebook.add-block.visualization', 'Visualization')}
-        onClick={() => onPick?.('query')}
+        onClick={() => onPick?.('visualization')}
       />
     </Menu>
   );

@@ -532,12 +532,12 @@ describe('NotebookLayoutManager', () => {
     // suite doesn't set up — same reason the old Query cell's own rendering had its own dedicated test
     // file rather than being exercised here. This file only cares whether the divider lands the right
     // cell on the manager.
-    it('inserts a query panel cell where the divider offered it', () => {
+    it('inserts a visualization panel cell where the divider offered it', () => {
       const manager = buildManager(buildNarrativeCells(['a', 'b']));
 
-      manager.addCell('query', 1);
+      manager.addCell('visualization', 1);
 
-      expect(cellNames(manager)).toEqual(['a', 'query-1', 'b']);
+      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b']);
       expect(manager.state.cells[1].state.content).toBeUndefined();
       expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
     });
@@ -591,14 +591,14 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
     });
 
-    // Query converts the cell into a panel (body), not content — a distinct code path from the
+    // Visualization converts the cell into a panel (body), not content — a distinct code path from the
     // content-diffing one every other type above goes through (see NotebookLayoutManager's
     // convertCellToPanel). Called directly rather than through the "/" menu UI, for the same reason
-    // 'inserts a query panel cell' above is: a real Panel body cell renders a genuine VizPanel, which
-    // needs plugin-registry machinery this suite doesn't set up. The "always one more empty block
-    // ready" invariant (a fresh cell appended once the trailing one stops being empty markdown) is the
-    // live renderer's own bootstrap effect, exercised for other conversions above through the UI;
-    // convertCellToPanel doesn't own that behavior, so it isn't re-asserted here.
+    // 'inserts a visualization panel cell' above is: a real Panel body cell renders a genuine VizPanel,
+    // which needs plugin-registry machinery this suite doesn't set up. The "always one more empty
+    // block ready" invariant (a fresh cell appended once the trailing one stops being empty markdown)
+    // is the live renderer's own bootstrap effect, exercised for other conversions above through the
+    // UI; convertCellToPanel doesn't own that behavior, so it isn't re-asserted here.
     it('converts the trailing cell into a panel, rather than leaving it narrative content', () => {
       const trailing = new NotebookCellItem({
         elementName: 'paragraph-1',
@@ -607,7 +607,7 @@ describe('NotebookLayoutManager', () => {
       });
       const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
 
-      manager.convertCell(trailing, 'query');
+      manager.convertCell(trailing, 'visualization');
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
       expect(trailing.state.content).toBeUndefined();
@@ -731,14 +731,6 @@ describe('NotebookLayoutManager', () => {
         const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
         expect(editors.some((editor) => editor === document.activeElement)).toBe(true);
       });
-    });
-
-    // Visualization is not buildable yet — its menu entry is a "Coming soon" submenu, not a pick.
-    it('leaves the block types it cannot build yet alone', () => {
-      const manager = buildManager(buildNarrativeCells(['a']));
-
-      expect(manager.addCell('visualization', 1)).toBeUndefined();
-      expect(cellNames(manager)).toEqual(['a']);
     });
 
     // What the renderer hands the caret to, so it has to be the cell that landed in the list.
@@ -1127,12 +1119,12 @@ describe('NotebookLayoutManager', () => {
       expect(cellNames(manager)).toEqual(['a', 'b', addedName, 'paragraph-1']);
     });
 
-    // Query builds a body (VizPanel), not content — kept separate from the it.each above, which
-    // asserts on `added?.state.content`, a shape Query's own cell never has.
-    it('undoes and redoes adding a query block', () => {
+    // Visualization builds a body (VizPanel), not content — kept separate from the it.each above,
+    // which asserts on `added?.state.content`, a shape Visualization's own cell never has.
+    it('undoes and redoes adding a visualization block', () => {
       const { manager, history } = withHistory(buildNarrativeCells(['a']));
 
-      const added = manager.addCell('query', 1);
+      const added = manager.addCell('visualization', 1);
 
       expect(history.state.undoLabel).toBe('Add block');
       expect(added?.state.content).toBeUndefined();
