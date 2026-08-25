@@ -71,6 +71,8 @@ export const FlagKeys = {
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, filtered by the `[datasource_forward_headers]` deny-list). */
+  GrafanaDatasourceForwardHeaders: "grafana.datasourceForwardHeaders",
   /** Check for the existence of logs when linking from the Trace View */
   GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
@@ -508,6 +510,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, filtered by the `[datasource_forward_headers]` deny-list).
+ *
+ * **Details:**
+ * - flag key: `grafana.datasourceForwardHeaders`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDatasourceForwardHeaders = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.datasourceForwardHeaders", false, options).value;
 };
 
 /**

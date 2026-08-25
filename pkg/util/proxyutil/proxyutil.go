@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/textproto"
 	"sort"
 	"strings"
 
@@ -52,25 +53,8 @@ func PrepareProxyRequest(req *http.Request) {
 func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookiesNames []string) {
 	keepCookies := map[string]*http.Cookie{}
 	for _, c := range req.Cookies() {
-		for _, v := range keepCookiesNames {
-			// match all
-			if v == "[]" {
-				keepCookies[c.Name] = c
-				continue
-			}
-
-			if strings.HasSuffix(v, "[]") {
-				// match prefix
-				pattern := strings.TrimSuffix(v, "[]")
-				if strings.HasPrefix(c.Name, pattern) {
-					keepCookies[c.Name] = c
-				}
-			} else {
-				// exact match
-				if c.Name == v {
-					keepCookies[c.Name] = c
-				}
-			}
+		if matchesKeepCookiesPattern(c.Name, keepCookiesNames, false) {
+			keepCookies[c.Name] = c
 		}
 	}
 
@@ -90,6 +74,82 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 		c := keepCookies[name]
 		req.AddCookie(c)
 	}
+}
+
+// MatchesKeepCookiesPattern reports whether name matches any of the given
+// patterns using the keepCookies-style matching semantics: an exact literal
+// match, "[]" as a match-all wildcard, or a "prefix[]" prefix match. When
+// caseInsensitive is true, exact and prefix comparisons ignore ASCII case,
+// which is appropriate for HTTP header names (see RFC 9110 5.1); it should be
+// false for cookie names, which are case-sensitive.
+func MatchesKeepCookiesPattern(name string, patterns []string, caseInsensitive bool) bool {
+	return matchesKeepCookiesPattern(name, patterns, caseInsensitive)
+}
+
+func matchesKeepCookiesPattern(name string, patterns []string, caseInsensitive bool) bool {
+	cmpName := name
+	if caseInsensitive {
+		cmpName = strings.ToLower(name)
+	}
+	for _, p := range patterns {
+		if p == "[]" {
+			return true
+		}
+		if strings.HasSuffix(p, "[]") {
+			prefix := strings.TrimSuffix(p, "[]")
+			if caseInsensitive {
+				prefix = strings.ToLower(prefix)
+			}
+			if strings.HasPrefix(cmpName, prefix) {
+				return true
+			}
+			continue
+		}
+		cmpP := p
+		if caseInsensitive {
+			cmpP = strings.ToLower(p)
+		}
+		if cmpName == cmpP {
+			return true
+		}
+	}
+	return false
+}
+
+// FilterAllowedHeaders returns the canonical names of headers present in h
+// that match the allowList (using keepCookies-style, case-insensitive
+// matching) and do not match the denyList. The deny-list takes precedence.
+// The returned names are canonicalized via textproto.CanonicalMIMEHeaderKey
+// and returned in sorted order so behavior is deterministic. This is used to
+// implement the per-datasource `jsonData.allowedHeaders` pass-through, gated
+// by the instance-wide deny-list configured in [datasource_forward_headers].
+func FilterAllowedHeaders(h http.Header, allowList, denyList []string) []string {
+	if len(h) == 0 || len(allowList) == 0 {
+		return nil
+	}
+	seen := map[string]struct{}{}
+	for name := range h {
+		canon := textproto.CanonicalMIMEHeaderKey(name)
+		if _, ok := seen[canon]; ok {
+			continue
+		}
+		if !matchesKeepCookiesPattern(canon, allowList, true) {
+			continue
+		}
+		if matchesKeepCookiesPattern(canon, denyList, true) {
+			continue
+		}
+		seen[canon] = struct{}{}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(seen))
+	for n := range seen {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // SetViaHeader adds Grafana's reverse proxy to the proxy chain.

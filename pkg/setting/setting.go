@@ -401,6 +401,10 @@ type Cfg struct {
 	DataProxyUserAgent             string
 	DataProxyForwardUserAgent      bool
 
+	// Datasource header pass-through
+	DataSourceForwardHeadersDenyList     []string
+	DataSourceForwardHeadersDenyListMode string
+
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheSettings
 
@@ -1601,6 +1605,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	if err := readDataProxySettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	if err := readDataSourceForwardHeadersSettings(iniFile, cfg); err != nil {
 		return err
 	}
 

@@ -600,6 +600,39 @@ For example, with this enabled, a request from a client carrying `User-Agent: my
 
 <hr />
 
+### `[datasource_forward_headers]`
+
+Controls the instance-wide allowlist for forwarding HTTP request headers from the user's request into backend data source plugin requests. When the `grafana.datasourceForwardHeaders` feature toggle is enabled, each data source can opt in per header by adding a name to `jsonData.allowedHeaders` in its settings, and the resulting set of headers becomes visible on the plugin request and, for data sources that use the Grafana HTTP client, on the outgoing request to the data source's backend.
+
+Every allowlisted header is still filtered against the instance-wide denylist configured here, so operators keep the final word on which headers can ever leave Grafana.
+
+#### `deny_list`
+
+Comma-separated denylist of HTTP header names that Grafana refuses to forward, regardless of any per-data source allowlist. Names use the same syntax as `keepCookies`:
+
+- **Exact match**: `X-Custom-Header`
+- **Prefix match**: `X-Tenant-[]` matches `X-Tenant-Id`, `X-Tenant-Cluster`, and so on
+- **Match everything**: `[]` acts as a global kill switch and denies every header
+
+Matching is case-insensitive because HTTP header names are case-insensitive.
+
+The default value is empty, which — combined with the default `deny_list_mode = merge` — means Grafana applies only its built-in denylist.
+
+#### `deny_list_mode`
+
+Controls how `deny_list` combines with Grafana's built-in denylist. Values:
+
+- `merge` (default): append `deny_list` entries to the built-in denylist
+- `replace`: use only `deny_list` and ignore the built-in denylist
+
+Any other value is a configuration error and Grafana fails to start.
+
+Grafana's built-in denylist blocks headers whose values Grafana or the transport owns, including `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, `X-ID-Token`, every `X-Grafana-*` header, every `X-Forwarded-*` header, hop-by-hop headers such as `Connection` and `Transfer-Encoding`, and transport-controlled headers such as `Host` and `Content-Length`.
+
+If `deny_list` contains `[]`, that kill switch takes precedence over both modes and denies every header.
+
+<hr />
+
 ### `[analytics]`
 
 #### `enabled`

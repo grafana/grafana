@@ -43,6 +43,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "grafana.datasourceForwardHeaders",
+			Description: "Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, filtered by the `[datasource_forward_headers]` deny-list).",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			Stage:       FeatureStageGeneralAvailability,
