@@ -26,6 +26,9 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
    */
   const allValuesNullAtIndex = useCallback(
     (idx: number): boolean => {
+      if (data[0]?.[idx] == null) {
+        return true;
+      }
       for (let seriesIdx = 1; seriesIdx < data.length; seriesIdx++) {
         if (data[seriesIdx][idx] != null) {
           return false;
@@ -64,6 +67,10 @@ export const OutsideRangePlugin = memo(({ config, onChangeTimeRange }: Threshold
 
   let first = timeValues[i];
   let last = timeValues[j];
+
+  if (first == null || last == null || !Number.isFinite(first) || !Number.isFinite(last)) {
+    return null;
+  }
 
   // (StartA <= EndB) and (EndA >= StartB)
   if (first <= timeRange.max && last >= timeRange.min) {
