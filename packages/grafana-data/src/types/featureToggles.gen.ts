@@ -69,11 +69,6 @@ export interface FeatureToggles {
   */
   lokiQuerySplitting?: boolean;
   /**
-  * populate star status from apiserver
-  * @default false
-  */
-  starsFromAPIServer?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -329,11 +324,6 @@ export interface FeatureToggles {
   * @default false
   */
   canvasPanelPanZoom?: boolean;
-  /**
-  * Load Canvas panel from an external plugin instead of the bundled core plugin
-  * @default false
-  */
-  canvasExternalPlugin?: boolean;
   /**
   * Enables time comparison option in supported panels
   * @default false
@@ -1022,7 +1012,7 @@ export interface FeatureToggles {
   otelLogsFormatting?: boolean;
   /**
   * Enables the notification history feature
-  * @default false
+  * @default true
   */
   alertingNotificationHistory?: boolean;
   /**
@@ -1153,7 +1143,7 @@ export interface FeatureToggles {
   lokiQueryLimitsContext?: boolean;
   /**
   * Adds support for Kubernetes alerting historian APIs
-  * @default false
+  * @default true
   */
   kubernetesAlertingHistorian?: boolean;
   /**
@@ -1242,6 +1232,16 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirectNoFallback?: boolean;
   /**
+  * Enables auth info APIs in the app platform
+  * @default false
+  */
+  kubernetesAuthInfoApi?: boolean;
+  /**
+  * Redirects the requests of the auth info service to the app platform APIs
+  * @default false
+  */
+  kubernetesAuthInfoRedirect?: boolean;
+  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
@@ -1253,22 +1253,22 @@ export interface FeatureToggles {
   alertingIgnorePendingForNoDataAndError?: boolean;
   /**
   * Enables the notification history tab in the rule viewer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryRuleViewer?: boolean;
   /**
   * Enables the notification history global menu item viewer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryGlobal?: boolean;
   /**
   * Enables the notification history timeline in the triage instance details drawer
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryTriage?: boolean;
   /**
   * Enables the notification history detail page
-  * @default false
+  * @default true
   */
   alertingNotificationHistoryDetail?: boolean;
   /**

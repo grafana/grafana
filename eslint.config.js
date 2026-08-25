@@ -133,7 +133,6 @@ module.exports = [
       'public/vendor/',
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
-      'public/build-rspack', // build output (rspack)
       'public/build-swagger', // swagger build output
       'public/build-swagger-rspack', // swagger build output (rspack)
       'apps/plugins/plugin/src/generated/meta/v0alpha1',

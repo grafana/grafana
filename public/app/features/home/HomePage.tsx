@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -9,6 +9,7 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { useStoredString } from 'app/core/hooks/useStored';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
@@ -26,6 +27,9 @@ import { Overview } from './Overview/Overview';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
+import { useHomepageSolutions } from './useHomepageSolutions';
+
+const HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY = 'grafana.home.alerts.teamFilter';
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -51,6 +55,17 @@ function HomepageViewTracker({ onView }: { onView: () => void }) {
   return null;
 }
 
+function HomepageSolutionSections() {
+  const solutions = useHomepageSolutions();
+
+  return (
+    <>
+      <Recommendations solutions={solutions} />
+      <Overview solutions={solutions.solutions} />
+    </>
+  );
+}
+
 export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
@@ -69,7 +84,10 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const [team, setTeam] = useState<string>();
+  // Persisted team scope for the alerts view and header pill; '' is the "your teams" default.
+  const [storedTeam, setStoredTeam] = useStoredString(HOME_ALERTS_TEAM_FILTER_LOCAL_STORAGE_KEY, '');
+  const team = storedTeam || undefined;
+  const setTeam = useCallback((next: string | undefined) => setStoredTeam(next ?? ''), [setStoredTeam]);
   const alertsData = useFiringAlerts(team);
   const incidentsData = useIncidents();
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
@@ -154,8 +172,7 @@ export default function HomePage() {
                     ),
                   })}
 
-                  <Recommendations />
-                  <Overview />
+                  <HomepageSolutionSections />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}

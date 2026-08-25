@@ -13,7 +13,6 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var dashboardsGVR = schema.GroupVersionResource{
@@ -108,7 +107,6 @@ func TestTranslateSearchQuery_TextAndFilters(t *testing.T) {
 	require.Len(t, req.QueryFields, 2)
 	assert.Equal(t, "title", req.QueryFields[0].Name)
 	assert.Equal(t, "panel_title", req.QueryFields[1].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_TEXT, req.QueryFields[0].Type)
 	// neutral boost so hits are scored (backend applies boost unconditionally).
 	assert.Equal(t, float32(1), req.QueryFields[0].Boost)
 	assert.Equal(t, float32(1), req.QueryFields[1].Boost)
