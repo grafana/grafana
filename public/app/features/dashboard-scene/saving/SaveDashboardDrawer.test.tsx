@@ -53,6 +53,10 @@ jest.mock('app/features/provisioning/hooks/useIsProvisionedNG', () => {
   return { ...actual, useIsProvisionedNG: jest.fn(actual.useIsProvisionedNG) };
 });
 
+jest.mock('app/features/provisioning/components/Dashboards/SaveProvisionedDashboard', () => ({
+  SaveProvisionedDashboard: () => <div data-testid="save-provisioned-dashboard" />,
+}));
+
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
   getDashboardAPI: jest.fn().mockResolvedValue({
@@ -423,7 +427,80 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
-      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
+      expect(await screen.findByTestId('schema-diff-editor')).toBeInTheDocument();
+    });
+  });
+
+  describe('Database save switch', () => {
+    afterEach(() => {
+      const { useIsProvisionedNG: actual } = jest.requireActual('app/features/provisioning/hooks/useIsProvisionedNG');
+      jest.mocked(useIsProvisionedNG).mockImplementation(actual);
+    });
+
+    it('keeps the database form mounted when a folder pick re-runs the repository lookup', async () => {
+      let repoState = { isProvisioned: true, isLoading: false };
+      jest.mocked(useIsProvisionedNG).mockImplementation(() => repoState);
+
+      const { dashboard, openAndRender } = setup();
+      const drawer = openAndRender();
+
+      act(() => {
+        drawer.setState({ saveToDatabase: true });
+      });
+      expect(await screen.findByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+
+      // Picking a folder in the database form restarts the lookup against a cold cache
+      repoState = { isProvisioned: false, isLoading: true };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'unmanaged-folder' } });
+      });
+      expect(screen.getByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+
+      // ...and the pick turns out to be an unmanaged folder, so no repository resolves at all
+      repoState = { isProvisioned: false, isLoading: false };
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderTitle: 'Unmanaged folder' } });
+      });
+      expect(screen.getByTestId('save-provisioned-dashboard')).toBeInTheDocument();
+    });
+  });
+
+  describe('Drawer title', () => {
+    afterEach(() => {
+      const { useIsProvisionedNG: actual } = jest.requireActual('app/features/provisioning/hooks/useIsProvisionedNG');
+      jest.mocked(useIsProvisionedNG).mockImplementation(actual);
+    });
+
+    it('shows the provisioned title for a stored provisioned dashboard', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: true, isLoading: false });
+
+      const { openAndRender } = setup();
+      openAndRender();
+
+      expect(await screen.findByRole('heading', { name: 'Provisioned dashboard' })).toBeInTheDocument();
+    });
+
+    it('keeps the plain title for a new dashboard that resolves to a repository', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: true, isLoading: false });
+
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ version: 0 });
+      openAndRender();
+
+      expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
+    });
+
+    it('keeps the plain title while the database save form is active', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: true, isLoading: false });
+
+      const { openAndRender } = setup();
+      const drawer = openAndRender();
+
+      act(() => {
+        drawer.setState({ saveToDatabase: true });
+      });
+
+      expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
     });
   });
 

@@ -76,11 +76,18 @@ const useResourceRepositoryViewData = ({
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
   const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
+  // currentData, not data: RTK keeps `data` from the last successful arg, so once a folder has
+  // been fetched it would leak into every later resolution, including root-level ones where the
+  // query is skipped.
   const {
-    data: folder,
-    isLoading: isFolderLoading,
+    currentData: folder,
+    isLoading: isFolderQueryLoading,
+    isFetching: isFolderFetching,
     error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
+  // RTK also reports isLoading false while fetching a new folderName, because it is still
+  // holding the previous folder's data, so count "fetching with nothing for this arg" as loading.
+  const isFolderLoading = isFolderQueryLoading || (isFolderFetching && !folder);
 
   if (!provisioningEnabled) {
     return {

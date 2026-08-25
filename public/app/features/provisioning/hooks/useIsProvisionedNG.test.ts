@@ -1,9 +1,9 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { config, locationService } from '@grafana/runtime';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 import { useIsProvisionedNG } from './useIsProvisionedNG';
@@ -33,9 +33,11 @@ function createDashboard({
   uid,
   folderUid,
 }: { managed?: boolean; k8sName?: string; uid?: string; folderUid?: string } = {}) {
+  const state = { uid, meta: { folderUid, k8s: k8sName ? { name: k8sName } : undefined } };
   return {
     isManagedRepository: jest.fn().mockReturnValue(managed),
-    state: { uid, meta: { folderUid, k8s: k8sName ? { name: k8sName } : undefined } },
+    state,
+    useState: () => state,
   } as unknown as DashboardScene;
 }
 
@@ -163,6 +165,26 @@ describe('useIsProvisionedNG', () => {
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
       folderName: 'picked-folder',
+      includeFolderless: false,
+    });
+  });
+
+  it('re-resolves the repository when the folder changes, without the caller subscribing', () => {
+    const dashboard = new DashboardScene({ title: 'New dashboard', meta: { folderUid: 'first-folder' } });
+
+    renderHook(() => useIsProvisionedNG(dashboard));
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenLastCalledWith({
+      folderName: 'first-folder',
+      includeFolderless: false,
+    });
+
+    act(() => {
+      dashboard.setState({ meta: { folderUid: 'second-folder' } });
+    });
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenLastCalledWith({
+      folderName: 'second-folder',
       includeFolderless: false,
     });
   });

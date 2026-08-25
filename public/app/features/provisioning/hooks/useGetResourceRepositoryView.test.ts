@@ -40,6 +40,7 @@ function setupMocks({
   settingsError,
   folder,
   folderLoading = false,
+  folderFetching = false,
   folderError,
 }: {
   settingsItems?: RepositoryView[];
@@ -47,6 +48,7 @@ function setupMocks({
   settingsError?: unknown;
   folder?: Folder;
   folderLoading?: boolean;
+  folderFetching?: boolean;
   folderError?: unknown;
 } = {}) {
   mockUseGetFrontendSettingsQuery.mockReturnValue({
@@ -57,13 +59,19 @@ function setupMocks({
     isFetching: false,
   } as unknown as ReturnType<typeof useGetFrontendSettingsQuery>);
 
-  mockUseGetFolderQuery.mockReturnValue({
-    data: folder,
-    isLoading: folderLoading,
-    error: folderError,
-    refetch: jest.fn(),
-    isFetching: false,
-  } as unknown as ReturnType<typeof useGetFolderQuery>);
+  // Mirrors RTK: `data` keeps the last successful result once the arg flips to skipToken or to a
+  // folder that is still fetching, while `currentData` only reflects the arg the hook was called with.
+  mockUseGetFolderQuery.mockImplementation(
+    (arg) =>
+      ({
+        data: folder,
+        currentData: arg === skipToken || folderFetching ? undefined : folder,
+        isLoading: folderLoading,
+        error: folderError,
+        refetch: jest.fn(),
+        isFetching: folderLoading || folderFetching,
+      }) as unknown as ReturnType<typeof useGetFolderQuery>
+  );
 }
 
 describe('useGetResourceRepositoryView', () => {
@@ -106,6 +114,15 @@ describe('useGetResourceRepositoryView', () => {
       const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
 
       expect(result.current.status).toBe(RepoViewStatus.Loading);
+    });
+
+    it('returns Loading while a newly targeted folder is fetching, not the previously fetched one', () => {
+      setupMocks({ settingsItems: [repoView()], folder: folderData(), folderFetching: true });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'other-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Loading);
+      expect(result.current.folder).toBeUndefined();
     });
   });
 
@@ -432,6 +449,29 @@ describe('useGetResourceRepositoryView', () => {
       const { result } = renderHook(() => useGetResourceRepositoryView({}));
 
       expect(result.current.repository).toBeUndefined();
+    });
+
+    it('resolves the folderless repo at root after a folder was previously targeted', () => {
+      const folderlessRepo = repoView({ name: 'folderless-repo', target: 'folderless' });
+      const pickedFolder = folderData({
+        [AnnoKeyManagerKind]: ManagerKind.Repo,
+        [AnnoKeyManagerIdentity]: 'folderless-repo',
+      });
+      setupMocks({ settingsItems: [folderlessRepo], folder: pickedFolder });
+
+      const initialProps: { folderName?: string; includeFolderless?: boolean } = {
+        folderName: 'nested-folder',
+        includeFolderless: true,
+      };
+      const { result, rerender } = renderHook((props) => useGetResourceRepositoryView(props), { initialProps });
+
+      expect(result.current.folder).toBe(pickedFolder);
+
+      rerender({ folderName: undefined, includeFolderless: true });
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(folderlessRepo);
+      expect(result.current.folder).toBeUndefined();
     });
 
     it('overrides the query skip so root-level lookups still fetch settings', () => {

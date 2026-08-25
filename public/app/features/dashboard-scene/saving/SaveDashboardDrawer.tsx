@@ -73,6 +73,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
+    saveToDatabase,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -118,7 +119,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
-  } else if (isProvisioned || isProvisionedNG) {
+  } else if ((isProvisioned || isProvisionedNG) && !changeInfo.isNew && !saveToDatabase) {
+    // A dashboard that does not exist yet, or one being written to the database, is not provisioned
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
@@ -158,11 +160,9 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    if (isResolvingRepo) {
-      return <Spinner />;
-    }
-
-    if (isProvisionedNG) {
+    // Checked before the spinner: once switched to the database form, a folder pick re-runs the
+    // repository lookup, and neither a cold cache nor an unmanaged folder may unmount that form
+    if (saveToDatabase || isProvisionedNG) {
       return (
         <SaveProvisionedDashboard
           dashboard={dashboard}
@@ -171,6 +171,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
           saveAsCopy={saveAsCopy}
         />
       );
+    }
+
+    if (isResolvingRepo) {
+      return <Spinner />;
     }
 
     if (saveAsCopy || changeInfo.isNew) {

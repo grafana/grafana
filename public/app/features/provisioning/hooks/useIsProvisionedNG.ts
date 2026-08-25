@@ -11,15 +11,18 @@ export interface ProvisionedNGState {
 }
 
 export function useIsProvisionedNG(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedNGState {
+  // Subscribed here rather than read off state, so the lookup re-resolves when the save form
+  // changes the folder without relying on the caller to subscribe
+  const { uid, meta } = dashboard.useState();
   // Both identities must be absent: a stored dashboard resolves its repository from its own
   // annotations, so it must not trigger a folder or folderless lookup
-  const isNewDashboard = !dashboard.state.uid && !dashboard.state.meta.k8s?.name;
+  const isNewDashboard = !uid && !meta.k8s?.name;
   // A save-as copy writes a new file, so it resolves the folder/root like a new dashboard: the
   // source's own annotations describe where the source lives, not where the copy is headed
   const isNewSave = isNewDashboard || Boolean(saveAsCopy);
   // meta.folderUid is seeded from the URL for new dashboards and then tracks the folder picked in
   // the save form, so this resolves the same folder useDefaultValues does
-  const folderName = isNewSave ? dashboard.state.meta.folderUid || undefined : undefined;
+  const folderName = isNewSave ? meta.folderUid || undefined : undefined;
 
   const { repository, isInstanceManaged, isLoading } = useGetResourceRepositoryView({
     folderName,

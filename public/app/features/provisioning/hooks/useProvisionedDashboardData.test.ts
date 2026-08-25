@@ -13,6 +13,7 @@ import {
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -237,6 +238,38 @@ describe('useDefaultValues', () => {
     await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
     expect(result.current.isNew).toBe(true);
     expect(result.current.values?.repo).toBe('folderless-repo');
+  });
+
+  it('drops the folder path prefix when a picked folder is cleared back to the repository root', async () => {
+    const provisionedFolder = {
+      ...folderResponse,
+      metadata: {
+        ...folderResponse.metadata,
+        annotations: {
+          [AnnoKeySourcePath]: 'team-a',
+          [AnnoKeyManagerKind]: ManagerKind.Repo,
+          [AnnoKeyManagerIdentity]: 'folderless-repo',
+        },
+      },
+    };
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(folderlessSettings)),
+      http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(provisionedFolder))
+    );
+
+    const { result, rerender } = renderHook(({ meta }) => useDefaultValues({ meta, defaultTitle: 'New Dashboard' }), {
+      wrapper: getWrapper({}),
+      initialProps: { meta: { folderUid: 'test-folder' } as DashboardMeta },
+    });
+
+    await waitFor(() => expect(result.current.values?.path).toMatch(/^team-a\//));
+
+    // "No folder (repository root)" clears the folder from the scene meta
+    rerender({ meta: {} });
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    expect(result.current.values?.repo).toBe('folderless-repo');
+    expect(result.current.values?.path).not.toContain('/');
   });
 });
 
