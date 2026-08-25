@@ -241,6 +241,11 @@ var serviceIdentityTokenPermissions = []string{
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
 
+	// Assistant-pushed alert-rule embeddings (external vector collection).
+	// Named explicitly: the *.ext.grafana.app wildcard only matches a
+	// single-segment prefix and this group has two.
+	"assistant.alertrules.ext.grafana.app:*",
+
 	// Allow access to apps.grafana.app resources (e.g. AppManifest)
 	"apps.grafana.app:*",
 }

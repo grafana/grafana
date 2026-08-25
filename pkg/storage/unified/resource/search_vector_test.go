@@ -699,9 +699,9 @@ func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 }
 
 func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
-	// External rows aren't unified-storage resources; per-result authz is
-	// skipped (the caller post-filters), so every row comes back even
-	// when the access client would deny everything.
+	// Legacy external collections (group without the *.ext.grafana.app
+	// suffix) skip per-result authz — the caller post-filters — so every
+	// row comes back even when the access client would deny everything.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
 		results: []vector.VectorSearchResult{
@@ -718,7 +718,34 @@ func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, resp.Error)
 	require.Len(t, resp.Results, 2)
-	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for external collections")
+	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for legacy external collections")
+}
+
+func TestVectorSearch_ExtGroupExternalCollectionEnforcesAuthz(t *testing.T) {
+	// External collections in *.ext.grafana.app groups get the same
+	// per-result checks as internal resources: rows are batch-checked
+	// against their folder and denied rows are filtered out.
+	const extGroup = "assistant.alertrules.ext.grafana.app"
+	backend := &fakeVectorBackend{
+		collection: &vector.Collection{Group: extGroup, Resource: "alertrules", PartitionKey: "alertrules_external", IsExternal: true},
+		results: []vector.VectorSearchResult{
+			{UID: "u1", Title: "T1", Folder: "f-allowed", Score: 0.1},
+			{UID: "u2", Title: "T2", Folder: "f-denied", Score: 0.2},
+		},
+	}
+	access := &countingAccessClient{allow: func(_, folder string) bool { return folder == "f-allowed" }}
+	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
+	s.collectionAllowlist = vector.NewCollectionAllowlist(nil, []string{extGroup + "/alertrules"})
+
+	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
+		Key:   &resourcepb.ResourceKey{Namespace: "ns", Group: extGroup, Resource: "alertrules"},
+		Query: "q", Limit: 5,
+	})
+	require.NoError(t, err)
+	assert.Nil(t, resp.Error)
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "u1", resp.Results[0].Name)
+	assert.NotZero(t, access.batchCalls, "BatchCheck must run for *.ext.grafana.app external collections")
 }
 
 func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {

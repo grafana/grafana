@@ -31,8 +31,10 @@ const (
 //
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service. Reads of external collections skip server-side
-// per-result access checks; the caller is responsible for authz post-filtering of results.
+// Reads go through the search service. For external collections whose group ends in
+// ".ext.grafana.app", reads run server-side per-result RBAC checks against each row's
+// folder — rows without a folder are denied for folder-scoped resources. Other external
+// collections skip server-side checks; those callers post-filter results themselves.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
@@ -106,8 +108,10 @@ func (c *vectorStoreClient) UpdateMetadata(ctx context.Context, in *VectorUpdate
 //
 // VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
-// Reads go through the search service. Reads of external collections skip server-side
-// per-result access checks; the caller is responsible for authz post-filtering of results.
+// Reads go through the search service. For external collections whose group ends in
+// ".ext.grafana.app", reads run server-side per-result RBAC checks against each row's
+// folder — rows without a folder are denied for folder-scoped resources. Other external
+// collections skip server-side checks; those callers post-filter results themselves.
 //
 // Request-level failures come back as gRPC status codes with an empty response
 // body:
