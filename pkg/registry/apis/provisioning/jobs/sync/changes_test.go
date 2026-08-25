@@ -264,6 +264,47 @@ func TestChanges(t *testing.T) {
 		require.Empty(t, changes, "folder should be kept when it contains hidden folders")
 	})
 
+	t.Run("unsafe path is reported instead of silently dropped", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/Backend - Synthesis API & UI.json", Hash: "xyz", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "folder/", Resource: "folders"},
+			},
+		}
+		changes, err := Changes(context.Background(), source, target, true)
+		require.Nil(t, changes)
+		var unsupportedErr *resources.UnsupportedPathError
+		require.ErrorAs(t, err, &unsupportedErr)
+		require.Len(t, unsupportedErr.Paths, 1)
+		require.Equal(t, "folder/Backend - Synthesis API & UI.json", unsupportedErr.Paths[0].Path)
+	})
+
+	t.Run("every unsafe path is reported, not just the first", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/one & two.json", Hash: "abc", Blob: true},
+			{Path: "folder/valid.json", Hash: "def", Blob: true},
+			{Path: "folder/three%four.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		changes, err := Changes(context.Background(), source, target, true)
+		require.Nil(t, changes)
+		var unsupportedErr *resources.UnsupportedPathError
+		require.ErrorAs(t, err, &unsupportedErr)
+		require.Len(t, unsupportedErr.Paths, 2, "the valid file must not suppress the two unsafe ones")
+	})
+
+	t.Run("README next to resources is not reported as unsupported", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "folder/README.md", Hash: "xyz", Blob: true},
+			{Path: "folder/dashboard.json", Hash: "abc", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+		_, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+	})
+
 	t.Run("unhidden path from hidden file", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "folder/.hidden/dashboard.json", Hash: "xyz", Blob: true},
