@@ -8,13 +8,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var folderGVR = schema.GroupVersionResource{
@@ -68,10 +66,4 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	deps.HealthNotifier.SetNotReady()
 	logger.Info("folder controller shutting down")
 	return nil
-}
-
-func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
-	// TODO: build a *rest.Config for the folder apiserver (TLS + token
-	// exchange) and return dynamic.NewForConfig(restConfig).
-	panic("not implemented")
 }
