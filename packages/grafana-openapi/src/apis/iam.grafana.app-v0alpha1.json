@@ -29,6 +29,37 @@
         }
       }
     },
+    "/authinfos/search": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Search AuthInfo resources in a namespace.",
+        "operationId": "listAuthInfoSearchV0alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A SearchQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A SearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/display": {
       "get": {
         "tags": ["Display"],
@@ -2828,6 +2859,87 @@
   },
   "components": {
     "schemas": {
+      "AuthInfo": {
+        "type": "object",
+        "required": ["metadata", "spec"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "description": "Spec is the spec of the AuthInfo",
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoList": {
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {}
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoSpec": {
+        "type": "object",
+        "required": ["userRef", "authModule", "authID"],
+        "properties": {
+          "authID": {
+            "description": "authID is the identifier the auth provider returns at login (OAuth subject, LDAP DN, SAML NameID).",
+            "type": "string",
+            "default": ""
+          },
+          "authModule": {
+            "description": "authModule is the external auth provider the user is linked through (e.g. \"github\", \"ldap\", \"saml\").",
+            "type": "string",
+            "default": ""
+          },
+          "created": {
+            "description": "created is the creation timestamp of the auth link, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "externalUID": {
+            "description": "externalUID is the external unique identifier of the user, used for provisioning systems such as SCIM to correlate the user without relying on authID.",
+            "type": "string"
+          },
+          "userRef": {
+            "default": {}
+          }
+        }
+      },
+      "AuthInfoUserRef": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "description": "Name is the unique identifier (UID) for a user.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "CreateSearchExternalGroupMappingsBody": {
         "type": "object",
         "required": ["teams", "totalHits"],

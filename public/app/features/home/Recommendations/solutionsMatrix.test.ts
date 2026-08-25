@@ -10,8 +10,8 @@ import {
 } from './solutionsMatrix';
 
 function state(m: SignalStatus, l: SignalStatus, t: SignalStatus, k: SignalStatus): SolutionState {
-  // spanMetrics inactive = App Observability not in use; specific cases override it.
-  return { metrics: m, logs: l, traces: t, kubernetes: k, spanMetrics: 'inactive' };
+  // spanMetrics/synthetics inactive = App Observability / Synthetic Monitoring not in use; cases override.
+  return { metrics: m, logs: l, traces: t, kubernetes: k, spanMetrics: 'inactive', synthetics: 'inactive' };
 }
 
 const on = 'active' as const;
@@ -22,14 +22,14 @@ describe('selectRecommendations', () => {
   it.each<[SolutionState, RecommendedCardId[], BaseRow]>([
     [state(off, off, off, off), ['connect-metrics', 'enable-logs', 'hosted-traces'], 'empty'],
     [state(off, off, on, off), ['connect-metrics'], 'partial_telemetry'],
-    [state(off, on, off, off), ['connect-metrics'], 'logs_only'],
+    [state(off, on, off, off), ['connect-metrics', 'hosted-traces'], 'logs_only'],
     [state(off, on, on, off), ['connect-metrics'], 'partial_telemetry'],
-    [state(on, off, off, off), ['enable-logs'], 'metrics_only'],
-    [state(on, off, on, off), ['enable-logs'], 'metrics_only'],
-    [state(on, off, off, on), ['enable-logs-k8s'], 'k8s_no_logs'],
-    [state(on, off, on, on), ['enable-logs-k8s'], 'k8s_no_logs'],
+    [state(on, off, off, off), ['enable-logs', 'synthetic-monitoring'], 'metrics_only'],
+    [state(on, off, on, off), ['enable-logs', 'synthetic-monitoring'], 'metrics_only'],
+    [state(on, off, off, on), ['enable-logs-k8s', 'synthetic-monitoring'], 'k8s_no_logs'],
+    [state(on, off, on, on), ['enable-logs-k8s', 'synthetic-monitoring'], 'k8s_no_logs'],
     [state(on, on, off, off), ['hosted-traces', 'kubernetes-monitoring'], 'ml_no_traces'],
-    [state(on, on, off, on), ['hosted-traces'], 'mlk_no_traces'],
+    [state(on, on, off, on), ['hosted-traces', 'synthetic-monitoring'], 'mlk_no_traces'],
     [state(on, on, on, off), ['application-observability', 'kubernetes-monitoring'], 'mlt'],
     [state(on, on, on, on), ['application-observability'], 'fully_active'],
   ])('m=%s selects %s (%s)', (input, cards, baseRow) => {
@@ -37,7 +37,7 @@ describe('selectRecommendations', () => {
   });
 
   // A single unknown core signal blanks the selection even when the settled signals would produce cards.
-  it.each<Exclude<keyof SolutionState, 'spanMetrics'>>(['metrics', 'logs', 'traces', 'kubernetes'])(
+  it.each<Exclude<keyof SolutionState, 'spanMetrics' | 'synthetics'>>(['metrics', 'logs', 'traces', 'kubernetes'])(
     'short-circuits to no cards when %s is unknown',
     (signal) => {
       const cardProducing = state(on, on, off, off);
@@ -72,6 +72,32 @@ describe('selectRecommendations', () => {
       baseRow: 'ml_no_traces',
     });
   });
+
+  it('drops the Synthetic Monitoring card from its rows when synthetics is active', () => {
+    expect(selectRecommendations({ ...state(on, off, off, on), synthetics: 'active' })).toEqual({
+      cards: ['enable-logs-k8s'],
+      baseRow: 'k8s_no_logs',
+    });
+    expect(selectRecommendations({ ...state(on, off, off, off), synthetics: 'active' })).toEqual({
+      cards: ['enable-logs'],
+      baseRow: 'metrics_only',
+    });
+    expect(selectRecommendations({ ...state(on, on, off, on), synthetics: 'active' })).toEqual({
+      cards: ['hosted-traces'],
+      baseRow: 'mlk_no_traces',
+    });
+  });
+
+  it('fails the Synthetic Monitoring card toward hiding on an unknown synthetics probe, without blanking', () => {
+    expect(selectRecommendations({ ...state(on, off, off, on), synthetics: 'unknown' })).toEqual({
+      cards: ['enable-logs-k8s'],
+      baseRow: 'k8s_no_logs',
+    });
+    expect(selectRecommendations({ ...state(on, on, off, on), synthetics: 'unknown' })).toEqual({
+      cards: ['hosted-traces'],
+      baseRow: 'mlk_no_traces',
+    });
+  });
 });
 
 describe('orderCardsForSolution', () => {
@@ -82,6 +108,7 @@ describe('orderCardsForSolution', () => {
     'hosted-traces',
     'kubernetes-monitoring',
     'application-observability',
+    'synthetic-monitoring',
   ];
 
   it('leads ml_no_traces with K8s Monitoring for metrics and Hosted Traces for logs', () => {

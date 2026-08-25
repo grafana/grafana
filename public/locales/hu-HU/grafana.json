@@ -890,7 +890,6 @@
       "close": "Bezárás",
       "create": "Létrehozás",
       "delete": "Törlés",
-      "deleting": "Törlés…",
       "edit": "Szerkesztés",
       "export": "Exportálás",
       "export-all": "Összes exportálása",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} útvonal"
       },
       "delete": {
-        "confirm": "Igen, törölje a házirendet",
-        "warning-1": "Az értesítési házirendet a törlésével véglegesen eltávolítja.",
-        "warning-2": "Biztosan törli ezt a házirendet?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Ez a művelet véglegesen eltávolítja a(z) <1>{{routeName}}</1> értesítési házirendet.",
-        "title-delete-notification-policy": "Értesítési házirend törlése"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Az útvonalak szűrése az egyezések vesszővel elválasztott listájának használatával, pl.:<1>súlyosság=kritikus, régió=EMEA</1>",
       "generated-policies": "Automatikusan generált házirendek",
@@ -2546,7 +2543,9 @@
         "reset": "Visszaállítás",
         "resetting": "Visszaállítás…",
         "title-delete-notification-policy": "Értesítési házirend törlése",
-        "title-reset-notification-policy": "Értesítési házirend visszaállítása"
+        "title-reset-notification-policy": "Értesítési házirend visszaállítása",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Kérjük, várjon, amíg frissítjük az értesítési házirendjeit.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Értesítési házirend törlése"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Panelek, szöveg és kódcellák függőleges sorozata",
       "name": "Jegyzetfüzet",
       "pill": "Közzétett jegyzetfüzet",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Idő"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nem áll rendelkezésre mennyiséginformáció az aktuális lekérdezésekhez és időtartományhoz."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} összecsukása",
       "error": "A metrikák betöltése nem sikerült",
@@ -8754,6 +8761,7 @@
       "loading-values": "Értékek betöltése…",
       "no-metrics": "Nem található metrika",
       "search-placeholder": "Metrikák keresése",
+      "show-metric-details": "",
       "show-more": "Több megjelenítése",
       "show-more-metrics": "További metrikák megjelenítése",
       "show-more-values": "További értékek megjelenítése",
@@ -11272,6 +11280,13 @@
       "show": "Megjelenítés",
       "switch": "Az ajánlások a kiválasztott megoldást követik",
       "switchSolution": "Megoldás váltása",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Ajánlások a stackjéhez"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Ez az erőforrás a(z) {{repoType}} ág mögött van.",
       "branch-targets": "",
       "delete-from-branch": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is látni fogja ezt az erőforrást",
+      "move-from-branch": "",
       "not-saved": "Amíg ez az ág össze nem lesz vonva, a szervezet többi Grafana-felhasználója továbbra is a konfigurált alapértelmezett ágba mentett aktuális verziót fogja látni",
       "open-in-repo-button": "Megnyitás itt: {{repoType}}",
       "open-pull-request-in-repo": "Összefésülési kérelem megnyitása itt: {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "Új erőforrás lett létrehozva egy ágban itt: {{repoType}}.",
     "title-deleted-resource-in-branch": "Egy erőforrás törölve lett egy ágban itt: {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Ez az erőforrás a(z) {{repoType}} adattárban az imént létrehozott ágból töltődik be, és csak Ön láthatja",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Egy erőforrás frissítve lett egy ágban itt: {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

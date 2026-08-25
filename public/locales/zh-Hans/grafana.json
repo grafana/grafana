@@ -885,7 +885,6 @@
       "close": "关闭",
       "create": "创建",
       "delete": "删除",
-      "deleting": "正在删除…",
       "edit": "编辑",
       "export": "导出",
       "export-all": "导出全部",
@@ -2479,13 +2478,10 @@
         "route-count_other": "{{count}} 个路由"
       },
       "delete": {
-        "confirm": "是，删除策略",
-        "warning-1": "删除此通知策略将永久移除它。",
-        "warning-2": "您确定要删除此策略吗？"
-      },
-      "delete-modal": {
-        "permanently-remove": "此操作将永久删除<1>{{routeName}}</1>通知策略。",
-        "title-delete-notification-policy": "删除通知策略"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "使用半角逗号分隔的匹配器列表来筛选路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自动生成的策略",
@@ -2529,7 +2525,8 @@
         "reset": "重置",
         "resetting": "正在重置...",
         "title-delete-notification-policy": "删除通知策略",
-        "title-reset-notification-policy": "重置通知策略"
+        "title-reset-notification-policy": "重置通知策略",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "请稍候，我们正在更新您的通知策略。",
@@ -3803,7 +3800,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "删除通知策略"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -5978,6 +5975,9 @@
       "description": "垂直排列的面板、文本和代码单元格",
       "name": "笔记本",
       "pill": "已发布的笔记本",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "时间"
     },
     "on-create-new-row": {
@@ -8684,6 +8684,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "没有可用于当前查询和时间范围的卷信息。"
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "收起{{name}}",
       "error": "加载指标失败",
@@ -8696,6 +8701,7 @@
       "loading-values": "正在加载值…",
       "no-metrics": "未找到指标",
       "search-placeholder": "搜索指标",
+      "show-metric-details": "",
       "show-more": "显示更多",
       "show-more-metrics": "显示更多指标",
       "show-more-values": "显示更多值",
@@ -11198,6 +11204,13 @@
       "show": "显示",
       "switch": "建议内容会根据所选解决方案而定",
       "switchSolution": "切换解决方案",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "针对您的堆栈的建议"
     },
     "solutions": {
@@ -11242,6 +11255,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12821,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12822,6 +12860,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13592,6 +13631,7 @@
       "behind-branch-text": "此资源位于 {{repoType}} 的分支之后。",
       "branch-targets": "",
       "delete-from-branch": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到此资源",
+      "move-from-branch": "",
       "not-saved": "在合并此分支之前，您组织中的其他 Grafana 用户仍将看到保存到已配置默认分支的当前版本",
       "open-in-repo-button": "在 {{repoType}} 中打开",
       "open-pull-request-in-repo": "在以下位置打开拉取请求：{{repoType}}",
@@ -13603,6 +13643,7 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中创建新资源。",
     "title-deleted-resource-in-branch": "已在{{repoType}}的分支中删除资源。",
     "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "已在{{repoType}}的分支中更新资源。"
   },
   "provisioning": {
@@ -16147,6 +16188,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

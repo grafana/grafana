@@ -191,7 +191,7 @@ const ui = {
   groupRepeatContainer: byTestId('am-repeat-interval'),
 
   confirmDeleteModal: byRole('dialog'),
-  confirmDeleteButton: byRole('button', { name: /yes, delete policy/i }),
+  confirmDeleteButton: byRole('button', { name: /yes, delete route/i }),
 };
 
 const getRootRoute = async () => {
