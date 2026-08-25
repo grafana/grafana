@@ -32,6 +32,12 @@ const options = [
 
 const initialOptions = [{ label: 'Initial state option', value: 'initial' }];
 
+async function selectSecond() {
+  await userEvent.click(screen.getByRole('combobox'));
+  await userEvent.click(await screen.findByRole('treeitem', { name: 'First' }));
+  await userEvent.click(await screen.findByRole('treeitem', { name: 'Second' }));
+}
+
 describe('Cascader', () => {
   const placeholder = 'cascader-placeholder';
 
@@ -62,13 +68,37 @@ describe('Cascader', () => {
     });
   });
 
-  it('filters results when searching', async () => {
-    render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
+  it('expands and collapses branches before selecting a leaf', async () => {
+    const onSelect = jest.fn();
+    render(<Cascader placeholder={placeholder} options={options} onSelect={onSelect} />);
 
-    await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+    await userEvent.click(screen.getByRole('combobox'));
+    const branch = await screen.findByRole('treeitem', { name: 'First' });
+    await userEvent.click(branch);
+    expect(await screen.findByRole('treeitem', { name: 'Second' })).toBeInTheDocument();
 
-    expect(screen.queryByText('Second')).not.toBeInTheDocument();
-    expect(await screen.findByText('First / Third')).toBeInTheDocument();
+    await userEvent.click(branch);
+    expect(screen.queryByRole('treeitem', { name: 'Second' })).not.toBeInTheDocument();
+
+    await userEvent.click(branch);
+    await userEvent.click(await screen.findByRole('treeitem', { name: 'Second' }));
+    expect(onSelect).toHaveBeenLastCalledWith('2');
+  });
+
+  it('formats the custom-value description', async () => {
+    render(
+      <Cascader
+        options={options}
+        allowCustomValue
+        formatCreateLabel={(value) => `Custom unit: ${value}`}
+        onSelect={jest.fn()}
+      />
+    );
+
+    await userEvent.type(screen.getByRole('combobox'), 'custom');
+
+    expect(await screen.findByRole('treeitem', { name: 'custom' })).toBeInTheDocument();
+    expect(screen.getByText('Custom unit: custom')).toBeInTheDocument();
   });
 
   it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', async () => {
@@ -82,61 +112,38 @@ describe('Cascader', () => {
     expect(screen.getByDisplayValue('First / Third')).toBeInTheDocument();
   });
 
-  it('displays all levels selected with default separator when displayAllSelectedLevels is true', async () => {
-    render(
-      <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={() => {}} />
-    );
-
-    expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(await screen.findByText('First'));
-    await userEvent.click(await screen.findByText('Second'));
-
-    expect(screen.getByDisplayValue('First / Second')).toBeInTheDocument();
-  });
-
-  it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', async () => {
-    const separator = ',';
-
+  it.each([
+    ['the default separator', undefined, 'First / Second'],
+    ['a custom separator', ',', 'First,Second'],
+  ])('displays all levels with %s', async (_, separator, expected) => {
     render(
       <Cascader
-        displayAllSelectedLevels={true}
+        displayAllSelectedLevels
         separator={separator}
         placeholder={placeholder}
         options={options}
-        onSelect={() => {}}
+        onSelect={jest.fn()}
       />
     );
 
-    expect(screen.queryByDisplayValue('First/Second')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(await screen.findByText('First'));
-    await userEvent.click(await screen.findByText('Second'));
-
-    expect(screen.getByDisplayValue(`First${separator}Second`)).toBeInTheDocument();
+    await selectSecond();
+    expect(screen.getByDisplayValue(expected)).toBeInTheDocument();
   });
 
-  it('displays last level selected when displayAllSelectedLevels is false', async () => {
+  it.each([
+    ['false', false],
+    ['omitted', undefined],
+  ])('displays only the last level when displayAllSelectedLevels is %s', async (_, displayAllSelectedLevels) => {
     render(
-      <Cascader displayAllSelectedLevels={false} placeholder={placeholder} options={options} onSelect={jest.fn()} />
+      <Cascader
+        displayAllSelectedLevels={displayAllSelectedLevels}
+        placeholder={placeholder}
+        options={options}
+        onSelect={jest.fn()}
+      />
     );
 
-    await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(await screen.findByText('First'));
-    await userEvent.click(await screen.findByText('Second'));
-
-    expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
-  });
-
-  it('displays last level selected when displayAllSelectedLevels is not passed in', async () => {
-    render(<Cascader placeholder={placeholder} options={options} onSelect={jest.fn()} />);
-
-    await userEvent.click(screen.getByPlaceholderText(placeholder));
-    await userEvent.click(await screen.findByText('First'));
-    await userEvent.click(await screen.findByText('Second'));
-
+    await selectSecond();
     expect(screen.getByDisplayValue('Second')).toBeInTheDocument();
   });
 

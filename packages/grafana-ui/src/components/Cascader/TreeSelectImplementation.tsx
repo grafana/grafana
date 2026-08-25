@@ -47,19 +47,18 @@ interface TreeSelectTriggerProps {
   'aria-haspopup': 'tree';
 }
 
-export type TreeSelectProps = Omit<CascaderProps, 'changeOnSelect' | 'hideActiveLevelLabel'>;
-
 interface SelectedValue {
   value: string;
   label: string;
 }
 
-export interface TreeSelectBaseProps extends CascaderProps {
+export interface TreeSelectBaseProps extends Omit<CascaderProps, 'onSelect'> {
+  onSelect?: CascaderProps['onSelect'];
   valuePath?: string[];
   onChangePath?: (values: string[], options: CascaderOption[]) => void;
   loadData?: (options: CascaderOption[]) => void;
   onOpenChange?: (open: boolean) => void;
-  renderTrigger?: (props: TreeSelectTriggerProps, open: boolean) => ReactNode;
+  renderTrigger?: (props: TreeSelectTriggerProps) => ReactNode;
   className?: string;
 }
 
@@ -101,9 +100,6 @@ function buildTreeData(
       }
 
       nodes.set(id, {
-        id,
-        value: option.value,
-        label: option.label,
         menuLabel: normalizedQuery ? nextPath.join(separator) : option.label,
         displayLabel: displayAllSelectedLevels ? nextPath.join(separator) : option.label,
         children,
@@ -116,15 +112,13 @@ function buildTreeData(
   };
 
   const rootChildren = addOptions(options, [], [], []);
-  const hasExactMatch = [...nodes.values()].some(
-    (node) => node.children.length === 0 && (node.value === query || node.label === query)
-  );
+  const hasExactMatch = [...nodes.values()].some((node) => {
+    const option = node.path.at(-1);
+    return node.children.length === 0 && (option?.value === query || option?.label === query);
+  });
 
   if (allowCustomValue && query && !hasExactMatch) {
     nodes.set(CUSTOM_ID, {
-      id: CUSTOM_ID,
-      value: query,
-      label: query,
       menuLabel: query,
       displayLabel: query,
       children: [],
@@ -137,9 +131,6 @@ function buildTreeData(
   }
 
   nodes.set(TREE_ROOT_ID, {
-    id: TREE_ROOT_ID,
-    value: '',
-    label: '',
     menuLabel: '',
     displayLabel: '',
     children: rootChildren,
@@ -151,7 +142,7 @@ function buildTreeData(
   return {
     nodes,
     expandedItems: normalizedQuery
-      ? [...nodes.values()].filter((node) => node.children.length > 0).map((node) => node.id)
+      ? [...nodes.entries()].filter(([, node]) => node.children.length > 0).map(([id]) => id)
       : [],
   };
 }
@@ -168,22 +159,18 @@ function findInitialValue(
   }
 
   const data = buildTreeData(options, '', separator, displayAllSelectedLevels, false);
-  const option = [...data.nodes.values()].find(
-    (node) => node.id !== TREE_ROOT_ID && (node.value === initialValue || node.label === initialValue)
-  );
+  const node = [...data.nodes.values()].find((node) => {
+    const option = node.path.at(-1);
+    return option?.value === initialValue || option?.label === initialValue;
+  });
 
-  if (option) {
-    return { value: option.value, label: option.displayLabel };
+  if (node) {
+    return { value: node.path.at(-1)!.value, label: node.displayLabel };
   }
 
   return allowCustomValue ? { value: initialValue, label: initialValue } : null;
 }
 
-/**
- * A lightweight tree selector for leaf-only Cascader use cases.
- *
- * @alpha
- */
 export const TreeSelectBase = memo(
   ({
     separator = DEFAULT_SEPARATOR,
@@ -261,6 +248,7 @@ export const TreeSelectBase = memo(
     const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
 
     const handleActivate = (node: TreeSelectNode, isFolder: boolean) => {
+      const value = node.path.at(-1)!.value;
       if (isFolder) {
         loadData?.(node.path);
         if (!changeOnSelect) {
@@ -269,13 +257,13 @@ export const TreeSelectBase = memo(
       }
 
       if (valuePath === undefined) {
-        setSelected({ value: node.value, label: hideActiveLevelLabel ? '' : node.displayLabel });
+        setSelected({ value, label: hideActiveLevelLabel ? '' : node.displayLabel });
       }
       setQuery('');
       if (!isFolder) {
         handleOpenChange(false);
       }
-      onSelect(node.value);
+      onSelect?.(value);
       onChangePath?.(
         node.path.map((option) => option.value),
         node.path
@@ -291,16 +279,13 @@ export const TreeSelectBase = memo(
     return (
       <div className={className} data-testid={dataTestId}>
         {renderTrigger ? (
-          renderTrigger(
-            {
-              ref: refs.setReference,
-              onClick: () => handleOpenChange(!open),
-              'aria-controls': menuId,
-              'aria-expanded': open,
-              'aria-haspopup': 'tree',
-            },
-            open
-          )
+          renderTrigger({
+            ref: refs.setReference,
+            onClick: () => handleOpenChange(!open),
+            'aria-controls': menuId,
+            'aria-expanded': open,
+            'aria-haspopup': 'tree',
+          })
         ) : (
           <Input
             {...getReferenceProps({
@@ -340,7 +325,7 @@ export const TreeSelectBase = memo(
                       event.stopPropagation();
                       setSelected(null);
                       setQuery('');
-                      onSelect('');
+                      onSelect?.('');
                       onChangePath?.([], []);
                     }}
                   />

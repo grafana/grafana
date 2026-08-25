@@ -78,7 +78,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
       {items.map((item) => {
         const node = item.getItemData();
         const itemProps = item.getProps();
-        const selected = node.value === selectedValue;
+        const selected = node.path.at(-1)?.value === selectedValue;
 
         return (
           <button

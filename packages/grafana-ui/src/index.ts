@@ -31,7 +31,6 @@ export { CustomScrollbar, type ScrollbarPosition } from './components/CustomScro
 export { TabbedContainer, type TabConfig } from './components/TabbedContainer/TabbedContainer';
 export { ClipboardButton } from './components/ClipboardButton/ClipboardButton';
 export { Cascader, type CascaderOption, type CascaderProps } from './components/Cascader/Cascader';
-export { TreeSelect, type TreeSelectProps } from './components/Cascader/TreeSelect';
 export { Carousel } from './components/Carousel/Carousel';
 export {
   ButtonCascader,

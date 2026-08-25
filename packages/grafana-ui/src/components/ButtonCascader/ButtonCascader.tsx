@@ -85,7 +85,6 @@ export const ButtonCascader = ({
     <TreeSelectBase
       options={mappedOptions}
       valuePath={value}
-      onSelect={() => {}}
       onChangePath={(values, selectedOptions) => onChange?.(values, publicOptions(selectedOptions))}
       loadData={(selectedOptions) => loadData?.(publicOptions(selectedOptions))}
       onOpenChange={onPopupVisibleChange}
