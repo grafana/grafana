@@ -1,18 +1,13 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { Button, type ButtonProps } from '../Button/Button';
 import { TreeSelectBase } from '../Cascader/TreeSelectImplementation';
 import { type CascaderOption } from '../Cascader/types';
 import { Icon } from '../Icon/Icon';
 
-export interface CascaderFieldNames<Option> {
-  label?: keyof Option;
-  value?: keyof Option;
-  children?: keyof Option;
+interface CascaderFieldNames {
+  label?: keyof CascaderOption;
+  value?: keyof CascaderOption;
+  children?: keyof CascaderOption;
 }
 
 export interface ButtonCascaderProps {
@@ -21,7 +16,7 @@ export interface ButtonCascaderProps {
   icon?: IconName;
   disabled?: boolean;
   value?: string[];
-  fieldNames?: CascaderFieldNames<CascaderOption>;
+  fieldNames?: CascaderFieldNames;
   loadData?: (selectedOptions: CascaderOption[]) => void;
   onChange?: (value: string[], selectedOptions: CascaderOption[]) => void;
   onPopupVisibleChange?: (visible: boolean) => void;
@@ -31,11 +26,7 @@ export interface ButtonCascaderProps {
   hideDownIcon?: boolean;
 }
 
-function isCascaderOptionArray(value: CascaderOption[keyof CascaderOption]): value is CascaderOption[] {
-  return Array.isArray(value);
-}
-
-function mapOptions(options: CascaderOption[], fieldNames: CascaderFieldNames<CascaderOption> = {}): CascaderOption[] {
+function mapOptions(options: CascaderOption[], fieldNames: CascaderFieldNames): CascaderOption[] {
   const labelField = fieldNames.label ?? 'label';
   const valueField = fieldNames.value ?? 'value';
   const childrenField = fieldNames.children ?? 'children';
@@ -51,7 +42,7 @@ function mapOptions(options: CascaderOption[], fieldNames: CascaderFieldNames<Ca
       value,
       disabled: option.disabled,
       isLeaf: option.isLeaf,
-      children: isCascaderOptionArray(rawChildren) ? mapOptions(rawChildren, fieldNames) : undefined,
+      children: Array.isArray(rawChildren) ? mapOptions(rawChildren, fieldNames) : undefined,
     };
   });
 }
@@ -78,8 +69,7 @@ export const ButtonCascader = ({
   buttonProps,
   hideDownIcon,
 }: ButtonCascaderProps) => {
-  const styles = useStyles2(getStyles);
-  const mappedOptions = mapOptions(options, fieldNames);
+  const mappedOptions = fieldNames ? mapOptions(options, fieldNames) : options;
 
   return (
     <TreeSelectBase
@@ -90,36 +80,24 @@ export const ButtonCascader = ({
       onOpenChange={onPopupVisibleChange}
       className={className}
       disabled={disabled}
-      renderTrigger={(triggerProps) => {
-        const { onClick, ref, ...rest } = triggerProps;
-        return (
-          <Button
-            icon={icon}
-            disabled={disabled}
-            variant={variant}
-            {...(buttonProps ?? {})}
-            {...rest}
-            ref={ref}
-            onClick={(event) => {
-              buttonProps?.onClick?.(event);
-              if (!event.defaultPrevented) {
-                onClick?.(event);
-              }
-            }}
-          >
-            {children}
-            {!hideDownIcon && <Icon name="angle-down" className={styles.icon} />}
-          </Button>
-        );
-      }}
+      renderTrigger={({ onClick, ...triggerProps }) => (
+        <Button
+          icon={icon}
+          disabled={disabled}
+          variant={variant}
+          {...buttonProps}
+          {...triggerProps}
+          onClick={(event) => {
+            buttonProps?.onClick?.(event);
+            if (!event.defaultPrevented) {
+              onClick(event);
+            }
+          }}
+        >
+          {children}
+          {!hideDownIcon && <Icon name="angle-down" style={{ marginLeft: 4 }} />}
+        </Button>
+      )}
     />
   );
 };
-
-ButtonCascader.displayName = 'ButtonCascader';
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  icon: css({
-    margin: theme.spacing(0, 0, 0, 0.5),
-  }),
-});

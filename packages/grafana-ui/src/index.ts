@@ -32,11 +32,7 @@ export { TabbedContainer, type TabConfig } from './components/TabbedContainer/Ta
 export { ClipboardButton } from './components/ClipboardButton/ClipboardButton';
 export { Cascader, type CascaderOption, type CascaderProps } from './components/Cascader/Cascader';
 export { Carousel } from './components/Carousel/Carousel';
-export {
-  ButtonCascader,
-  type ButtonCascaderProps,
-  type CascaderFieldNames,
-} from './components/ButtonCascader/ButtonCascader';
+export { ButtonCascader, type ButtonCascaderProps } from './components/ButtonCascader/ButtonCascader';
 export { InlineToast } from './components/InlineToast/InlineToast';
 export { LoadingPlaceholder, type LoadingPlaceholderProps } from './components/LoadingPlaceholder/LoadingPlaceholder';
 export { LoadingBar, type LoadingBarProps } from './components/LoadingBar/LoadingBar';

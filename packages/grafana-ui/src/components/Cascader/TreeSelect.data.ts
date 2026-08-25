@@ -6,8 +6,6 @@ export interface TreeSelectNode {
   menuLabel: string;
   displayLabel: string;
   children: string[];
-  folder: boolean;
-  disabled: boolean;
   path: CascaderOption[];
   customDescription?: string;
 }

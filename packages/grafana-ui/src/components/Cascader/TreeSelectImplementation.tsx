@@ -103,8 +103,6 @@ function buildTreeData(
         menuLabel: normalizedQuery ? nextPath.join(separator) : option.label,
         displayLabel: displayAllSelectedLevels ? nextPath.join(separator) : option.label,
         children,
-        folder: children.length > 0 || option.isLeaf === false,
-        disabled: Boolean(option.disabled),
         path: nextOptionPath,
       });
       return [id];
@@ -122,8 +120,6 @@ function buildTreeData(
       menuLabel: query,
       displayLabel: query,
       children: [],
-      folder: false,
-      disabled: false,
       path: [{ value: query, label: query }],
       customDescription: formatCreateLabel?.(query),
     });
@@ -134,8 +130,6 @@ function buildTreeData(
     menuLabel: '',
     displayLabel: '',
     children: rootChildren,
-    folder: true,
-    disabled: false,
     path: [],
   });
 
@@ -199,7 +193,7 @@ export const TreeSelectBase = memo(
     'data-testid': dataTestId,
   }: TreeSelectBaseProps) => {
     const styles = useStyles2(getTreeSelectStyles);
-    const menuId = `cascader-${useId().replace(/:/g, '-')}`;
+    const menuId = useId();
     const [isOpen, setIsOpen] = useState(alwaysOpen);
     const [query, setQuery] = useState('');
     const controlledValue = valuePath?.at(-1);
@@ -270,12 +264,6 @@ export const TreeSelectBase = memo(
       );
     };
 
-    const focusFirstTreeItem = () => {
-      requestAnimationFrame(() => {
-        document.getElementById(menuId)?.querySelector<HTMLElement>('[role="treeitem"]')?.focus();
-      });
-    };
-
     return (
       <div className={className} data-testid={dataTestId}>
         {renderTrigger ? (
@@ -298,7 +286,9 @@ export const TreeSelectBase = memo(
               onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
                 if (event.key === 'ArrowDown' && open) {
                   event.preventDefault();
-                  focusFirstTreeItem();
+                  requestAnimationFrame(() => {
+                    document.getElementById(menuId)?.querySelector<HTMLElement>('[role="treeitem"]')?.focus();
+                  });
                 }
               },
             })}
