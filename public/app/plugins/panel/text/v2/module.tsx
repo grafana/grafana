@@ -5,7 +5,6 @@ import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
-import { hasRenderableData } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
@@ -46,8 +45,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         },
       ],
     },
-    showIf: (_options, data) =>
-      getFeatureFlagClient().getBooleanValue('text.newFeatures', false) && hasRenderableData(data),
+    showIf: () => getFeatureFlagClient().getBooleanValue('text.newFeatures', false),
   });
 };
 

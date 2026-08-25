@@ -50,17 +50,12 @@ describe('textNGPanelOptions', () => {
     ['there is no data', undefined],
     ['no frames were returned', []],
     ['the frame has no rows', [toDataFrame({ fields: [{ name: 'a', values: [] }] })]],
-  ])('hides renderMode when %s', (_name, data) => {
-    expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
-  });
-
-  it('shows renderMode once a frame has rows', () => {
-    const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
-
+    ['a frame has rows', [toDataFrame({ fields: [{ name: 'a', values: [1] }] })]],
+  ])('shows renderMode when %s, so the mode stays discoverable', (_name, data) => {
     expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(true);
   });
 
-  it('hides renderMode when the text.newFeatures flag is off, even with rows', () => {
+  it('hides renderMode when the text.newFeatures flag is off', () => {
     mockNewFeatures = false;
     const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
