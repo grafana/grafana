@@ -634,10 +634,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingDisableDMAinUI
-	// Disables the DMA feature in the UI
-	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
-
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"

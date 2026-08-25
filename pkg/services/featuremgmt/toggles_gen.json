@@ -351,7 +351,8 @@
       "metadata": {
         "name": "alertingDisableDMAinUI",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-24T13:40:05Z"
       },
       "spec": {
         "description": "Disables the DMA feature in the UI",
