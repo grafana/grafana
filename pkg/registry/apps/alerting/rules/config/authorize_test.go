@@ -1,0 +1,135 @@
+package config
+
+import (
+	"context"
+	"testing"
+
+	"github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+)
+
+// recordingAC wraps the fake AccessControl so a test can both control the
+// Evaluate result and assert which action was evaluated.
+type recordingAC struct {
+	actest.FakeAccessControl
+	last accesscontrol.Evaluator
+}
+
+func (r *recordingAC) Evaluate(ctx context.Context, u identity.Requester, ev accesscontrol.Evaluator) (bool, error) {
+	r.last = ev
+	return r.FakeAccessControl.Evaluate(ctx, u, ev)
+}
+
+func attrs(verb, subresource string) authorizer.AttributesRecord {
+	return authorizer.AttributesRecord{
+		Verb:            verb,
+		APIGroup:        ResourceInfo.GroupResource().Group,
+		Resource:        ResourceInfo.GroupResource().Resource,
+		Subresource:     subresource,
+		Name:            "default",
+		ResourceRequest: true,
+	}
+}
+
+const (
+	idHuman = "human" // an authenticated end user
+	idNone  = "none"  // no requester in context
+)
+
+func ctxFor(t *testing.T, kind string) context.Context {
+	t.Helper()
+	switch kind {
+	case idHuman:
+		return identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type: types.TypeUser, UserID: 1, UserUID: "1", OrgID: 1,
+		})
+	case idNone:
+		return context.Background()
+	default:
+		t.Fatalf("unknown identity kind %q", kind)
+		return nil
+	}
+}
+
+func TestAuthorize(t *testing.T) {
+	cases := []struct {
+		name        string
+		verb        string
+		subresource string
+		resource    string // override; defaults to configs
+		noRequester bool
+		rbac        bool   // what AccessControl.Evaluate returns
+		wantAction  string // action expected to be evaluated; "" => RBAC not consulted
+		want        authorizer.Decision
+		wantReason  string
+	}{
+		// Reads (get/list/watch) gate on the read action; decision follows RBAC.
+		{name: "read get permitted", verb: "get", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "read get denied", verb: "get", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionDeny},
+		{name: "read list permitted", verb: "list", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "read watch permitted", verb: "watch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+
+		// create/patch/update all gate on the update action — unlike the
+		// notifications Config, there is no service-identity-only carve-out for
+		// create: the singleton must be creatable via the API (see the doc
+		// comment on Authorize).
+		{name: "create permitted", verb: "create", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+		{name: "create denied", verb: "create", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
+		{name: "update permitted", verb: "update", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+		{name: "update denied", verb: "update", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionDeny},
+		{name: "patch permitted", verb: "patch", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigUpdate, want: authorizer.DecisionAllow},
+
+		// /status: reads gate on read, writes on the status-update action.
+		{name: "status get permitted", verb: "get", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigRead, want: authorizer.DecisionAllow},
+		{name: "status create permitted", verb: "create", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionAllow},
+		{name: "status update permitted", verb: "update", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionAllow},
+		{name: "status update denied", verb: "update", subresource: "status", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionDeny},
+		{name: "status patch permitted", verb: "patch", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionAllow},
+
+		// delete/deletecollection are always rejected (destructive on a singleton).
+		{name: "delete denied", verb: "delete", rbac: true, want: authorizer.DecisionDeny},
+		{name: "deletecollection denied", verb: "deletecollection", rbac: true, want: authorizer.DecisionDeny},
+
+		// Unknown verbs fall through to no opinion (main resource and /status).
+		{name: "unknown verb on main", verb: "connect", rbac: true, want: authorizer.DecisionNoOpinion},
+		{name: "unknown verb on status", verb: "connect", subresource: "status", rbac: true, want: authorizer.DecisionNoOpinion},
+
+		// Guard rails: other resources are none of this authorizer's business,
+		// and an unauthenticated request is denied before any RBAC check.
+		{name: "non-Config resource", verb: "get", resource: "alertrules", rbac: true, want: authorizer.DecisionNoOpinion},
+		{name: "missing requester", verb: "get", noRequester: true, rbac: true, want: authorizer.DecisionDeny, wantReason: "valid user is required"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedEvaluate: tc.rbac}}
+			a := attrs(tc.verb, tc.subresource)
+			if tc.resource != "" {
+				a.Resource = tc.resource
+			}
+
+			id := idHuman
+			if tc.noRequester {
+				id = idNone
+			}
+			decision, reason, err := Authorize(ctxFor(t, id), ac, a)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, decision)
+			if tc.wantReason != "" {
+				require.Equal(t, tc.wantReason, reason)
+			}
+
+			if tc.wantAction == "" {
+				require.Nil(t, ac.last, "RBAC must not be consulted")
+			} else {
+				require.NotNil(t, ac.last)
+				require.Equal(t, tc.wantAction, ac.last.String())
+			}
+		})
+	}
+}
