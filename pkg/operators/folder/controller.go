@@ -15,8 +15,8 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/server"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // queueGroup is the NATS queue group this controller's subscription joins, so
