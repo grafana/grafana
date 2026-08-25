@@ -319,6 +319,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 4,
                   alertrules: 5,
                   recordingrules: 6,
+                  variables: 2,
                 }
               : {
                   folders: 1,
@@ -326,6 +327,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 3,
                   alertrules: 4,
                   recordingrules: 1,
+                  variables: 3,
                 }
           )
         )
@@ -344,6 +346,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 7,
         alertrules: 9,
         recordingrules: 7,
+        variables: 5,
       });
     });
 
@@ -374,6 +377,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 4,
         alertrules: 5,
         recordingrules: 0,
+        variables: 0,
       });
     });
 
@@ -399,6 +403,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 3,
         alertrules: 4,
         recordingrules: 5,
+        variables: 0,
       });
     });
 
@@ -420,8 +425,42 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 0,
         alertrules: 0,
         recordingrules: 0,
+        variables: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
+
+    it('includes variable counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({
+            folders: 0,
+            dashboards: 0,
+            library_elements: 0,
+            alertrules: 0,
+            recordingrules: 0,
+            variables: 4,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 0,
+        librarypanels: 0,
+        alertrules: 0,
+        recordingrules: 0,
+        variables: 4,
+      });
     });
   });
 

@@ -80,6 +80,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
   recordingrules: folderCounts.recordingrules || 0,
+  variables: folderCounts.variables || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -247,6 +248,7 @@ export const browseDashboardsAPI = createApi({
             librarypanels: 0,
             alertrules: 0,
             recordingrules: 0,
+            variables: 0,
           };
 
           for (const folderCounts of results) {
@@ -256,6 +258,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
             totalCounts.recordingrules += normalizedCounts.recordingrules;
+            totalCounts.variables += normalizedCounts.variables;
           }
 
           return { data: totalCounts };
