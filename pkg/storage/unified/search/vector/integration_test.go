@@ -984,16 +984,16 @@ func TestIntegrationVectorLexicalSearch(t *testing.T) {
 			Embedding: makeEmbedding(0.1, 0.2), Model: testModel,
 		}
 	}
-	rows := []Vector{
+	// The same content under another model must not duplicate hits.
+	other := row("r1", "chunk/0", "High CPU usage on mimir ingester", `{"folderUid":"f1"}`)
+	other.Model = "other-model"
+	require.NoError(t, backend.Upsert(ctx, []Vector{
 		row("r1", "chunk/0", "High CPU usage on mimir ingester", `{"folderUid":"f1","kind":"alert_rule"}`),
 		row("r1", "chunk/1", "runbook: restart mimir ingester pods, check CPU throttling", `{"folderUid":"f1","kind":"alert_rule"}`),
 		row("r2", "chunk/0", "Postgres disk usage high on primary", `{"folderUid":"f2","kind":"alert_rule","labels":["team=db","env=prod"]}`),
 		row("r3", "chunk/0", "staging mimir latency above threshold", `{"folderUid":"f1","kind":"alert_rule"}`),
-	}
-	// The same content under another model must not duplicate hits.
-	other := row("r1", "chunk/0", "High CPU usage on mimir ingester", `{"folderUid":"f1"}`)
-	other.Model = "other-model"
-	require.NoError(t, backend.Upsert(ctx, append(rows, other)))
+		other,
+	}))
 
 	search := func(q string, filters ...SearchFilter) []LexicalHit {
 		t.Helper()

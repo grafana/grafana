@@ -129,69 +129,16 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 
 	var lex []lexicalHit
 	g.Go(func() error {
-		if coll.IsExternal {
-			hits, err := s.externalLexical.LexicalSearch(gctx, vector.LexicalQuery{
-				Namespace: req.Key.Namespace,
-				Model:     s.embedder.Model,
-				Resource:  coll.PartitionKey,
-				Query:     req.Query,
-				Limit:     depth,
-				Filters:   vectorFilters,
-			})
-			if err != nil {
-				return fmt.Errorf("lexical leg: %w", err)
-			}
-			items := make([]vector.VectorSearchResult, len(hits))
-			for i, h := range hits {
-				items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
-			}
-			allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, items)
-			if err != nil {
-				return fmt.Errorf("authz batch check: %w", err)
-			}
-			kept := hits[:0]
-			for _, h := range hits {
-				if allowed[vectorAuthzKey{h.UID, h.Folder}] {
-					kept = append(kept, h)
-				}
-			}
-			lex = lexicalHitsFromLexical(kept)
-			return nil
-		}
-		lexResp, err := s.Search(gctx, hybridLexicalRequest(req, depth))
-		if err != nil {
-			return fmt.Errorf("lexical leg: %w", err)
-		}
-		if lexResp.Error != nil {
-			return fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(lexResp.Error))
-		}
-		lex = lexicalHitsFromResponse(lexResp)
-		return nil
+		var err error
+		lex, err = s.hybridLexicalLeg(gctx, user, req, coll, depth, vectorFilters)
+		return err
 	})
 
 	var sem []vector.VectorSearchResult
 	g.Go(func() error {
-		dense, err := s.embedVectorSearchQuery(gctx, req.Key.Namespace, embedText)
-		if err != nil {
-			return err
-		}
-		results, err := s.vectorBackend.Search(gctx,
-			req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
-			dense, depth, vectorFilters...)
-		if err != nil {
-			return fmt.Errorf("vector backend: %w", err)
-		}
-		allowed, err := s.batchCheckVectorSearchResults(gctx, user, req.Key, results)
-		if err != nil {
-			return fmt.Errorf("authz batch check: %w", err)
-		}
-		sem = make([]vector.VectorSearchResult, 0, len(results))
-		for _, r := range results {
-			if allowed[vectorAuthzKey{r.UID, r.Folder}] {
-				sem = append(sem, r)
-			}
-		}
-		return nil
+		var err error
+		sem, err = s.hybridSemanticLeg(gctx, user, req, coll, embedText, depth, vectorFilters)
+		return err
 	})
 
 	if err := g.Wait(); err != nil {
@@ -226,6 +173,75 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	_ = eg.Wait() // both are best-effort and never return an error
 
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+// hybridLexicalLeg runs the lexical retrieval: FTS over stored rows for
+// external collections (authz-filtered per hit), bleve for internal (the
+// index enforces authz itself).
+func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
+	if !coll.IsExternal {
+		lexResp, err := s.Search(ctx, hybridLexicalRequest(req, depth))
+		if err != nil {
+			return nil, fmt.Errorf("lexical leg: %w", err)
+		}
+		if lexResp.Error != nil {
+			return nil, fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(lexResp.Error))
+		}
+		return lexicalHitsFromResponse(lexResp), nil
+	}
+
+	hits, err := s.externalLexical.LexicalSearch(ctx, vector.LexicalQuery{
+		Namespace: req.Key.Namespace,
+		Model:     s.embedder.Model,
+		Resource:  coll.PartitionKey,
+		Query:     req.Query,
+		Limit:     depth,
+		Filters:   filters,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("lexical leg: %w", err)
+	}
+	items := make([]vector.VectorSearchResult, len(hits))
+	for i, h := range hits {
+		items[i] = vector.VectorSearchResult{UID: h.UID, Folder: h.Folder}
+	}
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, items)
+	if err != nil {
+		return nil, fmt.Errorf("authz batch check: %w", err)
+	}
+	kept := hits[:0]
+	for _, h := range hits {
+		if allowed[vectorAuthzKey{h.UID, h.Folder}] {
+			kept = append(kept, h)
+		}
+	}
+	return lexicalHitsFromLexical(kept), nil
+}
+
+// hybridSemanticLeg embeds the query and runs the vector search,
+// authz-filtering the hits.
+func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, embedText string, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, embedText)
+	if err != nil {
+		return nil, err
+	}
+	results, err := s.vectorBackend.Search(ctx,
+		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
+		dense, depth, filters...)
+	if err != nil {
+		return nil, fmt.Errorf("vector backend: %w", err)
+	}
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		return nil, fmt.Errorf("authz batch check: %w", err)
+	}
+	sem := make([]vector.VectorSearchResult, 0, len(results))
+	for _, r := range results {
+		if allowed[vectorAuthzKey{r.UID, r.Folder}] {
+			sem = append(sem, r)
+		}
+	}
+	return sem, nil
 }
 
 // lexicalUIDSet returns the UIDs the lexical leg matched.
