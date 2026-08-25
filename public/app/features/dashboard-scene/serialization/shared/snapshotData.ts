@@ -1,5 +1,7 @@
 import { type PanelData } from '@grafana/data';
-import { type SceneDataProvider, SceneDataTransformer } from '@grafana/scenes';
+import { type SceneDataProvider } from '@grafana/scenes';
+
+import { getSourceDataProvider } from '../../utils/utils';
 
 /**
  * The data a snapshot captures for a panel: the query result, before anything transformed it. Both
@@ -13,7 +15,5 @@ import { type SceneDataProvider, SceneDataTransformer } from '@grafana/scenes';
  * forever on it — so the snapshot gets no frames rather than the transformed ones.
  */
 export function getSnapshotSourceData(dataProvider: SceneDataProvider): PanelData | undefined {
-  const source = dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
-
-  return source?.state.data;
+  return getSourceDataProvider(dataProvider)?.state.data;
 }

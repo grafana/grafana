@@ -7,6 +7,7 @@ import {
   type CustomVariable,
   LocalValueVariable,
   type MultiValueVariable,
+  type SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
@@ -260,6 +261,18 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   }
 
   return undefined;
+}
+
+/**
+ * The provider holding untransformed results. A `SceneDataTransformer` keeps its own output in
+ * `state.data`, which makes it the one provider that cannot be read directly; it carries its source
+ * in `$data`.
+ *
+ * Returns undefined for a transformer with no source, leaving the choice between "raw or nothing"
+ * and "raw, else whatever ran" to the caller — snapshots need the former, display the latter.
+ */
+export function getSourceDataProvider(dataProvider: SceneDataProvider): SceneDataProvider | undefined {
+  return dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
 }
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {

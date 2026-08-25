@@ -161,6 +161,29 @@ describe('InspectJsonTab', () => {
     expect(tab.isEditable()).toBe(false);
   });
 
+  it('falls back to the transformed frames when the source has produced none', async () => {
+    const { tab, panel } = await buildTestScene();
+
+    // Unlike the snapshot path, which would rather write no frames than frames its transformations
+    // already ran over, this tab always shows something.
+    const transformer = panel.state.$data as SceneDataTransformer;
+    transformer.state.$data!.setState({ data: undefined });
+    transformer.setState({
+      data: {
+        state: LoadingState.Done,
+        series: [
+          toDataFrame({ name: 'transformed', fields: [{ name: 'value', type: FieldType.number, values: [1] }] }),
+        ],
+        timeRange: getDefaultTimeRange(),
+      },
+    });
+
+    tab.onChangeSource({ value: 'data-frames' });
+
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj[0].schema.name).toBe('transformed');
+  });
+
   it('Can update model', async () => {
     const { tab, panel, scene } = await buildTestScene();
 
