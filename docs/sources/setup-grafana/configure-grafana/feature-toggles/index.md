@@ -79,6 +79,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 | `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                                               | Yes                |
+| `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                                                       | Yes                |
 
 ## Public preview feature toggles
 
