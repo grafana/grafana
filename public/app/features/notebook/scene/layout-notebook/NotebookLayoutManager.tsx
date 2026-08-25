@@ -632,6 +632,23 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
     [model, requestFocus]
   );
 
+  // ArrowUp/ArrowDown once the caret (or, for a Panel/Collapsed cell, the frame itself — see
+  // NotebookCellFrame) has nowhere further to go within the current cell. No wraparound at the
+  // first/last cell, matching every other block editor.
+  const onNavigate = useCallback(
+    (fromIndex: number, direction: 'up' | 'down') => {
+      const target = cells[direction === 'up' ? fromIndex - 1 : fromIndex + 1];
+      if (!target) {
+        return;
+      }
+      // Omitted (rather than 0) already means "end of document" (see requestFocus's own doc
+      // comment) — exactly what arriving from below via ArrowUp wants. Arriving from above via
+      // ArrowDown wants the start instead.
+      requestFocus(target.state.key, direction === 'down' ? 0 : undefined);
+    },
+    [cells, requestFocus]
+  );
+
   const onDragStart = useCallback((start: DragStart) => {
     setDrag({ source: start.source.index, destination: start.source.index });
   }, []);
@@ -716,6 +733,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
+                    // Undefined outside edit mode, same as every other affordance here — a read-only
+                    // Code cell still mounts a (readOnly) CodeMirror instance, so without this its own
+                    // ArrowUp/Down keymap would happily fire while just reading the notebook.
+                    onNavigate={isEditing ? (direction) => onNavigate(index, direction) : undefined}
                   />
                 ))}
                 {dropProvided.placeholder}

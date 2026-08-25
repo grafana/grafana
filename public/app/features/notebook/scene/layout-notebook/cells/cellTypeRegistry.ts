@@ -14,13 +14,17 @@ const CodeCell = lazy(() =>
 // everything that doesn't need those, currently just Code.
 export interface CellTypeRegistryItem extends RegistryItem {
   // id matches CellContentKind['kind']; each renderer narrows the content by that kind. `isEditing`,
-  // `autoFocus` and `onChange` are offered to every cell type; a renderer with nothing to focus simply
-  // does not accept it.
+  // `autoFocus`, `focusRequestId`, `caretOffset`, `onChange` and `onNavigate` are offered to every
+  // cell type; a renderer with nothing to focus (or no boundary of its own to detect ArrowUp/Down
+  // at) simply does not accept the ones it has no use for.
   render: ComponentType<{
     content: CellContentKind;
     isEditing: boolean;
     autoFocus?: boolean;
+    focusRequestId?: number;
+    caretOffset?: number;
     onChange: (content: CellContentKind) => void;
+    onNavigate?: (direction: 'up' | 'down') => void;
   }>;
 }
 

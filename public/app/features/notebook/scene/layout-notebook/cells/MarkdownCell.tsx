@@ -13,7 +13,7 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
-import { useFocusExtension } from './focusExtension';
+import { navigationKeymap, useFocusExtension } from './focusExtension';
 import {
   enclosingListKind,
   markdownLivePreview,
@@ -56,6 +56,8 @@ interface Props {
    * that when Enter was pressed on a non-empty list item, so the caller can continue the list there.
    */
   onSubmit?: (remainder: string, marker?: string) => void;
+  /** ArrowUp/ArrowDown once the caret has nowhere further to go inside this cell. See navigationKeymap. */
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 export function MarkdownCell({
@@ -67,6 +69,7 @@ export function MarkdownCell({
   onChange,
   placeholder,
   onSubmit,
+  onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -201,6 +204,18 @@ export function MarkdownCell({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onSubmit exists at all should rebuild this
   }, [Boolean(onSubmit)]);
 
+  // Same ref-backed pattern as onSubmitRef above: onNavigate's identity changes every render, but
+  // whether this cell has the behavior at all doesn't.
+  const onNavigateRef = useRef(onNavigate);
+  onNavigateRef.current = onNavigate;
+  const navigateExt = useMemo(() => {
+    if (!onNavigate) {
+      return [];
+    }
+    return navigationKeymap((direction) => onNavigateRef.current?.(direction));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
+  }, [Boolean(onNavigate)]);
+
   if (content.kind !== 'Markdown') {
     return null;
   }
@@ -228,7 +243,7 @@ export function MarkdownCell({
         lineWrapping
         basicSetup={EDIT_SETUP}
         theme={livePreview.theme}
-        extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...(focusExtension ?? [])]}
+        extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...navigateExt, ...(focusExtension ?? [])]}
         aria-label={t('notebook.cell.markdown.aria-label-editor', 'Markdown')}
         onChange={(value) => {
           // Updated before the external onChange runs, so this render already has `text` matching

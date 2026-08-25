@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -78,6 +79,13 @@ interface Props {
    * currently just the "/" menu any empty markdown cell offers.
    */
   onFocusRequest?: () => void;
+  /**
+   * ArrowUp/ArrowDown once there's nowhere further to go inside this cell — a Markdown/Code cell
+   * decides that itself (see their own boundary-aware keymaps) and calls this the same way a
+   * Panel/Collapsed cell does from the frame's own onKeyDown below, since neither has a caret of its
+   * own to ask.
+   */
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 /**
@@ -99,18 +107,65 @@ export function NotebookCellFrame({
   onDelete,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const { collapsed, body, content } = cell.useState();
+  // Markdown/Code hand a focus grant to their own editor's caret (via useFocusExtension) and detect
+  // an ArrowUp/Down boundary themselves. A Panel or Collapsed cell has no caret to do either with, so
+  // the frame itself stands in for both below.
+  const isEditorCell = !collapsed && !body && (content?.kind === 'Markdown' || content?.kind === 'Code');
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
+  const previousFocusRequestId = useRef(focusRequestId);
+  useEffect(() => {
+    if (isEditorCell || !isEditing) {
+      return;
+    }
+    if (pendingAutoFocus.current) {
+      pendingAutoFocus.current = false;
+      previousFocusRequestId.current = focusRequestId;
+      frameRef.current?.focus();
+      return;
+    }
+    const isFreshRequest = focusRequestId !== undefined && focusRequestId !== previousFocusRequestId.current;
+    previousFocusRequestId.current = focusRequestId;
+    if (isFreshRequest) {
+      frameRef.current?.focus();
+    }
+  }, [focusRequestId, isEditing, isEditorCell]);
+
+  const onFrameKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Only when the bare frame itself is focused — never for a key bubbling up from something
+    // interactive inside it (a panel's own legend, menu, etc.), which owns its own arrow keys.
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      onNavigate?.('up');
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      onNavigate?.('down');
+    }
+  };
 
   return (
     <Draggable draggableId={cell.state.key!} index={index} isDragDisabled={!isEditing}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={dragProvided.innerRef}
+          ref={(node) => {
+            dragProvided.innerRef(node);
+            frameRef.current = node;
+          }}
           {...dragProvided.draggableProps}
+          tabIndex={isEditing && !isEditorCell ? 0 : undefined}
+          onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
           className={cx(
             styles.frame,
             isEditing && styles.frameEditing,
+            !isEditorCell && styles.frameFocusable,
             dragSnapshot.isDragging && styles.dragging,
             (dragSnapshot.isDragging || isDragActive) && styles.affordancesHidden,
             dropIndicator === 'top' && styles.dropLineTop,
@@ -145,6 +200,7 @@ export function NotebookCellFrame({
             caretOffset={caretOffset}
             onAdvance={onAdvance}
             onFocusRequest={onFocusRequest}
+            onNavigate={onNavigate}
           />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
@@ -188,6 +244,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
       // already interactive by the time the pointer arrives on it.
       pointerEvents: 'auto',
     },
+  }),
+  // Only a Panel/Collapsed cell's frame is ever the focused element itself (Markdown/Code hand focus
+  // to their own editor instead), so a plain `:focus` ring — not `:focus-visible`, whose heuristics
+  // for a scripted `.focus()` call are inconsistent across browsers — is safe: it can only ever be
+  // triggered by Tab or an arrow-key focus grant, never by a mouse click into the cell's own content.
+  frameFocusable: css({
+    '&:focus': getFocusStyles(theme),
   }),
   handle: css({
     position: 'absolute',

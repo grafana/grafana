@@ -1,5 +1,5 @@
-import { EditorSelection, type Extension } from '@codemirror/state';
-import { ViewPlugin } from '@codemirror/view';
+import { EditorSelection, Prec, type Extension } from '@codemirror/state';
+import { keymap, ViewPlugin, type EditorView } from '@codemirror/view';
 import { useMemo, useRef } from 'react';
 
 /**
@@ -83,4 +83,41 @@ export function useFocusExtension({
     previousFocusRequestId.current = focusRequestId;
     return isFreshRequest ? buildFocusExtension(caretOnFocus) : undefined;
   }, [isEditing, focusRequestId, caretOnFocus]);
+}
+
+/**
+ * An ArrowUp/ArrowDown keymap that only fires `onNavigate` once the caret has nowhere further to go
+ * *inside this editor* — shared by CodeCell and MarkdownCell, the notebook's two caret-based cells.
+ *
+ * `view.moveVertically` is the same primitive CodeMirror's own `cursorLineUp`/`cursorLineDown`
+ * commands use internally, so it already accounts for soft-wrapped lines: if moving vertically from
+ * the current position doesn't actually move it, there is truly no line above/below to go to (not
+ * just no more *logical* lines), and the notebook should hand off to the sibling cell instead of
+ * leaving the key a no-op. A non-empty selection is left alone, matching how a real text editor
+ * collapses a selection on an arrow key before doing anything else with it.
+ */
+export function navigationKeymap(onNavigate: (direction: 'up' | 'down') => void): Extension[] {
+  const run = (forward: boolean) => (view: EditorView) => {
+    const range = view.state.selection.main;
+    if (!range.empty) {
+      return false;
+    }
+    const moved = view.moveVertically(range, forward);
+    if (moved.head !== range.head) {
+      return false;
+    }
+    onNavigate(forward ? 'down' : 'up');
+    return true;
+  };
+
+  // Prec.highest for the same reason MarkdownCell's own Enter/Shift-Enter keymap needs it — it must
+  // win over basicSetup's bundled default ArrowUp/ArrowDown bindings.
+  return [
+    Prec.highest(
+      keymap.of([
+        { key: 'ArrowUp', run: run(false) },
+        { key: 'ArrowDown', run: run(true) },
+      ])
+    ),
+  ];
 }
