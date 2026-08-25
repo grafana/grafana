@@ -662,3 +662,48 @@ func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
 	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
 	assert.Equal(t, "7", *st.ExternalRulerSync.LastAppliedHash, "failure must not clear the persisted dedup hash")
 }
+
+func TestWriteStatus_RetriesOnUpdateConflict(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "") // existing object: writeStatus takes the Update path
+	cs.failNextUpdates(1, 2)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+
+	assert.GreaterOrEqual(t, cs.updateCallCount(1), 3, "RetryOnConflict re-entered after the forced conflicts (2 failures + 1 success)")
+	st := cs.statusFor(1)
+	require.NotNil(t, st)
+	require.NotNil(t, st.ExternalRulerSync)
+	require.NotNil(t, st.ExternalRulerSync.LastAppliedHash)
+	assert.Equal(t, "hash-1", *st.ExternalRulerSync.LastAppliedHash, "the write recovered and persisted despite the conflicts")
+}
+
+func TestWriteStatus_ExhaustingRetryBudgetLogsAndReturns(t *testing.T) {
+	cs := newFakeConfigClient()
+	cs.setSpec(1, "ds1", "")
+	cs.failNextUpdates(1, 100) // far more than retry.DefaultRetry's 5 steps
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	// writeStatus is best-effort: it must not panic or block forever once the
+	// retry budget is exhausted, and the status must simply remain unwritten.
+	require.NotPanics(t, func() {
+		s.recordSyncResult(context.Background(), 1, "ds1", originAPI, nil, "hash-1")
+	})
+	st := cs.statusFor(1)
+	require.NotNil(t, st) // the seeded object itself still exists
+	assert.Nil(t, st.ExternalRulerSync, "the failed write never persisted any status")
+}
+
+func TestWriteStatus_RetriesOnCreateConflict(t *testing.T) {
+	cs := newFakeConfigClient() // no object seeded: writeStatus takes the Create path
+	cs.failNextCreates(1, 1)
+	s := newTestSyncerWithConfigClient(t, cs, &fakeFetcher{}, &fakeRuleService{})
+
+	s.recordNotConfigured(context.Background(), 1)
+
+	st := cs.statusFor(1)
+	require.NotNil(t, st, "the retry recovered from AlreadyExists (a racing creator) and the object now exists")
+	require.Len(t, st.Conditions, 1)
+	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
+}
