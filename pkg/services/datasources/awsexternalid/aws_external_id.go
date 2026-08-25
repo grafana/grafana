@@ -179,14 +179,16 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 	}
 
 	existingIsGAR := isGrafanaAssumeRole(existing)
-	existingIdKey, _ := externalIDKeys(existing)
+	// Restores always target the stored datasource's namespace, never the payload's. A SigV4
+	// datasource whose payload omits sigV4AuthType looks native here, and copying its ID onto
+	// the native keys would leave an unvetted grafanaExternalId behind.
+	existingIdKey, existingModeKey := externalIDKeys(existing)
 	existingID := ""
 	if existing != nil {
 		existingID = existing.Get(existingIdKey).MustString()
 	}
 
 	updatedIsGAR := isGrafanaAssumeRole(updated)
-	idKey, modeKey := externalIDKeys(updated)
 	modeSet, modeOn := usePerDatasourceExternalID(updated)
 
 	// Leaving Grafana Assume Role with minting FT-enabled: BeforeSave already cleared the
@@ -196,28 +198,17 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 		return
 	}
 
+	// Keep a validated ID, or any stored ID when we cannot validate (empty stack/uid) so a
+	// misconfigured AWSExternalId does not wipe a previously minted value.
 	if isValidGrafanaExternalID(existingID, stackExternalID, uid) ||
 		(existingID != "" && (stackExternalID == "" || uid == "")) {
-		// Keep a validated ID, or any stored ID when we cannot validate (empty stack/uid)
-		// so a misconfigured AWSExternalId does not wipe a previously minted value.
-		//
-		// Restore into the existing datasource's namespace when the update selected a
-		// different one (e.g. FT-off path with auth type omitted → updated looks native
-		// while existing is SigV4). Avoids copying a SigV4 ID onto the native keys.
-		restoreIdKey, restoreModeKey := idKey, modeKey
-		if existingIdKey != idKey {
-			restoreIdKey = existingIdKey
-			_, restoreModeKey = externalIDKeys(existing)
-		}
-		updated.Set(restoreIdKey, existingID)
-		// When the update omits the mode flag in the restore namespace, restore the stored
-		// value so Terraform/API updates that only send partial jsonData do not silently
-		// fall back to stack ID. Check restoreModeKey (not updated's selected namespace) so
-		// cross-namespace restores (FT off, auth type omitted) honor an explicit SigV4 mode
-		// on the payload and are not blocked by a native mode key.
-		if _, restoreModeSet := updated.CheckGet(restoreModeKey); !restoreModeSet {
-			if existingModeSet, existingModeOn := usePerDatasourceExternalID(existing); existingModeSet {
-				updated.Set(restoreModeKey, existingModeOn)
+		updated.Set(existingIdKey, existingID)
+		// A partial update (Terraform, API) can send the ID's namespace without the mode
+		// flag. aws-sdk only uses the per-datasource ID when that flag is explicitly true,
+		// so leaving it unset would silently drop the datasource back to the stack ID.
+		if _, payloadSetsMode := updated.CheckGet(existingModeKey); !payloadSetsMode {
+			if storedModeSet, storedModeOn := usePerDatasourceExternalID(existing); storedModeSet {
+				updated.Set(existingModeKey, storedModeOn)
 			}
 		}
 		return
