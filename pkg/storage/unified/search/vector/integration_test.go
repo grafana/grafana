@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -1325,4 +1326,197 @@ func TestIntegrationVectorNullFolder(t *testing.T) {
 			assert.Empty(t, r.Folder)
 		}
 	}
+}
+
+func mustFilter(t *testing.T, raw string) *filter.Filter {
+	t.Helper()
+	f, err := filter.Parse(json.RawMessage(raw))
+	require.NoError(t, err)
+	require.NotNil(t, f)
+	return f
+}
+
+func TestIntegrationVectorDeleteByFilter(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, status string) Vector {
+		return Vector{
+			Namespace: "ns-flt", Resource: testResource, UID: uid, Title: "T",
+			Subresource: "", Content: "c", Embedding: makeEmbedding(0.3, 0.3), Model: testModel,
+			Metadata: json.RawMessage(fmt.Sprintf(`{"status":%q}`, status)),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", "stale"), mk("u2", "stale"), mk("u3", "fresh"),
+	}))
+
+	n, more, err := backend.DeleteRows(ctx, "ns-flt", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"status":"stale"}`)})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 2, n)
+
+	// Only the fresh row survives.
+	n, _, err = backend.DeleteRows(ctx, "ns-flt", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"status":"fresh"}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+}
+
+func TestIntegrationVectorUpdateMetadata(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	// Isolate so created_at == updated_at holds for freshly-seeded rows.
+	_, err := backend.DeleteNamespace(ctx, "ns-upd")
+	require.NoError(t, err)
+
+	mk := func(uid, status string) Vector {
+		return Vector{
+			Namespace: "ns-upd", Resource: testResource, UID: uid, Title: "T",
+			Subresource: "", Content: "c", Embedding: makeEmbedding(0.4, 0.4), Model: testModel,
+			Metadata: json.RawMessage(fmt.Sprintf(`{"status":%q,"owner":"u-old"}`, status)),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", "open"), mk("u2", "open"), mk("u3", "closed"),
+	}))
+
+	// Merge status, drop owner, only on open rows.
+	updated, err := backend.UpdateMetadata(ctx, "ns-upd", testResource,
+		mustFilter(t, `{"status":"open"}`),
+		json.RawMessage(`{"status":"resolved","note":"done"}`), []string{"owner"})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, updated)
+
+	var meta string
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT metadata::text FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u1").Scan(&meta))
+	require.JSONEq(t, `{"status":"resolved","note":"done"}`, meta)
+
+	// The closed row is untouched.
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT metadata::text FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u3").Scan(&meta))
+	require.JSONEq(t, `{"status":"closed","owner":"u-old"}`, meta)
+
+	// Updated rows bump updated_at; the untouched row keeps created_at == updated_at.
+	var bumped, untouched bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT updated_at > created_at FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u1").Scan(&bumped))
+	require.True(t, bumped, "updated_at should advance on metadata update")
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT updated_at > created_at FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u3").Scan(&untouched))
+	require.False(t, untouched, "untouched row keeps its original updated_at")
+}
+
+func TestIntegrationVectorFilterEdgeCases(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	// Isolate from any rows a prior run left in this namespace.
+	_, err := backend.DeleteNamespace(ctx, "ns-edge")
+	require.NoError(t, err)
+
+	mk := func(uid string, meta string) Vector {
+		return Vector{
+			Namespace: "ns-edge", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+			Metadata: json.RawMessage(meta),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("eq", `{"tag":"a"}`),          // scalar equal to "a"
+		mk("neq", `{"tag":"c"}`),         // scalar not "a"
+		mk("missing", `{"other":"x"}`),   // no tag field
+		mk("numstr", `{"score":"high"}`), // nonnumeric score
+		mk("num", `{"score":42}`),        // numeric score
+	}))
+
+	// $ne is the exact negation of $eq's containment: excludes the equal
+	// scalar, includes the unequal scalar and rows missing the field.
+	ne, err := backend.UpdateMetadata(ctx, "ns-edge", testResource,
+		mustFilter(t, `{"tag":{"$ne":"a"}}`),
+		json.RawMessage(`{"nematch":true}`), nil)
+	require.NoError(t, err)
+	require.EqualValues(t, 4, ne) // neq, missing, numstr, num — not eq
+
+	// $eq matches only the equal scalar.
+	n, _, err := backend.DeleteRows(ctx, "ns-edge", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"tag":"a"}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+
+	// A range filter over a key some rows store as a nonnumeric string must
+	// not abort; the nonnumeric row simply doesn't match.
+	n, more, err := backend.DeleteRows(ctx, "ns-edge", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"score":{"$gt":10}}`)})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 1, n) // only num (42); numstr skipped, not an error
+}
+
+func TestIntegrationVectorFilterNonStringIn(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	_, err := backend.DeleteNamespace(ctx, "ns-nonstr")
+	require.NoError(t, err)
+
+	mk := func(uid, meta string) Vector {
+		return Vector{
+			Namespace: "ns-nonstr", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.7, 0.7), Model: testModel,
+			Metadata: json.RawMessage(meta),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("num", `{"score":42}`),
+		mk("num2", `{"score":7}`),
+		mk("boolt", `{"flag":true}`),
+		mk("boolf", `{"flag":false}`),
+		mk("arr", `{"tags":["a","b"]}`),
+	}))
+
+	// $in with numeric values must not raise a text-vs-numeric type error and
+	// must match by JSONB value, not text formatting.
+	n, _, err := backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"score":{"$in":[42,99]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // only score=42
+
+	// $in with a boolean value.
+	n, _, err = backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"flag":{"$in":[true]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // only flag=true
+
+	// $in over a string array field matches by element membership.
+	n, _, err = backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"tags":{"$in":["b"]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // arr contains "b"
+}
+
+func TestIntegrationVectorNeMatchesNullMetadata(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	_, err := backend.DeleteNamespace(ctx, "ns-null")
+	require.NoError(t, err)
+
+	mk := func(uid string, meta json.RawMessage) Vector {
+		return Vector{
+			Namespace: "ns-null", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.8, 0.8), Model: testModel,
+			Metadata: meta,
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("has", json.RawMessage(`{"env":"prod"}`)),
+		mk("other", json.RawMessage(`{"env":"dev"}`)),
+		mk("none", nil), // stored as SQL NULL
+	}))
+
+	// $ne "prod" must match the dev row AND the metadata-less row (Mongo: a
+	// missing field is "not equal"), i.e. everything except the prod row.
+	n, _, err := backend.DeleteRows(ctx, "ns-null", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"env":{"$ne":"prod"}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n) // other + none, not has
 }

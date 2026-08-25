@@ -890,7 +890,6 @@
       "close": "Fechar",
       "create": "Criar",
       "delete": "Eliminar",
-      "deleting": "A eliminar...",
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} rotas"
       },
       "delete": {
-        "confirm": "Sim, eliminar política",
-        "warning-1": "A eliminação desta política de notificação irá removê-la permanentemente.",
-        "warning-2": "Tem a certeza de que pretende eliminar esta política?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Esta ação removerá permanentemente a política de notificação <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Eliminar política de notificação"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtre as rotas utilizando uma lista de correspondências separadas por vírgulas, por ex.:<1>gravidade=crítica, região=EMEA</1>",
       "generated-policies": "Políticas geradas automaticamente",
@@ -2546,7 +2543,9 @@
         "reset": "Repor",
         "resetting": "A redefinir...",
         "title-delete-notification-policy": "Eliminar política de notificação",
-        "title-reset-notification-policy": "Redefinir política de notificação"
+        "title-reset-notification-policy": "Redefinir política de notificação",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Aguarde enquanto atualizamos as suas políticas de notificação.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Eliminar política de notificação"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Bloco de notas",
       "pill": "Bloco de notas publicado",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Hora"
     },
     "on-create-new-row": {
@@ -7038,6 +7040,9 @@
       "name-json-values": "JSON",
       "selection-options": "Opções de seleção"
     },
+    "dashboard-controls": {
+      "add": ""
+    },
     "dashboard-link-form": {
       "back-to-list": "Voltar à lista",
       "label-icon": "Ícone",
@@ -7817,9 +7822,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou outros painel de controlo.",
       "content-variable-not-referenced-other-variables-dashboard": "Esta variável não é referenciada por outras variáveis ou outros painéis de controlo.",
       "content-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou outros painel de controlo."
-    },
-    "variable-controls": {
-      "add-variable": "Adicionar variável"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Não há informações de volume disponíveis para as consultas atuais e intervalo de tempo."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Recolher {{name}}",
       "error": "Falha ao carregar as métricas",
@@ -8754,6 +8761,7 @@
       "loading-values": "A carregar valores...",
       "no-metrics": "Nenhuma métrica encontrada",
       "search-placeholder": "Pesquisar métricas",
+      "show-metric-details": "",
       "show-more": "Mostrar mais",
       "show-more-metrics": "Mostrar mais métricas",
       "show-more-values": "Mostrar mais valores",
@@ -9147,6 +9155,7 @@
     "json": {
       "cancel-button": "Cancelar",
       "copy-button": "Copiar para a área de transferência",
+      "dashboard-definition": "",
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
       "export-format": "Formato",
@@ -11271,6 +11280,13 @@
       "show": "Mostrar",
       "switch": "As recomendações seguem a solução selecionada",
       "switchSolution": "Mudar de solução",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Recomendações para a sua pilha"
     },
     "solutions": {
@@ -11327,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12893,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12919,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13691,16 +13735,19 @@
       "behind-branch-text": "Este recurso está atrás do ramo em {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Os restantes utilizadores da Grafana na sua organização continuarão a ver este recurso até que este ramo seja combinado.",
+      "move-from-branch": "",
       "not-saved": "Os restantes utilizadores da Grafana na sua organização continuarão a ver a versão atualmente guardada no ramo predefinido configurado até que esse ramo seja combinado",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir pedido de extração em {{repoType}}",
       "update-from-branch": "Os restantes utilizadores da Grafana na sua organização continuarão a ver a versão atual até que esse ramo seja combinado.",
       "view-in-repo-button": "Ver em {{repoType}} para ver as alterações mais recentes.",
-      "view-pull-request-in-repo": "Ver pedido de extração em {{repoType}}"
+      "view-pull-request-in-repo": "Ver pedido de extração em {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Foi criado um novo recurso num ramo em {{repoType}}.",
     "title-deleted-resource-in-branch": "Foi eliminado um recurso num ramo em {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir do ramo que acabou de criar em {{repoType}} e só é visível para si",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Foi atualizado um recurso num ramo em {{repoType}}."
   },
   "provisioning": {
@@ -16275,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
