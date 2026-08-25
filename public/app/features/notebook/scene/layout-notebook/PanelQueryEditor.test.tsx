@@ -206,6 +206,20 @@ describe('PanelQueryEditor', () => {
     );
   });
 
+  // The row's header (including its own datasource picker) is always visible, collapsed or not — so
+  // switching datasource there needs the same auto-open as picking one for the first time. Without
+  // it, a reader who switches datasource on an already-collapsed row is left looking at a chevron,
+  // not the now-likely-stale query for the datasource they just switched to.
+  it('opens the row when the datasource is switched on an already-configured row', async () => {
+    const panel = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
+
+    await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
+  });
+
   it('runs the query from the Run button', async () => {
     const panel = buildPanel();
     const runner = getQueryRunnerFor(panel)!;

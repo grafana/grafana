@@ -523,15 +523,6 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
-    // Query inserts a real Panel VizPanel (see NotebookLayoutManager's buildQueryPanel), not narrative
-    // content — this just checks the "/" menu actually builds one, defaulted to a timeseries viz with
-    // no datasource chosen yet, the same starting point buildVizPanelState gives any other Panel element
-    // with no persisted query.
-    // Called directly rather than through renderManager: a real Panel body cell renders a genuine
-    // VizPanel (see PanelCell in NotebookCellRenderer), which needs plugin-registry machinery this
-    // suite doesn't set up — same reason the old Query cell's own rendering had its own dedicated test
-    // file rather than being exercised here. This file only cares whether the divider lands the right
-    // cell on the manager.
     it('inserts a visualization panel cell where the divider offered it', () => {
       const manager = buildManager(buildNarrativeCells(['a', 'b']));
 
@@ -591,14 +582,6 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
     });
 
-    // Visualization converts the cell into a panel (body), not content — a distinct code path from the
-    // content-diffing one every other type above goes through (see NotebookLayoutManager's
-    // convertCellToPanel). Called directly rather than through the "/" menu UI, for the same reason
-    // 'inserts a visualization panel cell' above is: a real Panel body cell renders a genuine VizPanel,
-    // which needs plugin-registry machinery this suite doesn't set up. The "always one more empty
-    // block ready" invariant (a fresh cell appended once the trailing one stops being empty markdown)
-    // is the live renderer's own bootstrap effect, exercised for other conversions above through the
-    // UI; convertCellToPanel doesn't own that behavior, so it isn't re-asserted here.
     it('converts the trailing cell into a panel, rather than leaving it narrative content', () => {
       const trailing = new NotebookCellItem({
         elementName: 'paragraph-1',

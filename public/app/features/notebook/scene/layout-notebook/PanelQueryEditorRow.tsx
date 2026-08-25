@@ -1,16 +1,10 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import {
-  type DataQuery,
-  type DataSourceInstanceSettings,
-  type GrafanaTheme2,
-  type PanelData,
-  type TimeRange,
-} from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneQueryRunner } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -41,20 +35,8 @@ interface Props {
  */
 export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, range, onRunQuery, startOpen }: Props) {
   const { settings: dsSettings } = useDataSourceInstanceSettings(query.datasource);
-  // Hides the row's own drag-to-reorder handle: reordering isn't supported here (see
-  // setQueryRunnerQueries's own notes on scope), and QueryEditorRow only exposes draggable bundled
-  // with hideActionButtons/inSavedQueryMode — both of which would also hide the duplicate/hide/remove
-  // actions this editor does want. Targeted by its own aria-label (kept in sync with QueryOperationRowHeader's,
-  // since it comes from the same translation key) rather than an unexported style, so it still finds the
-  // handle in any locale.
-  const dragAndDropLabel = t('query-operation.header.drag-and-drop', 'Drag and drop to reorder');
-  const styles = useStyles2(getStyles, dragAndDropLabel);
-  // Collapsed by default: entering edit mode with several rows already open at once would otherwise
-  // dominate the notebook cell before the reader has asked to look at any of them. `startOpen` is the
-  // one exception — a block the reader just added or converted, where making them click a chevron to
-  // see the editor they were just handed would be a needless extra step. Local state either way, not
-  // derived from anything persisted — PanelQueryEditorRow only mounts while editing, so a fresh mount
-  // (including re-entering edit mode after leaving it) starts from this same initial value again.
+  // Hides the row's own drag-to-reorder handle: reordering isn't supported here
+  const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(Boolean(startOpen));
 
   const changeQuery = (updated: DataQuery) => {
@@ -64,23 +46,18 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
     );
   };
 
+  // Opens the row on any datasource change, not just the first one — picking a datasource for the
+  // first time (via the bare picker below) and switching it later (via QueryEditorRow's own header
+  // picker, always visible whether the row is collapsed or not) both leave the reader looking at a
+  // now-stale or now-absent query for the new datasource; they shouldn't also have to find and click
+  // a chevron to see it.
   const changeDataSource = (settings: DataSourceInstanceSettings) => {
     changeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
+    setIsOpen(true);
   };
 
   if (!dsSettings) {
-    return (
-      <DataSourcePicker
-        current={query.datasource}
-        onChange={(settings) => {
-          changeDataSource(settings);
-          // The row that was just a bare picker a moment ago now has a real editor behind it —
-          // opening it automatically means the reader who just picked a datasource sees it right
-          // away, instead of also having to find and click a chevron.
-          setIsOpen(true);
-        }}
-      />
-    );
+    return <DataSourcePicker current={query.datasource} onChange={changeDataSource} />;
   }
 
   return (
@@ -95,14 +72,8 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
         onChangeDataSource={changeDataSource}
         onChange={changeQuery}
         onRunQuery={onRunQuery}
-        // Real handlers, not no-ops, now that a panel can carry more than one query: onCopyQuery
-        // (the row's own "Duplicate query" action) already calls onAddQuery(cloneDeep(query)) — same
-        // addQuery() the header's own "Add query" button uses, so the clone still gets a fresh refId
-        // rather than colliding with the query it was copied from.
         onAddQuery={(copy) => setQueryRunnerQueries(queryRunner, addQuery(queries, copy))}
         onRemoveQuery={(target) => {
-          // Refuses to go to zero queries — the rest of the editor (and the panel itself) assumes
-          // there's always at least one, same invariant a freshly-created query panel starts with.
           if (queries.length <= 1) {
             return;
           }
@@ -120,10 +91,10 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
   );
 }
 
-function getStyles(_theme: GrafanaTheme2, dragAndDropLabel: string) {
+function getStyles() {
   return {
     hideDragHandle: css({
-      [`[aria-label="${dragAndDropLabel}"]`]: {
+      '&& div:has(> [data-testid="icon-draggabledots"])': {
         display: 'none',
       },
     }),

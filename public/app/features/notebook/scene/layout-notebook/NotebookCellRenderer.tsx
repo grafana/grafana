@@ -74,12 +74,6 @@ export function NotebookCellRenderer({
   return null;
 }
 
-// A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
-// While editing, a panel with no transformations (the shape a "Visualization" block produces — see
-// NotebookLayoutManager's buildVisualizationPanel) also gets an inline query editor above it, one row
-// per query — see PanelQueryEditor. `autoFocus` (the same "this cell was just inserted or converted"
-// signal narrative cells use to grab the caret) opens that editor immediately instead of leaving a
-// freshly-added block collapsed behind a chevron the reader has to know to click.
 function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing: boolean; autoFocus?: boolean }) {
   const styles = useStyles2(getStyles);
 
