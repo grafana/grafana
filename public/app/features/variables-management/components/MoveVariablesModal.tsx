@@ -41,9 +41,9 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
           ? t('variables-management.move-modal.body', '', {
               count,
               defaultValue_one:
-                'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).',
+                'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available to all dashboards).',
               defaultValue_other:
-                'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).',
+                'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available to all dashboards).',
             })
           : t('variables-management.move-modal.body-folder-only', '', {
               count,

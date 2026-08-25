@@ -17672,8 +17672,8 @@
       "not-found": "Variable not found"
     },
     "move-modal": {
-      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
-      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available to all dashboards).",
+      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available to all dashboards).",
       "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
       "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
