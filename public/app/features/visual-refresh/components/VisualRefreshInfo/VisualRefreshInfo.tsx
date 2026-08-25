@@ -4,6 +4,8 @@ import { t, Trans } from '@grafana/i18n';
 import { FlagKeys, getLocalStorageProvider, getOFREPWebProvider } from '@grafana/runtime/internal';
 import { Alert, Button } from '@grafana/ui';
 
+import { stylesToggled } from '../../analytics/main';
+
 const VISUAL_REFRESH_FLAG = FlagKeys.GrafanaVisualDesignRefresh;
 
 /**
@@ -25,6 +27,7 @@ export function VisualRefreshInfo() {
   }
 
   const handleShowVisualRefresh = (force: boolean) => {
+    stylesToggled({ value: force });
     getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force });
     setShowVisualRefresh(force);
   };
