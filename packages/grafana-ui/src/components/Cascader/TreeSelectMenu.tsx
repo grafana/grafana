@@ -6,6 +6,7 @@ import { useEffect, type KeyboardEvent } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { NotFoundError } from '../Combobox/MessageRows';
 import { Icon } from '../Icon/Icon';
 
 import { TREE_ROOT_ID, type TreeSelectData, type TreeSelectNode } from './TreeSelect.data';
@@ -28,13 +29,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
       return item.getId() === TREE_ROOT_ID || node.children.length > 0 || node.path.at(-1)?.isLeaf === false;
     },
     dataLoader: {
-      getItem: (itemId) => {
-        const item = data.nodes.get(itemId);
-        if (!item) {
-          throw new Error(`Missing TreeSelect item: ${itemId}`);
-        }
-        return item;
-      },
+      getItem: (itemId) => data.nodes.get(itemId)!,
       getChildren: (itemId) => data.nodes.get(itemId)?.children ?? [],
     },
     initialState: { expandedItems: data.expandedItems },
@@ -56,7 +51,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
   if (items.length === 0) {
     return (
       <div {...containerProps} id={menuId} className={styles.tree}>
-        <div className={styles.empty}>{t('grafana-ui.tree-select.no-options', 'No options found.')}</div>
+        <NotFoundError />
       </div>
     );
   }

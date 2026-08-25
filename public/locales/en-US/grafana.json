@@ -10742,8 +10742,6 @@
     },
     "tree-select": {
       "clear-button": "Clear selection",
-      "loading-options": "Loading options...",
-      "no-options": "No options found.",
       "tree-label": "Available options"
     },
     "u-plot": {

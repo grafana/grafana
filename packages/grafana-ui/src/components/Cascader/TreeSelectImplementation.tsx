@@ -11,9 +11,7 @@ import {
 } from '@floating-ui/react';
 import {
   lazy,
-  memo,
   Suspense,
-  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -29,6 +27,7 @@ import {
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
+import { LoadingOptions } from '../Combobox/MessageRows';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
@@ -165,209 +164,200 @@ function findInitialValue(
   return allowCustomValue ? { value: initialValue, label: initialValue } : null;
 }
 
-export const TreeSelectBase = memo(
-  ({
-    separator = DEFAULT_SEPARATOR,
-    placeholder,
-    options,
-    onSelect,
-    width,
-    initialValue,
-    allowCustomValue = false,
-    formatCreateLabel,
-    displayAllSelectedLevels = false,
-    onBlur,
-    autoFocus,
-    alwaysOpen = false,
-    disabled,
-    id,
-    isClearable,
-    changeOnSelect = false,
-    hideActiveLevelLabel = false,
-    valuePath,
-    onChangePath,
-    loadData,
-    onOpenChange,
-    renderTrigger,
-    className,
-    'data-testid': dataTestId,
-  }: TreeSelectBaseProps) => {
-    const styles = useStyles2(getTreeSelectStyles);
-    const menuId = useId();
-    const [isOpen, setIsOpen] = useState(alwaysOpen);
-    const [query, setQuery] = useState('');
-    const controlledValue = valuePath?.at(-1);
-    const [selected, setSelected] = useState<SelectedValue | null>(() =>
-      findInitialValue(options, controlledValue ?? initialValue, separator, displayAllSelectedLevels, allowCustomValue)
-    );
-    const open = alwaysOpen || isOpen;
-    const data = useMemo(
-      () => buildTreeData(options, query, separator, displayAllSelectedLevels, allowCustomValue, formatCreateLabel),
-      [allowCustomValue, displayAllSelectedLevels, formatCreateLabel, options, query, separator]
-    );
+export function TreeSelectBase({
+  separator = DEFAULT_SEPARATOR,
+  placeholder,
+  options,
+  onSelect,
+  width,
+  initialValue,
+  allowCustomValue = false,
+  formatCreateLabel,
+  displayAllSelectedLevels = false,
+  onBlur,
+  autoFocus,
+  alwaysOpen = false,
+  disabled,
+  id,
+  isClearable,
+  changeOnSelect = false,
+  hideActiveLevelLabel = false,
+  valuePath,
+  onChangePath,
+  loadData,
+  onOpenChange,
+  renderTrigger,
+  className,
+  'data-testid': dataTestId,
+}: TreeSelectBaseProps) {
+  const styles = useStyles2(getTreeSelectStyles);
+  const menuId = useId();
+  const [isOpen, setIsOpen] = useState(alwaysOpen);
+  const [query, setQuery] = useState('');
+  const controlledValue = valuePath?.at(-1);
+  const [selected, setSelected] = useState<SelectedValue | null>(() =>
+    findInitialValue(options, controlledValue ?? initialValue, separator, displayAllSelectedLevels, allowCustomValue)
+  );
+  const open = alwaysOpen || isOpen;
+  const data = useMemo(
+    () => buildTreeData(options, query, separator, displayAllSelectedLevels, allowCustomValue, formatCreateLabel),
+    [allowCustomValue, displayAllSelectedLevels, formatCreateLabel, options, query, separator]
+  );
 
-    useEffect(() => {
-      if (valuePath) {
-        setSelected(findInitialValue(options, controlledValue, separator, displayAllSelectedLevels, allowCustomValue));
-      }
-    }, [allowCustomValue, controlledValue, displayAllSelectedLevels, options, separator, valuePath]);
+  useEffect(() => {
+    if (valuePath) {
+      setSelected(findInitialValue(options, controlledValue, separator, displayAllSelectedLevels, allowCustomValue));
+    }
+  }, [allowCustomValue, controlledValue, displayAllSelectedLevels, options, separator, valuePath]);
 
-    const handleOpenChange = useCallback(
-      (nextOpen: boolean) => {
-        if (disabled) {
-          return;
-        }
-        if (!alwaysOpen) {
-          setIsOpen(nextOpen);
-        }
-        if (nextOpen !== open) {
-          onOpenChange?.(nextOpen);
-        }
-        if (!nextOpen) {
-          setQuery('');
-        }
-      },
-      [alwaysOpen, disabled, onOpenChange, open]
-    );
-
-    const { context, refs, floatingStyles } = useFloating({
-      open,
-      onOpenChange: handleOpenChange,
-      placement: 'bottom-start',
-      middleware: [offset(4), flip(), shift({ padding: 8 })],
-      whileElementsMounted: autoUpdate,
-    });
-    const click = useClick(context, { enabled: !disabled });
-    const dismiss = useDismiss(context);
-    const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
-
-    const handleActivate = (node: TreeSelectNode, isFolder: boolean) => {
-      const value = node.path.at(-1)!.value;
-      if (isFolder) {
-        loadData?.(node.path);
-        if (!changeOnSelect) {
-          return;
-        }
-      }
-
-      if (valuePath === undefined) {
-        setSelected({ value, label: hideActiveLevelLabel ? '' : node.displayLabel });
-      }
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (disabled) {
+      return;
+    }
+    if (!alwaysOpen) {
+      setIsOpen(nextOpen);
+    }
+    if (nextOpen !== open) {
+      onOpenChange?.(nextOpen);
+    }
+    if (!nextOpen) {
       setQuery('');
-      if (!isFolder) {
-        handleOpenChange(false);
+    }
+  };
+
+  const { context, refs, floatingStyles } = useFloating({
+    open,
+    onOpenChange: handleOpenChange,
+    placement: 'bottom-start',
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  const click = useClick(context, { enabled: !disabled });
+  const dismiss = useDismiss(context);
+  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
+
+  const handleActivate = (node: TreeSelectNode, isFolder: boolean) => {
+    const value = node.path.at(-1)!.value;
+    if (isFolder) {
+      loadData?.(node.path);
+      if (!changeOnSelect) {
+        return;
       }
-      onSelect?.(value);
-      onChangePath?.(
-        node.path.map((option) => option.value),
-        node.path
-      );
-    };
+    }
 
-    return (
-      <div className={className} data-testid={dataTestId}>
-        {renderTrigger ? (
-          renderTrigger({
-            ref: refs.setReference,
-            onClick: () => handleOpenChange(!open),
-            'aria-controls': menuId,
-            'aria-expanded': open,
-            'aria-haspopup': 'tree',
-          })
-        ) : (
-          <Input
-            {...getReferenceProps({
-              onBlur,
-              onChange: (event: ChangeEvent<HTMLInputElement>) => {
-                setQuery(event.currentTarget.value);
-                handleOpenChange(true);
-              },
-              onFocus: (event: FocusEvent<HTMLInputElement>) => event.currentTarget.select(),
-              onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
-                if (event.key === 'ArrowDown' && open) {
-                  event.preventDefault();
-                  requestAnimationFrame(() => {
-                    document.getElementById(menuId)?.querySelector<HTMLElement>('[role="treeitem"]')?.focus();
-                  });
-                }
-              },
-            })}
-            ref={refs.setReference}
-            id={id}
-            role="combobox"
-            aria-autocomplete="list"
-            aria-controls={menuId}
-            aria-expanded={open}
-            aria-haspopup="tree"
-            autoFocus={autoFocus}
-            disabled={disabled}
-            placeholder={placeholder}
-            value={open ? query : (selected?.label ?? '')}
-            width={width}
-            suffix={
-              <Stack gap={0.5}>
-                {isClearable && selected && (
-                  <IconButton
-                    name="times"
-                    aria-label={t('grafana-ui.tree-select.clear-button', 'Clear selection')}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      setSelected(null);
-                      setQuery('');
-                      onSelect?.('');
-                      onChangePath?.([], []);
-                    }}
-                  />
-                )}
-                <Icon name={open ? 'angle-up' : 'angle-down'} />
-              </Stack>
-            }
-          />
-        )}
-        {open && (
-          <Portal>
-            <FloatingFocusManager context={context} initialFocus={-1} modal={false} returnFocus={false}>
-              <div
-                {...getFloatingProps()}
-                ref={refs.setFloating}
-                className={styles.menu}
-                style={{
-                  ...floatingStyles,
-                  minWidth: refs.reference.current?.getBoundingClientRect().width,
-                }}
-              >
-                <Suspense
-                  fallback={
-                    <div
-                      id={menuId}
-                      role="tree"
-                      aria-label={t('grafana-ui.tree-select.tree-label', 'Available options')}
-                      aria-busy="true"
-                      tabIndex={-1}
-                      className={styles.tree}
-                    >
-                      <div className={styles.empty}>
-                        {t('grafana-ui.tree-select.loading-options', 'Loading options...')}
-                      </div>
-                    </div>
-                  }
-                >
-                  <LazyTreeSelectMenu
-                    key={query}
-                    data={data}
-                    menuId={menuId}
-                    selectedValue={selected?.value}
-                    onActivate={handleActivate}
-                  />
-                </Suspense>
-              </div>
-            </FloatingFocusManager>
-          </Portal>
-        )}
-      </div>
+    if (valuePath === undefined) {
+      setSelected({ value, label: hideActiveLevelLabel ? '' : node.displayLabel });
+    }
+    setQuery('');
+    if (!isFolder) {
+      handleOpenChange(false);
+    }
+    onSelect?.(value);
+    onChangePath?.(
+      node.path.map((option) => option.value),
+      node.path
     );
-  }
-);
+  };
 
-TreeSelectBase.displayName = 'TreeSelectBase';
+  return (
+    <div className={className} data-testid={dataTestId}>
+      {renderTrigger ? (
+        renderTrigger({
+          ref: refs.setReference,
+          onClick: () => handleOpenChange(!open),
+          'aria-controls': menuId,
+          'aria-expanded': open,
+          'aria-haspopup': 'tree',
+        })
+      ) : (
+        <Input
+          {...getReferenceProps({
+            onBlur,
+            onChange: (event: ChangeEvent<HTMLInputElement>) => {
+              setQuery(event.currentTarget.value);
+              handleOpenChange(true);
+            },
+            onFocus: (event: FocusEvent<HTMLInputElement>) => event.currentTarget.select(),
+            onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'ArrowDown' && open) {
+                event.preventDefault();
+                requestAnimationFrame(() => {
+                  document.getElementById(menuId)?.querySelector<HTMLElement>('[role="treeitem"]')?.focus();
+                });
+              }
+            },
+          })}
+          ref={refs.setReference}
+          id={id}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls={menuId}
+          aria-expanded={open}
+          aria-haspopup="tree"
+          autoFocus={autoFocus}
+          disabled={disabled}
+          placeholder={placeholder}
+          value={open ? query : (selected?.label ?? '')}
+          width={width}
+          suffix={
+            <Stack gap={0.5}>
+              {isClearable && selected && (
+                <IconButton
+                  name="times"
+                  aria-label={t('grafana-ui.tree-select.clear-button', 'Clear selection')}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setSelected(null);
+                    setQuery('');
+                    onSelect?.('');
+                    onChangePath?.([], []);
+                  }}
+                />
+              )}
+              <Icon name={open ? 'angle-up' : 'angle-down'} />
+            </Stack>
+          }
+        />
+      )}
+      {open && (
+        <Portal>
+          <FloatingFocusManager context={context} initialFocus={-1} modal={false} returnFocus={false}>
+            <div
+              {...getFloatingProps()}
+              ref={refs.setFloating}
+              className={styles.menu}
+              style={{
+                ...floatingStyles,
+                minWidth: refs.reference.current?.getBoundingClientRect().width,
+              }}
+            >
+              <Suspense
+                fallback={
+                  <div
+                    id={menuId}
+                    role="tree"
+                    aria-label={t('grafana-ui.tree-select.tree-label', 'Available options')}
+                    aria-busy="true"
+                    tabIndex={-1}
+                    className={styles.tree}
+                  >
+                    <LoadingOptions />
+                  </div>
+                }
+              >
+                <LazyTreeSelectMenu
+                  key={query}
+                  data={data}
+                  menuId={menuId}
+                  selectedValue={selected?.value}
+                  onActivate={handleActivate}
+                />
+              </Suspense>
+            </div>
+          </FloatingFocusManager>
+        </Portal>
+      )}
+    </div>
+  );
+}
