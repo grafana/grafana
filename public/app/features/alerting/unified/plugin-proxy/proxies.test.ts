@@ -138,6 +138,12 @@ describe('rule pages', () => {
       );
     });
 
+    it('preserves encoded slashes in namespace and group names', async () => {
+      expect(await resolve(path, `/alerting/${MIMIR_UID}/namespaces/team%2Fa/groups/cpu%2Fhigh/${action}`)).toBe(
+        `${PLUGIN_BASE}/groups/${MIMIR_UID}/team%2Fa/cpu%2Fhigh${suffix}`
+      );
+    });
+
     it('leaves Grafana groups alone', async () => {
       expect(await resolve(path, `/alerting/grafana/namespaces/folder-uid/groups/my-group/${action}`)).toBeUndefined();
     });

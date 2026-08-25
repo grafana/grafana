@@ -187,7 +187,9 @@ const groupPageProxies: RouteProxy[] = (['view', 'edit'] as const).map((action) 
   matches: ({ params }: ProxyContext) =>
     isDataSourceManaged(params.dataSourceUid) && Boolean(params.namespaceId) && Boolean(params.groupName),
   handler: async ({ params, searchParams }: ProxyContext) => {
-    const path = `groups/${params.dataSourceUid}/${params.namespaceId}/${params.groupName}`;
+    const namespaceId = encodeURIComponent(params.namespaceId ?? '');
+    const groupName = encodeURIComponent(params.groupName ?? '');
+    const path = `groups/${params.dataSourceUid}/${namespaceId}/${groupName}`;
     return pluginUrl(action === 'edit' ? `${path}/edit` : path, searchParams);
   },
 }));
