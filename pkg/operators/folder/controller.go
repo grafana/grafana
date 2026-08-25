@@ -17,7 +17,7 @@ import (
 
 var folderGVR = schema.GroupVersionResource{
 	Group:    "folder.grafana.app",
-	Version:  "v1beta1",
+	Version:  "v1",
 	Resource: "folders",
 }
 
