@@ -146,6 +146,7 @@ describe('getLoadPluginCssUrl', () => {
 });
 describe('decorateSystemJSInstantiate', () => {
   const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototype;
+  const context: System.Context = { import: jest.fn(), meta: { url: '' } };
 
   beforeEach(() => {
     mockLogInfo.mockClear();
@@ -180,7 +181,7 @@ describe('decorateSystemJSInstantiate', () => {
       instantiate,
       'https://example.com/public/plugins/acme-panel/module.js'
     );
-    const declaration = decoratedRegistration![1](() => undefined, {});
+    const declaration = decoratedRegistration![1](() => undefined, context);
     const dependency = {
       useHistory: () => 'history',
       Switch: () => 'switch',
@@ -245,7 +246,7 @@ describe('decorateSystemJSInstantiate', () => {
       instantiate,
       'https://example.com/public/plugins/acme-router-panel/module.js'
     );
-    const declaration = decoratedRegistration![1](() => undefined, {});
+    const declaration = decoratedRegistration![1](() => undefined, context);
 
     declaration.setters![0]({
       __esModule: true,

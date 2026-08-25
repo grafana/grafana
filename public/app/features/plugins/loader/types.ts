@@ -1,17 +1,7 @@
 // Extend the System type with the loader hooks we use
 // to provide backwards compatibility with older version of Systemjs
-type SystemJSExport = (name: string | Record<string, unknown>, value?: unknown) => unknown;
 
-type SystemJSDeclaration = {
-  setters?: Array<(module: System.Module) => void>;
-  execute?: () => unknown;
-};
-
-export type SystemJSRegistration = [
-  dependencies: string[],
-  declare: (_export: SystemJSExport, context: unknown) => SystemJSDeclaration,
-  metadata?: unknown[],
-];
+export type SystemJSRegistration = [dependencies: string[], declare: System.DeclareFn, metadata?: unknown[]];
 
 export type SystemJSWithLoaderHooks = typeof System & {
   shouldFetch: (url: string) => Boolean;
