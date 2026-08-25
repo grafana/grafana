@@ -6017,6 +6017,9 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "pill": "Published Notebook",
+      "tags": "Tags",
+      "tags-custom-value": "Add as a new tag",
+      "tags-placeholder": "Add a tag",
       "time": "Time"
     },
     "on-create-new-row": {
@@ -16319,6 +16322,7 @@
       "render-mode": "Render mode"
     },
     "render": {
+      "handlebars-error": "Handlebars error: {{message}}",
       "truncated": "Showing the first {{maxRows}} rows."
     },
     "render-mode": {
