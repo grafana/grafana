@@ -265,7 +265,6 @@ export enum PluginExtensionExposedComponents {
   PrometheusQueryResultsV1 = 'grafana/prometheus-query-results/v1',
   CreateAlertFromPanelV1 = 'grafana/alerting/create-alert-from-panel/v1',
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
-  QueryEditorCoauthoringV1 = 'grafana/query-editor-coauthoring/v1',
 }
 
 export type PluginExtensionPanelContext = {

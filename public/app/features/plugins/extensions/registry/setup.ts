@@ -5,7 +5,6 @@ import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
-import { QueryCoauthoringExposedComponent } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryCoauthoringExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 
@@ -65,12 +64,6 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Access to the Query Library',
         description: 'Access to the Query Library',
         component: OpenQueryLibraryExposedComponent,
-      },
-      {
-        id: PluginExtensionExposedComponents.QueryEditorCoauthoringV1,
-        title: 'Query editor coauthoring',
-        description: 'AI-assisted query editing for compatible query editors',
-        component: QueryCoauthoringExposedComponent,
       },
     ],
   });

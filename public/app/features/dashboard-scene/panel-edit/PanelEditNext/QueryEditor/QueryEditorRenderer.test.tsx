@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -9,6 +9,8 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
   type TestDataSourceResponse,
 } from '@grafana/data';
 import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
@@ -19,7 +21,7 @@ import { QueryEditorType } from '../constants';
 
 import { type QueryCoauthoringHost, useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 import { QueryEditorProvider } from './QueryEditorContext';
-import { QueryEditorPanel, QueryEditorRenderer } from './QueryEditorRenderer';
+import { QueryEditorPanel, QueryEditorRenderer, synchronizeCoauthoringBaselineQuery } from './QueryEditorRenderer';
 import {
   ds1SettingsMock,
   mockActions,
@@ -121,8 +123,8 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('does not enable query coauthoring when the feature flag is disabled', () => {
-    function CapabilityQueryEditor(props: { queryEditorCoauthoringEnabled?: boolean }) {
-      expect(props.queryEditorCoauthoringEnabled).toBe(false);
+    function CapabilityQueryEditor(props: { queryEditorCoauthoring?: object }) {
+      expect(props.queryEditorCoauthoring).toBeUndefined();
       return <div data-testid="capability-query-editor" />;
     }
 
@@ -136,11 +138,11 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByTestId('capability-query-editor')).toBeInTheDocument();
   });
 
-  it('enables the datasource coauthoring bridge when the feature flag is enabled', () => {
+  it('provides the datasource coauthoring registrar when the feature flag is enabled', () => {
     mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
 
-    function CapabilityQueryEditor(props: { queryEditorCoauthoringEnabled?: boolean }) {
-      expect(props.queryEditorCoauthoringEnabled).toBe(true);
+    function CapabilityQueryEditor(props: { queryEditorCoauthoring?: object }) {
+      expect(props.queryEditorCoauthoring).toBeDefined();
       return <div data-testid="capability-query-editor" />;
     }
 
@@ -152,6 +154,58 @@ describe('QueryEditorRenderer', () => {
     });
 
     expect(screen.getByTestId('capability-query-editor')).toBeInTheDocument();
+  });
+
+  it('registers the row-scoped adapter and renders its selection trigger in Core', async () => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const snapshot = { mode: 'selection' as const, portalTarget };
+    const adapter: QueryEditorCoauthoringAdapterV1 = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      invoke: jest.fn(),
+      readInvocation: jest.fn(),
+      prepareProposal: jest.fn(),
+      dismiss: jest.fn(),
+    };
+
+    function CapabilityQueryEditor({
+      queryEditorCoauthoring,
+    }: {
+      queryEditorCoauthoring?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      useEffect(() => queryEditorCoauthoring?.register(adapter), [queryEditorCoauthoring]);
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    const view = renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: /Explain or modify/ }));
+
+    expect(adapter.invoke).toHaveBeenCalledTimes(1);
+    expect(portalTarget).toContainElement(screen.getByTestId('query-coauthoring-selection-toolbar'));
+
+    view.unmount();
+    portalTarget.remove();
+  });
+
+  it('synchronizes only a baseline that differs from the current query', () => {
+    const updateQuery = jest.fn();
+    const currentQuery: TestQuery = { refId: 'A', legendFormat: 'series-a' };
+    const equalBaseline: TestQuery = { refId: 'other', legendFormat: 'series-a' };
+    const differentBaseline: TestQuery = { refId: 'other', legendFormat: 'series-b' };
+
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, equalBaseline, updateQuery)).toBe(true);
+    expect(updateQuery).not.toHaveBeenCalled();
+
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, differentBaseline, updateQuery)).toBe(true);
+    expect(updateQuery).toHaveBeenCalledWith({ refId: 'A', legendFormat: 'series-b' }, 'A');
   });
 
   it('remounts the query editor when the datasource instance changes', () => {
@@ -174,6 +228,7 @@ describe('QueryEditorRenderer', () => {
         updateQuery={jest.fn()}
         addQuery={jest.fn()}
         runQueries={jest.fn()}
+        startQueryPreview={jest.fn()}
       />
     );
 
@@ -184,10 +239,12 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByTestId('datasource-instance')).toHaveTextContent('prometheus-second');
   });
 
-  it('runs a proposed query while keeping the baseline in the editor and coordinates revert and accept', () => {
+  it('displays an isolated proposed query and coordinates manual edits, revert, and accept', () => {
     mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
     const updateQuery = jest.fn();
     const runQueries = jest.fn();
+    const disposePreview = jest.fn();
+    const startQueryPreview = jest.fn(() => ({ dispose: disposePreview }));
     const proposedQuery = { ...queryA, legendFormat: 'proposed' };
     let coauthoringHost: QueryCoauthoringHost | undefined;
     let changeFromEditor: ((query: DataQuery) => void) | undefined;
@@ -220,6 +277,7 @@ describe('QueryEditorRenderer', () => {
         updateQuery={updateQuery}
         addQuery={jest.fn()}
         runQueries={runQueries}
+        startQueryPreview={startQueryPreview}
       />
     );
     const { rerender } = render(renderPanel(queryA, [queryA, queryB]));
@@ -232,55 +290,77 @@ describe('QueryEditorRenderer', () => {
     });
     expect(hostResult).toBe(true);
     expect(coauthoringHost!.previewPhase).toBe('pending');
-    expect(updateQuery).toHaveBeenCalledWith(proposedQuery, 'A');
-    expect(runQueries).toHaveBeenCalledTimes(1);
+    expect(startQueryPreview).toHaveBeenCalledWith('A', proposedQuery);
+    expect(updateQuery).not.toHaveBeenCalled();
+    expect(runQueries).not.toHaveBeenCalled();
 
     rerender(
-      renderPanel(proposedQuery, [proposedQuery, queryB], {
+      renderPanel(queryA, [queryA, queryB], {
         state: LoadingState.Loading,
       } as PanelData)
     );
     expect(coauthoringHost!.previewPhase).toBe('running');
     rerender(
-      renderPanel(proposedQuery, [proposedQuery, queryB], {
+      renderPanel(queryA, [queryA, queryB], {
         state: LoadingState.Done,
       } as PanelData)
     );
     expect(coauthoringHost!.previewPhase).toBe('complete');
-    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
 
     act(() => coauthoringProps.revert());
-    expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
-    expect(runQueries).toHaveBeenCalledTimes(2);
+    expect(updateQuery).not.toHaveBeenCalled();
+    expect(disposePreview).toHaveBeenCalledTimes(1);
+    expect(runQueries).toHaveBeenCalledTimes(1);
 
     act(() => {
       hostResult = coauthoringProps.accept(proposedQuery);
     });
     expect(hostResult).toBe(false);
-    expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
+    expect(updateQuery).not.toHaveBeenCalled();
 
     rerender(renderPanel(queryA, [queryA, queryB]));
     act(() => {
       hostResult = coauthoringProps.preview(proposedQuery);
     });
     expect(hostResult).toBe(true);
-    rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
-    expect(screen.getByTestId('preview-editor')).toHaveTextContent('series-a:series-a');
+    rerender(renderPanel(queryA, [queryA, queryB]));
+    expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
 
-    act(() => changeFromEditor!({ ...queryA }));
+    const firstManualEdit = { ...queryA, legendFormat: 'manual' };
+    act(() => changeFromEditor!(firstManualEdit));
+    expect(runQueries).toHaveBeenCalledTimes(1);
+    expect(updateQuery).toHaveBeenLastCalledWith(firstManualEdit, 'A');
 
+    const laterManualEdit = { ...queryA, legendFormat: 'manual-later' };
+    act(() => changeFromEditor!(laterManualEdit));
+    expect(runQueries).toHaveBeenCalledTimes(1);
+    expect(updateQuery).toHaveBeenLastCalledWith(laterManualEdit, 'A');
+
+    act(() => {
+      hostResult = coauthoringProps.accept(proposedQuery);
+    });
+    expect(hostResult).toBe(false);
+    expect(updateQuery).toHaveBeenLastCalledWith(laterManualEdit, 'A');
+
+    rerender(renderPanel(queryA, [queryA, queryB]));
+    act(() => {
+      hostResult = coauthoringProps.preview(proposedQuery);
+    });
+    expect(hostResult).toBe(true);
     act(() => {
       hostResult = coauthoringProps.accept(proposedQuery);
     });
     expect(hostResult).toBe(true);
     rerender(renderPanel(proposedQuery, [proposedQuery, queryB]));
     expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
-    expect(runQueries).toHaveBeenCalledTimes(3);
+    expect(runQueries).toHaveBeenCalledTimes(2);
   });
 
   it('can establish a new preview transaction after an explicit query run', () => {
     const updateQuery = jest.fn();
     const runQueries = jest.fn();
+    const startQueryPreview = jest.fn(() => ({ dispose: jest.fn() }));
     const proposedQuery = { ...queryA, legendFormat: 'proposed' };
     let coauthoringHost: QueryCoauthoringHost | undefined;
     let runFromEditor: VoidFunction | undefined;
@@ -304,6 +384,7 @@ describe('QueryEditorRenderer', () => {
         updateQuery={updateQuery}
         addQuery={jest.fn()}
         runQueries={runQueries}
+        startQueryPreview={startQueryPreview}
       />
     );
     const view = render(renderPanel(queryA));
@@ -313,18 +394,18 @@ describe('QueryEditorRenderer', () => {
       previewed = coauthoringHost!.preview(proposedQuery);
     });
     expect(previewed).toBe(true);
-    view.rerender(renderPanel(proposedQuery));
+    view.rerender(renderPanel(queryA));
 
     act(() => runFromEditor!());
-    expect(updateQuery).toHaveBeenLastCalledWith(queryA, 'A');
-    expect(runQueries).toHaveBeenCalledTimes(2);
+    expect(updateQuery).not.toHaveBeenCalled();
+    expect(runQueries).toHaveBeenCalledTimes(1);
     view.rerender(renderPanel(queryA));
 
     act(() => {
       previewed = coauthoringHost!.preview(proposedQuery);
     });
     expect(previewed).toBe(true);
-    expect(runQueries).toHaveBeenCalledTimes(3);
+    expect(runQueries).toHaveBeenCalledTimes(1);
   });
 
   it('contains errors thrown by the datasource query editor', () => {

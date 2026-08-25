@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 
 import {
   type DataQuery,
+  type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
-  type QueryEditorCoauthoringControllerV1,
 } from '@grafana/data';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
@@ -105,11 +106,9 @@ async function setup(
   },
   props: { isPreviewRunning?: boolean } = {}
 ) {
-  const focus = jest.fn();
-  const clearPreview = jest.fn();
   const stagePreview = jest.fn(
-    (source: string): ReturnType<QueryEditorCoauthoringControllerV1['stageEditorDiff']> => ({
-      status: 'staged',
+    (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
+      status: 'ready',
       query: { refId: 'A', expr: source } as DataQuery,
       changes: [
         {
@@ -126,19 +125,17 @@ async function setup(
   const onAccept = jest.fn(() => true);
   const onPreview = jest.fn(() => true);
   const onRevertPreview = jest.fn();
+  const onBaseline = jest.fn(() => true);
   const anchorElement = document.createElement('div');
-  const controller: QueryEditorCoauthoringControllerV1 = {
-    getSnapshot: () => ({ mode: 'session', revision: context.revision }),
+  const baseline = { refId: 'A', expr: context.query } as DataQuery;
+  const readInvocation = jest.fn().mockResolvedValue({ baseline, context });
+  const adapter: QueryEditorCoauthoringAdapterV1 = {
+    getSnapshot: () => ({ mode: 'invoked', invocationId: context.revision, portalTarget: anchorElement }),
     subscribe: () => () => undefined,
-    getPortalTarget: () => anchorElement,
-    reportSurfaceSize: jest.fn(),
-    getQueryText: jest.fn(() => context.query),
-    begin: jest.fn().mockResolvedValue(context),
-    refreshContext: jest.fn().mockImplementation(() => controller.begin()),
-    stageEditorDiff: stagePreview,
-    clearEditorDiff: clearPreview,
+    invoke: jest.fn(),
+    readInvocation,
+    prepareProposal: stagePreview,
     dismiss: dismissInvocation,
-    focus,
   };
   jest.spyOn(anchorElement, 'getBoundingClientRect').mockReturnValue({
     top: anchorTop,
@@ -153,17 +150,18 @@ async function setup(
   });
   document.body.append(anchorElement);
 
-  const result = render(
-    <QueryCoauthoring
-      controller={controller}
-      datasourceType="prometheus"
-      onAccept={onAccept}
-      onPreview={onPreview}
-      onRevertPreview={onRevertPreview}
-      isPreviewRunning={props.isPreviewRunning}
-      timeRange={{ from: 1_000, to: 2_000 }}
-    />
-  );
+  const queryCoauthoringProps = {
+    adapter,
+    invocationId: context.revision,
+    portalTarget: anchorElement,
+    datasourceType: 'prometheus',
+    onBaseline,
+    onAccept,
+    onPreview,
+    onRevertPreview,
+    timeRange: { from: 1_000, to: 2_000 },
+  };
+  const result = render(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />);
   await act(async () => {
     await Promise.resolve();
   });
@@ -173,14 +171,16 @@ async function setup(
 
   return {
     anchorElement,
-    capability: controller,
-    controller,
-    clearPreview,
+    capability: adapter,
     dismissInvocation,
-    focus,
+    baseline,
+    queryText: context.query,
     onAccept,
+    onBaseline,
     onPreview,
     onRevertPreview,
+    queryCoauthoringProps,
+    readInvocation,
     stagePreview,
     user: userEvent.setup(),
     ...result,
@@ -199,14 +199,15 @@ describe('QueryCoauthoring', () => {
   });
 
   it('shows the focused query summary using the highlighted query treatment', async () => {
-    await setup();
+    const { baseline, onBaseline } = await setup();
 
     expect(await screen.findByText('Highlighted query')).toBeInTheDocument();
     expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(onBaseline).toHaveBeenCalledWith(baseline);
   });
 
   it('requests and renders a privacy-bounded semantic explanation of the focused query text', async () => {
-    const { capability } = await setup();
+    const { queryText } = await setup();
 
     expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
     const request = mockIdentifySelection.mock.calls[0][0];
@@ -216,7 +217,7 @@ describe('QueryCoauthoring', () => {
       agentId: 'grafana.query.coauthor.identify.v1',
       prompt: 'Explain the focused part of this existing PromQL query.',
     });
-    expect(request.systemPrompt).toContain(JSON.stringify(capability.getQueryText()));
+    expect(request.systemPrompt).toContain(JSON.stringify(queryText));
     expect(request.systemPrompt).toContain('Focused text: ["rate"]');
     expect(request.systemPrompt).toContain('http_requests_total');
     expect(request.systemPrompt).not.toContain('dashboardTitle');
@@ -238,24 +239,44 @@ describe('QueryCoauthoring', () => {
     expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
   });
 
-  it('does not regenerate the explanation when the host rerenders with the same time range', async () => {
-    const { controller, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+  it('does not regenerate the explanation when the host time range changes after context loads', async () => {
+    const { queryCoauthoringProps, rerender } = await setup();
     const identificationRequest = mockIdentifySelection.mock.calls[0][0];
     act(() => identificationRequest.onComplete('Calculates the per-second request rate.'));
 
-    rerender(
-      <QueryCoauthoring
-        controller={controller}
-        datasourceType="prometheus"
-        onAccept={onAccept}
-        onPreview={onPreview}
-        onRevertPreview={onRevertPreview}
-        timeRange={{ from: 1_000, to: 2_000 }}
-      />
-    );
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} timeRange={{ from: 3_000, to: 4_000 }} />);
 
     expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Calculates the per-second request rate.')).toBeInTheDocument();
+  });
+
+  it('does not reload an invocation when baseline synchronization rerenders the row owner', async () => {
+    const { queryCoauthoringProps, readInvocation, unmount } = await setup(0, false);
+
+    function RowOwner() {
+      const [baselineSyncCount, setBaselineSyncCount] = useState(0);
+
+      return (
+        <QueryCoauthoring
+          {...queryCoauthoringProps}
+          onBaseline={() => {
+            if (baselineSyncCount === 0) {
+              setBaselineSyncCount(1);
+            }
+            return true;
+          }}
+        />
+      );
+    }
+
+    unmount();
+    readInvocation.mockClear();
+    mockIdentifySelection.mockClear();
+    render(<RowOwner />);
+
+    await screen.findByRole('textbox', { name: 'Describe a query change' });
+
+    expect(readInvocation).toHaveBeenCalledTimes(1);
   });
 
   it('requests a holistic explanation when the whole query is focused', async () => {
@@ -328,20 +349,19 @@ describe('QueryCoauthoring', () => {
 
   it('shows an explicit dismissal path when Assistant is unavailable', async () => {
     mockAssistantAvailable = false;
-    const { user, capability, dismissInvocation, focus } = await setup(0, false);
+    const { user, dismissInvocation, readInvocation } = await setup(0, false);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Assistant is not available');
     expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
-    expect(capability.begin).not.toHaveBeenCalled();
+    expect(readInvocation).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
 
     expect(dismissInvocation).toHaveBeenCalled();
-    expect(focus).toHaveBeenCalled();
   });
 
   it('sends the bounded datasource, time range, query, focus, and metric context', async () => {
-    const { user, capability } = await setup();
+    const { user, queryText } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Show the total count instead');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -353,7 +373,7 @@ describe('QueryCoauthoring', () => {
       agentId: 'grafana.query.coauthor.v1',
       prompt: 'Show the total count instead',
     });
-    expect(request.systemPrompt).toContain(JSON.stringify(capability.getQueryText()));
+    expect(request.systemPrompt).toContain(JSON.stringify(queryText));
     expect(request.systemPrompt).toContain('Focused text: ["rate"]');
     expect(request.systemPrompt).toContain('http_requests_total');
     expect(request.systemPrompt).toContain('counter');
@@ -375,8 +395,8 @@ describe('QueryCoauthoring', () => {
     expect(request.systemPrompt).not.toContain('dashboardTitle');
   });
 
-  it('stages a validated proposal in the editor and applies it only after acceptance', async () => {
-    const { user, stagePreview, onAccept, onPreview, onRevertPreview, clearPreview, dismissInvocation } = await setup();
+  it('prepares a validated proposal and applies it only after acceptance', async () => {
+    const { user, stagePreview, onAccept, onPreview, onRevertPreview, dismissInvocation } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -391,7 +411,7 @@ describe('QueryCoauthoring', () => {
     });
 
     expect(onAccept).not.toHaveBeenCalled();
-    expect(stagePreview).toHaveBeenCalledWith('increase(http_requests_total[5m])');
+    expect(stagePreview).toHaveBeenCalledWith('1', 'increase(http_requests_total[5m])');
     expect(onPreview).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
     expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
@@ -405,7 +425,6 @@ describe('QueryCoauthoring', () => {
 
     await user.click(screen.getByRole('button', { name: 'Accept' }));
 
-    expect(clearPreview).toHaveBeenCalled();
     expect(dismissInvocation).toHaveBeenCalled();
     expect(onAccept).toHaveBeenCalledWith({
       refId: 'A',
@@ -438,7 +457,7 @@ describe('QueryCoauthoring', () => {
   it('keeps long proposal messages and changes in a bounded body with actions outside it', async () => {
     const { user, stagePreview } = await setup();
     stagePreview.mockReturnValue({
-      status: 'staged',
+      status: 'ready',
       query: { refId: 'A', expr: 'sum by (handler) (rate(http_requests_total[5m]))' } as DataQuery,
       changes: Array.from({ length: 4 }, (_, index) => ({
         id: `change-${index}`,
@@ -472,7 +491,7 @@ describe('QueryCoauthoring', () => {
   });
 
   it('moves from running the updated query to previewing it without replacing the proposal', async () => {
-    const { user, capability, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+    const { user, queryCoauthoringProps, rerender } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -485,38 +504,19 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    rerender(
-      <QueryCoauthoring
-        controller={capability}
-        datasourceType="prometheus"
-        onAccept={onAccept}
-        onPreview={onPreview}
-        onRevertPreview={onRevertPreview}
-        isPreviewRunning
-        timeRange={{ from: 1_000, to: 2_000 }}
-      />
-    );
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning />);
     const proposalStatus = screen.getByRole('status');
     expect(proposalStatus).toHaveTextContent('Running updated query...');
     expect(screen.getByText('Suggestion updated')).toBeInTheDocument();
 
-    rerender(
-      <QueryCoauthoring
-        controller={capability}
-        datasourceType="prometheus"
-        onAccept={onAccept}
-        onPreview={onPreview}
-        onRevertPreview={onRevertPreview}
-        timeRange={{ from: 1_000, to: 2_000 }}
-      />
-    );
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
     expect(screen.getByRole('status')).toBe(proposalStatus);
     expect(proposalStatus).toHaveTextContent('Previewing query');
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
   });
 
-  it('clears a staged editor diff when generation fails after the proposal tool runs', async () => {
-    const { user, clearPreview, onPreview } = await setup();
+  it('does not preview a prepared proposal when generation later fails', async () => {
+    const { user, onPreview } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -527,17 +527,14 @@ describe('QueryCoauthoring', () => {
         why: ['Returns the increase over the selected range.'],
       });
     });
-    const clearCalls = clearPreview.mock.calls.length;
-
     act(() => request.onError(new Error('request failed')));
 
-    expect(clearPreview).toHaveBeenCalledTimes(clearCalls + 1);
     expect(onPreview).not.toHaveBeenCalled();
     expect(screen.getByText(/could not build a query proposal/i)).toBeInTheDocument();
   });
 
   it('keeps a running proposal when host callback identities change', async () => {
-    const { user, capability, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+    const { user, onRevertPreview, queryCoauthoringProps, rerender } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -551,16 +548,7 @@ describe('QueryCoauthoring', () => {
     });
 
     const nextRevertPreview = jest.fn();
-    rerender(
-      <QueryCoauthoring
-        controller={capability}
-        datasourceType="prometheus"
-        onAccept={onAccept}
-        onPreview={onPreview}
-        onRevertPreview={nextRevertPreview}
-        timeRange={{ from: 1_000, to: 2_000 }}
-      />
-    );
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} onRevertPreview={nextRevertPreview} />);
 
     expect(onRevertPreview).not.toHaveBeenCalled();
     expect(nextRevertPreview).not.toHaveBeenCalled();
@@ -588,23 +576,14 @@ describe('QueryCoauthoring', () => {
   });
 
   it('cancels an in-flight build and ignores a late proposal', async () => {
-    const { user, capability, stagePreview, onAccept, onPreview, onRevertPreview, rerender } = await setup();
+    const { user, stagePreview, onAccept, queryCoauthoringProps, rerender } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     const request = mockGenerate.mock.calls[0][0];
 
     mockIsGenerating = true;
-    rerender(
-      <QueryCoauthoring
-        controller={capability}
-        datasourceType="prometheus"
-        onAccept={onAccept}
-        onPreview={onPreview}
-        onRevertPreview={onRevertPreview}
-        timeRange={{ from: 1_000, to: 2_000 }}
-      />
-    );
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
     await user.click(screen.getByRole('button', { name: 'Stop' }));
 
     await act(async () => {
@@ -834,7 +813,7 @@ describe('QueryCoauthoring', () => {
   });
 
   it('reverts an active proposal when closed', async () => {
-    const { user, clearPreview, dismissInvocation, onRevertPreview } = await setup();
+    const { user, dismissInvocation, onRevertPreview } = await setup();
 
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -848,7 +827,6 @@ describe('QueryCoauthoring', () => {
     });
     await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
 
-    expect(clearPreview).toHaveBeenCalled();
     expect(onRevertPreview).toHaveBeenCalledTimes(1);
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: 'Resume suggestion' })).not.toBeInTheDocument();
@@ -881,24 +859,24 @@ describe('QueryCoauthoring', () => {
     expect(onPreview).not.toHaveBeenCalled();
   });
 
-  it('rejects a proposal when the baseline query changes during generation', async () => {
-    const { user, capability, stagePreview, clearPreview, onAccept, onPreview } = await setup();
+  it('rejects a stale proposal reported by the adapter', async () => {
+    const { user, stagePreview, onAccept, onPreview } = await setup();
+    stagePreview.mockReturnValueOnce({ status: 'rejected', reason: 'stale' });
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
 
     const request = mockGenerate.mock.calls[0][0];
-    await request.tools[0].invoke({
-      proposedQuery: 'increase(http_requests_total[5m])',
-      why: ['Returns the increase over the selected range.'],
-    });
-    jest.mocked(capability.getQueryText).mockReturnValue('rate(http_requests_total[10m])');
+    await expect(
+      request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      })
+    ).rejects.toThrow();
 
     act(() => request.onComplete(''));
 
-    expect(screen.getByText(/query changed while assistant was working/i)).toBeInTheDocument();
     expect(stagePreview).toHaveBeenCalledTimes(1);
-    expect(clearPreview).toHaveBeenCalled();
     expect(onPreview).not.toHaveBeenCalled();
     expect(onAccept).not.toHaveBeenCalled();
   });
@@ -937,7 +915,7 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    expect(stagePreview).toHaveBeenCalledWith('sum by (handler) (rate(http_requests_total[5m]))');
+    expect(stagePreview).toHaveBeenCalledWith('1', 'sum by (handler) (rate(http_requests_total[5m]))');
     expect(screen.getByText('Breaks the request rate down by handler.')).toBeInTheDocument();
   });
 
@@ -997,7 +975,7 @@ describe('QueryCoauthoring', () => {
     };
 
     try {
-      const { controller, onAccept, onPreview, onRevertPreview, rerender, user } = await setup();
+      const { queryCoauthoringProps, rerender, user } = await setup();
       const initialPrompt = screen.getByRole('textbox', { name: 'Describe a query change' });
       const initialMessage = screen.getByText('http_requests_total is a counter metric.');
       drainAnimationFrames();
@@ -1010,16 +988,7 @@ describe('QueryCoauthoring', () => {
       const request = mockGenerate.mock.calls[0][0];
 
       mockIsGenerating = true;
-      rerender(
-        <QueryCoauthoring
-          controller={controller}
-          datasourceType="prometheus"
-          onAccept={onAccept}
-          onPreview={onPreview}
-          onRevertPreview={onRevertPreview}
-          timeRange={{ from: 1_000, to: 2_000 }}
-        />
-      );
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
       expect(screen.getByRole('status')).toHaveTextContent('Building query...');
 
       mockIsGenerating = false;
@@ -1039,16 +1008,7 @@ describe('QueryCoauthoring', () => {
       const secondRequest = mockGenerate.mock.calls[1][0];
 
       mockIsGenerating = true;
-      rerender(
-        <QueryCoauthoring
-          controller={controller}
-          datasourceType="prometheus"
-          onAccept={onAccept}
-          onPreview={onPreview}
-          onRevertPreview={onRevertPreview}
-          timeRange={{ from: 1_000, to: 2_000 }}
-        />
-      );
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
       expect(screen.getByRole('status')).toHaveTextContent('Building query...');
 
       mockIsGenerating = false;
@@ -1224,7 +1184,7 @@ describe('QueryCoauthoring', () => {
   });
 
   it('closes and clears a bounded Assistant handoff', async () => {
-    const { clearPreview, dismissInvocation, focus, user } = await setup();
+    const { dismissInvocation, user } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Update all queries in this dashboard');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -1236,13 +1196,10 @@ describe('QueryCoauthoring', () => {
 
     expect(screen.getByText(/may need to span another datasource or additional queries/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
-    const clearPreviewCalls = clearPreview.mock.calls.length;
     const cancelCalls = mockCancel.mock.calls.length;
     await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
 
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
-    expect(focus).toHaveBeenCalledTimes(1);
-    expect(clearPreview).toHaveBeenCalledTimes(clearPreviewCalls + 1);
     expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
     expect(screen.queryByText(/may need to span another datasource or additional queries/i)).not.toBeInTheDocument();
   });
@@ -1594,7 +1551,7 @@ describe('QueryCoauthoring', () => {
   });
 
   it('discards on Escape', async () => {
-    const { user, focus, onAccept, dismissInvocation } = await setup();
+    const { user, onAccept, dismissInvocation } = await setup();
     const cancelCalls = mockCancel.mock.calls.length;
     const resetCalls = mockReset.mock.calls.length;
 
@@ -1604,7 +1561,6 @@ describe('QueryCoauthoring', () => {
     expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
     expect(mockReset).toHaveBeenCalledTimes(resetCalls + 1);
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
-    expect(focus).toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Continue coauthoring' })).not.toBeInTheDocument();
   });
 });

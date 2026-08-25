@@ -527,9 +527,6 @@ export interface LegacyMetricFindQueryOptions {
 }
 
 /** @alpha */
-export const QUERY_EDITOR_COAUTHORING_V1_COMPONENT_ID = 'grafana/query-editor-coauthoring/v1';
-
-/** @alpha */
 export interface QueryEditorCoauthoringRangeV1 {
   from: number;
   to: number;
@@ -574,36 +571,37 @@ export interface QueryEditorCoauthoringChangeV1 {
 /** @alpha */
 export type QueryEditorCoauthoringSnapshotV1 =
   | { mode: 'hidden' }
-  | { mode: 'selection'; selectedText: string; revision: string }
-  | { mode: 'session'; revision: string };
+  | { mode: 'selection'; portalTarget: HTMLElement }
+  | { mode: 'invoked'; invocationId: string; portalTarget: HTMLElement };
+
+/** @alpha */
+export interface QueryEditorCoauthoringInvocationV1<TQuery extends DataQuery = DataQuery> {
+  baseline: TQuery;
+  context: QueryEditorCoauthoringContextV1;
+}
 
 /** @alpha */
 export type QueryEditorCoauthoringProposalResultV1<TQuery extends DataQuery = DataQuery> =
   | {
-      status: 'staged';
+      status: 'ready';
       query: TQuery;
       changes: QueryEditorCoauthoringChangeV1[];
     }
   | { status: 'rejected'; reason: 'invalid' | 'unchanged' | 'stale' };
 
 /** @alpha */
-export interface QueryEditorCoauthoringControllerV1<TQuery extends DataQuery = DataQuery> {
+export interface QueryEditorCoauthoringAdapterV1<TQuery extends DataQuery = DataQuery> {
   getSnapshot(): QueryEditorCoauthoringSnapshotV1;
   subscribe(listener: VoidFunction): VoidFunction;
-  getPortalTarget(): HTMLElement;
-  reportSurfaceSize(size: { height: number; width: number }): void;
-  begin(): Promise<QueryEditorCoauthoringContextV1>;
-  refreshContext(): Promise<QueryEditorCoauthoringContextV1>;
-  getQueryText(): string;
-  stageEditorDiff(source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
-  clearEditorDiff(): void;
-  focus(): void;
+  invoke(): void;
+  readInvocation(invocationId: string): Promise<QueryEditorCoauthoringInvocationV1<TQuery>>;
+  prepareProposal(invocationId: string, source: string): QueryEditorCoauthoringProposalResultV1<TQuery>;
   dismiss(): void;
 }
 
 /** @alpha */
-export interface QueryEditorCoauthoringV1Props {
-  createController(): QueryEditorCoauthoringControllerV1;
+export interface QueryEditorCoauthoringRegistrationV1<TQuery extends DataQuery = DataQuery> {
+  register(adapter: QueryEditorCoauthoringAdapterV1<TQuery>): VoidFunction;
 }
 
 export interface QueryEditorProps<
@@ -616,7 +614,7 @@ export interface QueryEditorProps<
   query: TVQuery;
   onRunQuery: () => void;
   /** @alpha */
-  queryEditorCoauthoringEnabled?: boolean;
+  queryEditorCoauthoring?: QueryEditorCoauthoringRegistrationV1<TVQuery>;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   onAddQuery?: (query: TQuery) => void;

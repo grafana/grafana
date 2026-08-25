@@ -1,57 +1,45 @@
 import { css } from '@emotion/css';
-import {
-  Component,
-  type MouseEvent,
-  type ReactNode,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useSyncExternalStore,
-} from 'react';
+import { Component, type MouseEvent, type ReactNode, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
   type GrafanaTheme2,
-  type QueryEditorCoauthoringControllerV1,
-  type QueryEditorCoauthoringV1Props,
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringSnapshotV1,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type DataQuery } from '@grafana/schema';
 import { Button, useStyles2 } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 
-export function QueryCoauthoringExposedComponent(props: QueryEditorCoauthoringV1Props) {
-  const host = useQueryCoauthoringHost();
-
-  return (
-    <QueryCoauthoringFailureBoundary resetKey={props.createController} onFailure={host.revert}>
-      <QueryCoauthoringControllerSurface createController={props.createController} />
-    </QueryCoauthoringFailureBoundary>
-  );
+interface Props {
+  adapter: QueryEditorCoauthoringAdapterV1;
+  onBaseline: (query: DataQuery) => boolean;
 }
 
-function QueryCoauthoringControllerSurface({
-  createController,
-}: Pick<QueryEditorCoauthoringV1Props, 'createController'>) {
+export function QueryCoauthoringSurface({ adapter, onBaseline }: Props) {
   const host = useQueryCoauthoringHost();
-  const controller = useMemo(() => createController(), [createController]);
-  const handleFailure = useCallback(() => {
-    controller.clearEditorDiff();
-    host.revert();
-    controller.dismiss();
-  }, [controller, host]);
+  const snapshot = useSyncExternalStore(adapter.subscribe, adapter.getSnapshot, adapter.getSnapshot);
 
   return (
-    <QueryCoauthoringFailureBoundary resetKey={controller} onFailure={handleFailure}>
-      <QueryCoauthoringSurface controller={controller} />
+    <QueryCoauthoringFailureBoundary
+      adapter={adapter}
+      snapshotKey={getSnapshotKey(snapshot)}
+      onFailure={() => {
+        host.revert();
+        adapter.dismiss();
+      }}
+    >
+      <QueryCoauthoringAdapterSurface adapter={adapter} onBaseline={onBaseline} snapshot={snapshot} />
     </QueryCoauthoringFailureBoundary>
   );
 }
 
 class QueryCoauthoringFailureBoundary extends Component<
-  { children: ReactNode; onFailure: () => void; resetKey: object },
+  { adapter: object; children: ReactNode; onFailure: () => void; snapshotKey: string },
   { failed: boolean }
 > {
   state = { failed: false };
@@ -64,8 +52,11 @@ class QueryCoauthoringFailureBoundary extends Component<
     this.props.onFailure();
   }
 
-  componentDidUpdate(previousProps: Readonly<{ resetKey: object }>) {
-    if (previousProps.resetKey !== this.props.resetKey && this.state.failed) {
+  componentDidUpdate(previousProps: Readonly<{ adapter: object; snapshotKey: string }>) {
+    if (
+      (previousProps.adapter !== this.props.adapter || previousProps.snapshotKey !== this.props.snapshotKey) &&
+      this.state.failed
+    ) {
       this.setState({ failed: false });
     }
   }
@@ -75,31 +66,13 @@ class QueryCoauthoringFailureBoundary extends Component<
   }
 }
 
-function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauthoringControllerV1 }) {
+function QueryCoauthoringAdapterSurface({
+  adapter,
+  onBaseline,
+  snapshot,
+}: Props & { snapshot: QueryEditorCoauthoringSnapshotV1 }) {
   const host = useQueryCoauthoringHost();
   const styles = useStyles2(getStyles);
-  const snapshot = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
-  const portalTarget = controller.getPortalTarget();
-
-  useLayoutEffect(() => {
-    const updateSurfaceSize = () => {
-      const { height, width } = portalTarget.getBoundingClientRect();
-      controller.reportSurfaceSize({ height, width });
-    };
-
-    updateSurfaceSize();
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(updateSurfaceSize);
-    resizeObserver.observe(portalTarget);
-    return () => resizeObserver.disconnect();
-  }, [controller, portalTarget]);
-
-  const begin = useCallback(() => {
-    void controller.begin().catch(() => undefined);
-  }, [controller]);
 
   if (snapshot.mode === 'hidden') {
     return null;
@@ -112,7 +85,7 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
         <Button
           fill="text"
           icon="ai-sparkle"
-          onClick={begin}
+          onClick={adapter.invoke}
           onMouseDown={preserveSelection}
           size="sm"
           variant="secondary"
@@ -121,13 +94,16 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
           <span className={styles.shortcut}>{getModKey()}+.</span>
         </Button>
       </div>,
-      portalTarget
+      snapshot.portalTarget
     );
   }
 
   return (
     <QueryCoauthoring
-      controller={controller}
+      adapter={adapter}
+      invocationId={snapshot.invocationId}
+      portalTarget={snapshot.portalTarget}
+      onBaseline={onBaseline}
       datasourceType={host.datasourceType}
       onAccept={host.accept}
       onPreview={host.preview}
@@ -136,6 +112,10 @@ function QueryCoauthoringSurface({ controller }: { controller: QueryEditorCoauth
       timeRange={host.timeRange}
     />
   );
+}
+
+function getSnapshotKey(snapshot: QueryEditorCoauthoringSnapshotV1): string {
+  return snapshot.mode === 'invoked' ? `invoked:${snapshot.invocationId}` : snapshot.mode;
 }
 
 function getStyles(theme: GrafanaTheme2) {
