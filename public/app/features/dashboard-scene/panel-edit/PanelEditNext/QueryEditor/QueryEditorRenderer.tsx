@@ -110,15 +110,16 @@ export function QueryEditorPanel({
     []
   );
 
-  useEffect(() => {
-    if (!coauthoringProposal) {
-      setCoauthoringPreviewPhase('idle');
-    } else if (data?.state === LoadingState.Loading) {
-      setCoauthoringPreviewPhase('running');
-    } else {
-      setCoauthoringPreviewPhase((phase) => (phase === 'running' ? 'complete' : phase));
-    }
-  }, [coauthoringProposal, data?.state]);
+  const clearCoauthoringPreviewTransaction = useCallback((): CoauthoringPreviewTransaction | undefined => {
+    const transaction = coauthoringPreviewTransactionRef.current;
+    coauthoringPreviewRef.current?.dispose();
+    coauthoringPreviewRef.current = undefined;
+    coauthoringPreviewTransactionRef.current = undefined;
+    coauthoringProposalRef.current = undefined;
+    setCoauthoringProposal(undefined);
+    setCoauthoringPreviewPhase('idle');
+    return transaction;
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -126,15 +127,10 @@ export function QueryEditorPanel({
       if (!transaction || transaction.queryKey !== coauthoringIdentity) {
         return;
       }
-      coauthoringPreviewRef.current?.dispose();
-      coauthoringPreviewRef.current = undefined;
-      coauthoringPreviewTransactionRef.current = undefined;
-      coauthoringProposalRef.current = undefined;
-      setCoauthoringProposal(undefined);
-      setCoauthoringPreviewPhase('idle');
+      clearCoauthoringPreviewTransaction();
       runQueriesRef.current();
     };
-  }, [coauthoringIdentity]);
+  }, [clearCoauthoringPreviewTransaction, coauthoringIdentity]);
 
   // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
@@ -144,19 +140,14 @@ export function QueryEditorPanel({
         if (isEqual(proposal, updatedQuery)) {
           return;
         }
-        const originalRefId = coauthoringPreviewTransactionRef.current?.baseline.refId ?? updatedQuery.refId;
-        coauthoringPreviewRef.current?.dispose();
-        coauthoringPreviewRef.current = undefined;
-        coauthoringPreviewTransactionRef.current = undefined;
-        coauthoringProposalRef.current = undefined;
-        setCoauthoringProposal(undefined);
-        setCoauthoringPreviewPhase('idle');
+        const originalRefId = clearCoauthoringPreviewTransaction()?.baseline.refId ?? updatedQuery.refId;
+        coauthoringAdapter?.dismiss();
         updateQuery(updatedQuery, originalRefId);
         return;
       }
       updateQuery(updatedQuery, updatedQuery.refId);
     },
-    [updateQuery]
+    [clearCoauthoringPreviewTransaction, coauthoringAdapter, updateQuery]
   );
 
   const previewCoauthoredQuery = useCallback(
@@ -176,10 +167,7 @@ export function QueryEditorPanel({
       coauthoringPreviewRef.current = undefined;
       const preview = startQueryPreview(baseline.refId, proposedQuery);
       if (!preview) {
-        coauthoringPreviewTransactionRef.current = undefined;
-        coauthoringProposalRef.current = undefined;
-        setCoauthoringProposal(undefined);
-        setCoauthoringPreviewPhase('idle');
+        clearCoauthoringPreviewTransaction();
         if (transaction) {
           runQueriesRef.current();
         }
@@ -192,38 +180,31 @@ export function QueryEditorPanel({
       coauthoringPreviewRef.current = preview;
       coauthoringProposalRef.current = proposedQuery;
       setCoauthoringProposal(proposedQuery);
-      setCoauthoringPreviewPhase(data?.state === LoadingState.Loading ? 'running' : 'pending');
+      setCoauthoringPreviewPhase('pending');
+      preview.subscribeToState((state) => {
+        if (coauthoringPreviewRef.current === preview) {
+          setCoauthoringPreviewPhase(state === LoadingState.Loading ? 'running' : 'complete');
+        }
+      });
       return true;
     },
-    [coauthoringIdentity, data?.state, startQueryPreview]
+    [clearCoauthoringPreviewTransaction, coauthoringIdentity, startQueryPreview]
   );
 
   const revertCoauthoredQueryPreview = useCallback(() => {
-    const transaction = coauthoringPreviewTransactionRef.current;
+    const transaction = clearCoauthoringPreviewTransaction();
     if (!transaction) {
       return;
     }
-
-    coauthoringPreviewRef.current?.dispose();
-    coauthoringPreviewRef.current = undefined;
-    coauthoringPreviewTransactionRef.current = undefined;
-    coauthoringProposalRef.current = undefined;
-    setCoauthoringProposal(undefined);
-    setCoauthoringPreviewPhase('idle');
     runQueries();
-  }, [runQueries]);
+  }, [clearCoauthoringPreviewTransaction, runQueries]);
 
   const runQueryWithCoauthoringSafety = useCallback(() => {
-    if (coauthoringPreviewTransactionRef.current) {
-      coauthoringPreviewRef.current?.dispose();
-      coauthoringPreviewRef.current = undefined;
-      coauthoringPreviewTransactionRef.current = undefined;
-      coauthoringProposalRef.current = undefined;
-      setCoauthoringProposal(undefined);
-      setCoauthoringPreviewPhase('idle');
+    if (clearCoauthoringPreviewTransaction()) {
+      coauthoringAdapter?.dismiss();
     }
     runQueries();
-  }, [runQueries]);
+  }, [clearCoauthoringPreviewTransaction, coauthoringAdapter, runQueries]);
 
   const acceptCoauthoredQuery = useCallback(
     (acceptedQuery: DataQuery): boolean => {
@@ -232,17 +213,12 @@ export function QueryEditorPanel({
         return false;
       }
 
-      coauthoringPreviewRef.current?.dispose();
-      coauthoringPreviewRef.current = undefined;
-      coauthoringPreviewTransactionRef.current = undefined;
-      coauthoringProposalRef.current = undefined;
-      setCoauthoringProposal(undefined);
-      setCoauthoringPreviewPhase('idle');
+      clearCoauthoringPreviewTransaction();
       updateQuery(acceptedQuery, transaction.baseline.refId);
       runQueries();
       return true;
     },
-    [coauthoringIdentity, runQueries, updateQuery]
+    [clearCoauthoringPreviewTransaction, coauthoringIdentity, runQueries, updateQuery]
   );
 
   const synchronizeCoauthoringBaseline = useCallback(

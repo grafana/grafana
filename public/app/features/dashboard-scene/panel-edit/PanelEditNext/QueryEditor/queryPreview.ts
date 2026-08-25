@@ -1,8 +1,10 @@
+import { type LoadingState } from '@grafana/data';
 import { SceneDataTransformer, SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 export interface QueryPreview {
   dispose(): void;
+  subscribeToState(listener: (state: LoadingState) => void): VoidFunction;
 }
 
 function getPanelQueryRunner(panel: VizPanel): SceneQueryRunner | undefined {
@@ -37,9 +39,11 @@ export function startQueryPreview(
     runQueriesMode: 'manual',
   });
   let disposed = false;
+  const stateListeners = new Set<(state: LoadingState) => void>();
   const subscription = previewRunner.subscribeToState((state, previousState) => {
     if (state.data !== previousState.data && state.data) {
       queryRunner.setState({ data: state.data });
+      stateListeners.forEach((listener) => listener(state.data!.state));
     }
   });
 
@@ -53,11 +57,20 @@ export function startQueryPreview(
         return;
       }
       disposed = true;
+      stateListeners.clear();
       subscription.unsubscribe();
       previewRunner.cancelQuery();
       queryRunner.setState({ data: baselineData });
       panel.setState({ $behaviors: panel.state.$behaviors?.filter((behavior) => behavior !== previewRunner) });
       previewRunner.clearParent();
+    },
+    subscribeToState: (listener) => {
+      stateListeners.add(listener);
+      const currentState = previewRunner.state.data?.state;
+      if (currentState !== undefined) {
+        listener(currentState);
+      }
+      return () => stateListeners.delete(listener);
     },
   };
 }

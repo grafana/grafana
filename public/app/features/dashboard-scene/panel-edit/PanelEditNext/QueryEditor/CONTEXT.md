@@ -24,7 +24,7 @@ Before a second datasource adapter is added, promote a reviewed, generalized int
 
 ## Preview invariant
 
-Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Accept. `startQueryPreview` clones the canonical runner, replaces only the selected query in the clone, and projects the clone's `PanelData` back into the canonical runner. Saving, sharing, query-library actions, and other query serializers continue to see the baseline query during preview.
+Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Accept. `startQueryPreview` clones the canonical runner, replaces only the selected query in the clone, and projects the clone's `PanelData` back into the canonical runner. Preview status comes directly from the clone because projected scene updates may batch away an intermediate loading state. Saving, sharing, query-library actions, and other query serializers continue to see the baseline query during preview.
 
 ## Lifecycle
 
@@ -33,6 +33,6 @@ Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Ac
 3. Core asks the datasource to validate and construct a typed proposal.
 4. Core passes the proposal through normal query-editor props and starts the isolated panel preview.
 5. Accept commits the proposal. Discard disposes the preview and reruns the baseline.
-6. A genuine editor change during a proposal cancels coauthoring and becomes normal query state.
+6. A genuine editor change or explicit query run during a proposal cancels coauthoring; an editor change then becomes normal query state.
 
 Only one transaction is owned by a given query row. Cross-row session coordination is intentionally outside this experiment.

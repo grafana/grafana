@@ -46,10 +46,14 @@ describe('startQueryPreview', () => {
       (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
     )!;
     const previewData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
+    const previewStateListener = jest.fn();
+
+    preview.subscribeToState(previewStateListener);
 
     previewRunner.setState({ data: previewData });
 
     expect(queryRunner.state.data).toBe(previewData);
+    expect(previewStateListener).toHaveBeenCalledWith(LoadingState.Done);
 
     const cancelCallsBeforeDispose = jest.mocked(previewRunner.cancelQuery).mock.calls.length;
     preview.dispose();
@@ -59,6 +63,22 @@ describe('startQueryPreview', () => {
     expect(previewRunner.parent).toBeUndefined();
     expect(queryRunner.state.data).toBe(baselineData);
     expect(previewRunner.cancelQuery).toHaveBeenCalledTimes(cancelCallsBeforeDispose + 1);
+  });
+
+  it('replays preview state when data arrives before subscription', () => {
+    const queryRunner = new SceneQueryRunner({ queries: [queryA] });
+    const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+    const preview = startQueryPreview(panel, 'A', proposedQuery)!;
+    const previewRunner = panel.state.$behaviors?.find(
+      (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
+    )!;
+    const previewData: PanelData = { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() };
+    const previewStateListener = jest.fn();
+
+    previewRunner.setState({ data: previewData });
+    preview.subscribeToState(previewStateListener);
+
+    expect(previewStateListener).toHaveBeenCalledWith(LoadingState.Done);
   });
 
   it('rejects a proposal for a query outside the canonical runner', () => {

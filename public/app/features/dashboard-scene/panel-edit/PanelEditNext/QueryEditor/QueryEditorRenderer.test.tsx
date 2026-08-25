@@ -1,5 +1,6 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { useEffect, useRef, useState } from 'react';
+import { type PropsWithChildren, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import {
   type DataQueryError,
@@ -11,9 +12,10 @@ import {
   type PanelData,
   type TestDataSourceResponse,
 } from '@grafana/data';
-import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { QueryEditorType } from '../constants';
 
@@ -41,13 +43,6 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 jest.mock('app/features/query/components/QueryErrorAlert', () => ({
   QueryErrorAlert: ({ error }: { error: DataQueryError }) => <div data-testid="query-error-alert">{error.message}</div>,
 }));
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagQueryeditorCoauthoringUi: jest.fn(),
-}));
-
-const mockedUseFlagQueryeditorCoauthoringUi = jest.mocked(useFlagQueryeditorCoauthoringUi);
 
 interface TestQuery extends DataQuery {
   legendFormat?: string;
@@ -98,9 +93,21 @@ function renderRenderer(
   });
 }
 
+function renderWithOpenFeature(ui: ReactElement) {
+  function Wrapper({ children }: PropsWithChildren) {
+    return <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>;
+  }
+
+  return render(ui, { wrapper: Wrapper });
+}
+
 describe('QueryEditorRenderer', () => {
   beforeEach(() => {
-    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(false);
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
   });
 
   it('renders nothing when no query is selected', () => {
@@ -141,7 +148,7 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('provides the datasource coauthoring registrar when the feature flag is enabled', () => {
-    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
 
     function CapabilityQueryEditor(props: {
       query: DataQuery;
@@ -162,7 +169,7 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('does not offer the private coauthoring seam to a second datasource', () => {
-    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
 
     function OtherDatasourceQueryEditor(props: { query: DataQuery; unstable_queryEditorCoauthoringV1?: object }) {
       expect(props.unstable_queryEditorCoauthoringV1).toBeUndefined();
@@ -180,7 +187,7 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('registers the row-scoped adapter and renders its selection trigger in Core', async () => {
-    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
     const portalTarget = document.createElement('div');
     document.body.append(portalTarget);
     const snapshot = { mode: 'selection' as const, portalTarget };
@@ -256,7 +263,7 @@ describe('QueryEditorRenderer', () => {
       />
     );
 
-    const view = render(renderPanel(firstSettings));
+    const view = renderWithOpenFeature(renderPanel(firstSettings));
     expect(screen.getByTestId('datasource-instance')).toHaveTextContent('prometheus-first');
 
     view.rerender(renderPanel(secondSettings));
@@ -264,12 +271,29 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('displays an isolated proposed query and coordinates manual edits, revert, and accept', () => {
-    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
     const updateQuery = jest.fn();
     const runQueries = jest.fn();
     const disposePreview = jest.fn();
-    const startQueryPreview = jest.fn(() => ({ dispose: disposePreview }));
+    let publishPreviewState: ((state: LoadingState) => void) | undefined;
+    const startQueryPreview = jest.fn(() => ({
+      dispose: disposePreview,
+      subscribeToState: (listener: (state: LoadingState) => void) => {
+        publishPreviewState = listener;
+        return () => undefined;
+      },
+    }));
     const proposedQuery = { ...queryA, legendFormat: 'proposed' };
+    const dismiss = jest.fn();
+    const hiddenSnapshot = { mode: 'hidden' as const };
+    const adapter: QueryEditorCoauthoringAdapterV1 = {
+      getSnapshot: () => hiddenSnapshot,
+      subscribe: () => () => undefined,
+      invoke: jest.fn(),
+      readInvocation: jest.fn(),
+      prepareProposal: jest.fn(),
+      dismiss,
+    };
     let coauthoringHost: QueryCoauthoringHost | undefined;
     let changeFromEditor: ((query: DataQuery) => void) | undefined;
 
@@ -277,10 +301,12 @@ describe('QueryEditorRenderer', () => {
       query: DataQuery;
       queries?: DataQuery[];
       onChange: (query: DataQuery) => void;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
     }) {
-      const { onChange, query, queries } = props;
+      const { onChange, query, queries, unstable_queryEditorCoauthoringV1 } = props;
       coauthoringHost = useQueryCoauthoringHost();
       changeFromEditor = onChange;
+      useEffect(() => unstable_queryEditorCoauthoringV1?.register(adapter), [unstable_queryEditorCoauthoringV1]);
 
       return (
         <div data-testid="preview-editor">{`${getLegendFormat(query)}:${queries?.[0] ? getLegendFormat(queries[0]) : ''}`}</div>
@@ -289,7 +315,7 @@ describe('QueryEditorRenderer', () => {
 
     const queryDsData = {
       datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
-      dsSettings: ds1SettingsMock,
+      dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
     };
     const renderPanel = (query: DataQuery, queries: DataQuery[], data?: PanelData) => (
       <QueryEditorPanel
@@ -304,10 +330,10 @@ describe('QueryEditorRenderer', () => {
         startQueryPreview={startQueryPreview}
       />
     );
-    const { rerender } = render(renderPanel(queryA, [queryA, queryB]));
+    const { rerender } = renderWithOpenFeature(renderPanel(queryA, [queryA, queryB]));
     const coauthoringProps = coauthoringHost!;
 
-    expect(coauthoringProps.datasourceType).toBe(ds1SettingsMock.type);
+    expect(coauthoringProps.datasourceType).toBe('prometheus');
     let hostResult = false;
     act(() => {
       hostResult = coauthoringProps.preview(proposedQuery);
@@ -318,17 +344,12 @@ describe('QueryEditorRenderer', () => {
     expect(updateQuery).not.toHaveBeenCalled();
     expect(runQueries).not.toHaveBeenCalled();
 
-    rerender(
-      renderPanel(queryA, [queryA, queryB], {
-        state: LoadingState.Loading,
-      } as PanelData)
-    );
+    act(() => publishPreviewState!(LoadingState.Done));
+    expect(coauthoringHost!.previewPhase).toBe('complete');
+
+    act(() => publishPreviewState!(LoadingState.Loading));
     expect(coauthoringHost!.previewPhase).toBe('running');
-    rerender(
-      renderPanel(queryA, [queryA, queryB], {
-        state: LoadingState.Done,
-      } as PanelData)
-    );
+    act(() => publishPreviewState!(LoadingState.Done));
     expect(coauthoringHost!.previewPhase).toBe('complete');
     expect(screen.getByTestId('preview-editor')).toHaveTextContent('proposed:proposed');
 
@@ -354,6 +375,7 @@ describe('QueryEditorRenderer', () => {
     const firstManualEdit = { ...queryA, legendFormat: 'manual' };
     act(() => changeFromEditor!(firstManualEdit));
     expect(runQueries).toHaveBeenCalledTimes(1);
+    expect(dismiss).toHaveBeenCalledTimes(1);
     expect(updateQuery).toHaveBeenLastCalledWith(firstManualEdit, 'A');
 
     const laterManualEdit = { ...queryA, legendFormat: 'manual-later' };
@@ -382,22 +404,43 @@ describe('QueryEditorRenderer', () => {
   });
 
   it('can establish a new preview transaction after an explicit query run', () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
     const updateQuery = jest.fn();
     const runQueries = jest.fn();
-    const startQueryPreview = jest.fn(() => ({ dispose: jest.fn() }));
+    const startQueryPreview = jest.fn(() => ({
+      dispose: jest.fn(),
+      subscribeToState: jest.fn(() => () => undefined),
+    }));
     const proposedQuery = { ...queryA, legendFormat: 'proposed' };
+    const dismiss = jest.fn();
+    const hiddenSnapshot = { mode: 'hidden' as const };
+    const adapter: QueryEditorCoauthoringAdapterV1 = {
+      getSnapshot: () => hiddenSnapshot,
+      subscribe: () => () => undefined,
+      invoke: jest.fn(),
+      readInvocation: jest.fn(),
+      prepareProposal: jest.fn(),
+      dismiss,
+    };
     let coauthoringHost: QueryCoauthoringHost | undefined;
     let runFromEditor: VoidFunction | undefined;
 
-    function CapabilityQueryEditor({ onRunQuery }: { onRunQuery: VoidFunction }) {
+    function CapabilityQueryEditor({
+      onRunQuery,
+      unstable_queryEditorCoauthoringV1,
+    }: {
+      onRunQuery: VoidFunction;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
       coauthoringHost = useQueryCoauthoringHost();
       runFromEditor = onRunQuery;
+      useEffect(() => unstable_queryEditorCoauthoringV1?.register(adapter), [unstable_queryEditorCoauthoringV1]);
       return null;
     }
 
     const queryDsData = {
       datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
-      dsSettings: ds1SettingsMock,
+      dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
     };
     const renderPanel = (query: DataQuery) => (
       <QueryEditorPanel
@@ -411,7 +454,7 @@ describe('QueryEditorRenderer', () => {
         startQueryPreview={startQueryPreview}
       />
     );
-    const view = render(renderPanel(queryA));
+    const view = renderWithOpenFeature(renderPanel(queryA));
 
     let previewed = false;
     act(() => {
@@ -422,6 +465,7 @@ describe('QueryEditorRenderer', () => {
 
     act(() => runFromEditor!());
     expect(updateQuery).not.toHaveBeenCalled();
+    expect(dismiss).toHaveBeenCalledTimes(1);
     expect(runQueries).toHaveBeenCalledTimes(1);
     view.rerender(renderPanel(queryA));
 
@@ -514,7 +558,7 @@ describe('QueryEditorRenderer', () => {
       );
     }
 
-    const { rerender } = render(buildJsx(queryA));
+    const { rerender } = renderWithOpenFeature(buildJsx(queryA));
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
 
     rerender(buildJsx(queryB));
@@ -595,7 +639,7 @@ describe('QueryEditorRenderer', () => {
       );
     }
 
-    const { rerender } = render(buildJsx(queryA));
+    const { rerender } = renderWithOpenFeature(buildJsx(queryA));
 
     await act(async () => {
       rerender(buildJsx(queryB));
