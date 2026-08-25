@@ -198,40 +198,38 @@
         "right": "palette.orange200",
         "left": "palette.blue200"
       }
-    }
-  },
-  "badge": {
-    "colors": [
-      {
+    },
+    "badge": {
+      "blue": {
         "text": "palette.blue800",
         "background": "palette.blue50",
         "border": "palette.blue200"
       },
-      {
+      "red": {
         "text": "palette.red800",
         "background": "palette.red50",
         "border": "palette.red200"
       },
-      {
+      "green": {
         "text": "palette.sage800",
         "background": "palette.sage50",
         "border": "palette.sage200"
       },
-      {
+      "orange": {
         "text": "palette.orange800",
         "background": "palette.orange50",
         "border": "palette.orange200"
       },
-      {
+      "purple": {
         "text": "palette.violet800",
         "background": "palette.violet50",
         "border": "palette.violet200"
       },
-      {
+      "darkgrey": {
         "text": "palette.neutral800",
         "background": "palette.neutral50",
         "border": "palette.neutral200"
       }
-    ]
+    }
   }
 }

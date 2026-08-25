@@ -17,6 +17,12 @@ interface TagColors {
   text: string;
 }
 
+const badgeColorTokens = z.object({
+  text: z.string(),
+  background: z.string(),
+  border: z.string(),
+});
+
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
@@ -158,8 +164,14 @@ export const ThemeComponentsInputSchema = z
         })
         .optional(),
     }),
+    // keyed by BadgeColor ('brand' is handled separately)
     badge: z.object({
-      colors: z.array(z.object({ text: z.string(), background: z.string(), border: z.string() })).optional(),
+      blue: badgeColorTokens.optional(),
+      red: badgeColorTokens.optional(),
+      green: badgeColorTokens.optional(),
+      orange: badgeColorTokens.optional(),
+      purple: badgeColorTokens.optional(),
+      darkgrey: badgeColorTokens.optional(),
     }),
   })
   .partial();

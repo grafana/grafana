@@ -200,38 +200,36 @@
       }
     },
     "badge": {
-      "colors": [
-        {
-          "text": "palette.blue300",
-          "background": "palette.blue950",
-          "border": "palette.blue800"
-        },
-        {
-          "text": "palette.red300",
-          "background": "palette.red950",
-          "border": "palette.red800"
-        },
-        {
-          "text": "palette.sage300",
-          "background": "palette.sage950",
-          "border": "palette.sage800"
-        },
-        {
-          "text": "palette.orange300",
-          "background": "palette.orange950",
-          "border": "palette.orange800"
-        },
-        {
-          "text": "palette.violet300",
-          "background": "palette.violet950",
-          "border": "palette.violet800"
-        },
-        {
-          "text": "palette.ink300",
-          "background": "palette.ink950",
-          "border": "palette.ink800"
-        }
-      ]
+      "blue": {
+        "text": "palette.blue300",
+        "background": "palette.blue950",
+        "border": "palette.blue800"
+      },
+      "red": {
+        "text": "palette.red300",
+        "background": "palette.red950",
+        "border": "palette.red800"
+      },
+      "green": {
+        "text": "palette.sage300",
+        "background": "palette.sage950",
+        "border": "palette.sage800"
+      },
+      "orange": {
+        "text": "palette.orange300",
+        "background": "palette.orange950",
+        "border": "palette.orange800"
+      },
+      "purple": {
+        "text": "palette.violet300",
+        "background": "palette.violet950",
+        "border": "palette.violet800"
+      },
+      "darkgrey": {
+        "text": "palette.ink300",
+        "background": "palette.ink950",
+        "border": "palette.ink800"
+      }
     }
   }
 }

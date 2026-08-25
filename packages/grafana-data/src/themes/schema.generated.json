@@ -1295,28 +1295,125 @@
         "badge": {
           "type": "object",
           "properties": {
-            "colors": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "text": {
-                    "type": "string"
-                  },
-                  "background": {
-                    "type": "string"
-                  },
-                  "border": {
-                    "type": "string"
-                  }
+            "blue": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
                 },
-                "required": [
-                  "text",
-                  "background",
-                  "border"
-                ],
-                "additionalProperties": false
-              }
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
+            },
+            "red": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
+            },
+            "green": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
+            },
+            "orange": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
+            },
+            "purple": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
+            },
+            "darkgrey": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "background",
+                "border"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
