@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -76,7 +77,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 	ssoSettingsSvc := ssosettingsimpl.ProvideService(
 		cfg,
 		mustConfigProvider(t, cfg),
-		sqlStore,
+		legacysql.NewDatabaseProvider(sqlStore),
 		accessControl,
 		routing.NewRouteRegister(),
 		featuremgmt.WithFeatures(),
@@ -303,7 +304,7 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			ssoSettingsSvc := ssosettingsimpl.ProvideService(
 				cfg,
 				mustConfigProvider(t, cfg),
-				sqlStore,
+				legacysql.NewDatabaseProvider(sqlStore),
 				accessControl,
 				routing.NewRouteRegister(),
 				featuremgmt.WithFeatures(),

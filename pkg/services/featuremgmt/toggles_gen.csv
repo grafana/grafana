@@ -385,3 +385,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-17,grafana.panelPluginTransformations,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-18,tracesDrilldown.useValueTypeFiltering,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-08-18,grafana.dashboardsAutoHeightPanels,experimental,@grafana/dashboards-squad,false,false,true
+2026-08-13,grafana.dashboardAutoGridDefault,GA,@grafana/dashboards-squad,false,false,true
