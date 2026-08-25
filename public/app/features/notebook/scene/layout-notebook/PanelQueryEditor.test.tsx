@@ -324,7 +324,25 @@ describe('PanelQueryEditor', () => {
       expect(runner.state.queries).toHaveLength(2);
       expect(runner.state.queries[0]).toBe(before);
       expect(runner.state.queries[1]).toEqual(expect.objectContaining({ refId: 'B', hide: false }));
+      // Neither row has a datasource yet in this fixture, so there's nothing to inherit — see the
+      // next test for the case that actually exercises the hint.
       expect(runner.state.queries[1].datasource).toBeUndefined();
+    });
+
+    // Regression: a bare addQuery(queries) with no datasource hint used to leave the new row's
+    // datasource undefined, which setQueryRunnerQueries then treated as a distinct uid from the
+    // existing real one — flipping the runner to Mixed even though only one real datasource was ever
+    // in play, and Mixed can't dispatch a target with no datasource of its own.
+    it('gives a newly added query the existing datasource, so the runner does not flip to Mixed', async () => {
+      const panel = buildPanel([{ datasource: { uid: 'default-uid', type: 'testdata' } }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} />);
+
+      await user.click(await screen.findByRole('button', { name: 'Add query' }));
+
+      expect(runner.state.queries).toHaveLength(2);
+      expect(runner.state.queries[1].datasource).toEqual({ uid: 'default-uid', type: 'testdata' });
+      expect(runner.state.datasource).toEqual({ uid: 'default-uid', type: 'testdata' });
     });
 
     it('duplicates a query via its own row action, with a fresh refId', async () => {

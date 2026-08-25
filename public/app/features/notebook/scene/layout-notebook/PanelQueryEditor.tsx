@@ -67,7 +67,15 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
           variant="secondary"
           fill="text"
           size="sm"
-          onClick={() => setQueryRunnerQueries(queryRunner, addQuery(queries))}
+          // Hints the new query at the existing datasource: addQuery only applies a hint when the
+          // query doesn't already have one, so this is a no-op once every row already picked
+          // something, but a bare `addQuery(queries)` would otherwise hand the new row `datasource:
+          // undefined` — a value setQueryRunnerQueries has to treat as distinct from every other
+          // row's real uid, incorrectly flipping the runner to Mixed even though only one real
+          // datasource is in play, and Mixed can't dispatch a target with no datasource at all.
+          onClick={() =>
+            setQueryRunnerQueries(queryRunner, addQuery(queries, undefined, queries[0]?.datasource ?? undefined))
+          }
         >
           {t('notebook.cell.query.add', 'Add query')}
         </Button>

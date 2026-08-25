@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor, isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -79,7 +79,7 @@ function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isUntransformedQueryPanel(panel) && <PanelQueryEditor panel={panel} autoFocus={autoFocus} />}
+      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor panel={panel} autoFocus={autoFocus} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>
@@ -89,10 +89,13 @@ function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing
 
 // Transformations sit between the queries and what's on screen, so editing the raw queries here
 // wouldn't reflect (or let the reader touch) what actually reaches the panel — that needs a real,
-// transformation-aware editor, not this lightweight one.
-function isUntransformedQueryPanel(panel: VizPanel): boolean {
+// transformation-aware editor, not this lightweight one. Library panels are excluded for a different
+// reason: vizPanelToSchemaV2 serializes any panel carrying LibraryPanelBehavior only as a reference to
+// the shared library panel (kind, name, uid) — never as a full PanelKind with its own queries — so any
+// edit made here would look like it saved and then be silently discarded on the next save/reload.
+export function isEditableQueryPanel(panel: VizPanel): boolean {
   const queryRunner = getQueryRunnerFor(panel);
-  if (!queryRunner) {
+  if (!queryRunner || isLibraryPanel(panel)) {
     return false;
   }
 
