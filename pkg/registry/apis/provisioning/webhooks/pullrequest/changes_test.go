@@ -568,7 +568,7 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "process first 10 files",
+			name: "process all files",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
 					Path: "path/to/file.json",
@@ -633,10 +633,9 @@ func TestCalculateChanges(t *testing.T) {
 				return changes
 			}(),
 			expectedInfo: changeInfo{
-				SkippedFiles: 5,
 				Changes: func() []fileChangeInfo {
-					changes := make([]fileChangeInfo, 0, 10)
-					for range 10 {
+					changes := make([]fileChangeInfo, 0, 15)
+					for range 15 {
 						changes = append(changes, fileChangeInfo{
 							Change: repository.VersionedFileChange{
 								Action: repository.FileActionCreated,
@@ -1422,7 +1421,6 @@ func TestCalculateChanges(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, len(tt.expectedInfo.Changes), len(info.Changes))
-			require.Equal(t, tt.expectedInfo.SkippedFiles, info.SkippedFiles)
 
 			// compare change URLs
 			for i, change := range info.Changes {
@@ -1806,6 +1804,111 @@ func TestEvaluate_GitHubEnterpriseDoesNotPanic(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, info.Changes, 1)
+}
+
+// A canceled context must stop the loop before it touches any file -- reader/parser
+// mocks below have no expectations set, so a call past the cancellation check would
+// panic. This guards against burning through a large PR's file list (and filling the
+// comment with spurious "context canceled" errors) once the job's context expires.
+func TestEvaluate_StopsWhenContextIsCanceled(t *testing.T) {
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	})
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(resources.NewMockParser(t), nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	info, err := evaluator.Evaluate(ctx, reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "a.json", Ref: "ref"},
+		{Action: repository.FileActionCreated, Path: "b.json", Ref: "ref"},
+		{Action: repository.FileActionCreated, Path: "c.json", Ref: "ref"},
+	}, progress)
+
+	require.NoError(t, err)
+	require.Empty(t, info.Changes, "canceled context should stop the loop before any file is evaluated")
+	require.Equal(t, 3, info.UnprocessedFiles, "every file is unprocessed when canceled before the loop starts")
+}
+
+// The context expires partway through the diff (simulated by canceling from
+// inside the mock reader as it reads the second file). The first file, already
+// in flight, still completes; the loop then sees the canceled context at the
+// top of the next iteration and stops, leaving the last file unprocessed.
+func TestEvaluate_TracksUnprocessedFilesWhenCanceledMidway(t *testing.T) {
+	obj := func(name string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": resources.DashboardResource.GroupVersion().String(),
+				"kind":       dashboardKind,
+				"metadata":   map[string]interface{}{"name": name},
+				"spec":       map[string]interface{}{"title": name},
+			},
+		}
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	reader := repository.NewMockReader(t)
+	reader.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "x"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+	})
+
+	aInfo := &repository.FileInfo{Path: "a.json", Ref: "ref", Data: []byte("xxxx")}
+	bInfo := &repository.FileInfo{Path: "b.json", Ref: "ref", Data: []byte("xxxx")}
+	reader.On("Read", mock.Anything, "a.json", "ref").Return(aInfo, nil)
+	// Canceling here simulates the job's context expiring while this file is
+	// being read; the read itself (a mock) still succeeds, matching a real
+	// cancellation racing with an in-flight request rather than preempting it.
+	reader.On("Read", mock.Anything, "b.json", "ref").Run(func(mock.Arguments) { cancel() }).Return(bInfo, nil)
+
+	aMeta, _ := utils.MetaAccessor(obj("a"))
+	bMeta, _ := utils.MetaAccessor(obj("b"))
+	parser := resources.NewMockParser(t)
+	parser.On("Parse", mock.Anything, aInfo).Return(&resources.ParsedResource{
+		Info: aInfo, GVK: schema.GroupVersionKind{Kind: dashboardKind}, Obj: obj("a"), Meta: aMeta, DryRunResponse: obj("a"),
+	}, nil)
+	parser.On("Parse", mock.Anything, bInfo).Return(&resources.ParsedResource{
+		Info: bInfo, GVK: schema.GroupVersionKind{Kind: dashboardKind}, Obj: obj("b"), Meta: bMeta, DryRunResponse: obj("b"),
+	}, nil)
+
+	parserFactory := resources.NewMockParserFactory(t)
+	parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+
+	renderer := NewMockScreenshotRenderer(t)
+	renderer.On("IsAvailable", mock.Anything).Return(false)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+
+	evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+		Internal: func(_ context.Context, _ string) string { return "http://host/" },
+		Public:   func(_ context.Context, _ string) string { return "http://host/" },
+	}, prometheus.NewPedanticRegistry())
+
+	info, err := evaluator.Evaluate(ctx, reader, provisioning.PullRequestJobOptions{Ref: "ref"}, []repository.VersionedFileChange{
+		{Action: repository.FileActionCreated, Path: "a.json", Ref: "ref"},
+		{Action: repository.FileActionCreated, Path: "b.json", Ref: "ref"},
+		{Action: repository.FileActionCreated, Path: "c.json", Ref: "ref"},
+	}, progress)
+
+	require.NoError(t, err)
+	require.Len(t, info.Changes, 2, "a and b were already in flight/complete when the context expired")
+	require.Equal(t, 1, info.UnprocessedFiles, "c never started")
 }
 
 func TestDummyImageURL(t *testing.T) {
