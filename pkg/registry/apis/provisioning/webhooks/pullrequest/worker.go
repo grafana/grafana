@@ -160,13 +160,31 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return fmt.Errorf("calculate changes: %w", err)
 	}
 
-	if err := c.commenter.Comment(ctx, prRepo, opts.PR, changeInfo); err != nil {
+	commentCtx := ctx
+	if changeInfo.UnprocessedFiles > 0 {
+		// Context may already be cancelled but we want to make the comment
+		// to give a preview anyways
+		var cancel context.CancelFunc
+		commentCtx, cancel = context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+		defer cancel()
+	}
+
+	if err := c.commenter.Comment(commentCtx, prRepo, opts.PR, changeInfo); err != nil {
 		c.metrics.recordCommentPosted(utils.ErrorOutcome)
 		return fmt.Errorf("comment pull request: %w", err)
 	}
 	outcome = utils.SuccessOutcome
 	c.metrics.recordCommentPosted(utils.SuccessOutcome)
 	logger.Info("preview comment added")
+
+	if changeInfo.UnprocessedFiles > 0 {
+		// The comment already posted (with a caveat) covering whatever was evaluated
+		// before the context expired -- that's a successful outcome for this worker.
+		// Still surface it as a job-level warning so an incomplete evaluation is
+		// visible in job history, not indistinguishable from a normal success.
+		logger.Warn("pull request evaluation did not cover the whole diff", "unprocessedFiles", changeInfo.UnprocessedFiles)
+		return jobs.AsWarning(fmt.Errorf("evaluation stopped early: %d file(s) not processed", changeInfo.UnprocessedFiles))
+	}
 
 	return nil
 }

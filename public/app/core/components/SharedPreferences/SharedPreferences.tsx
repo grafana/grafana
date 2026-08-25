@@ -212,6 +212,7 @@ export const SharedPreferences = memo((props: Props) => {
               onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
               isClearable={true}
+              showUnknown={true}
               placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}
               inputId="home-dashboard-select"
             />
