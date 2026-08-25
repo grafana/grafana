@@ -112,10 +112,13 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
     }
 
     let subscription: Subscription | undefined;
-    const settle = (result: DataFrame[]) => setTransformed({ configs: stableConfigs, result });
+    const settle = (result: DataFrame[]) => setTransformed({ configs: stableConfigs, frames: result, settled: result });
     const fail = (err: unknown) => {
       logTransformationFailure(err);
-      settle(stableFrames);
+      // The untransformed frames are the closest shape there is to show, but this pipeline never
+      // produced them, so nothing settled: a replay piped off a failure would run over frames the
+      // panel never had. Recorded against `stableConfigs` all the same, so the failure settles.
+      setTransformed({ configs: stableConfigs, frames: stableFrames, settled: NO_FRAMES });
     };
 
     try {
@@ -151,7 +154,7 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
   const isThisPipeline = transformed?.configs === stableConfigs;
 
   return isThisPipeline
-    ? { frames: transformed.result, settled: transformed.result }
+    ? { frames: transformed.frames, settled: transformed.settled }
     : { frames: stableFrames, settled: NO_FRAMES };
 }
 
@@ -164,18 +167,18 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
  * The two things a replay is asked for, which part company while one is in flight.
  *
  * An editor reads `frames`, which stands in the closest shape there is whenever this pipeline has
- * not produced one yet. A replay piped off this one reads `settled`, which is only ever this
- * pipeline's own output: running a further transformation over a stand-in produces a shape the panel
- * never emits.
+ * not produced one yet — including after a replay that failed. A replay piped off this one reads
+ * `settled`, which is only ever this pipeline's own output, and is empty until there is one:
+ * running a further transformation over a stand-in produces a shape the panel never emits.
  */
 export interface FrameReplay {
   frames: DataFrame[];
   settled: DataFrame[];
 }
 
-interface TransformedFrames {
+/** A {@link FrameReplay} tagged with the pipeline that produced it, so a later one is not mistaken for it. */
+interface TransformedFrames extends FrameReplay {
   configs: TransformationConfigs;
-  result: DataFrame[];
 }
 
 function logTransformationFailure(err: unknown) {

@@ -294,6 +294,25 @@ describe('useFrameReplay', () => {
     expect(result.current.settled).toBe(emitted);
   });
 
+  it('reports nothing settled when the replay fails, though it still shows the frames', () => {
+    // A failure falls back to the untransformed frames, which is the right thing to show and the
+    // wrong thing to pipe onward: this pipeline never produced them, so a replay running over them
+    // produces a shape the panel never emits.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.error(new Error('extractFields could not parse the column as JSON'));
+      })
+    );
+
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(frames);
+    expect(result.current.settled).toEqual([]);
+
+    consoleError.mockRestore();
+  });
+
   it('drops what it settled on when the pipeline itself changes', () => {
     const otherConfigs: TransformationConfigs = [{ id: 'reduce', options: {} }];
 

@@ -125,6 +125,35 @@ describe('useTransformationDebugData', () => {
     expect(shown).not.toContainEqual(['organize(A-series+B-series)']);
   });
 
+  it('does not fall back to running the debugged transformation over the query frames when the preceding stage fails', () => {
+    // A failed replay settles on the untransformed frames so the editors have something to read.
+    // Piping those into the debugged transformation is the same wrong pairing as piping a stand-in:
+    // the panel is showing a data error, and there is no input for this pane to report output for.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockTransformDataFrame.mockImplementation((configs, frames) =>
+      configIds(configs) === 'joinByField'
+        ? new Observable<DataFrame[]>((subscriber) => subscriber.error(new Error('joinByField blew up')))
+        : emit(makeFrames([`organize(${frames.map(({ name }) => name).join('+')})`]))
+    );
+
+    renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: transformations[1],
+        transformations,
+        data,
+        isActive: true,
+      })
+    );
+
+    const debuggedRuns = mockTransformDataFrame.mock.calls.filter(
+      ([configs]) => (configs[0] as DataTransformerConfig).id === 'organize'
+    );
+
+    expect(debuggedRuns.map(([, frames]) => frames.map(({ name }) => name))).toEqual([[]]);
+
+    consoleError.mockRestore();
+  });
+
   it('runs the preceding stage once, not once per pane', () => {
     respondByConfig({ joinByField: makeFrames(['joined']), organize: makeFrames(['organized']) });
 
