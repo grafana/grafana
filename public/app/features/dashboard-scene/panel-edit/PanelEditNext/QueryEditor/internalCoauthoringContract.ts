@@ -3,18 +3,18 @@ import { type DataQuery } from '@grafana/schema';
 // Private to the paired PanelEditNext and Prometheus experiment.
 // Promote a generalized interface before adding another datasource adapter.
 
-export interface QueryEditorCoauthoringRangeV1 {
+interface QueryEditorCoauthoringRangeV1 {
   from: number;
   to: number;
 }
 
-export interface QueryEditorCoauthoringMetadataV1 {
+interface QueryEditorCoauthoringMetadataV1 {
   kind: string;
   name: string;
   attributes?: Record<string, string | string[]>;
 }
 
-export interface QueryEditorCoauthoringLanguageV1 {
+interface QueryEditorCoauthoringLanguageV1 {
   id: string;
   displayName: string;
   guidance?: string[];
@@ -41,7 +41,7 @@ export type QueryEditorCoauthoringSnapshotV1 =
   | { mode: 'selection'; portalTarget: HTMLElement }
   | { mode: 'invoked'; invocationId: string; portalTarget: HTMLElement };
 
-export interface QueryEditorCoauthoringInvocationV1<TQuery extends DataQuery = DataQuery> {
+interface QueryEditorCoauthoringInvocationV1<TQuery extends DataQuery = DataQuery> {
   baseline: TQuery;
   context: QueryEditorCoauthoringContextV1;
 }

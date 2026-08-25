@@ -31,7 +31,7 @@ export interface AssistantHandoffInstructions {
   instructions: string;
 }
 
-export const MAX_INLINE_CLARIFICATION_LENGTH = 240;
+const MAX_INLINE_CLARIFICATION_LENGTH = 240;
 // Allow a modest model overrun before treating free text as an implicit handoff.
 export const MAX_INLINE_CLARIFICATION_RESPONSE_LENGTH = 320;
 
@@ -224,7 +224,7 @@ export function selectionSummary(context: QueryEditorCoauthoringContextV1): stri
   });
 }
 
-export function isWholeQueryFocus(context: QueryEditorCoauthoringContextV1): boolean {
+function isWholeQueryFocus(context: QueryEditorCoauthoringContextV1): boolean {
   return (
     context.query.length > 0 &&
     context.focusRanges.length === 1 &&
