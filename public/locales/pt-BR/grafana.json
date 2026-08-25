@@ -890,7 +890,6 @@
       "close": "Fechar",
       "create": "Criar",
       "delete": "Excluir",
-      "deleting": "Excluindo…",
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} rotas"
       },
       "delete": {
-        "confirm": "Sim, excluir política",
-        "warning-1": "A exclusão desta política de notificação irá removê-la permanentemente.",
-        "warning-2": "Tem certeza de que deseja excluir esta política?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Esta ação removerá permanentemente a política de notificação <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Excluir política de notificação"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtre as rotas usando uma lista de correspondências separadas por vírgulas, por exemplo:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Políticas geradas automaticamente",
@@ -2546,7 +2543,9 @@
         "reset": "Redefinir",
         "resetting": "Redefinindo…",
         "title-delete-notification-policy": "Excluir política de notificação",
-        "title-reset-notification-policy": "Redefinir política de notificação"
+        "title-reset-notification-policy": "Redefinir política de notificação",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Aguarde enquanto atualizamos suas políticas de notificação.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Excluir política de notificação"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Notebook",
       "pill": "Notebook publicado",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Tempo"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nenhuma informação de volume disponível para as consultas atuais e intervalo de tempo."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Recolher {{name}}",
       "error": "Erro ao carregar as métricas",
@@ -8754,6 +8761,7 @@
       "loading-values": "Carregando valores…",
       "no-metrics": "Nenhuma métrica encontrada",
       "search-placeholder": "Buscar métricas",
+      "show-metric-details": "",
       "show-more": "Mostrar mais",
       "show-more-metrics": "Mostrar mais métricas",
       "show-more-values": "Mostrar mais valores",
@@ -11272,6 +11280,13 @@
       "show": "Mostrar",
       "switch": "As recomendações seguem a solução selecionada",
       "switchSolution": "Trocar solução",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Recomendações para seu stack"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Este recurso está atrás da ramificação em {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Os demais usuários da Grafana na sua organização ainda verão este recurso até que seja realizado o merge desta ramificação",
+      "move-from-branch": "",
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitação de pull no {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "Um novo recurso foi criado em uma ramificação em {{repoType}}.",
     "title-deleted-resource-in-branch": "Um recurso foi excluído em uma ramificação em {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir da ramificação que você acabou de criar em {{repoType}} e só é visível para você",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Um recurso foi atualizado em uma ramificação em {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

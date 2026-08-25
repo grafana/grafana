@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,6 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagCloudRBACRoles: {
+			Key:            featuremgmt.FlagCloudRBACRoles,
+			Variants:       map[string]any{"on": enabled},
+			DefaultVariant: "on",
+		},
+	})
+}
 
 func TestRBACSync_SyncPermission(t *testing.T) {
 	type testCase struct {
@@ -368,6 +380,7 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			setCloudRBACRolesFlag(t, true)
 			var called bool
 			s := &RBACSync{
 				ac: &acmock.Mock{
@@ -376,10 +389,9 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 						return tt.syncErr
 					},
 				},
-				log:      log.NewNopLogger(),
-				tracer:   tracing.InitializeTracerForTest(),
-				features: featuremgmt.WithFeatures(featuremgmt.FlagCloudRBACRoles),
-				cfg:      &setting.Cfg{StackID: tt.stackID},
+				log:    log.NewNopLogger(),
+				tracer: tracing.InitializeTracerForTest(),
+				cfg:    &setting.Cfg{StackID: tt.stackID},
 			}
 
 			req := &authn.Request{}
@@ -554,15 +566,10 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			var features featuremgmt.FeatureToggles
-			if tt.includeSupportTicketRoles {
-				features = featuremgmt.WithFeatures(featuremgmt.FlagCloudRBACRoles)
-			} else {
-				features = featuremgmt.WithFeatures()
-			}
-			s := &RBACSync{features: features}
+			setCloudRBACRolesFlag(t, tt.includeSupportTicketRoles)
+			s := &RBACSync{}
 
-			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(tt.identity)
+			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(context.Background(), tt.identity)
 			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
 			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)
