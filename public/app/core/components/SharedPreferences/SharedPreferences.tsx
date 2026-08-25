@@ -33,7 +33,7 @@ import { useSharedPreferences } from './useSharedPreferences';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
 export const SharedPreferences = memo((props: Props) => {
-  const { resourceUri } = props;
+  const { resourceUri, preferenceType } = props;
 
   const [updatePreferences, { preferences: prefs, isLoading, isError, isUpdating, isUpdateError }] =
     useSharedPreferences(resourceUri);
@@ -79,13 +79,13 @@ export const SharedPreferences = memo((props: Props) => {
     }
     if (isAnalyticsFrameworkEnabled) {
       saveButtonClicked({
-        preferenceType: props.preferenceType,
+        preferenceType,
         theme: state.theme,
         language: state.language,
       });
     } else {
       reportInteraction('grafana_preferences_save_button_clicked', {
-        preferenceType: props.preferenceType,
+        preferenceType,
         theme: state.theme,
         language: state.language,
       });
@@ -106,7 +106,7 @@ export const SharedPreferences = memo((props: Props) => {
 
     if (nextHomeDashboardUID !== previousHomeDashboardUID) {
       homeDashboardChanged({
-        preferenceType: props.preferenceType,
+        preferenceType,
         action: nextHomeDashboardUID ? 'set' : 'cleared',
       });
     }
@@ -119,13 +119,13 @@ export const SharedPreferences = memo((props: Props) => {
     if (isAnalyticsFrameworkEnabled) {
       themeChanged({
         toTheme: value.value,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     } else {
       // eslint-disable-next-line no-restricted-syntax
       reportInteraction('grafana_preferences_theme_changed', {
         toTheme: value.value,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     }
 
@@ -154,12 +154,12 @@ export const SharedPreferences = memo((props: Props) => {
     if (isAnalyticsFrameworkEnabled) {
       languageChanged({
         toLanguage: language,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     } else {
       reportInteraction('grafana_preferences_language_changed', {
         toLanguage: language,
-        preferenceType: props.preferenceType,
+        preferenceType,
       });
     }
   };
@@ -179,7 +179,7 @@ export const SharedPreferences = memo((props: Props) => {
       )}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
-          <VisualRefreshInfo />
+          {preferenceType === 'user' && <VisualRefreshInfo />}
           <Field
             noMargin
             loading={isLoading}

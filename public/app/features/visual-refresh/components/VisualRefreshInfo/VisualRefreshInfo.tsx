@@ -28,7 +28,9 @@ export function VisualRefreshInfo() {
 
   const handleShowVisualRefresh = (force: boolean) => {
     stylesToggled({ value: force });
-    getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force });
+    // rather than explicitly set true, we instead remove the override from local storage
+    // this prevents users from being stuck in the visual refresh if the rollout flag is later disabled
+    getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force ? undefined : false });
   };
 
   return (
