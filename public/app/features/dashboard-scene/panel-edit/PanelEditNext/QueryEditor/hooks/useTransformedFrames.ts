@@ -19,6 +19,9 @@ export type TransformationConfigs = Array<DataTransformerConfig | CustomTransfor
 /** Stable identity for "nothing to run", so passing it does not re-run a caller's memo or effect. */
 export const NO_CONFIGS: TransformationConfigs = [];
 
+/** Stable identity for "this replay has produced nothing yet", for the same reason. */
+const NO_FRAMES: DataFrame[] = [];
+
 /**
  * The context every editor replay runs with. One definition, so a change to how transformation
  * options resolve variables reaches all of them rather than whichever the author remembered.
@@ -76,7 +79,7 @@ function useStableArray<T>(value: T[]): T[] {
 }
 
 /**
- * Runs `configs` over `frames` and returns what comes out.
+ * Runs `configs` over `frames` and returns what comes out, in the two forms a caller can need.
  *
  * The panel's pipeline does not publish its intermediate stages, so the editors rebuild the ones they
  * need to answer "what does this transformation receive", "what did it produce", and "which frames
@@ -98,7 +101,7 @@ function useStableArray<T>(value: T[]): T[] {
  * A replay that fails settles on the untransformed frames and records that it did, rather than
  * leaving every later render looking like one that is still waiting.
  */
-export function useTransformedFrames(configs: TransformationConfigs, frames: DataFrame[]): DataFrame[] {
+export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame[]): FrameReplay {
   const stableConfigs = useStableArray(configs);
   const stableFrames = useStableArray(frames);
   const [transformed, setTransformed] = useState<TransformedFrames | undefined>(undefined);
@@ -135,7 +138,8 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
   }, [stableConfigs, stableFrames]);
 
   if (stableConfigs.length === 0) {
-    return stableFrames;
+    // An empty pipeline produces its input, so there is no gap for anything to stand in over.
+    return { frames: stableFrames, settled: stableFrames };
   }
 
   // Held across a data change, dropped across a pipeline change. `transformDataFrame` resolves a
@@ -146,7 +150,27 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
   // Output from a *different* pipeline is not held: that shape is genuinely gone.
   const isThisPipeline = transformed?.configs === stableConfigs;
 
-  return isThisPipeline ? transformed.result : stableFrames;
+  return isThisPipeline
+    ? { frames: transformed.result, settled: transformed.result }
+    : { frames: stableFrames, settled: NO_FRAMES };
+}
+
+/** {@link useFrameReplay} for the callers that only need something to show. */
+export function useTransformedFrames(configs: TransformationConfigs, frames: DataFrame[]): DataFrame[] {
+  return useFrameReplay(configs, frames).frames;
+}
+
+/**
+ * The two things a replay is asked for, which part company while one is in flight.
+ *
+ * An editor reads `frames`, which stands in the closest shape there is whenever this pipeline has
+ * not produced one yet. A replay piped off this one reads `settled`, which is only ever this
+ * pipeline's own output: running a further transformation over a stand-in produces a shape the panel
+ * never emits.
+ */
+export interface FrameReplay {
+  frames: DataFrame[];
+  settled: DataFrame[];
 }
 
 interface TransformedFrames {

@@ -1,10 +1,11 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, type DataTransformerConfig, transformDataFrame } from '@grafana/data';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationDebugData } from './useTransformationDebugData';
+import { type TransformationConfigs } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -20,15 +21,33 @@ const mockTransformDataFrame = jest.mocked(transformDataFrame);
 
 const emit = (frames: DataFrame[]) => new Observable<DataFrame[]>((subscriber) => subscriber.next(frames));
 
+/** Real `transformDataFrame` resolves a task later; answering synchronously hides every render in between. */
+const emitAsync = (frames: DataFrame[]) =>
+  new Observable<DataFrame[]>((subscriber) => {
+    const timeout = setTimeout(() => subscriber.next(frames), 0);
+    return () => clearTimeout(timeout);
+  });
+
+const configIds = (configs: TransformationConfigs) =>
+  configs.map((config) => (typeof config === 'object' && 'id' in config ? config.id : 'custom')).join(',');
+
 /**
  * Answers by which transformation it was handed, so an assertion can tell the two stages apart. A
  * mock that answers the same frames whatever it receives cannot fail if the stages are swapped.
  */
 const respondByConfig = (answers: Record<string, DataFrame[]>) =>
-  mockTransformDataFrame.mockImplementation((configs) => {
-    const ids = configs.map((config) => (typeof config === 'object' && 'id' in config ? config.id : 'custom'));
-    return emit(answers[ids.join(',')] ?? makeFrames([`unstubbed:${ids.join(',')}`]));
-  });
+  mockTransformDataFrame.mockImplementation((configs) =>
+    emit(answers[configIds(configs)] ?? makeFrames([`unstubbed:${configIds(configs)}`]))
+  );
+
+/**
+ * Answers with a frame named after what it received, so an assertion can tell which generation of
+ * input a stage ran over rather than only which configs it ran.
+ */
+const respondByInput = () =>
+  mockTransformDataFrame.mockImplementation((configs, frames) =>
+    emitAsync(makeFrames([`${configIds(configs)}(${frames.map(({ name }) => name).join('+')})`]))
+  );
 
 describe('useTransformationDebugData', () => {
   const data = makeFrames(['A-series', 'B-series']);
@@ -69,6 +88,41 @@ describe('useTransformationDebugData', () => {
     // Distinct frames per stage, so swapping input and output in the hook fails this.
     expect(result.current.input.map(({ name }) => name)).toEqual(['joined']);
     expect(result.current.output.map(({ name }) => name)).toEqual(['organized']);
+  });
+
+  it('waits for the preceding stage instead of running the debugged transformation over the query frames', async () => {
+    // `transformDataFrame` resolves a task after the render that subscribed to it, so on the render
+    // the output stage first runs, the preceding stage has produced nothing and stands in the
+    // untransformed frames. Running the debugged transformation over those puts a shape in the
+    // output pane that the pipeline never produces, next to an input pane that has already settled.
+    respondByInput();
+    const shown: string[][] = [];
+
+    const { result } = renderHook(() => {
+      const debug = useTransformationDebugData({
+        selectedTransformation: transformations[1],
+        transformations,
+        data,
+        isActive: true,
+      });
+      shown.push(debug.output.map(({ name }) => name ?? ''));
+      return debug;
+    });
+
+    await waitFor(() =>
+      expect(result.current.output.map(({ name }) => name)).toEqual(['organize(joinByField(A-series+B-series))'])
+    );
+
+    const debuggedRuns = mockTransformDataFrame.mock.calls.filter(
+      ([configs]) => (configs[0] as DataTransformerConfig).id === 'organize'
+    );
+
+    // Nothing to run over, then the settled input — never the query frames the input pane stood in.
+    expect(debuggedRuns.map(([, frames]) => frames.map(({ name }) => name))).toEqual([
+      [],
+      ['joinByField(A-series+B-series)'],
+    ]);
+    expect(shown).not.toContainEqual(['organize(A-series+B-series)']);
   });
 
   it('runs the preceding stage once, not once per pane', () => {

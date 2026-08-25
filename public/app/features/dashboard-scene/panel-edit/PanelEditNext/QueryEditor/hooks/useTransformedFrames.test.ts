@@ -9,6 +9,7 @@ import {
   NO_CONFIGS,
   type TransformationConfigs,
   precedingTransformations,
+  useFrameReplay,
   useTransformedFrames,
 } from './useTransformedFrames';
 
@@ -237,6 +238,73 @@ describe('useTransformedFrames', () => {
       expect(result.current).toBe(frames);
       expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('useFrameReplay', () => {
+  const frames = makeFrames(['a', 'b']);
+  const emitted = makeFrames(['transformed']);
+  const configs: TransformationConfigs = [{ id: 'organize', options: {} }];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.next(emitted);
+      })
+    );
+  });
+
+  it('reports what it produced as both what to show and what to pipe onward', () => {
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(emitted);
+    expect(result.current.settled).toBe(emitted);
+  });
+
+  it('settles on the frames themselves when there is no pipeline to run', () => {
+    // An empty pipeline produces its input, so a replay piped off it has real frames to run over.
+    const { result } = renderHook(() => useFrameReplay(NO_CONFIGS, frames));
+
+    expect(result.current.settled).toBe(frames);
+  });
+
+  it('reports nothing settled while a replay is in flight, though it still has frames to show', () => {
+    // The distinction the debug drawer's two stages turn on: an editor reads the untransformed
+    // frames standing in, but a replay piped off this one must not run over them.
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(frames);
+    expect(result.current.settled).toEqual([]);
+  });
+
+  it('keeps reporting the held output as settled across a data change', () => {
+    // Stale by one query, but a shape this pipeline did produce — so it is safe to pipe onward.
+    const nextFrames = makeFrames(['c']);
+
+    const { result, rerender } = renderHook(({ data }: { data: DataFrame[] }) => useFrameReplay(configs, data), {
+      initialProps: { data: frames },
+    });
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ data: nextFrames }));
+
+    expect(result.current.settled).toBe(emitted);
+  });
+
+  it('drops what it settled on when the pipeline itself changes', () => {
+    const otherConfigs: TransformationConfigs = [{ id: 'reduce', options: {} }];
+
+    const { result, rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useFrameReplay(c, frames), {
+      initialProps: { c: configs },
+    });
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ c: otherConfigs }));
+
+    expect(result.current.settled).toEqual([]);
   });
 });
 

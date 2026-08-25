@@ -4,7 +4,7 @@ import { type DataFrame, getFrameMatchers } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
+import { NO_CONFIGS, precedingTransformations, useFrameReplay, useTransformedFrames } from './useTransformedFrames';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
@@ -53,8 +53,13 @@ export function useTransformationDebugData({
   // Piped through the preceding stage's own output rather than replayed from `data` alongside it.
   // Two replays from `data` would run every preceding transformation a second time, and would leave
   // the two panes free to settle on different generations.
-  const inputFrames = useTransformedFrames(inputConfigs, data);
-  const outputFrames = useTransformedFrames(selfConfigs, inputFrames);
+  //
+  // The output stage pipes off what that stage *settled* on, never the untransformed frames it shows
+  // while its own replay is in flight: running the debugged transformation over those would put a
+  // shape in the output pane that the pipeline never produces. Until there is settled input to run
+  // over, the output pane has nothing to show, which is the honest answer rather than a wrong one.
+  const { frames: inputFrames, settled: settledInput } = useFrameReplay(inputConfigs, data);
+  const outputFrames = useTransformedFrames(selfConfigs, settledInput);
 
   return useMemo(() => {
     if (!debugTarget) {
