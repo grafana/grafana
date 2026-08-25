@@ -187,9 +187,10 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 		return nil, false, err
 	}
 
-	// Authorize the requester to delete this folder's alert rules and library elements, mirroring the
-	// per-folder permissions legacy enforced. Runs after the NotFound skip so a stale or already-deleted
-	// child folder is skipped idempotently instead of 403-ing on an un-walkable inheritance chain.
+	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder
+	// permissions legacy enforced (plus variables:delete when global variables are enabled). Runs
+	// after the NotFound skip so a stale or already-deleted child folder is skipped idempotently
+	// instead of 403-ing on an un-walkable inheritance chain.
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
@@ -457,14 +458,22 @@ func (s *cascadeDeleteStorage) childFolders(ctx context.Context, namespace, pare
 
 // Legacy folder delete gated contained resources on alert.rules:delete and folders:write; the authz
 // mapper resolves the tuples below to those actions (see pkg/services/authz/rbac/mapper.go).
+// variables:delete is added when global variables are enabled: the cascade deletes variables under a
+// service identity, so this is the only user-level gate (same reason as the alert-rules check).
 const (
 	cascadeAlertRuleGroup    = "rules.alerting.grafana.app"
 	cascadeAlertRuleResource = "alertrules"
 )
 
+type contentsAccessCheck struct {
+	req    authlib.CheckRequest
+	folder string
+}
+
 // checkFolderContentsAccess denies the delete unless the requester may delete the alert rules
 // (alert.rules:delete) and library elements (folders:write) in folderUID; parentUID lets folder
-// permissions resolve through inheritance. No-op when no access client is wired (e.g. tests).
+// permissions resolve through inheritance. When global variables are enabled it also requires
+// variables:delete. No-op when no access client is wired (e.g. tests).
 func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, user identity.Requester, namespace, folderUID, parentUID string) error {
 	if s.accessClient == nil {
 		return nil
@@ -479,12 +488,16 @@ func (s *cascadeDeleteStorage) checkFolderContentsAccess(ctx context.Context, us
 	}
 	// One homogeneous Check per resource: a mixed-resource BatchCheck is routed back to RBAC in
 	// Zanzana rollout mode, so tenants mid-rollout would be evaluated by the wrong engine.
-	checks := []struct {
-		req    authlib.CheckRequest
-		folder string
-	}{
+	checks := []contentsAccessCheck{
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: cascadeAlertRuleGroup, Resource: cascadeAlertRuleResource}, folderUID},
 		{authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbUpdate, Group: folderGVR.Group, Resource: folderGVR.Resource, Name: folderUID}, writeParent},
+	}
+	if grafanaDashboardGlobalVariablesEnabled(ctx) {
+		varGVR := dashboardV2beta1.VariableResourceInfo.GroupVersionResource()
+		checks = append(checks, contentsAccessCheck{
+			req:    authlib.CheckRequest{Namespace: namespace, Verb: utils.VerbDelete, Group: varGVR.Group, Resource: varGVR.Resource},
+			folder: folderUID,
+		})
 	}
 	for _, c := range checks {
 		resp, err := s.accessClient.Check(ctx, user, c.req, c.folder)
