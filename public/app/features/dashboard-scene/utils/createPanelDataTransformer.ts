@@ -17,6 +17,7 @@ import { PanelPluginTransformationsBehaviour } from '../scene/PanelPluginTransfo
  * module reaches back into through `DashboardDatasourceBehaviour`.
  */
 export function createPanelDataTransformer(state: Omit<SceneDataTransformerState, '$behaviors'>): SceneDataTransformer {
+  // eslint-disable-next-line @grafana/no-scene-data-transformer -- the one construction site the rule points at
   return new SceneDataTransformer({
     ...state,
     $behaviors: [new PanelPluginTransformationsBehaviour()],

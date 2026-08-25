@@ -357,3 +357,23 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `no-scene-data-transformer`
+
+Disallow `new SceneDataTransformer` under `public/app/features/dashboard-scene`. Use `createPanelDataTransformer` instead.
+
+Every transformer that sits between a dashboard panel and its queries has to carry `PanelPluginTransformationsBehaviour`, which is what runs the transformations a panel's plugin registers. A construction site that forgets it fails silently: the panel renders untransformed data with no error and nothing in state to notice. The factory owns `$behaviors` so the guarantee is unconditional.
+
+The rule is scoped to `dashboard-scene` (excluding tests) because that is where a `SceneDataTransformer` becomes a panel's `$data`. Scenes built elsewhere — the alerting insights scenes, plugin-authored SceneApps — are not dashboard panels and construct their own transformers legitimately.
+
+#### Examples
+
+```ts
+// Bad ❌ — missing PanelPluginTransformationsBehaviour
+import { SceneDataTransformer } from '@grafana/scenes';
+const $data = new SceneDataTransformer({ $data: queryRunner, transformations });
+
+// Good ✅
+import { createPanelDataTransformer } from 'app/features/dashboard-scene/utils/createPanelDataTransformer';
+const $data = createPanelDataTransformer({ $data: queryRunner, transformations });
+```

@@ -88,5 +88,14 @@ module.exports = createNoRestrictedSyntax(
     ].join(', '),
     message:
       'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
+  },
+  {
+    name: 'no-scene-data-transformer',
+    selector: [
+      'NewExpression[callee.name="SceneDataTransformer"]',
+      'NewExpression[callee.property.name="SceneDataTransformer"]',
+    ].join(', '),
+    message:
+      "Build a panel's data transformer with createPanelDataTransformer from app/features/dashboard-scene/utils/createPanelDataTransformer. Constructing SceneDataTransformer directly omits PanelPluginTransformationsBehaviour, so the panel renders untransformed data with no error to notice.",
   }
 );

@@ -421,6 +421,20 @@ module.exports = [
     },
   },
   {
+    // Scoped to dashboard-scene because that is where a SceneDataTransformer becomes a panel's
+    // $data. Scenes built elsewhere (alerting insights, SceneApps) are not dashboard panels and
+    // construct their own transformers legitimately.
+    name: 'grafana/dashboard-scene-panel-data-transformer',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/app/features/dashboard-scene/**/*.{ts,tsx}'],
+    ignores: [...commonTestIgnores],
+    rules: {
+      '@grafana/no-scene-data-transformer': 'error',
+    },
+  },
+  {
     name: 'grafana/i18n-plural-defaults',
     plugins: {
       '@grafana/i18n': grafanaI18nPlugin,
