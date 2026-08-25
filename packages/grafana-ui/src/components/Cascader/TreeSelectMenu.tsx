@@ -74,14 +74,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
   };
 
   return (
-    <div
-      {...containerProps}
-      id={menuId}
-      role="tree"
-      tabIndex={0}
-      className={styles.tree}
-      onKeyDown={handleKeyDown}
-    >
+    <div {...containerProps} id={menuId} role="tree" tabIndex={0} className={styles.tree} onKeyDown={handleKeyDown}>
       {items.map((item) => {
         const node = item.getItemData();
         const itemProps = item.getProps();

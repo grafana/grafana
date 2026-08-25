@@ -10277,9 +10277,6 @@
     "carousel": {
       "aria-label-open-image": "Open image preview"
     },
-    "cascader": {
-      "clear-button": "Clear selection"
-    },
     "code-mirror": {
       "error-label": "CodeMirror editor failed to load",
       "language-load-failed": "Syntax highlighting failed to load",
@@ -10742,6 +10739,12 @@
     },
     "toolbar-button-row": {
       "show-more": "Show more items"
+    },
+    "tree-select": {
+      "clear-button": "Clear selection",
+      "loading-options": "Loading options...",
+      "no-options": "No options found.",
+      "tree-label": "Available options"
     },
     "u-plot": {
       "config": {
