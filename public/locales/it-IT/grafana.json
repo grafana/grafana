@@ -890,7 +890,6 @@
       "close": "Chiudi",
       "create": "Crea",
       "delete": "Elimina",
-      "deleting": "Eliminazione in corso...",
       "edit": "Modifica",
       "export": "Esporta",
       "export-all": "Esporta tutto",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} percorsi"
       },
       "delete": {
-        "confirm": "Elimina criterio",
-        "warning-1": "L'eliminazione di questo criterio di notifica lo rimuoverà in modo permanente.",
-        "warning-2": "Vuoi davvero eliminare questo criterio?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Questa azione rimuoverà in modo permanente il criterio di notifica <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Elimina criterio di notifica"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtra i percorsi utilizzando un elenco di corrispondenti separati da virgole, ad esempio:<1>gravità=critica, regione=EMEA</1>",
       "generated-policies": "Criteri generati automaticamente",
@@ -2546,7 +2543,9 @@
         "reset": "Ripristina",
         "resetting": "Ripristino in corso...",
         "title-delete-notification-policy": "Elimina criterio di notifica",
-        "title-reset-notification-policy": "Ripristina criterio di notifica"
+        "title-reset-notification-policy": "Ripristina criterio di notifica",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Attendi mentre aggiorniamo i tuoi criteri di notifica.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Elimina criterio di notifica"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Una sequenza verticale di pannelli, testo e celle di codice",
       "name": "Notebook",
       "pill": "Notebook destinato alla pubblicazione",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Ora"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nessuna informazione sul volume disponibile per le query e l'intervallo di tempo correnti."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Comprimi {{name}}",
       "error": "Impossibile caricare le metriche",
@@ -8754,6 +8761,7 @@
       "loading-values": "Caricamento dei valori in corso...",
       "no-metrics": "Nessuna metrica trovata",
       "search-placeholder": "Cerca metriche",
+      "show-metric-details": "",
       "show-more": "Mostra di più",
       "show-more-metrics": "Mostra altre metriche",
       "show-more-values": "Mostra altri valori",
@@ -11272,6 +11280,13 @@
       "show": "Mostra",
       "switch": "I consigli seguono la soluzione selezionata",
       "switchSolution": "Cambia soluzione",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Consigli per il tuo stack"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Questa risorsa è dietro il ramo in {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora questa risorsa fino a quando questo ramo non verrà unito",
+      "move-from-branch": "",
       "not-saved": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente salvata nel ramo predefinito configurato fino a quando questo ramo non verrà unito",
       "open-in-repo-button": "Apri in {{repoType}}",
       "open-pull-request-in-repo": "Apri richiesta pull in {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "È stata creata una nuova risorsa in un ramo in {{repoType}}.",
     "title-deleted-resource-in-branch": "È stata eliminata una risorsa in un ramo in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Questa risorsa viene caricata dal ramo appena creato in {{repoType}} ed è visibile solo a te",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "È stata aggiornata una risorsa in un ramo in {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
