@@ -249,6 +249,7 @@ The sampled path already exists: when per-item authorization runs after ranking,
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
 - **405 Method Not Allowed**: the kind is served, but has no search endpoint. It declares no search fields, it opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
+- **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
 
 ## 7. Authorization
 
