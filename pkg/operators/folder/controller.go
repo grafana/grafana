@@ -7,13 +7,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/nats"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/server"
 )
+
+// queueGroup is the NATS queue group this controller's subscription joins, so
+// each live notification reaches only one replica.
+const queueGroup = "folder-controller"
 
 var folderGVR = schema.GroupVersionResource{
 	Group:    "folder.grafana.app",
@@ -23,6 +31,10 @@ var folderGVR = schema.GroupVersionResource{
 
 // RunFolderController watches Folder objects and logs deletion events.
 // This is a bare skeleton: no workqueue, no retries, no finalizers.
+//
+// The delta source is NATS when [nats] is enabled, otherwise an apiserver
+// watch — usinformer.Informer picks between them transparently, so the
+// DeleteFunc handler below is unaffected either way.
 func RunFolderController(ctx context.Context, deps server.OperatorDependencies) error {
 	logger := logging.NewSLogLogger(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
@@ -34,10 +46,20 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		return err
 	}
 
-	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, 10*time.Minute, "", nil)
-	informer := factory.ForResource(folderGVR).Informer()
+	subscriber := nats.ProvideSubscriber(nats.ProvideNATSConfig(deps.Config, nil), deps.Registerer)
 
-	_, err = informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	newObject := func(ns, name string) runtime.Object {
+		return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+	}
+	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
+		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
+		})
+	}
+
+	inf := usinformer.NewInformer(subscriber, folderGVR, "", 10*time.Minute, queueGroup, nil, newObject, list)
+
+	reg, err := inf.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj any) {
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
@@ -53,8 +75,9 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		return err
 	}
 
-	factory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), informer.HasSynced) {
+	go inf.Run(ctx.Done())
+
+	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
 		logger.Error("failed to sync folder informer cache")
 		return ctx.Err()
 	}
