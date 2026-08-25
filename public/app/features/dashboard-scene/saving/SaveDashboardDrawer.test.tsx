@@ -416,25 +416,25 @@ describe('SaveDashboardDrawer', () => {
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.tags).toEqual([]);
     });
-  });
 
-  it('Should add the source tags when saving a copy with Copy tags on', async () => {
-    const { dashboard, openAndRender } = setup();
+    it('Should add the source tags when saving a copy with Copy tags on', async () => {
+      const { dashboard, openAndRender } = setup();
 
-    act(() => {
-      dashboard.setState({ tags: ['my-tag'] });
+      act(() => {
+        dashboard.setState({ tags: ['my-tag'] });
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Copy tags'));
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.dashboard.tags).toEqual(['my-tag']);
     });
-
-    openAndRender({ saveAsCopy: true });
-    expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Copy tags'));
-
-    mockSaveDashboard();
-    await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
-
-    const dataSent = saveDashboardMutationMock.mock.calls[0][0];
-    expect(dataSent.dashboard.tags).toEqual(['my-tag']);
   });
 
   describe('Template save flows', () => {
