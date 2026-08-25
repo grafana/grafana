@@ -150,6 +150,11 @@ export function useDataGridRows(
 export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
+  /**
+   * Whether headers offer a drag handle. A flag rather than the callback, so an inline handler on the
+   * host does not invalidate this config — and with it every column — on each render.
+   */
+  draggableColumns?: boolean;
   filter: FilterType;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
@@ -250,6 +255,7 @@ function buildColumnsFromFields(
     maxRowHeight,
     disableKeyboardEvents,
     disableSanitizeHtml,
+    draggableColumns,
     showTypeIcons,
     timeRange,
   } = config;
@@ -546,6 +552,7 @@ function buildColumnsFromFields(
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       sortable: isSortableField(field),
+      draggable: draggableColumns,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

@@ -1,7 +1,8 @@
 import { type ActionModel, type Field, type FieldConfigSource, FieldMatcherID, FieldType } from '@grafana/data';
+import { type DataTransformerConfig } from '@grafana/schema';
 import { getActions } from 'app/features/actions/utils';
 
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from './utils';
+import { getCellActions, getCurrentFrameIndex, onColumnReorder, onColumnResize, onSortByChange } from './utils';
 
 jest.mock('app/features/actions/utils', () => ({
   getActions: jest.fn(),
@@ -221,6 +222,85 @@ describe('onColumnResize', () => {
       ],
     });
     expect(next.overrides[1].properties).toEqual([{ id: 'custom.width', value: 250 }]);
+  });
+});
+
+describe('onColumnReorder', () => {
+  const organize = (options: Record<string, unknown>): DataTransformerConfig => ({ id: 'organize', options });
+  const reduce: DataTransformerConfig = { id: 'reduce', options: {} };
+
+  it('appends an organize carrying the dropped order when the panel has no transformations', () => {
+    const onTransformationsChange = jest.fn();
+
+    onColumnReorder(['level', 'time', 'msg'], [], onTransformationsChange);
+
+    expect(onTransformationsChange).toHaveBeenCalledTimes(1);
+    // All four option keys: two of them are not optional on the transformer's options
+    expect(onTransformationsChange).toHaveBeenCalledWith([
+      organize({
+        indexByName: { level: 0, time: 1, msg: 2 },
+        excludeByName: {},
+        renameByName: {},
+        includeByName: {},
+      }),
+    ]);
+  });
+
+  it('updates the trailing organize instead of appending a second one', () => {
+    const onTransformationsChange = jest.fn();
+    const current = organize({ indexByName: { time: 0, level: 1 }, excludeByName: {}, renameByName: {} });
+
+    onColumnReorder(['level', 'time'], [current], onTransformationsChange);
+
+    expect(onTransformationsChange).toHaveBeenCalledWith([
+      organize({ indexByName: { level: 0, time: 1 }, excludeByName: {}, renameByName: {} }),
+    ]);
+    // Written, not mutated: scenes compares the incoming list to the current one and skips an equal write
+    expect(current.options.indexByName).toEqual({ time: 0, level: 1 });
+  });
+
+  it("keeps the user's own exclude and rename options on the config it updates", () => {
+    const onTransformationsChange = jest.fn();
+    const current = organize({
+      indexByName: { time: 0, level: 1 },
+      excludeByName: { msg: true },
+      renameByName: { level: 'severity' },
+    });
+
+    onColumnReorder(['level', 'time'], [current], onTransformationsChange);
+
+    expect(onTransformationsChange).toHaveBeenCalledWith([
+      organize({
+        indexByName: { level: 0, time: 1 },
+        excludeByName: { msg: true },
+        renameByName: { level: 'severity' },
+      }),
+    ]);
+  });
+
+  it('appends after a trailing transformation that is not an organize', () => {
+    const onTransformationsChange = jest.fn();
+
+    onColumnReorder(['level', 'time'], [reduce], onTransformationsChange);
+
+    expect(onTransformationsChange).toHaveBeenCalledWith([
+      reduce,
+      organize({ indexByName: { level: 0, time: 1 }, excludeByName: {}, renameByName: {}, includeByName: {} }),
+    ]);
+  });
+
+  it('leaves an organize that another transformation follows alone', () => {
+    const onTransformationsChange = jest.fn();
+    const existing = organize({ indexByName: { time: 0, level: 1 }, excludeByName: {}, renameByName: {} });
+
+    onColumnReorder(['level', 'time'], [existing, reduce], onTransformationsChange);
+
+    // Only the trailing config is treated as the one a drag wrote; an earlier one is the user's own
+    const [next] = onTransformationsChange.mock.calls[0];
+
+    expect(next).toHaveLength(3);
+    expect(next[0]).toBe(existing);
+    expect(next[2].options.indexByName).toEqual({ level: 0, time: 1 });
   });
 });
 

@@ -1,12 +1,14 @@
 import {
   type ActionModel,
   type DataFrame,
+  DataTransformerID,
   type Field,
   type FieldConfigSource,
   FieldMatcherID,
   type InterpolateFunction,
 } from '@grafana/data';
-import { type MatcherScope } from '@grafana/schema';
+import { type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
+import { type DataTransformerConfig, type MatcherScope } from '@grafana/schema';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { getActions } from 'app/features/actions/utils';
 
@@ -60,6 +62,40 @@ export function onColumnResize(
     ...fieldConfig,
     overrides,
   });
+}
+
+/**
+ * Persists a column reorder as an `organize` transformation, upserting the trailing config rather
+ * than appending a new one per drag. Only `indexByName` is written, so the user's own
+ * exclude/rename/include options on that config survive.
+ *
+ * Ownership is by convention: the trailing `organize` is taken to be the one a previous drag wrote.
+ * A user who hand-adds an `organize` after it gets that one edited instead, which is a defensible
+ * result for a transformation the user owns either way.
+ */
+export function onColumnReorder(
+  displayNames: string[],
+  transformations: DataTransformerConfig[],
+  onTransformationsChange: (transformations: DataTransformerConfig[]) => void
+) {
+  const indexByName = Object.fromEntries(displayNames.map((name, index) => [name, index]));
+  const last = transformations.at(-1);
+
+  if (last?.id === DataTransformerID.organize) {
+    onTransformationsChange([...transformations.slice(0, -1), { ...last, options: { ...last.options, indexByName } }]);
+
+    return;
+  }
+
+  // `excludeByName` and `renameByName` are not optional on the transformer's options
+  const options: OrganizeFieldsTransformerOptions = {
+    indexByName,
+    excludeByName: {},
+    renameByName: {},
+    includeByName: {},
+  };
+
+  onTransformationsChange([...transformations, { id: DataTransformerID.organize, options }]);
 }
 
 /**
