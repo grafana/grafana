@@ -95,10 +95,14 @@ const RecentlyDeletedPage = memo(() => {
                   trashUnavailable ? (
                     <Alert
                       severity="warning"
-                      title={t('recently-deleted.unavailable.title', 'Recently deleted is temporarily unavailable')}
+                      title={t('recently-deleted.unavailable.title', 'Recently deleted is unavailable')}
                     >
+                      {/* Covers both reasons the server reports: an index still being built,
+                          which clears on its own, and deleted-document indexing turned off,
+                          which does not. The two are one status code, so one message. */}
                       <Trans i18nKey="recently-deleted.unavailable.body">
-                        The list of deleted dashboards is still being prepared. Try again in a few minutes.
+                        The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an
+                        administrator to check the search index configuration.
                       </Trans>
                     </Alert>
                   ) : (

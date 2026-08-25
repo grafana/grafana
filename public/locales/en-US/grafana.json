@@ -15230,8 +15230,8 @@
       "title": "Restore Dashboards"
     },
     "unavailable": {
-      "body": "The list of deleted dashboards is still being prepared. Try again in a few minutes.",
-      "title": "Recently deleted is temporarily unavailable"
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {

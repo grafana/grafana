@@ -192,7 +192,7 @@ describe('RecentlyDeletedPage when trash is unavailable', () => {
 
     render();
 
-    expect(await screen.findByRole('alert', { name: /temporarily unavailable/i })).toBeInTheDocument();
+    expect(await screen.findByRole('alert', { name: /recently deleted is unavailable/i })).toBeInTheDocument();
     expect(screen.queryByText(/haven't deleted any dashboards/i)).not.toBeInTheDocument();
   });
 
@@ -203,6 +203,6 @@ describe('RecentlyDeletedPage when trash is unavailable', () => {
     render();
 
     expect(await screen.findByText(/haven't deleted any dashboards/i)).toBeInTheDocument();
-    expect(screen.queryByRole('alert', { name: /temporarily unavailable/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert', { name: /recently deleted is unavailable/i })).not.toBeInTheDocument();
   });
 });
