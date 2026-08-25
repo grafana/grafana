@@ -1,4 +1,14 @@
-import { type DataFrame, type InterpolateFunction, type ScopedVars } from '@grafana/data';
+import {
+  type DataFrame,
+  type DisplayValue,
+  type Field,
+  FieldType,
+  getDisplayProcessor,
+  type InterpolateFunction,
+  reduceField,
+  ReducerID,
+  type ScopedVars,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
@@ -45,8 +55,10 @@ export function catchTemplateError(render: () => string): RenderedContent {
   }
 }
 
+const hasRows = (frame: DataFrame) => frame.fields.length > 0 && frame.length > 0;
+
 export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
-  return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
+  return series?.some(hasRows) ?? false;
 }
 
 // Not cached: the flag value can change after the providers settle.
@@ -65,8 +77,10 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
+  const scopedVars = buildOnceContext(series);
+
   if (!compiled) {
-    return replaceVariables(content, {}, format);
+    return replaceVariables(content, scopedVars, format);
   }
 
   let readRows = false;
@@ -74,13 +88,49 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
     readRows = true;
   });
 
-  const blocks = [replaceVariables(compiled(rows), {}, format)];
+  const blocks = [replaceVariables(compiled(rows), scopedVars, format)];
 
   if (readRows && countRows(series) > MAX_RENDERED_ROWS) {
     blocks.push(truncationNotice());
   }
 
   return joinBlocks(blocks, mode);
+}
+
+// Never the time field, where ${__field.labels.x} is always empty.
+function getMacroField(frame: DataFrame): Field | undefined {
+  return frame.fields.find((field) => field.type !== FieldType.time) ?? frame.fields[0];
+}
+
+// Rendering once leaves no row for ${__value} to read, so it resolves against the
+// reduced value instead. ${__data} does need one, and keeps its literal fallback.
+function buildOnceContext(series: DataFrame[]): ScopedVars {
+  const frameIndex = findMacroFrameIndex(series);
+  const frame = series[frameIndex];
+  const field = frame && getMacroField(frame);
+
+  if (!field) {
+    return {};
+  }
+
+  const calculatedValue = reduceToDisplayValue(field);
+
+  return { __dataContext: { value: { data: series, frame, field, frameIndex, calculatedValue } } };
+}
+
+// The frame Handlebars' `data` binds to, so the two syntaxes agree.
+function findMacroFrameIndex(series: DataFrame[]): number {
+  const withRows = series.findIndex(hasRows);
+
+  return withRows >= 0 ? withRows : series.findIndex((frame) => frame.fields.length > 0);
+}
+
+// lastNotNull, the reduction the stat panel shows by default.
+function reduceToDisplayValue(field: Field): DisplayValue {
+  const value = reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
+
+  // `display` is only attached once field overrides have run.
+  return (field.display ?? getDisplayProcessor())(value);
 }
 
 // Content that never reads the capped collections cannot be under-counting, so
@@ -122,7 +172,7 @@ function interpolateEveryRow(
   const blocks: string[] = [];
 
   for (const [frameIndex, frame] of series.entries()) {
-    const field = frame.fields[0];
+    const field = getMacroField(frame);
     if (!field) {
       continue;
     }
@@ -131,8 +181,6 @@ function interpolateEveryRow(
     const rows = compiled ? buildRows(frame, series, rowCount) : [];
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      // `field` is unused by the ${__data} macro but required by the type, and
-      // ${__value}/${__field} fall back to the raw match without it.
       const scopedVars: ScopedVars = {
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
