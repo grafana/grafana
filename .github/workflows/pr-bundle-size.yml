@@ -39,12 +39,58 @@ jobs:
         with:
           self: .github/workflows/pr-bundle-size.yml
 
-  bundle-size:
+  build:
     if: needs.detect-changes.outputs.frontend-src == 'true'
-    name: Check bundle size impact
+    name: Build ${{ matrix.target }} frontend
     needs: detect-changes
     runs-on: ubuntu-x64-large
     timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      base: ${{ steps.stats.outputs.base }}
+      pr: ${{ steps.stats.outputs.pr }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: base
+            commit: ${{ github.event.pull_request.base.sha }}
+          - target: pr
+            commit: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout ${{ matrix.target }} commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ matrix.commit }}
+          persist-credentials: false
+
+      - name: Checkout shared build action
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .github/actions/build-frontend
+          path: .shared-actions
+          persist-credentials: false
+
+      - name: Build frontend
+        uses: ./.shared-actions/.github/actions/build-frontend
+
+      - name: Record bundle sizes
+        id: stats
+        env:
+          OUTPUT_NAME: ${{ matrix.target }}
+        run: |
+          {
+            echo "${OUTPUT_NAME}<<EOF"
+            yarn bundle-size:stats
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  bundle-size:
+    name: Check bundle size impact
+    needs: build
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
     steps:
@@ -54,32 +100,16 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - name: Checkout base commit
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base
-          persist-credentials: false
-
-      - name: Restore or build base frontend
-        uses: ./.github/actions/build-frontend
-        with:
-          working-directory: base
-
-      - name: Record base bundle sizes
-        working-directory: base
-        run: yarn bundle-size:stats > "$RUNNER_TEMP/base-bundle-sizes.txt"
-
-      - name: Restore or build PR frontend
-        uses: ./.github/actions/build-frontend
-
-      - name: Record PR bundle sizes
-        run: yarn bundle-size:stats > "$RUNNER_TEMP/pr-bundle-sizes.txt"
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
 
       - name: Test bundle size check
         run: node --test scripts/cli/checkBundleSize.test.mjs
 
       - name: Compare bundle sizes
+        env:
+          BASE_STATS: ${{ needs.build.outputs.base }}
+          PR_STATS: ${{ needs.build.outputs.pr }}
         run: |
           set -o pipefail
           printf '%s\n' "$BASE_STATS" > "$RUNNER_TEMP/base-bundle-sizes.txt"

@@ -2,12 +2,6 @@ name: Build frontend
 
 description: Restores or builds the Grafana frontend production assets.
 
-inputs:
-  working-directory:
-    description: Repository directory to build, relative to the workspace.
-    required: false
-    default: '.'
-
 runs:
   using: composite
   steps:
@@ -26,25 +20,20 @@ runs:
       with:
         key: "frontend-build-v1-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml', '.yarn/releases/**', '.yarn/plugins/**', '.yarn/patches/**', '.github/actions/setup-node/**', '.github/actions/yarn-install/**', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', 'scripts/cli/env-util.ts', 'scripts/cli/package.json', 'scripts/tsconfig.base.json', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc', 'Makefile') }}-${{ steps.action.outputs.hash }}"
         path: |
-          ${{ inputs.working-directory }}/public/build
-          ${{ inputs.working-directory }}/public/build-swagger
-          ${{ inputs.working-directory }}/public/app/plugins/*/*/dist
+          public/build
+          public/build-swagger
+          public/app/plugins/*/*/dist
 
     - name: Set up Node.js
       uses: ./.github/actions/setup-node
-      with:
-        cwd: ${{ inputs.working-directory }}
 
     - name: Install yarn dependencies
       if: steps.cache.outputs.cache-hit != 'true'
       uses: ./.github/actions/yarn-install
-      with:
-        cwd: ${{ inputs.working-directory }}
 
     - name: Build frontend
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
       env:
         NO_SOURCEMAP: '1'
       run: make build-js
