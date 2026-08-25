@@ -48,7 +48,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.30 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // indirect
 	github.com/aws/smithy-go v1.27.3 // indirect
-	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
@@ -66,7 +65,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
-	github.com/diegoholiveira/jsonlogic/v3 v3.7.4 // indirect
+	github.com/diegoholiveira/jsonlogic/v3 v3.10.1 // indirect
 	github.com/dlmiddlecote/sqlstats v1.0.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
@@ -243,7 +242,8 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/thomaspoignant/go-feature-flag v1.42.0 // indirect
+	github.com/thomaspoignant/go-feature-flag v1.55.1 // indirect
+	github.com/thomaspoignant/go-feature-flag/modules/core v0.7.2 // indirect
 	github.com/tjhop/slog-gokit v0.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
