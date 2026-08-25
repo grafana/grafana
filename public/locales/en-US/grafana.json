@@ -13899,6 +13899,7 @@
       "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-missing": "This connection no longer exists. Select a replacement.",
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
@@ -14399,7 +14400,8 @@
       "scope-bitbucket-pull-requests": "Pull requests",
       "scope-bitbucket-read-write": "Read and write",
       "scope-bitbucket-repositories": "Repositories",
-      "scope-bitbucket-webhooks": "Webhooks"
+      "scope-bitbucket-webhooks": "Webhooks",
+      "waiting-authorization-button": "Waiting for authorization..."
     },
     "oauth-authorization": {
       "pending-body": "If the provider shows an error page, verify the client ID and attempt to reauthorize.",

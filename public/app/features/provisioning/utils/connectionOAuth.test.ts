@@ -1,15 +1,5 @@
 import { buildOAuthAuthorizeUrl } from './connectionOAuth';
 
-// Polyfill for jsdom which lacks crypto.randomUUID
-if (typeof crypto.randomUUID !== 'function') {
-  Object.defineProperty(crypto, 'randomUUID', {
-    value: () =>
-      '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
-        (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16)
-      ),
-  });
-}
-
 const STATE_PREFIX = 'grafana.provisioning.oauth.';
 
 function getStateKeys() {
@@ -71,5 +61,19 @@ describe('buildOAuthAuthorizeUrl', () => {
     const url = buildOAuthAuthorizeUrl('githubEnterpriseOAuth', 'client', 'conn', 'https://ghe.example.com/api/v3');
 
     expect(url.startsWith('https://ghe.example.com/login/oauth/authorize?')).toBe(true);
+  });
+
+  it('builds a state and authorize URL when crypto.randomUUID is unavailable', () => {
+    const original = Object.getOwnPropertyDescriptor(crypto, 'randomUUID');
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
+    try {
+      const url = buildOAuthAuthorizeUrl('gitlabOAuth', 'client-1', 'conn-1');
+      expect(url).toContain('state=');
+      expect(getStateKeys()).toHaveLength(1);
+    } finally {
+      if (original) {
+        Object.defineProperty(crypto, 'randomUUID', original);
+      }
+    }
   });
 });

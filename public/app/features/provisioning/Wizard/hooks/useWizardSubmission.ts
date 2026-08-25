@@ -3,8 +3,9 @@ import { type UseFormReturn } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type RepositorySecureChanges } from '../../hooks/useCreateOrUpdateRepository';
 import { dataToSpec, deriveSigningKeySecret } from '../../utils/data';
 import { extractFormErrors, getFormErrors } from '../../utils/getFormErrors';
 import { type Step } from '../Stepper';
@@ -16,8 +17,7 @@ export interface UseWizardSubmissionParams {
   methods: UseFormReturn<WizardFormData>;
   submitData: (
     spec: RepositorySpec,
-    token?: string,
-    signingKeySecret?: InlineSecureValue
+    secureChanges?: RepositorySecureChanges
   ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
@@ -73,7 +73,10 @@ export function useWizardSubmission({
         // Wizard only creates repositories, so there is never an existing key to remove.
         const signingKeySecret = deriveSigningKeySecret(formData.repository, false);
 
-        const rsp = await submitData(spec, token, signingKeySecret);
+        const rsp = await submitData(spec, {
+          token: token ? { create: token } : undefined,
+          commitSigningKey: signingKeySecret,
+        });
         if (rsp.error) {
           if (isFetchError(rsp.error)) {
             setStepStatusInfo({

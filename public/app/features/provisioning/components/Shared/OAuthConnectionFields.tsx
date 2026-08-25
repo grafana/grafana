@@ -15,6 +15,8 @@ interface OAuthConnectionFieldsProps {
   /** When set, renders a create button that calls this handler (wizard inline creation) */
   onNewConnectionCreation?: () => void;
   isCreating?: boolean;
+  /** Authorization pending in another tab; a second create would restart the flow */
+  isAuthorizing?: boolean;
 }
 
 export function OAuthConnectionFields({
@@ -23,6 +25,7 @@ export function OAuthConnectionFields({
   type,
   onNewConnectionCreation,
   isCreating = false,
+  isAuthorizing = false,
 }: OAuthConnectionFieldsProps) {
   const [isClientSecretConfigured, setIsClientSecretConfigured] = useState(clientSecretConfigured);
   const {
@@ -113,9 +116,11 @@ export function OAuthConnectionFields({
 
       {onNewConnectionCreation && (
         <Stack>
-          <Button onClick={onNewConnectionCreation} disabled={isCreating}>
+          <Button onClick={onNewConnectionCreation} disabled={isCreating || isAuthorizing}>
             {isCreating ? (
               <Trans i18nKey="provisioning.connection-form.creating-connection-button">Creating connection...</Trans>
+            ) : isAuthorizing ? (
+              <Trans i18nKey="provisioning.oauth-app.waiting-authorization-button">Waiting for authorization...</Trans>
             ) : (
               <Trans i18nKey="provisioning.oauth-app.create-and-authorize-button">Create and authorize</Trans>
             )}

@@ -205,6 +205,7 @@ function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }
             type={type}
             onNewConnectionCreation={handleCreateOAuthApp}
             isCreating={request.isLoading}
+            isAuthorizing={isAuthorizing}
           />
         ) : (
           <GitHubConnectionFields

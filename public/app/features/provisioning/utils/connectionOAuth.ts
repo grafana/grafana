@@ -1,4 +1,4 @@
-import { store, textUtil } from '@grafana/data';
+import { generateUUID, store, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
@@ -63,7 +63,7 @@ export function buildOAuthAuthorizeUrl(
   serverUrl?: string,
   opts?: { popup?: boolean }
 ) {
-  const state = window.crypto.randomUUID();
+  const state = generateUUID();
   const redirectUri = getOAuthCallbackUri();
 
   sweepStaleOAuthStates();
