@@ -32,8 +32,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
-2026-05-22,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-2026-05-22,reportingFooterSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-05-22,reportingHeaderSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
+2026-05-22,reportingFooterSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,sseExpressionErrorIsolation,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false

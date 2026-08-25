@@ -5930,12 +5930,15 @@
     {
       "metadata": {
         "name": "reportingFooterSettings",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787660093741",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-25 12:14:53.741702 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the configurable footer settings for PDF reports",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"
@@ -5944,12 +5947,15 @@
     {
       "metadata": {
         "name": "reportingHeaderSettings",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1787660093741",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-25 12:14:53.741702 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables configuration of PDF report settings",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"
