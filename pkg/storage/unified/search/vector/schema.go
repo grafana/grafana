@@ -216,4 +216,24 @@ END $$;`))
 		migrator.NewRawSQLMigration("").Postgres(`
 			ALTER TABLE vector_backfill_jobs ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
 		`))
+
+	// Retro-fit the FTS expression index (HybridSearch's lexical leg) onto
+	// external partitions created before it existed. New partitions get it in
+	// EnsureResourcePartition; the to_regclass guard skips catalog rows whose
+	// leaf DDL previously failed. The expression must match the lexical
+	// search template's predicate exactly ('english' included).
+	mg.AddMigration("add fts index to external embeddings partitions",
+		migrator.NewRawSQLMigration("").Postgres(`
+			DO $$
+			DECLARE pk TEXT;
+			BEGIN
+				FOR pk IN SELECT partition_key FROM embedding_collections WHERE is_external LOOP
+					IF to_regclass('embeddings_' || pk) IS NOT NULL THEN
+						EXECUTE format(
+							'CREATE INDEX IF NOT EXISTS %I ON %I USING GIN (to_tsvector(''english'', content))',
+							'embeddings_' || pk || '_fts_idx', 'embeddings_' || pk);
+					END IF;
+				END LOOP;
+			END $$;
+		`))
 }

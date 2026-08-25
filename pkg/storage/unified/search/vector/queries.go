@@ -43,6 +43,7 @@ var (
 	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
 	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
+	sqlVectorCollectionLexicalSearch     = mustTemplate("vector_collection_lexical_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
 	sqlVectorBackfillJobsReopen          = mustTemplate("vector_backfill_jobs_reopen.sql")
@@ -491,6 +492,67 @@ func (r *sqlVectorCollectionSearchRequest) FolderFilter() bool {
 }
 
 func (r *sqlVectorCollectionSearchRequest) FolderFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.FolderValues)
+}
+
+type sqlVectorCollectionLexicalSearchResponse struct {
+	UID         string
+	Title       string
+	Folder      string
+	Subresource string
+	Content     string
+	Metadata    json.RawMessage
+	Rank        float64
+}
+
+type sqlVectorCollectionLexicalSearchRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	Query     string
+	Limit     int64
+	Response  *sqlVectorCollectionLexicalSearchResponse
+
+	// nil/empty means no filter on that field.
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Query == "" {
+		return fmt.Errorf("query must not be empty")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) Results() (*sqlVectorCollectionLexicalSearchResponse, error) {
+	// Response is reused across Scan calls; shallow copy is safe because Scan
+	// allocates a fresh []byte for Metadata.
+	cp := *r.Response
+	return &cp, nil
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) UIDFilter() bool {
+	return len(r.UIDValues) > 0
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) UIDFilterSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDValues)
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) FolderFilter() bool {
+	return len(r.FolderValues) > 0
+}
+
+func (r *sqlVectorCollectionLexicalSearchRequest) FolderFilterSlice() reflect.Value {
 	return reflect.ValueOf(r.FolderValues)
 }
 

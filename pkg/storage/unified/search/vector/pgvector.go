@@ -3,9 +3,9 @@ package vector
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 	"unicode/utf8"
@@ -605,28 +605,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		Response:       &sqlVectorCollectionSearchResponse{},
 	}
 
-	for _, f := range filters {
-		switch f.Field {
-		case "uid":
-			req.UIDValues = f.Values
-		case "folder":
-			req.FolderValues = f.Values
-		default:
-			// An empty group would render as "AND ()" — invalid SQL.
-			if len(f.Values) == 0 {
-				continue
-			}
-			// Writers store metadata values as scalars (embed extractor) or
-			// arrays (external collections); match either shape per value.
-			group := MetadataFilterGroup{JSONs: make([]string, 0, 2*len(f.Values))}
-			for _, v := range f.Values {
-				s, _ := json.Marshal(map[string]string{f.Field: v})
-				a, _ := json.Marshal(map[string][]string{f.Field: {v}})
-				group.JSONs = append(group.JSONs, string(s), string(a))
-			}
-			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
-		}
-	}
+	req.UIDValues, req.FolderValues, req.MetadataFilterGroups = searchFilterPredicates(filters)
 
 	rows, err := dbutil.Query(ctx, b.db, sqlVectorCollectionSearch, req)
 	if err != nil {
@@ -687,11 +666,19 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	}
 	leaf := subtreeName(resource) // embeddings_<resource>
 	idx := leaf + "_metadata_idx"
+	// External partitions also get an FTS expression index for HybridSearch's
+	// lexical leg; internal partitions never pay its maintenance cost (bleve
+	// is their lexical index). Name budget: 11+39+8 = 58 < 63.
+	ftsIdx := ""
+	if isExternalPartitionKey(resource) {
+		ftsIdx = leaf + "_fts_idx"
+	}
 
-	// Fast path: skip the lock + DDL only when BOTH leaf and index exist.
-	// Checking the index too lets a retry finish a prior attempt that created
-	// the leaf but failed before the index.
-	ready, err := b.resourcePartitionReady(ctx, leaf, idx)
+	// Fast path: skip the lock + DDL only when the leaf and ALL its indexes
+	// exist. Checking indexes too lets a retry finish a prior attempt that
+	// created the leaf but failed before an index — and retrofits the FTS
+	// index onto external partitions created before it existed.
+	ready, err := b.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
 	if err != nil {
 		return fmt.Errorf("check partition %s: %w", leaf, err)
 	}
@@ -727,13 +714,31 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	)); err != nil {
 		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
 	}
+	if ftsIdx != "" {
+		// The expression must match the lexical search template's predicate
+		// exactly ('english' included) or the planner won't use the index.
+		if _, err := conn.ExecContext(ctx, fmt.Sprintf(
+			`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (to_tsvector('english', content))`,
+			ftsIdx, leaf,
+		)); err != nil {
+			return fmt.Errorf("create fts index on %s: %w", leaf, err)
+		}
+	}
 	return nil
+}
+
+// isExternalPartitionKey reports whether a partition key belongs to an
+// external collection. EnsureCollection guarantees the suffix for external
+// keys and internal keys can never carry it.
+func isExternalPartitionKey(resource string) bool {
+	return strings.HasSuffix(resource, "_external")
 }
 
 // resourcePartitionReady reports whether leaf is attached as a partition of
 // the parent (pg_inherits, not to_regclass, so a same-named unrelated table
-// can't match) AND its metadata index exists.
-func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx string) (bool, error) {
+// can't match) AND its metadata index exists AND, when ftsIdx is non-empty,
+// the FTS index exists too.
+func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx, ftsIdx string) (bool, error) {
 	var ready bool
 	err := b.db.QueryRowContext(ctx, `
 		SELECT
@@ -745,7 +750,10 @@ func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx 
 			)
 			AND EXISTS (
 				SELECT 1 FROM pg_class WHERE relname = $3 AND relkind = 'i'
-			)`, unifiedParent, leaf, idx).Scan(&ready)
+			)
+			AND ($4 = '' OR EXISTS (
+				SELECT 1 FROM pg_class WHERE relname = $4 AND relkind = 'i'
+			))`, unifiedParent, leaf, idx, ftsIdx).Scan(&ready)
 	if err != nil {
 		return false, err
 	}

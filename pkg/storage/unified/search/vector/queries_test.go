@@ -43,6 +43,49 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCollectionLexicalSearch: {
+				{
+					Name: "no_filters",
+					Data: &sqlVectorCollectionLexicalSearchRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "alertrules_external",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						Query:       `mimir "high latency" -staging`,
+						Limit:       40,
+						Response:    &sqlVectorCollectionLexicalSearchResponse{},
+					},
+				},
+				{
+					Name: "with_uid_filter",
+					Data: &sqlVectorCollectionLexicalSearchRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "alertrules_external",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						Query:       "cpu",
+						Limit:       40,
+						UIDValues:   []string{"u1", "u2"},
+						Response:    &sqlVectorCollectionLexicalSearchResponse{},
+					},
+				},
+				{
+					Name: "with_metadata_filters",
+					Data: &sqlVectorCollectionLexicalSearchRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "alertrules_external",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						Query:       "cpu",
+						Limit:       40,
+						MetadataFilterGroups: []MetadataFilterGroup{
+							{JSONs: []string{`{"folderUid":"f1"}`, `{"folderUid":["f1"]}`}},
+							{JSONs: []string{`{"kind":"alert_rule"}`, `{"kind":["alert_rule"]}`}},
+						},
+						Response: &sqlVectorCollectionLexicalSearchResponse{},
+					},
+				},
+			},
 			sqlVectorCollectionRefreshMeta: {
 				{
 					Name: "simple",
