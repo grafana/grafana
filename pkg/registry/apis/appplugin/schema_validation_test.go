@@ -12,14 +12,15 @@ import (
 
 func buildTestKindValidator(t *testing.T, version string) validation.SchemaValidator {
 	t.Helper()
+	manifest := testManifest(t)
 
 	// Same construction as UpdateAPIGroupInfo: bare-name refs so the expander
 	// can resolve them directly against the definition map.
 	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
-	}, &exampleManifestData)
+	}, manifest)
 
-	gvk := schema.GroupVersionKind{Group: exampleManifestData.Group, Version: version, Kind: "TestKind"}
+	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: version, Kind: "TestKind"}
 	obj, ok := defs[kindOpenAPIName(gvk)]
 	require.True(t, ok, "missing definition for %s", kindOpenAPIName(gvk))
 	return newKindSchemaValidator(obj.Schema, defs)
@@ -30,10 +31,11 @@ func buildTestKindValidator(t *testing.T, version string) validation.SchemaValid
 // self-contained schema that validates realistic bodies (which always carry
 // metadata by the time the kindStore strategy validates them).
 func TestKindSchemaValidator(t *testing.T) {
+	manifest := testManifest(t)
 	validator := buildTestKindValidator(t, "v0alpha1")
 
 	valid := map[string]interface{}{
-		"apiVersion": exampleManifestData.Group + "/v0alpha1",
+		"apiVersion": manifest.Group + "/v0alpha1",
 		"kind":       "TestKind",
 		"metadata":   map[string]interface{}{"name": "x", "namespace": "default"},
 		"spec":       map[string]interface{}{"testField": int64(42)},

@@ -186,14 +186,7 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// HACK... make it work for pyroscope
-		if plugin.JSONData.ID == "grafana-pyroscope-app" {
-			copy := exampleManifestData
-			plugin.Manifest = &copy
-		}
-
 		// TODO -- update the constructor with the manifest
-		// needed to support MT, but also requires a parallel enterprise PR
 		if plugin.Manifest != nil {
 			// The served API group is always the plugin id -- schema registration
 			// and OpenAPI naming read the group from the manifest, so they would

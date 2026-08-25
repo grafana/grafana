@@ -17,7 +17,7 @@ import (
 // found for path".
 func TestGetAPIRoutesRegistration(t *testing.T) {
 	b := &AppPluginAPIBuilder{
-		manifest:   &exampleManifestData,
+		manifest:   testManifest(t),
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 	}
 

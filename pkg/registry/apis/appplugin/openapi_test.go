@@ -16,14 +16,15 @@ import (
 // component injection + refs in postProcessManifestKinds all key kinds by
 // kindOpenAPIName. This test guards that shared name against drift.
 func TestManifestKindOpenAPINames(t *testing.T) {
+	manifest := testManifest(t)
 	b := &AppPluginAPIBuilder{
-		manifest: &exampleManifestData,
+		manifest: manifest,
 	}
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref {
 		return spec.MustCreateRef("#/definitions/" + path)
 	})
 
-	gvk := schema.GroupVersionKind{Group: exampleManifestData.Group, Version: "v1alpha1", Kind: "TestKind"}
+	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind"}
 	name := kindOpenAPIName(gvk)
 	require.Equal(t, "example.ext.grafana.com.v1alpha1.TestKind", name)
 
@@ -37,11 +38,12 @@ func TestManifestKindOpenAPINames(t *testing.T) {
 }
 
 func TestPostProcessManifestKindRequestBodies(t *testing.T) {
-	group := exampleManifestData.Group
+	manifest := testManifest(t)
+	group := manifest.Group
 	version := "v1alpha1"
 
 	b := &AppPluginAPIBuilder{
-		manifest: &exampleManifestData,
+		manifest: manifest,
 	}
 
 	root := "/apis/" + group + "/" + version + "/"
