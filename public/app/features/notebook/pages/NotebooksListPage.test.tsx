@@ -34,6 +34,8 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
   useCreateNotebookMutation: () => [mockCreateNotebook],
   // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
   useLazyGetNotebookQuery: () => [jest.fn()],
+  // The table mounts the delete hook for every row menu; deleting is covered in NotebooksTable's own tests.
+  useDeleteNotebookMutation: () => [jest.fn(), { isLoading: false }],
 }));
 
 jest.mock('../list/notebookSearchApi', () => ({
