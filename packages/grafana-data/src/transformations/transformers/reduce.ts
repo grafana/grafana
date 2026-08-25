@@ -10,6 +10,7 @@ import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 
 import { DataTransformerID } from './ids';
+import { getTransformationDynamicRefId } from './utils';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
@@ -22,6 +23,7 @@ export interface ReduceTransformerOptions {
   mode?: ReduceTransformerMode;
   includeTimeField?: boolean;
   labelsToFields?: boolean;
+  refId?: string;
 }
 
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
@@ -51,16 +53,26 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Collapse all matching fields into a single row
         if (options.mode === ReduceTransformerMode.ReduceFields) {
-          return reduceFields(data, matcher, options.reducers);
+          const result = reduceFields(data, matcher, options.reducers);
+          if (options.refId) {
+            return result.map((frame) => ({ ...frame, refId: options.refId }));
+          }
+          return result;
         }
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
         return res
-          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          ? [
+              {
+                ...res,
+                refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.reduce, data),
+              },
+            ]
           : [];
       })
     ),
+  usesDynamicRefId: true,
 };
 
 /**

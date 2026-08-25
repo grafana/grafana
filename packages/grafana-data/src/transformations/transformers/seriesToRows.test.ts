@@ -39,10 +39,11 @@ describe('Series to rows', () => {
     });
   });
 
-  it('combine two series into one', async () => {
+  it('combine two series into one with static refId', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
+      refId: 'test',
     };
 
     const seriesA = toDataFrame({
@@ -69,18 +70,19 @@ describe('Series to rows', () => {
         createField('Metric', FieldType.string, ['B', 'A']),
         createField('Value', FieldType.number, [-1, 1]),
       ];
-
+      expect(result[0].refId).toBe('test');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
 
-  it('combine two series with multiple values into one', async () => {
+  it('combine two series with multiple values into one with dynamic refid', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
     };
 
     const seriesA = toDataFrame({
+      refId: 'A',
       name: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [100, 150, 200] },
@@ -89,6 +91,7 @@ describe('Series to rows', () => {
     });
 
     const seriesB = toDataFrame({
+      refId: 'B',
       name: 'B',
       fields: [
         { name: 'Time', type: FieldType.time, values: [100, 125, 126] },
@@ -104,7 +107,7 @@ describe('Series to rows', () => {
         createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
         createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
       ];
-
+      expect(result[0].refId).toBe('seriesToRows-A-B');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
