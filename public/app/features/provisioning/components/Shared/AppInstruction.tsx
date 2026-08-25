@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ClipboardButton, Field, Input, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, ClipboardButton, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
 import { getOAuthCallbackUri, isOAuthConnectionType } from '../../utils/connectionOAuth';
@@ -40,7 +38,6 @@ function GithubAppInstruction() {
 }
 
 function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
-  const styles = useStyles2(getStyles);
   const callbackUri = getOAuthCallbackUri();
 
   return (
@@ -77,34 +74,28 @@ function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
       }
     >
       {type === 'gitlabOAuth' && (
-        <ul className={styles.scopeList}>
+        <Box element="ul" margin={0} paddingLeft={3}>
           <li>
-            <span className={styles.scope}>{GITLAB_SCOPE}</span>
+            <code>{GITLAB_SCOPE}</code>
           </li>
-        </ul>
+        </Box>
       )}
 
       {type === 'bitbucketOAuth' && (
-        <ul className={styles.scopeList}>
+        <Box element="ul" margin={0} paddingLeft={3}>
           <li>
             <Trans i18nKey="provisioning.oauth-app.scope-bitbucket-repositories">Repositories</Trans>:{' '}
-            <span className={styles.scope}>
-              {t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}
-            </span>
+            <code>{t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}</code>
           </li>
           <li>
             <Trans i18nKey="provisioning.oauth-app.scope-bitbucket-pull-requests">Pull requests</Trans>:{' '}
-            <span className={styles.scope}>
-              {t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}
-            </span>
+            <code>{t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}</code>
           </li>
           <li>
             <Trans i18nKey="provisioning.oauth-app.scope-bitbucket-webhooks">Webhooks</Trans>:{' '}
-            <span className={styles.scope}>
-              {t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}
-            </span>
+            <code>{t('provisioning.oauth-app.scope-bitbucket-read-write', 'Read and write')}</code>
           </li>
-        </ul>
+        </Box>
       )}
 
       <Field
@@ -152,19 +143,4 @@ function InstructionSection({
       {children}
     </Stack>
   );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    scopeList: css({
-      margin: 0,
-      paddingLeft: theme.spacing(3),
-    }),
-    scope: css({
-      fontFamily: theme.typography.fontFamilyMonospace,
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(0.25, 0.5),
-    }),
-  };
 }
