@@ -149,6 +149,7 @@ describe('decorateSystemJSInstantiate', () => {
 
   beforeEach(() => {
     mockLogInfo.mockClear();
+    config.pluginImportTelemetryPackages = ['react-router-dom', 'react-router'];
   });
 
   it('reports shared dependency imports with the plugin ID without changing their values', async () => {
@@ -258,6 +259,21 @@ describe('decorateSystemJSInstantiate', () => {
       dependencyName: 'react-router',
       importName: 'useRoutes',
     });
+  });
+
+  it('does not decorate unconfigured shared dependencies', async () => {
+    config.pluginImportTelemetryPackages = [];
+    const registration: SystemJSRegistration = [['react-router-dom'], () => ({ setters: [] })];
+    const instantiate = jest.fn(async () => registration);
+
+    const result = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/plugins/acme-panel/module.js'
+    );
+
+    expect(result).toBe(registration);
+    expect(mockLogInfo).not.toHaveBeenCalled();
   });
 
   it('does not decorate modules outside plugin paths', async () => {

@@ -13,11 +13,6 @@ import { sharedDependenciesMap } from './sharedDependencies';
 import { type SystemJSRegistration, type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
 
-const monitoredSharedDependencies: Record<string, true> = {
-  'react-router-dom': true,
-  'react-router': true,
-};
-
 const ignoredInteropExports: Record<string, true> = {
   __esModule: true,
   __useDefault: true,
@@ -91,8 +86,9 @@ export async function decorateSystemJSInstantiate(
     return registration;
   }
 
+  const monitoredPackages = config.pluginImportTelemetryPackages;
   const [dependencies, declare, metadata] = registration;
-  if (!dependencies.some((dependency) => monitoredSharedDependencies[dependency])) {
+  if (!dependencies.some((dependency) => monitoredPackages.includes(dependency))) {
     return registration;
   }
 
@@ -106,7 +102,7 @@ export async function decorateSystemJSInstantiate(
 
       for (let index = 0; index < dependencies.length; index++) {
         const dependencyName = dependencies[index];
-        const isMonitoredDependency = monitoredSharedDependencies[dependencyName];
+        const isMonitoredDependency = monitoredPackages.includes(dependencyName);
         const setter = declaration.setters[index];
         if (!isMonitoredDependency || !setter) {
           continue;
