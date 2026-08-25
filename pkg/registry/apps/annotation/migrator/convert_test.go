@@ -42,21 +42,24 @@ func TestToBackfillRecord(t *testing.T) {
 		require.Equal(t, `{"foo":"bar"}`, *rec.LegacyData)
 	})
 
-	t.Run("time_end unset when zero", func(t *testing.T) {
+	t.Run("time_end defaults to time when zero", func(t *testing.T) {
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, EpochEnd: 0})
-		require.Nil(t, rec.TimeEnd)
+		require.NotNil(t, rec.TimeEnd)
+		require.Equal(t, int64(1000), *rec.TimeEnd)
 	})
 
-	t.Run("time_end dropped when before time (would violate CHECK)", func(t *testing.T) {
+	t.Run("time_end defaults to time when before time (would violate CHECK)", func(t *testing.T) {
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 2000, EpochEnd: 1000})
-		require.Nil(t, rec.TimeEnd)
+		require.NotNil(t, rec.TimeEnd)
+		require.Equal(t, int64(2000), *rec.TimeEnd)
 	})
 
-	t.Run("time_end dropped when equal to time (point annotation)", func(t *testing.T) {
-		// Legacy stores epoch_end == epoch for points; these must map to a nil
-		// TimeEnd so migrated points match natively-created ones.
+	t.Run("time_end equals time when equal to time (point annotation)", func(t *testing.T) {
+		// Points store TimeEnd == Time, matching the live write path's defaulting,
+		// so migrated points match natively-created ones.
 		rec := toBackfillRecord(ns, LegacyAnnotation{ID: 1, Epoch: 1000, EpochEnd: 1000})
-		require.Nil(t, rec.TimeEnd)
+		require.NotNil(t, rec.TimeEnd)
+		require.Equal(t, int64(1000), *rec.TimeEnd)
 	})
 
 	t.Run("time_end kept when after time (region annotation)", func(t *testing.T) {

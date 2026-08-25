@@ -437,7 +437,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 		// Incoming object has no legacy data annotation — the omitted case.
 		incoming := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -458,7 +458,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				Namespace:   ns,
 				Annotations: map[string]string{AnnotationKeyLegacyData: ""},
 			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -477,7 +477,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				Namespace:   ns,
 				Annotations: map[string]string{AnnotationKeyLegacyData: `{"baz":"qux"}`},
 			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -515,7 +515,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				adapter, ctx := seedWithData(t)
 				incoming := &annotationV0.Annotation{
 					ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 				}
 				tc.mutate(incoming)
 				_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
@@ -528,7 +528,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 		adapter, ctx := seedWithData(t)
 		incoming := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, Tags: []string{"new"}},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, TimeEnd: ptr.To(int64(1000)), Tags: []string{"new"}},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)

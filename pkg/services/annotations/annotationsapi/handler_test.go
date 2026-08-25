@@ -244,7 +244,7 @@ func TestMigrationProxy(t *testing.T) {
 		existingAnno := func(name string) *annotationV0.Annotation {
 			anno := &annotationV0.Annotation{
 				ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "7"},
-				Spec:       annotationV0.AnnotationSpec{Text: "before", Time: 1000},
+				Spec:       annotationV0.AnnotationSpec{Text: "before", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 			}
 			annotationpkg.SetLegacyID(anno, legacyID)
 			return anno
@@ -293,7 +293,8 @@ func TestMigrationProxy(t *testing.T) {
 			require.NoError(t, err)
 
 			require.NotNil(t, client.updated, "a point edit must update in place, not re-create")
-			assert.Nil(t, client.updated.Spec.TimeEnd, "the point must stay a point, not become a range")
+			require.NotNil(t, client.updated.Spec.TimeEnd, "a point still stores timeEnd == time")
+			assert.Equal(t, int64(1000), *client.updated.Spec.TimeEnd, "the point must stay a point, not become a range")
 			assert.Nil(t, client.created, "no re-create for an unchanged point")
 			assert.Empty(t, client.deletedNames)
 		})
@@ -308,7 +309,8 @@ func TestMigrationProxy(t *testing.T) {
 
 			require.NotNil(t, client.created, "moving the time re-creates the record")
 			assert.Equal(t, int64(5000), client.created.Spec.Time, "the new start is applied")
-			assert.Nil(t, client.created.Spec.TimeEnd, "the point stays a point, not a backwards range")
+			require.NotNil(t, client.created.Spec.TimeEnd)
+			assert.Equal(t, int64(5000), *client.created.Spec.TimeEnd, "the point stays a point, not a backwards range")
 			assert.Equal(t, []string{"anno-1"}, client.deletedNames)
 		})
 
@@ -322,7 +324,8 @@ func TestMigrationProxy(t *testing.T) {
 
 			require.NotNil(t, client.created)
 			assert.Equal(t, int64(5000), client.created.Spec.Time)
-			assert.Nil(t, client.created.Spec.TimeEnd, "the point stays a point, not a zero-length range")
+			require.NotNil(t, client.created.Spec.TimeEnd)
+			assert.Equal(t, int64(5000), *client.created.Spec.TimeEnd, "the point stays a point, not a zero-length range")
 		})
 
 		t.Run("widening a point into a genuine range is honored", func(t *testing.T) {
@@ -348,7 +351,8 @@ func TestMigrationProxy(t *testing.T) {
 
 			require.NotNil(t, client.created)
 			assert.Equal(t, int64(500), client.created.Spec.Time)
-			assert.Nil(t, client.created.Spec.TimeEnd, "a point edit stays a point in any direction")
+			require.NotNil(t, client.created.Spec.TimeEnd)
+			assert.Equal(t, int64(500), *client.created.Spec.TimeEnd, "a point edit stays a point in any direction")
 		})
 
 		t.Run("editing a range preserves its end", func(t *testing.T) {

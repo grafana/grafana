@@ -556,6 +556,11 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
 	}
 
+	// Point annotations store timeEnd == time, matching the legacy API's epochEnd defaulting.
+	if anno.Spec.TimeEnd == nil {
+		anno.Spec.TimeEnd = new(anno.Spec.Time)
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 
