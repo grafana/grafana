@@ -730,12 +730,6 @@ func validateHybridSearchFilters(req *resourcepb.HybridSearchRequest, isExternal
 		return status.Error(codes.InvalidArgument, msg)
 	}
 	if isExternal {
-		for _, f := range req.Filters {
-			// External rows have no folder; reject rather than match nothing.
-			if f.Key == "folder" {
-				return reqErr(`filter "folder" is not supported for external collections; filter on a metadata key instead`)
-			}
-		}
 		return nil
 	}
 	for _, f := range req.Filters {
@@ -842,8 +836,8 @@ func hybridVectorFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
 	return out
 }
 
-// hybridExternalFilters passes keys through verbatim: "uid" is a column,
-// anything else is metadata containment.
+// hybridExternalFilters passes keys through verbatim: "uid" and "folder"
+// are columns, anything else is metadata containment.
 func hybridExternalFilters(reqs []*resourcepb.Requirement) []vector.SearchFilter {
 	out := make([]vector.SearchFilter, 0, len(reqs))
 	for _, f := range reqs {

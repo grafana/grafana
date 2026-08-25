@@ -17,7 +17,7 @@ type LexicalQuery struct {
 	// (postgres: websearch syntax).
 	Query string
 	Limit int
-	// "uid" is a column; any other key matches the metadata JSONB.
+	// "uid" and "folder" are columns; any other key matches the metadata JSONB.
 	Filters []SearchFilter
 }
 

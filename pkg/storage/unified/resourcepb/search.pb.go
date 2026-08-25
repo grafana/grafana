@@ -832,9 +832,9 @@ type HybridSearchRequest struct {
 	// most once, max 1000 values total. Internal collections allow only
 	// "uid" and "folder" (all kinds), "datasource_uid" and "language"
 	// (dashboards; values: promql, logql, traceql, sql) — enforced
-	// natively by BOTH legs. External collections: "uid" matches the
-	// entity id, any other key matches the metadata JSON (containment),
-	// and "folder" is INVALID_ARGUMENT.
+	// natively by BOTH legs. External collections: "uid" and "folder"
+	// match the row's identity and folder, any other key matches the
+	// metadata JSON (containment).
 	Filters []*Requirement `protobuf:"bytes,5,rep,name=filters,proto3" json:"filters,omitempty"`
 	// Minimum relevance a result must reach to be returned. One of:
 	// "lowest", "low", "medium", "high", "highest"; empty keeps every

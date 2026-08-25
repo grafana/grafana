@@ -298,9 +298,9 @@ message HybridSearchRequest {
   // most once, max 1000 values total. Internal collections allow only
   // "uid" and "folder" (all kinds), "datasource_uid" and "language"
   // (dashboards; values: promql, logql, traceql, sql) — enforced
-  // natively by BOTH legs. External collections: "uid" matches the
-  // entity id, any other key matches the metadata JSON (containment),
-  // and "folder" is INVALID_ARGUMENT.
+  // natively by BOTH legs. External collections: "uid" and "folder"
+  // match the row's identity and folder, any other key matches the
+  // metadata JSON (containment).
   repeated Requirement filters = 5;
 
   // Minimum relevance a result must reach to be returned. One of:

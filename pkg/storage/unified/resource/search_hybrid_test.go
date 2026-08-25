@@ -315,14 +315,11 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	assert.Nil(t, validateHybridSearchRequest(r))
 	assert.Nil(t, validateHybridSearchFilters(r, false))
 
-	// External contract: folder rejected, arbitrary metadata keys pass.
-	r = valid()
-	r.Filters = []*resourcepb.Requirement{{Key: "folder", Operator: "in", Values: []string{"f"}}}
-	wantInvalid(validateHybridSearchFilters(r, true), "folder")
-
+	// External contract: no key allowlist.
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u"}},
+		{Key: "folder", Operator: "in", Values: []string{"f"}},
 		{Key: "folderUid", Operator: "in", Values: []string{"f"}},
 		{Key: "labels", Operator: "in", Values: []string{"team=infra"}},
 	}
@@ -1435,16 +1432,23 @@ func TestHybridSearch_ExternalFilters(t *testing.T) {
 		lexical.mu.Unlock()
 	})
 
-	t.Run("folder key is rejected", func(t *testing.T) {
-		s, _, _ := newHybridTestServer(lexTableResponse(), externalBackend())
-		s.externalLexical = &fakeLexicalSearcher{}
+	t.Run("folder key reaches both legs as a column filter", func(t *testing.T) {
+		backend := externalBackend()
+		lexical := &fakeLexicalSearcher{}
+		s, _, _ := newHybridTestServer(lexTableResponse(), backend)
+		s.externalLexical = lexical
 
 		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 			Key: validKey(), Query: "q",
 			Filters: []*resourcepb.Requirement{{Key: "folder", Operator: "in", Values: []string{"f1"}}},
 		})
-		require.Error(t, err)
-		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		require.NoError(t, err)
+
+		want := []vector.SearchFilter{{Field: "folder", Values: []string{"f1"}}}
+		assert.Equal(t, want, backend.gotFilters)
+		lexical.mu.Lock()
+		assert.Equal(t, want, lexical.gotQ.Filters)
+		lexical.mu.Unlock()
 	})
 
 	t.Run("too many filter values rejected on both kinds", func(t *testing.T) {
