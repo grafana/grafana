@@ -16,6 +16,7 @@ import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { sceneVariablesSetToSchemaV2Variables } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
 import {
   createSceneVariableFromVariableModel,
@@ -24,12 +25,13 @@ import {
 import { VariableEditorForm } from 'app/features/dashboard-scene/settings/variables/VariableEditorForm';
 import { type EditableVariableType, getVariableScene } from 'app/features/dashboard-scene/settings/variables/utils';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
+import { useCanManageGlobalVariables } from './useCanManageGlobalVariables';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
-  canManageGlobalVariables,
   canManageVariableScope,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
@@ -101,9 +103,9 @@ interface VariableEditorLoadedProps {
 function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEditorLoadedProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
-  const allowGlobalScope = canManageGlobalVariables();
+  const allowGlobalScope = useCanManageGlobalVariables();
   const [searchParams] = useSearchParams();
-  // '' is the FolderPicker root/global uid. For non-admins root is hidden, so start
+  // '' is the FolderPicker root/global uid. Without root rights, start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
   // even when showRootFolder is false. New variables may preselect a folder via
   // ?folderUid= from the folder Variables tab.
@@ -118,13 +120,19 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     return allowGlobalScope ? '' : undefined;
   });
   const [sceneVariable, setSceneVariable] = useState(initialVariable);
-
   const [createVariable, { isLoading: isCreating }] = useCreateVariableMutation();
   const [updateVariable, { isLoading: isUpdating }] = useUpdateVariableMutation();
   const [deleteVariable, { isLoading: isDeleting }] = useDeleteVariableMutation();
   const [isRecreating, setIsRecreating] = useState(false);
   const [hasNameError, setHasNameError] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Scoped RBAC for root loads async; default new variables to root once allowed.
+  useEffect(() => {
+    if (isNew && allowGlobalScope && folderUid === undefined && !searchParams.get('folderUid')) {
+      setFolderUid('');
+    }
+  }, [allowGlobalScope, folderUid, isNew, searchParams]);
   // Keep delete out of isSaving so the Save button doesn't flash "Saving..." mid-delete.
   const isSaving = isCreating || isUpdating || isRecreating;
   const isBusy = isSaving || isDeleting;
@@ -158,9 +166,9 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const sourceScopeReady =
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
-  // Non-admins may only save folder-scoped variables (root/global requires Admin),
-  // and only into folders they can edit. Edit also requires source-scope rights so rename/move
-  // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
+  // Root/global requires variables:* on folders:* or folders:uid:general (writer role).
+  // Folder-scoped saves require folder CanEdit. Edit also requires source-scope rights so
+  // rename/move (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
   const canManageSourceScope =
@@ -174,7 +182,10 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     selectedScopeReady &&
     canManageSelectedScope &&
     (isNew || canManageSourceScope);
-  const canDelete = !isBusy && Boolean(source) && canManageSourceScope;
+  // variables:write (or create) can open /edit/:name, but delete is a separate action —
+  // same variables:delete gate as the list page, plus source-scope rights.
+  const canDelete =
+    !isBusy && Boolean(source) && canManageSourceScope && contextSrv.hasPermission(AccessControlAction.VariablesDelete);
   // Viewers can open unmanageable scopes to inspect them, but must not relocate (copy-as-move).
   const canChangeFolder = isNew || canManageSourceScope;
 

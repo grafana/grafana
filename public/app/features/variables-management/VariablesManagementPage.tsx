@@ -28,13 +28,8 @@ import {
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import {
-  buildVariablesTree,
-  canManageGlobalVariables,
-  canManageVariableScope,
-  getVariableFolderUid,
-  getVariableSpecName,
-} from './utils';
+import { useCanManageGlobalVariables } from './useCanManageGlobalVariables';
+import { buildVariablesTree, canManageVariableScope, getVariableFolderUid, getVariableSpecName } from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -72,14 +67,14 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
-  const allowGlobalScope = canManageGlobalVariables();
+  const allowGlobalScope = useCanManageGlobalVariables();
   const selectedFolderUids = useMemo(
     () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
     [selectedVariables]
   );
   const folderCanEdit = useFolderCanEdit(selectedFolderUids);
   // Disable Move/Delete when any selected variable is outside scopes the user can manage
-  // (global without Admin, or a folder without CanEdit). Reuses the same folder-access map.
+  // (global without root variables:* , or a folder without CanEdit). Reuses the same folder-access map.
   const canMutateSelection =
     selectedVariables.length > 0 &&
     selectedVariables.every((variable) => {

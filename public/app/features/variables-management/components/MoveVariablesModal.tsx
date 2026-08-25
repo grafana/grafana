@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { canManageGlobalVariables, canManageVariableScope, getVariableFolderPickerExcludeUIDs } from '../utils';
+import { useCanManageGlobalVariables } from '../useCanManageGlobalVariables';
+import { canManageVariableScope, getVariableFolderPickerExcludeUIDs } from '../utils';
 
 export interface MoveVariablesModalProps {
   count: number;
@@ -15,12 +16,16 @@ export interface MoveVariablesModalProps {
 }
 
 export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
-  const allowGlobalScope = canManageGlobalVariables();
-  // '' is root/global. Non-admins hide root, so start empty (undefined) — NestedFolderPicker
+  const allowGlobalScope = useCanManageGlobalVariables();
+  // '' is root/global. Without root rights, start empty (undefined) — NestedFolderPicker
   // labels '' as "Dashboards" even when showRootFolder is false.
-  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
-    canManageGlobalVariables() ? '' : undefined
-  );
+  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() => (allowGlobalScope ? '' : undefined));
+
+  useEffect(() => {
+    if (allowGlobalScope && targetFolderUid === undefined) {
+      setTargetFolderUid('');
+    }
+  }, [allowGlobalScope, targetFolderUid]);
   const { data: targetFolder } = useGetFolderQueryFacade(targetFolderUid || undefined);
   // Match the editor Save gate: require CanEdit on folder targets (picker alone is not enough
   // for team folders / other surfaces that may still appear without Edit).
