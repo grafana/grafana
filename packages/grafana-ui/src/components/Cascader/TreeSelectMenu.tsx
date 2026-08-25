@@ -52,7 +52,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
   const items = tree.getItems();
   if (items.length === 0) {
     return (
-      <div {...containerProps} id={menuId} role="tree" className={styles.tree}>
+      <div {...containerProps} id={menuId} role="tree" tabIndex={0} className={styles.tree}>
         <div className={styles.empty}>{t('grafana-ui.tree-select.no-options', 'No options found.')}</div>
       </div>
     );
@@ -74,7 +74,14 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
   };
 
   return (
-    <div {...containerProps} id={menuId} role="tree" className={styles.tree} onKeyDown={handleKeyDown}>
+    <div
+      {...containerProps}
+      id={menuId}
+      role="tree"
+      tabIndex={0}
+      className={styles.tree}
+      onKeyDown={handleKeyDown}
+    >
       {items.map((item) => {
         const node = item.getItemData();
         const itemProps = item.getProps();
