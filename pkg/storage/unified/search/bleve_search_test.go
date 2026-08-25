@@ -943,8 +943,9 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1281,10 +1282,11 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  true,
+		PostRankAuthz:         cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),

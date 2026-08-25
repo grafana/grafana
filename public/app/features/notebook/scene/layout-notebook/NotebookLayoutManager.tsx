@@ -103,15 +103,36 @@ export class NotebookLayoutManager
 
   /**
    * The scene above owns the history, so reading it here means nothing has to hand it over again when
-   * the scene swaps its body. duplicate(), the deserializer and tests build a manager with no scene
-   * above it. Editing one of those still works, the changes are just not recorded.
+   * the scene swaps its body. Editing a manager with no scene above it still works, the changes are
+   * just not recorded.
    */
   private get editHistory(): NotebookEditHistory | undefined {
+    return this.notebookScene?.editHistory;
+  }
+
+  /**
+   * The scene owns the tags - it is what the save model reads - so the header's edits are forwarded up
+   * to it rather than applied here. A notebook rendered without a scene above it silently keeps its
+   * tags read-only.
+   */
+  public setTagsFromHeader(tags: string[]): void {
+    this.notebookScene?.onTagsChange(tags);
+  }
+
+  /**
+   * Walked rather than imported: taking NotebookScene as a value would have this file and that one
+   * import each other, which is the cycle this layout is arranged to avoid - hence the brand check.
+   *
+   * Undefined is a real answer, not a failure. duplicate(), the deserializer and this class's own
+   * tests all build a manager with no scene above it, and both readers below treat that as "nothing
+   * to tell" rather than an error.
+   */
+  private get notebookScene() {
     let parent = this.parent;
 
     while (parent) {
       if (isNotebookScene(parent)) {
-        return parent.editHistory;
+        return parent;
       }
       parent = parent.parent;
     }
@@ -148,6 +169,11 @@ export class NotebookLayoutManager
    */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
+  }
+
+  /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
+  public setTags(tags: string[] | undefined): void {
+    this.setState({ tags });
   }
 
   /**
@@ -564,6 +590,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
+  const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
+
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
   // handful of times per drag.
@@ -630,7 +658,14 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   return (
     <div className={styles.document}>
       <header className={styles.header}>
-        <NotebookDocumentHeader title={title} tags={tags} timeFrom={timeRange.from} timeTo={timeRange.to} />
+        <NotebookDocumentHeader
+          title={title}
+          tags={tags}
+          timeFrom={timeRange.from}
+          timeTo={timeRange.to}
+          isEditing={isEditing}
+          onTagsChange={onTagsChange}
+        />
       </header>
 
       <div className={styles.column}>

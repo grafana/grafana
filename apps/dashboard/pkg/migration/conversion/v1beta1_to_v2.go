@@ -14,5 +14,21 @@ func Convert_V1beta1_to_V2(in *dashv1.Dashboard, out *dashv2.Dashboard, scope co
 	if err := Convert_V1_to_V2beta1(in, intermediate, scope, dsIndexProvider, leIndexProvider); err != nil {
 		return err
 	}
-	return Convert_V2beta1_to_V2(intermediate, out, scope)
+	if err := Convert_V2beta1_to_V2(intermediate, out, scope); err != nil {
+		return err
+	}
+	setDefaultGridLayoutPreference(out)
+	return nil
+}
+
+// setDefaultGridLayoutPreference pins the classic grid as the default layout for new containers.
+// Dashboards migrated from the old (pre-v2) schema predate the auto grid default, so without this
+// preference new rows/tabs would switch to auto grid. The frontend v1-to-v2 conversion sets the
+// same preference; both conversions must produce identical output.
+func setDefaultGridLayoutPreference(out *dashv2.Dashboard) {
+	out.Spec.Preferences = &dashv2.DashboardPreferences{
+		Layout: &dashv2.DashboardAutoGridLayoutKindOrGridLayoutKind{
+			GridLayoutKind: dashv2.NewDashboardGridLayoutKind(),
+		},
+	}
 }

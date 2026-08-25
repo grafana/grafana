@@ -1624,6 +1624,10 @@
         "autosync-error-title": "Auto-sync Failed",
         "autosync-importing-body": "Enabling Auto-sync. Please wait...",
         "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-title": "Rules Import Failed",
+        "autosync-rules-imported-note": "Your selected alert rules were also imported.",
+        "autosync-rules-note": "Your selected alert rules will also be imported.",
         "autosync-success-body": "Auto-sync enabled. Redirecting...",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
@@ -1698,7 +1702,6 @@
       "review": {
         "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
-        "back-notifications": "Notification resources",
         "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
@@ -1717,7 +1720,6 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
-        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1745,7 +1747,7 @@
       "step1": {
         "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
-        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
@@ -3880,6 +3882,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
+      "autosync-rules-imported-note": "Your alert rules were also imported.",
       "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
       "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
@@ -6017,6 +6021,9 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "pill": "Published Notebook",
+      "tags": "Tags",
+      "tags-custom-value": "Add as a new tag",
+      "tags-placeholder": "Add a tag",
       "time": "Time"
     },
     "on-create-new-row": {
@@ -8741,6 +8748,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
+    "metric-detail-panel": {
+      "aria-label": "Metric details",
+      "close": "Close metric details",
+      "from-query": "Query {{refId}}"
+    },
     "metrics-list": {
       "collapse-metric": "Collapse {{name}}",
       "error": "Failed to load metrics",
@@ -8753,6 +8765,7 @@
       "loading-values": "Loading values…",
       "no-metrics": "No metrics found",
       "search-placeholder": "Search metrics",
+      "show-metric-details": "Show details for {{name}}",
       "show-more": "Show more",
       "show-more-metrics": "Show more metrics",
       "show-more-values": "Show more values",
@@ -9063,15 +9076,16 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Open share trace options menu",
+      "aria-label-share-dropdown": "Open share and feedback menu",
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
+      "feedback-group": "Feedback",
       "filters": "Filters",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "Give feedback",
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
@@ -9079,13 +9093,12 @@
       "path": "Path",
       "route": "Route",
       "services": "Services",
-      "share": "Share",
       "share-copy-link": "Copy link",
       "share-export-json": "Export as JSON",
-      "share-tooltip": "Share trace",
+      "share-group": "Share",
+      "share-tooltip": "Share and feedback",
       "start-time": "Start time",
       "target": "Target",
-      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
       "url": "URL"
@@ -11271,6 +11284,13 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
+      "synthetic-monitoring": {
+        "action": "Enable Synthetic Monitoring",
+        "context": "Black-box checks for the services your cluster runs",
+        "description": "Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.",
+        "setup-action": "Create your first check",
+        "title": "Monitor uptime from the outside"
+      },
       "title": "Recommendations for your stack"
     },
     "solutions": {
@@ -11327,6 +11347,20 @@
         "stats-hosts_one": "active · {{count}} host",
         "stats-hosts_other": "active · {{count}} hosts",
         "title": "Metrics & infrastructure"
+      },
+      "synthetics": {
+        "checks_one": "{{value}} check",
+        "checks_other": "{{value}} checks",
+        "create-check": "Create a check",
+        "description": "Monitor uptime and performance of your endpoints from probes around the world.",
+        "failing_one": "{{count}} check failing",
+        "failing_other": "{{count}} checks failing",
+        "failing-worst": "{{check}} at {{percent}}%",
+        "setup-hint": "create a check",
+        "stats": "{{percent}}% success · 24h",
+        "success-trend": "Success rate · last 24h",
+        "title": "Synthetic Monitoring",
+        "view-checks": "View failing checks"
       },
       "traces": {
         "description": "See how requests flow across services and where they slow down.",
@@ -16297,6 +16331,7 @@
       "render-mode": "Render mode"
     },
     "render": {
+      "handlebars-error": "Handlebars error: {{message}}",
       "truncated": "Showing the first {{maxRows}} rows."
     },
     "render-mode": {

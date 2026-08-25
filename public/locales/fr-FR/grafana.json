@@ -890,7 +890,6 @@
       "close": "Fermer",
       "create": "Créer",
       "delete": "Supprimer",
-      "deleting": "Suppression en cours…",
       "edit": "Modifier",
       "export": "Exporter",
       "export-all": "Tout exporter",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} chemins"
       },
       "delete": {
-        "confirm": "Oui, supprimer la politique",
-        "warning-1": "La suppression de cette politique de notification la supprimera définitivement.",
-        "warning-2": "Voulez-vous vraiment supprimer cette politique ?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Cette action supprimera définitivement la politique de notification <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Supprimer la politique de notification"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtrez les chemins en utilisant une liste de correspondances séparées par des virgules, par exemple :<1>gravité=critique, région=EMEA</1>",
       "generated-policies": "Politiques générées automatiquement",
@@ -2546,7 +2543,9 @@
         "reset": "Réinitialiser",
         "resetting": "Réinitialisation…",
         "title-delete-notification-policy": "Supprimer la politique de notification",
-        "title-reset-notification-policy": "Réinitialiser la politique de notification"
+        "title-reset-notification-policy": "Réinitialiser la politique de notification",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Veuillez patienter pendant que nous mettons à jour vos politiques de notification.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Supprimer la politique de notification"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Une séquence verticale de panneaux, de texte et de cellules de code",
       "name": "Notebook",
       "pill": "Notebook publié",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Heure"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Aucune information de volume disponible pour les requêtes actuelles et la plage temporelle."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Réduire {{name}}",
       "error": "Échec du chargement des métriques",
@@ -8754,6 +8761,7 @@
       "loading-values": "Chargement des valeurs…",
       "no-metrics": "Aucune métrique trouvée",
       "search-placeholder": "Rechercher des métriques",
+      "show-metric-details": "",
       "show-more": "Afficher plus",
       "show-more-metrics": "Afficher plus de métriques",
       "show-more-values": "Afficher plus de valeurs",
@@ -11272,6 +11280,13 @@
       "show": "Afficher",
       "switch": "Les recommandations dépendent de la solution sélectionnée",
       "switchSolution": "Changer de solution",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Recommandations pour votre stack"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Cette ressource est en retard par rapport à la branche dans {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Les autres utilisateurs Grafana de votre entreprise continueront à voir cette ressource jusqu’à ce que cette branche soit fusionnée",
+      "move-from-branch": "",
       "not-saved": "Les autres utilisateurs Grafana de votre entreprise verront toujours la version actuelle enregistrée sur la branche par défaut configurée, jusqu’à ce que cette branche soit fusionnée",
       "open-in-repo-button": "Ouvrir dans {{repoType}}",
       "open-pull-request-in-repo": "Ouvrir une demande de tirage dans {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "Une nouvelle ressource a été créée dans une branche dans {{repoType}}.",
     "title-deleted-resource-in-branch": "Une ressource a été supprimée dans une branche dans {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Cette ressource est chargée depuis la branche que vous venez de créer dans {{repoType}} et elle est uniquement visible pour vous",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Une ressource a été mise à jour dans une branche dans {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
