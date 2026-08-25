@@ -24,6 +24,7 @@ const mockCancelIdentification = jest.fn();
 const mockResetIdentification = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
+const mockReportInteraction = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
 let mockIsGenerating = false;
 let mockIsIdentifying = false;
@@ -80,6 +81,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: (...args: unknown[]) => mockPost(...args),
   }),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
 
 async function setup(
@@ -205,6 +207,9 @@ describe('QueryCoauthoring', () => {
     expect(await screen.findByText('Highlighted query')).toBeInTheDocument();
     expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
     expect(onBaseline).toHaveBeenCalledWith(baseline);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_opened_popover', {
+      datasource_type: 'prometheus',
+    });
   });
 
   it('associates each concurrent session prompt with its own query summary', async () => {
@@ -474,6 +479,10 @@ describe('QueryCoauthoring', () => {
       agentId: 'grafana.query.coauthor.v1',
       prompt: 'Show the total count instead',
     });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_submitted_prompt', {
+      datasource_type: 'prometheus',
+      prompt_stage: 'initial',
+    });
     expect(request.systemPrompt).toContain(JSON.stringify(queryText));
     expect(request.systemPrompt).toContain('Focused text: ["rate"]');
     expect(request.systemPrompt).toContain('http_requests_total');
@@ -532,6 +541,9 @@ describe('QueryCoauthoring', () => {
       expr: 'increase(http_requests_total[5m])',
     });
     expect(onRevertPreview).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_accepted_proposal', {
+      datasource_type: 'prometheus',
+    });
   });
 
   it('keeps the proposal open when the host cannot accept it', async () => {
@@ -750,6 +762,9 @@ describe('QueryCoauthoring', () => {
     expect(mockCancel).toHaveBeenCalled();
     expect(stagePreview).not.toHaveBeenCalled();
     expect(onAccept).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_stopped_generation', {
+      datasource_type: 'prometheus',
+    });
   });
 
   it('keeps the captured query focus visible while building', async () => {
@@ -1326,7 +1341,7 @@ describe('QueryCoauthoring', () => {
   });
 
   it('lets the user continue an ordinary clarification in Assistant chat', async () => {
-    const { user } = await setup();
+    const { dismissInvocation, user } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Break this down by route/handler');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
@@ -1346,6 +1361,11 @@ describe('QueryCoauthoring', () => {
     expect(handoffContext.intentHistory).toEqual(['Break this down by route/handler', 'Use handler']);
     expect(handoffContext.handoffReason).toBe('Should I group by handler, route, or both?');
     expect(mockOpenAssistant.mock.calls[0][0].prompt).not.toBe('Use handler');
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_continued_assistant_chat', {
+      datasource_type: 'prometheus',
+      source_state: 'clarification',
+    });
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
   it('hands a response that exceeds the inline clarification boundary to Assistant', async () => {
@@ -1431,6 +1451,9 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
     expect(screen.queryByText(/may need to span another datasource or additional queries/i)).not.toBeInTheDocument();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_dismissed_popover', {
+      datasource_type: 'prometheus',
+    });
   });
 
   it('nudges the user toward Assistant after repeated iterations while allowing them to continue here', async () => {

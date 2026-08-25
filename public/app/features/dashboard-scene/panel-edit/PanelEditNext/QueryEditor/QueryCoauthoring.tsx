@@ -38,6 +38,15 @@ import {
   type QueryCoauthoringRequestError,
   type QueryCoauthoringRequestOutcome,
 } from './queryCoauthoringRequest';
+import {
+  type QueryCoauthoringHandoffSource,
+  trackQueryCoauthoringContinuedInAssistant,
+  trackQueryCoauthoringDismissed,
+  trackQueryCoauthoringGenerationStopped,
+  trackQueryCoauthoringOpened,
+  trackQueryCoauthoringPromptSubmitted,
+  trackQueryCoauthoringProposalAccepted,
+} from './queryCoauthoringTracking';
 import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
 import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
 
@@ -119,6 +128,7 @@ export function QueryCoauthoring({
   const submittedIntentsRef = useRef<string[]>([]);
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
+  const trackedOpenRef = useRef(false);
   const onRevertPreviewRef = useRef(onRevertPreview);
   const containerRef = useRef<HTMLDivElement>(null);
   const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
@@ -169,6 +179,19 @@ export function QueryCoauthoring({
     adapter.dismiss();
   }, [adapter, clearSession]);
 
+  const dismissPopover = useCallback(() => {
+    trackQueryCoauthoringDismissed({ datasourceType });
+    dismiss();
+  }, [datasourceType, dismiss]);
+
+  useEffect(() => {
+    if (trackedOpenRef.current) {
+      return;
+    }
+    trackedOpenRef.current = true;
+    trackQueryCoauthoringOpened({ datasourceType });
+  }, [datasourceType]);
+
   useEffect(() => {
     if (!isAssistantAvailable) {
       return;
@@ -184,6 +207,7 @@ export function QueryCoauthoring({
   }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview]);
 
   const stop = () => {
+    trackQueryCoauthoringGenerationStopped({ datasourceType });
     generationIdRef.current++;
     cancel();
     revertQueryPreview();
@@ -211,6 +235,10 @@ export function QueryCoauthoring({
       return;
     }
 
+    trackQueryCoauthoringPromptSubmitted({
+      datasourceType,
+      promptStage: clarification ? 'clarification' : 'initial',
+    });
     submittedIntentsRef.current.push(trimmedIntent);
     promptUserGestureRef.current = false;
 
@@ -286,10 +314,11 @@ export function QueryCoauthoring({
     }
 
     previewActiveRef.current = false;
+    trackQueryCoauthoringProposalAccepted({ datasourceType });
     dismiss();
-  }, [dismiss, onAccept, proposal]);
+  }, [datasourceType, dismiss, onAccept, proposal]);
 
-  const continueInAssistant = (reason?: string) => {
+  const continueInAssistant = (sourceState: QueryCoauthoringHandoffSource, reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
     if (!activeContext || !openAvailableAssistant) {
       return;
@@ -320,6 +349,7 @@ export function QueryCoauthoring({
         }),
       ],
     });
+    trackQueryCoauthoringContinuedInAssistant({ datasourceType, sourceState });
     dismiss();
   };
 
@@ -338,13 +368,13 @@ export function QueryCoauthoring({
       if (feedback) {
         closeFeedback();
       } else {
-        dismiss();
+        dismissPopover();
       }
     };
 
     container.addEventListener('keydown', onKeyDown);
     return () => container.removeEventListener('keydown', onKeyDown);
-  }, [closeFeedback, dismiss, feedback]);
+  }, [closeFeedback, dismissPopover, feedback]);
 
   return createPortal(
     <div
@@ -355,7 +385,7 @@ export function QueryCoauthoring({
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
       {isAssistantLoading && (
-        <QueryCoauthoringHeader onClose={dismiss} pulse>
+        <QueryCoauthoringHeader onClose={dismissPopover} pulse>
           <Spinner size="sm" />
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="query-editor-coauthoring.checking-assistant">Checking Assistant availability...</Trans>
@@ -364,7 +394,7 @@ export function QueryCoauthoring({
       )}
       {!isAssistantLoading && !isAssistantAvailable && (
         <>
-          <QueryCoauthoringHeader onClose={dismiss}>
+          <QueryCoauthoringHeader onClose={dismissPopover}>
             <Text variant="bodySmall" weight="medium">
               <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant is not available</Trans>
             </Text>
@@ -379,7 +409,7 @@ export function QueryCoauthoring({
               </Trans>
             </Alert>
             <Stack justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={dismiss}>
+              <Button size="sm" variant="secondary" onClick={dismissPopover}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
             </Stack>
@@ -394,7 +424,7 @@ export function QueryCoauthoring({
         !contextError &&
         !shouldShowIterationNudge && (
           <>
-            <QueryCoauthoringHeader onClose={dismiss} pulse={!context || isIdentifying}>
+            <QueryCoauthoringHeader onClose={dismissPopover} pulse={!context || isIdentifying}>
               {!context || isIdentifying ? (
                 <QueryCoauthoringLiveStatus>
                   <Icon name="ai-sparkle" size="sm" />
@@ -468,14 +498,16 @@ export function QueryCoauthoring({
               onSubmit={() => void submit()}
             />
             {clarification && (
-              <QueryCoauthoringClarificationAction onContinue={() => continueInAssistant(clarification.message)} />
+              <QueryCoauthoringClarificationAction
+                onContinue={() => continueInAssistant('clarification', clarification.message)}
+              />
             )}
           </>
         )}
       {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} onStop={stop} />}
       {isAssistantAvailable && contextError && (
         <>
-          <QueryCoauthoringHeader onClose={dismiss}>
+          <QueryCoauthoringHeader onClose={dismissPopover}>
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.context-error">Could not read the selected query context</Trans>
             </Text>
@@ -486,7 +518,7 @@ export function QueryCoauthoring({
               title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
             />
             <Stack gap={1} justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={dismiss}>
+              <Button size="sm" variant="secondary" onClick={dismissPopover}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
               <Button size="sm" variant="secondary" onClick={loadContext}>
@@ -498,7 +530,7 @@ export function QueryCoauthoring({
       )}
       {isAssistantAvailable && error && (
         <>
-          <QueryCoauthoringHeader onClose={dismiss}>
+          <QueryCoauthoringHeader onClose={dismissPopover}>
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.error">Query coauthoring error</Trans>
             </Text>
@@ -511,7 +543,7 @@ export function QueryCoauthoring({
                   <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
                 </Button>
               )}
-              <Button size="sm" variant="secondary" onClick={dismiss}>
+              <Button size="sm" variant="secondary" onClick={dismissPopover}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
             </Stack>
@@ -521,15 +553,15 @@ export function QueryCoauthoring({
       {isAssistantAvailable && shouldShowIterationNudge && (
         <QueryCoauthoringIterationNudge
           onContinueHere={() => setIterationNudgeDismissed(true)}
-          onContinueInAssistant={() => continueInAssistant()}
+          onContinueInAssistant={() => continueInAssistant('iteration_nudge')}
         />
       )}
       {isAssistantAvailable && fallback && (
         <QueryCoauthoringFallback
           reason={fallback.reason}
-          onClose={dismiss}
+          onClose={dismissPopover}
           onFeedback={setFeedback}
-          onContinue={continueInAssistant}
+          onContinue={(reason) => continueInAssistant('fallback', reason)}
         />
       )}
       {isAssistantAvailable && proposal && (
@@ -538,8 +570,8 @@ export function QueryCoauthoring({
           changes={proposal.prepared.changes}
           isPreviewRunning={isPreviewRunning}
           onFeedback={setFeedback}
-          onClose={dismiss}
-          onContinue={() => continueInAssistant()}
+          onClose={dismissPopover}
+          onContinue={() => continueInAssistant('proposal')}
           onAccept={accept}
         />
       )}
