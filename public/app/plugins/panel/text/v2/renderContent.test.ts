@@ -1,10 +1,26 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { type DataFrame, FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import { hasRenderableData, interpolateTemplate, MAX_RENDERED_ROWS, renderContent } from './renderContent';
+import {
+  catchTemplateError,
+  hasRenderableData,
+  interpolateTemplate,
+  MAX_RENDERED_ROWS,
+  renderContent,
+} from './renderContent';
+
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 const hosts = toDataFrame({
   name: 'frameA',
@@ -112,6 +128,82 @@ describe('interpolateTemplate', () => {
       expect(blocks[MAX_RENDERED_ROWS]).toContain(String(MAX_RENDERED_ROWS));
     });
   });
+
+  describe('handlebars', () => {
+    it('leaves expressions alone when the text.newFeatures flag is off', () => {
+      setTestFlags({ [FlagKeys.TextNewFeatures]: false });
+
+      expect(interpolate('{{#each data}}{{host}}{{/each}}', [hosts], RenderMode.Once)).toBe(
+        '{{#each data}}{{host}}{{/each}}'
+      );
+    });
+
+    it('renders the whole result set for Once', () => {
+      expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
+    });
+
+    it('caps the rows a Once template can iterate, so a huge frame cannot lock up the browser', () => {
+      const big = toDataFrame({
+        fields: [
+          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
+        ],
+      });
+
+      // The truncation notice follows the template output as its own block.
+      const [rendered] = interpolate('{{#each data}}{{n}},{{/each}}', [big], RenderMode.Once).split('\n\n');
+
+      expect(rendered.split(',').filter(Boolean)).toHaveLength(MAX_RENDERED_ROWS);
+    });
+
+    it('exposes every frame for Once', () => {
+      expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
+        'frameA:2 frameB:1 '
+      );
+    });
+
+    it('gives each row its own context for PerRow', () => {
+      expect(interpolate('{{#if (gt cpu 50)}}**{{host}}** hot{{/if}}', [hosts], RenderMode.PerRow)).toBe(
+        '**web-1** hot\n\n'
+      );
+    });
+
+    it('runs before variable interpolation, so its output is still interpolated', () => {
+      const nested = toDataFrame({
+        fields: [
+          { name: 'host', type: FieldType.string, values: ['${__data.fields.cpu}'] },
+          { name: 'cpu', type: FieldType.number, values: [84] },
+        ],
+      });
+
+      expect(interpolate('{{host}}', [nested], RenderMode.PerRow)).toBe('84');
+    });
+
+    it('is skipped in code mode, where escaping would mangle the source', () => {
+      expect(interpolate('{ "a": "{{b}}" }', [hosts], RenderMode.Once, TextMode.Code)).toBe('{ "a": "{{b}}" }');
+    });
+
+    it('throws on a broken template, so the panel can surface the error', () => {
+      expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
+    });
+
+    describe('truncation notice', () => {
+      const big = toDataFrame({
+        fields: [
+          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
+        ],
+      });
+
+      it('says so when a Once template only saw the capped rows', () => {
+        expect(interpolate('{{data.length}}', [big], RenderMode.Once)).toBe(
+          `${MAX_RENDERED_ROWS}\n\nShowing the first ${MAX_RENDERED_ROWS} rows.`
+        );
+      });
+
+      it('is left off content that never read the rows, since nothing was truncated', () => {
+        expect(interpolate('# Status', [big], RenderMode.Once)).toBe('# Status');
+      });
+    });
+  });
 });
 
 describe('renderContent', () => {
@@ -142,5 +234,19 @@ describe('renderContent', () => {
     expect(render('<b>${__data.fields.host}</b><script>alert(1)</script>', RenderMode.PerRow, TextMode.HTML)).toBe(
       '<b>web-1</b>&lt;script&gt;alert(1)&lt;/script&gt;\n<b>web-2</b>&lt;script&gt;alert(1)&lt;/script&gt;'
     );
+  });
+});
+
+describe('catchTemplateError', () => {
+  it('passes the content through when nothing throws', () => {
+    expect(catchTemplateError(() => 'hello')).toEqual({ content: 'hello' });
+  });
+
+  it('describes the failure instead', () => {
+    expect(
+      catchTemplateError(() => {
+        throw new Error('boom');
+      })
+    ).toEqual({ content: '', error: 'Handlebars error: boom' });
   });
 });

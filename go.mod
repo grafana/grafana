@@ -103,8 +103,8 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.57.2-0.20260820142358-60ae43210ffe // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.57.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.59.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.59.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
@@ -221,14 +221,14 @@ require (
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v2 v2.4.0 // @grafana/identity-access-team
-	k8s.io/api v0.36.3 // @grafana/grafana-app-platform-squad
-	k8s.io/apiextensions-apiserver v0.36.3 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.36.3 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.36.3 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.36.3 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.36.3 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/apiextensions-apiserver v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.36.4 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.36.4 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.140.0 // @grafana/grafana-app-platform-squad
-	k8s.io/kube-aggregator v0.36.0 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-aggregator v0.36.4 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // @grafana/grafana-app-platform-squad
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // @grafana/data-sources-plugins
 	pgregory.net/rapid v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -698,8 +698,8 @@ require (
 	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/kms v0.36.3 // indirect
-	k8s.io/streaming v0.36.3 // indirect
+	k8s.io/kms v0.36.4 // indirect
+	k8s.io/streaming v0.36.4 // indirect
 	modernc.org/libc v1.74.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
@@ -709,6 +709,8 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
 )
+
+require github.com/grafana/grafana-app-sdk/plugin v0.59.0
 
 replace (
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints

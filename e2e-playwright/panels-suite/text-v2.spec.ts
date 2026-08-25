@@ -12,6 +12,7 @@ const CODE_PANEL = '5';
 // Render mode needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
+const HANDLEBARS_PANEL = '5';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -170,6 +171,38 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       // A single render cannot resolve per-row fields, so the macro stays literal.
       await expect(preview.locator('.user-card')).toHaveCount(1);
       await expect(preview).toContainText('${__data.fields.Id}');
+    });
+  });
+
+  test.describe('handlebars', () => {
+    test('evaluates expressions against the query data', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Handlebars support')),
+      });
+
+      // Below the fold, so the panel doesn't query until it scrolls into view.
+      await panel.scrollIntoViewIfNeeded();
+
+      // One row per user of the panel's csv_content query.
+      await expect(panel.locator('tbody tr')).toHaveCount(5);
+      await expect(panel).toContainText('John Smith');
+
+      // {{#unless}} filters the list down to the two users who are not active.
+      await expect(panel.locator('li')).toHaveCount(2);
+      await expect(panel.locator('li')).toContainText(['Jessica Johnson', 'Priya Raman']);
+    });
+
+    test('evaluates expressions in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: HANDLEBARS_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview).toContainText('John Smith');
+      await expect(preview).not.toContainText('{{#each data}}');
     });
   });
 });

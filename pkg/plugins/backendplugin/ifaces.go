@@ -19,7 +19,6 @@ type Plugin interface {
 	Decommission() error
 	IsDecommissioned() bool
 	Target() Target
-
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.QueryDataHandler

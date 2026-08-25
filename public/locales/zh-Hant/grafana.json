@@ -885,7 +885,6 @@
       "close": "關閉",
       "create": "建立",
       "delete": "刪除",
-      "deleting": "正在刪除…",
       "edit": "編輯",
       "export": "匯出",
       "export-all": "匯出全部",
@@ -2479,13 +2478,10 @@
         "route-count_other": "{{count}} 條路由"
       },
       "delete": {
-        "confirm": "是的，刪除政策",
-        "warning-1": "刪除此通知政策將永久移除該政策。",
-        "warning-2": "您確定要刪除這個政策嗎？"
-      },
-      "delete-modal": {
-        "permanently-remove": "此動作將永久移除 <1>{{routeName}}</1> 通知政策。",
-        "title-delete-notification-policy": "刪除通知政策"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "使用以逗號分隔的比對條件清單來篩選路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動產生的政策",
@@ -2529,7 +2525,8 @@
         "reset": "重設",
         "resetting": "正在重設...",
         "title-delete-notification-policy": "刪除通知政策",
-        "title-reset-notification-policy": "重設通知政策"
+        "title-reset-notification-policy": "重設通知政策",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "請稍候，我們正在更新您的通知政策。",
@@ -3803,7 +3800,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "刪除通知政策"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -5978,6 +5975,9 @@
       "description": "面板、文字和程式碼儲存格的縱向序列",
       "name": "筆記本",
       "pill": "已發布的筆記本",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "時間"
     },
     "on-create-new-row": {
@@ -8684,6 +8684,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "目前的查詢和時間範圍沒有可用的容量資訊。"
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "收合{{name}}",
       "error": "無法載入指標",
@@ -8696,6 +8701,7 @@
       "loading-values": "正在載入值…",
       "no-metrics": "未找到任何指標",
       "search-placeholder": "搜尋指標",
+      "show-metric-details": "",
       "show-more": "顯示更多",
       "show-more-metrics": "顯示更多指標",
       "show-more-values": "顯示更多值",
@@ -11198,6 +11204,13 @@
       "show": "顯示",
       "switch": "建議遵循所選解決方案",
       "switchSolution": "切換解決方案",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "針對您的堆疊的建議"
     },
     "solutions": {
@@ -11242,6 +11255,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12821,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12822,6 +12860,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13592,6 +13631,7 @@
       "behind-branch-text": "此資源位於 {{repoType}} 的分支後方。",
       "branch-targets": "",
       "delete-from-branch": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到此資源",
+      "move-from-branch": "",
       "not-saved": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到儲存到已設定預設分支的目前版本",
       "open-in-repo-button": "在 {{repoType}} 中開啟",
       "open-pull-request-in-repo": "在 {{repoType}} 中開啟拉取請求",
@@ -13603,6 +13643,7 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中建立新資源。",
     "title-deleted-resource-in-branch": "已在 {{repoType}} 的分支中刪除資源。",
     "title-loaded-pull-request-in-repo": "此資源是從您剛剛在 {{repoType}} 中建立的分支載入，且只有您可以查看",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "已在 {{repoType}} 的分支中更新資源。"
   },
   "provisioning": {
@@ -16147,6 +16188,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

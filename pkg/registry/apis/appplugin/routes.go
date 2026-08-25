@@ -6,8 +6,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin-next/genproto/grafana/plugin/v3"
-	"github.com/grafana/grafana-app-sdk/plugin-next/httpadapter"
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 

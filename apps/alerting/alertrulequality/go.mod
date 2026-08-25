@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/alerting/alertrulequality
 go 1.26.6
 
 require (
-	k8s.io/apimachinery v0.36.3
+	k8s.io/apimachinery v0.36.4
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad
 )
 
