@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/login/social"
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -30,11 +32,12 @@ type storedLister interface {
 // SSOSettingsBackfill copies the stored SSO overrides into MT-Settings so the
 // store is populated before reads become MT-authoritative (dual-writer mode 4).
 type SSOSettingsBackfill struct {
-	reader storedLister
-	writer settingsvc.Writer
-	lock   *serverlock.ServerLockService
-	cfg    *setting.Cfg
-	log    log.Logger
+	reader    storedLister
+	writer    settingsvc.Writer
+	lock      *serverlock.ServerLockService
+	cfg       *setting.Cfg
+	namespace string
+	log       log.Logger
 }
 
 func ProvideSSOSettingsBackfill(reader *ssosettingsimpl.Service, lock *serverlock.ServerLockService, cfg *setting.Cfg) (*SSOSettingsBackfill, error) {
@@ -51,7 +54,11 @@ func ProvideSSOSettingsBackfill(reader *ssosettingsimpl.Service, lock *serverloc
 		writer: writer,
 		lock:   lock,
 		cfg:    cfg,
-		log:    log.New("ssosettings.backfill"),
+		// SSO settings are instance-global; the org-1 namespace maps to the
+		// instance tenant. The writer runs on a background context, so the
+		// namespace must come from config rather than a request.
+		namespace: grafanarequest.GetNamespaceMapper(cfg)(1),
+		log:       log.New("ssosettings.backfill"),
 	}, nil
 }
 
@@ -84,6 +91,9 @@ func (s *SSOSettingsBackfill) Run(ctx context.Context) error {
 }
 
 func (s *SSOSettingsBackfill) backfill(ctx context.Context) error {
+	// The MT-Settings writer resolves the tenant from the context namespace.
+	ctx = request.WithNamespace(ctx, s.namespace)
+
 	stored, err := s.reader.ListStored(ctx)
 	if err != nil {
 		return err
