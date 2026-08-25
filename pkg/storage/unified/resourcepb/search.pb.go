@@ -820,12 +820,8 @@ type HybridSearchRequest struct {
 	// Resource type to search (namespace + group + resource).
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// Required. Feeds the lexical leg verbatim; also embedded for the
-	// semantic leg unless semantic_query is set. Max 1000 bytes.
-	// Callers that extract keywords (e.g. via an LLM rewriter) should
-	// send them here and put the natural-language phrasing in
-	// semantic_query. Lexical interpretation is backend-defined; the
-	// external collections' backend supports quoted phrases, OR, and
-	// -exclusion (websearch syntax).
+	// semantic leg unless semantic_query is set. Max 1000 bytes. Put
+	// extracted keywords here and natural language in semantic_query.
 	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
 	// Optional richer phrasing embedded for the semantic leg instead of
 	// query. Max 1000 bytes.
@@ -833,19 +829,12 @@ type HybridSearchRequest struct {
 	// Top-k: maximum results. Defaults to 50 when zero, capped at 200.
 	Limit int64 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Exact-match filters, IN semantics for multiple values, each key at
-	// most once. Semantics depend on the collection kind:
-	//
-	// Internal (indexed) collections: supported keys are "uid" and
-	// "folder" (all kinds), "datasource_uid" and "language" (dashboards;
-	// language values: promql, logql, traceql, sql). Every key is
-	// enforced natively by BOTH legs. Any other key or language fails the
-	// request.
-	//
-	// External collections: "uid" matches the entity id; any other key
-	// matches inside the caller-written metadata JSON (containment, so an
-	// array-valued metadata field matches when it contains the value).
-	// "folder" is INVALID_ARGUMENT — external rows carry no folder;
-	// filter on your own metadata key instead. At most 1000 values total.
+	// most once, max 1000 values total. Internal collections allow only
+	// "uid" and "folder" (all kinds), "datasource_uid" and "language"
+	// (dashboards; values: promql, logql, traceql, sql) — enforced
+	// natively by BOTH legs. External collections: "uid" matches the
+	// entity id, any other key matches the metadata JSON (containment),
+	// and "folder" is INVALID_ARGUMENT.
 	Filters []*Requirement `protobuf:"bytes,5,rep,name=filters,proto3" json:"filters,omitempty"`
 	// Minimum relevance a result must reach to be returned. One of:
 	// "lowest", "low", "medium", "high", "highest"; empty keeps every
@@ -1002,8 +991,7 @@ type HybridSearchResult struct {
 	// Folder display title, resolved fresh at query time from the folder
 	// index (one batched lookup per request). Empty for the root folder or
 	// when resolution fails — best-effort display data, never an error.
-	// folder, folder_title, managed_by_kind and managed_by_id are always
-	// empty for external collections.
+	// Like folder and managed_by_*, always empty for external collections.
 	FolderTitle string `protobuf:"bytes,6,opt,name=folder_title,json=folderTitle,proto3" json:"folder_title,omitempty"`
 	// Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
 	// With a reranker configured this is the calibrated cross-encoder relevance (roughly
