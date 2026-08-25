@@ -137,6 +137,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables RBAC for playlists */
+  PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -873,6 +875,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables RBAC for playlists
+ *
+ * **Details:**
+ * - flag key: `playlistsRBAC`
+ * - default value: `false`
+ */
+export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("playlistsRBAC", false, options).value;
 };
 
 /**
