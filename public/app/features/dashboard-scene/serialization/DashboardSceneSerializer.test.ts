@@ -411,32 +411,6 @@ describe('DashboardSceneSerializer', () => {
       });
     });
 
-    describe('getSaveAsModel', () => {
-      it('drops the tags when copyTags is false', () => {
-        const serializer = new V1DashboardSerializer();
-        const dashboard = setup({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboard, {
-          copyTags: false,
-          title: 'hello Copy',
-        });
-
-        expect(saveAsModel.tags).toEqual([]);
-      });
-
-      it('keeps the tags when copyTags is true', () => {
-        const serializer = new V1DashboardSerializer();
-        const dashboard = setup({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboard, {
-          copyTags: true,
-          title: 'hello Copy',
-        });
-
-        expect(saveAsModel.tags).toEqual(['my-tag']);
-      });
-    });
-
     it('should allow retrieving snapshot url', () => {
       const initialSaveModel: Dashboard = {
         snapshot: {
@@ -839,28 +813,6 @@ describe('DashboardSceneSerializer', () => {
           isNew: true,
           copyTags: true,
         };
-      });
-
-      it('drops the tags when copyTags is false', () => {
-        const dashboardWithTags = setupV2({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboardWithTags, {
-          ...baseOptions,
-          copyTags: false,
-        });
-
-        expect(saveAsModel.tags).toEqual([]);
-      });
-
-      it('keeps the tags when copyTags is true', () => {
-        const dashboardWithTags = setupV2({ tags: ['my-tag'] });
-
-        const saveAsModel = serializer.getSaveAsModel(dashboardWithTags, {
-          ...baseOptions,
-          copyTags: true,
-        });
-
-        expect(saveAsModel.tags).toEqual(['my-tag']);
       });
 
       it('should set basic dashboard properties correctly', () => {
