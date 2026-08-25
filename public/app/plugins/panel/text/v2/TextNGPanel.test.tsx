@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
@@ -11,6 +13,14 @@ import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -530,5 +540,30 @@ describe('TextNGPanel', () => {
       }
       expect(ancestor).not.toBeNull();
     });
+  });
+
+  it('evaluates handlebars expressions against the query data', () => {
+    const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
+    const props = createProps((target) => target, {
+      data: createData(series),
+      options: { content: '{{#each data}}- {{host}}\n{{/each}}', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    expect(html).toContain('web-1');
+    expect(html).toContain('web-2');
+  });
+
+  it('shows an alert instead of the content when the handlebars template is broken', () => {
+    const props = createProps((target) => target, {
+      options: { content: '{{#each data}}', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
+    expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 });

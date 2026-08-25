@@ -332,11 +332,21 @@ func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, reso
 	if model == "" && !sel.AllModels {
 		return 0, false, fmt.Errorf("model must not be empty")
 	}
-	if (len(sel.UIDs) > 0) == sel.All {
-		return 0, false, fmt.Errorf("exactly one of UIDs or All must be set")
+	set := 0
+	for _, on := range []bool{len(sel.UIDs) > 0, sel.All, sel.Filter != nil} {
+		if on {
+			set++
+		}
+	}
+	if set != 1 {
+		return 0, false, fmt.Errorf("exactly one of UIDs, All or Filter must be set")
 	}
 	if err := b.validateResource(ctx, resource); err != nil {
 		return 0, false, err
+	}
+
+	if sel.Filter != nil {
+		return b.deleteByFilter(ctx, namespace, model, resource, sel)
 	}
 
 	if len(sel.UIDs) > 0 {

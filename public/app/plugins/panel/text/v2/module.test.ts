@@ -1,26 +1,23 @@
-import {
-  FieldConfigProperty,
-  PanelOptionsEditorBuilder,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-  toDataFrame,
-} from '@grafana/data';
+import { FieldConfigProperty, PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { type Options, RenderMode } from '../panelcfg.gen';
 
-import { plugin, textNGPanelOptions } from './module';
+import { textNGPanelOptions } from './module';
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
 }));
 
-let mockNewFeatures = true;
+// module.tsx reads the flag while this file's own imports are still running, so the state has
+// to be hoisted: a `let` would still be in its temporal dead zone. The value it sees there only
+// matters for the field config tests below, which re-import the module themselves.
+// eslint-disable-next-line no-var
+var mockNewFeatures = true;
 
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 function getItems() {
   const builder = new PanelOptionsEditorBuilder<Options>();
@@ -75,9 +72,29 @@ describe('textNGPanelOptions', () => {
   });
 });
 
-it('registers value mappings and thresholds as the only field config options', () => {
-  expect(plugin.fieldConfigRegistry.list().map((item) => item.id)).toEqual([
-    FieldConfigProperty.Mappings,
-    FieldConfigProperty.Thresholds,
-  ]);
+describe('field config', () => {
+  // module.tsx decides on the field config at import time, so each case needs a fresh module
+  // registry, and the standard configs app.ts normally seeds have to be seeded inside it too.
+  async function getFieldConfigIds(newFeatures: boolean) {
+    mockNewFeatures = newFeatures;
+    let ids: string[] = [];
+    await jest.isolateModulesAsync(async () => {
+      // Seeded with this file's own `getAllStandardFieldConfigs`: importing it inside the isolated
+      // registry would load a second copy of the app's API clients, which logs and fails the run.
+      const { standardFieldConfigEditorRegistry } = await import('@grafana/data');
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+      const { plugin } = await import('./module');
+      ids = plugin.fieldConfigRegistry.list().map((item) => item.id);
+    });
+    return ids;
+  }
+
+  it('registers value mappings and thresholds as the only field config options', async () => {
+    expect(await getFieldConfigIds(true)).toEqual([FieldConfigProperty.Mappings, FieldConfigProperty.Thresholds]);
+  });
+
+  it('registers no field config at all when the text.newFeatures flag is off', async () => {
+    expect(await getFieldConfigIds(false)).toEqual([]);
+  });
 });
