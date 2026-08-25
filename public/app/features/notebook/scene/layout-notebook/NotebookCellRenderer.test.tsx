@@ -30,9 +30,24 @@ function buildCodeCell() {
   });
 }
 
+function buildMarkdownCell(text = '') {
+  return new NotebookCellItem({
+    elementName: 'md-1',
+    source: 'user',
+    content: { kind: 'Markdown', spec: { text } },
+  });
+}
+
 /** A cell reaches its layout manager through the scene graph, so it has to actually be in one. */
 function buildCellInLayout() {
   const cell = buildCodeCell();
+  new NotebookLayoutManager({ cells: [cell] });
+
+  return cell;
+}
+
+function buildMarkdownCellInLayout(text?: string) {
+  const cell = buildMarkdownCell(text);
   new NotebookLayoutManager({ cells: [cell] });
 
   return cell;
@@ -66,5 +81,109 @@ describe('NotebookCellRenderer', () => {
     expect(() => orphan.onContentChange({ kind: 'Code', spec: { code: 'x', language: 'sql' } })).toThrow(
       /not inside a NotebookLayoutManager/
     );
+  });
+
+  describe('the "/" block-type menu', () => {
+    it('opens on a lone "/" and offers every block type', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
+    });
+
+    it('never opens for ordinary typing', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), 'Hello');
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    // The exact bug fixed earlier this session: the menu opening but never closing again once the "/"
+    // it was keyed off was gone.
+    it('closes once the "/" is backspaced away', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      await user.type(screen.getByLabelText('Markdown'), '{Backspace}');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    // useDismiss's default outside-press handling has to replicate what the hand-rolled listener it
+    // replaced used to do — dismiss on a press outside both the cell and the menu itself.
+    it('closes on an outside click', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(
+        <div>
+          <NotebookCellRenderer cell={cell} isEditing={true} />
+          <button>Outside</button>
+        </div>
+      );
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Outside' }));
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('closes on Escape', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    // useDismiss excludes presses on the reference element by default — the cell's own container,
+    // wired as the reference — so continuing to interact with the editor itself must not be mistaken
+    // for an outside press.
+    it('stays open for a press back inside the cell that opened it', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText('Markdown'));
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+    });
+
+    it('converts the cell and closes the menu when a type is picked', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+    });
+
+    // Picking a type that keeps content.kind the same (Paragraph, Heading) converts this cell in
+    // place rather than mounting a different one — the caret has nowhere else to go but back here.
+    it('asks for focus back after picking a type that keeps this cell mounted', async () => {
+      const cell = buildMarkdownCellInLayout();
+      const onFocusRequest = jest.fn();
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
+
+      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
+
+      expect(onFocusRequest).toHaveBeenCalledTimes(1);
+    });
   });
 });
