@@ -900,7 +900,6 @@
       "close": "Zamknij",
       "create": "Utwórz",
       "delete": "Usuń",
-      "deleting": "Usuwanie…",
       "edit": "Edytuj",
       "export": "Eksport",
       "export-all": "Eksportuj wszystkie",
@@ -2527,13 +2526,13 @@
         "route-count_other": "{{count}} trasy"
       },
       "delete": {
-        "confirm": "Usuń zasady",
-        "warning-1": "Usunięcie tego zbioru zasad dot. powiadomień jest nieodwracalne.",
-        "warning-2": "Na pewno chcesz usunąć te zasady?"
-      },
-      "delete-modal": {
-        "permanently-remove": "To działanie spowoduje trwałe usunięcie zasady dotyczącej powiadomień <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Usuń zasadę dotyczącą powiadomień"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtruj trasy, używając oddzielonej przecinkami listy dopasowań, np. <1>severity=critical, region=EMEA</1>",
       "generated-policies": "Zasady generowane automatycznie",
@@ -2580,7 +2579,11 @@
         "reset": "Zresetuj",
         "resetting": "Resetowanie…",
         "title-delete-notification-policy": "Usuń zasadę dotyczącą powiadomień",
-        "title-reset-notification-policy": "Zresetuj zasadę dotyczącą powiadomień"
+        "title-reset-notification-policy": "Zresetuj zasadę dotyczącą powiadomień",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Poczekaj, aż zaktualizujemy Twoje zasady powiadomień.",
@@ -3890,7 +3893,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Usuń zasady dotyczące powiadomień"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6098,6 +6101,9 @@
       "description": "Pionowa sekwencja paneli, tekstu i komórek kodu",
       "name": "Notatnik",
       "pill": "Opublikowany notatnik",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Czas"
     },
     "on-create-new-row": {
@@ -8858,6 +8864,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Brak dostępnych informacji o wolumenie dla bieżących zapytań i zakresu czasu."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Zwiń: {{name}}",
       "error": "Nie udało się wczytać wskaźników",
@@ -8870,6 +8881,7 @@
       "loading-values": "Wczytywanie wartości…",
       "no-metrics": "Nie znaleziono wskaźników",
       "search-placeholder": "Szukaj wskaźników",
+      "show-metric-details": "",
       "show-more": "Pokaż więcej",
       "show-more-metrics": "Pokaż więcej wskaźników",
       "show-more-values": "Pokaż więcej wartości",
@@ -11420,6 +11432,13 @@
       "show": "Pokaż",
       "switch": "Zalecenia są zgodne z wybranym rozwiązaniem",
       "switchSolution": "Przełącz rozwiązanie",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Zalecenia dotyczące Twojej platformy"
     },
     "solutions": {
@@ -11500,6 +11519,24 @@
         "stats-hosts_few": "",
         "stats-hosts_many": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_few": "",
+        "checks_many": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_few": "",
+        "failing_many": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -13090,7 +13127,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -13116,6 +13166,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13892,6 +13943,7 @@
       "behind-branch-text": "Ten zasób znajduje się za gałęzią w repozytorium {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Pozostali użytkownicy usługi Grafana w Twojej organizacji nadal będą widzieć ten zasób, dopóki ta gałąź nie zostanie scalona",
+      "move-from-branch": "",
       "not-saved": "Pozostali użytkownicy Grafany w Twojej organizacji nadal będą widzieć bieżącą wersję zapisaną w skonfigurowanej gałęzi domyślnej, dopóki ta gałąź nie zostanie scalona",
       "open-in-repo-button": "Otwórz w repozytorium {{repoType}}",
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
@@ -13903,6 +13955,7 @@
     "title-created-branch-in-repo": "Utworzono nowy zasób w gałęzi w repozytorium {{repoType}}.",
     "title-deleted-resource-in-branch": "Usunięto zasób w gałęzi w repozytorium {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Ten zasób został wczytany z gałęzi, która właśnie została przez ciebie utworzona w repozytorium {{repoType}}, i jest widoczny tylko dla ciebie",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Zaktualizowano zasób w gałęzi w repozytorium {{repoType}}."
   },
   "provisioning": {
@@ -16537,6 +16590,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

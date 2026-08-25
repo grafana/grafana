@@ -885,7 +885,6 @@
       "close": "閉じる",
       "create": "作成",
       "delete": "削除",
-      "deleting": "削除中…",
       "edit": "編集",
       "export": "エクスポート",
       "export-all": "すべてをエクスポート",
@@ -2479,13 +2478,10 @@
         "route-count_other": "{{count}}件のルート"
       },
       "delete": {
-        "confirm": "はい、ポリシーを削除します",
-        "warning-1": "この通知ポリシーを削除すると、完全に削除されます。",
-        "warning-2": "本当にこれを削除してもよろしいですか？"
-      },
-      "delete-modal": {
-        "permanently-remove": "この操作により、<1><{{routeName}}</1>通知ポリシーが完全に削除されます。",
-        "title-delete-notification-policy": "通知ポリシーを削除"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "ルートを、カンマで区切られたマッチャーのリストを使用してフィルタリングします。例：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動生成されたポリシー",
@@ -2529,7 +2525,8 @@
         "reset": "リセット",
         "resetting": "リセットしています...",
         "title-delete-notification-policy": "通知ポリシーを削除",
-        "title-reset-notification-policy": "通知ポリシーをリセット"
+        "title-reset-notification-policy": "通知ポリシーをリセット",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "通知ポリシーを更新している間、しばらくお待ちください。",
@@ -3803,7 +3800,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "通知ポリシーを削除"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -5978,6 +5975,9 @@
       "description": "パネル、テキスト、コードセルを縦に並べた構成",
       "name": "ノートブック",
       "pill": "公開済みノートブック",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "時刻"
     },
     "on-create-new-row": {
@@ -8684,6 +8684,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "現在のクエリと時間範囲で利用可能なログ量情報はありません。"
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}}を折りたたむ",
       "error": "メトリクスデータの読み込みに失敗しました",
@@ -8696,6 +8701,7 @@
       "loading-values": "値を読み込んでいます…",
       "no-metrics": "メトリクスが見つかりません",
       "search-placeholder": "メトリクスを検索",
+      "show-metric-details": "",
       "show-more": "さらに表示",
       "show-more-metrics": "メトリクスをさらに表示",
       "show-more-values": "値をさらに表示",
@@ -11198,6 +11204,13 @@
       "show": "表示",
       "switch": "選択したソリューションに応じて推奨事項が表示されます",
       "switchSolution": "ソリューションを切り替える",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "スタックの推奨事項"
     },
     "solutions": {
@@ -11242,6 +11255,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12821,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12822,6 +12860,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13592,6 +13631,7 @@
       "behind-branch-text": "このリソースは{{repoType}}内の該当ブランチよりも古いバージョンです。",
       "branch-targets": "",
       "delete-from-branch": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、このリソースが引き続き表示されます",
+      "move-from-branch": "",
       "not-saved": "このブランチがマージされるまで、組織内の他のGrafanaユーザーには、デフォルトブランチに保存された現在のバージョンが表示されます",
       "open-in-repo-button": "{{repoType}}で開く",
       "open-pull-request-in-repo": "{{repoType}}でプルリクエストを開く",
@@ -13603,6 +13643,7 @@
     "title-created-branch-in-repo": "{{repoType}}のブランチに新しいリソースが作成されました。",
     "title-deleted-resource-in-branch": "{{repoType}}のブランチでリソースが削除されました。",
     "title-loaded-pull-request-in-repo": "このリソースは{{repoType}}で作成したブランチから読み込まれており、あなたにのみ表示されます",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "{{repoType}}のブランチでリソースが更新されました。"
   },
   "provisioning": {
@@ -16147,6 +16188,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
