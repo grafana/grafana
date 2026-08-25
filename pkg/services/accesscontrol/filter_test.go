@@ -35,6 +35,38 @@ func TestManagedPermissionsActionSetsFilter(t *testing.T) {
 	assert.Contains(t, filter, "'folders:admin'")
 }
 
+func TestAccessControlQueryFields(t *testing.T) {
+	tests := []struct {
+		name      string
+		filter    accesscontrol.SQLFilter
+		accessAll bool
+		args      []any
+	}{
+		{
+			name:      "allows all records",
+			filter:    accesscontrol.SQLFilter{Where: " 1 = 1 ", Args: nil},
+			accessAll: true,
+		},
+		{
+			name:   "returns filtered record arguments",
+			filter: accesscontrol.SQLFilter{Where: " u.id IN (?, ?)", Args: []any{int64(1), int64(2)}},
+			args:   []any{int64(1), int64(2)},
+		},
+		{
+			name:   "denies all records",
+			filter: accesscontrol.SQLFilter{Where: " 1 = 0 "},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			accessAll, args := accesscontrol.AccessControlQueryFields(tt.filter)
+			require.Equal(t, tt.accessAll, accessAll)
+			require.Equal(t, tt.args, args)
+		})
+	}
+}
+
 type filterDatasourcesTestCase struct {
 	desc        string
 	sqlID       string

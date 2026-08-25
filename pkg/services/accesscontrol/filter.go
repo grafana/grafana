@@ -32,6 +32,12 @@ type SQLFilter struct {
 	Args  []any
 }
 
+// AccessControlQueryFields returns whether a SQL filter allows all records and
+// the arguments needed to apply the filter.
+func AccessControlQueryFields(filter SQLFilter) (bool, []any) {
+	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
+}
+
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 // Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
