@@ -65,6 +65,8 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Uses auto grid as the default layout for new dashboards */
+  GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
@@ -475,6 +477,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
+ * Uses auto grid as the default layout for new dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardAutoGridDefault`
+ * - default value: `true`
+ */
+export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardAutoGridDefault", true, options).value;
 };
 
 /**
