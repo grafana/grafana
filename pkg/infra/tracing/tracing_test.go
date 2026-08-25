@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -151,4 +152,28 @@ func TestStart(t *testing.T) {
 		require.Equal(t, spanCtx.TraceID(), childSpan.SpanContext().TraceID())
 		require.True(t, childSpan.SpanContext().IsValid())
 	})
+}
+
+// TestInitTracerProvider_FilterOperationalEndpointsToggle verifies the config
+// toggle actually gates the filter at the provider level: when enabled an
+// operational-endpoint server span is dropped, when disabled it is exported.
+func TestInitTracerProvider_FilterOperationalEndpointsToggle(t *testing.T) {
+	recordMetricsSpan := func(t *testing.T, filter bool) int {
+		t.Helper()
+		exp := tracetest.NewInMemoryExporter()
+		tp, err := initTracerProvider(exp, "grafana", "test", tracesdk.AlwaysSample(), filter)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+
+		_, span := tp.Tracer("test").Start(context.Background(), "GET",
+			trace.WithSpanKind(trace.SpanKindServer),
+			trace.WithAttributes(attribute.String("url.path", "/metrics")),
+		)
+		span.End()
+		require.NoError(t, tp.ForceFlush(context.Background()))
+		return len(exp.GetSpans())
+	}
+
+	assert.Equal(t, 0, recordMetricsSpan(t, true), "filter enabled should drop the /metrics span")
+	assert.Equal(t, 1, recordMetricsSpan(t, false), "filter disabled should export the /metrics span")
 }

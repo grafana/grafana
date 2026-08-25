@@ -163,11 +163,14 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 	if err != nil {
 		return nil, err
 	}
+	if ots.cfg.FilterOperationalEndpoints {
+		sampler = newInfraEndpointFilterSampler(sampler)
+	}
 
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
 		tracesdk.WithResource(res),
-		tracesdk.WithSampler(newInfraEndpointFilterSampler(sampler)),
+		tracesdk.WithSampler(sampler),
 	)
 
 	return tp, nil
@@ -192,7 +195,7 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.FilterOperationalEndpoints, ots.cfg.CustomAttribs...)
 }
 
 func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
@@ -215,7 +218,7 @@ func (ots *TracingService) initFileTracerProvider() (tracerProvider, error) {
 		return ots.disableFileExporter(err)
 	}
 
-	tp, err := initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+	tp, err := initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.FilterOperationalEndpoints, ots.cfg.CustomAttribs...)
 	if err != nil {
 		_ = exp.Shutdown(context.Background())
 		return ots.disableFileExporter(err)
@@ -257,7 +260,7 @@ func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 	}
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVersion string, sampler tracesdk.Sampler, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVersion string, sampler tracesdk.Sampler, filterOperationalEndpoints bool, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
@@ -273,13 +276,17 @@ func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVe
 		return nil, err
 	}
 
-	// The endpoint filter must sit outside ParentBased: ParentBased skips its
-	// root sampler when a span has a sampled parent, so a request arriving with
-	// a sampled traceparent would otherwise bypass the filter and still record
-	// operational-endpoint spans.
+	rootSampler := tracesdk.Sampler(tracesdk.ParentBased(sampler))
+	if filterOperationalEndpoints {
+		// The endpoint filter must sit outside ParentBased: ParentBased skips its
+		// root sampler when a span has a sampled parent, so a request arriving
+		// with a sampled traceparent would otherwise bypass the filter and still
+		// record operational-endpoint spans.
+		rootSampler = newInfraEndpointFilterSampler(rootSampler)
+	}
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
-		tracesdk.WithSampler(newInfraEndpointFilterSampler(tracesdk.ParentBased(sampler))),
+		tracesdk.WithSampler(rootSampler),
 		tracesdk.WithResource(res),
 	)
 	return tp, nil
