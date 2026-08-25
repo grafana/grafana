@@ -276,7 +276,7 @@ func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVe
 		return nil, err
 	}
 
-	var rootSampler tracesdk.Sampler = tracesdk.ParentBased(sampler)
+	rootSampler := tracesdk.ParentBased(sampler)
 	if filterOperationalEndpoints {
 		// The endpoint filter must sit outside ParentBased: ParentBased skips its
 		// root sampler when a span has a sampled parent, so a request arriving
