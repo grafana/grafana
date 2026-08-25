@@ -278,7 +278,7 @@ describe('kubernetesSolution CTA and offer', () => {
     mockAccessibleAppPage.mockResolvedValue(null);
     jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
 
-    await expect(kubernetesSolution().cta()).resolves.toBeNull();
+    await expect(kubernetesSolution(null).cta()).resolves.toBeNull();
   });
 
   it('offers the accessible setup flow after a definitive no-data result', async () => {

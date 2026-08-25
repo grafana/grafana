@@ -30,6 +30,28 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
   const status = needsAttention
     ? t('home.overview.status.attention', 'Needs attention')
     : t('home.overview.status.enabled', 'Enabled');
+  const ctaContent = ctaLoading ? (
+    <Skeleton width={120} height={24} />
+  ) : cta ? (
+    <LinkButton
+      href={cta.href}
+      fill="text"
+      size="sm"
+      icon="angle-right"
+      iconPlacement="right"
+      className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
+      onClick={() =>
+        ctaClicked({
+          surface: 'overview',
+          action: cta.action,
+          placement: 'card',
+          solution: solution.id,
+        })
+      }
+    >
+      <Text truncate>{cta.label}</Text>
+    </LinkButton>
+  ) : null;
 
   return (
     <Card noMargin className={styles.card}>
@@ -81,33 +103,7 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         )}
       </Card.Description>
 
-      {ctaLoading && (
-        <Card.Actions className={styles.actions}>
-          <Skeleton width={120} height={24} />
-        </Card.Actions>
-      )}
-      {!ctaLoading && cta && (
-        <Card.Actions className={styles.actions}>
-          <LinkButton
-            href={cta.href}
-            fill="text"
-            size="sm"
-            icon="angle-right"
-            iconPlacement="right"
-            className={cx(styles.textAction, isAttentionCta && styles.attentionAction)}
-            onClick={() =>
-              ctaClicked({
-                surface: 'overview',
-                action: cta.action,
-                placement: 'card',
-                solution: solution.id,
-              })
-            }
-          >
-            <Text truncate>{cta.label}</Text>
-          </LinkButton>
-        </Card.Actions>
-      )}
+      {ctaContent && <Card.Actions className={styles.actions}>{ctaContent}</Card.Actions>}
       {solution.id === 'kubernetes' && datasource && (
         <Card.SecondaryActions>
           <KubernetesFilterActions datasource={datasource} attention={isAttentionCta} />
