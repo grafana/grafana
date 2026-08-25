@@ -1478,6 +1478,22 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "teamHttpHeadersFromAppPlatformST",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "teamHttpHeadersFromAppPlatformMT",
+			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "teamLBACApiReadFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
@@ -3287,6 +3303,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 			HideFromDocs: true,
+		},
+		{
+			Name:        "grafana.dashboardAutoGridDefault",
+			Description: "Uses auto grid as the default layout for new dashboards",
+			Stage:       FeatureStageGeneralAvailability,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

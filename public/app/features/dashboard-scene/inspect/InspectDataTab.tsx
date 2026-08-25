@@ -51,7 +51,13 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   const { options } = model.useState();
   const panel = model.state.panelRef.resolve();
   const dataProvider = sceneGraph.getData(panel);
-  const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+
+  // Subscribed whether or not its frames are the ones on screen: what the panel's plugin contributes
+  // can change without the query re-running — a plugin finishing its load, a visualization switch —
+  // and that is what decides whether the toggle is offered at all.
+  const { data: transformedData } = dataProvider.useState();
+  const { data: sourceData } = getQuerySourceOf(dataProvider).useState();
+  const data = options.withTransforms ? transformedData : sourceData;
   const timeRange = sceneGraph.getTimeRange(panel);
   const useTableNG = useFlagTableInspectDataTableNG();
 
@@ -97,8 +103,9 @@ function hasTransformations(dataProvider: SceneDataProvider) {
   return prepend.length > 0 || append.length > 0;
 }
 
-function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
-  if (!withTransforms && dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
+/** The query result, before this panel's transformations: the transformer's source, when it has one. */
+function getQuerySourceOf(dataProvider: SceneDataProvider): SceneDataProvider {
+  if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
     return dataProvider.state.$data;
   }
 

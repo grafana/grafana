@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { cleanup, render, screen } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState, type QueryResultMeta, standardTransformersRegistry } from '@grafana/data';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -77,7 +77,29 @@ describe('InspectDataTab', () => {
   });
 
   afterEach(() => {
+    // Ahead of resetting the flags, which reconfigures the OpenFeature provider: the tab reads a
+    // flag through it, and the status update that reaches a still-mounted one lands outside `act`.
+    cleanup();
     setTestFlags({});
+  });
+
+  it('offers the transformations toggle when the plugin starts transforming after the tab rendered', async () => {
+    registerPlugin('plain-table');
+    registerPlugin('logs-table', (p) => p.setSystemTransformations(() => [extractLabels]));
+
+    const { panel, tab } = buildTab({ pluginId: 'plain-table' });
+    activateFullSceneTree(panel);
+
+    const { user } = render(<tab.Component model={tab} />);
+    await user.click(screen.getByText('Data options'));
+    expect(screen.queryByText('Apply panel transformations')).not.toBeInTheDocument();
+
+    // A visualization switch, like a plugin finishing its load, changes what the supplier answers
+    // without the query re-running. Only the transformer sees it, so a tab watching the query result
+    // alone would go on offering the view it already had.
+    panel.setState({ pluginId: 'logs-table' });
+
+    expect(await screen.findByText('Apply panel transformations')).toBeInTheDocument();
   });
 
   it('offers the transformations toggle when only the plugin registered transformations', async () => {

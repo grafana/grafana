@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -98,11 +98,11 @@ const organize: DataTransformerConfig = { id: 'organize', options: {} };
  * Unlike {@link createModelMock}, this activates a real scene so the plugin's supplier is registered
  * and the real resolver answers, rather than stubbing what the resolver would have returned.
  */
-function createModelWithActivatedPlugin(pluginId: string) {
+function createModelWithActivatedPlugin(pluginId: string, userTransformations: DataTransformerConfig[] = [organize]) {
   // Needs a source to activate against; the tab reads the raw frames from the query runner below.
   const transformer = new SceneDataTransformer({
     $data: new SceneDataNode({ data: rawData }),
-    transformations: [organize],
+    transformations: userTransformations,
     $behaviors: [new PanelPluginTransformationsBehaviour()],
   });
   // Activating parents the transformer and is what registers the plugin's supplier.
@@ -305,6 +305,40 @@ describe('PanelDataTransformationsTab', () => {
         expect(screen.getByText('labels')).toBeInTheDocument();
       });
       expect(screen.queryByText('level')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('feeding the drawer the frames a new transformation will receive', () => {
+    beforeEach(() => {
+      mockSystemTransformationPlugins.clear();
+      setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('judges applicability without the plugin appended transformations', async () => {
+      // Appended, so it runs after every user transformation: a row added from the drawer is placed
+      // ahead of it and never receives the `level` field it produces.
+      registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => ({ append: [extractLabels] })));
+
+      const model = createModelWithActivatedPlugin('logs-table', [
+        { id: 'organize', options: { excludeByName: { line: true } } },
+      ]);
+      render(<PanelDataTransformationsTabRendered model={model} />);
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Transforms.addTransformationButton));
+      const card = await screen.findByTestId(selectors.components.TransformTab.newTransform('Grouping to matrix'));
+
+      // Two fields: the query's three, less the one the user's organize drops. The panel renders
+      // three — `extractFields` puts `level` back — and judging against those would offer this
+      // transformation as applicable to a row that will only ever see two.
+      await waitFor(() =>
+        expect(within(card).getByTestId(selectors.components.Transforms.applicabilityInfo)).toHaveAccessibleName(
+          'Grouping to matrix requires at least 3 fields to work. Currently there are 2 fields.'
+        )
+      );
     });
   });
 

@@ -890,7 +890,6 @@
       "close": "Sluiten",
       "create": "Aanmaken",
       "delete": "Verwijderen",
-      "deleting": "Bezig met verwijderen...",
       "edit": "Bewerken",
       "export": "Exporteren",
       "export-all": "Alles exporteren",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} routes"
       },
       "delete": {
-        "confirm": "Ja, beleid verwijderen",
-        "warning-1": "Als je dit meldingsbeleid verwijdert, wordt dit permanent verwijderd.",
-        "warning-2": "Weet je zeker dat je dit beleid wil verwijderen?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Met deze actie wordt het meldingsbeleid <1>{{routeName}} </1> permanent verwijderd.",
-        "title-delete-notification-policy": "Meldingsbeleid verwijderen"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filter routes met behulp van een door komma's gescheiden lijst met matchers, bijv.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatisch gegenereerd beleid",
@@ -2546,7 +2543,9 @@
         "reset": "Resetten",
         "resetting": "Resetten ...",
         "title-delete-notification-policy": "Meldingsbeleid verwijderen",
-        "title-reset-notification-policy": "Meldingsbeleid resetten"
+        "title-reset-notification-policy": "Meldingsbeleid resetten",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Een ogenblik geduld terwijl we je meldingsbeleid bijwerken.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Meldingsbeleid verwijderen"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Een verticale reeks panelen, tekst en codecellen",
       "name": "Notebook",
       "pill": "Gepubliceerde notebook",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Tijd"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Geen volume-informatie beschikbaar voor de huidige query's en het huidige tijdbereik."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} samenvouwen",
       "error": "Metrics laden mislukt",
@@ -8754,6 +8761,7 @@
       "loading-values": "Waarden aan het laden...",
       "no-metrics": "Geen metrics gevonden",
       "search-placeholder": "Metrics zoeken",
+      "show-metric-details": "",
       "show-more": "Meer weergeven",
       "show-more-metrics": "Meer metrics weergeven",
       "show-more-values": "Meer waarden weergeven",
@@ -11272,6 +11280,13 @@
       "show": "Tonen",
       "switch": "Aanbevelingen volgen de geselecteerde oplossing",
       "switchSolution": "Oplossing wisselen",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Aanbevelingen voor je stack"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Deze bron bevindt zich achter de tak in {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "De rest van de Grafana-gebruikers in je organisatie ziet deze bron nog steeds totdat deze branch is samengevoegd",
+      "move-from-branch": "",
       "not-saved": "De rest van de Grafana-gebruikers in je organisatie ziet nog steeds de huidige versie die is opgeslagen in de geconfigureerde standaardtak totdat deze tak is samengevoegd",
       "open-in-repo-button": "Openen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-verzoek openen in {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "Er is een nieuwe bron gemaakt in een tak in {{repoType}}.",
     "title-deleted-resource-in-branch": "Er is een bron verwijderd in een branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Er is een bron bijgewerkt in een branch in {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
