@@ -28,7 +28,7 @@ export interface UseAutoSyncConfigurationResult {
   selectedUid: string;
   setSelectedUid: (uid: string) => void;
   /** Persists the given UID (or the current selection). Resolves to true on success. */
-  save: (uidOverride?: string) => Promise<boolean>;
+  save: (uidOverride?: string, opts?: { silent?: boolean }) => Promise<boolean>;
   /** Clears the synced UID. Resolves to true on success. */
   disableSync: () => Promise<boolean>;
   isPending: boolean;
@@ -102,17 +102,19 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   const notify = useAppNotification();
 
-  const persist = async (uid: string): Promise<boolean> => {
+  const persist = async (uid: string, opts?: { silent?: boolean }): Promise<boolean> => {
     try {
       await updateConfiguration({
         external_alertmanager_uid: uid,
         notificationOptions: { showErrorAlert: false },
       }).unwrap();
-      notify.success(
-        uid
-          ? t('alerting.settings.auto-sync.save-success', 'Mimir Alertmanager auto-sync enabled')
-          : t('alerting.settings.auto-sync.disable-success', 'Mimir Alertmanager auto-sync disabled')
-      );
+      if (!opts?.silent) {
+        notify.success(
+          uid
+            ? t('alerting.settings.auto-sync.save-success', 'Mimir Alertmanager auto-sync enabled')
+            : t('alerting.settings.auto-sync.disable-success', 'Mimir Alertmanager auto-sync disabled')
+        );
+      }
       setSelectedOverride(null);
       return true;
     } catch (err) {
@@ -135,7 +137,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     mimirCortexDatasources,
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
-    save: (uidOverride?: string) => persist(uidOverride ?? selectedUid),
+    save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),
     // Backend convention: empty string clears the configured UID.
     disableSync: () => persist(''),
     isPending: updateConfigurationState.isLoading,
