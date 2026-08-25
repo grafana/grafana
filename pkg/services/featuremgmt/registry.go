@@ -3287,6 +3287,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.adHocTransformations",
+			Description: "Let panels author user-editable transformations",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "tracesDrilldown.useValueTypeFiltering",
 			Description:  "Enables value type filtering in Traces Drilldown",
 			Stage:        FeatureStageExperimental,
