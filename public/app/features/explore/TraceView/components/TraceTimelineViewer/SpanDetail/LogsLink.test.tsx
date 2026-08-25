@@ -9,6 +9,7 @@ import {
   EventBusSrv,
   type LinkModel,
   PluginExtensionPoints,
+  PluginExtensionTypes,
   store,
   toDataFrame,
 } from '@grafana/data';
@@ -645,8 +646,12 @@ describe('LogsLinkButton', () => {
       isLoading: false,
       links: [
         {
+          id: '',
           pluginId: 'grafana-lokiexplore-app',
           path: '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid',
+          type: PluginExtensionTypes.link,
+          title: '',
+          description: '',
         },
       ],
     });
@@ -672,9 +677,12 @@ describe('LogsLinkButton', () => {
   });
 
   it('uses the Open in Logs Drilldown extension path on a Traces Drilldown URL', async () => {
-    jest
-      .spyOn(locationService, 'getLocation')
-      .mockReturnValue({ pathname: '/a/grafana-exploretraces-app/explore' } as Location);
+    jest.spyOn(locationService, 'getLocation').mockReturnValue({
+      pathname: '/a/grafana-exploretraces-app/explore',
+      search: '',
+      state: undefined,
+      hash: '',
+    });
     mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: LokiQuery = {
       refId: 'A',
@@ -685,8 +693,12 @@ describe('LogsLinkButton', () => {
       isLoading: false,
       links: [
         {
+          id: '',
           pluginId: 'grafana-lokiexplore-app',
           path: '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid',
+          type: PluginExtensionTypes.link,
+          title: '',
+          description: '',
         },
       ],
     });
