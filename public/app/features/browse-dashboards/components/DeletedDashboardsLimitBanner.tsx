@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardRecentlyDeletedViaTrash } from '@grafana/runtime/internal';
 import { Alert } from '@grafana/ui';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function DeletedDashboardsLimitBanner({ resultToken }: Props) {
-  const viaTrash = Boolean(config.featureToggles.recentlyDeletedViaTrash);
+  const viaTrash = useFlagDashboardRecentlyDeletedViaTrash();
   const { value: data } = useAsync(
     () => (viaTrash ? Promise.resolve(undefined) : deletedDashboardsCache.getAsTable()),
     [resultToken, viaTrash]

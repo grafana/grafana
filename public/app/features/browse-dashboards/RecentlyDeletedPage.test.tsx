@@ -3,8 +3,10 @@ import type AutoSizer from 'react-virtualized-auto-sizer';
 import { render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { store } from '@grafana/data';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
 import { type SearchState, SearchLayout } from 'app/features/search/types';
@@ -171,12 +173,17 @@ describe('RecentlyDeletedPage when trash is unavailable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetAsTable.mockResolvedValue(EMPTY_TABLE_RESPONSE);
-    config.featureToggles.recentlyDeletedViaTrash = true;
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: true });
   });
 
-  afterEach(() => {
-    config.featureToggles.recentlyDeletedViaTrash = false;
+  afterEach(async () => {
     mockIsTrashUnavailable.mockReturnValue(false);
+    // setTestFlags fires OpenFeature events that update React state; wrap in act() since the
+    // component may still be mounted when this runs (RTL cleanup is a separate afterEach).
+    // Only this flag is reset, so other suites sharing the worker keep theirs.
+    await act(async () => {
+      setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
+    });
   });
 
   it('replaces the empty state, so the page does not also claim nothing was deleted', async () => {

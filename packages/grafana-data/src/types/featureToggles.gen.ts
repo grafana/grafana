@@ -1272,11 +1272,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryDetail?: boolean;
   /**
-  * Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser
-  * @default false
-  */
-  recentlyDeletedViaTrash?: boolean;
-  /**
   * Whether to use the new React 19 runtime
   * @default true
   */

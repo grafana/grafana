@@ -4,7 +4,7 @@ import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagDashboardRecentlyDeletedViaTrash } from '@grafana/runtime/internal';
 import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
@@ -29,7 +29,7 @@ const RecentlyDeletedPage = memo(() => {
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
 
-  const viaTrash = Boolean(config.featureToggles.recentlyDeletedViaTrash);
+  const viaTrash = useFlagDashboardRecentlyDeletedViaTrash();
   const trashUnavailable = viaTrash && deletedDashboardsCache.isTrashUnavailable();
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();

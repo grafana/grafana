@@ -1,4 +1,5 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { iamAPIv0alpha1, type Display, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import { AnnoKeyUpdatedBy, EMPTY_TABLE_RESPONSE } from 'app/features/apiserver/types';
 import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
@@ -684,11 +685,11 @@ describe('DeletedDashboardsCache', () => {
   });
 });
 
-describe('deletedDashboardsCache with recentlyDeletedViaTrash', () => {
+describe('deletedDashboardsCache with the trash flag on', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     deletedDashboardsCache.clear();
-    config.featureToggles.recentlyDeletedViaTrash = true;
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: true });
     mockInitiate.mockReturnValue('initiate-thunk');
     mockDispatch.mockReturnValue(
       mockSubscription({
@@ -698,7 +699,7 @@ describe('deletedDashboardsCache with recentlyDeletedViaTrash', () => {
   });
 
   afterEach(() => {
-    config.featureToggles.recentlyDeletedViaTrash = false;
+    setTestFlags({ [FlagKeys.DashboardRecentlyDeletedViaTrash]: false });
     deletedDashboardsCache.clear();
   });
 

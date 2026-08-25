@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
 import {
   AnnoKeyFolder,
@@ -61,8 +61,9 @@ const TRASH_SORT_FIELDS: Record<string, SortField> = {
   'deletedby-desc': { field: TRASH_FIELD_DELETED_BY, direction: 'desc' },
 };
 
+// Evaluated per call rather than held: the flag's value can change under a running page.
 function isTrashEnabled(): boolean {
-  return Boolean(config.featureToggles.recentlyDeletedViaTrash);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, false);
 }
 
 /** Builds the request body for one page of a Recently deleted query. */
