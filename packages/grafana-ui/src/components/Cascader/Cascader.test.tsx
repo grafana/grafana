@@ -1,10 +1,9 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Cascader, type CascaderOption, type CascaderProps } from './Cascader';
+import { Cascader } from './Cascader';
 
 const options = [
   {
@@ -31,63 +30,37 @@ const options = [
   },
 ];
 
-const CascaderWithOptionsStateUpdate = (props: Omit<CascaderProps, 'options' | 'theme'>) => {
-  const [updatedOptions, setOptions] = useState<CascaderOption[]>([
-    {
-      label: 'Initial state option',
-      value: 'initial',
-    },
-  ]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => setOptions(options), 1000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  return <Cascader options={updatedOptions} {...props} />;
-};
+const initialOptions = [{ label: 'Initial state option', value: 'initial' }];
 
 describe('Cascader', () => {
   const placeholder = 'cascader-placeholder';
 
-  describe('options from state change', () => {
-    let user: ReturnType<typeof userEvent.setup>;
-
-    beforeEach(() => {
-      jest.useFakeTimers();
-      // Need to use delay: null here to work with fakeTimers
-      // see https://github.com/testing-library/user-event/issues/833
-      user = userEvent.setup({ delay: null });
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
+  describe('options updates', () => {
     it('displays updated options', async () => {
-      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
+      const onSelect = jest.fn();
+      const { rerender } = render(
+        <Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />
+      );
 
-      await user.click(screen.getByPlaceholderText(placeholder));
+      await userEvent.click(screen.getByPlaceholderText(placeholder));
 
       expect(await screen.findByText('Initial state option')).toBeInTheDocument();
       expect(screen.queryByText('First')).not.toBeInTheDocument();
 
-      await act(async () => {
-        jest.runAllTimers();
-      });
+      rerender(<Cascader options={options} placeholder={placeholder} onSelect={onSelect} />);
 
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(await screen.findByText('First')).toBeInTheDocument();
     });
 
     it('filters updated results when searching', async () => {
-      render(<CascaderWithOptionsStateUpdate placeholder={placeholder} onSelect={jest.fn()} />);
+      const onSelect = jest.fn();
+      const { rerender } = render(
+        <Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />
+      );
+      rerender(<Cascader options={options} placeholder={placeholder} onSelect={onSelect} />);
 
-      await act(async () => {
-        jest.runAllTimers();
-      });
-
-      await user.type(screen.getByPlaceholderText(placeholder), 'Third');
+      await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
       expect(await screen.findByText('First / Third')).toBeInTheDocument();
     });
