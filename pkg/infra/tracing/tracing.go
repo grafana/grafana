@@ -167,7 +167,7 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
 		tracesdk.WithResource(res),
-		tracesdk.WithSampler(sampler),
+		tracesdk.WithSampler(newInfraEndpointFilterSampler(sampler)),
 	)
 
 	return tp, nil
@@ -234,20 +234,6 @@ func (ots *TracingService) disableFileExporter(err error) (tracerProvider, error
 }
 
 func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
-	base, err := ots.initBaseSampler()
-	if err != nil {
-		return nil, err
-	}
-	// Drop spans for high-frequency operational endpoints (profiling, health,
-	// metrics) regardless of the configured sampler. These carry no diagnostic
-	// value and distort latency signals — /debug/pprof/profile in particular
-	// intentionally blocks for its sample window (e.g. seconds=14), which would
-	// otherwise surface as a multi-second server span and trip latency-based
-	// tail sampling.
-	return newInfraEndpointFilterSampler(base), nil
-}
-
-func (ots *TracingService) initBaseSampler() (tracesdk.Sampler, error) {
 	switch ots.cfg.Sampler {
 	case "const", "":
 		if ots.cfg.SamplerParam >= 1 {
@@ -287,9 +273,13 @@ func initTracerProvider(exp tracesdk.SpanExporter, serviceName string, serviceVe
 		return nil, err
 	}
 
+	// The endpoint filter must sit outside ParentBased: ParentBased skips its
+	// root sampler when a span has a sampled parent, so a request arriving with
+	// a sampled traceparent would otherwise bypass the filter and still record
+	// operational-endpoint spans.
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
-		tracesdk.WithSampler(tracesdk.ParentBased(sampler)),
+		tracesdk.WithSampler(newInfraEndpointFilterSampler(tracesdk.ParentBased(sampler))),
 		tracesdk.WithResource(res),
 	)
 	return tp, nil
@@ -467,19 +457,27 @@ var untracedServerPathPrefixes = []string{
 }
 
 // pathAttributeKeys are the span attributes that may carry the request path.
-// Grafana runs otelhttp with duplicated semconv, so both the legacy http.target
-// and the stable url.path can be present at span start.
+// Different server middlewares emit different keys: the k8s apiserver's otelhttp
+// runs with duplicated semconv (http.target + url.path), while Grafana's own
+// RequestTracing middleware sets http.url. Any of them may hold a query string.
 var pathAttributeKeys = map[attribute.Key]struct{}{
-	semconv.HTTPTargetKey:       {}, // "http.target" (may include a query string)
+	semconv.HTTPTargetKey:       {}, // "http.target"
+	semconv.HTTPURLKey:          {}, // "http.url" (grafana RequestTracing middleware)
 	attribute.Key("url.path"):   {},
 	attribute.Key("http.route"): {},
 }
 
-// infraEndpointFilterSampler drops server spans for operational endpoints
-// (profiling, health, metrics) and delegates every other decision to the
-// configured sampler. Filtering at the sampler covers all otelhttp layers at
-// once — including the API server's nested handler-chain tracing — so a single
-// hook keeps these endpoints out of traces process-wide.
+// infraEndpointFilterSampler drops server spans for high-frequency operational
+// endpoints (profiling, health, metrics) and delegates every other decision to
+// the wrapped sampler. These spans carry no diagnostic value and distort latency
+// signals — /debug/pprof/profile in particular intentionally blocks for its
+// sample window (e.g. seconds=14), which would otherwise surface as a
+// multi-second server span and trip latency-based tail sampling.
+//
+// Filtering at the sampler covers all otelhttp/tracing layers at once —
+// including the API server's nested handler-chain tracing — so a single hook
+// keeps these endpoints out of traces process-wide. It must be composed as the
+// outermost sampler so it also drops spans that arrive with a sampled parent.
 type infraEndpointFilterSampler struct {
 	inner tracesdk.Sampler
 }
@@ -515,7 +513,9 @@ func isUntracedServerPath(attrs []attribute.KeyValue) bool {
 			return true
 		}
 		for _, prefix := range untracedServerPathPrefixes {
-			if strings.HasPrefix(path, prefix) {
+			// Require a path boundary so /debug/pprof matches /debug/pprof and
+			// its descendants, but not e.g. /debug/pprofiler.
+			if path == prefix || strings.HasPrefix(path, prefix+"/") {
 				return true
 			}
 		}
