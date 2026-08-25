@@ -2922,6 +2922,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardAutoGridDefault",
+        "resourceVersion": "1786614347930",
+        "creationTimestamp": "2026-08-13T09:45:47Z"
+      },
+      "spec": {
+        "description": "Uses auto grid as the default layout for new dashboards",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardGlobalVariables",
         "resourceVersion": "1785434853665",
         "creationTimestamp": "2026-07-30T18:07:33Z"
