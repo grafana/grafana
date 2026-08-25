@@ -482,6 +482,68 @@ func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
 	})
 }
 
+// TestGetAPIResourceName_ExactKeyMatch verifies that when the requested resource is itself
+// an API-resource key, that key is returned directly (even if other API resources in the group
+// share the same scope resource, e.g. dashboards vs dashboards/annotations).
+func TestGetAPIResourceName_ExactKeyMatch(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	name, ok := reg.GetAPIResourceName("dashboard.grafana.app", "dashboards")
+	require.True(t, ok)
+	assert.Equal(t, "dashboards", name, "an exact key match must win over the shared-scope fallback")
+}
+
+// TestGetAPIResourceName_NotFound covers the unknown-group and unknown-resource paths.
+func TestGetAPIResourceName_NotFound(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	_, ok := reg.GetAPIResourceName("does.not.exist.grafana.app", "dashboards")
+	assert.False(t, ok, "unknown group must return false")
+
+	_, ok = reg.GetAPIResourceName("dashboard.grafana.app", "no-such-resource")
+	assert.False(t, ok, "unknown scope resource must return false")
+}
+
+// TestGetAPIResourceName_SharedScopeResourceIsDeterministic is the regression test for the
+// non-determinism fix. Several API resources can share one legacy scope resource; the fallback
+// must return the same (sorted-first) API resource name regardless of Go's map iteration order.
+func TestGetAPIResourceName_SharedScopeResourceIsDeterministic(t *testing.T) {
+	// Real config: rules.alerting.grafana.app has three API resources (alertrules,
+	// recordingrules, rulesequences) that all map to the "alert.rules" scope resource.
+	// Sorted order makes "alertrules" the deterministic winner.
+	t.Run("real alert.rules mapping", func(t *testing.T) {
+		reg := NewMapperRegistry()
+		// Repeat on the same registry: map iteration order is re-randomized per range,
+		// so a non-deterministic implementation would eventually return a different key.
+		for i := 0; i < 100; i++ {
+			name, ok := reg.GetAPIResourceName("rules.alerting.grafana.app", "alert.rules")
+			require.True(t, ok)
+			assert.Equal(t, "alertrules", name, "shared scope resource must resolve deterministically to the sorted-first key")
+		}
+	})
+
+	// Hermetic case: three keys in shuffled-looking order, all sharing one scope resource.
+	// The sorted-first key ("aaa") must always be returned, and rebuilding the mapper
+	// (fresh map each time) must not change the result.
+	t.Run("synthetic shared scope resource", func(t *testing.T) {
+		const group = "example.grafana.app"
+		const sharedScope = "shared"
+		for i := 0; i < 100; i++ {
+			m := mapper{
+				group: {
+					"zzz": newResourceTranslation(sharedScope, "uid", false, nil),
+					"aaa": newResourceTranslation(sharedScope, "uid", false, nil),
+					"mmm": newResourceTranslation(sharedScope, "uid", false, nil),
+				},
+			}
+			var reg MapperRegistry = m
+			name, ok := reg.GetAPIResourceName(group, sharedScope)
+			require.True(t, ok)
+			assert.Equal(t, "aaa", name, "must return the sorted-first API resource key")
+		}
+	})
+}
+
 func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 	assert.Nil(t, reg.ResourceMappings("unknown.grafana.app"))
