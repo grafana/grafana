@@ -70,8 +70,9 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 	t.Run("should override FSFrontendSettings fields from settings service", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey:     "base-write-key",
-				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
+				RudderstackWriteKey:           "base-write-key",
+				RudderstackDataPlaneUrl:       "https://base-dataplane.example.com",
+				PluginImportTelemetryPackages: []string{"base-router"},
 			},
 		}
 
@@ -79,11 +80,13 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
+		assert.Equal(t, []string{"tenant-router", "tenant-history"}, config.PluginImportTelemetryPackages)
 	})
 
 	t.Run("should override allow_embedding_hosts from settings service", func(t *testing.T) {
@@ -157,11 +160,13 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 	t.Run("with full frontend settings enabled, applies rudderstack overrides to FullFrontendSettings", func(t *testing.T) {
 		config := FSRequestConfig{
 			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey: "legacy-write-key",
+				RudderstackWriteKey:           "legacy-write-key",
+				PluginImportTelemetryPackages: []string{"legacy-router"},
 			},
 			FullFrontendSettings: &dtos.FrontendSettingsDTO{
-				RudderstackWriteKey:     "base-write-key",
-				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
+				RudderstackWriteKey:           "base-write-key",
+				RudderstackDataPlaneUrl:       "https://base-dataplane.example.com",
+				PluginImportTelemetryPackages: []string{"base-router"},
 			},
 		}
 
@@ -169,15 +174,18 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), true)
 
 		// Overrides land on the full settings object when the flag is enabled.
 		assert.Equal(t, "tenant-write-key", config.FullFrontendSettings.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.FullFrontendSettings.RudderstackDataPlaneUrl)
+		assert.Equal(t, []string{"tenant-router", "tenant-history"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 
 		// The legacy FSFrontendSettings field is left untouched when the flag is enabled.
 		assert.Equal(t, "legacy-write-key", config.RudderstackWriteKey)
+		assert.Equal(t, []string{"legacy-router"}, config.PluginImportTelemetryPackages)
 	})
 
 	// When the flag is enabled the middleware always builds FullFrontendSettings before
@@ -203,6 +211,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 	newCfg := func() *setting.Cfg {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com"
+		cfg.PluginImportTelemetryPackages = []string{"react-router-dom", "react-router"}
 		return cfg
 	}
 
@@ -222,6 +231,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Nil(t, config.FullFrontendSettings)
 		// The legacy per-request settings are still populated.
 		assert.Equal(t, "https://grafana.example.com", config.AppURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.PluginImportTelemetryPackages)
 	})
 
 	t.Run("builds full frontend settings when flag enabled", func(t *testing.T) {
@@ -242,5 +252,6 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com", config.FullFrontendSettings.AppUrl)
 		// The plugins CDN base URL is sourced from the plugins CDN service.
 		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 	})
 }

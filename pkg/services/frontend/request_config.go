@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // FSRequestConfig contains all configuration that can be overridden on a per-request basis.
@@ -41,6 +42,7 @@ type FSRequestConfig struct {
 func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
 	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		PluginImportTelemetryPackages:        cfg.PluginImportTelemetryPackages,
 		AnonymousEnabled:                     cfg.Anonymous.Enabled,
 		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
@@ -179,6 +181,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.FullFrontendSettings.RudderstackV3SdkUrl, logger)
 		applyString(settings, "analytics", "rudderstack_config_url", &c.FullFrontendSettings.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.FullFrontendSettings.RudderstackIntegrationsUrl, logger)
+		applyStringList(settings, "analytics", "plugin_import_telemetry_packages", &c.FullFrontendSettings.PluginImportTelemetryPackages, logger)
 	} else {
 		applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
 		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
@@ -186,6 +189,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
 		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
 		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+		applyStringList(settings, "analytics", "plugin_import_telemetry_packages", &c.PluginImportTelemetryPackages, logger)
 	}
 }
 
@@ -217,6 +221,17 @@ func applyString(settings *ini.File, sectionName, keyName string, target *string
 func applyStringSlice(settings *ini.File, sectionName, keyName string, target *[]string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
 		*target = key.Strings(" ")
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+func applyStringList(settings *ini.File, sectionName, keyName string, target *[]string, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = util.SplitString(key.String())
 
 		logger.Debug("applying request config override",
 			"section", sectionName,
