@@ -432,12 +432,12 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 	}
 	changes := make([]permissionChange, 0, len(permissions))
 	for _, perm := range permissions {
-		name, err := a.getPermissionName(ctx, perm)
+		kind, name, err := a.getPermissionSubject(ctx, c.GetOrgID(), perm)
 		if err != nil {
-			return fmt.Errorf("failed to get permission name: %w", err)
+			return fmt.Errorf("failed to get permission subject: %w", err)
 		}
 		changes = append(changes, permissionChange{
-			kind:       iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm)),
+			kind:       kind,
 			name:       name,
 			permission: perm.Permission,
 		})
@@ -690,27 +690,35 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 	return nil
 }
 
-func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) (string, error) {
+func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm accesscontrol.SetResourcePermissionCommand) (iamv0.ResourcePermissionSpecPermissionKind, string, error) {
+	kind := iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm))
 	if perm.UserID != 0 {
-		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		userDetails, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			OrgID:  orgID,
+			UserID: perm.UserID,
+		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
+			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
 		}
-		return userDetails.UID, nil
+		if userDetails.IsServiceAccount {
+			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+		}
+		return kind, userDetails.UserUID, nil
 	}
 	if perm.TeamID != 0 {
 		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID: perm.TeamID,
+			OrgID: orgID,
+			ID:    perm.TeamID,
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
+			return "", "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
 		}
-		return teamDetails.UID, nil
+		return kind, teamDetails.UID, nil
 	}
 	if perm.BuiltinRole != "" {
-		return perm.BuiltinRole, nil
+		return kind, perm.BuiltinRole, nil
 	}
-	return "", fmt.Errorf("no valid permission subject found")
+	return "", "", fmt.Errorf("no valid permission subject found")
 }
 
 // Teams-specific redirect functions reading and writing Team.Spec.Members.
