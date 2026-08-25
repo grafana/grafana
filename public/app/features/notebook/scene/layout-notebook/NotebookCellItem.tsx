@@ -4,6 +4,7 @@ import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/typ
 import { type CellContentKind } from '../../types';
 
 import { type NotebookLayoutManager } from './NotebookLayoutManager';
+import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { isNotebookLayoutManager } from './isNotebookLayoutManager';
 
 export interface NotebookCellItemState extends SceneObjectState {
@@ -42,6 +43,15 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
    */
   public onContentChange(content: CellContentKind): void {
     this.getParentLayout().setCellContent(this, content);
+  }
+
+  /**
+   * Converts this cell's content to `type` in place — the trailing-slot markdown cell's own "/" menu
+   * (see NotebookCellRenderer) uses this instead of onContentChange directly, since picking a type is a
+   * different intent than typing text, and the manager owns contentForBlockType's starter text/markers.
+   */
+  public onConvert(type: NotebookBlockType): void {
+    this.getParentLayout().convertCell(this, type);
   }
 
   /**
