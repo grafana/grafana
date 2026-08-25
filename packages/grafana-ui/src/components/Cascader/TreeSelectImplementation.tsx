@@ -72,7 +72,6 @@ interface SelectedValue {
 }
 
 export interface TreeSelectBaseProps extends TreeSelectProps {
-  inputRole?: 'combobox' | 'textbox';
   changeOnSelect?: boolean;
   hideActiveLevelLabel?: boolean;
   valuePath?: string[];
@@ -221,7 +220,6 @@ export const TreeSelectBase = memo(
     disabled,
     id,
     isClearable,
-    inputRole = 'combobox',
     changeOnSelect = false,
     hideActiveLevelLabel = false,
     valuePath,
@@ -340,7 +338,7 @@ export const TreeSelectBase = memo(
             })}
             ref={refs.setReference}
             id={id}
-            role={inputRole}
+            role="combobox"
             aria-autocomplete="list"
             aria-controls={menuId}
             aria-expanded={open}
