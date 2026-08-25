@@ -1,7 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
-import { CoreApp, type DataQueryRequest, dateTime, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  type DataQueryRequest,
+  type DataSourceApi,
+  dateTime,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
@@ -583,7 +591,9 @@ describe('QueryEditorRow', () => {
     afterEach(() => {
       mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
       mockReplace.mockImplementation((target?: string) => target ?? '');
-      jest.mocked(getDataSourceInstance).mockImplementation((...args: unknown[]) => mockGet(...args));
+      jest
+        .mocked(getDataSourceInstance)
+        .mockImplementation((...args: unknown[]) => mockGet(...args) as unknown as Promise<DataSourceApi>);
       jest
         .mocked(getDataSourceInstanceSettings)
         .mockImplementation((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args)));
@@ -638,14 +648,14 @@ describe('QueryEditorRow', () => {
         const uid = typeof ref === 'string' ? ref : ref?.uid;
         return uid === 'gone' ? undefined : mockDS;
       });
-      jest.mocked(getDataSourceInstance).mockImplementation(async (uid?: unknown) => {
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
         if (uid == null) {
           throw new Error('unavailable');
         }
         return {
           ...mockDS,
           components: { QueryEditor: FakeQueryEditor },
-        };
+        } as unknown as DataSourceApi;
       });
 
       const initialProps = props(data);

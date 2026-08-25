@@ -18,7 +18,7 @@ function firstVariableValue<T>(value: T | T[]): T {
  * instance settings so a query with no ref still has a stable identity.
  */
 export function getQueryDataSourceIdentity(
-  datasource: DataQuery['datasource'],
+  datasource: DataQuery['datasource'] | string,
   scopedVars?: ScopedVars,
   fallback?: DataSourceInstanceSettings
 ): string | undefined {

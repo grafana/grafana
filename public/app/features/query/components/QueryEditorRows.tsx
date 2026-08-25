@@ -348,23 +348,22 @@ function QueryEditorRowWithResolvedDataSource({
     [datasourceKey, varsKey, interpolatedUid]
   );
 
-  const currentQuerySettings = value && value.interpolatedUid === interpolatedUid ? value.settings : undefined;
-  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings);
+  const fetchMatches = Boolean(value && value.interpolatedUid === interpolatedUid);
+  const currentQuerySettings = fetchMatches ? value?.settings : undefined;
+  const dataSourceSettings = resolveRowDataSourceSettings(query.datasource, currentQuerySettings, groupSettings, {
+    lookupFailed: fetchMatches && currentQuerySettings === undefined,
+  });
 
   // Always render the row so `@hello-pangea/dnd` indices stay contiguous. Returning null
   // here skips a Draggable and also hides deleted-datasource queries with no recovery path.
   return <QueryEditorRow {...rowProps} query={query} dataSource={dataSourceSettings} scopedVars={scopedVars} />;
 }
 
-/**
- * A query with its own datasource ref must not inherit Mixed group settings — those are
- * the panel mixer, not the query's datasource. When the lookup is pending or fails, keep
- * a placeholder so the row stays visible and the user can reassign or delete the query.
- */
 export function resolveRowDataSourceSettings(
   queryDatasource: DataQuery['datasource'],
   querySettings: DataSourceInstanceSettings | undefined,
-  groupSettings: DataSourceInstanceSettings
+  groupSettings: DataSourceInstanceSettings,
+  options?: { lookupFailed?: boolean }
 ): DataSourceInstanceSettings {
   if (!queryDatasource) {
     return groupSettings;
@@ -375,7 +374,29 @@ export function resolveRowDataSourceSettings(
   if (!groupSettings.meta.mixed) {
     return groupSettings;
   }
+  if (isMixedQueryDatasource(queryDatasource, groupSettings) || !queryDatasourceUid(queryDatasource)) {
+    return groupSettings;
+  }
+  if (!options?.lookupFailed) {
+    return groupSettings;
+  }
   return notFoundSettings(queryDatasource, groupSettings);
+}
+
+function queryDatasourceUid(queryDatasource: DataQuery['datasource'] | string): string | undefined {
+  return typeof queryDatasource === 'string' ? queryDatasource : queryDatasource?.uid;
+}
+
+function isMixedQueryDatasource(
+  queryDatasource: DataQuery['datasource'] | string,
+  groupSettings: DataSourceInstanceSettings
+): boolean {
+  const uid = queryDatasourceUid(queryDatasource);
+  if (uid && (uid === MIXED_DATASOURCE_NAME || uid === groupSettings.uid)) {
+    return true;
+  }
+  const type = typeof queryDatasource === 'string' ? undefined : queryDatasource?.type;
+  return type === 'mixed';
 }
 
 /**

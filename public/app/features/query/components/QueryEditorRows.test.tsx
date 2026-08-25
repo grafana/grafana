@@ -472,6 +472,7 @@ describe('QueryEditorRows', () => {
 
     afterEach(() => {
       mockReplace.mockImplementation((target?: string) => target ?? '');
+      dsSrvMock.getInstanceSettings = jest.fn(() => mockDS);
       jest
         .mocked(getDataSourceInstanceSettings)
         .mockImplementation(async (...args: unknown[]) =>
@@ -608,13 +609,44 @@ describe('QueryEditorRows', () => {
         expectNotFound: false,
       },
       {
-        name: 'uses a not-found placeholder instead of mixed group settings when query settings are missing',
+        name: 'uses a not-found placeholder after a mixed-panel lookup miss',
         queryDatasource: { uid: 'prom' },
         hasQuerySettings: false,
+        lookupFailed: true,
         mixed: true,
         expectQuerySettings: false,
         expectGroup: false,
         expectNotFound: true,
+      },
+      {
+        name: 'keeps mixed group settings while a concrete query datasource is still loading',
+        queryDatasource: { uid: 'prom' },
+        hasQuerySettings: false,
+        lookupFailed: false,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: true,
+        expectNotFound: false,
+      },
+      {
+        name: 'keeps mixed group settings when the query datasource is Mixed',
+        queryDatasource: { uid: MIXED_DATASOURCE_NAME, type: 'mixed' },
+        hasQuerySettings: false,
+        lookupFailed: true,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: true,
+        expectNotFound: false,
+      },
+      {
+        name: 'keeps mixed group settings when the query datasource has no uid',
+        queryDatasource: { type: 'grafana-testdata-datasource' },
+        hasQuerySettings: false,
+        lookupFailed: true,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: true,
+        expectNotFound: false,
       },
       {
         name: 'falls back to non-mixed group settings when query settings are missing',
@@ -625,25 +657,59 @@ describe('QueryEditorRows', () => {
         expectGroup: true,
         expectNotFound: false,
       },
-    ])('$name', ({ queryDatasource, hasQuerySettings, mixed, expectQuerySettings, expectGroup, expectNotFound }) => {
-      const groupSettings = mockDataSource(
-        { name: mixed ? MIXED_DATASOURCE_NAME : 'Prometheus', uid: mixed ? MIXED_DATASOURCE_NAME : 'prom' },
-        { mixed }
-      );
-      const resolved = hasQuerySettings ? mockDataSource({ name: 'Loki', uid: 'loki', type: 'loki' }) : undefined;
+    ])(
+      '$name',
+      ({
+        queryDatasource,
+        hasQuerySettings,
+        lookupFailed,
+        mixed,
+        expectQuerySettings,
+        expectGroup,
+        expectNotFound,
+      }) => {
+        const groupSettings = mockDataSource(
+          { name: mixed ? MIXED_DATASOURCE_NAME : 'Prometheus', uid: mixed ? MIXED_DATASOURCE_NAME : 'prom' },
+          { mixed }
+        );
+        const resolved = hasQuerySettings ? mockDataSource({ name: 'Loki', uid: 'loki', type: 'loki' }) : undefined;
 
-      const result = resolveRowDataSourceSettings(queryDatasource, resolved, groupSettings);
+        const result = resolveRowDataSourceSettings(queryDatasource, resolved, groupSettings, { lookupFailed });
 
-      if (expectQuerySettings) {
-        expect(result).toBe(resolved);
-      } else if (expectGroup) {
-        expect(result).toBe(groupSettings);
-      } else if (expectNotFound) {
-        expect(result).not.toBe(groupSettings);
-        expect(result.uid).toBe('prom');
-        expect(result.name).toBe('prom');
-        expect(result.meta.mixed).toBe(false);
+        if (expectQuerySettings) {
+          expect(result).toBe(resolved);
+        } else if (expectGroup) {
+          expect(result).toBe(groupSettings);
+        } else if (expectNotFound) {
+          expect(result).not.toBe(groupSettings);
+          expect(result.uid).toBe('prom');
+          expect(result.name).toBe('prom');
+          expect(result.meta.mixed).toBe(false);
+        }
       }
+    );
+
+    it('shows Mixed in the row picker when the query datasource is Mixed', async () => {
+      const mixedSettings = mockDataSource(
+        { name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, type: 'mixed' },
+        { mixed: true }
+      );
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValue(undefined);
+      dsSrvMock.getInstanceSettings = jest.fn((ref) => {
+        const key = typeof ref === 'string' ? ref : ref?.uid;
+        return key === MIXED_DATASOURCE_NAME ? mixedSettings : mockDS;
+      });
+
+      render(
+        <QueryEditorRows
+          {...baseProps}
+          dsSettings={mixedSettings}
+          queries={[{ refId: 'A', datasource: { uid: MIXED_DATASOURCE_NAME, type: 'mixed' } }]}
+        />
+      );
+
+      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(MIXED_DATASOURCE_NAME)).toBeInTheDocument();
     });
 
     it('keeps a mixed-panel row visible when query datasource resolution fails', async () => {
