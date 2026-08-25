@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -8,7 +8,12 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TimeRangeLabel } from '../TimeRangeLabel';
 
-import { type AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
+import {
+  type AlertQueryOptions,
+  type QueryOptionFieldHandle,
+  MaxDataPointsOption,
+  MinIntervalOption,
+} from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;
@@ -28,6 +33,8 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
+  const maxDataPointsRef = useRef<QueryOptionFieldHandle>(null);
+  const minIntervalRef = useRef<QueryOptionFieldHandle>(null);
 
   const separator = <span>, </span>;
 
@@ -44,12 +51,26 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
-            <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
+            <MaxDataPointsOption
+              ref={maxDataPointsRef}
+              options={queryOptions}
+              onChange={(options) => onChangeQueryOptions(options, index)}
+            />
+            <MinIntervalOption
+              ref={minIntervalRef}
+              options={queryOptions}
+              onChange={(options) => onChangeQueryOptions(options, index)}
+            />
           </div>
         }
         closeButton={true}
         placement="bottom-start"
+        onClose={() => {
+          // Commit any pending edits before the toggletip (and its inputs) unmount - clicking
+          // outside can otherwise close it before the input's onBlur commits the value.
+          maxDataPointsRef.current?.flush();
+          minIntervalRef.current?.flush();
+        }}
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -221,18 +221,23 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-export function MaxDataPointsOption({
-  options,
-  onChange,
-}: {
+// Exposes a way for the parent to force the pending input value to be committed. This is needed
+// because the options are shown inside a `Toggletip` that gets dismissed (and its content
+// unmounted) on outside click, which can happen before the input's `onBlur` has a chance to
+// commit the value - silently discarding the edit. See https://github.com/grafana/grafana/issues/111664
+export interface QueryOptionFieldHandle {
+  flush: () => void;
+}
+
+export const MaxDataPointsOption = forwardRef<QueryOptionFieldHandle, {
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
-}) {
+}>(({ options, onChange }, ref) => {
   const value = options.maxDataPoints ?? '';
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
+  const commit = (rawValue: string) => {
+    const maxDataPointsNumber = parseInt(rawValue, 10);
     const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
 
     if (maxDataPoints !== options.maxDataPoints) {
@@ -242,6 +247,16 @@ export function MaxDataPointsOption({
       });
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    flush: () => {
+      if (inputRef.current) {
+        commit(inputRef.current.value);
+      }
+    },
+  }));
+
+  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => commit(event.target.value);
 
   return (
     <InlineField
@@ -253,6 +268,7 @@ export function MaxDataPointsOption({
       )}
     >
       <Input
+        ref={inputRef}
         type="number"
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
@@ -262,26 +278,34 @@ export function MaxDataPointsOption({
       />
     </InlineField>
   );
-}
+});
+MaxDataPointsOption.displayName = 'MaxDataPointsOption';
 
-export function MinIntervalOption({
-  options,
-  onChange,
-}: {
+export const MinIntervalOption = forwardRef<QueryOptionFieldHandle, {
   options: AlertQueryOptions;
   onChange: (options: AlertQueryOptions) => void;
-}) {
+}>(({ options, onChange }, ref) => {
   const value = options.minInterval ?? '';
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
+  const commit = (rawValue: string) => {
+    if (rawValue !== value) {
       onChange({
         ...options,
-        minInterval,
+        minInterval: rawValue,
       });
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    flush: () => {
+      if (inputRef.current) {
+        commit(inputRef.current.value);
+      }
+    },
+  }));
+
+  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => commit(event.target.value);
 
   return (
     <InlineField
@@ -295,6 +319,7 @@ export function MinIntervalOption({
       }
     >
       <Input
+        ref={inputRef}
         type="text"
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
@@ -304,7 +329,8 @@ export function MinIntervalOption({
       />
     </InlineField>
   );
-}
+});
+MinIntervalOption.displayName = 'MinIntervalOption';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
