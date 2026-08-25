@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeStoredLister struct {
@@ -72,6 +73,16 @@ func TestSSOSettingsBackfill_WritesUnderConfiguredNamespace(t *testing.T) {
 	require.NoError(t, b.backfill(context.Background()))
 
 	assert.Equal(t, map[string]bool{"stacks-11": true}, writer.namespaces)
+}
+
+// Guards startup: no settings service -> disabled provider, not a wire error.
+func TestProvideSSOSettingsBackfill_DisabledWithoutSettingsService(t *testing.T) {
+	b, err := ProvideSSOSettingsBackfill(nil, nil, setting.NewCfg())
+
+	require.NoError(t, err)
+	require.NotNil(t, b)
+	assert.Nil(t, b.writer)
+	assert.True(t, b.IsDisabled())
 }
 
 func TestSSOSettingsBackfill_PropagatesReadError(t *testing.T) {
