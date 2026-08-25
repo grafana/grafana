@@ -97,6 +97,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
 | `timeComparison`                   | Enables time comparison option in supported panels                                                                             |
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
+| `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
+| `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
 | `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
