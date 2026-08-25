@@ -19,6 +19,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
 import { transformDataTopic } from '../../serialization/transformToV2TypesUtils';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { serializeResultLayoutItem } from './panelSerialization';
@@ -41,19 +42,6 @@ function mergeReplacingArrays(
   });
 }
 
-interface RawLinksHolder {
-  state: { rawLinks: unknown };
-  setState: (state: Record<string, unknown>) => void;
-}
-
-function hasRawLinks(item: unknown): item is RawLinksHolder {
-  if (!item || typeof item !== 'object' || !('state' in item) || !('setState' in item)) {
-    return false;
-  }
-  const { state } = item;
-  return typeof state === 'object' && state !== null && 'rawLinks' in state && typeof item.setState === 'function';
-}
-
 export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
   name: 'UPDATE_PANEL',
   description: payloads.updatePanel.description ?? '',
@@ -68,6 +56,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
     try {
       const { element, panel } = payload;
+      const warnings: string[] = [];
       const elementName = element.name;
       const spec = panel?.spec;
 
@@ -100,14 +89,14 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
         }
 
         if (spec.links !== undefined) {
-          const titleItems = vizPanel.state.titleItems;
-          if (Array.isArray(titleItems)) {
-            for (const item of titleItems) {
-              if (hasRawLinks(item)) {
-                item.setState({ rawLinks: spec.links });
-                break;
-              }
-            }
+          // Same lookup the serializer reads links back through, so writer and reader agree on which
+          // object holds them. A duck-type on `rawLinks` would miss the holder `getDefaultVizPanel`
+          // builds, which omits the key until something writes it.
+          const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
+          if (panelLinks) {
+            panelLinks.setState({ rawLinks: spec.links });
+          } else {
+            warnings.push('links ignored: this panel has no links holder in its titleItems.');
           }
         }
 
@@ -152,12 +141,14 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           }
 
           if (dataSpec.transformations !== undefined && dataPipeline instanceof SceneDataTransformer) {
+            // Spread rather than enumerate, matching the mapper in `layoutSerializers/utils.ts`: a field
+            // added to `transformationKindSchema.spec` then reaches the scene from both paths instead of
+            // being silently dropped here. `topic` is restated because the schema types it as a string
+            // union and the scene wants the `DataTopic` enum.
             const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
               id: t.group,
-              disabled: t.spec.disabled,
-              filter: t.spec.filter,
+              ...t.spec,
               topic: transformDataTopic(t.spec.topic),
-              options: t.spec.options,
             }));
             dataPipeline.setState({ transformations });
             dataPipeline.reprocessTransformations();
@@ -225,6 +216,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
             newValue: updatedElement,
           },
         ],
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {

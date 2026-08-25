@@ -42,44 +42,42 @@ export function useTransformationDebugData({
   data,
   isActive,
 }: UseTransformationDebugDataOptions): TransformationDebugData {
-  const isDebuggable =
+  // The guard produces the value it guards, so the callers below narrow on one check rather than
+  // re-testing for null inside each of them.
+  const debugTarget =
     isActive &&
     selectedTransformation !== null &&
     data.length > 0 &&
-    transformations.some(({ transformId }) => transformId === selectedTransformation.transformId);
+    transformations.some(({ transformId }) => transformId === selectedTransformation.transformId)
+      ? selectedTransformation
+      : null;
 
   const inputConfigs = useMemo(
-    () =>
-      selectedTransformation && isDebuggable
-        ? precedingTransformations(selectedTransformation, transformations, systemTransformations)
-        : NO_CONFIGS,
-    [isDebuggable, selectedTransformation, transformations, systemTransformations]
+    () => (debugTarget ? precedingTransformations(debugTarget, transformations, systemTransformations) : NO_CONFIGS),
+    [debugTarget, transformations, systemTransformations]
   );
 
-  // Appended to the preceding stage rather than piped into a second `transformDataFrame`:
-  // `transformDataFrame` concatenates its configs into one operator chain, so both forms run the
-  // same pipeline, and this one does not rebuild the preceding stage to get there.
-  const outputConfigs = useMemo(
-    () =>
-      selectedTransformation && isDebuggable ? [...inputConfigs, selectedTransformation.transformConfig] : NO_CONFIGS,
-    [isDebuggable, selectedTransformation, inputConfigs]
-  );
+  const selfConfigs = useMemo(() => (debugTarget ? [debugTarget.transformConfig] : NO_CONFIGS), [debugTarget]);
 
+  // Piped through the preceding stage's own output rather than replayed from `data` alongside it.
+  // Two replays from `data` would run every preceding transformation a second time, and would leave
+  // the two panes free to settle on different generations.
   const inputFrames = useTransformedFrames(inputConfigs, data);
-  const outputFrames = useTransformedFrames(outputConfigs, data);
+  const outputFrames = useTransformedFrames(selfConfigs, inputFrames);
 
   return useMemo(() => {
-    if (!isDebuggable) {
+    if (!debugTarget) {
       return NO_DEBUG_DATA;
     }
 
-    // The debugged transformation only sees the frames its own filter admits.
-    const filter = selectedTransformation?.transformConfig.filter;
+    // The debugged transformation only sees the frames its own filter admits. `transformDataFrame`
+    // applies that filter itself, so only the displayed input is narrowed here.
+    const filter = debugTarget.transformConfig.filter;
     const matcher = filter?.options ? getFrameMatchers(filter) : undefined;
 
     return {
       input: matcher ? inputFrames.filter((frame) => matcher(frame)) : inputFrames,
       output: outputFrames,
     };
-  }, [isDebuggable, selectedTransformation, inputFrames, outputFrames]);
+  }, [debugTarget, inputFrames, outputFrames]);
 }

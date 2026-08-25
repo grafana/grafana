@@ -179,11 +179,11 @@ describe('useTransformationInputData', () => {
     );
   });
 
-  it('never hands the editor the previous query’s output paired with the current query', () => {
+  it('never hands the editor untransformed frames once the pipeline has produced something', () => {
     // The replay resolves a render later than the query it belongs to, so there is always a render
-    // where the new frames are in and their transformed form is not. Holding the previous output
-    // across it is what an editor reads to build its field pickers, and those fields belong to a
-    // frame shape the panel no longer has.
+    // where the new frames are in and their transformed form is not. Handing the editor the raw
+    // frames there gives it the pre-pipeline shape — the Organize editor reads `input.length > 1`
+    // and reports "only works with a single frame" on a panel whose Join already merged them.
     const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
     const newRawData = makeFrames(['C-series']);
 
@@ -204,8 +204,9 @@ describe('useTransformationInputData', () => {
     mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
     act(() => rerender({ data: newRawData }));
 
-    // Untransformed, but from the query the editor is being asked about.
-    expect(result.current).toBe(newRawData);
+    // The joined frame this pipeline last produced, not the two unjoined ones it never emits.
+    expect(result.current).toBe(mockPipelineOutput);
+    expect(result.current).not.toBe(newRawData);
   });
 
   it('runs the plugin-registered transformations ahead of the preceding user ones', () => {

@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import {
   type CustomTransformOperator,
+  type DataFrame,
   type DataTransformerConfig,
   type GrafanaTheme2,
   type PanelData,
@@ -23,6 +24,9 @@ interface TransformationFilterEditorProps {
   onUpdate: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
 }
 
+/** Stable identity for "the query has not returned anything yet". */
+const NO_SERIES: DataFrame[] = [];
+
 /**
  * Displays transformation filter options to control which data frames
  * the transformation applies to. This is shown inline in the editor
@@ -39,11 +43,15 @@ export function TransformationFilterEditor({
 }: TransformationFilterEditorProps) {
   const styles = useStyles2(getStyles);
 
+  // Hoisted so the fallback is not a fresh array on every render: `useTransformedFrames` treats a
+  // new array as a new generation, and its two sibling call sites memoize the same expression.
+  const series = useMemo(() => queryData?.series ?? NO_SERIES, [queryData?.series]);
+
   const prevOutput = usePreviousTransformationOutput({
     selectedTransformation: transformation,
     transformations,
     systemTransformations,
-    queryData: queryData?.series ?? [],
+    queryData: series,
     queryTargets: queryData?.request?.targets,
   });
 

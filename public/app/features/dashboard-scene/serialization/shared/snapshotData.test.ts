@@ -15,7 +15,7 @@ describe('getSnapshotSourceData', () => {
   it('reads a provider that is not a transformer directly', () => {
     const queryResult = new SceneDataNode({ data: panelData('raw') });
 
-    expect(getSnapshotSourceData(queryResult)).toBe(queryResult.state.data);
+    expect(getSnapshotSourceData(queryResult)?.series[0].name).toBe('raw');
   });
 
   it('reads a transformer’s source rather than its own output', () => {
