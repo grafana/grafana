@@ -126,6 +126,17 @@ func TestTenantAddPendingDeleted(t *testing.T) {
 		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
+
+	t.Run("no-op when context is already cancelled", func(t *testing.T) {
+		tw := newTestTenantWatcher(t)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		tw.handleTenant(ctx, pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		assert.ErrorIs(t, err, ErrNotFound)
+	})
 }
 
 func TestTenantClearPendingDelete(t *testing.T) {

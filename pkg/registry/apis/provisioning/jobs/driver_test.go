@@ -27,6 +27,20 @@ func newConflictError() error {
 	)
 }
 
+// TestSumTotalChanges verifies the driver totals the per-summary TotalChanges the
+// recorder set (see TestUpdateSummary_TotalChanges for the action-aware population),
+// skipping nil entries.
+func TestSumTotalChanges(t *testing.T) {
+	require.Equal(t, 0, sumTotalChanges(nil))
+
+	summaries := []*provisioning.JobResourceSummary{
+		{TotalChanges: 5},
+		nil,
+		{TotalChanges: 3},
+	}
+	require.Equal(t, 8, sumTotalChanges(summaries))
+}
+
 func makeTestJob(rv string) *provisioning.Job {
 	return &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

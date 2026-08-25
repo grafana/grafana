@@ -3,14 +3,14 @@ import { useCallback } from 'react';
 import { t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 
+import { addVariable } from '../../actions/variable/addVariable';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getNextAvailableId, getVariableNamePrefix, getVariableScene } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
 
 import { AddButton } from './AddButton';
 
-export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
+export async function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 
@@ -20,24 +20,24 @@ export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: S
 
   const type = 'adhoc';
   const name = getVariableNamePrefix(type);
-  const newVar = getVariableScene(type, {
+  const newVar = await getVariableScene(type, {
     name: getNextAvailableId(name, variablesSet.state.variables ?? []),
   });
 
-  dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+  addVariable({ source: variablesSet, addedObject: newVar });
   dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {
   const onAddFiltersClick = useCallback(() => {
-    openAddFilterForm(dashboardScene, dashboardScene);
+    void openAddFilterForm(dashboardScene, dashboardScene);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboardScene]);
 
   return (
     <AddButton
       icon="filter"
-      label={t('dashboard-scene.add-filters.label', 'Filter and Group by')}
+      label={t('dashboard.sidebar.add.filters.label', 'Filter and Group by')}
       onClick={onAddFiltersClick}
     />
   );

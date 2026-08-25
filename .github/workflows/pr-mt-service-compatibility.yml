@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -26,13 +30,14 @@ jobs:
 
       - name: Detect changes
         id: changed-files
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files_yaml: |
             frontend_strict:
               - 'public/**'
               - 'packages/**'
               - 'scripts/webpack/**'
+              - 'scripts/rspack/**'
               - '.eslintrc*'
               - '.prettierrc*'
               - '.stylelintrc*'
@@ -52,8 +57,6 @@ jobs:
               - '!public/app/plugins/datasource/azuremonitor/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
-              - '!public/app/plugins/datasource/influxdb/**'
-              - '!public/app/plugins/datasource/mysql/**'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'
@@ -74,8 +77,6 @@ jobs:
               - 'public/app/plugins/datasource/azuremonitor/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
-              - 'public/app/plugins/datasource/influxdb/**'
-              - 'public/app/plugins/datasource/mysql/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'

@@ -13,10 +13,11 @@ import (
 )
 
 // pagedJobList builds one page of a paginated job LIST: the named jobs plus the
-// continue token pointing at the next page (empty on the last page).
-func pagedJobList(continueToken string, names ...string) *provisioningapis.JobList {
+// continue token pointing at the next page (empty on the last page) and the
+// snapshot resource version (pinned across pages by the continue token).
+func pagedJobList(continueToken, resourceVersion string, names ...string) *provisioningapis.JobList {
 	l := &provisioningapis.JobList{
-		ListMeta: metav1.ListMeta{Continue: continueToken},
+		ListMeta: metav1.ListMeta{Continue: continueToken, ResourceVersion: resourceVersion},
 	}
 	for _, name := range names {
 		l.Items = append(l.Items, provisioningapis.Job{
@@ -31,34 +32,37 @@ func TestListAllPages(t *testing.T) {
 		name string
 		// pages is keyed by the continue token the page func receives; "" is the
 		// first call.
-		pages     map[string]*provisioningapis.JobList
-		errOn     string // continue token whose page fails
-		wantNames []string
-		wantErr   bool
-		wantCalls []string // continue tokens received, in order
+		pages      map[string]*provisioningapis.JobList
+		errOn      string // continue token whose page fails
+		wantNames  []string
+		wantListRV int64 // resource version listAllPages reports for the snapshot
+		wantErr    bool
+		wantCalls  []string // continue tokens received, in order
 	}{
 		{
 			name: "single page",
 			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("", "a", "b"),
+				"": pagedJobList("", "100", "a", "b"),
 			},
-			wantNames: []string{"a", "b"},
-			wantCalls: []string{""},
+			wantNames:  []string{"a", "b"},
+			wantListRV: 100,
+			wantCalls:  []string{""},
 		},
 		{
 			name: "follows continue tokens across pages",
 			pages: map[string]*provisioningapis.JobList{
-				"":      pagedJobList("page2", "a", "b"),
-				"page2": pagedJobList("page3", "c", "d"),
-				"page3": pagedJobList("", "e"),
+				"":      pagedJobList("page2", "200", "a", "b"),
+				"page2": pagedJobList("page3", "200", "c", "d"),
+				"page3": pagedJobList("", "200", "e"),
 			},
-			wantNames: []string{"a", "b", "c", "d", "e"},
-			wantCalls: []string{"", "page2", "page3"},
+			wantNames:  []string{"a", "b", "c", "d", "e"},
+			wantListRV: 200, // pinned to the first page's version across pages
+			wantCalls:  []string{"", "page2", "page3"},
 		},
 		{
 			name: "error on a later page fails the whole list",
 			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("page2", "a", "b"),
+				"": pagedJobList("page2", "300", "a", "b"),
 			},
 			errOn:     "page2",
 			wantErr:   true,
@@ -79,13 +83,14 @@ func TestListAllPages(t *testing.T) {
 				return l, nil
 			}
 
-			out, err := listAllPages(context.Background(), page)
+			out, listRV, err := listAllPages(context.Background(), page)
 			require.Equal(t, tt.wantCalls, calls)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			require.Equal(t, tt.wantListRV, listRV)
 			names := make([]string, 0, len(out))
 			for _, obj := range out {
 				job, ok := obj.(*provisioningapis.Job)

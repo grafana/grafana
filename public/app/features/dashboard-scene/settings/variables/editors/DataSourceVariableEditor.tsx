@@ -1,4 +1,5 @@
 import React, { type FormEvent } from 'react';
+import { useAsync } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { type SelectableValue } from '@grafana/data';
@@ -19,7 +20,7 @@ interface DataSourceVariableEditorProps {
 export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVariableEditorProps) {
   const { pluginId, regex, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
 
-  const optionTypes = getOptionDataSourceTypes();
+  const { value: optionTypes = [] } = useAsync(getOptionDataSourceTypes, []);
 
   const onChangeType = (option: SelectableValue) => {
     variable.setState({
@@ -102,7 +103,7 @@ interface InputProps {
 
 function DataSourceTypeSelect({ variable, id }: InputProps) {
   const { pluginId } = variable.useState();
-  const options = getOptionDataSourceTypes();
+  const { value: options = [] } = useAsync(getOptionDataSourceTypes, []);
 
   const onChange = async (value: ComboboxOption<string>) => {
     variable.setState({ pluginId: value.value });

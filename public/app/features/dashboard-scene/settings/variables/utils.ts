@@ -1,8 +1,9 @@
 import { chain } from 'lodash';
 
-import { type DataSourceInstanceSettings, getDataSourceRef, type SelectableValue } from '@grafana/data';
+import { type SelectableValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   ConstantVariable,
   CustomVariable,
@@ -53,7 +54,7 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 }
 
 export const getDefaultTopPlacementLabel = () =>
-  t('dashboard-scene.variables-list.top-placement.default', 'Above dashboard');
+  t('dashboard.sidebar.variables.top-placement-default', 'Above dashboard');
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {
@@ -180,7 +181,7 @@ export function getVariableTypeLabel(
   { standalone }: VariableTypeSelectOptionsArgs = {}
 ): string {
   if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
-    return t('dashboard-scene.add-filters.label', 'Filter and Group by');
+    return t('dashboard.sidebar.add.filters.label', 'Filter and Group by');
   }
   return getEditableVariables()[variableType].name;
 }
@@ -231,12 +232,12 @@ export interface CommonVariableProperties {
   key?: string;
 }
 
-function getDefaultDatasourceRef(): DataSourceRef | undefined {
-  const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+async function getDefaultDatasourceRef(): Promise<DataSourceRef | undefined> {
+  const defaultDs = await getDataSourceInstanceSettings(null);
   return defaultDs ? getDataSourceRef(defaultDs) : undefined;
 }
 
-export function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
+export async function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
   switch (type) {
     case 'custom':
       return new CustomVariable(initialState);
@@ -245,7 +246,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
       // this matches the behavior in Settings -> Variables -> Add Variable
       // otherwise v2 transformer to save model will treat the variable as auto-assigned and
       // not include it in the save model
-      const datasource = getDefaultDatasourceRef();
+      const datasource = await getDefaultDatasourceRef();
       return new QueryVariable({ ...initialState, ...(datasource && { datasource }) });
     }
     case 'constant':
@@ -267,7 +268,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
   }
 }
 
-export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
+export async function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
   const nextVariableIdName = getNextAvailableId('query', variables);
   return getVariableScene('query', { name: nextVariableIdName });
 }
@@ -313,12 +314,12 @@ export function getDefinition(model: SceneVariable): string {
   return definition;
 }
 
-export function getOptionDataSourceTypes() {
-  const datasources = getDataSourceSrv().getList({ metrics: true, variables: true });
+export async function getOptionDataSourceTypes() {
+  const datasources = await getDataSourceInstanceList({ metrics: true, variables: true });
 
   const optionTypes = chain(datasources)
     .uniqBy('meta.id')
-    .map((ds: DataSourceInstanceSettings) => {
+    .map((ds) => {
       return { label: ds.meta.name, value: ds.meta.id };
     })
     .value();

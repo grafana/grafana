@@ -19,12 +19,15 @@ import { type PropsWithChildren, type ReactNode, useId, useLayoutEffect, useRef,
 
 import { type GrafanaTheme2, type PluginExtensionLink, textUtil, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 
 import jsonMarkup from './jsonMarkup';
+import { AttributePluginPromoTip } from './pluginPromo/AttributePluginPromoTip';
+import { type AttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const keyColor = theme.colors.text.secondary;
@@ -35,6 +38,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: autoColor(theme, '#fff'),
       maxHeight: '450px',
       overflow: 'auto',
+      color: theme.colors.text.primary,
     }),
     table: css({
       width: '100%',
@@ -83,7 +87,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     linkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the icon on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.5),
     }),
     linkIcon: css({
@@ -91,7 +96,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     multiLinkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the chevron on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.25),
     }),
     multiLinkContent: css({
@@ -122,7 +128,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
     }),
     jsonTable: css({
-      display: 'inline-block',
+      display: 'block',
+      // `word-break: break-word` also shrinks min-content, which lets the table column narrow enough
+      // to wrap long unbroken values. `overflow-wrap: break-word` does not, and restores the scrollbar.
+      wordBreak: 'break-word',
     }),
   };
 };
@@ -142,13 +151,31 @@ function parseIfComplexJson(value: unknown) {
 }
 
 export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'> &
-  Partial<Pick<PluginExtensionLink, 'description'>>;
+  Partial<Pick<PluginExtensionLink, 'description' | 'pluginId' | 'category' | 'group'>>;
+
+type ResourceLinkClickLocation = 'value' | 'menu';
+
+function reportResourceLinkClick(
+  link: KeyValuesTableLink,
+  { location, datasourceType }: { location: ResourceLinkClickLocation; datasourceType?: string }
+) {
+  // Right-clicks / middle-clicks that open in a new tab without firing onClick are not tracked
+  reportInteraction('grafana_traces_trace_view_resource_link_clicked', {
+    grafana_version: config.buildInfo.version,
+    datasourceType,
+    pluginId: link.pluginId,
+    group: link.group?.name,
+    category: link.category,
+    location,
+  });
+}
 
 interface LinkValueProps {
   link: KeyValuesTableLink;
+  datasourceType?: string;
 }
 
-export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>) => {
+export const LinkValue = ({ link, datasourceType, children }: PropsWithChildren<LinkValueProps>) => {
   const { path, title, onClick, icon = 'external-link-alt' } = link;
   const styles = useStyles2(getStyles);
 
@@ -156,7 +183,10 @@ export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>)
     <a
       href={path ? textUtil.sanitizeUrl(path) : path}
       title={title}
-      onClick={onClick}
+      onClick={(event) => {
+        reportResourceLinkClick(link, { location: 'value', datasourceType });
+        onClick?.(event);
+      }}
       target="_blank"
       rel="noopener noreferrer"
       className={styles.linkValue}
@@ -169,10 +199,11 @@ export const LinkValue = ({ link, children }: PropsWithChildren<LinkValueProps>)
 
 interface LinkValuesMenuProps {
   links: KeyValuesTableLink[];
+  datasourceType?: string;
   children: ReactNode;
 }
 
-const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
+const LinkValuesMenu = ({ links, datasourceType, children }: LinkValuesMenuProps) => {
   const styles = useStyles2(getStyles);
   const openValueInLabel = t('explore.key-values-table.open-value-in', 'Open value in');
   const triggerId = useId();
@@ -207,7 +238,10 @@ const LinkValuesMenu = ({ links, children }: LinkValuesMenuProps) => {
                     icon={link.icon}
                     url={link.path ? textUtil.sanitizeUrl(link.path) : undefined}
                     target="_blank"
-                    onClick={link.onClick}
+                    onClick={(event) => {
+                      reportResourceLinkClick(link, { location: 'menu', datasourceType });
+                      link.onClick?.(event);
+                    }}
                   />
                 </div>
               ))}
@@ -233,10 +267,12 @@ export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onlyValues?: boolean;
+  promoGetter?: AttributePluginPromoGetter;
+  datasourceType?: string;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter, onlyValues } = props;
+  const { data, linksGetter, onlyValues, promoGetter, datasourceType } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
@@ -256,14 +292,25 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
             );
             const links = linksGetter?.(data, i) ?? [];
-            const valueMarkup =
+            let valueMarkup =
               links.length > 1 ? (
-                <LinkValuesMenu links={links}>{jsonTable}</LinkValuesMenu>
+                <LinkValuesMenu links={links} datasourceType={datasourceType}>
+                  {jsonTable}
+                </LinkValuesMenu>
               ) : links.length === 1 ? (
-                <LinkValue link={links[0]}>{jsonTable}</LinkValue>
+                <LinkValue link={links[0]} datasourceType={datasourceType}>
+                  {jsonTable}
+                </LinkValue>
               ) : (
                 jsonTable
               );
+
+            // Skip promo when value markup already has an anchor (jsonMarkup auto-linkifies
+            // http(s) strings) to avoid nesting interactive content inside the promo <button>.
+            const promo = links.length === 0 && !html.includes('<a ') ? promoGetter?.(row.key) : undefined;
+            if (promo) {
+              valueMarkup = <AttributePluginPromoTip promo={promo}>{valueMarkup}</AttributePluginPromoTip>;
+            }
 
             return (
               // `i` is necessary in the key because row.key can repeat

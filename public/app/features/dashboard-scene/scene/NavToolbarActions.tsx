@@ -20,7 +20,7 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
@@ -176,7 +176,7 @@ export function ToolbarActions({ dashboard }: Props) {
               onClick={() => {
                 const vizPanel = dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
+                openPanelEditor(dashboard, vizPanel, true);
               }}
             />
             <Menu.Item
@@ -471,6 +471,7 @@ export function ToolbarActions({ dashboard }: Props) {
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
+            testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
           />
         </Menu>
       );
@@ -494,6 +495,7 @@ export function ToolbarActions({ dashboard }: Props) {
               icon="angle-down"
               variant={isDirty ? 'primary' : 'secondary'}
               size="sm"
+              data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
           </Dropdown>
         </ButtonGroup>

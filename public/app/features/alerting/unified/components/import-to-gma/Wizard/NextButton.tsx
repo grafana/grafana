@@ -1,9 +1,10 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
 import { useStepperState } from './StepperState';
 import { getNextStep, isLastStep } from './steps';
-import { useImportMethod } from './useImportMethod';
+import { useIsRulesForcedSkipped } from './useIsRulesForcedSkipped';
 
 interface NextButtonProps {
   /** Handler called when clicking next - should return true to proceed */
@@ -26,9 +27,9 @@ interface NextButtonProps {
  */
 export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disabledTooltip }: NextButtonProps) => {
   const { activeStep, setActiveStep } = useStepperState();
-  const method = useImportMethod();
-  const nextStep = getNextStep(activeStep, method);
-  const isLast = isLastStep(activeStep, method);
+  const rulesForcedSkipped = useIsRulesForcedSkipped();
+  const nextStep = getNextStep(activeStep, rulesForcedSkipped);
+  const isLast = isLastStep(activeStep);
 
   const handleClick = async () => {
     const shouldProceed = await onNext();
@@ -54,7 +55,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
   return (
     <Stack direction="row" gap={1}>
       {canSkip && (
-        <Button variant="secondary" onClick={handleSkip} data-testid="wizard-skip-button">
+        <Button variant="secondary" onClick={handleSkip} data-testid={selectors.pages.Alerting.ImportToGMA.skipButton}>
           {skipLabel || t('alerting.import-to-gma.wizard.skip', 'Skip')}
         </Button>
       )}
@@ -64,7 +65,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
         onClick={handleClick}
         disabled={disabled}
         tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
-        data-testid="wizard-next-button"
+        data-testid={selectors.pages.Alerting.ImportToGMA.nextButton}
       >
         {nextStep.name}
       </Button>

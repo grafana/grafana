@@ -145,7 +145,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 					Namespace: requester.GetNamespace(),
 				},
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS,
+					Key:      builders.TEAM_SEARCH_MEMBERS,
 					Operator: string(selection.Equals),
 					Values:   []string{name},
 				}},

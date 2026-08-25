@@ -4,7 +4,7 @@
  * Update a tab's metadata (title) by path.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';

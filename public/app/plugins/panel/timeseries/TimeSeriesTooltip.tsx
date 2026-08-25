@@ -21,6 +21,8 @@ import {
   getFieldDisplayItems,
   isTooltipScrollable,
 } from '@grafana/ui';
+import { AssistantTooltipButton } from 'app/core/components/AssistantTooltip/AssistantTooltipButton';
+import { type AssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { getFieldActions } from '../status-history/utils';
 
@@ -53,6 +55,9 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  comparisonFieldPairs?: Map<number, number>;
+  /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
+  assistantContext?: AssistantTooltipContext;
 }
 
 export const TimeSeriesTooltip = ({
@@ -72,6 +77,8 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  assistantContext,
+  comparisonFieldPairs,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -84,16 +91,28 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
+  const compareFieldIdx = seriesIdx == null ? undefined : comparisonFieldPairs?.get(seriesIdx);
+
+  // Single mode shows only the hovered series, so a pair has to borrow Multi to fit both rows and
+  // then filter Multi back down to just those two.
+  const isPairOnly = compareFieldIdx !== undefined && mode === TooltipDisplayMode.Single;
+
   const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,
     seriesIdx,
-    mode,
+    isPairOnly ? TooltipDisplayMode.Multi : mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    (field, i) => {
+      if (field.type !== FieldType.number && field.type !== FieldType.enum) {
+        return false;
+      }
+      return !isPairOnly || i === seriesIdx || i === compareFieldIdx;
+    },
     hideZeros,
-    _rest
+    _rest,
+    compareFieldIdx
   );
 
   let footer: ReactNode;
@@ -116,6 +135,18 @@ export const TimeSeriesTooltip = ({
           annotate={annotate}
           adHocFilters={adHocFilters}
           filterByGroupedLabels={filterByGroupedLabels}
+          additionalContent={
+            isPinned && assistantContext != null ? (
+              <AssistantTooltipButton
+                series={series}
+                seriesIdx={seriesIdx}
+                dataIdxs={dataIdxs}
+                replaceVariables={replaceVariables}
+                context={assistantContext}
+                xVal={xVal}
+              />
+            ) : undefined
+          }
         />
       );
     }

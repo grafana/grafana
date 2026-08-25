@@ -205,7 +205,7 @@ export class UserStorage implements UserStorageType {
         const result = await storageSpec;
         return result?.data[key] ?? null;
       }
-      return storageSpec.data[key];
+      return storageSpec.data[key] ?? null;
     } finally {
       releaseLock();
     }
@@ -281,6 +281,86 @@ export class UserStorage implements UserStorageType {
       }
       // Update global cache with the modified storage (using cloned object)
       storageCache.set(this.resourceName, updatedSpec);
+    } finally {
+      releaseLock();
+    }
+  }
+
+  async deleteItem(key: string): Promise<void> {
+    if (!this.canUseUserStorage) {
+      // Fallback to localStorage
+      store.delete(`${this.resourceName}:${key}`);
+      return;
+    }
+
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      // Ensure storage is initialized
+      const error = await this.init();
+      if (error) {
+        // Fallback to localStorage
+        store.delete(`${this.resourceName}:${key}`);
+        return;
+      }
+
+      let storageSpec = storageCache.get(this.resourceName);
+      if (storageSpec instanceof Promise) {
+        storageSpec = await storageSpec;
+      }
+      if (!storageSpec) {
+        // Storage doesn't exist, nothing to delete
+        store.delete(`${this.resourceName}:${key}`);
+        return;
+      }
+
+      // Clone the storage spec to avoid mutating the cached object directly
+      const updatedData = { ...storageSpec.data };
+      delete updatedData[key];
+      const updatedSpec: UserStorageSpec = { data: updatedData };
+
+      const deleteResult = await apiRequest<UserStorageSpec>({
+        headers: { 'Content-Type': 'application/merge-patch+json' },
+        url: `/${this.resourceName}`,
+        method: 'PATCH',
+        body: { spec: { data: { [key]: null } } },
+        manageError: (error) => {
+          // Fallback to localStorage
+          store.delete(`${this.resourceName}:${key}`);
+          return { error };
+        },
+      });
+      if ('error' in deleteResult && deleteResult.error) {
+        // Error occurred, fallback already handled in manageError
+        return;
+      }
+      // Update global cache with the modified storage (using cloned object)
+      storageCache.set(this.resourceName, updatedSpec);
+    } finally {
+      releaseLock();
+    }
+  }
+
+  async allItems(): Promise<Record<string, string>> {
+    if (!this.canUseUserStorage) {
+      // Fallback to localStorage
+      return store.all(`${this.resourceName}:`);
+    }
+
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      // Ensure storage is initialized
+      await this.init();
+      let storageSpec = storageCache.get(this.resourceName);
+      if (storageSpec instanceof Promise) {
+        storageSpec = await storageSpec;
+      }
+      if (!storageSpec) {
+        // Storage doesn't exist, fallback to localStorage
+        return store.all(`${this.resourceName}:`);
+      }
+      return { ...storageSpec.data };
     } finally {
       releaseLock();
     }

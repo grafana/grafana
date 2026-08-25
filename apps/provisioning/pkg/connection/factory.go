@@ -32,6 +32,14 @@ type factory struct {
 	enabled map[provisioning.ConnectionType]struct{}
 }
 
+func ToConnectionTypes(connectionTypes []string) map[provisioning.ConnectionType]struct{} {
+	enabled := make(map[provisioning.ConnectionType]struct{}, len(connectionTypes))
+	for _, t := range connectionTypes {
+		enabled[provisioning.ConnectionType(t)] = struct{}{}
+	}
+	return enabled
+}
+
 func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra) (Factory, error) {
 	f := &factory{
 		enabled: enabled,

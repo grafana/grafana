@@ -199,6 +199,20 @@ func Test_StateToPostableAlert(t *testing.T) {
 				})
 			})
 
+			t.Run("should strip labels and annotations with an empty name or value", func(t *testing.T) {
+				alertState := randomTransition(eval.Normal, tc.state)
+				alertState.Labels[""] = "empty-name-label"
+				alertState.Labels["empty-value-label"] = ""
+				alertState.Annotations = randomMapOfStrings()
+				alertState.Annotations[""] = "empty-name-annotation"
+				alertState.Annotations["empty-value-annotation"] = ""
+				result := StateToPostableAlert(alertState, appURL)
+				require.NotContains(t, result.Labels, "")
+				require.NotContains(t, result.Labels, "empty-value-label")
+				require.NotContains(t, result.Annotations, "")
+				require.NotContains(t, result.Annotations, "empty-value-annotation")
+			})
+
 			switch tc.state {
 			case eval.NoData:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {

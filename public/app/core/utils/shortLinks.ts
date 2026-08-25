@@ -17,6 +17,7 @@ import { type ShareLinkConfiguration } from '../../features/dashboard-scene/shar
 import { notifyApp } from '../reducers/appNotification';
 
 import { copyStringToClipboard } from './explore';
+import { isOnPrem } from './isOnPrem';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
@@ -24,9 +25,16 @@ function buildHostUrl() {
 
 export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
-  const orgId = k8sShortUrl.metadata.namespace;
   const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  // The resource namespace is not the org ID — it is `default`, `org-<id>` or
+  // `stacks-<id>`. On-prem is multi-org, so carry the current user's org ID in
+  // the query param; Cloud doesn't support multi-org, so the param would just
+  // be noise (`orgId=1`) and is omitted.
+  if (isOnPrem()) {
+    const orgId = config.bootData.user.orgId;
+    return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  }
+  return `${hostUrl}/goto/${key}`;
 }
 
 function getRelativeURLPath(url: string) {

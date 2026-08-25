@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -12,14 +11,22 @@ import (
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns these endpoints
-// on. The endpoints are off by default while the API is being built out.
+// on. Search is on by default, trash is not.
+//
+// Trash has its own key rather than sharing ConfigKey. It authorizes on a
+// different rule -- folder admin, or whoever deleted the object -- that has not been
+// reviewed yet, and a deployment may well turn search on for live search alone.
 const (
-	ConfigSection = "grafana-apiserver"
-	ConfigKey     = "enable_search_api"
+	ConfigSection  = "grafana-apiserver"
+	ConfigKey      = "enable_search_api"
+	ConfigKeyTrash = "enable_trash_api"
 )
 
-// searchPathSegment is the last segment of the search endpoint path.
-const searchPathSegment = "search"
+// Aliased so the authorization chain and the routes cannot drift apart.
+const (
+	searchPathSegment = searchv0.SearchPathSegment
+	trashPathSegment  = searchv0.TrashPathSegment
+)
 
 // Route is an endpoint to mount, described in terms the caller's apiserver
 // wiring can consume. Deliberately not Grafana's builder.APIRouteHandler: the
@@ -29,6 +36,10 @@ type Route struct {
 	Path    string
 	Spec    *spec3.PathProps
 	Handler http.HandlerFunc
+
+	// Schemas are the components Spec references. They travel with the route
+	// because the envelope types belong to a different group than the one serving.
+	Schemas map[string]spec.Schema
 }
 
 // SearchRoute returns the namespaced route for a kind's search endpoint,
@@ -43,6 +54,21 @@ func (h *Handler) SearchRoute(group, version, resourceName, kindName string) Rou
 		Path:    resourceName + "/" + searchPathSegment,
 		Spec:    searchRouteSpec(kindName, version),
 		Handler: h.SearchFor(kind),
+		Schemas: envelopeSchemas(searchQueryGoName, searchResultsGoName),
+	}
+}
+
+// TrashRoute returns the namespaced route for a kind's trash endpoint, mounted at
+// .../namespaces/{namespace}/{resource}/trash.
+//
+// POST for the same reasons as SearchRoute.
+func (h *Handler) TrashRoute(group, version, resourceName, kindName string) Route {
+	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
+	return Route{
+		Path:    resourceName + "/" + trashPathSegment,
+		Spec:    trashRouteSpec(kindName, version),
+		Handler: h.TrashFor(kind),
+		Schemas: envelopeSchemas(trashQueryGoName, trashResultsGoName),
 	}
 }
 
@@ -55,6 +81,10 @@ func searchOperationID(kindName, version string) string {
 	return "list" + kindName + "Search" + capitalize(version)
 }
 
+func trashOperationID(kindName, version string) string {
+	return "list" + kindName + "Trash" + capitalize(version)
+}
+
 func capitalize(s string) string {
 	if s == "" {
 		return s
@@ -62,47 +92,49 @@ func capitalize(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
-// IsSearchRequest reports whether attr describes a call to a kind's search
-// endpoint. Kubernetes parses that path as a create on the kind named "search",
-// which a real create never is: creating an object posts to the collection and
-// so carries no name.
-func IsSearchRequest(attr authorizer.Attributes) bool {
-	return attr.IsResourceRequest() &&
-		attr.GetVerb() == "create" &&
-		attr.GetSubresource() == "" &&
-		attr.GetName() == searchPathSegment
-}
-
-// AsReadAttributes restates a search request as the read it performs. Without
-// this, searching would demand permission to create the kind.
-func AsReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
-	fieldSelector, fieldErr := attr.GetFieldSelector()
-	labelSelector, labelErr := attr.GetLabelSelector()
-	return authorizer.AttributesRecord{
-		User:            attr.GetUser(),
-		Verb:            "list",
-		Namespace:       attr.GetNamespace(),
-		APIGroup:        attr.GetAPIGroup(),
-		APIVersion:      attr.GetAPIVersion(),
-		Resource:        attr.GetResource(),
-		Subresource:     attr.GetSubresource(),
-		ResourceRequest: true,
-		Path:            attr.GetPath(),
-
-		FieldSelectorRequirements: fieldSelector,
-		FieldSelectorParsingErr:   fieldErr,
-		LabelSelectorRequirements: labelSelector,
-		LabelSelectorParsingErr:   labelErr,
-	}
-}
-
 func searchRouteSpec(kindName, version string) *spec3.PathProps {
+	return routeSpec(routeSpecArgs{
+		operationID:  searchOperationID(kindName, version),
+		description:  "Search " + kindName + " resources in a namespace.",
+		requestKind:  searchv0.KindSearchQuery,
+		requestGo:    searchQueryGoName,
+		responseKind: searchv0.KindSearchResults,
+		responseGo:   searchResultsGoName,
+	})
+}
+
+func trashRouteSpec(kindName, version string) *spec3.PathProps {
+	return routeSpec(routeSpecArgs{
+		operationID:  trashOperationID(kindName, version),
+		description:  "List deleted " + kindName + " resources in a namespace.",
+		requestKind:  searchv0.KindTrashQuery,
+		requestGo:    trashQueryGoName,
+		responseKind: searchv0.KindTrashResults,
+		responseGo:   trashResultsGoName,
+	})
+}
+
+// routeSpecArgs is what differs between the two endpoints. Go names are separate
+// from kind names because the schema components are keyed by the Go name, while
+// the descriptions read better with the kind name.
+type routeSpecArgs struct {
+	operationID  string
+	description  string
+	requestKind  string
+	requestGo    string
+	responseKind string
+	responseGo   string
+}
+
+// routeSpec builds what both endpoints have in common: a namespaced POST taking a
+// query envelope and returning a results envelope.
+func routeSpec(a routeSpecArgs) *spec3.PathProps {
 	return &spec3.PathProps{
 		Post: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
 				Tags:        []string{"Search"},
-				OperationId: searchOperationID(kindName, version),
-				Description: "Search " + kindName + " resources in a namespace.",
+				OperationId: a.operationID,
+				Description: a.description,
 				Parameters: []*spec3.Parameter{
 					{
 						ParameterProps: spec3.ParameterProps{
@@ -118,10 +150,8 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required:    true,
-						Description: "A " + searchv0.KindSearchQuery + " describing what to match, sort and return.",
-						Content: map[string]*spec3.MediaType{
-							"application/json": {},
-						},
+						Description: "A " + a.requestKind + " describing what to match, sort and return.",
+						Content:     jsonContent(a.requestGo),
 					},
 				},
 				Responses: &spec3.Responses{
@@ -129,10 +159,8 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 						StatusCodeResponses: map[int]*spec3.Response{
 							200: {
 								ResponseProps: spec3.ResponseProps{
-									Description: "A " + searchv0.KindSearchResults + " envelope.",
-									Content: map[string]*spec3.MediaType{
-										"application/json": {},
-									},
+									Description: "A " + a.responseKind + " envelope.",
+									Content:     jsonContent(a.responseGo),
 								},
 							},
 						},

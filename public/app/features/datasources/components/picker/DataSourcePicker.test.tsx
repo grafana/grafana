@@ -160,13 +160,13 @@ describe('DataSourcePicker', () => {
       //Mock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS1);
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
-      let cards = await screen.findAllByTestId('data-source-card');
+      let cards = await screen.findAllByTestId(/^data-testid data source card/);
       expect(await findByText(cards[0], mockDS1.name, { selector: 'span' })).toBeInTheDocument();
 
       //xMock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS2.name });
-      cards = await screen.findAllByTestId('data-source-card');
+      cards = await screen.findAllByTestId(/^data-testid data source card/);
       expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
     });
 
@@ -199,6 +199,45 @@ describe('DataSourcePicker', () => {
         'id',
         'custom.input.id'
       );
+    });
+
+    it('should mark the input as invalid when `invalid` is true', () => {
+      render(<DataSourcePicker onChange={jest.fn()} invalid></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should show a spinner when `isLoading` is true', () => {
+      render(<DataSourcePicker onChange={jest.fn()} isLoading></DataSourcePicker>);
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Clear data source' })).not.toBeInTheDocument();
+    });
+
+    it('should show a clear button when `onClear` is provided and a data source is selected', async () => {
+      const onClear = jest.fn();
+      const onChange = jest.fn();
+      render(<DataSourcePicker onChange={onChange} onClear={onClear} current={mockDS1.name}></DataSourcePicker>);
+
+      const clearButton = screen.getByRole('button', { name: 'Clear data source' });
+      // The dropdown indicator renders next to the clear button, not replaced by it
+      expect(screen.getByTestId('icon-angle-down')).toBeInTheDocument();
+
+      await user.click(clearButton);
+      expect(onClear).toHaveBeenCalledTimes(1);
+      // Clicking clear should not open the dropdown
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
+    });
+
+    it('should close the dropdown when the clear button is clicked while it is open', async () => {
+      const onClear = jest.fn();
+      await setupOpenDropdown(user, { onChange: jest.fn(), onClear, current: mockDS1.name });
+      expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Clear data source' }));
+      expect(onClear).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).not.toBeInTheDocument();
     });
 
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {

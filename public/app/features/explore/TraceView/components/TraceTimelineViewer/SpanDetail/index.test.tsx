@@ -14,19 +14,21 @@
 
 jest.mock('../../utils/date');
 
-// Controls the measured container width so the two-column layout decision is
-// deterministic in tests (real measurement needs layout jsdom doesn't do).
-let mockMeasuredWidth = 0;
-jest.mock('react-use/lib/useMeasure', () => ({
-  __esModule: true,
-  default: () => [jest.fn(), { width: mockMeasuredWidth }],
-}));
-
 // SpanDetailLinkButtons resolves data source settings via an async hook; return a
 // synchronous value so rendering doesn't trigger an un-acted state update in tests.
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+}));
+
+jest.mock('./pluginPromo/attributePluginPromos', () => ({
+  ...jest.requireActual('./pluginPromo/attributePluginPromos'),
+  useAttributePluginPromoGetter: jest.fn(() => () => undefined),
 }));
 
 import { act, render, screen } from '@testing-library/react';
@@ -49,7 +51,8 @@ import SpanDetail, { getAbsoluteTime, type SpanDetailProps } from './index';
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
-  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
+  // Span/resource attributes default open; only open the sections that start collapsed.
+  const detailState = new DetailState().toggleLogs().toggleReferences();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
   const request = {
@@ -176,7 +179,6 @@ describe('<SpanDetail>', () => {
   ];
 
   beforeEach(() => {
-    mockMeasuredWidth = 0;
     jest.mocked(formatDuration).mockReset();
     props.tagsToggle.mockReset();
     props.processToggle.mockReset();
@@ -203,18 +205,9 @@ describe('<SpanDetail>', () => {
     expect(() => render(<SpanDetail {...(props as unknown as SpanDetailProps)} />)).not.toThrow();
   });
 
-  describe('attribute card layout', () => {
-    it('uses two columns when the container is wider than 1000px', () => {
-      mockMeasuredWidth = 1200;
-      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(2);
-    });
-
-    it('uses a single column when the container is 1000px or narrower', () => {
-      mockMeasuredWidth = 800;
-      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-      expect(screen.getAllByTestId('span-detail-cards-column')).toHaveLength(1);
-    });
+  it('renders attribute cards', () => {
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+    expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
   it('shows the operation name', () => {
@@ -379,8 +372,12 @@ describe('<SpanDetail>', () => {
         { key: 'aggregation.span_count', value: '3' },
       ],
     };
-    // All accordions collapsed so each renders its abbreviated key preview.
-    const summaryTagsProps = { ...props, span: summarySpanWithTags, detailState: new DetailState() };
+    // Collapse span/resource attributes (open by default) so each accordion renders its abbreviated key preview.
+    const summaryTagsProps = {
+      ...props,
+      span: summarySpanWithTags,
+      detailState: new DetailState().toggleTags().toggleProcess(),
+    };
 
     beforeEach(() => {
       jest.mocked(formatDuration).mockImplementation((duration: number) => `${duration}us`);

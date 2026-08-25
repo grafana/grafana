@@ -13,6 +13,7 @@ import {
   SERVICE_HEXAGON_CATEGORY_ICON,
 } from './attributeCategories';
 import { ServiceHexagonIcon } from './icons/ServiceHexagonIcon';
+import { type AttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 export type AccordionCategorizedKeyValuesProps = {
   data: TraceKeyValuePair[];
@@ -21,6 +22,8 @@ export type AccordionCategorizedKeyValuesProps = {
   label: React.ReactNode;
   linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onToggle?: null | (() => void);
+  promoGetter?: AttributePluginPromoGetter;
+  datasourceType?: string;
 };
 
 export default function AccordionCategorizedKeyValues({
@@ -30,6 +33,8 @@ export default function AccordionCategorizedKeyValues({
   label,
   linksGetter,
   onToggle = null,
+  promoGetter,
+  datasourceType,
 }: AccordionCategorizedKeyValuesProps) {
   const styles = useStyles2(getStyles);
   const isEmpty = !Array.isArray(data) || !data.length;
@@ -85,7 +90,12 @@ export default function AccordionCategorizedKeyValues({
       </div>
       {isOpen &&
         (showFlatAttributes ? (
-          <KeyValuesTable data={data} linksGetter={linksGetter} />
+          <KeyValuesTable
+            data={data}
+            linksGetter={linksGetter}
+            promoGetter={promoGetter}
+            datasourceType={datasourceType}
+          />
         ) : (
           <div className={styles.categories} data-testid="AccordionCategorizedKeyValues--categories">
             {groupedCategories.map(({ category, attributes }) => {
@@ -114,7 +124,12 @@ export default function AccordionCategorizedKeyValues({
                   </button>
                   {isCategoryOpen && (
                     <div className={styles.categoryContent}>
-                      <KeyValuesTable data={attributes} linksGetter={linksGetter} />
+                      <KeyValuesTable
+                        data={attributes}
+                        linksGetter={linksGetter}
+                        promoGetter={promoGetter}
+                        datasourceType={datasourceType}
+                      />
                     </div>
                   )}
                 </div>
@@ -156,6 +171,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     summary: css({
       marginLeft: '0.7em',
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,

@@ -61,6 +61,16 @@ type RunOptions struct {
 	UsingDistributor bool
 }
 
+// legacyTableRenameEnabled reports whether legacy tables should be renamed after migration.
+// Skipped when explicitly disabled, or when locking is off: the MySQL rename path needs the READ
+// lock to order the RENAME, so without it the rename would hang.
+func (r *MigrationRunner) legacyTableRenameEnabled() bool {
+	if r.cfg.DisableLegacyTableRename {
+		return false
+	}
+	return r.cfg.Raw.Section("unified_storage").Key("migration_locking").MustBool(true)
+}
+
 // Run executes the migration logic for all organizations.
 func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migrator.Migrator, opts RunOptions) error {
 	orgs, err := r.getAllOrgs(sess)
@@ -162,7 +172,7 @@ func (r *MigrationRunner) Run(ctx context.Context, sess *xorm.Session, mg *migra
 		}
 	}
 
-	if !r.cfg.DisableLegacyTableRename {
+	if r.legacyTableRenameEnabled() {
 		if err := r.tableRenamer.RenameTables(ctx, r.definition.RenameTables, unlockTables); err != nil {
 			return err
 		}
@@ -234,7 +244,7 @@ func (r *MigrationRunner) MigrateOrg(ctx context.Context, sess *xorm.Session, en
 	// On MySQL with rename, use a separate session so validator SELECTs don't hold
 	// shared MDL on sess's transaction (would deadlock with RENAME's exclusive MDL).
 	validationSess := sess
-	if opts.DriverName == migrator.MySQL && len(r.definition.RenameTables) > 0 && !r.cfg.DisableLegacyTableRename {
+	if opts.DriverName == migrator.MySQL && len(r.definition.RenameTables) > 0 && r.legacyTableRenameEnabled() {
 		validationSess = engine.NewSession()
 		defer validationSess.Close()
 	}

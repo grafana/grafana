@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/api-clients",
-  "version": "13.2.0-pre",
+  "version": "13.3.0-pre",
   "description": "Grafana API client utilities",
   "keywords": [
     "grafana",
@@ -39,9 +39,6 @@
     },
     "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
-    },
-    "./internal/rtkq/legacy/user": {
-      "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
     },
     "./internal/rtkq/legacy/preferences/org": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/org/index.ts"
@@ -174,6 +171,12 @@
       "types": "./dist/types/clients/rtkq/plugins/v0alpha1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/plugins/v0alpha1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/plugins/v0alpha1/index.cjs"
+    },
+    "./rtkq/preferences/v1": {
+      "@grafana-app/source": "./src/clients/rtkq/preferences/v1/index.ts",
+      "types": "./dist/types/clients/rtkq/preferences/v1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/preferences/v1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/preferences/v1/index.cjs"
     }
   },
   "publishConfig": {
@@ -197,10 +200,11 @@
   },
   "devDependencies": {
     "@rtk-query/codegen-openapi": "^2.0.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "enquirer": "^2.4.1",
     "openapi-types": "^12.1.3",
     "rollup": "^4.60.1",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
     "@grafana/runtime": ">=11.6 <= 12.x",

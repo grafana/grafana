@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -568,43 +567,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	}
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
-	for _, frame := range result.Condition {
-		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
-		if frame.Meta != nil && frame.Meta.Custom != nil {
-			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
-				continue // do not overwrite EvalMatch from classic condition.
-			}
-		}
-
-		frame.SetMeta(&data.FrameMeta{}) // overwrite metadata
-
-		if len(frame.Fields) == 1 {
-			theseLabels := frame.Fields[0].Labels
-			fp := theseLabels.Fingerprint()
-
-			for _, fps := range captures {
-				// First look for a capture whose labels are an exact match
-				if v, ok := fps[fp]; ok {
-					if frame.Meta.Custom == nil {
-						frame.Meta.Custom = []NumberValueCapture{}
-					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-				} else {
-					// If no exact match was found, look for captures whose labels are either subsets
-					// or supersets
-					for _, v := range fps {
-						// matching labels are equal labels, or when one set of labels includes the labels of the other.
-						if theseLabels.Equals(v.Labels) || theseLabels.Contains(v.Labels) || v.Labels.Contains(theseLabels) {
-							if frame.Meta.Custom == nil {
-								frame.Meta.Custom = []NumberValueCapture{}
-							}
-							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-						}
-					}
-				}
-			}
-		}
-	}
+	attachCaptureValues(result.Condition, captures)
 
 	return result
 }

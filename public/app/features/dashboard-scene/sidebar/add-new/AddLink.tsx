@@ -17,8 +17,8 @@ export function AddLink({ dashboardScene }: { dashboardScene: DashboardSceneLike
   return (
     <AddButton
       icon="link"
-      label={t('dashboard-scene.add-link.label-link', 'Link')}
-      tooltip={t('dashboard-scene.add-link.tooltip', 'Add link to another dashboard or external site')}
+      label={t('dashboard.sidebar.add.link.label', 'Link')}
+      tooltip={t('dashboard.sidebar.add.link.tooltip', 'Add link to another dashboard or external site')}
       onClick={onAddLinkClick}
     />
   );

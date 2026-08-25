@@ -73,7 +73,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 			enabled:     true,
 			annotations: map[string]string{AnnoAuthor: "Spoofed"},
-			expected:    map[string]string{AnnoAuthorOrigin: "Unknown"},
+			expected:    map[string]string{},
 		},
 		{
 			name:        "user cannot spoof the author id and origin",
@@ -81,6 +81,22 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			requester:   userRequester,
 			enabled:     true,
 			annotations: map[string]string{AnnoAuthorID: "user:someone-else", AnnoAuthorOrigin: "GitHub"},
+			expected: map[string]string{
+				AnnoAuthor:       "Test User",
+				AnnoAuthorEmail:  "test@example.com",
+				AnnoAuthorID:     "user:abc123",
+				AnnoAuthorOrigin: "Grafana",
+			},
+		},
+		{
+			name:      "user whose token carries the provisioning audience is still attributed",
+			operation: admission.Create,
+			requester: fakeProvisioningAuthInfo{
+				StaticRequester: userRequester,
+				audience:        []string{"provisioning.grafana.app"},
+			},
+			enabled:     true,
+			annotations: map[string]string{AnnoAuthor: "Spoofed", AnnoAuthorOrigin: "GitHub"},
 			expected: map[string]string{
 				AnnoAuthor:       "Test User",
 				AnnoAuthorEmail:  "test@example.com",

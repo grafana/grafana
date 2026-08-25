@@ -475,6 +475,8 @@ Defaults to `private`.
 
 For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
 
+SQLite stores the journal mode in the database file, so a database that was opened with WAL keeps using it. Setting `wal` back to `false` puts the database into `DELETE` journal mode again on the next start.
+
 #### `query_retries`
 
 This setting applies to `sqlite` only and controls the number of times the system retries a query when the database is locked. The default value is `0` (disabled).
@@ -892,13 +894,23 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+Path to a custom default home dashboard. If this value is empty, Grafana uses the unified homepage.
+
+Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
 The file may contain either a classic dashboard JSON or a Kubernetes-format dashboard resource exported from the `dashboard.grafana.app` API (with top-level `apiVersion`, `kind`, `metadata` and `spec` fields). The Kubernetes-format is required for `v2` dashboard schemas.
 
-{{< admonition type="note" >}}
-On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
-{{< /admonition >}}
+#### `default_preload`
+
+The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
+
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+
+This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
+
+#### `report_render_query_grace_period`
+
+How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
 
 ### `[dashboard_cleanup]`
 
@@ -916,6 +928,14 @@ Number of deleted dashboards to process in each batch during the cleanup process
 Default: `10`, Minimum: `5`, Maximum: `200`.
 
 Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
+
+<hr />
+
+### `[folder]`
+
+#### `deleted_resource_cleanup_interval`
+
+How often the background job deletes resources (alert rules, library panels) whose folder no longer exists. Requires the `deletedFolderResourceCleanup` feature toggle. Default and minimum: `5m`.
 
 <hr />
 
@@ -1010,7 +1030,7 @@ The default is `en-US`.
 
 #### `home_page`
 
-Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
+Path to a custom home page. Users are only redirected to this when no home dashboard UID is configured. It should match a frontend route and contain a leading slash.
 
 #### `External user management`
 
@@ -1718,6 +1738,10 @@ Maximum requests accepted per short interval of time for Grafana backend log ing
 #### `bot_filter_enabled`
 
 Enables the bot filter for the Grafana Faro JavaScript agent integration. Default is `false`. When enabled, it will filter out requests from known bots and crawlers.
+
+#### `track_resources`
+
+Controls which resource timings the Grafana Faro JavaScript agent tracks. Leave empty, the default, to track only `fetch` and `xhr` resource timings. Set to `true` to track all resources, including images, stylesheets, and fonts. Set to `false` to track no resource timings at all.
 
 <hr>
 
@@ -2845,13 +2869,21 @@ For more information, refer to the [Configure Grafana Live HA setup](../set-up-g
 
 **Experimental**
 
-Address string of selected the high availability (HA) Live engine. For Redis, it's a `host:port` string. Example:
+Address of the selected high availability (HA) Live engine. For Redis, it's a `host:port` string or a `redis://` or `rediss://` connection URL. Example:
 
 ```ini
 [live]
 ha_engine = redis
 ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
 ha_engine_password: $__file{/your/redis/password/secret/mount}
+```
+
+Use the `rediss://` scheme to connect to Redis over TLS. Connection URLs can also carry credentials and a database number; a password set in the URL (even an explicitly empty one) takes precedence, and `ha_engine_password` applies when the URL sets no password. Example:
+
+```ini
+[live]
+ha_engine = redis
+ha_engine_address = rediss://redis.example.com:6380
 ```
 
 <hr>
@@ -2870,6 +2902,14 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
 
+#### `allowed_git_urls`
+
+While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
+
+If you want to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host, add an entry here. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range.
+
+This field is empty by default.
+
 #### `min_sync_interval`
 
 The minimum sync interval that you can set for a repository. Indicates how often the controller will check for changes in the repository that were not propagated by a webhook. The minimum value is `10s`. Default is `10s`.
@@ -2879,6 +2919,12 @@ The minimum sync interval that you can set for a repository. Indicates how often
 List of enabled repository types, separated by `|`. When empty, defaults are applied by each subsystem.
 
 Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
+
+#### `connection_types`
+
+List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
+
+Supported types: `github` and `githubOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 
 #### `max_repositories`
 
@@ -2898,6 +2944,16 @@ Two consumers honor this setting:
 - Screenshot images embedded in pull-request comments. These are fetched by the Git provider's servers, so the URL must be reachable from the public internet.
 
 Set this when `[server] root_url` points at a cluster-internal address (for example, when Grafana runs behind a private ingress) but provisioning needs an externally-reachable host. This is analogous to `[rendering] callback_url`, which serves the same purpose for the image renderer plugin.
+
+#### `webhook_trusted_ip_header`
+
+Name of the header that carries the real client IP, used to key per-client rate limiting on the webhook endpoint. When empty, rate-limiter keys on the real TCP peer address.
+
+Set this only when the endpoint sits behind a proxy that overwrites the header with the resolved client IP, for example `X-Real-Ip`.
+
+#### `webhook_rate_limit_rps`
+
+Sustained requests per second that the webhook endpoint allows per client before it returns `429 Too Many Requests`. The instantaneous burst allowance is twice this value. Default is `0`, which disables rate limiting.
 
 <hr>
 

@@ -1493,6 +1493,15 @@ func TestValidateAuthor(t *testing.T) {
 			annotations: map[string]string{AnnoAuthor: "grot", AnnoAuthorID: "123", AnnoAuthorOrigin: "github"},
 		},
 		{
+			name: "create by a user whose token carries the provisioning audience",
+			ctx: identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
+				StaticRequester: requester,
+				audience:        []string{"provisioning.grafana.app"},
+			}),
+			operation:   admission.Create,
+			annotations: annotations,
+		},
+		{
 			name:            "create with mismatched id",
 			ctx:             userCtx,
 			operation:       admission.Create,
@@ -1528,13 +1537,7 @@ func TestValidateAuthor(t *testing.T) {
 			ctx:             t.Context(),
 			operation:       admission.Create,
 			annotations:     map[string]string{AnnoAuthorOrigin: "github"},
-			wantErrContains: AnnoAuthorOrigin + " must be Unknown",
-		},
-		{
-			name:        "create with only an origin and no requester is allowed",
-			ctx:         t.Context(),
-			operation:   admission.Create,
-			annotations: map[string]string{AnnoAuthorOrigin: "Unknown"},
+			wantErrContains: AnnoAuthorOrigin + " may not be set",
 		},
 		{
 			name:           "update with unchanged annotations",

@@ -2,12 +2,13 @@
 aliases:
   - /docs/grafana-cloud/account-management/e2c-guide/
   - /docs/grafana-cloud/account-management/migration-guide/
+  - /docs/grafana-cloud/security-and-account-management/migration-guide/
 description: Migrate from Grafana OSS/Enterprise to Grafana Cloud
 keywords:
   - Grafana Cloud
   - Grafana Enterprise
   - Grafana OSS
-menuTitle: Migrate from Grafana OSS/Enterprise to Grafana Cloud
+menuTitle: Migrate
 title: Migrate from Grafana OSS/Enterprise to Grafana Cloud
 weight: 7000
 ---

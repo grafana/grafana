@@ -158,11 +158,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	// Measure once so the metric and the log line agree on the operation duration.
+	duration := result.elapsed()
 	if r.metrics != nil {
-		r.metrics.RecordResourceOperation(r.action, result)
+		r.metrics.RecordResourceOperation(r.action, result, duration)
 	}
 
-	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name(), "duration", duration, "bytes", result.Bytes())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
 	} else if shouldLogWarning {
@@ -310,6 +312,22 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 			summary.Create++
 		}
 		summary.Write = summary.Create + summary.Update
+
+		// Action-aware total, kept in sync with the counters above so the driver can
+		// sum it without re-deriving per action. Each single-purpose worker records
+		// one FileAction type: push writes, delete deletes, move renames (recorded as
+		// create+delete, so count creates only to avoid double-counting). Everything
+		// else (pull, migrate) sums create+update+delete.
+		switch r.action {
+		case provisioning.JobActionPush:
+			summary.TotalChanges = summary.Write
+		case provisioning.JobActionDelete:
+			summary.TotalChanges = summary.Delete
+		case provisioning.JobActionMove:
+			summary.TotalChanges = summary.Create
+		default:
+			summary.TotalChanges = summary.Create + summary.Update + summary.Delete
+		}
 	}
 }
 
@@ -364,7 +382,11 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	if err != nil {
-		jobStatus.State = provisioning.JobStateError
+		if IsWarning(err) {
+			jobStatus.State = provisioning.JobStateWarning
+		} else {
+			jobStatus.State = provisioning.JobStateError
+		}
 		jobStatus.Message = err.Error()
 	}
 

@@ -408,7 +408,10 @@ export function createDashboardSceneFromDashboardModel(
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
-      preload: dto.preload ?? false,
+      // Keep preload undefined when the dashboard JSON omits it. Baking in `false` here would
+      // persist an explicit `false` on the next save, pinning a dashboard that never expressed a
+      // preference. New dashboards get a concrete value seeded at creation instead.
+      preload: dto.preload,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,

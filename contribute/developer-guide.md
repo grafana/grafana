@@ -112,7 +112,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 
 - azuremonitor
 - grafana-testdata-datasource
-- mysql
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 

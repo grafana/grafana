@@ -49,47 +49,35 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
+	// Never let a caller set the email annotation
+	delete(job.Annotations, AnnoAuthorEmail)
 
 	enabled := m.userAttributionEnabled != nil && m.userAttributionEnabled(ctx)
 
-	// Never trust client-supplied author annotations: clear them and set them
-	// only from the request identity below. The provisioning service identity
-	// is exempt so the webhook dispatcher can attribute jobs to the webhook
-	// sender, but only for the fields a webhook carries: name, id, and origin.
-	delete(job.Annotations, AnnoAuthorEmail)
-	if info, ok := types.AuthInfoFrom(ctx); !enabled || !ok || !identity.IsProvisioningServiceIdentity(info) {
-		delete(job.Annotations, AnnoAuthor)
-		delete(job.Annotations, AnnoAuthorID)
-		delete(job.Annotations, AnnoAuthorOrigin)
-	}
+	requester, err := identity.GetRequester(ctx)
+	isUser := err == nil && requester.IsIdentityType(types.TypeUser)
 
-	if !enabled {
+	if enabled && isUser {
+		job.Annotations[AnnoAuthor] = requester.GetName()
+		job.Annotations[AnnoAuthorEmail] = requester.GetEmail()
+		job.Annotations[AnnoAuthorID] = requester.GetUID()
+		job.Annotations[AnnoAuthorOrigin] = "Grafana"
 		return nil
 	}
 
-	if info, ok := types.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(info) {
+	info, hasInfo := types.AuthInfoFrom(ctx)
+	isProvisioningService := hasInfo && identity.IsProvisioningServiceIdentity(info)
+
+	if enabled && isProvisioningService {
 		if job.Annotations[AnnoAuthorOrigin] == "" {
 			job.Annotations[AnnoAuthorOrigin] = "Grafana"
 		}
 		return nil
 	}
 
-	requester, err := identity.GetRequester(ctx)
-	if err != nil || !requester.IsIdentityType(types.TypeUser) {
-		job.Annotations[AnnoAuthorOrigin] = "Unknown"
-		return nil
-	}
-
-	if name := requester.GetName(); name != "" {
-		job.Annotations[AnnoAuthor] = name
-	}
-	if email := requester.GetEmail(); email != "" {
-		job.Annotations[AnnoAuthorEmail] = email
-	}
-	if uid := requester.GetUID(); uid != "" {
-		job.Annotations[AnnoAuthorID] = uid
-	}
-	job.Annotations[AnnoAuthorOrigin] = "Grafana"
+	delete(job.Annotations, AnnoAuthor)
+	delete(job.Annotations, AnnoAuthorID)
+	delete(job.Annotations, AnnoAuthorOrigin)
 
 	return nil
 }

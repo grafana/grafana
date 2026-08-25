@@ -59,6 +59,9 @@ type Manager struct {
 	persister StatePersister
 
 	ignorePendingForNoDataAndError bool
+
+	// readiness gates whether evaluation results may be applied before the cache is warmed.
+	readiness ReadinessProbe
 }
 
 type ManagerCfg struct {
@@ -89,6 +92,12 @@ type ManagerCfg struct {
 	Log    log.Logger
 
 	IgnorePendingForNoDataAndError bool // TODO: Remove
+
+	// RequireWarm gates evaluation until the cache is warmed. Off by default; the ruler sets it
+	// because it warms asynchronously after (re)assignment.
+	RequireWarm bool
+	// WarmGateTimeout is the grace window before gated evaluation proceeds anyway. 0 uses the default.
+	WarmGateTimeout time.Duration
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
@@ -97,6 +106,13 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	// Only expose the metrics if this grafana server does execute alerts.
 	if cfg.Metrics != nil && !cfg.DisableExecution {
 		c.RegisterMetrics(cfg.Metrics.Registerer())
+	}
+
+	// Vanilla Grafana warms before evaluating, so it never needs to gate; the ruler warms
+	// asynchronously and sets RequireWarm to gate until the cache is warmed.
+	var readiness ReadinessProbe = AlwaysReady{}
+	if cfg.RequireWarm {
+		readiness = newGatedProbe(cfg.Clock, cfg.WarmGateTimeout)
 	}
 
 	m := &Manager{
@@ -115,13 +131,21 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		tracer:                 cfg.Tracer,
 
 		ignorePendingForNoDataAndError: cfg.IgnorePendingForNoDataAndError,
+
+		readiness: readiness,
 	}
 
 	return m
 }
 
+// Ready reports whether results may be applied to the state cache.
+func (st *Manager) Ready() Readiness {
+	return st.readiness.Ready()
+}
+
 func (st *Manager) ClearCache() {
 	st.cache.reset()
+	st.readiness.Reset()
 }
 
 func (st *Manager) Run(ctx context.Context) error {
@@ -132,21 +156,36 @@ func (st *Manager) Run(ctx context.Context) error {
 func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader RuleReader, instanceReader InstanceReader) {
 	logger := st.log.FromContext(ctx)
 
+	success := true
+	startTime := time.Now()
+	rulesCount := 0
+	statesCount := 0
+	defer func() {
+		// TODO this is how it works since the inception. This needs to be reviewed and changed because it has an implication for state history.
+		// Mark ready regardless of the outcome.
+		st.readiness.MarkReady()
+		if !success {
+			logger.Warn("State cache initialization finished with errors. Continue with empty state")
+			return
+		}
+		logger.Info("State cache has been initialized", "rules", rulesCount, "states", statesCount, "duration", time.Since(startTime))
+	}()
+
 	if orgReader == nil || rulesReader == nil || instanceReader == nil {
 		logger.Error("Unable to warm state cache, missing required store readers")
+		success = false
 		return
 	}
 
-	startTime := time.Now()
 	logger.Info("Warming state cache for startup")
 
 	orgIds, err := orgReader.FetchOrgIds(ctx)
 	if err != nil {
 		logger.Error("Unable to warm state cache, failed to fetch org IDs", "error", err)
+		success = false
 		return
 	}
 
-	statesCount := 0
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -154,8 +193,11 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		}
 		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
-			logger.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch rules", "error", err)
+			success = false
+			continue
 		}
+		rulesCount += len(alertRules)
 
 		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
 		groupSizes := make(map[string]int64)
@@ -183,13 +225,14 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		}
 		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
-			logger.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch previous state.", "error", err)
+			success = false
+			continue
 		}
-
+		// TODO change this to consider situation when there is already a state, e.g. when readiness probe expired and state started from scratch.
 		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				// TODO Should we delete the orphaned state from the db?
 				continue
 			}
 
@@ -207,8 +250,6 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			statesCount++
 		}
 	}
-
-	logger.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
@@ -298,6 +339,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 // This will update the states in cache/store and return the state transitions that need to be sent to the alertmanager.
+// A non-nil error means the results were not applied; the returned StateTransitions is nil in that case.
 func (st *Manager) ProcessEvalResults(
 	ctx context.Context,
 	evaluatedAt time.Time,
@@ -305,7 +347,19 @@ func (st *Manager) ProcessEvalResults(
 	results eval.Results,
 	extraLabels data.Labels,
 	send Sender,
-) StateTransitions {
+) (StateTransitions, error) {
+	logger := st.log.FromContext(ctx)
+
+	// Don't apply results to a cold cache, or we write spurious transitions to state history.
+	switch st.readiness.Ready() {
+	case Ready:
+		// Cache is warm (or gating is disabled) — process normally.
+	case NotReady:
+		return nil, ErrNotReady
+	case TimedOut:
+		logger.Warn("Processing evaluation results before the state cache is ready; readiness grace period elapsed")
+	}
+
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
 	ctx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
@@ -314,8 +368,6 @@ func (st *Manager) ProcessEvalResults(
 		attribute.String("tick", utcTick),
 		attribute.Int("results", len(results))))
 	defer span.End()
-
-	logger := st.log.FromContext(ctx)
 
 	// lazy evaluation of takeImage only once and only if it is requested.
 	var fn takeImageFn
@@ -370,7 +422,7 @@ func (st *Manager) ProcessEvalResults(
 		send(ctx, statesToSend)
 	}
 
-	return allChanges
+	return allChanges, nil
 }
 
 // updateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.

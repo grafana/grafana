@@ -1,6 +1,5 @@
-import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { config } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { backendSrv } from './backend_srv';
@@ -27,6 +26,7 @@ describe('changeTheme', () => {
   afterEach(() => {
     contextSrv.isSignedIn = originalSignedIn;
     contextSrv.user.uid = originalUid;
+    document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
     setTestFlags({});
     jest.restoreAllMocks();
   });
@@ -44,35 +44,43 @@ describe('changeTheme', () => {
     expect(preferencesAPI.endpoints.updatePreferences.initiate).not.toHaveBeenCalled();
   });
 
-  describe('when the newPreferencesPage flag is off', () => {
-    it('persists via the legacy preferences API', async () => {
-      await changeTheme('light', false);
-      expect(backendSrv.patch).toHaveBeenCalledWith('/api/user/preferences', { theme: 'light' });
-      expect(preferencesAPI.endpoints.updatePreferences.initiate).not.toHaveBeenCalled();
+  it('persists to the user resource via the k8s preferences API', async () => {
+    await changeTheme('light', false);
+    expect(preferencesAPI.endpoints.updatePreferences.initiate).toHaveBeenCalledWith({
+      name: 'user-abc123',
+      patch: { spec: { theme: 'light' } },
+    });
+    expect(backendSrv.patch).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the "user" resource name when the user has no uid', async () => {
+    contextSrv.user.uid = '';
+    await changeTheme('light', false);
+    expect(preferencesAPI.endpoints.updatePreferences.initiate).toHaveBeenCalledWith({
+      name: 'user',
+      patch: { spec: { theme: 'light' } },
     });
   });
 
-  describe('when the newPreferencesPage flag is on', () => {
-    beforeEach(() => {
-      setTestFlags({ [FlagKeys.GrafanaNewPreferencesPage]: true });
-    });
+  // The build directory name differs per bundler, so the old stylesheet has to be matched by
+  // the URL the backend published rather than by a hardcoded path fragment.
+  it.each([
+    ['webpack', 'public/build/grafana.dark.abc123.css', 'public/build/grafana.light.def456.css'],
+    ['rspack', 'public/build/rspack/grafana.dark.abc123.css', 'public/build/rspack/grafana.light.def456.css'],
+  ])('removes the previous theme stylesheet under %s', async (_bundler, darkHref, lightHref) => {
+    config.bootData.assets = { ...config.bootData.assets, dark: darkHref, light: lightHref };
+    const oldLink = document.createElement('link');
+    oldLink.rel = 'stylesheet';
+    oldLink.href = darkHref;
+    document.head.appendChild(oldLink);
 
-    it('persists to the user resource via the k8s preferences API', async () => {
-      await changeTheme('light', false);
-      expect(preferencesAPI.endpoints.updatePreferences.initiate).toHaveBeenCalledWith({
-        name: 'user-abc123',
-        patch: { spec: { theme: 'light' } },
-      });
-      expect(backendSrv.patch).not.toHaveBeenCalled();
-    });
+    await changeTheme('light', true);
 
-    it('falls back to the "user" resource name when the user has no uid', async () => {
-      contextSrv.user.uid = '';
-      await changeTheme('light', false);
-      expect(preferencesAPI.endpoints.updatePreferences.initiate).toHaveBeenCalledWith({
-        name: 'user',
-        patch: { spec: { theme: 'light' } },
-      });
-    });
+    const newLink = document.head.querySelector<HTMLLinkElement>(`link[href="${lightHref}"]`);
+    expect(newLink).not.toBeNull();
+    newLink!.onload!(new Event('load'));
+
+    expect(document.head.querySelector(`link[href="${darkHref}"]`)).toBeNull();
+    expect(document.head.querySelector(`link[href="${lightHref}"]`)).not.toBeNull();
   });
 });

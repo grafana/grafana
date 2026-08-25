@@ -175,7 +175,7 @@ function VariableRow({ variable, indented, selected, onSetSelected, onEdit }: Va
           className={cx(styles.nameButton, indented && styles.indented)}
           onClick={() => onEdit(variable)}
         >
-          <Icon name="brackets-curly" />
+          <Icon name="gf-variable" />
           <span>{specName}</span>
         </button>
       </td>
