@@ -1,4 +1,4 @@
-import { type NavModelItem } from '@grafana/data';
+import { type GrafanaConfig, locationUtil, type NavModelItem } from '@grafana/data';
 
 import { buildBreadcrumbs } from './utils';
 
@@ -134,6 +134,62 @@ describe('breadcrumb utils', () => {
         { text: 'My section', href: '/my-section?from=1h&to=now' },
         { text: 'My page', href: '/my-page' },
       ]);
+    });
+
+    describe('with appSubUrl', () => {
+      beforeAll(() => {
+        locationUtil.initialize({
+          config: { appSubUrl: '/grafana' } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
+        });
+      });
+
+      afterAll(() => {
+        locationUtil.initialize({
+          config: { appSubUrl: '' } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
+        });
+      });
+
+      it('prefixes a bare nav url with the subpath exactly once', () => {
+        const sectionNav: NavModelItem = {
+          text: 'My section',
+          url: '/my-section',
+        };
+        expect(buildBreadcrumbs(sectionNav)).toEqual([{ text: 'My section', href: '/grafana/my-section' }]);
+      });
+
+      it('does not double-prefix a nav url that already carries the subpath', () => {
+        const sectionNav: NavModelItem = {
+          text: 'My section',
+          url: '/grafana/my-section',
+        };
+        expect(buildBreadcrumbs(sectionNav)).toEqual([{ text: 'My section', href: '/grafana/my-section' }]);
+      });
+
+      it('still matches the home nav and dedupes using the unprefixed nav urls', () => {
+        const pageNav: NavModelItem = {
+          text: 'My page',
+          url: '/my-page',
+          parentItem: {
+            text: 'My parent page',
+            url: '/home',
+          },
+        };
+        const sectionNav: NavModelItem = {
+          text: 'My section',
+          url: '/my-section',
+          parentItem: {
+            text: 'My parent section',
+            url: '/my-parent-section',
+          },
+        };
+        expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
+          { text: 'My page', href: '/grafana/my-page' },
+        ]);
+      });
     });
   });
 });
