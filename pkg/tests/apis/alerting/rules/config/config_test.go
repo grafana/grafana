@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -46,12 +47,14 @@ func TestMain(m *testing.M) {
 // feature flag enabled. The flag is required for the datasource admission
 // validator to run (with it off the validator short-circuits with "sync is
 // disabled on this instance"); see newExternalRulerSyncDatasourceValidator in
-// pkg/registry/apps/alerting/rules/register.go.
+// pkg/registry/apps/alerting/rules/register.go. The poll interval is shortened
+// so seedSingleton's wait for the sync worker's own seed pass stays fast.
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAlertingSyncExternalRuler,
 		},
+		NGAlertAdminConfigPollInterval: 200 * time.Millisecond,
 	})
 }
 
@@ -104,15 +107,19 @@ func newConfig(name string) *alertingrulesv0alpha1.Config {
 	}
 }
 
-// seedSingleton brings the "default" singleton into existence. Unlike the
-// notifications Config (create is service-identity only there), the rules
-// Config authorizer gates create on the same update permission as everything
-// else, so an admin can create it directly.
+// seedSingleton brings the "default" singleton into existence the way
+// production does — by waiting for the sync worker's own flag-on-but-
+// unconfigured tick to seed it (create is service-identity only; humans only
+// ever read/update the already-seeded object). getTestHelper shortens the
+// poll interval so this stays fast; require.Eventually absorbs the remaining
+// race with the first tick and unified-storage read-after-write lag.
 func seedSingleton(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper) {
 	t.Helper()
 	adminClient := newConfigClient(t, helper.Org1.Admin)
-	_, err := adminClient.Create(ctx, newConfig(alertingrulesv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-	require.NoError(t, err)
+	require.Eventually(t, func() bool {
+		_, err := adminClient.Get(ctx, singletonID)
+		return err == nil
+	}, 30*time.Second, 200*time.Millisecond, "sync worker did not seed the Config singleton")
 }
 
 func requireForbidden(t *testing.T, err error, msgContains string) {
@@ -140,14 +147,11 @@ func configWildcardPermission(actions ...string) resourcepermissions.SetResource
 // against a real apiserver:
 //   - get/list gated by rules-configs:get (read), granted to Viewer and Admin.
 //   - patch/update gated by rules-configs:update, granted to Admin only.
+//   - create is service-identity only: forbidden for every human (the singleton
+//     is seeded by the sync worker).
 //   - delete/deletecollection is rejected for everyone ("cannot be deleted").
 //   - /status writes require the service-identity-only rules-configs/status:update
 //     and are forbidden for every human, including Admin.
-//
-// create is covered separately by TestIntegrationConfigCreate: unlike the
-// notifications Config, it is gated on the same update permission (not
-// service-identity only), and testing it here would need a fresh server per
-// user since delete is never allowed.
 func TestIntegrationConfigAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -219,6 +223,14 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 				})
 			}
 
+			// create is service-identity only: every human is forbidden regardless of
+			// update permission. The singleton is brought into existence by the sync
+			// worker; humans only read/update the seeded object.
+			t.Run("is forbidden to create", func(t *testing.T) {
+				_, err := client.Create(ctx, newConfig(alertingrulesv0alpha1.ConfigSingletonName), resource.CreateOptions{})
+				requireForbidden(t, err, "seeded automatically")
+			})
+
 			t.Run("is forbidden to delete", func(t *testing.T) {
 				err := client.Delete(ctx, singletonID, resource.DeleteOptions{})
 				requireForbidden(t, err, "cannot be deleted")
@@ -234,32 +246,25 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 	}
 }
 
-// TestIntegrationConfigCreate verifies who can bring the singleton into
-// existence. Unlike the notifications Config (create is service-identity only,
-// seeded by the sync worker), the rules Config authorizer gates create on the
-// same update permission as everything else, so any user with that permission
-// can create it — a POST, and a PUT upsert to the missing object (re-authorized
-// by the apiserver as create) alike. Each subtest uses a fresh server so the
-// singleton does not yet exist.
+// TestIntegrationConfigCreate verifies that humans cannot bring the singleton
+// into existence — it is seeded by the sync worker, and human create is denied
+// on every path. A POST is rejected by the authorizer (verb=create); a PUT
+// upsert to the missing object is re-authorized by the apiserver as create and
+// rejected the same way. Each subtest uses a fresh server so the singleton
+// does not yet exist.
 func TestIntegrationConfigCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
-	t.Run("admin can POST create", func(t *testing.T) {
+	t.Run("POST create is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
 		_, err := newConfigClient(t, helper.Org1.Admin).Create(ctx, newConfig(alertingrulesv0alpha1.ConfigSingletonName), resource.CreateOptions{})
-		require.NoError(t, err)
+		requireForbidden(t, err, "seeded automatically")
 	})
 
-	t.Run("admin can PUT upsert (create-on-update)", func(t *testing.T) {
+	t.Run("PUT upsert (create-on-update) is forbidden for humans", func(t *testing.T) {
 		helper := getTestHelper(t)
 		_, err := rawUpdate(t, ctx, helper.Org1.Admin, newConfig(alertingrulesv0alpha1.ConfigSingletonName))
-		require.NoError(t, err)
-	})
-
-	t.Run("viewer is forbidden to POST create", func(t *testing.T) {
-		helper := getTestHelper(t)
-		_, err := newConfigClient(t, helper.Org1.Viewer).Create(ctx, newConfig(alertingrulesv0alpha1.ConfigSingletonName), resource.CreateOptions{})
 		requireForbidden(t, err, "")
 	})
 }
