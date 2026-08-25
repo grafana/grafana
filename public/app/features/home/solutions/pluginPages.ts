@@ -44,15 +44,7 @@ export async function drilldownActiveCta(
     return { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' };
   }
 
-  if (contextSrv.hasAccessToExplore()) {
-    return {
-      label: openExploreLabel(),
-      href: constructDataSourceExploreUrl({ name: ds.name }),
-      action: 'open_solution',
-    };
-  }
-
-  return null;
+  return exploreFallbackCta(ds);
 }
 
 // Product names are not translated.
@@ -62,4 +54,14 @@ export function openAppLabel(appName: string): string {
 
 export function openExploreLabel(): string {
   return t('home.solutions.cta.open-explore', 'Open in Explore');
+}
+
+export function exploreFallbackCta(ds: DataSourceInstanceListItem): SolutionCta<'open_solution'> | null {
+  return contextSrv.hasAccessToExplore()
+    ? {
+        label: openExploreLabel(),
+        href: constructDataSourceExploreUrl({ name: ds.name }),
+        action: 'open_solution',
+      }
+    : null;
 }
