@@ -80,19 +80,9 @@ describe('DashboardPicker', () => {
           dashboard: { uid: folderA_dashbdD.item.uid, title: folderA_dashbdD.item.title },
           meta: { folderTitle: folderA.item.title, folderUid: folderA.item.uid },
         });
-      const mockedDashboardApi: Awaited<ReturnType<typeof dashboardApi.getDashboardAPI>> = {
-        getDashboardDTO,
-        saveDashboard: jest.fn(),
-        deleteDashboard: jest.fn(),
-        listDashboardHistory: jest.fn(),
-        getDashboardHistoryVersions: jest.fn(),
-        restoreDashboardVersion: jest.fn(),
-        listDeletedDashboards: jest.fn(),
-        getDeletedDashboard: jest.fn(),
-        getDashboard: jest.fn(),
-        restoreDashboard: jest.fn(),
-      };
-      const apiSpy = jest.spyOn(dashboardApi, 'getDashboardAPI').mockResolvedValue(mockedDashboardApi);
+      const apiSpy = jest
+        .spyOn(dashboardApi, 'getDashboardAPI')
+        .mockResolvedValue({ getDashboardDTO } as unknown as Awaited<ReturnType<typeof dashboardApi.getDashboardAPI>>);
 
       const { rerender } = render(<DashboardPicker value={unknownUid} showUnknown />);
 
