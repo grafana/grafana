@@ -546,13 +546,14 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 	})
 }
 
-// Cross-namespace update attacks: a client injects the inactive auth-type key (or a stolen
-// ID in the other namespace) so scrub/mint runs on the wrong key pair and leaves an
-// unvetted grafanaExternalId for STS.
+// Cross-namespace update attacks: a client injects the inactive auth-type key, or an ID under
+// the namespace its datasource does not use, to steer the mint or restore onto the wrong key
+// pair. Payload IDs are always dropped, so what these cover is that the datasource ends up
+// with the ID the server chose, under the keys it actually reads.
 func TestPreserveGrafanaExternalID_CrossNamespace(t *testing.T) {
 	const uid, stack = "dsUid1", "stackABC"
 
-	t.Run("empty sigV4AuthType does not let stolen native ID survive native GAR switch-in", func(t *testing.T) {
+	t.Run("empty sigV4AuthType does not redirect a native mint onto the SigV4 keys", func(t *testing.T) {
 		stolen := buildGrafanaExternalID(stack, uid)
 		existing := simplejson.NewFromAny(map[string]any{"authType": "keys"})
 		updated := simplejson.NewFromAny(map[string]any{
