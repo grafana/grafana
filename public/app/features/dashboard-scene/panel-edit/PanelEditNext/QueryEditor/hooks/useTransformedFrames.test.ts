@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import {
@@ -18,7 +19,7 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => `replaced:${v}` }),
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, 'prod') }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -68,12 +69,52 @@ describe('useTransformedFrames', () => {
     expect(result.current).toBe(emitted);
   });
 
-  it('interpolates transformation options through the template service', () => {
+  it('resolves variables in transformation options before replaying them', () => {
+    // The pipeline interpolates configs before it runs them, and `transformDataFrame` skips its own
+    // pass whenever a scene is active — which, in the panel editor, is always. Forwarding the raw
+    // config replays a transformation matching on the literal `$env` that the panel never ran.
+    const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
+
+    renderHook(() => useTransformedFrames(withVariable, frames));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [{ id: 'filterByValue', options: { value: 'prod' } }],
+      frames,
+      expect.any(Object)
+    );
+  });
+
+  it('leaves custom operators alone, as the pipeline does', () => {
+    // Their options are captured in a closure, so there is nothing here to resolve.
+    const operator = jest.fn();
+    const custom: TransformationConfigs = [operator];
+
+    renderHook(() => useTransformedFrames(custom, frames));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith([operator], frames, expect.any(Object));
+  });
+
+  it('still hands a context to transformers that resolve their own options', () => {
+    // `formatTime` reads `ctx.interpolate` itself rather than relying on the pass above.
     renderHook(() => useTransformedFrames(configs, frames));
 
     const ctx = mockTransformDataFrame.mock.calls[0][2];
 
-    expect(ctx?.interpolate('$var')).toBe('replaced:$var');
+    expect(ctx?.interpolate('$env')).toBe('prod');
+  });
+
+  it('does not re-run when a caller rebuilds its arrays with the same contents', () => {
+    // Callers rebuild these every time the panel emits, because `useTransformations` memoizes on
+    // transformer state and that carries `data`. Treating a new array as a new generation would
+    // resubscribe on every emission — and, for an array built fresh each render, without end.
+    const { rerender } = renderHook(
+      ({ c, f }: { c: TransformationConfigs; f: DataFrame[] }) => useTransformedFrames(c, f),
+      { initialProps: { c: [...configs], f: [...frames] } }
+    );
+
+    act(() => rerender({ c: [...configs], f: [...frames] }));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
   });
 
   it('re-runs against the new frames when a query returns', () => {
@@ -161,6 +202,22 @@ describe('useTransformedFrames', () => {
       expect(result.current).toBe(frames);
       expect(consoleError).toHaveBeenCalledWith(expect.stringContaining('Failed to replay'), failure);
     });
+
+    it('settles on the failure instead of leaving every later render looking unresolved', () => {
+      mockTransformDataFrame.mockReturnValue(
+        new Observable((subscriber) => {
+          subscriber.error(new Error('boom'));
+        })
+      );
+
+      const { result, rerender } = renderHook(() => useTransformedFrames(configs, frames));
+
+      // A failed generation is recorded, so re-rendering does not re-run the broken pipeline.
+      act(() => rerender());
+
+      expect(result.current).toBe(frames);
+      expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
+    });
   });
 });
 
@@ -179,5 +236,22 @@ describe('precedingTransformations', () => {
     // `slice(0, -1)` would return every entry but the last, so the caller would replay
     // transformations that do not precede anything.
     expect(precedingTransformations(makeTransformation('absent'), all)).toEqual([]);
+  });
+
+  it('keeps one identity for "nothing precedes this", so a caller memo does not churn', () => {
+    expect(precedingTransformations(all[0], all)).toBe(NO_CONFIGS);
+  });
+
+  it('leaves out annotation-topic transformations, which run over a different set of frames', () => {
+    // The pipeline routes those to `data.annotations` in a separate pass, so replaying them over the
+    // series applies a transformation to frames it never receives.
+    const annotations = {
+      ...makeTransformation('filterByRefId'),
+      transformConfig: { id: 'filterByRefId', options: {}, topic: DataTopic.Annotations },
+    };
+    const series = makeTransformation('organize');
+    const selected = makeTransformation('reduce');
+
+    expect(precedingTransformations(selected, [annotations, series, selected])).toEqual([series.transformConfig]);
   });
 });

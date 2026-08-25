@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { transformDataFrame } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, transformDataFrame } from '@grafana/data';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationDebugData } from './useTransformationDebugData';
@@ -18,21 +18,35 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
 
+const emit = (frames: DataFrame[]) => new Observable<DataFrame[]>((subscriber) => subscriber.next(frames));
+
+/**
+ * Answers by which transformation it was handed, so an assertion can tell the two stages apart. A
+ * mock that answers the same frames whatever it receives cannot fail if the stages are swapped.
+ */
+const respondByConfig = (answers: Record<string, DataFrame[]>) =>
+  mockTransformDataFrame.mockImplementation((configs) => {
+    const ids = configs.map((config) => (typeof config === 'object' && 'id' in config ? config.id : 'custom'));
+    return emit(answers[ids.join(',')] ?? makeFrames([`unstubbed:${ids.join(',')}`]));
+  });
+
 describe('useTransformationDebugData', () => {
   const data = makeFrames(['A-series', 'B-series']);
-  const pipelineOutput = makeFrames(['joined']);
   const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTransformDataFrame.mockReturnValue(
-      new Observable((subscriber) => {
-        subscriber.next(pipelineOutput);
-      })
-    );
   });
 
-  it('replays the transformations preceding the debugged one, then the debugged one itself', () => {
+  afterEach(() => {
+    mockTransformDataFrame.mockReset();
+  });
+
+  it('shows the preceding stage as input and that stage piped through the debugged one as output', () => {
+    const joined = makeFrames(['joined']);
+    const organized = makeFrames(['organized']);
+    respondByConfig({ joinByField: joined, organize: organized });
+
     const { result } = renderHook(() =>
       useTransformationDebugData({
         selectedTransformation: transformations[1],
@@ -42,19 +56,42 @@ describe('useTransformationDebugData', () => {
       })
     );
 
+    // The preceding stage runs over the query result...
     expect(mockTransformDataFrame).toHaveBeenCalledWith([transformations[0].transformConfig], data, expect.any(Object));
-    // The output stage is its own list rather than a second pass over the input's result, so it has
-    // to be asserted separately: the mock answers the same frames whatever it is handed.
+    // ...and the debugged one runs over what that produced, rather than replaying the whole pipeline
+    // from `data` a second time.
     expect(mockTransformDataFrame).toHaveBeenCalledWith(
-      [transformations[0].transformConfig, transformations[1].transformConfig],
-      data,
+      [transformations[1].transformConfig],
+      joined,
       expect.any(Object)
     );
-    expect(result.current.input).toBe(pipelineOutput);
-    expect(result.current.output).toBe(pipelineOutput);
+
+    // Distinct frames per stage, so swapping input and output in the hook fails this.
+    expect(result.current.input.map(({ name }) => name)).toEqual(['joined']);
+    expect(result.current.output.map(({ name }) => name)).toEqual(['organized']);
+  });
+
+  it('runs the preceding stage once, not once per pane', () => {
+    respondByConfig({ joinByField: makeFrames(['joined']), organize: makeFrames(['organized']) });
+
+    renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: transformations[1],
+        transformations,
+        data,
+        isActive: true,
+      })
+    );
+
+    const precedingRuns = mockTransformDataFrame.mock.calls.filter(
+      ([configs]) => configs.length === 1 && (configs[0] as DataTransformerConfig).id === 'joinByField'
+    );
+    expect(precedingRuns).toHaveLength(1);
   });
 
   it('produces nothing while the debug drawer is closed', () => {
+    respondByConfig({});
+
     const { result } = renderHook(() =>
       useTransformationDebugData({
         selectedTransformation: transformations[1],
@@ -68,6 +105,24 @@ describe('useTransformationDebugData', () => {
     expect(result.current).toEqual({ input: [], output: [] });
   });
 
+  it('keeps one identity for "nothing to show", so a closed drawer does not re-render its readers', () => {
+    respondByConfig({});
+
+    const { result, rerender } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: transformations[1],
+        transformations,
+        data,
+        isActive: false,
+      })
+    );
+
+    const first = result.current;
+    rerender();
+
+    expect(result.current).toBe(first);
+  });
+
   it('admits only the frames the debugged transformation’s own filter matches', () => {
     // The debug view claims to show what the transformation received. Its filter runs ahead of it in
     // the real pipeline, so unfiltered input here shows frames it never saw.
@@ -77,11 +132,10 @@ describe('useTransformationDebugData', () => {
     };
     const filtered = [transformations[0], filteredTransformation];
 
-    mockTransformDataFrame.mockReturnValue(
-      new Observable((subscriber) => {
-        subscriber.next(makeFrames(['joined', 'excluded']));
-      })
-    );
+    respondByConfig({
+      joinByField: makeFrames(['joined', 'excluded']),
+      organize: makeFrames(['joined', 'excluded']),
+    });
 
     const { result } = renderHook(() =>
       useTransformationDebugData({
