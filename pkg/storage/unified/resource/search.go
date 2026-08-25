@@ -350,6 +350,8 @@ type searchServer struct {
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
 	// Lexical leg for external collections (internal use bleve); nil = unsupported.
+	// Interim until bleve indexes external kinds — then external routes down
+	// the existing bleve leg and this field (and the FTS impl) gets deleted.
 	externalLexical vector.LexicalSearcher
 	embedder        *embedder.Embedder
 	reranker        *rerank.Reranker
