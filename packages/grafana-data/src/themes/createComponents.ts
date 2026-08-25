@@ -17,6 +17,12 @@ interface TagColors {
   text: string;
 }
 
+const tagColorTokens = z.object({
+  text: z.string().optional(),
+  icon: z.string().optional(),
+  background: z.string().optional(),
+});
+
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
@@ -145,9 +151,6 @@ export const ThemeComponentsInputSchema = z
       borderRadius: z.enum(['default', 'md', 'sm', 'lg', 'pill', 'circle']).optional(),
       padding: z.number().optional(),
     }),
-    tag: z.object({
-      colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
-    }),
     home: z.object({
       background: z
         .object({
@@ -157,6 +160,14 @@ export const ThemeComponentsInputSchema = z
           left: z.string().optional(),
         })
         .optional(),
+    }),
+    tag: z.object({
+      blue: tagColorTokens.optional(),
+      red: tagColorTokens.optional(),
+      green: tagColorTokens.optional(),
+      orange: tagColorTokens.optional(),
+      purple: tagColorTokens.optional(),
+      darkgrey: tagColorTokens.optional(),
     }),
   })
   .partial();
@@ -268,9 +279,6 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     menu: {
       borderRadius: 'lg',
       padding: 0.5,
-    },
-    tag: {
-      colors: DEFAULT_TAG_COLORS,
     },
     home: {
       background: {
