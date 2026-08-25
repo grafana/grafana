@@ -837,6 +837,7 @@ knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
 
 # Claude Code skills — owned by the squad that maintains each skill
+/.claude/skills/frontend-testing-strategy/ @grafana/dataviz-squad
 /.claude/skills/panel-testing-strategy/ @grafana/dataviz-squad
 /.claude/skills/add-e2e-selectors/ @grafana/grafana-frontend-platform
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
@@ -1154,7 +1155,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/trigger_grafana_packer.sh @grafana/grafana-backend-services-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-operator-experience-squad
 /scripts/verify-repo-update/ @grafana/grafana-backend-services-squad
-/scripts/generate-alerting-rtk-apis.ts @grafana/alerting-squad
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/grafana-frontend-platform
 /scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
 /scripts/estimate-npm-packument-size.sh @grafana/grafana-frontend-platform

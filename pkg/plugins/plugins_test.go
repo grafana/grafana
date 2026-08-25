@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os"
@@ -11,7 +12,49 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 )
+
+func TestPluginClientV3(t *testing.T) {
+	t.Run("returns false when the backend does not support V3", func(t *testing.T) {
+		p := &Plugin{}
+		p.RegisterClient(&backendClient{})
+
+		client, ok := p.ClientV3(context.Background())
+		require.False(t, ok)
+		require.Nil(t, client)
+	})
+
+	t.Run("returns the V3 client when supported", func(t *testing.T) {
+		expected := &fakeClientV3{}
+		p := &Plugin{}
+		p.RegisterClient(&backendClientV3{client: expected})
+
+		client, ok := p.ClientV3(context.Background())
+		require.True(t, ok)
+		require.Same(t, expected, client)
+	})
+}
+
+type backendClient struct {
+	backendplugin.Plugin
+}
+
+type backendClientV3 struct {
+	backendplugin.Plugin
+	client v3.ClientV3
+}
+
+func (c *backendClientV3) ClientV3(context.Context) (v3.ClientV3, bool) {
+	return c.client, c.client != nil
+}
+
+type fakeClientV3 struct{}
+
+func (*fakeClientV3) IsHealthy(context.Context) error {
+	return nil
+}
 
 func Test_ReadPluginJSON(t *testing.T) {
 	tests := []struct {
