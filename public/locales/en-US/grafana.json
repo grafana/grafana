@@ -9104,13 +9104,13 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
-      "aria-label-copy": "Copy to clipboard",
-      "attribute-plugin-promo": {
-        "learn-more": "Learn more"
-      },
       "application-observability-promo": {
         "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
         "title": "Understand your services faster"
+      },
+      "aria-label-copy": "Copy to clipboard",
+      "attribute-plugin-promo": {
+        "learn-more": "Learn more"
       },
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
