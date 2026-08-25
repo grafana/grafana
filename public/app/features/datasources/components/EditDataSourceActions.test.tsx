@@ -49,7 +49,7 @@ jest.mock('./picker/DataSourcePicker', () => ({
 // Mock BuildDashboardButton to avoid needing a Redux Provider
 jest.mock('./BuildDashboardButton', () => ({
   BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
-    <a href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
+    <a href={`/dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
   ),
 }));
 
@@ -217,7 +217,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
-      expect(dashboardLink).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
+      expect(dashboardLink).toHaveAttribute('href', '/dashboard/new-with-ds/test-uid');
     });
   });
 
