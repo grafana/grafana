@@ -177,12 +177,32 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	token, err := o.TryTokenRefresh(ctx, usr, tokenRefreshMetadata)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return persistedToken
+			// No refresh token is stored, and needTokenRefresh may already have
+			// cleared the access token of persistedToken while forcing the
+			// refresh attempt. Rebuild the token from storage so callers never
+			// observe an access token that was blanked.
+			if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+				return buildOAuthTokenFromExternalSession(externalSession)
+			}
+			return buildOAuthTokenFromAuthInfo(authInfo)
 		}
 
 		ctxLogger.Error("Failed to refresh OAuth token", "error", err)
 
 		return nil
+	}
+
+	// TryTokenRefresh returns (nil, nil) when it declines to refresh: the
+	// provider was not found or has refresh handling disabled. Nothing was
+	// mutated in that case, but needTokenRefresh may have cleared the access
+	// token on persistedToken to force the refresh attempt. Returning nil here
+	// would make datasource requests go out without credentials even though a
+	// usable token is stored, so rebuild the stored token instead.
+	if token == nil {
+		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			return buildOAuthTokenFromExternalSession(externalSession)
+		}
+		return buildOAuthTokenFromAuthInfo(authInfo)
 	}
 
 	return token
