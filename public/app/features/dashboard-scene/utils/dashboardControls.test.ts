@@ -202,6 +202,38 @@ describe('dashboardControls', () => {
       });
     });
 
+    it('should load default controls for a type-only ref with an empty uid', (done) => {
+      const emptyUidRef: DataSourceRef = { uid: '', type: 'prometheus' };
+
+      const mockDs = createMockDatasource({
+        uid: 'prom-uid',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+
+      getDataSourceInstanceSettingsMock.mockImplementation(async (ref) => {
+        if (ref && typeof ref === 'object' && ref.uid === '') {
+          return undefined;
+        }
+        return { uid: 'prom-uid' } as DataSourceInstanceSettings;
+      });
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([emptyUidRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(getDataSourceInstanceSettingsMock).toHaveBeenCalledWith({ uid: undefined, type: 'prometheus' });
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(emptyUidRef);
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('variables');
+          done();
+        },
+      });
+    });
+
     it('should warn when a registered datasource fails to load, even if the error mentions not found', (done) => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const refs: DataSourceRef[] = [{ uid: 'ds-fail', type: 'broken' }];

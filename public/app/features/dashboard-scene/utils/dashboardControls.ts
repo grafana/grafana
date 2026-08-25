@@ -65,8 +65,9 @@ function sortLinks(a: DashboardLink, b: DashboardLink): number {
 async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<DefaultControlEvent>) {
   // Default controls are opportunistic; a missing datasource is a skip, not a failure.
   // Ask the settings cache first so plugin-load errors (e.g. "module not found") are
-  // not mistaken for a missing datasource.
-  if (!(await getDataSourceInstanceSettings(ref))) {
+  // not mistaken for a missing datasource. Match getDataSourceInstance's empty-uid
+  // normalization so { uid: '', type } is a type-only lookup, not a miss on uid ''.
+  if (!(await getDataSourceInstanceSettings(settingsLookupRef(ref)))) {
     return;
   }
 
@@ -79,6 +80,10 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
   }
 
   await Promise.all([emitDefaultVariables(ds, subscriber), emitDefaultLinks(ds, subscriber)]);
+}
+
+function settingsLookupRef(ref: DataSourceRef): DataSourceRef {
+  return ref.uid === '' ? { ...ref, uid: undefined } : ref;
 }
 
 async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
