@@ -513,6 +513,11 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 	ctx, span := s.tracer.Start(ctx, "folder.deleteVariablesInFolders")
 	defer span.End()
 
+	// Search is GET-scoped to the requester. Run as the service so leftover
+	// variables are found and deleted even when grafana.dashboardGlobalVariables
+	// is off (user-facing APIs deny) or the user cannot see every child.
+	ctx = identity.WithServiceIdentityContext(ctx, orgID)
+
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Labels: []*resourcepb.Requirement{},

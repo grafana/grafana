@@ -15,9 +15,11 @@ import (
 // newVariableAuthorizer authorizes dashboard.grafana.app/variables requests.
 //
 // It first gates on FlagGrafanaDashboardGlobalVariables via OpenFeature (when
-// storage is registered, enablement is enforced here). When enabled, it maps
-// k8s verbs to variables:* RBAC actions. A nil accessControl denies cleanly
-// (standalone NewAPIService does not wire classic RBAC).
+// storage is registered, enablement is enforced here). Service identity is
+// allowed through that gate so folder cleanup can delete leftovers after a
+// flag flip; users are still denied. When enabled, it maps k8s verbs to
+// variables:* RBAC actions. A nil accessControl denies cleanly (standalone
+// NewAPIService does not wire classic RBAC).
 //
 // Create/update/delete/list/watch use a coarse (any-scope) check. Admission
 // narrows mutations to the target folder. List/watch per-item filtering is
@@ -32,6 +34,11 @@ func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 			}
 
 			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(ctx)) {
+				if identity.IsServiceIdentity(ctx) {
+					// Grafana subsystem cleanup (folder delete) must still remove leftover
+					// variables after the feature is turned off. Users cannot CRUD them.
+					return authorizer.DecisionAllow, "", nil
+				}
 				return authorizer.DecisionDeny, "global dashboard variables feature is not enabled", nil
 			}
 
