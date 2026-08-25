@@ -98,7 +98,6 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, status.Error(codes.NotFound, "collection not found")
 	}
 
-	// External collections need a LexicalSearcher; without one keep the old rejection.
 	if coll.IsExternal && s.externalLexical == nil {
 		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 	}

@@ -42,7 +42,6 @@ type ResourceIndexClient interface {
 	// Semantic search
 	VectorSearch(ctx context.Context, in *VectorSearchRequest, opts ...grpc.CallOption) (*VectorSearchResponse, error)
 	// Hybrid search: RRF fuse lexical and vector with optional reranker.
-	// External collections skip per-result access checks, like VectorSearch.
 	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
@@ -120,7 +119,6 @@ type ResourceIndexServer interface {
 	// Semantic search
 	VectorSearch(context.Context, *VectorSearchRequest) (*VectorSearchResponse, error)
 	// Hybrid search: RRF fuse lexical and vector with optional reranker.
-	// External collections skip per-result access checks, like VectorSearch.
 	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 
