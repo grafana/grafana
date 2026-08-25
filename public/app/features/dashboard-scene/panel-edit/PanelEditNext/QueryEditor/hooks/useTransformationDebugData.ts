@@ -4,7 +4,7 @@ import { type DataFrame, getFrameMatchers } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-import { NO_CONFIGS, precedingTransformations, useFrameReplay, useTransformedFrames } from './useTransformedFrames';
+import { NO_CONFIGS, isInterpolatable, precedingTransformations, useFrameReplay } from './useTransformedFrames';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
@@ -59,7 +59,7 @@ export function useTransformationDebugData({
   // shape in the output pane that the pipeline never produces. Until there is settled input to run
   // over, the output pane has nothing to show, which is the honest answer rather than a wrong one.
   const { frames: inputFrames, settled: settledInput } = useFrameReplay(inputConfigs, data);
-  const outputFrames = useTransformedFrames(selfConfigs, settledInput);
+  const { frames: outputFrames, configs: ranConfigs } = useFrameReplay(selfConfigs, settledInput);
 
   return useMemo(() => {
     if (!debugTarget) {
@@ -67,13 +67,15 @@ export function useTransformationDebugData({
     }
 
     // The debugged transformation only sees the frames its own filter admits. `transformDataFrame`
-    // applies that filter itself, so only the displayed input is narrowed here.
-    const filter = debugTarget.transformConfig.filter;
+    // applies that filter itself, so only the displayed input is narrowed here — and by the filter
+    // the replay ran, not the one the config holds: a `$var` in it resolves before either sees it.
+    const [ranConfig] = ranConfigs;
+    const filter = isInterpolatable(ranConfig) ? ranConfig.filter : undefined;
     const matcher = filter?.options ? getFrameMatchers(filter) : undefined;
 
     return {
       input: matcher ? inputFrames.filter((frame) => matcher(frame)) : inputFrames,
       output: outputFrames,
     };
-  }, [debugTarget, inputFrames, outputFrames]);
+  }, [debugTarget, inputFrames, outputFrames, ranConfigs]);
 }

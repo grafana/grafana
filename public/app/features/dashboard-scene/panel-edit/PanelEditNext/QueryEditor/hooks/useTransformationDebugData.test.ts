@@ -14,7 +14,7 @@ jest.mock('@grafana/data', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v }),
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, 'keep') }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -204,6 +204,30 @@ describe('useTransformationDebugData', () => {
     rerender();
 
     expect(result.current).toBe(first);
+  });
+
+  it('admits frames by the filter as the pipeline resolved it, not by the literal variable', () => {
+    // The filter runs ahead of the transformation, and the pipeline interpolates it along with the
+    // rest of the config — so the replay does too. A matcher built from the raw config narrows the
+    // displayed input by a `$var` that never reached `transformDataFrame`, hiding frames the
+    // transformation was handed.
+    const filteredTransformation = {
+      ...transformations[1],
+      transformConfig: { id: 'organize', options: {}, filter: { id: 'byName', options: '$env' } },
+    };
+
+    respondByConfig({ joinByField: makeFrames(['keep', 'drop']), organize: makeFrames(['organized']) });
+
+    const { result } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: filteredTransformation,
+        transformations: [transformations[0], filteredTransformation],
+        data,
+        isActive: true,
+      })
+    );
+
+    expect(result.current.input.map(({ name }) => name)).toEqual(['keep']);
   });
 
   it('admits only the frames the debugged transformation’s own filter matches', () => {

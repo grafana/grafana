@@ -64,7 +64,7 @@ function interpolateConfigs(configs: TransformationConfigs): TransformationConfi
  * A plain config object, whose options are data this can resolve — as opposed to a custom operator,
  * which holds its options in a closure.
  */
-function isInterpolatable(config: TransformationConfigs[number]): config is DataTransformerConfig {
+export function isInterpolatable(config: TransformationConfigs[number]): config is DataTransformerConfig {
   return typeof config === 'object' && !('operator' in config);
 }
 
@@ -171,7 +171,7 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
 
   if (stableConfigs.length === 0) {
     // An empty pipeline produces its input, so there is no gap for anything to stand in over.
-    return { frames: stableFrames, settled: stableFrames };
+    return { frames: stableFrames, settled: stableFrames, configs: interpolatedConfigs };
   }
 
   // Held across a data change, dropped across a pipeline change. `transformDataFrame` resolves a
@@ -185,8 +185,8 @@ export function useFrameReplay(configs: TransformationConfigs, frames: DataFrame
   const isThisPipeline = transformed?.configs === stableConfigs;
 
   return isThisPipeline
-    ? { frames: transformed.frames, settled: transformed.settled }
-    : { frames: stableFrames, settled: NO_FRAMES };
+    ? { frames: transformed.frames, settled: transformed.settled, configs: interpolatedConfigs }
+    : { frames: stableFrames, settled: NO_FRAMES, configs: interpolatedConfigs };
 }
 
 /** {@link useFrameReplay} for the callers that only need something to show. */
@@ -195,21 +195,29 @@ export function useTransformedFrames(configs: TransformationConfigs, frames: Dat
 }
 
 /**
- * The two things a replay is asked for, which part company while one is in flight.
+ * What a replay gives back: two views of its frames, which part company while one is in flight, and
+ * the configs it ran to get them.
  *
  * An editor reads `frames`, which stands in the closest shape there is whenever this pipeline has
  * not produced one yet — including after a replay that failed. A replay piped off this one reads
  * `settled`, which is only ever this pipeline's own output, and is empty until there is one:
  * running a further transformation over a stand-in produces a shape the panel never emits.
+ *
+ * `configs` are those configs with their variables resolved. Anything describing what the replay did
+ * — which frames a filter admitted, say — has to read these rather than the originals, which still
+ * hold the literal `$var` that never reached `transformDataFrame`.
  */
 export interface FrameReplay {
   frames: DataFrame[];
   settled: DataFrame[];
+  configs: TransformationConfigs;
 }
 
-/** A {@link FrameReplay} tagged with the pipeline that produced it, so a later one is not mistaken for it. */
-interface TransformedFrames extends FrameReplay {
+/** What a replay produced, tagged with the pipeline that produced it, so a later one is not mistaken for it. */
+interface TransformedFrames {
   configs: TransformationConfigs;
+  frames: DataFrame[];
+  settled: DataFrame[];
 }
 
 function logTransformationFailure(err: unknown) {
