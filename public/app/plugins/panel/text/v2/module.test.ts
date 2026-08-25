@@ -1,17 +1,19 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { type Options, RenderMode } from '../panelcfg.gen';
 
 import { textNGPanelOptions } from './module';
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
-}));
+beforeEach(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
 
-// eslint-disable-next-line no-var
-var mockNewFeatures = true;
+afterAll(() => {
+  setTestFlags({});
+});
 
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -31,10 +33,6 @@ function getRenderModeItem() {
 }
 
 describe('textNGPanelOptions', () => {
-  beforeEach(() => {
-    mockNewFeatures = true;
-  });
-
   it('registers renderMode with a default that preserves a single render', () => {
     expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
   });
@@ -62,7 +60,7 @@ describe('textNGPanelOptions', () => {
   });
 
   it('hides renderMode when the text.newFeatures flag is off, even with rows', () => {
-    mockNewFeatures = false;
+    setTestFlags({ [FlagKeys.TextNewFeatures]: false });
     const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
     expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
@@ -71,9 +69,11 @@ describe('textNGPanelOptions', () => {
 
 describe('field config', () => {
   async function getFieldConfigIds(newFeatures: boolean) {
-    mockNewFeatures = newFeatures;
     let ids: string[] = [];
     await jest.isolateModulesAsync(async () => {
+      const { setTestFlags } = await import('@grafana/test-utils/unstable');
+      setTestFlags({ [FlagKeys.TextNewFeatures]: newFeatures });
+
       const { standardFieldConfigEditorRegistry } = await import('@grafana/data');
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
