@@ -24,7 +24,7 @@ type Collection struct {
 	Group        string // e.g. "dashboard.grafana.app"
 	Resource     string // resource name as callers send it, e.g. "dashboards"
 	PartitionKey string // value stored in embeddings.resource (LIST partition key)
-	IsExternal   bool   // externally-pushed rows; reads skip per-result authz
+	IsExternal   bool   // externally-pushed rows
 }
 
 func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource string) (Collection, bool, error) {

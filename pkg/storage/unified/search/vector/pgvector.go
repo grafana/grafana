@@ -256,6 +256,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 				rows[i] = VectorMeta{
 					Subresource: metadataOnly[i].Subresource,
 					Title:       truncateRunes(metadataOnly[i].Title, maxTitleLen),
+					Folder:      metadataOnly[i].Folder,
 					Metadata:    metadataOnly[i].Metadata,
 				}
 			}
