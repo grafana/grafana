@@ -78,11 +78,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
                 : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
             }
           >
-            <Badge
-              icon="lock"
-              aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-              color="red"
-            />
+            <Badge icon="lock" color="red" />
           </Tooltip>
         )}
       </td>
