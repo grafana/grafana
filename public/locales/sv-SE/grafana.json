@@ -890,7 +890,6 @@
       "close": "Stäng",
       "create": "Skapa",
       "delete": "Ta bort",
-      "deleting": "Tar bort …",
       "edit": "Redigera",
       "export": "Exportera",
       "export-all": "Exportera alla",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} rutter"
       },
       "delete": {
-        "confirm": "Ja, ta bort policy",
-        "warning-1": "Om du tar bort denna aviseringspolicy tas den bort permanent.",
-        "warning-2": "Är du säker på att du vill ta bort denna policy?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Denna åtgärd tar bort aviseringspolicyn <1>{{routeName}}</1> permanent.",
-        "title-delete-notification-policy": "Radera aviseringspolicy"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtrera vägar med hjälp av en kommaseparerad lista över matchare, till exempel:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Automatiskt genererade policyer",
@@ -2546,7 +2543,9 @@
         "reset": "Återställ",
         "resetting": "Återställer …",
         "title-delete-notification-policy": "Radera aviseringspolicy",
-        "title-reset-notification-policy": "Återställ aviseringspolicy"
+        "title-reset-notification-policy": "Återställ aviseringspolicy",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Vänta medan vi uppdaterar dina aviseringspolicyer.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Radera aviseringspolicy"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "En vertikal sekvens av paneler, text och kodceller",
       "name": "Anteckningsbok",
       "pill": "Publicerad anteckningsbok",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Tid"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Ingen volyminformation tillgänglig för de aktuella frågorna och tidsintervallet."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Dölj {{name}}",
       "error": "Det gick inte att ladda mätvärden",
@@ -8754,6 +8761,7 @@
       "loading-values": "Laddar värden …",
       "no-metrics": "Inga mätvärden hittades",
       "search-placeholder": "Sök mätvärden",
+      "show-metric-details": "",
       "show-more": "Visa mer",
       "show-more-metrics": "Visa fler mätvärden",
       "show-more-values": "Visa fler värden",
@@ -11272,6 +11280,13 @@
       "show": "Visa",
       "switch": "Rekommendationerna följer den valda lösningen",
       "switchSolution": "Byt lösning",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Rekommendationer för din stack"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Den här resursen ligger bakom grenen i {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Resten av Grafana-användarna i din organisation kommer fortfarande att se den här resursen tills den här grenen slås samman",
+      "move-from-branch": "",
       "not-saved": "Resten av Grafana-användarna i din organisation kommer fortfarande att se den aktuella versionen som sparats i den konfigurerade standardgrenen tills den här grenen slås samman",
       "open-in-repo-button": "Öppna i {{repoType}}",
       "open-pull-request-in-repo": "Öppna pull-begäran i {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "En ny resurs har skapats i en gren i {{repoType}}.",
     "title-deleted-resource-in-branch": "En resurs har raderats i en gren i {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Den här resursen laddas från den gren du just skapade i {{repoType}} och den är bara synlig för dig",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "En resurs har uppdaterats i en gren i {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
