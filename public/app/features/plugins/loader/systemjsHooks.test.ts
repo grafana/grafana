@@ -222,6 +222,44 @@ describe('decorateSystemJSInstantiate', () => {
     ]);
   });
 
+  it('reports react-router exports but ignores SystemJS interop exports', async () => {
+    let importedUseRoutes: (() => string) | undefined;
+    let interopExports: unknown[];
+    const registration: SystemJSRegistration = [
+      ['react-router'],
+      () => ({
+        setters: [
+          (module) => {
+            interopExports = [module.__esModule, module.__useDefault];
+            importedUseRoutes = module.useRoutes;
+          },
+        ],
+        execute: () => ({ routes: importedUseRoutes?.(), interopExports }),
+      }),
+    ];
+    const instantiate = jest.fn(async () => registration);
+
+    const decoratedRegistration = await decorateSystemJSInstantiate.call(
+      systemJSPrototype,
+      instantiate,
+      'https://example.com/public/plugins/acme-router-panel/module.js'
+    );
+    const declaration = decoratedRegistration![1](() => undefined, {});
+
+    declaration.setters![0]({
+      __esModule: true,
+      __useDefault: true,
+      useRoutes: () => 'routes',
+    });
+    expect(declaration.execute?.()).toEqual({ routes: 'routes', interopExports: [true, true] });
+    expect(mockLogInfo).toHaveBeenCalledTimes(1);
+    expect(mockLogInfo).toHaveBeenCalledWith('Plugin accessed shared dependency import', {
+      pluginId: 'acme-router-panel',
+      dependencyName: 'react-router',
+      importName: 'useRoutes',
+    });
+  });
+
   it('does not decorate modules outside plugin paths', async () => {
     const registration: SystemJSRegistration = [['react-router-dom'], () => ({ setters: [] })];
     const instantiate = jest.fn(async () => registration);
