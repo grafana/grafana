@@ -58,7 +58,9 @@ const MAX_TRASH_PAGES = 8;
  * mean opposite things to the page, and `unavailable` separates the failure the server tells
  * us about from every other one.
  */
-type TrashFetchResult = { failed: false; items: TrashItem[] } | { failed: true; unavailable: boolean };
+type TrashFetchResult =
+  | { failed: false; items: TrashItem[]; truncated: boolean }
+  | { failed: true; unavailable: boolean };
 
 /**
  * The UI's sort values mapped onto trash fields. `deletedby-*` sorts on the deleter's UID
@@ -142,6 +144,8 @@ class DeletedDashboardsCache {
   private restoredUids: Set<string> = new Set();
   /** Set when the server says trash exists but cannot be served yet. */
   private trashUnavailable = false;
+  /** Set when the fetch stopped at the row ceiling with more still available. */
+  private trashTruncated = false;
 
   /**
    * The deleted dashboards matching `query`, already filtered and sorted.
@@ -198,11 +202,20 @@ class DeletedDashboardsCache {
     return this.trashUnavailable;
   }
 
+  /**
+   * Whether the last trash fetch stopped at DELETED_DASHBOARDS_LIMIT while the server still had
+   * more to give, so the list on screen is not everything that matches.
+   */
+  isTrashTruncated(): boolean {
+    return this.trashTruncated;
+  }
+
   clear(): void {
     this.tableCache = null;
     this.tablePromise = null;
     this.trashCache.clear();
     this.trashUnavailable = false;
+    this.trashTruncated = false;
     // Deleting a dashboard clears the cache, and a dashboard restored earlier may be among
     // the deleted ones again, so the suppression list must not outlive the cached results.
     this.restoredUids.clear();
@@ -258,6 +271,7 @@ class DeletedDashboardsCache {
 
     if (isCurrent) {
       this.trashUnavailable = false;
+      this.trashTruncated = result.truncated;
     }
 
     const items = result.items;
@@ -297,7 +311,8 @@ class DeletedDashboardsCache {
         pages++;
       } while (items.length < DELETED_DASHBOARDS_LIMIT && continueToken && pages < MAX_TRASH_PAGES);
 
-      return { failed: false, items };
+      // A token left over means the server had more than we were willing to take.
+      return { failed: false, items, truncated: Boolean(continueToken) };
     } catch (error) {
       // 503 is the one failure the server distinguishes for us: trash is on, but this index
       // has not been rebuilt to hold deleted documents. Anything else, including a server

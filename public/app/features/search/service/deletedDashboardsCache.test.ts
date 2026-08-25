@@ -916,6 +916,19 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
   });
 
+  it('reports truncation only when the server still had rows to give', async () => {
+    // The ceiling reached with a token left over: the list on screen is not everything.
+    const fullPage = Array.from({ length: DELETED_DASHBOARDS_LIMIT }, (_, i) => makeItem(`dash-${i}`));
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage, 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    // Exhausted the result set: nothing hidden.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-2')]));
+    await deletedDashboardsCache.search({ query: 'complete' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+  });
+
   it('reports trash unavailable on 503, and retries rather than caching the failure', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: { message: 'rebuilding' } });

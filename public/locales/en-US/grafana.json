@@ -15212,8 +15212,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",

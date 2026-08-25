@@ -25,6 +25,7 @@ jest.mock('../search/service/deletedDashboardsCache', () => ({
   deletedDashboardsCache: {
     getAsTable: jest.fn(),
     isTrashUnavailable: jest.fn().mockReturnValue(false),
+    isTrashTruncated: jest.fn().mockReturnValue(false),
   },
 }));
 
@@ -112,7 +113,7 @@ function render() {
   });
 }
 
-const atLimitAlert = { name: /deleted dashboards limit reached/i };
+const atLimitAlert = { name: /showing at most 1000 deleted dashboards/i };
 
 describe('RecentlyDeletedPage banner integration', () => {
   beforeEach(() => {
@@ -143,7 +144,7 @@ describe('RecentlyDeletedPage banner integration', () => {
 
     render();
 
-    expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+    expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
   });
 
   it('updates the banner when searchState.result changes (post-mutation reactivity)', async () => {
@@ -164,7 +165,7 @@ describe('RecentlyDeletedPage banner integration', () => {
       publishSearchState(defaultSearchState(buildSearchResult(2)));
     });
 
-    expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+    expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
     expect(mockGetAsTable).toHaveBeenCalledTimes(2);
   });
 });
