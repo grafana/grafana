@@ -23,6 +23,7 @@ import {
   WeekStartPicker,
 } from '@grafana/ui';
 import { changeTheme } from 'app/core/services/theme';
+import { VisualRefreshInfo } from 'app/features/visual-refresh/components/VisualRefreshInfo/VisualRefreshInfo';
 
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
@@ -178,6 +179,7 @@ export const SharedPreferences = memo((props: Props) => {
       )}
       <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={props.disabled}>
         <Stack direction="column" gap={2}>
+          <VisualRefreshInfo />
           <Field
             noMargin
             loading={isLoading}

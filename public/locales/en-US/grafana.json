@@ -17686,6 +17686,13 @@
       "select-variable": "Select variable {{name}}"
     }
   },
+  "visual-refresh": {
+    "info": {
+      "apply": "Apply new styles",
+      "revert": "Revert to old styles",
+      "title": "We've updated our look and feel"
+    }
+  },
   "visualization": {
     "data-hover-view": {
       "link": "Link"
