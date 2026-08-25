@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // EmbeddingDim is the fixed width of the `embedding halfvec(N)` column. Models
@@ -61,6 +63,12 @@ type VectorBackend interface {
 	// DeleteSubresources removes specific subresources under `uid`. Empty
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
+
+	// UpdateMetadata patches metadata on rows matching f within (namespace,
+	// resource), spanning all models. set is merged (JSON object, may be
+	// empty), then unset keys are removed. At least one of set/unset must be
+	// non-empty. Returns the number of rows updated.
+	UpdateMetadata(ctx context.Context, namespace, resource string, f *filter.Filter, set json.RawMessage, unset []string) (int64, error)
 
 	// DeleteNamespace removes every row belonging to a namespace across all
 	// resources and models, plus its cached query embeddings, rate buckets, and
@@ -207,6 +215,9 @@ type DeleteSelector struct {
 	UIDs  []string
 	All   bool
 	Limit int // page size when All; 0 means defaultDeleteAllPageSize
+	// Filter selects rows by metadata using the filter dialect. Paged by
+	// Limit like All; exactly one of UIDs/All/Filter must be set.
+	Filter *filter.Filter
 	// AllModels drops the model scope: rows under every embedding model are
 	// deleted. External collections use this — they have no backfill, so
 	// rows from a previous model are unreachable orphans otherwise.

@@ -55,6 +55,7 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  comparisonFieldPairs?: Map<number, number>;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -77,6 +78,7 @@ export const TimeSeriesTooltip = ({
   compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
+  comparisonFieldPairs,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -89,16 +91,28 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
+  const compareFieldIdx = seriesIdx == null ? undefined : comparisonFieldPairs?.get(seriesIdx);
+
+  // Single mode shows only the hovered series, so a pair has to borrow Multi to fit both rows and
+  // then filter Multi back down to just those two.
+  const isPairOnly = compareFieldIdx !== undefined && mode === TooltipDisplayMode.Single;
+
   const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,
     seriesIdx,
-    mode,
+    isPairOnly ? TooltipDisplayMode.Multi : mode,
     sortOrder,
-    (field) => field.type === FieldType.number || field.type === FieldType.enum,
+    (field, i) => {
+      if (field.type !== FieldType.number && field.type !== FieldType.enum) {
+        return false;
+      }
+      return !isPairOnly || i === seriesIdx || i === compareFieldIdx;
+    },
     hideZeros,
-    _rest
+    _rest,
+    compareFieldIdx
   );
 
   let footer: ReactNode;
