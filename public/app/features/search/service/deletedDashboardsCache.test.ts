@@ -865,6 +865,36 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     consoleError.mockRestore();
   });
 
+  it('ignores a superseded fetch that fails after a newer one has taken over', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // First fetch is held open, and will fail with 503 once released.
+    let release: (value: unknown) => void = () => {};
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    mockFetchTrashPage.mockImplementationOnce(async () => {
+      await gate;
+      throw { status: 503, data: {} };
+    });
+
+    const superseded = deletedDashboardsCache.search({});
+
+    // clear() drops it, and a newer fetch for the same query succeeds.
+    deletedDashboardsCache.clear();
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('fresh')]));
+    const current = await deletedDashboardsCache.search({});
+    expect(current.map((hit) => hit.name)).toEqual(['fresh']);
+
+    // The old 503 lands last. It must not raise a warning over results that superseded it.
+    release(undefined);
+    await superseded;
+
+    expect(deletedDashboardsCache.isTrashUnavailable()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
   it('does not report unavailable for failures other than 503', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockFetchTrashPage.mockRejectedValue({ status: 404, data: {} });

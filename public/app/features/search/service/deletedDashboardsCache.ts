@@ -48,6 +48,13 @@ const TRASH_PAGE_SIZE = 500;
 const MAX_TRASH_PAGES = 8;
 
 /**
+ * Outcome of one trash fetch. Failure is distinguished from an empty result because the two
+ * mean opposite things to the page, and `unavailable` separates the failure the server tells
+ * us about from every other one.
+ */
+type TrashFetchResult = { failed: false; items: TrashItem[] } | { failed: true; unavailable: boolean };
+
+/**
  * The UI's sort values mapped onto trash fields. `deletedby-*` sorts on the deleter's UID
  * rather than their display name, because the name is resolved in the browser and the server
  * has never seen it.
@@ -99,7 +106,7 @@ class DeletedDashboardsCache {
    * concurrent identical queries share one fetch and a `clear()` mid-fetch cannot be undone by
    * a late write.
    */
-  private trashCache: Map<string, Promise<TrashItem[] | null>> = new Map();
+  private trashCache: Map<string, Promise<TrashFetchResult>> = new Map();
   /** Dashboards restored this session. The trash index may still list them for a moment. */
   private restoredUids: Set<string> = new Set();
   /** Set when the server says trash exists but cannot be served yet. */
@@ -194,18 +201,28 @@ class DeletedDashboardsCache {
       this.trashCache.set(key, pending);
     }
 
-    const items = await pending;
+    const result = await pending;
 
-    // A failure is not cached: an index being rebuilt becomes available on its own, and keeping
-    // the empty list would leave the page stuck until the next delete or restore. Only drop the
-    // entry if it is still ours, so a clear() that already replaced it is left alone.
-    if (items === null) {
-      if (this.trashCache.get(key) === pending) {
+    // Everything the cache carries between calls is written only by the fetch that is still the
+    // current one for this query. A slower, superseded fetch must not clear a warning the page
+    // is showing, or raise one for results nobody is looking at any more.
+    const isCurrent = this.trashCache.get(key) === pending;
+
+    if (result.failed) {
+      if (isCurrent) {
+        this.trashUnavailable = result.unavailable;
+        // A failure is not cached: an index being rebuilt becomes available on its own, and
+        // keeping the empty list would leave the page stuck until the next delete or restore.
         this.trashCache.delete(key);
       }
       return [];
     }
 
+    if (isCurrent) {
+      this.trashUnavailable = false;
+    }
+
+    const items = result.items;
     const uids = new Set<string>();
     for (const item of items) {
       const uid = readString(item, TRASH_FIELD_DELETED_BY);
@@ -224,9 +241,10 @@ class DeletedDashboardsCache {
 
   /**
    * Follows `continue` until the result set is exhausted or DELETED_DASHBOARDS_LIMIT rows are in
-   * hand. Returns null if the fetch failed, which the caller must not confuse with no results.
+   * hand. Reports failure rather than an empty list, which the caller must not confuse with a
+   * query that matched nothing.
    */
-  private async fetchTrash(query: DeletedDashboardsQuery): Promise<TrashItem[] | null> {
+  private async fetchTrash(query: DeletedDashboardsQuery): Promise<TrashFetchResult> {
     try {
       const items: TrashItem[] = [];
       let continueToken: string | undefined;
@@ -241,15 +259,13 @@ class DeletedDashboardsCache {
         pages++;
       } while (items.length < DELETED_DASHBOARDS_LIMIT && continueToken && pages < MAX_TRASH_PAGES);
 
-      this.trashUnavailable = false;
-      return items;
+      return { failed: false, items };
     } catch (error) {
       // 503 is the one failure the server distinguishes for us: trash is on, but this index
       // has not been rebuilt to hold deleted documents. Anything else, including a server
       // that does not serve the endpoint at all, reads as an empty list.
-      this.trashUnavailable = getStatusFromError(error) === 503;
       console.error('Failed to fetch deleted dashboards from the trash endpoint:', error);
-      return null;
+      return { failed: true, unavailable: getStatusFromError(error) === 503 };
     }
   }
 

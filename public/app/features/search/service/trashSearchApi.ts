@@ -99,9 +99,16 @@ export async function fetchTrashPage(query: TrashQuery): Promise<TrashResults> {
   // serves rather than naming a version that it may have dropped. Resolution is cached.
   const { v1 } = await dashboardAPIVersionResolver.resolve();
   const url = `${getAPIBaseURL(DASHBOARD_API_GROUP, v1)}/dashboards/trash`;
-  return getBackendSrv().post<TrashResults>(url, {
-    apiVersion: SEARCH_API_VERSION,
-    kind: TRASH_QUERY_KIND,
-    ...query,
-  });
+  return getBackendSrv().post<TrashResults>(
+    url,
+    {
+      apiVersion: SEARCH_API_VERSION,
+      kind: TRASH_QUERY_KIND,
+      ...query,
+    },
+    // The caller renders its own message for a failure, in the page where the results would
+    // have been. A global toast on top of that would say the same thing twice, or contradict
+    // the empty list the page settles on.
+    { showErrorAlert: false }
+  );
 }
