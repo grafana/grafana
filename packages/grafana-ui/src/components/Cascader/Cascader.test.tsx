@@ -73,9 +73,6 @@ describe('Cascader', () => {
         jest.runAllTimers();
       });
 
-      await user.click(screen.getByPlaceholderText(placeholder));
-      await user.click(screen.getByPlaceholderText(placeholder));
-
       expect(screen.queryByText('Initial state option')).not.toBeInTheDocument();
       expect(await screen.findByText('First')).toBeInTheDocument();
     });

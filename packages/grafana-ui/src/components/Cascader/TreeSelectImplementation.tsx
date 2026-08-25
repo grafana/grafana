@@ -86,13 +86,13 @@ function buildTreeData(
     items: CascaderOption[],
     path: string[],
     optionPath: CascaderOption[],
-    indices: number[]
+    parentId: string
   ): string[] => {
     return items.flatMap((option, index) => {
       const nextPath = [...path, option.label];
       const nextOptionPath = [...optionPath, option];
-      const id = `option-${[...indices, index].join('-')}`;
-      const children = addOptions(option.items ?? option.children ?? [], nextPath, nextOptionPath, [...indices, index]);
+      const id = `${parentId}-${index}`;
+      const children = addOptions(option.items ?? option.children ?? [], nextPath, nextOptionPath, id);
       const matches = !normalizedQuery || nextPath.join(' ').toLocaleLowerCase().includes(normalizedQuery);
 
       if (!matches && children.length === 0) {
@@ -109,7 +109,7 @@ function buildTreeData(
     });
   };
 
-  const rootChildren = addOptions(options, [], [], []);
+  const rootChildren = addOptions(options, [], [], 'option');
   const hasExactMatch = [...nodes.values()].some((node) => {
     const option = node.path.at(-1);
     return node.children.length === 0 && (option?.value === query || option?.label === query);
@@ -354,7 +354,7 @@ export const TreeSelectBase = memo(
                   }
                 >
                   <LazyTreeSelectMenu
-                    key={query || 'default'}
+                    key={query}
                     data={data}
                     menuId={menuId}
                     selectedValue={selected?.value}
