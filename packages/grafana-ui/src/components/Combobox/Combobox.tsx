@@ -433,24 +433,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     : { Wrapper: React.Fragment };
 
   const icon = selectedItem?.icon ?? prefixIcon;
-  const inputProps = getInputProps({
-    ref: inputRef,
-    onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
-    'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
-    'aria-label': ariaLabel,
-    placeholder,
-    'data-testid': dataTestId,
-    onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
-      // Stop Escape from propagating to parent overlays (e.g. Modals, Drawers)
-      // so that only the dropdown menu closes, not the parent.
-      if (event.key === 'Escape' && isOpen) {
-        event.stopPropagation();
-      }
-    },
-    onBlur,
-  });
-
-  console.log('inputProps', inputProps);
 
   return (
     <Wrapper {...wrapperProps}>
