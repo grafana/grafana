@@ -112,12 +112,7 @@ function buildTreeData(
       const nextPath = [...path, option.label];
       const nextOptionPath = [...optionPath, option];
       const id = `option-${[...indices, index].join('-')}`;
-      const children = addOptions(
-        option.items ?? option.children ?? [],
-        nextPath,
-        nextOptionPath,
-        [...indices, index]
-      );
+      const children = addOptions(option.items ?? option.children ?? [], nextPath, nextOptionPath, [...indices, index]);
       const matches = !normalizedQuery || nextPath.join(' ').toLocaleLowerCase().includes(normalizedQuery);
 
       if (!matches && children.length === 0) {
@@ -241,13 +236,7 @@ export const TreeSelectBase = memo(
     const [query, setQuery] = useState('');
     const controlledValue = valuePath?.at(-1);
     const [selected, setSelected] = useState<SelectedValue | null>(() =>
-      findInitialValue(
-        options,
-        controlledValue ?? initialValue,
-        separator,
-        displayAllSelectedLevels,
-        allowCustomValue
-      )
+      findInitialValue(options, controlledValue ?? initialValue, separator, displayAllSelectedLevels, allowCustomValue)
     );
     const open = alwaysOpen || isOpen;
     const data = useMemo(
@@ -257,9 +246,7 @@ export const TreeSelectBase = memo(
 
     useEffect(() => {
       if (valuePath) {
-        setSelected(
-          findInitialValue(options, controlledValue, separator, displayAllSelectedLevels, allowCustomValue)
-        );
+        setSelected(findInitialValue(options, controlledValue, separator, displayAllSelectedLevels, allowCustomValue));
       }
     }, [allowCustomValue, controlledValue, displayAllSelectedLevels, options, separator, valuePath]);
 
@@ -359,7 +346,7 @@ export const TreeSelectBase = memo(
             autoFocus={autoFocus}
             disabled={disabled}
             placeholder={placeholder}
-            value={open ? query : selected?.label ?? ''}
+            value={open ? query : (selected?.label ?? '')}
             width={width}
             suffix={
               <Stack gap={0.5}>

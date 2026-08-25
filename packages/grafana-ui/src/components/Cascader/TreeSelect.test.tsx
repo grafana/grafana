@@ -49,13 +49,7 @@ describe('TreeSelect', () => {
 
   it('displays the full path when requested', () => {
     render(
-      <TreeSelect
-        options={options}
-        initialValue="2"
-        displayAllSelectedLevels
-        separator="-"
-        onSelect={jest.fn()}
-      />
+      <TreeSelect options={options} initialValue="2" displayAllSelectedLevels separator="-" onSelect={jest.fn()} />
     );
 
     expect(screen.getByDisplayValue('First-Second')).toBeInTheDocument();

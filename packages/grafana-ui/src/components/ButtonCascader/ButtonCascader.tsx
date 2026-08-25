@@ -12,16 +12,11 @@ import { type ButtonCascaderProps, type CascaderFieldNames } from './types';
 
 export type { ButtonCascaderProps, CascaderFieldNames } from './types';
 
-function isCascaderOptionArray(
-  value: CascaderOption[keyof CascaderOption]
-): value is CascaderOption[] {
+function isCascaderOptionArray(value: CascaderOption[keyof CascaderOption]): value is CascaderOption[] {
   return Array.isArray(value);
 }
 
-function mapOptions(
-  options: CascaderOption[],
-  fieldNames: CascaderFieldNames<CascaderOption> = {}
-): CascaderOption[] {
+function mapOptions(options: CascaderOption[], fieldNames: CascaderFieldNames<CascaderOption> = {}): CascaderOption[] {
   const labelField = fieldNames.label ?? 'label';
   const valueField = fieldNames.value ?? 'value';
   const childrenField = fieldNames.children ?? 'children';

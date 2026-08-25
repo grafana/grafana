@@ -38,9 +38,7 @@ describe('Cascader', () => {
   describe('options updates', () => {
     it('displays updated options', async () => {
       const onSelect = jest.fn();
-      const { rerender } = render(
-        <Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />
-      );
+      const { rerender } = render(<Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />);
 
       await userEvent.click(screen.getByPlaceholderText(placeholder));
 
@@ -55,9 +53,7 @@ describe('Cascader', () => {
 
     it('filters updated results when searching', async () => {
       const onSelect = jest.fn();
-      const { rerender } = render(
-        <Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />
-      );
+      const { rerender } = render(<Cascader options={initialOptions} placeholder={placeholder} onSelect={onSelect} />);
       rerender(<Cascader options={options} placeholder={placeholder} onSelect={onSelect} />);
 
       await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
