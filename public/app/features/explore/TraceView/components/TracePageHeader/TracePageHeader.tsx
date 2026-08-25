@@ -274,7 +274,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                     props: traceContext,
                     components: extensionComponents,
                     limit: 2,
-                    wrapper: ({ children }) => <div className={styles.pluginActionItem}>{children}</div>,
+                    wrapper: PluginActionItem,
                   })
                 : null}
             </div>
@@ -421,6 +421,11 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 });
 
 TracePageHeader.displayName = 'TracePageHeader';
+
+function PluginActionItem({ children }: { children: React.ReactNode }) {
+  const styles = useStyles2(getStyles);
+  return <div className={styles.pluginActionItem}>{children}</div>;
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
