@@ -55,10 +55,8 @@ export function catchTemplateError(render: () => string): RenderedContent {
   }
 }
 
-const hasRows = (frame: DataFrame) => frame.fields.length > 0 && frame.length > 0;
-
 export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
-  return series?.some(hasRows) ?? false;
+  return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
 // Not cached: the flag value can change after the providers settle.
@@ -120,7 +118,7 @@ function buildOnceContext(series: DataFrame[]): ScopedVars {
 
 // The frame Handlebars' `data` binds to, so the two syntaxes agree.
 function findMacroFrameIndex(series: DataFrame[]): number {
-  const withRows = series.findIndex(hasRows);
+  const withRows = series.findIndex((frame) => frame.fields.length > 0 && frame.length > 0);
 
   return withRows >= 0 ? withRows : series.findIndex((frame) => frame.fields.length > 0);
 }
