@@ -1567,10 +1567,11 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	}
 
 	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
-	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
-	defer iter.stop()
 
-	if err := cb(iter); err != nil {
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "", req.KeysOnly)
+	defer it.stop()
+
+	if err := cb(it); err != nil {
 		return 0, err
 	}
 
@@ -1578,13 +1579,31 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace, keysOnly bool) *kvListIterator {
+	objs := batchGetResourceKeys(ctx, ds, keys)
+	if keysOnly {
+		// The data key already carries namespace/name/rv/folder, so the value
+		// read is skipped entirely rather than fetched and discarded.
+		objs = keysAsDataObjs(keys)
+	}
+	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
+		keysOnly:         keysOnly,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+// keysAsDataObjs adapts keys to the iterator's item type without reading values.
+func keysAsDataObjs(keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		for key, err := range keys {
+			if !yield(DataObj{Key: key}, err) || err != nil {
+				return
+			}
+		}
 	}
 }
 
@@ -1623,6 +1642,7 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 type kvListIterator struct {
 	listRV           int64
 	isCrossNamespace bool
+	keysOnly         bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1659,9 +1679,11 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.value, i.err = readAndClose(i.currentDataObj.Value)
-	if i.err != nil {
-		return false
+	if !i.keysOnly {
+		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		if i.err != nil {
+			return false
+		}
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
