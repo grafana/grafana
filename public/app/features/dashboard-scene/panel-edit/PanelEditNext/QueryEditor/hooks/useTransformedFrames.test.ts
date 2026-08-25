@@ -9,6 +9,7 @@ import {
   NO_CONFIGS,
   type TransformationConfigs,
   precedingTransformations,
+  useFrameReplay,
   useTransformedFrames,
 } from './useTransformedFrames';
 
@@ -17,9 +18,12 @@ jest.mock('@grafana/data', () => ({
   transformDataFrame: jest.fn(),
 }));
 
+/** Mutable, so a test can move a variable the way the dashboard's variable picker does. */
+let envValue = 'prod';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, 'prod') }),
+  getTemplateSrv: () => ({ replace: (v: string) => v.replace(/\$env/g, envValue) }),
 }));
 
 const mockTransformDataFrame = jest.mocked(transformDataFrame);
@@ -28,8 +32,10 @@ describe('useTransformedFrames', () => {
   const frames = makeFrames(['a', 'b']);
   const emitted = makeFrames(['transformed']);
   const configs: TransformationConfigs = [{ id: 'organize', options: {} }];
+  const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
 
   beforeEach(() => {
+    envValue = 'prod';
     jest.clearAllMocks();
     mockTransformDataFrame.mockReturnValue(
       new Observable((subscriber) => {
@@ -73,8 +79,6 @@ describe('useTransformedFrames', () => {
     // The pipeline interpolates configs before it runs them, and `transformDataFrame` skips its own
     // pass whenever a scene is active — which, in the panel editor, is always. Forwarding the raw
     // config replays a transformation matching on the literal `$env` that the panel never ran.
-    const withVariable: TransformationConfigs = [{ id: 'filterByValue', options: { value: '$env' } }];
-
     renderHook(() => useTransformedFrames(withVariable, frames));
 
     expect(mockTransformDataFrame).toHaveBeenCalledWith(
@@ -82,6 +86,68 @@ describe('useTransformedFrames', () => {
       frames,
       expect.any(Object)
     );
+  });
+
+  it('re-resolves and re-runs when a variable moves, though the configs are the same objects', () => {
+    // The panel's pipeline reprocesses on a variable change, so the editor has to as well. Nothing
+    // it can compare by identity moves: `useTransformations` rebuilds its array around the same
+    // Scene state entries, and those still hold the literal `$env`. Only the resolved options move.
+    const { rerender } = renderHook(() => useTransformedFrames(withVariable, frames));
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(
+      [{ id: 'filterByValue', options: { value: 'prod' } }],
+      frames,
+      expect.any(Object)
+    );
+
+    envValue = 'staging';
+    act(() => rerender());
+
+    expect(mockTransformDataFrame).toHaveBeenLastCalledWith(
+      [{ id: 'filterByValue', options: { value: 'staging' } }],
+      frames,
+      expect.any(Object)
+    );
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(2);
+  });
+
+  it('holds the previous output across a variable change rather than dropping to the frames', () => {
+    // A variable change is the same list of transformations, so what it last produced is still the
+    // shape the editors read — the same reason a new query holds rather than falling back.
+    const { result, rerender } = renderHook(() => useTransformedFrames(withVariable, frames));
+
+    expect(result.current).toBe(emitted);
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    envValue = 'staging';
+    act(() => rerender());
+
+    expect(result.current).toBe(emitted);
+  });
+
+  it('does not re-run when the variable resolves to what it did before', () => {
+    // Interpolation runs every render now, so an unchanged resolution has to compare equal or the
+    // replay resubscribes on every emission the panel makes.
+    const { rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useTransformedFrames(c, frames), {
+      initialProps: { c: [...withVariable] },
+    });
+
+    act(() => rerender({ c: [...withVariable] }));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not re-run when a caller rebuilds an array around the same custom operator', () => {
+    // Interpolation leaves operators untouched, so identity is what "unchanged" means for them.
+    const operator = jest.fn();
+
+    const { rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useTransformedFrames(c, frames), {
+      initialProps: { c: [operator] },
+    });
+
+    act(() => rerender({ c: [operator] }));
+
+    expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
   });
 
   it('leaves custom operators alone, as the pipeline does', () => {
@@ -237,6 +303,92 @@ describe('useTransformedFrames', () => {
       expect(result.current).toBe(frames);
       expect(mockTransformDataFrame).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('useFrameReplay', () => {
+  const frames = makeFrames(['a', 'b']);
+  const emitted = makeFrames(['transformed']);
+  const configs: TransformationConfigs = [{ id: 'organize', options: {} }];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.next(emitted);
+      })
+    );
+  });
+
+  it('reports what it produced as both what to show and what to pipe onward', () => {
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(emitted);
+    expect(result.current.settled).toBe(emitted);
+  });
+
+  it('settles on the frames themselves when there is no pipeline to run', () => {
+    // An empty pipeline produces its input, so a replay piped off it has real frames to run over.
+    const { result } = renderHook(() => useFrameReplay(NO_CONFIGS, frames));
+
+    expect(result.current.settled).toBe(frames);
+  });
+
+  it('reports nothing settled while a replay is in flight, though it still has frames to show', () => {
+    // The distinction the debug drawer's two stages turn on: an editor reads the untransformed
+    // frames standing in, but a replay piped off this one must not run over them.
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(frames);
+    expect(result.current.settled).toEqual([]);
+  });
+
+  it('keeps reporting the held output as settled across a data change', () => {
+    // Stale by one query, but a shape this pipeline did produce — so it is safe to pipe onward.
+    const nextFrames = makeFrames(['c']);
+
+    const { result, rerender } = renderHook(({ data }: { data: DataFrame[] }) => useFrameReplay(configs, data), {
+      initialProps: { data: frames },
+    });
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ data: nextFrames }));
+
+    expect(result.current.settled).toBe(emitted);
+  });
+
+  it('reports nothing settled when the replay fails, though it still shows the frames', () => {
+    // A failure falls back to the untransformed frames, which is the right thing to show and the
+    // wrong thing to pipe onward: this pipeline never produced them, so a replay running over them
+    // produces a shape the panel never emits.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockTransformDataFrame.mockReturnValue(
+      new Observable((subscriber) => {
+        subscriber.error(new Error('extractFields could not parse the column as JSON'));
+      })
+    );
+
+    const { result } = renderHook(() => useFrameReplay(configs, frames));
+
+    expect(result.current.frames).toBe(frames);
+    expect(result.current.settled).toEqual([]);
+
+    consoleError.mockRestore();
+  });
+
+  it('drops what it settled on when the pipeline itself changes', () => {
+    const otherConfigs: TransformationConfigs = [{ id: 'reduce', options: {} }];
+
+    const { result, rerender } = renderHook(({ c }: { c: TransformationConfigs }) => useFrameReplay(c, frames), {
+      initialProps: { c: configs },
+    });
+
+    mockTransformDataFrame.mockReturnValue(new Observable(() => {}));
+    act(() => rerender({ c: otherConfigs }));
+
+    expect(result.current.settled).toEqual([]);
   });
 });
 

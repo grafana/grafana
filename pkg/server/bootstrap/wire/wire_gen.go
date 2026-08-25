@@ -431,7 +431,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
-	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
+	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
 	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider, marketplacelicensingLicensing)
@@ -1182,7 +1182,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
-	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, sqlStore, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
+	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
 	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
 	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
 	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider, marketplacelicensingLicensing)

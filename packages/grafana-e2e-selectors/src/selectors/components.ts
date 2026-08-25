@@ -1586,6 +1586,20 @@ export const versionedComponents = {
     filtersRow: {
       '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
     },
+    shareMenu: {
+      triggerButton: {
+        '13.3.0': 'data-testid TraceViewer share trigger-button',
+      },
+      copyLinkButton: {
+        '13.3.0': 'data-testid TraceViewer share copy-link-button',
+      },
+      exportJsonButton: {
+        '13.3.0': 'data-testid TraceViewer share export-json-button',
+      },
+      feedbackLink: {
+        '13.3.0': 'data-testid TraceViewer share feedback-link',
+      },
+    },
   },
   QueryField: {
     container: {

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, type ReactNode, useMemo } from 'react';
+import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
@@ -18,6 +18,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
+import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
+import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
 import { getNeutralTagListStyle } from '../tagColors';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
@@ -91,6 +93,23 @@ function withoutSkeleton({ skeleton, ...column }: ColumnLayout) {
 
 export function NotebooksTable({ notebooks }: Props) {
   const styles = useStyles2(getStyles);
+  // Held here rather than in the row menu, which lives in a Dropdown overlay that unmounts as the menu
+  // closes. Only the uid and title, because the rows are flattened and carry no resource envelope.
+  const [toDelete, setToDelete] = useState<{ uid: string; title: string } | undefined>();
+  const { remove, isDeleting } = useDeleteNotebook();
+
+  // Stable, so the memoized rows and the memoized columns below are not rebuilt on every render.
+  const onDelete = useCallback((uid: string, title: string) => setToDelete({ uid, title }), []);
+  const onDismissDelete = useCallback(() => setToDelete(undefined), []);
+  const onConfirmDelete = useCallback(async () => {
+    if (!toDelete) {
+      return;
+    }
+    // Closed either way: the hook reports the failure, and leaving the modal open over a toast that
+    // says it failed just makes it look like the click never landed.
+    await remove(toDelete.uid, toDelete.title);
+    setToDelete(undefined);
+  }, [remove, toDelete]);
 
   // InteractiveTable requires memoized columns, and styles is memoized by useStyles2, so this stays
   // referentially stable and the table doesn't remount.
@@ -127,23 +146,35 @@ export function NotebooksTable({ notebooks }: Props) {
       },
       {
         ...withoutSkeleton(layout.actions),
-        cell: ({ row: { original } }) => <NotebookRowActions uid={original.uid} />,
+        cell: ({ row: { original } }) => (
+          <NotebookRowActions uid={original.uid} title={original.title} onDelete={onDelete} />
+        ),
       },
     ];
-  }, [styles]);
+  }, [styles, onDelete]);
 
   return (
-    <InteractiveTable
-      columns={columns}
-      data={notebooks}
-      getRowId={(notebook) => notebook.uid}
-      initialSortBy={[{ id: 'updated', desc: true }]}
-      pageSize={ROWS_PER_PAGE}
-      // Deliberately not autoResetPage: it keys on the data reference, and these rows get a new one
-      // every time another cursor page lands or an author name resolves, which would drag a reader
-      // back to page 1 while the list is still filling in. Narrowing the set has to reset the page
-      // too, but that is a change of filters, so the caller remounts this table for it.
-    />
+    <>
+      <InteractiveTable
+        columns={columns}
+        data={notebooks}
+        getRowId={(notebook) => notebook.uid}
+        initialSortBy={[{ id: 'updated', desc: true }]}
+        pageSize={ROWS_PER_PAGE}
+        // Deliberately not autoResetPage: it keys on the data reference, and these rows get a new one
+        // every time another cursor page lands or an author name resolves, which would drag a reader
+        // back to page 1 while the list is still filling in. Narrowing the set has to reset the page
+        // too, but that is a change of filters, so the caller remounts this table for it.
+      />
+      {toDelete && (
+        <DeleteNotebookModal
+          title={toDelete.title}
+          isDeleting={isDeleting}
+          onConfirm={onConfirmDelete}
+          onDismiss={onDismissDelete}
+        />
+      )}
+    </>
   );
 }
 
@@ -217,7 +248,15 @@ const RelativeTime = memo(function RelativeTime({ timestamp }: { timestamp: numb
 });
 
 /** Takes the uid rather than the row for the same reason as RelativeTime: three buttons per row. */
-const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: string }) {
+const NotebookRowActions = memo(function NotebookRowActions({
+  uid,
+  title,
+  onDelete,
+}: {
+  uid: string;
+  title: string;
+  onDelete: (uid: string, title: string) => void;
+}) {
   // Omitted rather than disabled for a user who cannot edit, matching the create button on the page
   // around this table.
   const canEdit = canEditNotebooks();
@@ -232,7 +271,7 @@ const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: stri
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
-      <Dropdown overlay={<NotebookRowMenu uid={uid} />} placement="bottom-end">
+      <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">
         <IconButton
           name="ellipsis-v"
           variant="secondary"
