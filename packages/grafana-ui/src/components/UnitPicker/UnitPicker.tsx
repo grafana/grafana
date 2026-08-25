@@ -4,7 +4,7 @@ import { getValueFormats, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { TreeSelect } from '../Cascader/TreeSelect';
+import { TreeSelectBase } from '../Cascader/TreeSelectImplementation';
 import { type CascaderOption } from '../Cascader/types';
 
 export interface UnitPickerProps {
@@ -54,8 +54,9 @@ export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, id })
   }
 
   return (
-    <TreeSelect
+    <TreeSelectBase
       id={id}
+      inputRole="textbox"
       width={width}
       initialValue={current && current.label}
       allowCustomValue
