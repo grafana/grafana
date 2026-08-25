@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { type UseFormSetError } from 'react-hook-form';
 
+import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -82,7 +83,16 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
       }
 
       if (shouldAuthorize && form.clientID && isOAuthConnectionType(form.type)) {
-        authorize({ type: form.type, clientID: form.clientID, name, serverUrl: form.serverUrl });
+        if (!authorize({ type: form.type, clientID: form.clientID, name, serverUrl: form.serverUrl })) {
+          return {
+            status: 'error',
+            fieldErrors: false,
+            message: t(
+              'provisioning.save-connection.error-popup-blocked',
+              'The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize.'
+            ),
+          };
+        }
         return { status: 'authorizing', name };
       }
       closeTab();

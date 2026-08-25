@@ -215,6 +215,7 @@ function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }
         )}
 
         <WebhookDisabledField
+          type={type}
           registration={credentialForm.register('webhookDisabled')}
           invalid={!!credentialForm.formState.errors.webhookDisabled}
           error={credentialForm.formState.errors.webhookDisabled?.message}

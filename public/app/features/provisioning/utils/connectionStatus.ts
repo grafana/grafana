@@ -11,5 +11,11 @@ export function isConnectionReady(status: ConnectionStatus | undefined): boolean
 
 export function isConnectionPending(status: ConnectionStatus | undefined): boolean {
   const readyCondition = status?.conditions?.find((c) => c.type === 'Ready');
-  return !readyCondition || (status?.token?.lastUpdated ?? 0) > (status?.health.checked ?? 0);
+  if (!readyCondition) {
+    return true;
+  }
+  // Routine token refreshes bump token.lastUpdated without an immediate health
+  // re-check; a newer token only means authorization is in flight while the
+  // connection is not Ready yet (right after /authorize writes the token).
+  return readyCondition.status !== 'True' && (status?.token?.lastUpdated ?? 0) > (status?.health.checked ?? 0);
 }

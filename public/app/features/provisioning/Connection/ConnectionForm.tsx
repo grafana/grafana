@@ -279,13 +279,14 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
             )}
 
             <WebhookDisabledField
+              type={selectedType}
               registration={register('webhookDisabled')}
               invalid={!!errors.webhookDisabled}
               error={errors.webhookDisabled?.message}
             />
 
             <Stack gap={2}>
-              <Button type="submit" disabled={request.isLoading || !selectedTypeAvailable}>
+              <Button type="submit" disabled={request.isLoading || isAuthorizing || !selectedTypeAvailable}>
                 {request.isLoading
                   ? t('provisioning.connection-form.button-saving', 'Saving...')
                   : t('provisioning.connection-form.button-save', 'Save')}

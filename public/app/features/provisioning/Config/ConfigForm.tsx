@@ -30,13 +30,19 @@ import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
 import { PROVISIONING_URL } from '../constants';
+import { useConnectionList } from '../hooks/useConnectionList';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { type RepositoryFormData } from '../types';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitHubBased, isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
+import {
+  getRepositoryTypeConfig,
+  isGitProvider,
+  supportsConnections,
+  supportsWebhooks,
+} from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -89,17 +95,23 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
-  // Detect if repository uses GitHub App authentication
-  // Repositories using GitHub App have a connection reference in their spec,
-  // whereas PAT-based repositories store credentials directly
+  // Repositories that authenticate through a provisioning connection (GitHub App
+  // or OAuth app) have a connection reference in their spec; PAT-based
+  // repositories store credentials directly.
   const connectionName = data?.spec?.connection?.name;
-  const usesGitHubApp = Boolean(connectionName && isGitHubBased(type));
+  const usesConnection = Boolean(connectionName && supportsConnections(type));
+
+  // Offer connections of the same type as the referenced one, mirroring the
+  // wizard where the kind (app vs OAuth) is fixed before picking a connection.
+  // Reuses the same RTK Query cache entry as useConnectionOptions.
+  const [allConnections] = useConnectionList(usesConnection ? {} : skipToken);
+  const referencedConnectionType = allConnections?.find((c) => c.metadata?.name === connectionName)?.spec?.type;
 
   const {
     options: connectionOptions,
     isLoading: connectionsLoading,
     connections,
-  } = useConnectionOptions(usesGitHubApp, isGitHubBased(type) ? type : undefined);
+  } = useConnectionOptions(usesConnection, referencedConnectionType);
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
@@ -213,14 +225,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
         {gitFields && (
           <>
-            {usesGitHubApp ? (
+            {usesConnection ? (
               <Field
                 noMargin
-                label={t('provisioning.config-form.label-connection', 'GitHub App connection')}
-                description={t(
-                  'provisioning.config-form.description-connection',
-                  'Select the GitHub App connection to use'
-                )}
+                label={t('provisioning.config-form.label-connection', 'Connection')}
+                description={t('provisioning.config-form.description-connection', 'Select the connection to use')}
                 error={errors?.connectionName?.message}
                 invalid={!!errors.connectionName}
               >
@@ -276,7 +285,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.tokenUserConfig && (
+            {gitFields.tokenUserConfig && !usesConnection && (
               <Field
                 noMargin
                 label={gitFields.tokenUserConfig.label}
@@ -312,7 +321,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {hasTokenInstructions && <TokenPermissionsInfo type={type} url={watch('url')} />}
+            {hasTokenInstructions && !usesConnection && <TokenPermissionsInfo type={type} url={watch('url')} />}
             <Field
               noMargin
               label={gitFields.urlConfig.label}

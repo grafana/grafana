@@ -3,7 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { type OAuthConnectionType } from '../types';
 import { buildOAuthAuthorizeUrl, onOAuthAuthorizationComplete } from '../utils/connectionOAuth';
 
-const authorizationPendingTimeout = 15_000;
+// Poll the authorization tab so the user closing it ends the pending state.
+const tabClosedPollInterval = 1_000;
+// The callback tab posts its completion message right before closing itself,
+// so give an in-flight message time to arrive before ending the pending state.
+const completionGracePeriod = 2_000;
 
 interface AuthorizeParams {
   type: OAuthConnectionType;
@@ -16,7 +20,9 @@ interface AuthorizeParams {
 // page (and its form state) stays put. Call `openTab` synchronously from the
 // user action so popup blockers allow the tab, then `authorize` to navigate it
 // once the connection is saved (or `closeTab` if saving failed). The callback
-// tab reports the result, which is forwarded to `onComplete`.
+// tab reports the result, which is forwarded to `onComplete`; closing the tab
+// without finishing ends the pending state. `authorize` returns false when the
+// browser blocked opening the tab.
 export function useOAuthAuthorization(onComplete: (connectionName: string, error?: string) => void) {
   const tabRef = useRef<Window | null>(null);
   const [pendingName, setPendingName] = useState<string>();
@@ -35,10 +41,17 @@ export function useOAuthAuthorization(onComplete: (connectionName: string, error
         onCompleteRef.current(name, error);
       }
     });
-    const timeout = window.setTimeout(() => setIsPending(false), authorizationPendingTimeout);
+    let graceTimeout: number | undefined;
+    const poll = window.setInterval(() => {
+      if (!tabRef.current || tabRef.current.closed) {
+        window.clearInterval(poll);
+        graceTimeout = window.setTimeout(() => setIsPending(false), completionGracePeriod);
+      }
+    }, tabClosedPollInterval);
     return () => {
       unsubscribe();
-      window.clearTimeout(timeout);
+      window.clearInterval(poll);
+      window.clearTimeout(graceTimeout);
     };
   }, [pendingName]);
 
@@ -56,16 +69,21 @@ export function useOAuthAuthorization(onComplete: (connectionName: string, error
     tabRef.current = null;
   }, []);
 
-  const authorize = useCallback(({ type, clientID, name, serverUrl }: AuthorizeParams) => {
+  const authorize = useCallback(({ type, clientID, name, serverUrl }: AuthorizeParams): boolean => {
     const url = buildOAuthAuthorizeUrl(type, clientID, name, serverUrl, { popup: true });
-    if (tabRef.current) {
-      tabRef.current.location.href = url;
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    if (!tabRef.current || tabRef.current.closed) {
+      tabRef.current = window.open('', '_blank');
+      if (tabRef.current) {
+        tabRef.current.opener = null;
+      }
     }
-    tabRef.current = null;
+    if (!tabRef.current) {
+      return false;
+    }
+    tabRef.current.location.href = url;
     setPendingName(name);
     setIsPending(true);
+    return true;
   }, []);
 
   const cancel = useCallback(() => {

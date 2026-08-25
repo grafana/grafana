@@ -13895,7 +13895,7 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
-      "description-connection": "Select the GitHub App connection to use",
+      "description-connection": "Select the connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
@@ -13906,7 +13906,7 @@
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-commit-message-template": "Commit message template",
-      "label-connection": "GitHub App connection",
+      "label-connection": "Connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -13963,6 +13963,7 @@
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-oauth": "When enabled, Grafana will not register or receive webhook events for repositories using this connection. Use this when Grafana is not reachable from the public internet.",
       "description-workspace": "The workspace your OAuth consumer belongs to",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
@@ -13993,6 +13994,10 @@
       "placeholder-installation-id": "12345678",
       "placeholder-title": "My App",
       "reauthorize-button": "Reauthorize"
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "Failed to complete authorization",
+      "error-state-expired": "This authorization link has expired or was already used. Start the authorization again."
     },
     "connection-options": {
       "loading": "Loading...",
@@ -14390,7 +14395,7 @@
       "create-and-authorize-button": "Create and authorize",
       "help-instructions-bitbucket": "In Bitbucket, go to your workspace settings and add an OAuth consumer with the callback URL below, then paste its key and secret here. <2>View step-by-step instructions</2>. Add the consumer with these permissions:",
       "help-instructions-github": "In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste its client ID and a generated client secret here. <2>View step-by-step instructions</2>",
-      "help-instructions-gitlab": "In GitLab, go to your user or group settings and create an application with the callback URL below, then paste its application ID and secret here. <2>View step-by-step instructions</2>. Create the application with these scopes:",
+      "help-instructions-gitlab": "In GitLab, go to your user or group settings and create an application with the callback URL below, then paste its application ID and secret here. <2>View step-by-step instructions</2>. Create the application with this scope:",
       "help-title": "Need help creating an OAuth app?",
       "scope-bitbucket-pull-requests": "Pull requests",
       "scope-bitbucket-read-write": "Read and write",
@@ -14637,6 +14642,9 @@
         }
       },
       "title-error-saving-file": "Error saving file"
+    },
+    "save-connection": {
+      "error-popup-blocked": "The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize."
     },
     "save-resource": {
       "button-cancel": "Cancel",

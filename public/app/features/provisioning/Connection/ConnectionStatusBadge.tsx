@@ -15,7 +15,8 @@ interface BadgeConfig {
 }
 
 function getBadgeConfig(status?: ConnectionStatus): BadgeConfig {
-  // If no conditions exist or authorization completed after the last health check, show pending state
+  // Pending when no Ready condition exists yet, or when the connection is not
+  // Ready but authorization completed after the last health check.
   if (isConnectionPending(status)) {
     return {
       color: 'darkgrey',

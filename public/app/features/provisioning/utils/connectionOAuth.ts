@@ -1,4 +1,5 @@
 import { store, textUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage, getAPINamespace } from 'app/api/utils';
@@ -16,6 +17,24 @@ const AUTHORIZE_URLS: Record<Exclude<OAuthConnectionType, 'githubEnterpriseOAuth
 // authorization tab, which does not share session storage.
 const STATE_STORAGE_PREFIX = 'grafana.provisioning.oauth.';
 const COMPLETION_CHANNEL = 'grafana.provisioning.oauth';
+
+// Abandoned authorizations never get their state consumed; sweep old entries
+// so they don't accumulate in localStorage. One hour comfortably outlives any
+// real authorization round-trip.
+const STATE_TTL_MS = 60 * 60 * 1000;
+
+function sweepStaleOAuthStates() {
+  for (const [key, raw] of Object.entries(store.all(STATE_STORAGE_PREFIX))) {
+    try {
+      const { createdAt } = JSON.parse(raw);
+      if (typeof createdAt !== 'number' || Date.now() - createdAt > STATE_TTL_MS) {
+        store.delete(`${STATE_STORAGE_PREFIX}${key}`);
+      }
+    } catch {
+      store.delete(`${STATE_STORAGE_PREFIX}${key}`);
+    }
+  }
+}
 
 export function isOAuthConnectionType(type?: string): type is OAuthConnectionType {
   return (
@@ -51,9 +70,10 @@ export function buildOAuthAuthorizeUrl(
   const state = window.crypto.randomUUID();
   const redirectUri = getOAuthCallbackUri();
 
+  sweepStaleOAuthStates();
   store.set(
     `${STATE_STORAGE_PREFIX}${state}`,
-    JSON.stringify({ name: connectionName, redirectUri, popup: opts?.popup })
+    JSON.stringify({ name: connectionName, redirectUri, popup: opts?.popup, createdAt: Date.now() })
   );
 
   const params = new URLSearchParams({
@@ -102,7 +122,12 @@ export async function completeOAuthAuthorization(
   const key = `${STATE_STORAGE_PREFIX}${state}`;
   const raw = store.get(key);
   if (!raw) {
-    throw new Error('This authorization link has expired or was already used. Start the authorization again.');
+    throw new Error(
+      t(
+        'provisioning.connection-oauth.error-state-expired',
+        'This authorization link has expired or was already used. Start the authorization again.'
+      )
+    );
   }
   store.delete(key);
 
@@ -118,7 +143,9 @@ export async function completeOAuthAuthorization(
       }
     );
   } catch (err) {
-    error = extractErrorMessage(err) || 'failed to complete authorization';
+    error =
+      extractErrorMessage(err) ||
+      t('provisioning.connection-oauth.error-authorize-failed', 'Failed to complete authorization');
   }
 
   const channel = new BroadcastChannel(COMPLETION_CHANNEL);

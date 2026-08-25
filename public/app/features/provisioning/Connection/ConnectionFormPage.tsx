@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Card, Collapse, EmptyState, Stack, Text, TextLink } from '@grafana/ui';
@@ -108,7 +109,7 @@ export default function ConnectionFormPage() {
                       {availableRepos.map((repo: ExternalRepository, index: number) => {
                         const label = repo.owner && repo.name ? `${repo.owner}/${repo.name}` : repo.name || repo.owner;
                         return repo.url ? (
-                          <TextLink key={label || index} href={repo.url} external>
+                          <TextLink key={label || index} href={textUtil.sanitizeUrl(repo.url)} external>
                             {label || repo.url}
                           </TextLink>
                         ) : (
