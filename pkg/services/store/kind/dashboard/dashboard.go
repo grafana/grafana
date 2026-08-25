@@ -240,7 +240,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 					continue
 				}
 
-				dash.Tags = append(dash.Tags, iter.ReadString())
+				// An empty tag has nothing to search for or show, and it would still take a
+				// slot in the tag list a user picks from. The reader that indexes deleted
+				// dashboards skips it too, so both report the same tags for one dashboard.
+				if tag := iter.ReadString(); tag != "" {
+					dash.Tags = append(dash.Tags, tag)
+				}
 			}
 
 		case "links":
