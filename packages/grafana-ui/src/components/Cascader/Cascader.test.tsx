@@ -83,8 +83,10 @@ describe('Cascader', () => {
       act(() => {
         jest.runAllTimers();
       });
+      // The floating menu positions itself asynchronously, which triggers act() warnings under fake timers.
+      jest.useRealTimers();
 
-      await user.type(screen.getByPlaceholderText(placeholder), 'Third');
+      await userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
       expect(screen.queryByText('Second')).not.toBeInTheDocument();
       expect(await screen.findByText('First / Third')).toBeInTheDocument();
     });

@@ -77,7 +77,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
   };
 
   return (
-    <div {...containerProps} id={menuId} className={styles.tree} onKeyDown={handleKeyDown}>
+    <div role="tree" tabIndex={-1} {...containerProps} id={menuId} className={styles.tree} onKeyDown={handleKeyDown}>
       {items.map((item) => {
         const node = item.getItemData();
         const itemProps = item.getProps();
@@ -89,6 +89,7 @@ export function TreeSelectMenu({ data, menuId, selectedValue, onActivate }: Tree
             key={item.getId()}
             {...itemProps}
             type="button"
+            role="treeitem"
             aria-disabled={disabled || undefined}
             aria-selected={selected}
             className={cx(styles.item, selected && styles.selected, disabled && styles.disabled)}
