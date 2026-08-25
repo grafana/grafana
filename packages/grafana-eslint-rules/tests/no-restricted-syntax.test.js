@@ -14,14 +14,14 @@ const ruleTester = new RuleTester();
 
 const rule = noRestrictedSyntax.rules['no-direct-create-monitoring-logger'];
 const zodImportNamespaceRule = noRestrictedSyntax.rules['zod-import-namespace'];
-const noSceneDataTransformerRule = noRestrictedSyntax.rules['no-scene-data-transformer'];
+const panelTransformationsBehaviourRule = noRestrictedSyntax.rules['require-panel-plugin-transformations-behaviour'];
 
 const expectedMessage =
   'Direct usage of createMonitoringLogger is not allowed. Register your logger source in packages/grafana-runtime/src/services/logging/loggers.ts and use getLogger from @grafana/runtime/unstable instead.';
 const expectedZodImportMessage =
   "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.";
-const expectedSceneDataTransformerMessage =
-  "Build a panel's data transformer with createPanelDataTransformer from app/features/dashboard-scene/utils/createPanelDataTransformer. Constructing SceneDataTransformer directly omits PanelPluginTransformationsBehaviour, so the panel renders untransformed data with no error to notice.";
+const expectedPanelTransformationsBehaviourMessage =
+  "A dashboard panel's SceneDataTransformer has to carry PanelPluginTransformationsBehaviour in $behaviors, otherwise the transformations the panel's plugin registers never run and the panel renders untransformed data with no error to notice. Build it with createPanelDataTransformer from app/features/dashboard-scene/utils/createPanelDataTransformer, or pass the behaviour in $behaviors yourself.";
 
 ruleTester.run('no-direct-create-monitoring-logger', rule, {
   valid: [
@@ -131,11 +131,27 @@ ruleTester.run('zod-import-namespace', zodImportNamespaceRule, {
   ],
 });
 
-ruleTester.run('no-scene-data-transformer', noSceneDataTransformerRule, {
+ruleTester.run('require-panel-plugin-transformations-behaviour', panelTransformationsBehaviourRule, {
   valid: [
     {
       name: 'the factory is the sanctioned construction path',
       code: `const $data = createPanelDataTransformer({ $data: queryRunner, transformations });`,
+    },
+    {
+      name: 'the behaviour constructed inline',
+      code: `const $data = new SceneDataTransformer({ transformations, $behaviors: [new PanelPluginTransformationsBehaviour()] });`,
+    },
+    {
+      name: 'the behaviour alongside others',
+      code: `const $data = new SceneDataTransformer({ $behaviors: [new DashboardDatasourceBehaviour(), new PanelPluginTransformationsBehaviour()] });`,
+    },
+    {
+      name: 'the behaviour passed by reference',
+      code: `const $data = new SceneDataTransformer({ $behaviors: [PanelPluginTransformationsBehaviour] });`,
+    },
+    {
+      name: 'construction through a namespace import carrying the behaviour',
+      code: `const $data = new scenes.SceneDataTransformer({ $behaviors: [new PanelPluginTransformationsBehaviour()] });`,
     },
     {
       name: 'importing the type is fine',
@@ -156,29 +172,42 @@ ruleTester.run('no-scene-data-transformer', noSceneDataTransformerRule, {
   ],
   invalid: [
     {
-      name: 'direct construction',
+      name: 'no behaviours at all',
       code: `const $data = new SceneDataTransformer({ $data: queryRunner, transformations });`,
-      errors: [{ message: expectedSceneDataTransformerMessage }],
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
     },
     {
       name: 'construction with no arguments',
       code: `const $data = new SceneDataTransformer();`,
-      errors: [{ message: expectedSceneDataTransformerMessage }],
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
+    },
+    {
+      name: 'an empty $behaviors array',
+      code: `const $data = new SceneDataTransformer({ transformations, $behaviors: [] });`,
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
+    },
+    {
+      name: 'other behaviours but not this one',
+      code: `const $data = new SceneDataTransformer({ $behaviors: [new DashboardDatasourceBehaviour()] });`,
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
+    },
+    {
+      name: 'a $behaviors array assembled elsewhere cannot be checked syntactically',
+      code: `const $data = new SceneDataTransformer({ ...state });`,
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
     },
     {
       name: 'construction through a namespace import',
       code: `import * as scenes from '@grafana/scenes'; const $data = new scenes.SceneDataTransformer({});`,
-      errors: [{ message: expectedSceneDataTransformerMessage }],
-    },
-    {
-      name: 'construction even when $behaviors is passed by hand',
-      code: `const $data = new SceneDataTransformer({ transformations, $behaviors: [new PanelPluginTransformationsBehaviour()] });`,
-      errors: [{ message: expectedSceneDataTransformerMessage }],
+      errors: [{ message: expectedPanelTransformationsBehaviourMessage }],
     },
     {
       name: 'each construction site is reported',
       code: `const a = new SceneDataTransformer({}); const b = new SceneDataTransformer({});`,
-      errors: [{ message: expectedSceneDataTransformerMessage }, { message: expectedSceneDataTransformerMessage }],
+      errors: [
+        { message: expectedPanelTransformationsBehaviourMessage },
+        { message: expectedPanelTransformationsBehaviourMessage },
+      ],
     },
   ],
 });
