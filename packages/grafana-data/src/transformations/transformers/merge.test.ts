@@ -32,8 +32,9 @@ describe('Merge multiple to single', () => {
     });
   });
 
-  it('combine two series into one', async () => {
+  it('combine two series into one with dynamic refId', async () => {
     const seriesA = toDataFrame({
+      refId: 'A',
       name: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1000] },
@@ -42,6 +43,7 @@ describe('Merge multiple to single', () => {
     });
 
     const seriesB = toDataFrame({
+      refId: 'B',
       name: 'B',
       fields: [
         { name: 'Time', type: FieldType.time, values: [2000] },
@@ -55,7 +57,7 @@ describe('Merge multiple to single', () => {
         createField('Time', FieldType.time, [1000, 2000]),
         createField('Temp', FieldType.number, [1, -1]),
       ];
-
+      expect(result[0].refId).toBe('merge-A-B');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
@@ -77,13 +79,15 @@ describe('Merge multiple to single', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+    const config = { ...cfg, refId: 'test' };
+
+    await expect(transformDataFrame([config], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         createField('Time', FieldType.time, [100, 150, 200, 100, 125, 126]),
         createField('Temp', FieldType.number, [1, 4, 5, -1, 2, 3]),
       ];
-
+      expect(result[0].refId).toBe('test');
       expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });

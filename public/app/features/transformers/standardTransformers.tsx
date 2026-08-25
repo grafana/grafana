@@ -103,6 +103,7 @@ function makeRegistryItemFromTransformer<T>(
     defaultOptions: transformer.defaultOptions,
     isApplicable: transformer.isApplicable,
     isApplicableDescription: transformer.isApplicableDescription,
+    usesDynamicRefId: transformer.usesDynamicRefId,
   };
 }
 
@@ -585,6 +586,8 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
       defaultOptions: {},
       isApplicable: undefined,
       isApplicableDescription: undefined,
+      // must match usesDynamicRefId on getJoinByLabelsTransformer()
+      usesDynamicRefId: true,
       name: t('transformers.get-join-by-labels-transformer.name.join-by-labels', 'Join by labels'),
       description: t(
         'transformers.get-join-by-labels-transformer.description.flatten-labeled-results-table-joined-labels',

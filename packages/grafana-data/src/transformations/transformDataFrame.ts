@@ -60,7 +60,7 @@ const getOperator =
         from(getTransformation(info)).pipe(
           mergeMap((transformation) => {
             const defaultOptions = transformation.defaultOptions ?? {};
-            const options = { ...defaultOptions, ...config.options };
+            const options = { ...defaultOptions, refId: config.refId, ...config.options };
 
             // when running within Scenes, we can skip var interpolation, since it's already handled upstream
             const isScenes = window.__grafanaSceneContext != null;
