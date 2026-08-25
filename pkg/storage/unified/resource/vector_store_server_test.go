@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeWriteStore implements vectorWriteStore for handler tests.
@@ -41,6 +43,16 @@ type fakeWriteStore struct {
 	deleted      int64
 	hasMore      bool
 	lockCalls    int
+	updateCalls  []updateMetadataCall
+	updateErr    error
+	updated      int64
+}
+
+type updateMetadataCall struct {
+	Namespace, Resource string
+	Filter              *filter.Filter
+	Set                 json.RawMessage
+	Unset               []string
 }
 
 type replaceCall struct {
@@ -106,6 +118,14 @@ func (f *fakeWriteStore) DeleteRows(_ context.Context, ns, model, res string, se
 	}
 	f.deleteCalls = append(f.deleteCalls, deleteRowsCall{ns, model, res, sel})
 	return f.deleted, f.hasMore, nil
+}
+
+func (f *fakeWriteStore) UpdateMetadata(_ context.Context, ns, res string, fl *filter.Filter, set json.RawMessage, unset []string) (int64, error) {
+	if f.updateErr != nil {
+		return 0, f.updateErr
+	}
+	f.updateCalls = append(f.updateCalls, updateMetadataCall{ns, res, fl, set, unset})
+	return f.updated, nil
 }
 
 func (f *fakeWriteStore) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
@@ -214,15 +234,6 @@ func TestVectorStore_MissingKeyFieldsIsInvalidArgument(t *testing.T) {
 	}
 }
 
-func TestVectorStore_UpdateMetadataUnimplemented(t *testing.T) {
-	s := newTestVectorStoreServer(&fakeWriteStore{})
-	_, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
-		Namespace: "ns", Group: "g", Resource: "r", Filter: []byte(`{}`), Set: []byte(`{}`),
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unimplemented, status.Code(err))
-}
-
 func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := newTestVectorStoreServer(store)
@@ -272,6 +283,9 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 			r.Inputs[0].Metadata = []byte(`{"k":"` + strings.Repeat("x", 4096) + `"}`)
 		}},
 		{"invalid metadata json", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`{not json`) }},
+		{"metadata array not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`[1,2]`) }},
+		{"metadata scalar not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`"x"`) }},
+		{"metadata null not object", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`null`) }},
 		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
 		{"oversized multibyte uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("ü", 257) }},
 		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
@@ -465,13 +479,124 @@ func TestVectorStore_DeleteSelectorValidation(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	// Filter selector ships with the metadata filter dialect.
+	// Empty filter ({} parses to no filter) is rejected.
 	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
 		Namespace: "ns", Group: "g", Resource: "r",
 		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{}`)},
 	})
 	require.Error(t, err)
-	assert.Equal(t, codes.Unimplemented, status.Code(err))
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Malformed filter is rejected.
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{"$and": "not-an-array"}`)},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestVectorStore_DeleteByFilter(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, deleted: 3}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{"status":"stale"}`)},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 3, resp.Deleted)
+	require.Len(t, store.deleteCalls, 1)
+	sel := store.deleteCalls[0].Sel
+	require.NotNil(t, sel.Filter)
+	assert.True(t, sel.AllModels)
+	assert.Empty(t, sel.UIDs)
+	assert.False(t, sel.All)
+}
+
+func TestVectorStore_UpdateMetadata(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, updated: 2}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Filter: []byte(`{"status":"open"}`),
+		Set:    []byte(`{"status":"resolved"}`),
+		Unset:  []string{"owner"},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, resp.Updated)
+	require.Len(t, store.updateCalls, 1)
+	c := store.updateCalls[0]
+	assert.Equal(t, "r_external", c.Resource)
+	require.NotNil(t, c.Filter)
+	assert.JSONEq(t, `{"status":"resolved"}`, string(c.Set))
+	assert.Equal(t, []string{"owner"}, c.Unset)
+}
+
+func TestVectorStore_UpdateMetadataValidation(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+	base := func() *resourcepb.VectorUpdateMetadataRequest {
+		return &resourcepb.VectorUpdateMetadataRequest{
+			Namespace: "ns", Group: "g", Resource: "r",
+			Filter: []byte(`{"status":"open"}`), Set: []byte(`{"a":1}`),
+		}
+	}
+	cases := []struct {
+		name   string
+		mutate func(*resourcepb.VectorUpdateMetadataRequest)
+	}{
+		{"empty filter", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Filter = []byte(`{}`) }},
+		{"malformed filter", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Filter = []byte(`{"$or":5}`) }},
+		{"no set or unset", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = nil; r.Unset = nil }},
+		{"set not an object", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = []byte(`[1,2]`) }},
+		{"set is null", func(r *resourcepb.VectorUpdateMetadataRequest) { r.Set = []byte(`null`) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := base()
+			tc.mutate(req)
+			_, err := s.UpdateMetadata(vsAuthedCtx(), req)
+			require.Error(t, err)
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
+}
+
+func TestVectorStore_FilterTooManyValuesIsInvalidArgument(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+
+	vals := make([]string, maxFilterValues+1)
+	for i := range vals {
+		vals[i] = "v"
+	}
+	b, _ := json.Marshal(map[string]any{"uid": map[string]any{"$in": vals}})
+
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: b},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	_, err = s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Filter: b, Set: []byte(`{"a":1}`),
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestVectorStore_UpdateMetadataUnprovisionedIsNotFound(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: false}
+	s := newTestVectorStoreServer(store)
+	_, err := s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Filter: []byte(`{"status":"open"}`), Set: []byte(`{"a":1}`),
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestVectorStore_DeleteUnprovisionedIsNotFound(t *testing.T) {

@@ -890,7 +890,6 @@
       "close": "Cerrar",
       "create": "Crear",
       "delete": "Eliminar",
-      "deleting": "Eliminando...",
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar todo",
@@ -2495,13 +2494,11 @@
         "route-count_other": "{{count}} rutas"
       },
       "delete": {
-        "confirm": "Sí, eliminar política",
-        "warning-1": "La eliminación de esta política de notificación la eliminará de forma permanente.",
-        "warning-2": "¿Seguro que quieres eliminar esta política?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Esta acción eliminará de forma permanente la política de notificación <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Eliminar política de notificación"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtra las rutas mediante una lista de comparadores separados por comas, por ejemplo:<1>gravedad=crítica, región=EMEA</1>",
       "generated-policies": "Políticas generadas automáticamente",
@@ -2546,7 +2543,9 @@
         "reset": "Restablecer",
         "resetting": "Restableciendo...",
         "title-delete-notification-policy": "Eliminar política de notificación",
-        "title-reset-notification-policy": "Restablecer política de notificación"
+        "title-reset-notification-policy": "Restablecer política de notificación",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Espera mientras actualizamos tus políticas de notificación.",
@@ -3832,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Eliminar política de notificación"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6018,6 +6017,9 @@
       "description": "Una secuencia vertical de paneles, texto y celdas de código",
       "name": "Cuaderno",
       "pill": "Cuaderno publicado",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Hora"
     },
     "on-create-new-row": {
@@ -8742,6 +8744,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Contraer {{name}}",
       "error": "Error al cargar las métricas",
@@ -8754,6 +8761,7 @@
       "loading-values": "Cargando valores...",
       "no-metrics": "No se han encontrado métricas",
       "search-placeholder": "Buscar métricas",
+      "show-metric-details": "",
       "show-more": "Mostrar más",
       "show-more-metrics": "Mostrar más métricas",
       "show-more-values": "Mostrar más valores",
@@ -11272,6 +11280,13 @@
       "show": "Mostrar",
       "switch": "Las recomendaciones siguen la solución seleccionada",
       "switchSolution": "Cambiar de solución",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Recomendaciones para tu pila"
     },
     "solutions": {
@@ -11328,6 +11343,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12923,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12920,6 +12962,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13692,6 +13735,7 @@
       "behind-branch-text": "Este recurso se encuentra detrás de la rama en {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "El resto de usuarios de Grafana de tu organización seguirán viendo este recurso hasta que se fusione esta rama.",
+      "move-from-branch": "",
       "not-saved": "El resto de usuarios de Grafana de tu organización seguirán viendo la versión actual guardada en la rama predeterminada configurada hasta que se fusione esta rama",
       "open-in-repo-button": "Abrir en {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitud de extracción en {{repoType}}",
@@ -13703,6 +13747,7 @@
     "title-created-branch-in-repo": "Se ha creado un nuevo recurso en una rama en {{repoType}}.",
     "title-deleted-resource-in-branch": "Se ha eliminado un recurso en una rama en {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Este recurso se carga desde la rama que acabas de crear en {{repoType}} y solo es visible para ti",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Se ha actualizado un recurso en una rama en {{repoType}}."
   },
   "provisioning": {
@@ -16277,6 +16322,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
