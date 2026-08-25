@@ -100,7 +100,16 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
+	var manifest *app.ManifestData
+	if plugin.Manifest != nil {
+		// Plugin APIs are always served under the plugin ID.
+		manifestCopy := *plugin.Manifest
+		manifestCopy.Group = plugin.JSONData.ID
+		manifest = &manifestCopy
+	}
+
 	return &AppPluginAPIBuilder{
+		manifest:        manifest,
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3Loader:  clientV3Loader,
@@ -186,16 +195,6 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// TODO -- update the constructor with the manifest
-		if plugin.Manifest != nil {
-			// The served API group is always the plugin id -- schema registration
-			// and OpenAPI naming read the group from the manifest, so they would
-			// diverge from the storage+samples if a manifest declared its own group.
-			manifest := *plugin.Manifest
-			manifest.Group = plugin.JSONData.ID
-			b.manifest = &manifest
-		}
-
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
@@ -215,6 +214,9 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 
 	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
 	for _, v := range b.manifest.Versions {
+		if !v.Served {
+			continue
+		}
 		gv := schema.GroupVersion{
 			Group:   b.pluginJSON.ID,
 			Version: v.Name,
@@ -247,21 +249,18 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
 		}
 
-		// Server-side apply converts objects to the internal ("__internal")
-		// hub version when tracking managed fields, so every kind must be
-		// registered there as well or apply fails with "no kind registered
-		// for the internal version".
+		// Server-side apply uses the internal version to track managed fields.
 		internalGV := schema.GroupVersion{Group: b.manifest.Group, Version: runtime.APIVersionInternal}
 		for _, version := range b.manifest.Versions {
+			if !version.Served {
+				continue
+			}
 			gv := schema.GroupVersion{Group: b.manifest.Group, Version: version.Name}
 			for _, r := range version.Kinds {
 				addKind(gv.WithKind(r.Kind))
 				addKind(internalGV.WithKind(r.Kind))
 			}
 		}
-
-		// ??? How do CRDs register conversions.
-		// Given that the type is always the same, how and where to we convert ???
 	}
 
 	return scheme.SetVersionPriority(gvs...)
@@ -284,8 +283,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
-	// The settings store is version-independent -- build it once and share the
-	// same instance across every version's storage map, k8s style.
+	// Share one settings store across all versions.
 	var settingsStorage rest.Storage
 	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
 	if err != nil {
@@ -300,7 +298,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	}
 	b.getter = settingsStorage.(rest.Getter)
 
-	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
+	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, b.manifest)
 
@@ -325,7 +323,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			storage[settingsRI.StoragePath("proxy")] = newProxy(b)
 		}
 
-		// Configure storage for manifest defined kinds
+		// Configure storage for manifest-defined kinds.
 		if b.manifest != nil {
 			for _, v := range b.manifest.Versions {
 				if v.Name != gv.Version {

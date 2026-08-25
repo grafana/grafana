@@ -112,7 +112,7 @@ func loadClientV3(rpcClient plugin.ClientProtocol) v3.ClientV3 {
 	if err != nil {
 		return nil
 	}
-	return v3.NewClientFromSDK(client)
+	return client
 }
 
 func (p *grpcPlugin) Stop(_ context.Context) error {

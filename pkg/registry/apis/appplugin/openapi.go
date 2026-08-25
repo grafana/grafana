@@ -26,20 +26,9 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		base := apppluginV0.GetOpenAPIDefinitions(ref)
 		if b.manifest != nil {
-			// NOTE: this is called for each apiserver in the setup, so we may want to cache it
-			maps.Copy(base, loadOpenAPIDefinition(ref, b.manifest))
+			maps.Copy(base, loadOpenAPIDefinitions(ref, b.manifest))
 
-			// Manifest kinds are served as unstructured objects. Routes the
-			// post-processor does not rewrite (list samples, request bodies)
-			// resolve to the reflected unstructured names, which must have a
-			// definition or the spec build fails hard.
-			//
-			// The server-side-apply type converter indexes models by the
-			// x-kubernetes-group-version-kind extension, and it only sees the
-			// definitions reachable from each storage's sample object -- for
-			// manifest kinds that is always this unstructured definition, so
-			// every served kind GVK must be stamped here or apply fails with
-			// "no corresponding type for <gvk>".
+			// Server-side apply finds manifest GVKs through these generic route models.
 			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = b.unstructuredOpenAPIDefinition("")
 			base[openapiutil.GetCanonicalTypeName(unstructured.UnstructuredList{})] = b.unstructuredOpenAPIDefinition("List")
 		}
@@ -47,17 +36,12 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 	}
 }
 
-// kindOpenAPIName is both the OpenAPI definition key and the final component
-// name for a manifest kind (the definition namer passes names through
-// unchanged, so it must not contain a slash).
+// kindOpenAPIName returns the definition and component name for a manifest kind.
 func kindOpenAPIName(gvk schema.GroupVersionKind) string {
 	return gvk.Group + "." + gvk.Version + "." + gvk.Kind
 }
 
-// unstructuredOpenAPIDefinition builds the generic object definition served
-// for unstructured.Unstructured(List), carrying an x-kubernetes-group-version-kind
-// entry for every served manifest kind so the server-side-apply type converter
-// can resolve those GVKs. kindSuffix is "" for single objects, "List" for lists.
+// unstructuredOpenAPIDefinition adds the GVK metadata required by server-side apply.
 func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) common.OpenAPIDefinition {
 	s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
 	gvks := []interface{}{}
@@ -79,8 +63,8 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 	return common.OpenAPIDefinition{Schema: s}
 }
 
-// loadOpenAPIDefinition loads the schemas for all kinds
-func loadOpenAPIDefinition(ref common.ReferenceCallback, manifest *app.ManifestData) map[string]common.OpenAPIDefinition {
+// loadOpenAPIDefinitions loads schemas for all served kinds.
+func loadOpenAPIDefinitions(ref common.ReferenceCallback, manifest *app.ManifestData) map[string]common.OpenAPIDefinition {
 	defs := map[string]common.OpenAPIDefinition{}
 	if manifest == nil {
 		return defs
@@ -93,7 +77,7 @@ func loadOpenAPIDefinition(ref common.ReferenceCallback, manifest *app.ManifestD
 		prefix := manifest.Group + "." + version.Name
 		for _, kind := range version.Kinds {
 			if kind.Schema == nil {
-				continue // legal: kinds without a schema get no documentation
+				continue
 			}
 			gvk := schema.GroupVersionKind{
 				Group:   manifest.Group,
@@ -121,9 +105,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if b.schemas != nil {
 		schema = b.schemas[version]
 		if schema.IsZero() {
-			// The loader currently only extracts the v0alpha1 settings schema;
-			// the settings kind is identical in every served version, so reuse
-			// it rather than degrading to the generic default.
+			// The settings kind uses the same schema in every version.
 			schema = b.schemas[apppluginV0.VERSION]
 		}
 	}
@@ -189,10 +171,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	})
 }
 
-// specVersion returns the version of the group-version spec being processed.
-// The builder framework stamps every per-version spec with
-// Info.Title = "<group>/<version>" before post-processing runs, and for app
-// plugins the group is the plugin id.
+// specVersion reads the group version from the title set by the API builder.
 func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
 	if oas.Info != nil {
 		if version, ok := strings.CutPrefix(oas.Info.Title, b.pluginJSON.ID+"/"); ok && version != "" {
@@ -202,21 +181,13 @@ func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
 	return apppluginV0.VERSION
 }
 
-// postProcessManifestKinds documents manifest-defined kinds in the spec. The
-// endpoint installer documents every route from scheme-created zero-value
-// unstructured objects, which have no per-kind identity, so the spec builder
-// emits generic object schemas and never includes the manifest definitions
-// (they are unreachable from any route sample). Inject this version's
-// definitions as components and point the kind routes' request and response
-// bodies at them. Only the given version is processed: each group version
-// gets its own self-contained spec.
+// postProcessManifestKinds replaces generic route schemas with manifest schemas.
 func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root string, version string) {
 	if b.manifest == nil || oas.Components == nil || oas.Components.Schemas == nil {
 		return
 	}
 
-	// Without this, every ref written below dangles and clients see empty models.
-	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
+	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef("#/components/schemas/" + name)
 	}, b.manifest)
 	prefix := b.manifest.Group + "." + version + "."
@@ -235,7 +206,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 		gvk.Version = v.Name
 		for _, kind := range v.Kinds {
 			if kind.Schema == nil {
-				continue // no schema, nothing to point the routes at
+				continue
 			}
 			gvk.Kind = kind.Kind
 			name := kindOpenAPIName(gvk)
@@ -245,13 +216,12 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 				base = root + strings.ToLower(kind.Plural)
 			}
 
-			// Update the request+response bodies to point to a real kind (not unstructured)
+			// PATCH requests contain patch documents, not full resources.
 			for _, path := range []string{base, base + "/{name}", base + "/{name}/status"} {
 				if p := oas.Paths.Paths[path]; p != nil {
 					for _, op := range []*spec3.Operation{p.Get, p.Put, p.Post} {
 						setOperationRequestResponseBodies(op, ref)
 					}
-					// PATCH bodies are patch documents; only the response is the kind
 					setOperationResponseBodies(p.Patch, ref)
 				}
 			}
@@ -266,12 +236,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 	}
 }
 
-// kindListSchema mirrors the <Kind>List definition AsKubeOpenAPI produces,
-// with refs pointing at components already present in the built spec. The
-// ListMeta component is always reachable through the settings kind, so the
-// metadata ref never dangles. The SDK-generated List definition is not reused
-// directly because it places Default as a $ref sibling, which needs the spec
-// builder's allOf ref-wrapping pass that injected components bypass.
+// kindListSchema builds a list without kube-openapi's unavailable ref-wrapping pass.
 func kindListSchema(kind string, itemRef spec.Ref) *spec.Schema {
 	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
@@ -297,8 +262,7 @@ func kindListSchema(kind string, itemRef spec.Ref) *spec.Schema {
 	}
 }
 
-// setResponseSchemaRef replaces the schema of every media type in the
-// response for the given status code with a reference to the given schema.
+// setResponseSchemaRef updates every media type for one response code.
 func setResponseSchemaRef(op *spec3.Operation, code int, ref spec.Ref) {
 	if op.Responses == nil {
 		return
@@ -312,8 +276,7 @@ func setResponseSchemaRef(op *spec3.Operation, code int, ref spec.Ref) {
 	}
 }
 
-// setOperationRequestResponseBodies points the request body and every
-// response body of an operation at the given schema.
+// setOperationRequestResponseBodies updates an operation's request and responses.
 func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref) {
 	if op == nil {
 		return
@@ -326,8 +289,7 @@ func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref) {
 	setOperationResponseBodies(op, ref)
 }
 
-// setOperationResponseBodies points every response body of an operation at
-// the given schema, leaving the request body alone.
+// setOperationResponseBodies updates every response body for an operation.
 func setOperationResponseBodies(op *spec3.Operation, ref spec.Ref) {
 	if op == nil || op.Responses == nil {
 		return

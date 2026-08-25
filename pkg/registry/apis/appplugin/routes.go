@@ -6,7 +6,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -17,17 +16,12 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		c, ok := b.clientV3(r.Context())
+		client, ok := b.clientV3(r.Context())
 		if !ok {
-			http.Error(w, "no backend configured", 500)
+			http.Error(w, "no backend configured", http.StatusInternalServerError)
 			return
 		}
-		routeClient, ok := c.(pluginv3.RouteServiceClient)
-		if !ok {
-			http.Error(w, "backend does not support routes", 500)
-			return
-		}
-		httpadapter.HandlerFunc(routeClient).ServeHTTP(w, r)
+		httpadapter.HandlerFunc(client).ServeHTTP(w, r)
 	}
 
 	for _, version := range b.manifest.Versions {

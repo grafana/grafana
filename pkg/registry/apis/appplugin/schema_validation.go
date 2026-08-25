@@ -9,15 +9,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-// newKindSchemaValidator builds the create/update validator for a manifest
-// kind from the definitions AsKubeOpenAPI produced with bare-name refs.
-// kube-openapi's validator panics on any schema containing a $ref (it has no
-// resolution step and never consults Definitions), so the kind schema must
-// first be expanded into a fully self-contained schema.
+// newKindSchemaValidator expands refs that kube-openapi's validator cannot resolve.
 func newKindSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) validation.SchemaValidator {
-	// metadata, kind, and apiVersion are validated by the apiserver itself
-	// (and metadata's ObjectMeta definition is not part of the manifest defs);
-	// validate only the payload fields, as CRD validation does.
+	// The API server validates these common fields.
 	root := kindSchema
 	root.Properties = maps.Clone(kindSchema.Properties)
 	root.Required = slices.Clone(kindSchema.Required)
@@ -29,9 +23,7 @@ func newKindSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenA
 	return validation.NewSchemaValidatorFromOpenAPI(&expanded)
 }
 
-// expandSchemaRefs returns a deep copy of s with every $ref replaced by its
-// definition. Unknown and cyclic references become permissive empty schemas:
-// under-validating is preferable to panicking or rejecting every write.
+// expandSchemaRefs replaces refs with definitions. Cycles become permissive schemas.
 func expandSchemaRefs(s spec.Schema, defs map[string]common.OpenAPIDefinition, expanding map[string]bool) spec.Schema {
 	if ref := s.Ref.String(); ref != "" {
 		def, ok := defs[ref]

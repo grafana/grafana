@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
@@ -87,4 +89,19 @@ func testManifest(t *testing.T) *app.ManifestData {
 			},
 		},
 	}
+}
+
+func TestGetGroupVersions(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "unused", Served: false})
+	b := &AppPluginAPIBuilder{
+		manifest:   manifest,
+		pluginJSON: plugins.JSONData{ID: "example-app"},
+	}
+
+	require.Equal(t, []schema.GroupVersion{
+		{Group: "example-app", Version: "v1alpha1"},
+		{Group: "example-app", Version: "v0alpha1"},
+		{Group: "example-app", Version: "v2alpha1"},
+	}, b.GetGroupVersions())
 }

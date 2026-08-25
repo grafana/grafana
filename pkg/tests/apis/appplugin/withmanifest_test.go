@@ -15,9 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// The served group is always the plugin id -- register.go overrides whatever
-// group the manifest declares -- and the manifest's versions replace the
-// default v0alpha1 settings-only group.
+// Manifest APIs use the plugin ID as their group.
 const thingAPIVersion = testAppID + "/v1"
 
 func TestIntegrationPluginManifestDiscovery(t *testing.T) {
@@ -120,10 +118,7 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	]`, disco)
 }
 
-// TestIntegrationPluginManifestOpenAPIV2 verifies that the aggregate OpenAPI v2
-// (swagger) spec builds successfully when a manifest kind declares a custom route.
-// The root v2 spec is built lazily on first request and the apiserver crashes the
-// process via klog.Fatalf if a referenced model definition cannot be resolved.
+// TestIntegrationPluginManifestOpenAPIV2 verifies the aggregate spec resolves manifest schemas.
 func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -139,15 +134,10 @@ func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
 
 	raw, err := result.Raw()
 	require.NoError(t, err)
-	// The manifest-defined kind must appear in the built spec.
 	require.Contains(t, string(raw), testAppID)
 }
 
-// TestIntegrationPluginManifestCreate verifies a resource can be created and read back
-// with its group intact. This guards against the shared-scheme group-mismatch bug, where
-// the generic object type was registered under many groups and an unrelated group (e.g.
-// quotas.grafana.app) could be stamped onto the created object, causing unified storage to
-// reject the write with "group in key does not match group in the body".
+// TestIntegrationPluginManifestCreate covers CRUD and server-side apply for a manifest kind.
 func TestIntegrationPluginManifestCreate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -180,7 +170,6 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 		_ = client.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 	})
 
-	// The persisted object must keep the plugin's group, not a foreign one.
 	require.Equal(t, thingAPIVersion, created.GetAPIVersion())
 	require.Equal(t, "Thing", created.GetKind())
 
@@ -188,20 +177,14 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, thingAPIVersion, got.GetAPIVersion())
 
-	// LIST exercises the typed-list append in unified storage. Manifest kinds are backed by
-	// an untyped object whose list uses an interface element type ([]resource.Object); the
-	// append must not dereference the pointer to a value (which would not satisfy the
-	// interface and panic with "reflect.Set: value of type ... is not assignable").
+	// LIST exercises unified storage's unstructured list handling.
 	list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "thing-1", list.Items[0].GetName())
 	require.Equal(t, thingAPIVersion, list.Items[0].GetAPIVersion())
 
-	// Server-side apply exercises the managedFields/structured-merge-diff type converter,
-	// which indexes models by the x-kubernetes-group-version-kind OpenAPI extension. Without
-	// that extension on the served definition, apply fails with "no corresponding type for
-	// <gvk>". This guards that the extension is present and the apply path works.
+	// Apply requires the manifest GVK in the OpenAPI definition.
 	applyObj := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": thingAPIVersion,
 		"kind":       "Thing",
@@ -219,11 +202,7 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.Equal(t, thingAPIVersion, applied.GetAPIVersion())
 }
 
-// TestIntegrationPluginManifestServiceLoading verifies the manifest APIs are still served when
-// plugins are loaded via the service-loading path (FlagPluginStoreServiceLoading), where the
-// plugin registry is populated during service startup rather than at Wire-injection time. This
-// path previously produced no installers because they were derived eagerly at injection time,
-// before any plugin had loaded.
+// TestIntegrationPluginManifestServiceLoading covers manifests loaded during service startup.
 func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

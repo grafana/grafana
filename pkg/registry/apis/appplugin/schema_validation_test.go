@@ -16,7 +16,7 @@ func buildTestKindValidator(t *testing.T, version string) validation.SchemaValid
 
 	// Same construction as UpdateAPIGroupInfo: bare-name refs so the expander
 	// can resolve them directly against the definition map.
-	defs := loadOpenAPIDefinition(func(name string) spec.Ref {
+	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, manifest)
 

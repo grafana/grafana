@@ -345,9 +345,7 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string
 	return setupHelperFull(t, mode, false, extraFeatures...)
 }
 
-// setupHelperWithManifest also installs testdata/app-sdk-manifest.json at the
-// plugin root, so the API group serves the manifest-defined versions and kinds
-// instead of the settings-only v0alpha1 group.
+// setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
 	return setupHelperFull(t, mode, true, extraFeatures...)
 }
@@ -355,13 +353,16 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
 
+	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
+	if withManifest {
+		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+	}
+
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
-		EnableFeatureToggles: append([]string{
-			featuremgmt.FlagApppluginsRegisterAPIServer,
-		}, extraFeatures...),
+		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
