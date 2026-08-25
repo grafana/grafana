@@ -41,7 +41,7 @@ func TestAsErrorResult_UnpackCorrectErrorDetails(t *testing.T) {
 			},
 			RetryAfterSeconds: 12,
 		},
-		Code: int32(codes.NotFound),
+		Code: http.StatusNotFound,
 	}
 	st, err := st.WithDetails(&errDetails)
 	require.NoError(t, err)
@@ -109,4 +109,46 @@ func TestErrorFromResponse(t *testing.T) {
 		fromDetails := AsErrorResult(ErrorFromResponse(respErr, detailsErr(http.StatusNotFound, "from details")))
 		require.Equal(t, "from details", fromDetails.Message)
 	})
+}
+
+func TestGRPCCodeFromHTTPStatus(t *testing.T) {
+	t.Parallel()
+
+	mapped := map[int32]codes.Code{
+		http.StatusOK:                           codes.OK,
+		http.StatusBadRequest:                   codes.InvalidArgument,
+		http.StatusUnauthorized:                 codes.Unauthenticated,
+		http.StatusForbidden:                    codes.PermissionDenied,
+		http.StatusNotFound:                     codes.NotFound,
+		http.StatusRequestTimeout:               codes.DeadlineExceeded,
+		http.StatusConflict:                     codes.AlreadyExists,
+		http.StatusPreconditionFailed:           codes.FailedPrecondition,
+		http.StatusRequestedRangeNotSatisfiable: codes.OutOfRange,
+		http.StatusUnprocessableEntity:          codes.InvalidArgument,
+		http.StatusTooManyRequests:              codes.ResourceExhausted,
+		http.StatusInternalServerError:          codes.Internal,
+		http.StatusNotImplemented:               codes.Unimplemented,
+		http.StatusServiceUnavailable:           codes.Unavailable,
+		http.StatusGatewayTimeout:               codes.DeadlineExceeded,
+		499:                                     codes.Canceled, // nginx's client-closed-request, what gRPC gateways emit for Canceled
+	}
+	for httpCode, want := range mapped {
+		require.Equal(t, want, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	}
+
+	// Anything unmapped labels as Unknown: a signal to add a mapping rather
+	// than a silent mislabel.
+	unmapped := []int32{
+		0,
+		-1,
+		http.StatusNoContent,
+		http.StatusMovedPermanently,
+		http.StatusTeapot,
+		http.StatusGone,
+		http.StatusBadGateway,
+		599,
+	}
+	for _, httpCode := range unmapped {
+		require.Equal(t, codes.Unknown, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	}
 }

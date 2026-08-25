@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"sort"
@@ -328,18 +327,18 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
-// searchCallError normalizes the two ways a Search call reports failure — a
-// transport error carrying an ErrorResult in its details, or a successful
-// call whose response embeds one — into a single error. Returns nil when
-// the call succeeded.
+// searchCallError maps an ErrorResult — embedded in the response or attached
+// to a grpc error's details — to a single error, so either form yields
+// the same code. The result replaces the grpc error rather than joining
+// it, which would let the grpc status win status.Code.
 func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
-	if err != nil {
-		if res := errorResultFromGRPCDetails(err); res != nil {
-			return errors.Join(grpcErrorFromErrorResult(res), err)
-		}
-		return err
+	if err == nil {
+		return grpcErrorFromErrorResult(resp.GetError())
 	}
-	return grpcErrorFromErrorResult(resp.GetError())
+	if res := errorResultFromGRPCDetails(err); res != nil {
+		return grpcErrorFromErrorResult(res)
+	}
+	return err
 }
 
 // rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).

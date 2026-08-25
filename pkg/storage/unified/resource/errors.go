@@ -94,8 +94,9 @@ func IsResourceVersionExpired(err error) bool {
 // embeds an ErrorResult — into a single error, so callers need one error
 // branch. The transport error is returned untouched to keep its gRPC status,
 // cancellation semantics and errors.Is/As chain intact; a response-embedded
-// result is converted to a typed Kubernetes error. Callers that need the
-// structured view can recover it with AsErrorResult on the returned error.
+// result is converted to a typed Kubernetes error. Callers that need an ErrorResult
+// representation for status checks can convert the returned error with AsErrorResult.
+// Attached or response-embedded details are preserved when available.
 // Returns nil only when the call fully succeeded.
 func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err != nil {
@@ -302,6 +303,11 @@ func NewValidationError(field, value, msg string) error {
 // (AlreadyExists and Aborted both become 409, InvalidArgument /
 // FailedPrecondition / OutOfRange all become 400), so coming back we pick the
 // code that unified storage actually produces for that status.
+// An unmapped code labels as Unknown — a signal to add a mapping, not a silent
+// mislabel.
+// For now this is just a helper to set the correct codes in metric labels, may
+// be used at a later point for dynamic http code to grpc code changes when servers
+// respond with correct grpc status codes.
 func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 	switch httpCode {
 	case http.StatusOK:
