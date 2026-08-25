@@ -8,13 +8,12 @@
  *    Safe to call at module load time or in non-React contexts.
  *
  * 2. **Ability-calling utilities**: functions that delegate to the central ability system
- *    (`evaluateAccess`, `getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
+ *    (`getRulesAccess`, `getCreateAlertInMenuAvailability`). These are
  *    intentionally plain functions (not hooks) because they are also used in non-React
  *    contexts (route guards, panel menus). When used inside React components, wrap them
  *    in `useMemo` or call them via the `useRulesAccess()` hook in `accessControlHooks.ts`.
  */
 
-import { userHasAllPermissions } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -54,25 +53,6 @@ export const instancesPermissions = {
   delete: {
     grafana: AccessControlAction.AlertingInstanceUpdate,
     external: AccessControlAction.AlertingInstancesExternalWrite,
-  },
-};
-
-export const notificationsPermissions = {
-  read: {
-    grafana: AccessControlAction.AlertingNotificationsRead,
-    external: AccessControlAction.AlertingNotificationsExternalRead,
-  },
-  create: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  update: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
-  },
-  delete: {
-    grafana: AccessControlAction.AlertingNotificationsWrite,
-    external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
 };
 
@@ -139,30 +119,8 @@ export function getRulesPermissions(rulesSourceName: string) {
 // ── Runtime utilities ─────────────────────────────────────────────────────────
 // Plain functions (not hooks) for non-React contexts (route guards, panel menus).
 // RBAC checks delegate to get*Ability() from the central ability system.
-// evaluateAccess uses contextSrv.evaluatePermission directly (route-guard API).
 // getRulesAccess retains direct contextSrv calls only for the auxiliary
 // FoldersRead / DataSourcesRead workflow-feasibility guards.
-
-/**
- * Returns a route-guard thunk for Grafana's route config.
- * The returned function is called at navigation time to check if the user can
- * access the route.
- */
-export function evaluateAccess(actions: AccessControlAction[]) {
-  return () => {
-    return contextSrv.evaluatePermission(actions);
-  };
-}
-
-/**
- * Like `evaluateAccess`, but requires the user to hold ALL of the given actions (AND
- * semantics) rather than any one of them. Use when access depends on a combination of
- * permissions — e.g. the import-to-GMA route, which needs both the convert endpoint's
- * rule-create and provisioning-set-status permissions.
- */
-export function evaluateAccessAll(actions: AccessControlAction[]) {
-  return () => (userHasAllPermissions(actions, contextSrv.user) ? [] : ['Reject']);
-}
 
 /**
  * Returns an object describing what rule-creation actions the current user can
