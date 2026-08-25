@@ -213,7 +213,8 @@ export function MarkdownCell({
       return [];
     }
     return navigationKeymap((direction) => onNavigateRef.current?.(direction));
-  }, [onNavigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
+  }, [Boolean(onNavigate)]);
 
   if (content.kind !== 'Markdown') {
     return null;

@@ -12912,8 +12912,7 @@
       "label": "Add block",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
-      "visualization": "Visualization",
-      "visualization-placeholder": "Coming soon"
+      "visualization": "Visualization"
     },
     "cell": {
       "code": {
@@ -12940,6 +12939,10 @@
         "tooltip-link": "Link",
         "tooltip-numbered-list": "Numbered list",
         "tooltip-strikethrough": "Strikethrough"
+      },
+      "query": {
+        "add": "Add query",
+        "run": "Run query"
       }
     },
     "errors": {

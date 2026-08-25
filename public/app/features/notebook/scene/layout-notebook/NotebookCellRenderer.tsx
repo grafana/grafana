@@ -4,11 +4,13 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, useStyles2 } from '@grafana/ui';
+import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
+import { floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { getQueryRunnerFor, isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -56,7 +58,7 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell panel={panel} />;
+    return <PanelCell panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   if (narrative) {
@@ -78,15 +80,32 @@ export function NotebookCellRenderer({
   return null;
 }
 
-// A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
-function PanelCell({ panel }: { panel: VizPanel }) {
+function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing: boolean; autoFocus?: boolean }) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.panel}>
-      <panel.Component model={panel} />
-    </div>
+    <Stack direction="column" gap={1}>
+      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor panel={panel} autoFocus={autoFocus} />}
+      <div className={styles.panel}>
+        <panel.Component model={panel} />
+      </div>
+    </Stack>
   );
+}
+
+// Transformations sit between the queries and what's on screen, so editing the raw queries here
+// wouldn't reflect (or let the reader touch) what actually reaches the panel — that needs a real,
+// transformation-aware editor, not this lightweight one. Library panels are excluded for a different
+// reason: vizPanelToSchemaV2 serializes any panel carrying LibraryPanelBehavior only as a reference to
+// the shared library panel (kind, name, uid) — never as a full PanelKind with its own queries — so any
+// edit made here would look like it saved and then be silently discarded on the next save/reload.
+export function isEditableQueryPanel(panel: VizPanel): boolean {
+  const queryRunner = getQueryRunnerFor(panel);
+  if (!queryRunner || isLibraryPanel(panel)) {
+    return false;
+  }
+
+  return !(panel.state.$data instanceof SceneDataTransformer && panel.state.$data.state.transformations.length > 0);
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.
@@ -145,8 +164,9 @@ function NarrativeCell({
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
           caretOffset={caretOffset}
-          onNavigate={onNavigate}
+          cell={cell}
           onChange={(updated) => cell.onContentChange(updated)}
+          onNavigate={onNavigate}
         />
       </Suspense>
     </div>

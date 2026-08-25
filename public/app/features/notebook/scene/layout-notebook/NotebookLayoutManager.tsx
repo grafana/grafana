@@ -8,15 +8,16 @@ import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObjectBase,
+  VizPanel,
   type SceneComponentProps,
   type SceneObject,
   type SceneObjectState,
-  type VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -25,6 +26,7 @@ import {
   type CellContentKind,
   defaultCodeCellContentKind,
   defaultMarkdownCellContentKind,
+  defaultVisualizationPanelKind,
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
@@ -307,6 +309,11 @@ export class NotebookLayoutManager
    * claimed the slot before convertCell runs.
    */
   public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+    if (type === 'visualization') {
+      this.convertCellToPanel(cell);
+      return;
+    }
+
     const content = contentForBlockType(type);
     if (!content) {
       return;
@@ -321,6 +328,29 @@ export class NotebookLayoutManager
     }
 
     this.setCellContent(cell, content);
+  }
+
+  /**
+   * Turns an existing narrative cell into a panel cell in place, for the "/" menu's Visualization pick
+   * — addCell's own buildPanelCell builds the fresh-insert equivalent. Bypasses setCellContent's
+   * content-diffing undo/coalescing machinery entirely: that machinery is built around comparing two
+   * CellContentKind values, which doesn't apply to a content -> body transition.
+   */
+  private convertCellToPanel(cell: NotebookCellItem): void {
+    const previousContent = cell.state.content;
+    const panel = this.buildVisualizationPanel();
+
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      perform: () => cell.setElementBody(panel),
+      undo: () => cell.setState({ body: undefined, content: previousContent }),
+    });
+  }
+
+  /** A fresh, unconfigured Panel VizPanel — shared by buildCellFor (insert) and convertCellToPanel. */
+  private buildVisualizationPanel(): VizPanel {
+    const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
+    return new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), nextId()));
   }
 
   /**
@@ -345,9 +375,24 @@ export class NotebookLayoutManager
    * shared by `addCell` (a reader-initiated, undoable insert) and `appendSystemCell` (the "always one
    * more empty block ready" invariant's own automatic appends, which must stay off the undo stack:
    * they're bookkeeping the notebook performs on the reader's behalf, not a distinct action anyone
-   * asked for). `undefined` when `type` has nothing to build yet (Visualization).
+   * asked for).
+   *
+   * Visualization is the one block type that builds a `body` (a real Panel VizPanel) rather than
+   * `content` — see buildVisualizationPanel and this file's own header comment on why a query-first
+   * cell is a Panel element, not a bespoke content kind.
    */
   private buildCellFor(type: NotebookBlockType, index: number): { cell: NotebookCellItem; index: number } | undefined {
+    const clampedIndex = Math.max(0, Math.min(index, this.state.cells.length));
+
+    if (type === 'visualization') {
+      const cell = new NotebookCellItem({
+        elementName: this.nextElementName(type),
+        source: 'user',
+        body: this.buildVisualizationPanel(),
+      });
+      return { cell, index: clampedIndex };
+    }
+
     const content = contentForBlockType(type);
     if (!content) {
       return undefined;
@@ -362,7 +407,7 @@ export class NotebookLayoutManager
       content,
     });
 
-    return { cell, index: Math.max(0, Math.min(index, this.state.cells.length)) };
+    return { cell, index: clampedIndex };
   }
 
   /**
@@ -374,11 +419,6 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    const content = contentForBlockType(type);
-    if (!content) {
-      return undefined;
-    }
-
     // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
@@ -755,6 +795,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
  * they're adding, but the editor underneath is the same one. A heading starts with its marker already
  * typed so the live-preview cell opens straight into "type your heading text" rather than a blank
  * block the reader has to know to prefix themselves.
+ *
+ * Visualization isn't handled here — it builds a `body` (a Panel VizPanel), not `content`. See
+ * buildCellFor and convertCellToPanel; both intercept it before ever reaching this function, so the
+ * case below is unreachable in practice — kept for the switch's own exhaustiveness.
  */
 function contentForBlockType(type: NotebookBlockType): CellContentKind | undefined {
   switch (type) {

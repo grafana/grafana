@@ -90,6 +90,13 @@ jest.mock('@grafana/ui/unstable', () => {
   };
 });
 
+// PanelQueryEditor pulls in datasource-picker/query-editor machinery with its own dedicated coverage
+// in PanelQueryEditor.test.tsx — this file only cares whether inserting or converting a cell into a
+// panel lands the right VizPanel on the manager, not whether the inline editor itself renders.
+jest.mock('./PanelQueryEditor', () => ({
+  PanelQueryEditor: () => <div data-testid="panel-query-editor-stub" />,
+}));
+
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 
@@ -226,15 +233,6 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
-
-    // The only assertion that pins childItems: a plain Menu.Item silently drops the submenu chevron.
-    it('offers visualizations through a submenu', async () => {
-      const { user } = renderNotebook(true);
-
-      await user.click(screen.getAllByRole('button', { name: 'Add block' })[0]);
-
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
-    });
   });
 
   // The "always one more empty block ready" invariant: unlike the old dedicated prompt component,
@@ -286,7 +284,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
 
     // Regular typing (anything but a lone "/") never opens the menu — it is just markdown text.
@@ -530,6 +528,16 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
+    it('inserts a visualization panel cell where the divider offered it', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
+
+      manager.addCell('visualization', 1);
+
+      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b']);
+      expect(manager.state.cells[1].state.content).toBeUndefined();
+      expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
+    });
+
     // The divider after the trailing empty cell is offering to insert *past* it. Inserting after
     // that slot would leave it stranded mid-document once the invariant appends a replacement;
     // inserting before it keeps the empty cell at the tail and still records an "Add block".
@@ -577,6 +585,21 @@ describe('NotebookLayoutManager', () => {
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1', 'paragraph-2']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+    });
+
+    it('converts the trailing cell into a panel, rather than leaving it narrative content', () => {
+      const trailing = new NotebookCellItem({
+        elementName: 'paragraph-1',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: '' } },
+      });
+      const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
+
+      manager.convertCell(trailing, 'visualization');
+
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+      expect(trailing.state.content).toBeUndefined();
+      expect(trailing.state.body?.state.pluginId).toBe('timeseries');
     });
 
     // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
@@ -696,14 +719,6 @@ describe('NotebookLayoutManager', () => {
         const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
         expect(editors.some((editor) => editor === document.activeElement)).toBe(true);
       });
-    });
-
-    // Visualization is not buildable yet — its menu entry is a "Coming soon" submenu, not a pick.
-    it('leaves the block types it cannot build yet alone', () => {
-      const manager = buildManager(buildNarrativeCells(['a']));
-
-      expect(manager.addCell('visualization', 1)).toBeUndefined();
-      expect(cellNames(manager)).toEqual(['a']);
     });
 
     // What the renderer hands the caret to, so it has to be the cell that landed in the list.
@@ -1090,6 +1105,24 @@ describe('NotebookLayoutManager', () => {
       history.redo();
       expect(manager.state.cells[2]).toBe(added);
       expect(cellNames(manager)).toEqual(['a', 'b', addedName, 'paragraph-1']);
+    });
+
+    // Visualization builds a body (VizPanel), not content — kept separate from the it.each above,
+    // which asserts on `added?.state.content`, a shape Visualization's own cell never has.
+    it('undoes and redoes adding a visualization block', () => {
+      const { manager, history } = withHistory(buildNarrativeCells(['a']));
+
+      const added = manager.addCell('visualization', 1);
+
+      expect(history.state.undoLabel).toBe('Add block');
+      expect(added?.state.content).toBeUndefined();
+      expect(added?.state.body?.state.pluginId).toBe('timeseries');
+
+      history.undo();
+      expect(cellNames(manager)).toEqual(['a']);
+
+      history.redo();
+      expect(manager.state.cells[1]).toBe(added);
     });
 
     // Enter's "split into a new block" gesture. Undoing only removes the split-off cell here — the
