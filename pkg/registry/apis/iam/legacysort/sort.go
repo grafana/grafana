@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // ConvertToSortOptions translates unified search sort fields into legacy SQL sort options.
-// fieldMapping maps unified field names (e.g. "title", "fields.email") to legacy sort key names (e.g. "name", "email").
+// fieldMapping maps unified field names (e.g. "title", "email") to legacy sort key names (e.g. "name", "email").
 // sortOptions is the resource-specific SortOptionsByQueryParam map.
 func ConvertToSortOptions(
 	sortBy []*resourcepb.ResourceSearchRequest_Sort,
@@ -19,7 +20,8 @@ func ConvertToSortOptions(
 ) []model.SortOption {
 	opts := []model.SortOption{}
 	for _, s := range sortBy {
-		field := s.Field
+		// Older callers may still name a per-kind field as "fields.<name>".
+		field := strings.TrimPrefix(s.Field, resource.SEARCH_FIELD_PREFIX)
 		if mapped, ok := fieldMapping[field]; ok {
 			field = mapped
 		}
@@ -41,7 +43,7 @@ func ConvertToSortOptions(
 }
 
 // ConvertToSortParams translates legacy SQL sort options into K8s search sort query parameters.
-// fieldMapping is the same unified→legacy map used in ConvertToSortOptions (e.g. "title" to "name", "fields.email" to "email").
+// fieldMapping is the same unified→legacy map used in ConvertToSortOptions (e.g. "title" to "name", "email" to "email").
 // It is reversed internally, stripping the "fields." prefix to produce bare K8s sort param names.
 // Sort options that cannot be mapped (e.g. member_count) are silently skipped.
 func ConvertToSortParams(
@@ -51,7 +53,7 @@ func ConvertToSortParams(
 	// Build reverse mapping: legacy sort key to K8s sort param field name
 	reverseMapping := make(map[string]string, len(fieldMapping))
 	for unified, legacy := range fieldMapping {
-		reverseMapping[legacy] = strings.TrimPrefix(unified, "fields.")
+		reverseMapping[legacy] = strings.TrimPrefix(unified, resource.SEARCH_FIELD_PREFIX)
 	}
 
 	params := make([]string, 0, len(sortOpts))

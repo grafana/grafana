@@ -207,7 +207,6 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
-		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
 		// Authorization is enforced by the snapshot authorizer.
@@ -258,13 +257,19 @@ func (s *service) Run(ctx context.Context) error {
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 	s.builders = append(s.builders, b)
-	if registrar, ok := b.(builder.HTTPRouteRegistrar); ok {
-		registrar.RegisterHTTPRoutes(s.rr)
-	}
 }
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
+}
+
+// applyOpenAPIV2Setting drops the v2 OpenAPI config when a deployment has turned
+// /openapi/v2 off. OpenAPIV3Config is left alone.
+func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, apiserverSection *setting.DynamicSection) {
+	if apiserverSection.Key("openapi_v2_enabled").MustBool(true) {
+		return
+	}
+	serverConfig.OpenAPIConfig = nil
 }
 
 // nolint:gocyclo
@@ -408,8 +413,8 @@ func (s *service) start(ctx context.Context) error {
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(false)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(false)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
 	searchRoutes := searchroutes.Build(searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
 
 	// Add OpenAPI specs for each group+version (existing builders)
@@ -428,6 +433,8 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	applyOpenAPIV2Setting(serverConfig, apiserverSection)
 
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,

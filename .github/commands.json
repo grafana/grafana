@@ -408,7 +408,7 @@
     "name": "type/build-packaging",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/632"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {

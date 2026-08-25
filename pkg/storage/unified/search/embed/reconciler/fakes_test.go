@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeStorage stubs the bits of resource.StorageBackend the reconciler uses.
@@ -335,6 +336,10 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
+func (f *fakeVector) UpdateMetadata(_ context.Context, _, _ string, _ *filter.Filter, _ json.RawMessage, _ []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }

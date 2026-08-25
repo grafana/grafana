@@ -158,11 +158,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	// Measure once so the metric and the log line agree on the operation duration.
+	duration := result.elapsed()
 	if r.metrics != nil {
-		r.metrics.RecordResourceOperation(r.action, result)
+		r.metrics.RecordResourceOperation(r.action, result, duration)
 	}
 
-	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name(), "duration", duration, "bytes", result.Bytes())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
 	} else if shouldLogWarning {

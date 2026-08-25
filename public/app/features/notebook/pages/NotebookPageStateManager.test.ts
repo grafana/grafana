@@ -33,11 +33,11 @@ jest.mock('app/store/store', () => {
   };
 });
 
-function notebookResource(name = 'nb-1'): Resource<NotebookSpec> {
+function notebookResource(name = 'nb-1', generation = 1): Resource<NotebookSpec> {
   return {
     apiVersion: 'dashboard.grafana.app/v2beta1',
     kind: 'Notebook',
-    metadata: { name, resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+    metadata: { name, resourceVersion: '1', generation, creationTimestamp: '2026-07-01T00:00:00Z' },
     spec: {
       ...defaultNotebookSpec(),
       title: 'My notebook',
@@ -88,6 +88,63 @@ describe('NotebookPageStateManager', () => {
 
     await manager.loadNotebook('nb-1');
     const first = manager.state.scene?.state.key;
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.state.key).toBe(first);
+  });
+
+  it("reuses the cached scene when the only thing that moved the generation was this page's own save", async () => {
+    const fetch = jest
+      .fn()
+      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 1))))
+      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 2))));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const first = manager.state.scene?.state.key;
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    // Emptied so the second load actually reaches the server, which is what happens once the query
+    // layer's own entry expires.
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.state.key).toBe(first);
+  });
+
+  it('rebuilds the scene when the server moved past what this page saved', async () => {
+    const fetch = jest
+      .fn()
+      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 1))))
+      .mockReturnValueOnce(of(createFetchResponse(notebookResource('nb-1', 3))));
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const first = manager.state.scene?.state.key;
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene).toBeInstanceOf(NotebookScene);
+    expect(manager.state.scene?.state.key).not.toBe(first);
+  });
+
+  it('keeps the cached scene when the query layer answers from before this page saved', async () => {
+    // No reset here: the query layer still holds the response from the first load, so the second one is
+    // answered with the generation from before the save. Rebuilding from that would put the notebook
+    // back to how it looked before the edits autosave had already persisted.
+    setBackendSrv({
+      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-1', 1)))),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const first = manager.state.scene?.state.key;
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+
     await manager.loadNotebook('nb-1');
 
     expect(manager.state.scene?.state.key).toBe(first);
