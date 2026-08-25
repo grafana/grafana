@@ -24,7 +24,6 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
-	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -115,7 +114,10 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
-		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Skip the top-level "KubernetesAPI" span for watch requests: their span
+		// would stay open for the whole long-running connection. See
+		// filters.WithWatchInstrumentation for the upstream request span.
+		handler = withoutWatchServerSpan(handler, c.TracerProvider)
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
