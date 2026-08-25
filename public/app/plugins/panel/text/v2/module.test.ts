@@ -1,26 +1,20 @@
-import {
-  FieldConfigProperty,
-  PanelOptionsEditorBuilder,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-  toDataFrame,
-} from '@grafana/data';
+import { FieldConfigProperty, PanelOptionsEditorBuilder, standardEditorsRegistry, toDataFrame } from '@grafana/data';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { type Options, RenderMode } from '../panelcfg.gen';
 
-import { plugin, textNGPanelOptions } from './module';
+import { textNGPanelOptions } from './module';
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
 }));
 
-let mockNewFeatures = true;
+// eslint-disable-next-line no-var
+var mockNewFeatures = true;
 
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 function getItems() {
   const builder = new PanelOptionsEditorBuilder<Options>();
@@ -75,6 +69,25 @@ describe('textNGPanelOptions', () => {
   });
 });
 
-it('registers thresholds as the only field config option', () => {
-  expect(plugin.fieldConfigRegistry.list().map((item) => item.id)).toEqual([FieldConfigProperty.Thresholds]);
+describe('field config', () => {
+  async function getFieldConfigIds(newFeatures: boolean) {
+    mockNewFeatures = newFeatures;
+    let ids: string[] = [];
+    await jest.isolateModulesAsync(async () => {
+      const { standardFieldConfigEditorRegistry } = await import('@grafana/data');
+      standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
+
+      const { plugin } = await import('./module');
+      ids = plugin.fieldConfigRegistry.list().map((item) => item.id);
+    });
+    return ids;
+  }
+
+  it('registers thresholds as the only field config option', async () => {
+    expect(await getFieldConfigIds(true)).toEqual([FieldConfigProperty.Thresholds]);
+  });
+
+  it('registers no field config at all when the text.newFeatures flag is off', async () => {
+    expect(await getFieldConfigIds(false)).toEqual([]);
+  });
 });

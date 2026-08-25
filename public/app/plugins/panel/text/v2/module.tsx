@@ -8,6 +8,10 @@ import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
+function newFeaturesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
+}
+
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   const category = [t('textng.category-text', 'Text')];
 
@@ -46,15 +50,17 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         },
       ],
     },
-    showIf: (_options, data) =>
-      getFeatureFlagClient().getBooleanValue('text.newFeatures', false) && hasRenderableData(data),
+    showIf: (_options, data) => newFeaturesEnabled() && hasRenderableData(data),
   });
 };
 
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
-  .setSuggestionsSupplier(() => [])
-  .useFieldConfig({
+  .setSuggestionsSupplier(() => []);
+
+if (newFeaturesEnabled()) {
+  plugin.useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => id !== FieldConfigProperty.Thresholds),
   });
+}
