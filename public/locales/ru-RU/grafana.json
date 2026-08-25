@@ -900,7 +900,6 @@
       "close": "Закрыть",
       "create": "Создать",
       "delete": "Удалить",
-      "deleting": "Удаление...",
       "edit": "Редактировать",
       "export": "Экспорт",
       "export-all": "Экспортировать всё",
@@ -2527,13 +2526,13 @@
         "route-count_other": "{{count}} маршрута"
       },
       "delete": {
-        "confirm": "Да, удалить политику",
-        "warning-1": "Политика уведомления будет безвозвратно удалена.",
-        "warning-2": "Действительно удалить политику?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Это действие приведет к безвозвратному удалению политики уведомлений <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Удалить политику уведомлений"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Фильтруйте маршруты, используя список сопоставлений, разделенных запятыми, например <1>серьезность=критическая, регион=EMEA</1>",
       "generated-policies": "Автоматически генерируемые политики",
@@ -2580,7 +2579,11 @@
         "reset": "Сброс",
         "resetting": "Сброс...",
         "title-delete-notification-policy": "Удалить политику уведомлений",
-        "title-reset-notification-policy": "Сброс политики уведомлений"
+        "title-reset-notification-policy": "Сброс политики уведомлений",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Подождите, пока мы обновляем ваши политики уведомления.",
@@ -3890,7 +3893,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Удаление политики уведомления"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -6098,6 +6101,9 @@
       "description": "Вертикальная последовательность панелей, текста и ячеек кода",
       "name": "Заметки",
       "pill": "Опубликованные заметки",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Время"
     },
     "on-create-new-row": {
@@ -8858,6 +8864,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Информация об объеме недоступна для текущих запросов и временного диапазона."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Свернуть {{name}}",
       "error": "Не удалось загрузить метрики",
@@ -8870,6 +8881,7 @@
       "loading-values": "Загрузка значений…",
       "no-metrics": "Метрики не найдены",
       "search-placeholder": "Поиск метрик",
+      "show-metric-details": "",
       "show-more": "Показать еще",
       "show-more-metrics": "Показать больше метрик",
       "show-more-values": "Показать больше значений",
@@ -11420,6 +11432,13 @@
       "show": "Показать",
       "switch": "Рекомендации соответствуют выбранному решению",
       "switchSolution": "Поменять решение",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Рекомендации для вашего стека"
     },
     "solutions": {
@@ -11500,6 +11519,24 @@
         "stats-hosts_few": "",
         "stats-hosts_many": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_few": "",
+        "checks_many": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_few": "",
+        "failing_many": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -13090,7 +13127,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -13116,6 +13166,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13892,6 +13943,7 @@
       "behind-branch-text": "Этот ресурс находится за ветвью в {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть этот ресурс до тех пор, пока эта ветвь не будет объединена",
+      "move-from-branch": "",
       "not-saved": "Остальные пользователи Grafana в вашей организации будут по-прежнему видеть текущую версию, сохраненную в заданной ветви по умолчанию, до тех пор, пока эта ветвь не будет объединена",
       "open-in-repo-button": "Открыть в {{repoType}}",
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
@@ -13903,6 +13955,7 @@
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-deleted-resource-in-branch": "В ветви репозитория {{repoType}} удален ресурс.",
     "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "В ветви репозитория {{repoType}} обновлен ресурс."
   },
   "provisioning": {
@@ -16537,6 +16590,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

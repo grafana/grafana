@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeTextEmbedder returns a deterministic fixed-length vector for any
@@ -117,6 +119,10 @@ func (f *fakeVectorBackend) DeleteRows(context.Context, string, string, string, 
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
+func (f *fakeVectorBackend) UpdateMetadata(context.Context, string, string, *filter.Filter, json.RawMessage, []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVectorBackend) DeleteNamespace(context.Context, string) (int64, error) {
 	return 0, nil
 }
