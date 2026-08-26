@@ -29,15 +29,12 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   const { meta } = dashboard.useState();
   const resolvedData = useProvisionedDashboardData(dashboard, saveAsCopy);
 
-  // Hold the last settled result across a folder pick, or the spinner would unmount the form that is
-  // already up and drop what the user typed into it
-  const settledData = useRef<ProvisionedDashboardData | undefined>(undefined);
-  const isReresolving = resolvedData.repoDataStatus === RepoViewStatus.Loading && Boolean(settledData.current);
-  if (!isReresolving) {
-    settledData.current = resolvedData;
-  }
-  const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
-    settledData.current ?? resolvedData;
+  // Hold the data behind the form that is already on screen, or a folder pick putting the repository
+  // back into loading would unmount that form and drop what the user typed into it
+  const shownData = useRef<ProvisionedDashboardData | undefined>(undefined);
+  const isReresolving = resolvedData.repoDataStatus === RepoViewStatus.Loading && Boolean(shownData.current);
+  const data = isReresolving ? shownData.current! : resolvedData;
+  const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } = data;
 
   // Same check the data hook does, read from meta directly: the hook reports isNew as false
   // whenever the repository is not Ready, which is when the escape hatch is needed most
@@ -50,6 +47,14 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     repoDataStatus,
     isNewDashboard,
   });
+
+  const isLoading = repoDataStatus === RepoViewStatus.Loading;
+  const isOrphaned = repoDataStatus === RepoViewStatus.Orphaned;
+  const isError = repoDataStatus === RepoViewStatus.Error || !defaultValues;
+
+  // Only the form is worth holding, and only while it is the branch on screen. Holding anything else
+  // would bring a dead end back as the answer to the next lookup, in place of its spinner
+  shownData.current = !saveToDatabase && !isLoading && !isOrphaned && !isError ? data : undefined;
 
   // Latched on saveToDatabase alone: folder picks in the database form can make the repository
   // stop resolving, and that must not collapse this branch into the provisioning error gate
@@ -66,12 +71,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
   return (
     <Stack direction="column" gap={2}>
-      <ProvisionedFormGate
-        isLoading={repoDataStatus === RepoViewStatus.Loading}
-        isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
-        isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
-        error={error}
-      >
+      <ProvisionedFormGate isLoading={isLoading} isOrphaned={isOrphaned} isError={isError} error={error}>
         <SaveProvisionedDashboardForm
           dashboard={dashboard}
           drawer={drawer}

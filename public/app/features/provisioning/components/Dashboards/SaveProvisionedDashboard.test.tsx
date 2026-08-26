@@ -438,6 +438,108 @@ describe('SaveProvisionedDashboard', () => {
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
   });
 
+  it('shows a spinner rather than the settled error when a later lookup goes back into loading', () => {
+    const { rerender, props } = setup();
+
+    // Picking an unmanaged folder in the git form dead-ends the lookup
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Error,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+    expect(screen.getByText(/error loading form/i)).toBeInTheDocument();
+
+    // Picking again puts the lookup back in flight, and the dead end the user just left is not the answer to it
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText(/error loading form/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a spinner rather than the orphaned notice when switching back to git re-resolves the repository', async () => {
+    const { user, rerender, props } = setup({
+      isNew: false,
+      defaultValues: null,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Orphaned,
+    });
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    // Switch-back restores the git meta, so the repository lookup runs again
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText(/repository no longer exists/i)).not.toBeInTheDocument();
+  });
+
+  it('waits for the lookup rather than reusing pre-switch defaults when switching back mid-flight', async () => {
+    const { user, rerender, props } = setup();
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+
+    // A database folder pick puts the lookup in flight while the git form is off screen
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+
+    // Nothing was typed into the git form to protect, and its pre-switch defaults were built for
+    // a meta the switch has since replaced twice, so the restored meta has to resolve first
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+  });
+
+  it('does not bring the git form back mid-flight when switching back from the database form', async () => {
+    const { user, rerender, props } = setup();
+
+    await user.click(screen.getByRole('button', { name: /grafana database/i }));
+    await user.click(screen.getByRole('button', { name: /git repository/i }));
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+
+    // The restored git meta sends the folder lookup back out
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: true,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Loading,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    // The form is on screen again, so its defaults are worth holding through the re-resolve
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+  });
+
   it('does not touch the dashboard meta when unmounting from the git flow', () => {
     const dashboard = createDashboard({ folderUid: 'git-folder-uid' });
     const { unmount } = setup({}, { dashboard });
