@@ -716,7 +716,7 @@ func trashReturnFields(fields []string) []string {
 	if len(fields) == 0 {
 		fields = []string{trashFieldTitle, trashFieldFolder, trashFieldDeletedBy, trashFieldDeletionTime}
 	}
-	// deleted_rv is mandatory in the response; it drives restore.
+	// Always returned, so a client can restore from a trash hit without a second read.
 	if !slices.Contains(fields, trashFieldDeletedRV) {
 		fields = append(fields, trashFieldDeletedRV)
 	}
