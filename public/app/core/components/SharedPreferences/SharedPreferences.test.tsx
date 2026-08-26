@@ -293,14 +293,14 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it('lists Global Home first and saves the sentinel when selected', async () => {
+  it('lists Grafana home first and saves the sentinel when selected', async () => {
     const capture = captureRequests();
     const { user } = await setup();
 
     const combobox = await screen.findByRole('combobox', { name: /home dashboard/i });
     await user.click(combobox);
     const options = await screen.findAllByRole('option');
-    expect(options[0]).toHaveTextContent('Global Home');
+    expect(options[0]).toHaveTextContent('Grafana home');
     await user.click(options[0]);
 
     await user.click(screen.getByText('Save preferences'));
@@ -312,10 +312,10 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it('fires home_dashboard_changed with action set_global_home when Global Home is saved', async () => {
+  it('fires home_dashboard_changed with action set_global_home when Grafana home is saved', async () => {
     const { user } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /home dashboard/i }), 'Global Home');
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /home dashboard/i }), 'Grafana home');
     await user.click(screen.getByText('Save preferences'));
 
     await waitFor(() => {
@@ -326,7 +326,7 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it('renders Global Home when the stored preference is the sentinel', async () => {
+  it('renders Grafana home when the stored preference is the sentinel', async () => {
     server.use(
       preferencesHandlers.listPreferencesHandler(
         HttpResponse.json({
@@ -340,7 +340,7 @@ describe('SharedPreferences', () => {
 
     const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
     await waitFor(() => {
-      expect(dashboardSelect).toHaveTextContent('Global Home');
+      expect(dashboardSelect).toHaveTextContent('Grafana home');
     });
   });
 });

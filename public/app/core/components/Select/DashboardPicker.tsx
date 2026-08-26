@@ -14,7 +14,7 @@ import { type DashboardDTO } from 'app/types/dashboard';
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
-  /** Offer a reserved "Global Home" entry that stops the user > team > org home dashboard fallback. */
+  /** Offer a reserved "Grafana home" entry that stops the user > team > org home dashboard fallback. */
   includeGlobalHomeOption?: boolean;
   showUnknown?: boolean;
 }
@@ -28,8 +28,8 @@ const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${f
 export const GLOBAL_HOME_DASHBOARD_UID = 'global-home';
 
 const getGlobalHomeOption = (): SelectableValue<DashboardPickerDTO> => ({
-  value: { uid: GLOBAL_HOME_DASHBOARD_UID, name: t('dashboard-picker.global-home-option', 'Global Home') },
-  label: t('dashboard-picker.global-home-option', 'Global Home'),
+  value: { uid: GLOBAL_HOME_DASHBOARD_UID, name: t('dashboard-picker.global-home-option', 'Grafana home') },
+  label: t('dashboard-picker.global-home-option', 'Grafana home'),
   icon: 'home-alt',
 });
 
