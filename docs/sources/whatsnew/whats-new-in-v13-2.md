@@ -19,9 +19,6 @@ posts:
       - whats-new/2026-07-08-organize-dashboards-faster-with-multi-select-grouping.md
       - whats-new/2026-07-18-saved-queries-is-now-generally-available-with-command-palette-and-provisioning-support.md
       - whats-new/2026-07-23-revamped-homepage-for-grafana.md
-      - whats-new/2026-07-29-panel-thresholds-interpolation.md
-      - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
-      - whats-new/2026-08-06-more-filterable-panels.md
       - whats-new/2026-08-11-explore-busy-panels-with-the-new-view-panel-sidebar.md
       - whats-new/2026-08-14-improved-auto-layout-indication-when-editing-dashboards.md
   - title: Data sources
