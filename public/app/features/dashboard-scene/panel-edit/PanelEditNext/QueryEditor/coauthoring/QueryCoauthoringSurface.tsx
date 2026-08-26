@@ -10,7 +10,6 @@ import { Button, useStyles2 } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
-import { useQueryCoauthoringHost } from './QueryCoauthoringHostContext';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringSnapshotV1,
@@ -18,12 +17,20 @@ import {
 
 interface Props {
   adapter: QueryEditorCoauthoringAdapterV1;
+  host: QueryCoauthoringHost;
   onBaseline: (query: DataQuery) => boolean;
 }
 
-export function QueryCoauthoringSurface({ adapter, onBaseline }: Props) {
-  const host = useQueryCoauthoringHost();
+export interface QueryCoauthoringHost {
+  datasourceType: string;
+  previewPhase: 'idle' | 'pending' | 'running' | 'complete';
+  timeRange?: { from: number; to: number };
+  preview(query: DataQuery): boolean;
+  accept(query: DataQuery): boolean;
+  revert(): void;
+}
 
+export function QueryCoauthoringSurface({ adapter, host, onBaseline }: Props) {
   return (
     <QueryCoauthoringFailureBoundary
       adapter={adapter}
@@ -32,7 +39,7 @@ export function QueryCoauthoringSurface({ adapter, onBaseline }: Props) {
         adapter.dismiss();
       }}
     >
-      <QueryCoauthoringAdapterSubscriber adapter={adapter} onBaseline={onBaseline} />
+      <QueryCoauthoringAdapterSubscriber adapter={adapter} host={host} onBaseline={onBaseline} />
     </QueryCoauthoringFailureBoundary>
   );
 }
@@ -88,10 +95,10 @@ function QueryCoauthoringAdapterSubscriber(props: Props) {
 
 function QueryCoauthoringAdapterSurface({
   adapter,
+  host,
   onBaseline,
   snapshot,
 }: Props & { snapshot: QueryEditorCoauthoringSnapshotV1 }) {
-  const host = useQueryCoauthoringHost();
   const styles = useStyles2(getStyles);
 
   if (snapshot.mode === 'hidden') {

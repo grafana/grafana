@@ -4,7 +4,6 @@ import { useState as mockUseState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
 import {
   type QueryEditorCoauthoringAdapterV1,
@@ -51,17 +50,17 @@ function createAdapter(initialSnapshot: QueryEditorCoauthoringSnapshotV1) {
 function renderSurface(adapter: QueryEditorCoauthoringAdapterV1) {
   const revert = jest.fn();
   const view = render(
-    <QueryCoauthoringHostProvider
-      value={{
+    <QueryCoauthoringSurface
+      adapter={adapter}
+      host={{
         datasourceType: 'prometheus',
         previewPhase: 'idle',
         preview: jest.fn(() => true),
         accept: jest.fn(() => true),
         revert,
       }}
-    >
-      <QueryCoauthoringSurface adapter={adapter} onBaseline={jest.fn(() => true)} />
-    </QueryCoauthoringHostProvider>
+      onBaseline={jest.fn(() => true)}
+    />
   );
   return { revert, ...view };
 }

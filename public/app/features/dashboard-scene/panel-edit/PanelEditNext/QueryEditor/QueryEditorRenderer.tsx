@@ -15,7 +15,6 @@ import { filterPanelDataToQuery } from 'app/features/query/components/QueryEdito
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
-import { QueryCoauthoringHostProvider } from './coauthoring/QueryCoauthoringHostContext';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
@@ -154,31 +153,30 @@ export function QueryEditorPanel({
   };
   return (
     <>
-      <QueryCoauthoringHostProvider value={coauthoringHost}>
-        <DataSourcePluginContextProvider instanceSettings={dsSettings}>
-          <ErrorBoundaryAlert boundaryName="query-editor-renderer">
-            <QueryEditorComponent
-              key={coauthoringIdentity}
-              {...internalCoauthoringProps}
-              app={CoreApp.PanelEditor}
-              data={filteredData}
-              datasource={datasource}
-              onAddQuery={addQuery}
-              onChange={proposalTransaction.onChange}
-              onRunQuery={proposalTransaction.run}
-              queries={proposalTransaction.editorQueries}
-              query={proposalTransaction.editorQuery ?? query}
-              range={filteredData?.timeRange}
+      <DataSourcePluginContextProvider instanceSettings={dsSettings}>
+        <ErrorBoundaryAlert boundaryName="query-editor-renderer">
+          <QueryEditorComponent
+            key={coauthoringIdentity}
+            {...internalCoauthoringProps}
+            app={CoreApp.PanelEditor}
+            data={filteredData}
+            datasource={datasource}
+            onAddQuery={addQuery}
+            onChange={proposalTransaction.onChange}
+            onRunQuery={proposalTransaction.run}
+            queries={proposalTransaction.editorQueries}
+            query={proposalTransaction.editorQuery ?? query}
+            range={filteredData?.timeRange}
+          />
+          {coauthoringAdapter && (
+            <QueryCoauthoringSurface
+              adapter={coauthoringAdapter}
+              host={coauthoringHost}
+              onBaseline={proposalTransaction.synchronizeBaseline}
             />
-            {coauthoringAdapter && (
-              <QueryCoauthoringSurface
-                adapter={coauthoringAdapter}
-                onBaseline={proposalTransaction.synchronizeBaseline}
-              />
-            )}
-          </ErrorBoundaryAlert>
-        </DataSourcePluginContextProvider>
-      </QueryCoauthoringHostProvider>
+          )}
+        </ErrorBoundaryAlert>
+      </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
     </>
   );
