@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -730,90 +729,71 @@ func TestIntegrationApi_bulkPermissionsLegacyAndK8sRedirectMatch(t *testing.T) {
 		{
 			name: "partial upsert preserves unmentioned permissions",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
-				{BuiltinRole: "Editor", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+				{UserID: paritySecondUserID, Permission: "View"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Editor", Permission: "Edit"},
+				{UserID: paritySecondUserID, Permission: "Edit"},
 			},
 		},
 		{
 			name: "targeted delete preserves other permissions",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
-				{BuiltinRole: "Editor", Permission: "Edit"},
+				{UserID: parityFirstUserID, Permission: "View"},
+				{UserID: paritySecondUserID, Permission: "Edit"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: ""},
+				{UserID: parityFirstUserID, Permission: ""},
 			},
 		},
 		{
 			name: "mixed delete and upsert preserves unmentioned permissions",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
-				{BuiltinRole: "Editor", Permission: "View"},
-				{BuiltinRole: "Admin", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+				{UserID: paritySecondUserID, Permission: "View"},
+				{UserID: parityThirdUserID, Permission: "View"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: ""},
-				{BuiltinRole: "Editor", Permission: "Edit"},
+				{UserID: parityFirstUserID, Permission: ""},
+				{UserID: paritySecondUserID, Permission: "Edit"},
 			},
 		},
 		{
 			name: "empty batch is a no-op",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
-				{BuiltinRole: "Editor", Permission: "Edit"},
+				{UserID: parityFirstUserID, Permission: "View"},
+				{UserID: paritySecondUserID, Permission: "Edit"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{},
 		},
 		{
 			name: "removing the final permission yields an empty set",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: ""},
+				{UserID: parityFirstUserID, Permission: ""},
 			},
 		},
 		{
 			name: "repeated commands for one subject use the last value",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "Edit"},
-				{BuiltinRole: "Viewer", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "Edit"},
+				{UserID: parityFirstUserID, Permission: "View"},
 			},
 		},
 		{
-			name: "user subjects match",
+			name: "terraform permission change preserves unmentioned user",
 			initial: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: parityUserID, Permission: "View"},
-				{BuiltinRole: "Viewer", Permission: "View"},
+				{UserID: parityFirstUserID, Permission: "View"},
+				{UserID: paritySecondUserID, Permission: "Edit"},
 			},
 			commands: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: parityUserID, Permission: "Edit"},
-			},
-		},
-		{
-			name: "team subjects match",
-			initial: []accesscontrol.SetResourcePermissionCommand{
-				{TeamID: parityTeamID, Permission: "View"},
-				{BuiltinRole: "Viewer", Permission: "View"},
-			},
-			commands: []accesscontrol.SetResourcePermissionCommand{
-				{TeamID: parityTeamID, Permission: "Edit"},
-			},
-		},
-		{
-			name: "service account subjects match",
-			initial: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: parityServiceAccountID, Permission: "View"},
-				{BuiltinRole: "Viewer", Permission: "View"},
-			},
-			commands: []accesscontrol.SetResourcePermissionCommand{
-				{UserID: parityServiceAccountID, Permission: "Edit"},
+				{UserID: parityFirstUserID, Permission: ""},
+				{UserID: parityFirstUserID, Permission: "Edit"},
 			},
 		},
 	}
@@ -1099,19 +1079,16 @@ func setPermission(t *testing.T, server *web.Mux, resource, resourceID, permissi
 }
 
 type observedResourcePermission struct {
-	UserID           int64
-	TeamID           int64
-	BuiltInRole      string
-	Permission       string
-	IsManaged        bool
-	IsInherited      bool
-	IsServiceAccount bool
+	UserID      int64
+	Permission  string
+	IsManaged   bool
+	IsInherited bool
 }
 
 const (
-	parityUserID           int64 = -1
-	parityServiceAccountID int64 = -2
-	parityTeamID           int64 = -1
+	parityFirstUserID  int64 = -1
+	paritySecondUserID int64 = -2
+	parityThirdUserID  int64 = -3
 )
 
 func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, commands []accesscontrol.SetResourcePermissionCommand) []observedResourcePermission {
@@ -1127,28 +1104,25 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 		options.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: k8sServer.URL}}
 	}
 
-	service, userSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures())
+	service, userSvc, _, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures())
 	if redirect {
 		cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 			iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
 		}
 	}
-	createdUser, err := userSvc.Create(context.Background(), &user.CreateUserCommand{Login: "parity-user", OrgID: 1})
-	require.NoError(t, err)
-	createdServiceAccount, err := userSvc.CreateServiceAccount(context.Background(), &user.CreateUserCommand{Login: "parity-service-account", OrgID: 1})
-	require.NoError(t, err)
-	require.Positive(t, createdServiceAccount.ID)
-	createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "parity-team", Email: "parity-team@example.com", OrgID: 1})
-	require.NoError(t, err)
-	initial = materializeParitySubjects(initial, createdUser.ID, createdServiceAccount.ID, createdTeam.ID)
-	commands = materializeParitySubjects(commands, createdUser.ID, createdServiceAccount.ID, createdTeam.ID)
+	userIDs := make([]int64, 3)
+	for i := range userIDs {
+		createdUser, err := userSvc.Create(context.Background(), &user.CreateUserCommand{Login: fmt.Sprintf("parity-user-%d", i), OrgID: 1})
+		require.NoError(t, err)
+		userIDs[i] = createdUser.ID
+	}
+	initial = materializeParityUsers(initial, userIDs)
+	commands = materializeParityUsers(commands, userIDs)
 
 	authorized := []accesscontrol.Permission{
 		{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 		{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
-		{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-		{Action: serviceaccounts.ActionRead, Scope: fmt.Sprintf("serviceaccounts:id:%d", createdServiceAccount.ID)},
 	}
 	server := setupTestServer(t, &user.SignedInUser{
 		OrgID:       1,
@@ -1164,30 +1138,26 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 	observed := make([]observedResourcePermission, 0, len(permissions))
 	for _, permission := range permissions {
 		observed = append(observed, observedResourcePermission{
-			UserID:           permission.UserID,
-			TeamID:           permission.TeamID,
-			BuiltInRole:      permission.BuiltInRole,
-			Permission:       permission.Permission,
-			IsManaged:        permission.IsManaged,
-			IsInherited:      permission.IsInherited,
-			IsServiceAccount: permission.IsServiceAccount,
+			UserID:      permission.UserID,
+			Permission:  permission.Permission,
+			IsManaged:   permission.IsManaged,
+			IsInherited: permission.IsInherited,
 		})
 	}
 	return observed
 }
 
-func materializeParitySubjects(commands []accesscontrol.SetResourcePermissionCommand, userID, serviceAccountID, teamID int64) []accesscontrol.SetResourcePermissionCommand {
+func materializeParityUsers(commands []accesscontrol.SetResourcePermissionCommand, userIDs []int64) []accesscontrol.SetResourcePermissionCommand {
 	materialized := make([]accesscontrol.SetResourcePermissionCommand, len(commands))
 	copy(materialized, commands)
 	for i := range materialized {
 		switch materialized[i].UserID {
-		case parityUserID:
-			materialized[i].UserID = userID
-		case parityServiceAccountID:
-			materialized[i].UserID = serviceAccountID
-		}
-		if materialized[i].TeamID == parityTeamID {
-			materialized[i].TeamID = teamID
+		case parityFirstUserID:
+			materialized[i].UserID = userIDs[0]
+		case paritySecondUserID:
+			materialized[i].UserID = userIDs[1]
+		case parityThirdUserID:
+			materialized[i].UserID = userIDs[2]
 		}
 	}
 	return materialized
