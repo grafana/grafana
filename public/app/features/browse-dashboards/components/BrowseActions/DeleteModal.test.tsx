@@ -100,8 +100,6 @@ describe('browse-dashboards DeleteModal', () => {
       />
     );
 
-    expect(
-      await screen.findByRole('alert', { name: /contains resources that will be deleted/i })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('alert', { name: /contains resources that will be deleted/i })).toBeInTheDocument();
   });
 });
