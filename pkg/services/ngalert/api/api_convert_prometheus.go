@@ -407,7 +407,7 @@ func (srv *ConvertPrometheusSrv) rejectManagedFolderChange(c *contextmodel.ReqCo
 		return response.Error(http.StatusInternalServerError, "failed to check external ruler sync configuration", err)
 	}
 	if managed {
-		return response.Error(http.StatusConflict, "rule changes are disabled while external ruler sync is configured for this organization", nil)
+		return response.Error(http.StatusConflict, fmt.Sprintf("rule changes are disabled for folder %q while external ruler sync is configured for it", folderUID), nil)
 	}
 	return nil
 }
