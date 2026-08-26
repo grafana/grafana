@@ -5,7 +5,6 @@ import { type CellContentKind } from 'app/features/notebook/types';
 import { MarkdownCell } from './MarkdownCell';
 
 jest.mock('@grafana/ui/unstable', () => {
-  // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
   return {
@@ -49,7 +48,6 @@ jest.mock('@grafana/ui/unstable', () => {
 
 const content: CellContentKind = { kind: 'Markdown', spec: { text: '**bold**' } };
 
-// The cell asks for the caret a frame late, so an assertion that it stayed put has to outlast that.
 const waitForFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 describe('MarkdownCell', () => {
@@ -70,7 +68,6 @@ describe('MarkdownCell', () => {
   it('offers an editor once the notebook is being edited, instead of the static render', async () => {
     render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
 
-    // Behind a lazy()/Suspense boundary now, so the editor no longer appears on the same tick.
     expect(await screen.findByLabelText('Markdown')).toBeInTheDocument();
     expect(screen.queryByText('bold')).not.toBeInTheDocument();
   });
@@ -90,8 +87,6 @@ describe('MarkdownCell', () => {
       await waitFor(() => expect(screen.getByLabelText('Markdown')).toHaveFocus());
     });
 
-    // A read-only cell taking the caret would scroll the reader down the document to a cell they
-    // cannot type into.
     it('is left alone while the notebook is being read', async () => {
       render(<MarkdownCell content={content} isEditing={false} autoFocus onChange={jest.fn()} />);
 
@@ -99,9 +94,6 @@ describe('MarkdownCell', () => {
       expect(screen.queryByLabelText('Markdown')).not.toBeInTheDocument();
     });
 
-    // The request belongs to the moment the cell was inserted, not to edit mode. Re-reading the mode
-    // would replay it, so a reader who leaves edit mode and comes back would be thrown down the
-    // document to whichever cell they last added.
     it('is not asked for again when edit mode comes back', async () => {
       const { rerender } = render(<MarkdownCell content={content} isEditing={true} autoFocus onChange={jest.fn()} />);
       await waitFor(() => expect(screen.getByLabelText('Markdown')).toHaveFocus());
@@ -114,9 +106,6 @@ describe('MarkdownCell', () => {
       expect(editor).not.toHaveFocus();
     });
 
-    // Converting this cell in place via its own "/" menu (Paragraph, Heading — see
-    // NotebookCellRenderer's handlePick) never changes `autoFocus` from true to true, so `autoFocus`
-    // alone cannot signal "focus me again" — a fresh, distinct `focusRequestId` is what does.
     it('is focused again when a fresh request names it, even though it was already the target', async () => {
       const { rerender } = render(
         <MarkdownCell content={content} isEditing={true} autoFocus focusRequestId={1} onChange={jest.fn()} />

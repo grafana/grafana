@@ -88,7 +88,6 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      // MarkdownCell reaches its editor through a lazy()/Suspense boundary.
       await user.type(await screen.findByLabelText('Markdown'), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();

@@ -186,8 +186,6 @@ describe('NotebookLayoutManager', () => {
     it('renders an insertion point above, between and below the cells in edit mode', async () => {
       renderNotebook(true);
 
-      // Settles the markdown cell's lazy()/Suspense boundary before the test ends — otherwise the
-      // dynamic import resolves after teardown, outside any act(), and React warns about it.
       await screen.findAllByRole('textbox', { name: 'Markdown' });
       expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(4);
     });
@@ -240,8 +238,6 @@ describe('NotebookLayoutManager', () => {
   // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
   // (see NotebookCellRenderer/NotebookLayoutManager's own setCellContent doc comment).
   describe('the trailing empty cell', () => {
-    // Awaited rather than a synchronous query: MarkdownCell reaches its editor through a
-    // lazy()/Suspense boundary now, so it does not exist on the same tick as render().
     async function trailingTextbox() {
       const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
       return editors[editors.length - 1];
@@ -512,8 +508,6 @@ describe('NotebookLayoutManager', () => {
     // *current* last "Markdown" textbox rather than caching one, since the trailing-invariant may have
     // already appended a new one by the time this runs.
     async function pickFromTrailingCellMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
-      // Awaited rather than a synchronous query: MarkdownCell reaches its editor through a
-      // lazy()/Suspense boundary now, so it does not exist on the same tick as render().
       const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
       await user.type(editors[editors.length - 1], '/');
       await user.click(screen.getByRole('menuitem', { name: itemName }));

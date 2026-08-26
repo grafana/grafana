@@ -4,12 +4,7 @@ import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownCellEditor } from './MarkdownCellEditor';
 
-// MarkdownCellEditor is reached through MarkdownCell's lazy()/Suspense boundary in the real app, but
-// is imported directly here — same convention as CodeCell.test.tsx importing CodeCell directly
-// rather than going through cellTypeRegistry's own lazy() wrapper — so these tests exercise its
-// CodeMirror-specific behavior without paying for (or asserting on) the async chunk boundary.
 jest.mock('@grafana/ui/unstable', () => {
-  // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
 
   return {
