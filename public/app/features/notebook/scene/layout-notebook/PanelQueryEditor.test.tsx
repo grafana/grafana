@@ -278,6 +278,58 @@ describe('PanelQueryEditor', () => {
     await waitFor(() => expect(runQueries).toHaveBeenCalled());
   });
 
+  it('does not re-fetch the suggestion on a repeat click with an unchanged query', async () => {
+    const panel = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const runButton = await screen.findByRole('button', { name: 'Run query' });
+
+    await user.click(runButton);
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    await user.click(runButton);
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+
+    // The query itself hasn't changed between clicks, so the (query-running) suggestion fetch only
+    // has to happen once — the second "Run query" click should go straight to the real run.
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('fetches a fresh suggestion after the query changes', async () => {
+    const panel = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
+
+    await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+    await user.click(await screen.findByRole('button', { name: 'Run query' }));
+
+    await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(2));
+    expect(getVizSuggestionForQuery).toHaveBeenNthCalledWith(2, runner.state.queries[0], expect.anything());
+  });
+
+  it('retries the suggestion fetch after a previous attempt failed', async () => {
+    const panel = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const runQueries = jest.spyOn(runner, 'runQueries');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    getVizSuggestionForQuery.mockRejectedValueOnce(new Error('datasource unreachable'));
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const runButton = await screen.findByRole('button', { name: 'Run query' });
+
+    await user.click(runButton);
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(1));
+
+    await user.click(runButton);
+    await waitFor(() => expect(runQueries).toHaveBeenCalledTimes(2));
+
+    // A fetch that failed must not be cached as "already suggested" — it's retried on the next click.
+    expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(2);
+  });
+
   it('renders nothing for a panel with no query runner', () => {
     const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
     const { container } = render(<PanelQueryEditor panel={panel} />);

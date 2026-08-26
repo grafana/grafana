@@ -1,8 +1,11 @@
+import { isEqual } from 'lodash';
+import { useRef } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
@@ -28,22 +31,23 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
+  // The last query we successfully fetched a viz suggestion for.
+  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
 
-  // Picks a visualization fitting the query's result shape, same suggestion pipeline as
-  // UnconfiguredPanel's "Use saved query" button. Only reflects the first query — a true multi-query
-  // suggestion would need the real run's settled series. Runs the query twice (once for the
-  // suggestion, once for real), and a failed suggestion must not block the real run.
   const [runState, runQuery] = useAsyncFn(async () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    try {
-      const suggestion = await getVizSuggestionForQuery(queries[0], range);
-      if (suggestion) {
-        await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
+      try {
+        const suggestion = await getVizSuggestionForQuery(queries[0], range);
+        lastSuggestedQuery.current = queries[0];
+        if (suggestion) {
+          await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+        }
+      } catch {
+        console.error('Failed to get viz suggestion for query', queries[0]);
       }
-    } catch {
-      console.error('Failed to get viz suggestion for query', queries[0]);
     }
     queryRunner.runQueries();
   }, [queries, range, panel, queryRunner]);
