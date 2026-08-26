@@ -224,8 +224,6 @@ describe('NotebookDocumentHeader', () => {
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
-    // The heading itself is the control now, rather than a pencil beside it, so it keeps naming the
-    // notebook while the button it became says what it does.
     it('is the heading and the way into editing it once the notebook is being edited', () => {
       setup({ isEditing: true });
 
@@ -244,8 +242,7 @@ describe('NotebookDocumentHeader', () => {
       expect(onTitleChange).toHaveBeenLastCalledWith('Q3');
     });
 
-    // The read-only branch renders nothing for an empty title. Were the editable one to do the same, a
-    // notebook that lost its title would lose the only control that can give it another.
+    // The read-only branch renders nothing for an empty title; this one has to, or there is no way back.
     it('still offers a way in on a notebook whose title is empty', () => {
       setup({ isEditing: true, title: '' });
 
@@ -253,9 +250,7 @@ describe('NotebookDocumentHeader', () => {
       expect(screen.getByRole('heading', { name: 'Add a title' })).toBeInTheDocument();
     });
 
-    // Autosave stops counting changes the moment the notebook leaves edit mode, and it can be left
-    // without the field ever blurring — the browser's Back button dropping `?edit=true` does exactly
-    // that. Nothing covered this before.
+    // Edit mode can be left without the field ever blurring: the Back button dropping `?edit=true`.
     it('keeps a title typed but never blurred when the notebook leaves edit mode', async () => {
       const { user, rerender } = setup({ isEditing: true, title: 'Q2 latency regression' });
 

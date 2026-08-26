@@ -5,11 +5,7 @@ import { NotebookTitleEditor } from './NotebookTitleEditor';
 
 const TITLE = 'Q2 latency regression';
 
-/**
- * Controlled, the way the layout manager and the scene above it are: every keystroke this field
- * reports comes straight back down as the next `title`. An uncontrolled spy would let the two drift
- * and hide whatever the round trip does to the caret.
- */
+/** Controlled, the way the scene above it is: what this field reports comes back down as `title`. */
 function ControlledEditor({ initialTitle, onChange }: { initialTitle: string; onChange: (title: string) => void }) {
   const [title, setTitle] = useState(initialTitle);
 
@@ -39,7 +35,6 @@ function getInput() {
   return screen.getByRole('textbox', { name: 'Title' });
 }
 
-/** Every element between `element` and the document body, nearest first. */
 function ancestorsOf(element: HTMLElement) {
   const ancestors: HTMLElement[] = [];
   for (let current = element.parentElement; current && current !== document.body; current = current.parentElement) {
@@ -52,8 +47,6 @@ describe('NotebookTitleEditor', () => {
   it('is a heading, and the heading itself is the way in', () => {
     setup();
 
-    // The heading keeps the notebook's name while the control that opens it says what it does: the
-    // button's `title` names the button alone, and the h1 still computes its own name from the text.
     expect(screen.getByRole('heading', { name: TITLE })).toBeInTheDocument();
     expect(getTrigger()).toBeInTheDocument();
   });
@@ -66,14 +59,11 @@ describe('NotebookTitleEditor', () => {
     const input = getInput();
     expect(input).toHaveValue(TITLE);
     expect(input).toHaveFocus();
-    // Selected so the usual gesture — replacing "New notebook" wholesale — takes one keystroke.
     expect(input).toHaveProperty('selectionStart', 0);
     expect(input).toHaveProperty('selectionEnd', TITLE.length);
   });
 
-  // The behaviour the whole arrangement turns on. Autosave stops counting changes the moment the
-  // notebook leaves edit mode, and it can leave without this field ever blurring, so a title held
-  // back until blur would reach the scene too late to be written.
+  // Autosave stops counting once edit mode is left, which can happen without this field ever blurring.
   it('reports every keystroke rather than waiting for the field to close', async () => {
     const { user, onChange } = setup();
 
@@ -107,8 +97,6 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
   });
 
-  // The scene's title is required, and autosave would write the notebook nameless. Nothing blocks the
-  // emptying itself — the last real title is simply never given up.
   it('reports nothing while the field is empty, and will not close on it', async () => {
     const { user, onChange } = setup();
 
@@ -134,8 +122,7 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
   });
 
-  // Every keystroke has already been reported by this point, so Escape has to put the old title back
-  // rather than merely stop reporting a new one.
+  // Every keystroke has been reported by now, so Escape has to put the old title back, not just stop.
   it('puts back the title the edit started from on Escape', async () => {
     const { user, onChange } = setup();
 
@@ -159,8 +146,6 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
   });
 
-  // A notebook whose title was emptied elsewhere would otherwise have nothing to click, and so no way
-  // back to a title at all.
   it('still offers something to click when the notebook has no title', async () => {
     const { user } = setup('');
 
@@ -169,19 +154,16 @@ describe('NotebookTitleEditor', () => {
     await user.click(getTrigger());
 
     expect(getInput()).toHaveValue('');
-    // Not nagged before they have had a chance to type.
     expect(screen.queryByText('Please enter a title')).not.toBeInTheDocument();
   });
 
-  // The field takes its width from whatever it is dropped into, which no type or snapshot protects:
-  // the document header stacks it in a column aligned to flex-start, so a row that shrink-wraps leaves
-  // the field at the browser's default input size instead of on the line the heading had.
+  // The header stacks this in a column aligned to flex-start, which shrink-wraps whatever it holds.
   it('gives the open field the whole line rather than letting it shrink to content', async () => {
     const { user } = setup();
 
     await user.click(getTrigger());
-    // The field wrapper specifically — the one element holding both the label and the input. Input
-    // brings a full-width wrapper of its own, so "some ancestor fills the line" would hold either way.
+    // The field wrapper specifically: Input brings a full-width wrapper of its own, so "some ancestor
+    // fills the line" would hold either way.
     const field = ancestorsOf(getInput()).find((element) => element.contains(screen.getByText('Title')));
 
     expect(field).toHaveStyle({ width: '100%' });

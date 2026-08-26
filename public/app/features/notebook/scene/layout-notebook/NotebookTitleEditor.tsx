@@ -14,31 +14,28 @@ interface Props {
 }
 
 /**
- * The notebook title, while the notebook is being edited: the heading itself is the way in, rather
- * than a pencil beside it, and there is no save button to press — the same bargain the cells make.
+ * The notebook title while the notebook is being edited: click the heading to open a field, blur to
+ * close it again.
  *
  * Every keystroke is reported, not just the closing one. Autosave ignores changes made once the
- * notebook has left edit mode (see NotebookAutosave), and edit mode can be left without this field
- * ever blurring — the browser's Back button dropping `?edit=true` is the path that does it — so a
- * value held back until blur would be written to the scene too late to be saved, and lost on reload.
- * Blur only closes the field back into a heading.
+ * notebook has left edit mode, and it can be left without this field ever blurring — the browser's
+ * Back button dropping `?edit=true` does exactly that — so a value held back until blur would arrive
+ * too late to be written.
  */
 export function NotebookTitleEditor({ title, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(title);
   const [showEmptyError, setShowEmptyError] = useState(false);
-  /** The title as it was when this edit began, so Escape has something to put back. */
+  /** The title this edit started from, so Escape has something to put back. */
   const titleBeforeEdit = useRef(title);
 
-  // Focused through a ref rather than autoFocus so no lint suppression is needed, and stable so it
-  // runs on mount alone — an inline callback would re-select the text on every keystroke.
+  // Stable, so it runs on mount alone - an inline callback would re-select the text on every keystroke.
   const focusInput = useCallback((input: HTMLInputElement | null) => {
     input?.focus();
     input?.select();
   }, []);
 
-  /** Closes the field, unless there is nothing to close it on. */
   const commit = () => {
     const trimmed = draft.trim();
     if (!trimmed) {
@@ -57,9 +54,8 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
     const next = event.currentTarget.value;
     setDraft(next);
 
-    // An emptied field reports nothing rather than an empty title: the scene's title is required and
-    // autosave would write the notebook nameless. Holding the last real one back here is what lets
-    // the field stay open with an error instead of having to block anything.
+    // Never report an empty title: it is required, and autosave would write the notebook nameless.
+    // Holding the last real one back is what lets the field stay open with an error rather than block.
     if (!next.trim()) {
       return;
     }
@@ -72,7 +68,6 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
     if (event.key === 'Enter') {
       commit();
     } else if (event.key === 'Escape') {
-      // Stopped here so a scene above cannot also act on it.
       event.stopPropagation();
       setDraft(titleBeforeEdit.current);
       if (titleBeforeEdit.current !== title) {
@@ -87,22 +82,17 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
     return (
       <Text element="h1" variant="h1">
         {/*
-          `title` rather than `aria-label`: the tooltip is wanted on hover anyway, and the accessible
-          name it produces stops at the button — the h1 above still computes its own name from the
-          text, so the page announces its heading as the notebook's name and the control as "Edit
-          title". An aria-label would name the button the same way but leaves no tooltip behind.
-
-          Rendered whatever the title is — a notebook that lost its name would otherwise lose the only
-          control that can give it another.
+          `title` rather than `aria-label`: it names the button alone, so the h1 still announces the
+          notebook's name. Rendered whatever the title is - an emptied one would otherwise lose the
+          only control that can give it another.
         */}
         <button
           type="button"
           className={styles.trigger}
           title={t('dashboard.notebook-layout.title-edit', 'Edit title')}
           onClick={() => {
-            // Seeded here rather than kept in step with the prop, so a title replaced from elsewhere
-            // (an APPLY_NOTEBOOK_SPEC rebuild) is picked up without anything being able to overwrite
-            // what someone is in the middle of typing.
+            // Seeded on open rather than kept in step with the prop, so a title replaced elsewhere is
+            // picked up without anything overwriting what someone is in the middle of typing.
             titleBeforeEdit.current = title;
             setDraft(title);
             setShowEmptyError(false);
@@ -154,8 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'left',
     cursor: 'text',
     borderRadius: theme.shape.radius.default,
-    // The padding gives the hover tint room to breathe; the matching negative margin keeps the text
-    // where the read-only heading put it, so nothing shifts on entering edit mode.
+    // Padding to give the hover tint room, negative margin to keep the text where the heading put it.
     padding: theme.spacing(0, 1),
     margin: theme.spacing(0, -1),
     '&:hover': {
@@ -164,8 +153,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   field: css({
     width: '100%',
-    // Pulled back by the input's own border and padding, so the title stays on the same line it sat
-    // on as a heading rather than stepping right when the field opens.
+    // Pulled back by the input's own border and padding, so the title does not step right on opening.
     position: 'relative',
     left: `calc(-${theme.spacing(1)} - 1px)`,
   }),
