@@ -142,6 +142,8 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene.state.title).toBe('Checkout latency investigation');
     expect(scene.state.uid).toBe('nb-1');
     expect(scene.state.hideTimeControls).toBe(false);
+    // The body is what renders the time picker, so it needs its own copy from the start.
+    expect(scene.state.body.state.hideTimeControls).toBe(false);
     expect(scene.state.$timeRange.state.from).toBe('now-6h');
     expect(scene.state.body.state.cells).toHaveLength(4);
     // Title and tags are surfaced on the layout manager for the document header.
