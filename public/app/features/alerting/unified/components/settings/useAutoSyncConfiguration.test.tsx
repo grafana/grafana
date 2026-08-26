@@ -133,7 +133,7 @@ describe('useAutoSyncConfiguration — state resolution', () => {
 
     const { result } = renderHook(() => useAutoSyncConfiguration(), { wrapper: wrapper() });
     await waitFor(() => expect(result.current.state.kind).toBe('no-datasources'));
-    expect(result.current.mimirCortexDatasources).toHaveLength(0);
+    expect(result.current.autoSyncEligibleAlertmanagers).toHaveLength(0);
   });
 
   it('returns `unconfigured` when no UID is configured even if 404 is returned from admin_config', async () => {
