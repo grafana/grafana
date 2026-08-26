@@ -84,7 +84,7 @@ The default notification policy and its child policies are assigned to a [specif
 
 ## Edit the default notification policy
 
-The default notification policy handles alerts that don't match a child policy. You can change its contact point, grouping, and timing options. You can't assign mute timings or active time intervals on the default policy. Add those on a [child policy](#add-a-child-policy) instead.
+The default notification policy is the fallback (root) of the tree. It handles alerts that don't match a child policy. You can change its contact point, grouping, and timing options. You can't assign mute timings or active time intervals on the default policy. Add those on a [child policy](#add-a-child-policy) instead.
 
 1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
 1. Click **Notification configuration**, then select the **Notification policies** tab.
@@ -149,7 +149,7 @@ It is important to note that all matched policies are **exact** matches. Grafana
 
 Mute timings and active time intervals suppress notifications during recurring periods of time.
 
-You can assign them only on child notification policies, not on the default notification policy. Mute timings aren't inherited from a parent notification policy. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
+You can assign them only on child notification policies, not on the default notification policy, the fallback (root) of the tree. Mute timings aren't inherited from a parent notification policy. For instructions, refer to [Configure mute timings](ref:configure-mute-timings).
 
 ## Manage multiple notification policies
 
