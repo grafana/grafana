@@ -155,6 +155,17 @@ func connectionResourceVersion(obj any) string {
 	return ""
 }
 
+// connSpanAttrs returns the resource-identifying attributes stamped on every
+// reconcile child span, so a span is self-describing in isolation (e.g. a
+// health_check or apply_status span says which connection it concerns) rather
+// than only via its parent.
+func connSpanAttrs(conn *provisioning.Connection) trace.SpanStartOption {
+	return trace.WithAttributes(
+		attribute.String("connection.name", conn.GetName()),
+		attribute.String("connection.namespace", conn.GetNamespace()),
+	)
+}
+
 // Run starts the ConnectionController. The onStarted callback is invoked once
 // all workers have been launched, before blocking on ctx.Done().
 func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
@@ -267,7 +278,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	defer span.End()
 	defer func() {
 		if err != nil {
-			tracing.Error(span, err)
+			_ = tracing.Error(span, err)
 		}
 	}()
 
@@ -300,7 +311,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
+	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build_connection", connSpanAttrs(conn))
+	c, err := cc.connectionFactory.Build(buildCtx, conn)
+	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
 		// orphaned reference whose secret was deleted). Regenerate it from the private
@@ -365,7 +378,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_connection_token", connSpanAttrs(conn))
+		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
+		tokenSpan.End()
 		if err != nil {
 			logger.Error("failed to generate connection token", "error", err)
 			return err
@@ -387,7 +402,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check")
+	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check", connSpanAttrs(conn))
 	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(healthCtx, conn)
 	healthSpan.End()
 	if err != nil {
@@ -420,6 +435,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
 		patchCtx, patchSpan := cc.tracer.Start(ctx, "provisioning.controller.apply_status",
+			connSpanAttrs(conn),
 			trace.WithAttributes(attribute.Int("patch.operations", len(patchOperations))),
 		)
 		err := cc.statusPatcher.Patch(patchCtx, conn, patchOperations...)
