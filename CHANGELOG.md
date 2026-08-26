@@ -192,6 +192,11 @@
 - **Reporting:** batch dashboard lookups when listing reports (Enterprise)
 
 <!-- 13.1.4 END -->
+<!-- 13.1.3 START -->
+
+# 13.1.3 (2026-08-07)
+
+<!-- 13.1.3 END -->
 <!-- 13.1.2 START -->
 
 # 13.1.2 (2026-08-04)
@@ -443,6 +448,11 @@
 - **Reporting:** batch dashboard lookups when listing reports (Enterprise)
 
 <!-- 13.0.7 END -->
+<!-- 13.0.6 START -->
+
+# 13.0.6 (2026-08-07)
+
+<!-- 13.0.6 END -->
 <!-- 13.0.5 START -->
 
 # 13.0.5 (2026-08-04)
@@ -856,6 +866,11 @@
 - **Azure Monitor:** fix migration for dimension filters [#130521](https://github.com/grafana/grafana/pull/130521), [@olivierlemasle](https://github.com/olivierlemasle)
 
 <!-- 12.4.9 END -->
+<!-- 12.4.8 START -->
+
+# 12.4.8 (2026-08-07)
+
+<!-- 12.4.8 END -->
 <!-- 12.4.7 START -->
 
 # 12.4.7 (2026-08-04)
