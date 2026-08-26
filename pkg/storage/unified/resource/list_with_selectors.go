@@ -84,14 +84,12 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 			Key:             row.Key,
 			ResourceVersion: row.ResourceVersion,
 		})
-		if err != nil {
-			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-		}
-		if val.Error != nil {
-			if val.Error.Code == http.StatusForbidden {
+		if err := ErrorFromResponse(val.GetError(), err); err != nil {
+			resErr := AsErrorResult(err)
+			if resErr.Code == http.StatusForbidden {
 				continue
 			}
-			return &resourcepb.ListResponse{Error: val.Error}, nil
+			return &resourcepb.ListResponse{Error: resErr}, nil
 		}
 		pageBytes += len(val.Value)
 		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{

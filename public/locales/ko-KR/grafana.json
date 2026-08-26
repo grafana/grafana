@@ -1617,6 +1617,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1691,6 @@
       "review": {
         "autosync-badge": "",
         "back": "경고 규칙",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "필터",
         "folder": "대상 폴더",
@@ -1706,7 +1709,6 @@
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "경고 규칙은 가져오지 않습니다.",
         "rules-title": "경고 규칙",
         "skipped": "건너뜀",
@@ -3849,6 +3851,8 @@
       "title-notification-policies": "알림 정책"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "리소스 가져오기 실패",
@@ -6814,6 +6818,11 @@
       "title": "아직 추가된 대시보드 링크 없음"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9008,15 +9017,16 @@
       "split-widen": "창 확대"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "공유 추적 옵션 메뉴 열기",
+      "aria-label-share-dropdown": "",
       "critical-path": "임계 경로",
       "critical-path-tooltip": "임계 경로(최소 추적 기간을 결정하는 가장 긴 종속 작업 시퀀스) 내 구간을 선택합니다.",
       "duration": "지속 시간",
       "errors": "오류",
       "errors-tooltip": "상태가 오류인 구간을 선택합니다.",
       "export-started": "내보내기가 시작되었습니다",
+      "feedback-group": "",
       "filters": "필터",
-      "give-feedback": "피드백",
+      "give-feedback-item": "",
       "high-latency": "고지연(High latency)",
       "high-latency-tooltip": "경로에서 가장 긴 구간 10%를 선택합니다(p90).",
       "link-copied": "클립보드에 링크 복사되었습니다",
@@ -9024,13 +9034,12 @@
       "path": "경로",
       "route": "라우트",
       "services": "서비스",
-      "share": "공유",
       "share-copy-link": "링크 복사",
       "share-export-json": "JSON으로 내보내기",
-      "share-tooltip": "트레이스 공유",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "시작 시간",
       "target": "대상",
-      "title-share-thoughts-about-tracing-grafana": "Grafana에서 트레이싱에 대한 의견을 공유하세요.",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
       "trace-id": "트레이스 ID",
       "url": "URL"
@@ -12843,6 +12852,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12921,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
