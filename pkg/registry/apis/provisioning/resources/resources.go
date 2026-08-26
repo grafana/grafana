@@ -80,6 +80,11 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 type WriteOptions struct {
 	Path string
 	Ref  string
+	// FilePath pins the destination file, bypassing the title/folder derivation.
+	// Used when several writes must land on the same file — replaying a
+	// resource's stored versions, where each version's own title would otherwise
+	// scatter the history across renamed files.
+	FilePath string
 }
 
 type resourceID struct {
@@ -165,47 +170,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 		return "", 0, ErrAlreadyInRepository
 	}
 
-	title := meta.FindTitle("")
-	if title == "" {
-		title = name
-	}
-
-	folder := meta.GetFolder()
-	// Get the absolute path of the folder
-	rootFolder := RootFolder(r.repo.Config())
-
-	// If no folder is specified in the file, set it to the root to ensure everything is written under it
-	var fid Folder
-	if folder == "" {
-		fid = Folder{ID: rootFolder}
-		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
-	} else {
-		var ok bool
-		fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
-		if !ok {
-			// HACK: this is a hack to get the folder path without the root folder
-			// TODO: should we build the tree in a different way?
-			fid, ok = r.folders.Tree().DirPath(folder, "")
-			if !ok {
-				return "", 0, fmt.Errorf("folder %s NOT found in tree", folder)
-			}
-		}
-	}
-
-	fileName := slugify.Slugify(title) + ".json"
-	if fid.Path != "" {
-		fileName = safepath.Join(fid.Path, fileName)
-	}
-
-	if options.Path != "" {
-		fileName = safepath.Join(options.Path, fileName)
-	}
-
-	// The folder path is derived from folder titles, which are not sanitized.
-	// Reject any unsafe path (traversal, absolute, too deep) before it reaches
-	// the backend, using the same validation enforced on the import side.
-	if err := IsPathSupported(fileName); err != nil {
-		return "", 0, fmt.Errorf("unsafe export path %q: %w", fileName, err)
+	fileName, err := r.resourceFilePath(meta, options)
+	if err != nil {
+		return "", 0, err
 	}
 
 	parsed := ParsedResource{
@@ -229,6 +196,75 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	}
 
 	return fileName, len(body), nil
+}
+
+// ResourceFilePath reports where a resource would be written, without writing it.
+// The object is not modified.
+func (r *ResourcesManager) ResourceFilePath(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", fmt.Errorf("context error: %w", err)
+	}
+
+	meta, err := utils.MetaAccessor(obj.DeepCopy())
+	if err != nil {
+		return "", fmt.Errorf("extract meta accessor: %w", err)
+	}
+
+	return r.resourceFilePath(meta, options)
+}
+
+// resourceFilePath derives the repository path for a resource from its title and
+// folder, unless options.FilePath pins it explicitly. Note that it defaults an
+// unset folder to the repository root on the accessor, which the write path
+// relies on to keep the written object consistent with its location.
+func (r *ResourcesManager) resourceFilePath(meta utils.GrafanaMetaAccessor, options WriteOptions) (string, error) {
+	fileName := options.FilePath
+	if fileName == "" {
+		title := meta.FindTitle("")
+		if title == "" {
+			title = meta.GetName()
+		}
+
+		folder := meta.GetFolder()
+		// Get the absolute path of the folder
+		rootFolder := RootFolder(r.repo.Config())
+
+		// If no folder is specified in the file, set it to the root to ensure everything is written under it
+		var fid Folder
+		if folder == "" {
+			fid = Folder{ID: rootFolder}
+			meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
+		} else {
+			var ok bool
+			fid, ok = r.folders.Tree().DirPath(folder, rootFolder)
+			if !ok {
+				// HACK: this is a hack to get the folder path without the root folder
+				// TODO: should we build the tree in a different way?
+				fid, ok = r.folders.Tree().DirPath(folder, "")
+				if !ok {
+					return "", fmt.Errorf("folder %s NOT found in tree", folder)
+				}
+			}
+		}
+
+		fileName = slugify.Slugify(title) + ".json"
+		if fid.Path != "" {
+			fileName = safepath.Join(fid.Path, fileName)
+		}
+
+		if options.Path != "" {
+			fileName = safepath.Join(options.Path, fileName)
+		}
+	}
+
+	// The folder path is derived from folder titles, which are not sanitized.
+	// Reject any unsafe path (traversal, absolute, too deep) before it reaches
+	// the backend, using the same validation enforced on the import side.
+	if err := IsPathSupported(fileName); err != nil {
+		return "", fmt.Errorf("unsafe export path %q: %w", fileName, err)
+	}
+
+	return fileName, nil
 }
 
 // WriteResourceOption configures optional behavior for resource write operations.

@@ -285,7 +285,7 @@ func exportItem(ctx context.Context,
 	// Regenerating UIDs is deliberately incompatible — that produces new
 	// resources, which have no prior history to replay.
 	if options.History && historyClient != nil && !generateNewUIDs {
-		return exportItemHistory(ctx, historyClient, item, options, shim, repositoryResources, progress)
+		return exportItemHistory(ctx, historyClient, item, options, repositoryResources, progress)
 	}
 
 	if shim != nil {

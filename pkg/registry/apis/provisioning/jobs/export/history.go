@@ -29,17 +29,30 @@ import (
 // The current version is part of the history, so a caller replaying history
 // must not also write the live object.
 func listHistory(ctx context.Context, client dynamic.ResourceInterface, name string) ([]*unstructured.Unstructured, error) {
-	list, err := client.List(ctx, metav1.ListOptions{
+	opts := metav1.ListOptions{
 		LabelSelector: utils.LabelKeyGetHistory + "=true",
 		FieldSelector: "metadata.name=" + name,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("list history for %s: %w", name, err)
 	}
 
-	versions := make([]*unstructured.Unstructured, 0, len(list.Items))
-	for i := range list.Items {
-		versions = append(versions, &list.Items[i])
+	// Follow continue tokens. Unified storage caps a page by both item count and
+	// payload size, and answers newest-first, so a single unpaginated request
+	// would silently drop the oldest versions — precisely the ones worth keeping.
+	var versions []*unstructured.Unstructured
+	for {
+		list, err := client.List(ctx, opts)
+		if err != nil {
+			return nil, fmt.Errorf("list history for %s: %w", name, err)
+		}
+
+		for i := range list.Items {
+			versions = append(versions, &list.Items[i])
+		}
+
+		next := list.GetContinue()
+		if next == "" || next == opts.Continue {
+			break
+		}
+		opts.Continue = next
 	}
 
 	sort.SliceStable(versions, func(i, j int) bool {
@@ -98,12 +111,28 @@ func exportItemHistory(ctx context.Context,
 	client dynamic.ResourceInterface,
 	item *unstructured.Unstructured,
 	options provisioning.ExportJobOptions,
-	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 ) error {
 	name := item.GetName()
 	gvk := item.GroupVersionKind()
+
+	// Every version is written to the path the resource occupies now. A version's
+	// own title and folder would otherwise decide its path, so a rename or a move
+	// would start a second file and split the history in two — leaving `git log`
+	// on the current file blind to everything before the rename, which is the one
+	// thing this feature exists to prevent.
+	filePath, err := repositoryResources.ResourceFilePath(ctx, item, resources.WriteOptions{
+		Path: options.Path,
+		Ref:  options.Branch,
+	})
+	if err != nil {
+		result := jobs.NewGVKResult(name, gvk).
+			WithAction(repository.FileActionCreated).
+			WithError(fmt.Errorf("resolving repository path for %s: %w", name, err))
+		progress.Record(ctx, result.Build())
+		return progress.TooManyErrors()
+	}
 
 	versions, err := listHistory(ctx, client, name)
 	if err != nil {
@@ -122,7 +151,7 @@ func exportItemHistory(ctx context.Context,
 
 	var wrote bool
 	for _, version := range versions {
-		if err := writeHistoricalVersion(ctx, version, options, shim, repositoryResources); err != nil {
+		if err := writeHistoricalVersion(ctx, version, filePath, options, repositoryResources); err != nil {
 			if errors.Is(err, repository.ErrNothingToCommit) || errors.Is(err, resources.ErrAlreadyInRepository) {
 				continue
 			}
@@ -148,17 +177,16 @@ func exportItemHistory(ctx context.Context,
 // writeHistoricalVersion writes one stored version, dated to when it was saved.
 func writeHistoricalVersion(ctx context.Context,
 	version *unstructured.Unstructured,
+	filePath string,
 	options provisioning.ExportJobOptions,
-	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 ) error {
-	if shim != nil {
-		converted, err := shim(ctx, version)
-		if err != nil {
-			return err
-		}
-		version = converted
-	}
+	// The conversion shim is deliberately not applied here. It exists to recover
+	// the originally stored apiVersion of the *current* object, and it does so by
+	// re-fetching the live resource — which would replace every historical version
+	// with current content and collapse the whole replay into one commit. The
+	// history endpoint already returns each version at the apiVersion it was
+	// stored with, so there is nothing to reconstruct.
 
 	// Strip the manager annotations a version may carry from a period when the
 	// resource was already provisioned: they describe the resource's state at
@@ -170,8 +198,9 @@ func writeHistoricalVersion(ctx context.Context,
 	}
 
 	_, _, err := repositoryResources.WriteResourceFileFromObject(withVersionTimestamp(ctx, version), version, resources.WriteOptions{
-		Path: options.Path,
-		Ref:  options.Branch,
+		Path:     options.Path,
+		Ref:      options.Branch,
+		FilePath: filePath,
 	})
 
 	return err

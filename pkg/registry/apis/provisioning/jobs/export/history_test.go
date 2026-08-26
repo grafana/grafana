@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -23,16 +24,31 @@ import (
 type historyClientStub struct {
 	dynamic.ResourceInterface
 	items    []unstructured.Unstructured
+	pages    [][]unstructured.Unstructured // when set, served one page per List call
+	calls    []metav1.ListOptions
 	lastOpts metav1.ListOptions
 	err      error
 }
 
 func (m *historyClientStub) List(_ context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	m.calls = append(m.calls, opts)
 	m.lastOpts = opts
 	if m.err != nil {
 		return nil, m.err
 	}
-	return &unstructured.UnstructuredList{Items: m.items}, nil
+	if m.pages == nil {
+		return &unstructured.UnstructuredList{Items: m.items}, nil
+	}
+
+	page := len(m.calls) - 1
+	if page >= len(m.pages) {
+		return &unstructured.UnstructuredList{}, nil
+	}
+	list := &unstructured.UnstructuredList{Items: m.pages[page]}
+	if page+1 < len(m.pages) {
+		list.SetContinue(fmt.Sprintf("page-%d", page+1))
+	}
+	return list, nil
 }
 
 func versionAt(name, resourceVersion string, updated time.Time) unstructured.Unstructured {
@@ -139,6 +155,8 @@ func TestExportItemHistory(t *testing.T) {
 		item := createDashboardObject("abc")
 
 		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).
+			Return("dash.json", nil).Once()
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
 			Return("abc.json", 10, nil).Twice()
 
@@ -146,7 +164,7 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, nil, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
 	})
 
 	t.Run("a version identical to the previous one produces no commit and is not an error", func(t *testing.T) {
@@ -157,6 +175,8 @@ func TestExportItemHistory(t *testing.T) {
 		item := createDashboardObject("abc")
 
 		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).
+			Return("dash.json", nil).Once()
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
 			Return("abc.json", 10, nil).Once()
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
@@ -166,7 +186,7 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, nil, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
 	})
 
 	t.Run("falls back to the live object when nothing is stored", func(t *testing.T) {
@@ -174,6 +194,8 @@ func TestExportItemHistory(t *testing.T) {
 		item := createDashboardObject("abc")
 
 		repoResources := resources.NewMockRepositoryResources(t)
+		repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).
+			Return("dash.json", nil).Once()
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
 			Return("abc.json", 10, nil).Once()
 
@@ -181,6 +203,49 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, nil, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
 	})
+}
+
+func TestListHistory_FollowsPagination(t *testing.T) {
+	// The server answers newest-first and caps a page, so stopping at the first
+	// page would drop the oldest versions -- the ones this feature exists for.
+	client := &historyClientStub{pages: [][]unstructured.Unstructured{
+		{versionAt("abc", "300", time.Time{})},
+		{versionAt("abc", "200", time.Time{})},
+		{versionAt("abc", "100", time.Time{})},
+	}}
+
+	versions, err := listHistory(context.Background(), client, "abc")
+	require.NoError(t, err)
+	require.Len(t, versions, 3, "every page should be collected")
+	require.Equal(t, "100", versions[0].GetResourceVersion(), "oldest first after sorting")
+	require.Len(t, client.calls, 3)
+	require.Equal(t, "", client.calls[0].Continue)
+	require.Equal(t, "page-1", client.calls[1].Continue)
+	require.Equal(t, "page-2", client.calls[2].Continue)
+}
+
+func TestExportItemHistory_PinsEveryVersionToOnePath(t *testing.T) {
+	// A version's own title would otherwise decide its path, so a rename would
+	// start a second file and split the history.
+	client := &historyClientStub{items: []unstructured.Unstructured{
+		versionAt("abc", "100", time.Time{}),
+		versionAt("abc", "200", time.Time{}),
+	}}
+	item := createDashboardObject("abc")
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).
+		Return("folder/current-title.json", nil).Once()
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything,
+		mock.MatchedBy(func(o resources.WriteOptions) bool { return o.FilePath == "folder/current-title.json" })).
+		Return("folder/current-title.json", 10, nil).Twice()
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	require.NoError(t, exportItemHistory(context.Background(), client, &item,
+		provisioningV0.ExportJobOptions{}, repoResources, progress))
 }

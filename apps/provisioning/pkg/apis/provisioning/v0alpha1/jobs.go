@@ -220,8 +220,12 @@ type ExportJobOptions struct {
 	// not in the database and cannot be written. A version whose content matches
 	// the one before it produces no commit.
 	//
+	// Every version is written to the path the resource occupies now, so a
+	// rename does not split the history across two files.
+	//
 	// Only repositories that stage commits locally support this; it is ignored
-	// otherwise.
+	// otherwise. Push jobs reject it: they export with newly generated resource
+	// identifiers, leaving no prior history to attach to.
 	History bool `json:"history,omitempty"`
 }
 
@@ -276,8 +280,12 @@ type MigrateJobOptions struct {
 	// not in the database and cannot be written. A version whose content matches
 	// the one before it produces no commit.
 	//
+	// Every version is written to the path the resource occupies now, so a
+	// rename does not split the history across two files.
+	//
 	// Only repositories that stage commits locally support this; it is ignored
-	// otherwise.
+	// otherwise. Push jobs reject it: they export with newly generated resource
+	// identifiers, leaving no prior history to attach to.
 	History bool `json:"history,omitempty"`
 }
 

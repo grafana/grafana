@@ -113,9 +113,9 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	msg := jobs.CommitMessage(job, defaultMsg)
 
 	cloneOptions := repository.StageOptions{
-		Ref:                   options.Branch,
-		Timeout:               10 * time.Minute,
-		PushOnWrites:          false,
+		Ref:          options.Branch,
+		Timeout:      10 * time.Minute,
+		PushOnWrites: false,
 		// Replaying history needs a commit per write so each stored version keeps
 		// its own message and timestamp; everything else batches into one commit.
 		// Either way the push happens once, on Push.
