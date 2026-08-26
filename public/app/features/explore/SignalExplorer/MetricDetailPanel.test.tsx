@@ -78,7 +78,9 @@ describe('<MetricDetailPanel />', () => {
     await userEvent.tab();
 
     expect(screen.getByText('Unknown type')).toHaveFocus();
-    expect(screen.getByRole('tooltip')).toHaveTextContent('This datasource reported no metadata for this metric');
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      'This datasource reported no recognized type for this metric'
+    );
   });
 
   it('closes on request', async () => {

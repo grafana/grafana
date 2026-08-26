@@ -8775,7 +8775,7 @@
       "close": "Close metric details",
       "from-query": "Query {{refId}}",
       "unknown-type": "Unknown type",
-      "unknown-type-tooltip": "This datasource reported no metadata for this metric"
+      "unknown-type-tooltip": "This datasource reported no recognized type for this metric"
     },
     "metrics-list": {
       "collapse-metric": "Collapse {{name}}",

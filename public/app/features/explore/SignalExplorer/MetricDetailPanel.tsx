@@ -36,7 +36,10 @@ export function MetricDetailPanel({ refId, metric, onClose }: Props) {
     ? t('explore.metric-detail-panel.unknown-type', 'Unknown type')
     : metric.type.toUpperCase();
   const badgeTooltip = isUnknownType
-    ? t('explore.metric-detail-panel.unknown-type-tooltip', 'This datasource reported no metadata for this metric')
+    ? t(
+        'explore.metric-detail-panel.unknown-type-tooltip',
+        'This datasource reported no recognized type for this metric'
+      )
     : undefined;
 
   return (
