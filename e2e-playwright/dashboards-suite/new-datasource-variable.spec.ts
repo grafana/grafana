@@ -43,8 +43,8 @@ test.describe(
       );
       await labelInput.fill('Variable under test');
 
-      // If this is failing, make sure there are Prometheus datasources named "gdev-prometheus" and "gdev-slow-prometheus"
-      // Or update to match available gdev datasources for testing
+      // Provisioned gdev Prometheus sources must appear in the preview. Don't assert first/last:
+      // other suites (e.g. diagnostics) may create extra Prometheus sources on the shared server.
       const datasourceSelect = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
       );
@@ -54,8 +54,8 @@ test.describe(
       const previewOptions = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
       );
-      await expect(previewOptions.first()).toContainText('gdev-prometheus');
-      await expect(previewOptions.last()).toContainText('gdev-slow-prometheus');
+      await expect(previewOptions.filter({ hasText: 'gdev-prometheus' })).toBeVisible();
+      await expect(previewOptions.filter({ hasText: 'gdev-slow-prometheus' })).toBeVisible();
 
       // Navigate back to the homepage and change the selected variable value
       await dashboardPage
