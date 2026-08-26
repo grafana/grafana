@@ -443,7 +443,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			t,
 			func() bool {
 				cms, _ := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
-				return cms.Status == cloudmigration.SnapshotStatusFinished
+				return cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished
 			},
 			5*time.Second,
 			100*time.Millisecond,
@@ -953,7 +953,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
-		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
 	)
 	require.NoError(t, err)

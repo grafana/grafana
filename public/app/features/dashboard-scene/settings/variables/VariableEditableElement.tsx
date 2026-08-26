@@ -21,6 +21,12 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
+import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
+import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
+import { changeVariableName } from '../../actions/variable/changeVariableName';
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
+import { removeVariable } from '../../actions/variable/removeVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -36,10 +42,8 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
-import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
@@ -118,7 +122,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     if (this.variable instanceof LocalValueVariable) {
       return {
         typeName: t('dashboard.sidebar.elements.local-variable', 'Local variable'),
-        icon: 'dollar-alt',
+        icon: 'gf-variable',
         instanceName: this.variable.state.name,
         isHidden: true,
       };
@@ -142,7 +146,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     return {
       typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
-      icon: 'dollar-alt',
+      icon: 'gf-variable',
       instanceName,
       tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
@@ -156,19 +160,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
-    const set = this.variable.parent!;
-    if (!(set instanceof SceneVariableSet)) {
-      return;
-    }
-
-    dashboardEditActions.addVariable({
-      source: set,
-      addedObject: this.variable.clone({
-        key: undefined,
-        name: `${this.variable.state.name}_copy${set.state.variables.length}`,
-      }),
-    });
-    DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
+    duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {
@@ -193,9 +185,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return;
     }
 
-    DashboardInteractions.variableActionButtonClicked('delete', { type: this.variable.state.type });
-
-    dashboardEditActions.removeVariable({
+    removeVariable({
       source: set,
       removedObject: this.variable,
     });
@@ -312,7 +302,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
               return;
             }
 
-            dashboardEditActions.changeVariableName({
+            changeVariableName({
               source: variable,
               oldValue: oldName.current,
               newValue: name,
@@ -350,7 +340,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableLabel({
+        changeVariableLabel({
           source: variable,
           oldValue: oldLabel.current,
           newValue: e.currentTarget.value,
@@ -382,7 +372,7 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
           return;
         }
 
-        dashboardEditActions.changeVariableDescription({
+        changeVariableDescription({
           source: variable,
           oldValue: oldDescription.current,
           newValue: e.currentTarget.value,
@@ -398,7 +388,7 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
   const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
 
   const onChange = (option: VariableHide) => {
-    dashboardEditActions.changeVariableHideValue({
+    changeVariableHideValue({
       source: variable,
       oldValue: display,
       newValue: option,

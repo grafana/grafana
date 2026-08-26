@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Dávkové API",
+      "description-batch-api": "Odesílá dotazy na více zdrojů v jednom požadavku, což zlepšuje výkon u velkých nástěnek. Vyžaduje roli <2>Monitoring čtenářů</2> v rozsahu předplatného na <6>metrics.monitor.azure.com</6>. Mimo bezplatnou úroveň <9>mohou být účtovány další náklady</9>.",
+      "label-enable-batch-api": "Povolit dávkové API"
     },
     "config-editor": {
       "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. Patří sem zabezpečený proxy server Socks, časový limit požadavku a přeposlané soubory cookie.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Načíst předplatné"
     },
     "dimension-fields": {
-      "aria-label-remove": "Odebrat",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Rozměry",
       "placeholder-field": "Pole",
       "placeholder-operation": "Činnost",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Metrický jmenný prostor"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Můžete vybrat položky stejného typu zdroje napříč předplatnými a regiony. Zdroje v různých předplatných nebo regionech jsou dotazovány v samostatných požadavcích a mohou selhat nezávisle na sobě. Chcete-li vybrat zdroje jiného typu, nejprve zrušte zaškrtnutí aktuálního výběru.",
+      "selection-notice-standard": "Můžete vybrat položky stejného typu zdroje a umístění. Chcete-li vybrat zdroje jiného typu nebo umístění, nejprve zrušte zaškrtnutí aktuálního výběru."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funkce"
     },
     "nested-row": {
       "text-loading": "Načítání…"
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Načítání bylo zastaveno po {{maxPages}} stránkách; některé výsledky mohou být vynechány.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Při požadování metadat ze služby Azure Monitor došlo k chybě"

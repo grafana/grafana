@@ -14,6 +14,7 @@ import { TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFlatRowHeight,
   useFilteredRows,
   useHeaderHeight,
@@ -24,7 +25,12 @@ import {
   useRowCompiler,
   useTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -35,7 +41,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
@@ -76,6 +81,7 @@ export function TableFlat(props: TableNGProps) {
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -93,6 +99,12 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  // Row-height and column-width measurement must both see the same rendered value column-building
+  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
+  // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
+  // object value to "[object Object]" — a single short line that never grows the row past one line,
+  // and that content-aware width sizes no wider than a plain short string column.
+  const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
     () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -143,10 +155,6 @@ export function TableFlat(props: TableNGProps) {
   const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
@@ -167,18 +175,25 @@ export function TableFlat(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+  });
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    visibleFields,
+    preparedFields,
     availableWidth,
     frozenColumns,
-    widthConfigResetKey
+    widthConfigResetKey,
+    contentAwareWidths
   );
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
-    sortColumns,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
@@ -191,7 +206,7 @@ export function TableFlat(props: TableNGProps) {
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: preparedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
@@ -238,7 +253,6 @@ export function TableFlat(props: TableNGProps) {
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -259,7 +273,6 @@ export function TableFlat(props: TableNGProps) {
     }),
     [
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,

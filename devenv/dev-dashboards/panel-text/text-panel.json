@@ -139,6 +139,121 @@
             }
           }
         }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Render mode: Per row",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "Id,first_name,last_name,login,last_login_date,status,role,email,photo\n1,John,Smith,j.smith,2022-11-02,active,admin,j.smith@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n2,Jessica,Johnson,j.johnson,2022-10-31,not active,analyst,j.johnson@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n3,Wei,Zhang,w.zhang,2026-08-10,Active,editor,w.zhang@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n4,Priya,Raman,p.raman,2026-08-09,pending,viewer,p.raman@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n5,\"Anne-Marie \"\"Annie\"\"\",\"van der Berg, Johannes\",a.vdberg,2026-07-04,active,admin,a.vdberg+test@example.co.uk,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "content": "<article class=\"user-card\" style=\"display:flex;gap:20px;align-items:center;margin-bottom:12px;padding:20px;color:var(--theme-colors-text-primary, #d8d9da);background:var(--theme-colors-background-primary, #181b1f);border:1px solid var(--theme-colors-border-weak, #2c3235);border-radius:8px;box-shadow:0 1px 2px rgb(0 0 0 / 18%)\">\n  <div style=\"flex-grow:1;min-width:0\">\n    <header style=\"margin-bottom:18px\">\n      <h3 style=\"margin:0;font-size:18px;font-weight:500\">\n        ${__data.fields.Id}\n        ${__data.fields.first_name} ${__data.fields.last_name}\n      </h3>\n\n      <div style=\"margin-top:4px;color:var(--theme-colors-text-secondary, #9fa7af);font-size:13px\">${__data.fields.email}</div>\n    </header>\n\n    <div style=\"display:flex;gap:16px\">\n      <div style=\"flex-grow:1;flex-basis:90px\">\n        <div style=\"margin-bottom:4px;color:var(--theme-colors-text-secondary, #9fa7af);font-size:11px;font-weight:500;letter-spacing:0.03em;text-transform:uppercase\">Username</div>\n        <div style=\"font-size:14px;font-weight:500\">${__data.fields.login}</div>\n      </div>\n      <div style=\"flex-grow:1;flex-basis:90px\">\n        <div style=\"margin-bottom:4px;color:var(--theme-colors-text-secondary, #9fa7af);font-size:11px;font-weight:500;letter-spacing:0.03em;text-transform:uppercase\">Role</div>\n        <div style=\"font-size:14px;font-weight:500\">${__data.fields.role}</div>\n      </div>\n      <div style=\"flex-grow:1;flex-basis:90px\">\n        <div style=\"margin-bottom:4px;color:var(--theme-colors-text-secondary, #9fa7af);font-size:11px;font-weight:500;letter-spacing:0.03em;text-transform:uppercase\">Last login</div>\n        <div style=\"font-size:14px;font-weight:500\">${__data.fields.last_login_date}</div>\n      </div>\n    </div>\n  </div>\n\n  <img style=\"flex-shrink:0;width:80px;height:80px;border:1px solid var(--theme-colors-border-medium, #3d4449);border-radius:50%;background:var(--theme-colors-background-secondary, #111217)\" src=\"${__data.fields.photo}\" alt=\"placeholder\" />\n</article>",
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false
+                },
+                "renderMode": "perRow"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Handlebars support",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "csvContent": "Id,first_name,last_name,login,last_login_date,status,role,email,photo\n1,John,Smith,j.smith,2022-11-02,active,admin,j.smith@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n2,Jessica,Johnson,j.johnson,2022-10-31,not active,analyst,j.johnson@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n3,Wei,Zhang,w.zhang,2026-08-10,Active,editor,w.zhang@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n4,Priya,Raman,p.raman,2026-08-09,pending,viewer,p.raman@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n5,\"Anne-Marie \"\"Annie\"\"\",\"van der Berg, Johannes\",a.vdberg,2026-07-04,active,admin,a.vdberg+test@example.co.uk,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "## User accounts ({{data.length}})\n\n| User | Role | Last login | Status |\n| --- | --- | --- | --- |\n{{#each data}}| **{{first_name}} {{last_name}}** | {{role}} | {{last_login_date}} | {{#if (match status \"^[Aa]ctive$\")}}\ud83d\udfe2 Active{{else}}\ud83d\udd34 {{status}}{{/if}} |\n{{/each}}\n\n### Needs attention\n\n{{#each data}}{{#unless (match status \"^[Aa]ctive$\")}}- **{{first_name}} {{last_name}}** ({{role}}) - {{status}}, last seen {{last_login_date}}\n{{/unless}}{{/each}}",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -181,6 +296,32 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 16,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
               }
             }
           }

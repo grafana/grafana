@@ -64,6 +64,10 @@ const baseImportConfig = {
       group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
       message: 'Import from the public export instead.',
     },
+    {
+      group: ['react-router', 'react-router-dom'],
+      message: 'Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete.',
+    },
   ],
   paths: [
     {
@@ -130,6 +134,7 @@ module.exports = [
       'scripts/grafana-server/tmp',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
       'public/build-swagger', // swagger build output
+      'public/build-swagger-rspack', // swagger build output (rspack)
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
       'packages/get-document/index.js',
@@ -628,6 +633,7 @@ module.exports = [
       '@grafana/no-gf-form': 'error',
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
   },
   {
@@ -640,6 +646,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
     plugins: {
       '@grafana': grafanaPlugin,
@@ -650,6 +657,7 @@ module.exports = [
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
+      '@grafana/no-config-datasources': 'error',
     },
   },
   {
