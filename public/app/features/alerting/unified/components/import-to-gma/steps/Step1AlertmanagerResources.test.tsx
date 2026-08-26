@@ -534,6 +534,12 @@ describe('Step1AlertmanagerResources', () => {
 
       beforeEach(() => {
         setupDataSources(alertmanagerDataSource, mimirDataSource);
+        // useAutoSyncConfiguration now gates its Config and datasources queries on this permission
+        // (not just the Admin role), so it must be granted here too or both queries get skipped.
+        grantUserPermissions([
+          AccessControlAction.AlertingNotificationsWrite,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
         // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
         // render below fires these two queries regardless of what the test exercises — mock them
         // by default for the whole block rather than per test.
