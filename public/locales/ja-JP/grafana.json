@@ -1617,6 +1617,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1691,6 @@
       "review": {
         "autosync-badge": "",
         "back": "アラートルール",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "フィルター",
         "folder": "ターゲットフォルダ",
@@ -1706,7 +1709,6 @@
         "routing": "通知ルーティング",
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "アラートルールはインポートされません。",
         "rules-title": "アラートルール",
         "skipped": "スキップ済み",
@@ -3849,6 +3851,8 @@
       "title-notification-policies": "通知ポリシー"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "リソースのインポートに失敗しました",
@@ -6814,6 +6818,11 @@
       "title": "ダッシュボードリンクがまだ追加されていません"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9008,15 +9017,16 @@
       "split-widen": "ペインを広げる"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "共有トレースオプションメニューを開きます",
+      "aria-label-share-dropdown": "",
       "critical-path": "クリティカルパス",
       "critical-path-tooltip": "クリティカルパスのスパンを選択します。これは、トレースの最短期間を決定する依存タスクの最長シーケンスです。",
       "duration": "期間",
       "errors": "エラー",
       "errors-tooltip": "ステータスがエラーになっているスパンを選択します。",
       "export-started": "エクスポートが開始されました",
+      "feedback-group": "",
       "filters": "フィルター",
-      "give-feedback": "フィードバック",
+      "give-feedback-item": "",
       "high-latency": "高レイテンシー",
       "high-latency-tooltip": "トレース内で最長のスパンの10%を選択します（p90）。",
       "link-copied": "リンクをクリップボードにコピーしました",
@@ -9024,13 +9034,12 @@
       "path": "パス",
       "route": "経路",
       "services": "サービス",
-      "share": "共有",
       "share-copy-link": "リンクをコピー",
       "share-export-json": "JSONとしてエクスポート",
-      "share-tooltip": "トレースを共有",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "開始時間",
       "target": "ターゲット",
-      "title-share-thoughts-about-tracing-grafana": "Grafanaのトレース機能についてのご意見をお聞かせください。",
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
       "trace-id": "トレースID",
       "url": "URL"
@@ -12843,6 +12852,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12921,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
