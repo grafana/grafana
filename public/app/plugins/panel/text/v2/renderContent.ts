@@ -76,11 +76,15 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
   const rendered = replaceVariables(compiled(buildAllRowsContext(series, maxRows)), {}, format);
 
   // A Once template emits one string, so the row limit cannot bound its size.
-  return rendered.length > MAX_RENDERED_CHARS ? cutToMaxChars(rendered) : rendered;
+  return cutToMaxChars(rendered);
 }
 
 // Cut on a line break so the tail lands between elements rather than inside a tag.
 function cutToMaxChars(rendered: string): string {
+  if (rendered.length <= MAX_RENDERED_CHARS) {
+    return rendered;
+  }
+
   const boundary = rendered.lastIndexOf('\n', MAX_RENDERED_CHARS);
   return rendered.slice(0, boundary > 0 ? boundary : MAX_RENDERED_CHARS);
 }
@@ -132,7 +136,8 @@ function interpolateEveryRow(
     }
   }
 
-  return joinBlocks(blocks, mode);
+  // The loop breaks after appending, so the last block and the separators can still push past the limit.
+  return cutToMaxChars(joinBlocks(blocks, mode));
 }
 
 export function renderContent(

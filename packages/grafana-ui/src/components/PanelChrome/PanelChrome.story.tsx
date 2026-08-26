@@ -297,7 +297,7 @@ export const Examples = () => {
                 aria-label="Select option"
               />
             ),
-          })}˚
+          })}
           {renderPanel('Content', {
             title: 'With empty subheader element',
             menu,

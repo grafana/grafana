@@ -274,11 +274,20 @@ describe('interpolateTemplate', () => {
     });
 
     it('stops at the size backstop before reaching the row limit', () => {
-      const row = 'x'.repeat(1000);
-      const blocks = interpolate(row, [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow).split('\n\n');
+      const rendered = interpolate('x'.repeat(1000), [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow);
 
-      expect(blocks).toHaveLength(MAX_RENDERED_CHARS / row.length);
-      expect(blocks.length).toBeLessThan(MAX_RENDERED_ROWS);
+      expect(rendered.length).toBeLessThanOrEqual(MAX_RENDERED_CHARS);
+      expect(rendered.split('\n\n').length).toBeLessThan(MAX_RENDERED_ROWS);
+    });
+
+    it('truncates a single row that passes the size backstop on its own', () => {
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+      });
+
+      expect(interpolate('${__data.fields.n}', [wide], RenderMode.PerRow).length).toBeLessThanOrEqual(
+        MAX_RENDERED_CHARS
+      );
     });
   });
 
