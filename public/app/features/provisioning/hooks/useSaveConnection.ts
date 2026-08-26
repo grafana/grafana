@@ -103,7 +103,15 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
     }
   };
 
-  return { save, request, submitError, setSubmitError, isAuthorizing: isPending };
+  // Ends the UI's pending state and closes the tab where possible. A COOP-severed
+  // handle ignores close(); an authorization finished later in that tab still
+  // lands server-side, the form just stops waiting for it.
+  const cancelAuthorization = () => {
+    cancel();
+    closeTab();
+  };
+
+  return { save, request, submitError, setSubmitError, isAuthorizing: isPending, cancelAuthorization };
 }
 
 function errorResult(error: unknown, setError: UseFormSetError<ConnectionFormData>): SaveConnectionResult {

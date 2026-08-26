@@ -89,7 +89,7 @@ describe('useOAuthAuthorization', () => {
     expect(onComplete).toHaveBeenCalledWith('conn-1', 'boom');
   });
 
-  it('ends the pending state after the tab closes and the grace period passes', () => {
+  it('stays pending when the tab handle reports closed (COOP providers sever it)', () => {
     const { hook, onComplete, tab } = setup();
 
     act(() => {
@@ -98,18 +98,14 @@ describe('useOAuthAuthorization', () => {
 
     tab!.closed = true;
     act(() => {
-      jest.advanceTimersByTime(1_000); // poll notices the closed tab
+      jest.advanceTimersByTime(60_000);
     });
-    expect(hook.result.current.isPending).toBe(true);
 
-    act(() => {
-      jest.advanceTimersByTime(2_000); // grace period elapses
-    });
-    expect(hook.result.current.isPending).toBe(false);
+    expect(hook.result.current.isPending).toBe(true);
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it('still delivers a completion that arrives during the grace period', () => {
+  it('still delivers a completion after the tab handle reports closed', () => {
     const { hook, onComplete, tab } = setup();
 
     act(() => {
@@ -117,14 +113,24 @@ describe('useOAuthAuthorization', () => {
     });
 
     tab!.closed = true;
-    act(() => {
-      jest.advanceTimersByTime(1_000);
-    });
     act(() => {
       completionCallback?.('conn-1');
     });
 
     expect(onComplete).toHaveBeenCalledWith('conn-1', undefined);
+    expect(hook.result.current.isPending).toBe(false);
+  });
+
+  it('cancel ends the pending state', () => {
+    const { hook } = setup();
+
+    act(() => {
+      hook.result.current.authorize(authorizeParams);
+    });
+    act(() => {
+      hook.result.current.cancel();
+    });
+
     expect(hook.result.current.isPending).toBe(false);
   });
 

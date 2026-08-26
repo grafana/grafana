@@ -13966,6 +13966,7 @@
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
       "description-webhook-disabled-oauth": "When enabled, Grafana will not register or receive webhook events for repositories using this connection. Use this when Grafana is not reachable from the public internet.",
       "description-workspace": "The workspace your OAuth consumer belongs to",
+      "error-client-secret-new-app": "Enter the client secret for the new OAuth app.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
@@ -14404,6 +14405,7 @@
       "waiting-authorization-button": "Waiting for authorization..."
     },
     "oauth-authorization": {
+      "cancel-button": "Cancel authorization",
       "pending-body": "If the provider shows an error page, verify the client ID and attempt to reauthorize.",
       "pending-title": "Waiting for authorization in the other tab"
     },

@@ -147,7 +147,8 @@ function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }
   });
   const { setStepStatusInfo } = useStepStatus();
 
-  const { save, request, submitError, setSubmitError, isAuthorizing } = useSaveConnection(onAuthorized);
+  const { save, request, submitError, setSubmitError, isAuthorizing, cancelAuthorization } =
+    useSaveConnection(onAuthorized);
 
   const handleCreateGitHubApp = async () => {
     // Reset any existing step errors
@@ -193,7 +194,7 @@ function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }
   return (
     <FormProvider {...credentialForm}>
       <Stack direction="column" gap={2}>
-        {isAuthorizing && <AuthorizationPendingAlert />}
+        {isAuthorizing && <AuthorizationPendingAlert onCancel={cancelAuthorization} />}
         {submitError && <Alert severity="error" title={submitError} />}
 
         <AppInstruction type={type} />

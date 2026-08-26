@@ -97,19 +97,27 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   const reauthorizeRef = useRef(false);
   const navigateOnCompleteRef = useRef(false);
 
-  const { save, request, submitError, setSubmitError, isAuthorizing } = useSaveConnection(() => {
+  const { save, request, submitError, setSubmitError, isAuthorizing, cancelAuthorization } = useSaveConnection(() => {
     if (navigateOnCompleteRef.current) {
       navigate(CONNECTIONS_TAB_URL);
     }
   }, connectionName);
+
+  // The client secret belongs to the OAuth app itself; pointing the connection at
+  // a different app (client ID, or GHES host) makes the stored secret invalid for
+  // the code exchange, so the user must supply the new app's secret.
+  const oauthIdentityChanged = (form: ConnectionFormData) =>
+    isEdit &&
+    isOAuthConnectionType(form.type) &&
+    (form.clientID !== data?.spec?.oauth?.clientID ||
+      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl));
 
   // OAuth app connections need the user to authorize the app before tokens can be issued
   const needsAuthorization = (form: ConnectionFormData) =>
     isOAuthConnectionType(form.type) &&
     (!isEdit ||
       Boolean(form.clientSecret) ||
-      form.clientID !== data?.spec?.oauth?.clientID ||
-      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl) ||
+      oauthIdentityChanged(form) ||
       (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
       reauthorizeRef.current);
 
@@ -141,6 +149,16 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   };
 
   const onSubmit = async (form: ConnectionFormData) => {
+    if (oauthIdentityChanged(form) && !form.clientSecret) {
+      setError('clientSecret', {
+        type: 'validate',
+        message: t(
+          'provisioning.connection-form.error-client-secret-new-app',
+          'Enter the client secret for the new OAuth app.'
+        ),
+      });
+      return;
+    }
     navigateOnCompleteRef.current = !reauthorizeRef.current;
     const shouldAuthorize = needsAuthorization(form);
     reauthorizeRef.current = false;
@@ -186,7 +204,17 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
           <div style={{ maxWidth: 700 }}>
             {submitError && <Alert severity="error" title={submitError} />}
             {isPending && (
-              <Alert severity="warning" title={t('provisioning.connection.pending-title', 'Connecting')}>
+              <Alert
+                severity="warning"
+                title={t('provisioning.connection.pending-title', 'Connecting')}
+                action={
+                  isAuthorizing ? (
+                    <Button variant="secondary" onClick={cancelAuthorization}>
+                      {t('provisioning.oauth-authorization.cancel-button', 'Cancel authorization')}
+                    </Button>
+                  ) : undefined
+                }
+              >
                 <Stack alignItems="center" gap={1}>
                   <Spinner size="sm" inline />
                   <Trans i18nKey="provisioning.connection.pending-message">

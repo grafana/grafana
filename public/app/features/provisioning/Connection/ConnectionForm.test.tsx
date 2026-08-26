@@ -389,4 +389,112 @@ describe('ConnectionForm', () => {
       btoaSpy.mockRestore();
     });
   });
+
+  describe('OAuth app edit', () => {
+    const createOAuthConnection = (): Connection =>
+      createMockConnection({
+        spec: { title: 'GitLab OAuth', type: 'gitlabOAuth', oauth: { clientID: 'old-client' } },
+        secure: { clientSecret: { name: 'configured' } },
+      });
+
+    beforeEach(() => {
+      server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ availableConnectionTypes: ['gitlabOAuth'] })));
+    });
+
+    it('blocks saving a changed client ID until the new app secret is entered', async () => {
+      let putCount = 0;
+      server.use(
+        http.put(`${BASE}/connections/:name`, () => {
+          putCount++;
+          return HttpResponse.json({});
+        })
+      );
+
+      const { user } = setup({ data: createOAuthConnection() });
+
+      const clientIDInput = await screen.findByLabelText(/^Application ID/);
+      await user.clear(clientIDInput);
+      await user.type(clientIDInput, 'new-client');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      expect(await screen.findByText('Enter the client secret for the new OAuth app.')).toBeInTheDocument();
+      expect(putCount).toBe(0);
+    });
+
+    it('saves the new secret with the new client ID and lets the user cancel authorization', async () => {
+      const tab = { closed: false, close: jest.fn(), location: { href: '' }, opener: {} };
+      // Window mock is intentionally partial; the hook only touches these fields.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(tab as unknown as Window);
+
+      try {
+        const capturedBodies: unknown[] = [];
+        server.use(
+          http.put(`${BASE}/connections/:name`, async ({ request }) => {
+            capturedBodies.push(await request.json());
+            return HttpResponse.json({
+              metadata: { name: 'test-connection' },
+              spec: { type: 'gitlabOAuth', title: 'GitLab OAuth' },
+            });
+          })
+        );
+
+        const { user } = setup({ data: createOAuthConnection() });
+
+        const clientIDInput = await screen.findByLabelText(/^Application ID/);
+        await user.clear(clientIDInput);
+        await user.type(clientIDInput, 'new-client');
+
+        await user.click(screen.getByRole('button', { name: /reset/i }));
+        await user.type(screen.getByLabelText(/^Client secret/), 'new-secret');
+
+        await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+        expect(await screen.findByText('Connecting')).toBeInTheDocument();
+        // dryRun PUT arrives first, then the real one
+        expect(capturedBodies).toHaveLength(2);
+        expect(capturedBodies[1]).toMatchObject({
+          spec: { oauth: { clientID: 'new-client' } },
+          secure: { clientSecret: { create: 'new-secret' } },
+        });
+        expect(tab.location.href).toContain('client_id=new-client');
+
+        await user.click(screen.getByRole('button', { name: /Cancel authorization/i }));
+
+        expect(tab.close).toHaveBeenCalled();
+        expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^save$/i })).toBeEnabled();
+      } finally {
+        openSpy.mockRestore();
+      }
+    });
+
+    it('saves without authorization when the app identity is unchanged', async () => {
+      let capturedBody: unknown = null;
+      server.use(
+        http.put(`${BASE}/connections/:name`, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            metadata: { name: 'test-connection' },
+            spec: { type: 'gitlabOAuth', title: 'Renamed OAuth' },
+          });
+        })
+      );
+
+      const { user } = setup({ data: createOAuthConnection() });
+
+      const titleInput = await screen.findByLabelText(/^Title/);
+      await user.clear(titleInput);
+      await user.type(titleInput, 'Renamed OAuth');
+
+      await user.click(screen.getByRole('button', { name: /^save$/i }));
+
+      await waitFor(() => {
+        expect(capturedBody).toMatchObject({ spec: { title: 'Renamed OAuth', oauth: { clientID: 'old-client' } } });
+      });
+      expect(screen.queryByText('Enter the client secret for the new OAuth app.')).not.toBeInTheDocument();
+      expect(screen.queryByText('Connecting')).not.toBeInTheDocument();
+    });
+  });
 });

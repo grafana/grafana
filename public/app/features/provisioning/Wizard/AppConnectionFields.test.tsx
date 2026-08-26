@@ -11,6 +11,7 @@ import { type WizardFormData } from './types';
 setupProvisioningMswServer();
 
 const mockSave = jest.fn();
+const mockCancelAuthorization = jest.fn();
 
 jest.mock('../hooks/useSaveConnection', () => ({
   useSaveConnection: () => ({
@@ -19,6 +20,7 @@ jest.mock('../hooks/useSaveConnection', () => ({
     submitError: undefined,
     setSubmitError: jest.fn(),
     isAuthorizing: true,
+    cancelAuthorization: mockCancelAuthorization,
   }),
 }));
 
@@ -42,6 +44,7 @@ function setup() {
 describe('AppConnectionFields', () => {
   beforeEach(() => {
     mockSave.mockClear();
+    mockCancelAuthorization.mockClear();
   });
 
   it('disables the create button and blocks re-submits while authorization is pending', async () => {
@@ -55,5 +58,15 @@ describe('AppConnectionFields', () => {
     // A second click here would drop the pending listener and restart authorization.
     await user.click(button);
     expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it('offers an enabled cancel action on the pending alert', async () => {
+    const { user } = setup();
+
+    const cancelButton = await screen.findByRole('button', { name: /Cancel authorization/i });
+    expect(cancelButton).toBeEnabled();
+
+    await user.click(cancelButton);
+    expect(mockCancelAuthorization).toHaveBeenCalledTimes(1);
   });
 });
