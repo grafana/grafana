@@ -19,7 +19,11 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
-import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterExtensionActions,
+  useRegisterRecentDashboardsActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { bucketQueryLength } from './bucketQueryLength';
 import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
@@ -50,6 +54,7 @@ function CommandPaletteContents() {
     currentRootActionId: state.currentRootActionId,
   }));
 
+  useRegisterExtensionActions();
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
