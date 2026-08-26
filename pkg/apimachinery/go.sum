@@ -6,8 +6,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/emicklei/go-restful/v3 v3.13.0 h1:C4Bl2xDndpU6nJ4bc1jXd+uTmYPVUwkD6bFY/oTyCes=
 github.com/emicklei/go-restful/v3 v3.13.0/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
-github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
-github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
+github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh78=
+github.com/fxamacker/cbor/v2 v2.9.2/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
 github.com/go-jose/go-jose/v4 v4.1.4/go.mod h1:x4oUasVrzR7071A4TnHLGSPpNOm2a21K9Kf04k1rs08=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=
@@ -130,10 +130,10 @@ google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fw
 google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/inf.v0 v0.9.1 h1:73M5CoZyi3ZLMOyDlQh031Cx6N9NDJ2Vvfl76EDAgDc=
 gopkg.in/inf.v0 v0.9.1/go.mod h1:cWUDdTG/fYaXco+Dcufb5Vnc6Gp2YChqWtbxRZE0mXw=
-k8s.io/apimachinery v0.36.3 h1:PkzMRBRG8joFD8EhCuQAtNPvJlxb82FwplP26HIzvAM=
-k8s.io/apimachinery v0.36.3/go.mod h1:cTSjBWgPe/6CQyBKzY/hDIRWCQQQeK0mfLbml0UYFHE=
-k8s.io/apiserver v0.36.3 h1:MGSg2SkdfuytiDEcRylT5mQFmmSsbx90XFUO67Y4bsQ=
-k8s.io/apiserver v0.36.3/go.mod h1:fVH7zv9EUNUA7Fl7LtDKh8aB9W7u1VQPSGtWV5SjUxg=
+k8s.io/apimachinery v0.36.4 h1:PT2UzkupGuAx/+xT5XjiMJ1WGpY3fn9/hdAvjweRet4=
+k8s.io/apimachinery v0.36.4/go.mod h1:p2I2dipt7JHG+quVwQ1d02d28O4GdDi77RByQ13MTpk=
+k8s.io/apiserver v0.36.4 h1:AtKjaf2eUiX5G6TfF2IOlhuUuvMsHh49Ivr1+4fZ2gA=
+k8s.io/apiserver v0.36.4/go.mod h1:RyiGghXP67hb0Ll+7iLJ6GGv2JpEzCn7ljbiA+L3cJ0=
 k8s.io/klog/v2 v2.140.0 h1:Tf+J3AH7xnUzZyVVXhTgGhEKnFqye14aadWv7bzXdzc=
 k8s.io/klog/v2 v2.140.0/go.mod h1:o+/RWfJ6PwpnFn7OyAG3QnO47BFsymfEfrz6XyYSSp0=
 k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad h1:oXImqH8mQNk7PmvzKhmN3ddJoY6OnyM225MXwGHPm0A=

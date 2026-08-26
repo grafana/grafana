@@ -19,7 +19,13 @@ message ResourceWrapper {
   int64 resource_version = 1;
 
   // Full kubernetes json bytes (although the resource version may not be accurate)
+  // Empty for keys_only requests.
   bytes value = 2;
+
+  // Metadata returned for keys_only requests.
+  string namespace = 3;
+  string name = 4;
+  string folder = 5;
 }
 
 // Status structure is copied from:
@@ -259,6 +265,12 @@ message ListRequest {
   Source source = 6;
 
   ResourceVersionMatchV2 version_match_v2 = 7;
+
+  // ListResponse returns only metadata for each item, without their value
+  // Available for STORE source only
+  // Does not support field/label selectors
+  // Must be cluster-wide: the key namespace has to be empty
+  bool keys_only = 8;
 }
 
 message ListResponse {

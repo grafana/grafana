@@ -494,6 +494,10 @@ func NewMapperRegistry() MapperRegistry {
 			"recordingrules": newAlertRuleTranslation(),
 			"rulesequences":  newAlertRuleTranslation(),
 		},
+		// Assistant-pushed alert-rule embeddings, authorized like the native rule kinds above.
+		"assistant.alertrules.ext.grafana.app": {
+			"alertrules": newAlertRuleTranslation(),
+		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
 			"notebooks":     newNotebookTranslation(),
