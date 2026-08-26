@@ -38,6 +38,19 @@ type MigrateJobOptionsApplyConfiguration struct {
 	// branch migration); when true, no deletion happens and the resources are
 	// left in place.
 	SkipResourceDeletion *bool `json:"skipResourceDeletion,omitempty"`
+	// History writes one commit per stored version of each exported resource,
+	// oldest first, instead of a single commit holding only the current state.
+	// Each commit keeps the timestamp of the version it was written from, so the
+	// resulting file history reflects when the changes were actually made.
+	//
+	// Unified storage keeps a bounded number of versions per resource, so the
+	// history is necessarily partial: anything older than the retained window is
+	// not in the database and cannot be written. A version whose content matches
+	// the one before it produces no commit.
+	//
+	// Only repositories that stage commits locally support this; it is ignored
+	// otherwise.
+	History *bool `json:"history,omitempty"`
 }
 
 // MigrateJobOptionsApplyConfiguration constructs a declarative configuration of the MigrateJobOptions type for use with
@@ -88,5 +101,13 @@ func (b *MigrateJobOptionsApplyConfiguration) WithGenerateNewFolderIDs(value boo
 // If called multiple times, the SkipResourceDeletion field is set to the value of the last call.
 func (b *MigrateJobOptionsApplyConfiguration) WithSkipResourceDeletion(value bool) *MigrateJobOptionsApplyConfiguration {
 	b.SkipResourceDeletion = &value
+	return b
+}
+
+// WithHistory sets the History field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the History field is set to the value of the last call.
+func (b *MigrateJobOptionsApplyConfiguration) WithHistory(value bool) *MigrateJobOptionsApplyConfiguration {
+	b.History = &value
 	return b
 }

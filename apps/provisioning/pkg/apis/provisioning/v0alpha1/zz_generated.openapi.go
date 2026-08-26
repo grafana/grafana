@@ -914,6 +914,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							Format:      "",
 						},
 					},
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "History writes one commit per stored version of each exported resource, oldest first, instead of a single commit holding only the current state. Each commit keeps the timestamp of the version it was written from, so the resulting file history reflects when the changes were actually made.\n\nUnified storage keeps a bounded number of versions per resource, so the history is necessarily partial: anything older than the retained window is not in the database and cannot be written. A version whose content matches the one before it produces no commit.\n\nOnly repositories that stage commits locally support this; it is ignored otherwise.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -2143,6 +2150,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 					"skipResourceDeletion": {
 						SchemaProps: spec.SchemaProps{
 							Description: "SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "History writes one commit per stored version of each exported resource, oldest first, instead of a single commit holding only the current state. Each commit keeps the timestamp of the version it was written from, so the resulting file history reflects when the changes were actually made.\n\nUnified storage keeps a bounded number of versions per resource, so the history is necessarily partial: anything older than the retained window is not in the database and cannot be written. A version whose content matches the one before it produces no commit.\n\nOnly repositories that stage commits locally support this; it is ignored otherwise.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

@@ -91,6 +91,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	type pendingResource struct {
 		item *unstructured.Unstructured
 		shim conversionShim
+		// client is kept so a history replay can list the resource's stored
+		// versions through the same client that fetched it.
+		client dynamic.ResourceInterface
 	}
 	var pending []pendingResource
 
@@ -157,7 +160,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 				folderUIDs = append(folderUIDs, folder)
 			}
 		}
-		pending = append(pending, pendingResource{item: item, shim: rk.shim})
+		pending = append(pending, pendingResource{item: item, shim: rk.shim, client: rk.client})
 	}
 
 	if err := exportFolderAncestry(ctx, options, folderClient, repositoryResources, progress, folderUIDs); err != nil {
@@ -165,7 +168,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	}
 
 	for _, p := range pending {
-		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
+		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true, p.client); err != nil {
 			return err
 		}
 	}
@@ -209,7 +212,7 @@ func exportResource(ctx context.Context,
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false)
+		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false, client)
 	})
 }
 
@@ -227,6 +230,7 @@ func exportItem(ctx context.Context,
 	progress jobs.JobProgressRecorder,
 	generateNewUIDs bool,
 	explicitlyRequested bool,
+	historyClient dynamic.ResourceInterface,
 ) error {
 	gvk := item.GroupVersionKind()
 	name := item.GetName()
@@ -274,6 +278,14 @@ func exportItem(ctx context.Context,
 		resultBuilder.WithAction(repository.FileActionIgnored)
 		progress.Record(ctx, resultBuilder.Build())
 		return nil
+	}
+
+	// Replaying history replaces the single current-state write: the current
+	// version is itself part of the history, so writing both would duplicate it.
+	// Regenerating UIDs is deliberately incompatible — that produces new
+	// resources, which have no prior history to replay.
+	if options.History && historyClient != nil && !generateNewUIDs {
+		return exportItemHistory(ctx, historyClient, item, options, shim, repositoryResources, progress)
 	}
 
 	if shim != nil {

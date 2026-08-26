@@ -209,6 +209,20 @@ type ExportJobOptions struct {
 	// new folders on a subsequent sync rather than taking over the originals.
 	// Has no effect when folder metadata is not written.
 	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
+
+	// History writes one commit per stored version of each exported resource,
+	// oldest first, instead of a single commit holding only the current state.
+	// Each commit keeps the timestamp of the version it was written from, so the
+	// resulting file history reflects when the changes were actually made.
+	//
+	// Unified storage keeps a bounded number of versions per resource, so the
+	// history is necessarily partial: anything older than the retained window is
+	// not in the database and cannot be written. A version whose content matches
+	// the one before it produces no commit.
+	//
+	// Only repositories that stage commits locally support this; it is ignored
+	// otherwise.
+	History bool `json:"history,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -251,6 +265,20 @@ type MigrateJobOptions struct {
 	// branch migration); when true, no deletion happens and the resources are
 	// left in place.
 	SkipResourceDeletion bool `json:"skipResourceDeletion,omitempty"`
+
+	// History writes one commit per stored version of each exported resource,
+	// oldest first, instead of a single commit holding only the current state.
+	// Each commit keeps the timestamp of the version it was written from, so the
+	// resulting file history reflects when the changes were actually made.
+	//
+	// Unified storage keeps a bounded number of versions per resource, so the
+	// history is necessarily partial: anything older than the retained window is
+	// not in the database and cannot be written. A version whose content matches
+	// the one before it produces no commit.
+	//
+	// Only repositories that stage commits locally support this; it is ignored
+	// otherwise.
+	History bool `json:"history,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {
