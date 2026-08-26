@@ -888,6 +888,16 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+
+	schema = oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "UserPermission"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{

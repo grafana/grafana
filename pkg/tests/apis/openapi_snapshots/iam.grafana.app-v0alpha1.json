@@ -3183,6 +3183,37 @@
           }
         }
       }
+    },
+    "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~/permissions": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get effective permissions for the currently authenticated identity",
+        "operationId": "getCurrentUserPermissions",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "workspace",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5690,6 +5721,40 @@
               "admin",
               "member"
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermission": {
+        "description": "UserPermission is one effective action and scope granted to an identity.",
+        "type": "object",
+        "required": [
+          "action",
+          "scope"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions": {
+        "description": "UserPermissions contains the effective permissions for the current identity.",
+        "type": "object",
+        "required": [
+          "permissions"
+        ],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermission"
+            },
+            "x-kubernetes-list-type": "atomic"
           }
         }
       },
