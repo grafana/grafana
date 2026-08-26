@@ -20,11 +20,25 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
+export interface DashboardEditorAPI {
+  /** True when the open dashboard differs from its last saved version. */
+  hasUnsavedChanges(): boolean;
+  /** True when the open dashboard is in edit mode. */
+  isEditing(): boolean;
+  /** True when the dashboard sidebar's diff pane is the open pane. */
+  isDiffViewOpen(): boolean;
+  /** Calls back whenever the answer to any of the above may have changed. Returns an unsubscribe. */
+  subscribeToChanges(cb: () => void): () => void;
+  /** Opens the dashboard sidebar's diff pane. No-op when no dashboard is open. */
+  openDiffView(): void;
+}
+
 interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  dashboardEditorAPI?: DashboardEditorAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).

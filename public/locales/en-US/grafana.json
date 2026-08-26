@@ -6317,6 +6317,16 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
+      "diff": {
+        "format-json": "JSON",
+        "format-yaml": "YAML",
+        "migrated": "Note: The diff also includes changes resulting from migration to the new dashboard format.",
+        "no-changes": "No changes to show",
+        "no-changes-body": "The dashboard matches the last saved version.",
+        "pane-header": "Changes",
+        "unavailable": "Cannot show changes",
+        "unavailable-body": "The last saved dashboard is not available for comparison."
+      },
       "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",

@@ -4,12 +4,14 @@ import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContext
 import { config } from '@grafana/runtime';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
+import { dashboardEditorApi } from './dashboardEditor/dashboardEditorApi';
 import { dashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 
 const restrictedGrafanaApis: RestrictedGrafanaApisContextType = config.featureToggles.restrictedPluginApis
   ? {
       alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
       dashboardMutationAPI: dashboardMutationApi,
+      dashboardEditorAPI: dashboardEditorApi,
     }
   : {};
 
