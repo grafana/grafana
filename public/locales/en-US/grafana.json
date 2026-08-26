@@ -6020,7 +6020,6 @@
     "notebook-layout": {
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
-      "pill": "Published Notebook",
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
@@ -13015,6 +13014,9 @@
       },
       "unknown-author": "Anonymous"
     },
+    "new": {
+      "default-title": "Notebook #{{token}}"
+    },
     "save-status": {
       "failed": "Save failed",
       "pending": "Unsaved changes",
@@ -13023,6 +13025,7 @@
       "saving": "Saving…"
     },
     "view": {
+      "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
       "mode-edit": "Edit",
       "mode-view": "View",

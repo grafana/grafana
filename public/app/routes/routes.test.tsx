@@ -84,4 +84,32 @@ describe('notebooks route guards', () => {
 
     expect(getRouteRolesGuard(path)()).toEqual([]);
   });
+
+  // The blank route is the only notebook one that writes, so reading is not enough to reach it.
+  it('rejects /notebooks/new without dashboards:create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsRead]: true };
+
+    expect(getRouteRolesGuard('/notebooks/new')()).toEqual(['Reject']);
+  });
+
+  it('allows /notebooks/new with dashboards:create', () => {
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+
+    expect(getRouteRolesGuard('/notebooks/new')()).toEqual([]);
+  });
+
+  /**
+   * A notebook created by typing moves from /notebooks/new to /notebooks/<uid> while somebody is
+   * mid-sentence. Two SafeDynamicImport calls would give the two routes two component identities, so
+   * React would unmount one and mount the other, and every cell's editor was rebuilt underneath the
+   * writer. One shared component makes that a parameter change instead.
+   */
+  it('renders both notebook page routes through one component, so moving between them is not a remount', () => {
+    const routes = getAppRoutes();
+    const blank = routes.find((r) => r.path === '/notebooks/new');
+    const byUid = routes.find((r) => r.path === '/notebooks/:uid/:slug?');
+
+    expect(blank?.component).toBeDefined();
+    expect(blank?.component).toBe(byUid?.component);
+  });
 });
