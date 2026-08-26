@@ -55,6 +55,25 @@ func TestCachingMiddleware(t *testing.T) {
 			},
 		}
 
+		t.Run("QueryChunkedData bypasses the cache entirely", func(t *testing.T) {
+			t.Cleanup(func() {
+				cs.Reset()
+			})
+
+			// Even with a cache hit configured, chunked queries must not consult the cache.
+			cs.ReturnHit = true
+			cs.ReturnQueryResponse = dataResponse
+
+			err := cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+			}, nopChunkedWriter{})
+			assert.NoError(t, err)
+			// The caching service is never called for chunked queries
+			cs.AssertCalls(t, "HandleQueryRequest", 0)
+			// The request reached the underlying handler
+			assert.NotNil(t, cdt.QueryChunkedDataReq)
+		})
+
 		t.Run("If cache returns a hit, no queries are issued", func(t *testing.T) {
 			t.Cleanup(func() {
 				updateCacheCalled = false

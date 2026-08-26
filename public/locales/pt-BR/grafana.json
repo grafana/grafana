@@ -890,7 +890,6 @@
       "close": "Fechar",
       "create": "Criar",
       "delete": "Excluir",
-      "deleting": "Excluindo…",
       "edit": "Editar",
       "export": "Exportar",
       "export-all": "Exportar tudo",
@@ -1625,6 +1624,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1695,7 +1698,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Regras de alerta",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtro",
         "folder": "Pasta de destino",
@@ -1714,7 +1716,6 @@
         "routing": "Encaminhamento de notificação",
         "routing-none": "Nenhuma árvore de políticas selecionada",
         "routing-tree": "Árvore de políticas: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "As regras de alerta não serão importadas.",
         "rules-title": "Regras de alerta",
         "skipped": "Ignorado",
@@ -2495,13 +2496,11 @@
         "route-count_other": "{{count}} rotas"
       },
       "delete": {
-        "confirm": "Sim, excluir política",
-        "warning-1": "A exclusão desta política de notificação irá removê-la permanentemente.",
-        "warning-2": "Tem certeza de que deseja excluir esta política?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Esta ação removerá permanentemente a política de notificação <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Excluir política de notificação"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtre as rotas usando uma lista de correspondências separadas por vírgulas, por exemplo:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Políticas geradas automaticamente",
@@ -2546,7 +2545,9 @@
         "reset": "Redefinir",
         "resetting": "Redefinindo…",
         "title-delete-notification-policy": "Excluir política de notificação",
-        "title-reset-notification-policy": "Redefinir política de notificação"
+        "title-reset-notification-policy": "Redefinir política de notificação",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Aguarde enquanto atualizamos suas políticas de notificação.",
@@ -3832,7 +3833,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Excluir política de notificação"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3881,6 +3882,8 @@
       "title-notification-policies": "Política de notificações"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Falha ao importar recursos",
@@ -6018,6 +6021,9 @@
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Notebook",
       "pill": "Notebook publicado",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Tempo"
     },
     "on-create-new-row": {
@@ -6868,6 +6874,11 @@
       "title": "Ainda não há links de painel de controle adicionados"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7037,6 +7048,9 @@
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Opções de seleção"
+    },
+    "dashboard-controls": {
+      "add": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Voltar para a lista",
@@ -7817,9 +7831,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel.",
       "content-variable-not-referenced-other-variables-dashboard": "Esta variável não é referenciada por outras variáveis ou painel.",
       "content-variable-referenced-other-variables-dashboard": "Esta variável é referenciada por outras variáveis ou painel."
-    },
-    "variable-controls": {
-      "add-variable": "Adicionar variável"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -8742,6 +8753,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nenhuma informação de volume disponível para as consultas atuais e intervalo de tempo."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Recolher {{name}}",
       "error": "Erro ao carregar as métricas",
@@ -8754,6 +8770,7 @@
       "loading-values": "Carregando valores…",
       "no-metrics": "Nenhuma métrica encontrada",
       "search-placeholder": "Buscar métricas",
+      "show-metric-details": "",
       "show-more": "Mostrar mais",
       "show-more-metrics": "Mostrar mais métricas",
       "show-more-values": "Mostrar mais valores",
@@ -9064,15 +9081,16 @@
       "split-widen": "Painel amplo"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Abrir menu de opções de compartilhamento de traços",
+      "aria-label-share-dropdown": "",
       "critical-path": "Caminho crítico",
       "critical-path-tooltip": "Seleciona intervalos no caminho crítico: a sequência mais longa de tarefas dependentes que determina a duração mínima do rastro.",
       "duration": "Duração",
       "errors": "Erros",
       "errors-tooltip": "Seleciona intervalos em que o status é igual a \"erro\".",
       "export-started": "Exportação iniciada",
+      "feedback-group": "",
       "filters": "Filtros",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "",
       "high-latency": "Alta latência",
       "high-latency-tooltip": "Seleciona os intervalos 10% mais longos no rastro (p90).",
       "link-copied": "Link copiado para a área de transferência",
@@ -9080,13 +9098,12 @@
       "path": "Caminho",
       "route": "Rota",
       "services": "Serviços",
-      "share": "Compartilhar",
       "share-copy-link": "Copiar link",
       "share-export-json": "Exportar como JSON",
-      "share-tooltip": "Compartilhar traço",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Horário de início",
       "target": "Destino",
-      "title-share-thoughts-about-tracing-grafana": "Compartilhe sua opinião sobre os traços no Grafana.",
       "tooltip-url": "{{route}} ou {{url}} ou {{target}} ou {{path}}",
       "trace-id": "ID do traço",
       "url": "URL"
@@ -9147,6 +9164,7 @@
     "json": {
       "cancel-button": "Cancelar",
       "copy-button": "Copiar para a área de transferência",
+      "dashboard-definition": "",
       "download-button": "Baixar arquivo",
       "download-successful_toast_message": "Seu JSON foi baixado",
       "export-format": "Formato",
@@ -11271,6 +11289,13 @@
       "show": "Mostrar",
       "switch": "As recomendações seguem a solução selecionada",
       "switchSolution": "Trocar solução",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Recomendações para seu stack"
     },
     "solutions": {
@@ -11327,6 +11352,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12893,7 +12932,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12902,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12919,6 +12979,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12964,7 +13025,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13691,16 +13753,19 @@
       "behind-branch-text": "Este recurso está atrás da ramificação em {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Os demais usuários da Grafana na sua organização ainda verão este recurso até que seja realizado o merge desta ramificação",
+      "move-from-branch": "",
       "not-saved": "O restante dos usuários do Grafana na sua organização ainda verá a versão atual salva na ramificação padrão configurada até que esta ramificação seja mesclada",
       "open-in-repo-button": "Abrir em {{repoType}}",
       "open-pull-request-in-repo": "Abrir solicitação de pull no {{repoType}}",
       "update-from-branch": "Os demais usuários da Grafana na sua organização ainda verão a versão atual até que seja realizado o merge desta ramificação",
       "view-in-repo-button": "Visualizar em {{repoType}} para ver as alterações mais recentes.",
-      "view-pull-request-in-repo": "Ver solicitação de pull no {{repoType}}"
+      "view-pull-request-in-repo": "Ver solicitação de pull no {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "Um novo recurso foi criado em uma ramificação em {{repoType}}.",
     "title-deleted-resource-in-branch": "Um recurso foi excluído em uma ramificação em {{repoType}}.",
     "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir da ramificação que você acabou de criar em {{repoType}} e só é visível para você",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Um recurso foi atualizado em uma ramificação em {{repoType}}."
   },
   "provisioning": {
@@ -16275,6 +16340,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

@@ -195,7 +195,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           </p>
         </Alert>
       )}
-      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')}>
+      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')} noMargin>
         <TextArea
           aria-label={t('dashboard-scene.save-dashboard-form.aria-label-message', 'message')}
           value={options.message ?? ''}

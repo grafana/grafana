@@ -890,7 +890,6 @@
       "close": "Kapat",
       "create": "Oluştur",
       "delete": "Sil",
-      "deleting": "Siliniyor...",
       "edit": "Düzenle",
       "export": "Dışa aktar",
       "export-all": "Tümünü dışa aktar",
@@ -1625,6 +1624,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1695,7 +1698,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Uyarı kuralları",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtre",
         "folder": "Hedef klasör",
@@ -1714,7 +1716,6 @@
         "routing": "Bildirim yönlendirme",
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Uyarı kuralları içe aktarılmayacak.",
         "rules-title": "Uyarı Kuralları",
         "skipped": "Atlandı",
@@ -2495,13 +2496,11 @@
         "route-count_other": "{{count}} yönlendirme"
       },
       "delete": {
-        "confirm": "Evet, politikayı sil",
-        "warning-1": "Bu bildirim politikası silindiğinde kalıcı olarak kaldırılacaktır.",
-        "warning-2": "Bu politikayı silmek istediğinizden emin misiniz?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Bu işlem <1>{{routeName}}</1> bildirim politikasını kalıcı olarak kaldıracaktır.",
-        "title-delete-notification-policy": "Bildirim politikasını sil"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Yönlendirmeleri virgülle ayrılmış bir eşleştirici listesi kullanarak filtreleyin, ör.<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
@@ -2546,7 +2545,9 @@
         "reset": "Sıfırla",
         "resetting": "Sıfırlanıyor...",
         "title-delete-notification-policy": "Bildirim politikasını sil",
-        "title-reset-notification-policy": "Bildirim politikasını sıfırla"
+        "title-reset-notification-policy": "Bildirim politikasını sıfırla",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Bildirim politikalarınız güncellenirken lütfen bekleyin.",
@@ -3832,7 +3833,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Bildirim politikasını sil"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3881,6 +3882,8 @@
       "title-notification-policies": "Bildirim politikaları"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Kaynaklar içe aktarılamadı",
@@ -6018,6 +6021,9 @@
       "description": "Panel, metin ve kod hücrelerinden oluşan dikey bir sıra",
       "name": "Defter",
       "pill": "Yayımlanmış Not Defteri",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Zaman"
     },
     "on-create-new-row": {
@@ -6868,6 +6874,11 @@
       "title": "Henüz eklenmiş pano bağlantısı yok"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7037,6 +7048,9 @@
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Seçim ayarları"
+    },
+    "dashboard-controls": {
+      "add": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Listeye geri dön",
@@ -7817,9 +7831,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor.",
       "content-variable-not-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvurulmuyor.",
       "content-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor."
-    },
-    "variable-controls": {
-      "add-variable": "Değişken ekle"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -8742,6 +8753,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Mevcut sorgular ve zaman aralığı için birim bilgisi mevcut değil."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} metriğini daralt",
       "error": "Metrikler yüklenemedi",
@@ -8754,6 +8770,7 @@
       "loading-values": "Değerler yükleniyor...",
       "no-metrics": "Metrik bulunamadı",
       "search-placeholder": "Metrik ara",
+      "show-metric-details": "",
       "show-more": "Daha fazla göster",
       "show-more-metrics": "Daha fazla metrik göster",
       "show-more-values": "Daha fazla değer göster",
@@ -9064,15 +9081,16 @@
       "split-widen": "Bölmeyi genişlet"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "İzlemeyi paylaşma seçenekleri menüsünü aç",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritik yol",
       "critical-path-tooltip": "Kritik yoldaki aralıkları seçer. Bu, izdeki minimum süreyi belirleyen, bağımlı görevlerin en uzun dizisi olur.",
       "duration": "Süre",
       "errors": "Hata",
       "errors-tooltip": "Durumu \"hata\" olan aralıkları seçer.",
       "export-started": "Dışa aktarma işlemi başlatıldı",
+      "feedback-group": "",
       "filters": "Filtreler",
-      "give-feedback": "Geri Bildirim",
+      "give-feedback-item": "",
       "high-latency": "Yüksek gecikme",
       "high-latency-tooltip": "İzdeki en uzun %10'luk aralıkları seçer (p90).",
       "link-copied": "Bağlantı panoya kopyalandı",
@@ -9080,13 +9098,12 @@
       "path": "Yol",
       "route": "Yol",
       "services": "Hizmetler",
-      "share": "Paylaş",
       "share-copy-link": "Bağlantıyı kopyala",
       "share-export-json": "JSON olarak dışa aktar",
-      "share-tooltip": "İzlemeyi paylaş",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Başlangıç zamanı",
       "target": "Hedef",
-      "title-share-thoughts-about-tracing-grafana": "Grafana'daki izleme deneyiminiz hakkındaki görüşlerinizi paylaşın.",
       "tooltip-url": "{{route}} veya {{url}} veya {{target}} veya {{path}}",
       "trace-id": "İzleme kimliği",
       "url": "URL"
@@ -9147,6 +9164,7 @@
     "json": {
       "cancel-button": "İptal",
       "copy-button": "Panoya kopyala",
+      "dashboard-definition": "",
       "download-button": "Dosyayı indir",
       "download-successful_toast_message": "JSON dosyanız indirildi",
       "export-format": "Biçim",
@@ -11271,6 +11289,13 @@
       "show": "Göster",
       "switch": "Öneriler seçilen çözüme göre belirlenir",
       "switchSolution": "Çözümü değiştir",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Yığınınız için öneriler"
     },
     "solutions": {
@@ -11327,6 +11352,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12893,7 +12932,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12902,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12919,6 +12979,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12964,7 +13025,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13691,16 +13753,19 @@
       "behind-branch-text": "Bu kaynak, {{repoType}} içindeki dalın gerisinde.",
       "branch-targets": "",
       "delete-from-branch": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar bu kaynağı görmeye devam edecektir",
+      "move-from-branch": "",
       "not-saved": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar yapılandırılmış varsayılan dala kaydedilen mevcut sürümü görmeye devam edecektir",
       "open-in-repo-button": "Şurada aç: {{repoType}}",
       "open-pull-request-in-repo": "Şurada çekme isteği aç: {{repoType}}",
       "update-from-branch": "Kuruluşunuzdaki diğer Grafana kullanıcıları, bu dal birleştirilene kadar mevcut sürümü görmeye devam edecektir",
       "view-in-repo-button": "En son değişiklikleri görmek için {{repoType}} içinde görüntüleyin.",
-      "view-pull-request-in-repo": "Çekme isteğini şurada görüntüleyin: {{repoType}}"
+      "view-pull-request-in-repo": "Çekme isteğini şurada görüntüleyin: {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "{{repoType}} içindeki bir dalda yeni bir kaynak oluşturuldu.",
     "title-deleted-resource-in-branch": "{{repoType}} içindeki bir dalda bir kaynak silindi.",
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "{{repoType}} içindeki bir dalda bir kaynak güncellendi."
   },
   "provisioning": {
@@ -16275,6 +16340,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

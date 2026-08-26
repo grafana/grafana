@@ -22,6 +22,7 @@ v0alpha1: {
 		teamlbacrulev0alpha1,
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1,
+		authInfov0alpha1,
 	]
 
 	routes: {

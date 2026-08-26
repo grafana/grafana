@@ -900,7 +900,6 @@
       "close": "Закрыть",
       "create": "Создать",
       "delete": "Удалить",
-      "deleting": "Удаление...",
       "edit": "Редактировать",
       "export": "Экспорт",
       "export-all": "Экспортировать всё",
@@ -1639,6 +1638,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1709,7 +1712,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Правила оповещения",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Фильтр",
         "folder": "Целевая папка",
@@ -1728,7 +1730,6 @@
         "routing": "Маршрутизация уведомлений",
         "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Правила оповещений импортированы не будут.",
         "rules-title": "Правила оповещения",
         "skipped": "Пропущено",
@@ -2527,13 +2528,13 @@
         "route-count_other": "{{count}} маршрута"
       },
       "delete": {
-        "confirm": "Да, удалить политику",
-        "warning-1": "Политика уведомления будет безвозвратно удалена.",
-        "warning-2": "Действительно удалить политику?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Это действие приведет к безвозвратному удалению политики уведомлений <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Удалить политику уведомлений"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Фильтруйте маршруты, используя список сопоставлений, разделенных запятыми, например <1>серьезность=критическая, регион=EMEA</1>",
       "generated-policies": "Автоматически генерируемые политики",
@@ -2580,7 +2581,11 @@
         "reset": "Сброс",
         "resetting": "Сброс...",
         "title-delete-notification-policy": "Удалить политику уведомлений",
-        "title-reset-notification-policy": "Сброс политики уведомлений"
+        "title-reset-notification-policy": "Сброс политики уведомлений",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Подождите, пока мы обновляем ваши политики уведомления.",
@@ -3890,7 +3895,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Удаление политики уведомления"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3939,6 +3944,8 @@
       "title-notification-policies": "Политики уведомления"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Не удалось импортировать ресурсы",
@@ -6098,6 +6105,9 @@
       "description": "Вертикальная последовательность панелей, текста и ячеек кода",
       "name": "Заметки",
       "pill": "Опубликованные заметки",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Время"
     },
     "on-create-new-row": {
@@ -6976,6 +6986,11 @@
       "title": "Ссылки на дашборды еще не добавлены"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7145,6 +7160,9 @@
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Параметры выбора"
+    },
+    "dashboard-controls": {
+      "add": ""
     },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
@@ -7929,9 +7947,6 @@
       "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
       "content-variable-not-referenced-other-variables-dashboard": "На эту переменную не ссылается ни одна другая переменная или дашборд.",
       "content-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд."
-    },
-    "variable-controls": {
-      "add-variable": "Добавить переменную"
     },
     "variable-edit-actions": {
       "edit-custom-values": "",
@@ -8858,6 +8873,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Информация об объеме недоступна для текущих запросов и временного диапазона."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Свернуть {{name}}",
       "error": "Не удалось загрузить метрики",
@@ -8870,6 +8890,7 @@
       "loading-values": "Загрузка значений…",
       "no-metrics": "Метрики не найдены",
       "search-placeholder": "Поиск метрик",
+      "show-metric-details": "",
       "show-more": "Показать еще",
       "show-more-metrics": "Показать больше метрик",
       "show-more-values": "Показать больше значений",
@@ -9188,15 +9209,16 @@
       "split-widen": "Расширить область"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Открыть меню параметров трассировки общего доступа",
+      "aria-label-share-dropdown": "",
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
+      "feedback-group": "",
       "filters": "Фильтры",
-      "give-feedback": "Обратная связь",
+      "give-feedback-item": "",
       "high-latency": "Высокая задержка",
       "high-latency-tooltip": "Выбирает 10% самых длинных диапазонов в трассировке (p90).",
       "link-copied": "Ссылка скопирована в буфер обмена",
@@ -9204,13 +9226,12 @@
       "path": "Путь",
       "route": "Маршрут",
       "services": "Службы",
-      "share": "Поделиться",
       "share-copy-link": "Копировать ссылку",
       "share-export-json": "Экспорт в формате JSON",
-      "share-tooltip": "Поделиться трассировкой",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Время начала",
       "target": "Цель",
-      "title-share-thoughts-about-tracing-grafana": "Поделитесь своим мнением о трассировке в Grafana.",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
       "trace-id": "Идентификатор трассировки",
       "url": "URL-адрес"
@@ -9271,6 +9292,7 @@
     "json": {
       "cancel-button": "Отмена",
       "copy-button": "Копировать в буфер обмена",
+      "dashboard-definition": "",
       "download-button": "Загрузить файл",
       "download-successful_toast_message": "JSON-файл загружен",
       "export-format": "Формат",
@@ -11419,6 +11441,13 @@
       "show": "Показать",
       "switch": "Рекомендации соответствуют выбранному решению",
       "switchSolution": "Поменять решение",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Рекомендации для вашего стека"
     },
     "solutions": {
@@ -11499,6 +11528,24 @@
         "stats-hosts_few": "",
         "stats-hosts_many": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_few": "",
+        "checks_many": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_few": "",
+        "failing_many": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -13089,7 +13136,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -13098,6 +13158,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13115,6 +13183,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13164,7 +13233,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13891,16 +13961,19 @@
       "behind-branch-text": "Этот ресурс находится за ветвью в {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть этот ресурс до тех пор, пока эта ветвь не будет объединена",
+      "move-from-branch": "",
       "not-saved": "Остальные пользователи Grafana в вашей организации будут по-прежнему видеть текущую версию, сохраненную в заданной ветви по умолчанию, до тех пор, пока эта ветвь не будет объединена",
       "open-in-repo-button": "Открыть в {{repoType}}",
       "open-pull-request-in-repo": "Открыть запрос на включение изменений в {{repoType}}",
       "update-from-branch": "Остальные пользователи Grafana в вашей организации будут видеть текущую версию до тех пор, пока эта ветвь не будет объединена",
       "view-in-repo-button": "Просмотрите его в {{repoType}}, чтобы увидеть последние изменения.",
-      "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}"
+      "view-pull-request-in-repo": "Просмотреть запрос на включение изменений в {{repoType}}",
+      "view-saved-version": ""
     },
     "title-created-branch-in-repo": "В ветви в {{repoType}} создан новый ресурс.",
     "title-deleted-resource-in-branch": "В ветви репозитория {{repoType}} удален ресурс.",
     "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "В ветви репозитория {{repoType}} обновлен ресурс."
   },
   "provisioning": {
@@ -16535,6 +16608,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

@@ -273,6 +273,37 @@
         }
       }
     },
+    "/dashboards/trash": {
+      "post": {
+        "tags": ["Search"],
+        "description": "List deleted Dashboard resources in a namespace.",
+        "operationId": "listDashboardTrashV2alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A TrashQuery describing what to match, sort and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A TrashResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboards/{name}": {
       "get": {
         "tags": ["Dashboard"],
@@ -3827,7 +3858,7 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\" or \"NotIn\" in v1.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
             "type": "string",
             "default": ""
           },
@@ -4062,8 +4093,72 @@
           }
         }
       },
+      "TrashQuery": {
+        "description": "TrashQuery is the request body for POST .../{resource}/trash. It is a deliberately smaller subset of SearchQuery: trash documents index only the standard fields, so there is no labelSelector and no faceting. Field references are restricted to the fixed trash field set.",
+        "type": "object",
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "continue": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/SortField"
+            }
+          },
+          "where": {
+            "$ref": "#/components/schemas/WhereNode"
+          }
+        }
+      },
+      "TrashResults": {
+        "description": "TrashResults is the response body for POST .../{resource}/trash. It has the same item shape as SearchResults but never carries facets.",
+        "type": "object",
+        "required": ["metadata", "items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "$ref": "#/components/schemas/ResultItem"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "$ref": "#/components/schemas/ResultsMetadata"
+          }
+        }
+      },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
