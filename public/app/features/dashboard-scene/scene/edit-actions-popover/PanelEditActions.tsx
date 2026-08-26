@@ -9,7 +9,6 @@ import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getPanelIdForVizPanel } from '../../utils/utils';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {
@@ -21,6 +20,10 @@ import {
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
 import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
+
+function getPanelIdForVizPanel(panel: VizPanel): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+}
 
 export function PanelEditActions({
   onClickEdit,
