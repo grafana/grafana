@@ -118,6 +118,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
@@ -1536,18 +1537,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Default layout used for new Tab and Row containers
-   * Undefined if default layout is not set in preferences
+   * Default layout used for new Tab and Row containers.
+   * Dashboards without a persisted layout preference follow the instance default:
+   * auto grid when the auto grid feature flag is enabled, classic grid otherwise.
    */
-  getDefaultLayout() {
+  getDefaultLayout(): DashboardLayoutManager {
     if (this.state.preferences?.defaultLayoutTemplate) {
       return this.state.preferences.defaultLayoutTemplate.clone();
     }
-    return undefined;
+
+    return this.isAutoGridInstanceDefault()
+      ? AutoGridLayoutManager.createEmpty()
+      : DefaultGridLayoutManager.createEmpty();
   }
 
   getDefaultLayoutType() {
-    return this.state.preferences?.defaultLayoutTemplate?.descriptor?.id;
+    if (this.state.preferences?.defaultLayoutTemplate) {
+      return this.state.preferences.defaultLayoutTemplate.descriptor.id;
+    }
+
+    return this.isAutoGridInstanceDefault()
+      ? AutoGridLayoutManager.descriptor.id
+      : DefaultGridLayoutManager.descriptor.id;
+  }
+
+  private isAutoGridInstanceDefault(): boolean {
+    return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardAutoGridDefault, true);
   }
 
   updateDefaultLayoutTemplate(template: DashboardLayoutManager) {

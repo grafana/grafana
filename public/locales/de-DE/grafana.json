@@ -890,7 +890,6 @@
       "close": "Schließen",
       "create": "Erstellen",
       "delete": "Löschen",
-      "deleting": "Wird gelöscht …",
       "edit": "Bearbeiten",
       "export": "Exportieren",
       "export-all": "Alles exportieren",
@@ -1625,6 +1624,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1695,7 +1698,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Warnregeln",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filter",
         "folder": "Zielordner",
@@ -1714,7 +1716,6 @@
         "routing": "Benachrichtigungs-Routing",
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Warnregeln werden nicht importiert.",
         "rules-title": "Warnregeln",
         "skipped": "Übersprungen",
@@ -2495,13 +2496,11 @@
         "route-count_other": "{{count}} Routen"
       },
       "delete": {
-        "confirm": "Ja, Richtlinie löschen",
-        "warning-1": "Wenn Sie diese Benachrichtigungsrichtlinie löschen, wird sie dauerhaft entfernt.",
-        "warning-2": "Möchten Sie diese Richtlinie wirklich löschen?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Durch diese Aktion wird die Benachrichtigungsrichtlinie <1>{{routeName}}</1> dauerhaft entfernt.",
-        "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtern Sie Routen und trennen Sie die Matchers durch Kommata, z. B.:<1>Schweregrad=kritisch, Region=EMEA</1>",
       "generated-policies": "Automatisch generierte Richtlinien",
@@ -2546,7 +2545,9 @@
         "reset": "Zurücksetzen",
         "resetting": "Wird zurückgesetzt …",
         "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen",
-        "title-reset-notification-policy": "Benachrichtigungsrichtlinie zurücksetzen"
+        "title-reset-notification-policy": "Benachrichtigungsrichtlinie zurücksetzen",
+        "warning-child-routes_one": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Bitte warten Sie, während wir Ihre Benachrichtigungsrichtlinien aktualisieren.",
@@ -3832,7 +3833,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Benachrichtigungsrichtlinie löschen"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3881,6 +3882,8 @@
       "title-notification-policies": "Benachrichtigungsrichtlinien"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Import der Ressourcen fehlgeschlagen",
@@ -6018,6 +6021,9 @@
       "description": "Eine vertikale Abfolge von Panels, Text und Codezellen",
       "name": "Notizbuch",
       "pill": "Veröffentlichtes Notizbuch",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Zeit"
     },
     "on-create-new-row": {
@@ -6867,6 +6873,11 @@
       "info-box-content": "Mit Dashboard-Links können Sie Links zu anderen Dashboards und Websites direkt unter der Dashboard-Kopfzeile platzieren. <2>Mehr erfahren</2>",
       "title": "Es wurden noch keine Dashboard-Links hinzugefügt"
     }
+  },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
   },
   "dashboard-prompt": {
     "datasource-entry": {
@@ -8742,6 +8753,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Für die aktuellen Abfragen und den aktuellen Zeitbereich sind keine Volumeninformationen verfügbar."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} einklappen",
       "error": "Die Metriken konnten nicht geladen werden",
@@ -8754,6 +8770,7 @@
       "loading-values": "Werte werden geladen …",
       "no-metrics": "Keine Metriken gefunden",
       "search-placeholder": "Metriken suchen",
+      "show-metric-details": "",
       "show-more": "Mehr anzeigen",
       "show-more-metrics": "Weitere Metriken anzeigen",
       "show-more-values": "Weitere Werte anzeigen",
@@ -9064,15 +9081,16 @@
       "split-widen": "Bereich verbreitern"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Menü „Trace-Optionen teilen“ öffnen",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
       "errors": "Fehler",
       "errors-tooltip": "Wählt Spannen aus, in denen der Status „Fehler“ ist.",
       "export-started": "Export gestartet",
+      "feedback-group": "",
       "filters": "Filter",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "",
       "high-latency": "Hohe Latenz",
       "high-latency-tooltip": "Wählt die 10 % längsten Spannen im Trace aus (p90).",
       "link-copied": "Link in die Zwischenablage kopiert",
@@ -9080,13 +9098,12 @@
       "path": "Pfad",
       "route": "Route",
       "services": "Dienstleistungen",
-      "share": "Teilen",
       "share-copy-link": "Link kopieren",
       "share-export-json": "Als JSON exportieren",
-      "share-tooltip": "Trace teilen",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Startzeitpunkt",
       "target": "Ziel",
-      "title-share-thoughts-about-tracing-grafana": "Sagen Sie Ihre Meinung zum Tracing in Grafana.",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
       "trace-id": "Trace-ID",
       "url": "URL"
@@ -11272,6 +11289,13 @@
       "show": "Anzeigen",
       "switch": "Die Empfehlungen folgen der ausgewählten Lösung",
       "switchSolution": "Lösung wechseln",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Empfehlungen für Ihren Stack"
     },
     "solutions": {
@@ -11328,6 +11352,20 @@
         "series_other": "",
         "stats-hosts_one": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12894,7 +12932,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12903,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12920,6 +12979,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12965,7 +13025,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13692,6 +13753,7 @@
       "behind-branch-text": "Diese Ressource ist hinter dem Branch in {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen diese Ressource weiterhin, bis dieser Branch zusammengeführt wird",
+      "move-from-branch": "",
       "not-saved": "Die übrigen Nutzer von Grafana in Ihrem Unternehmen sehen weiterhin die aktuelle Version, die im konfigurierten Standard-Branch gespeichert ist, bis dieser Branch zusammengeführt wird",
       "open-in-repo-button": "Öffnen in {{repoType}}",
       "open-pull-request-in-repo": "Pull-Request öffnen in {{repoType}}",
@@ -13703,6 +13765,7 @@
     "title-created-branch-in-repo": "Eine neue Ressource wurde in einem Branch in {{repoType}} erstellt.",
     "title-deleted-resource-in-branch": "Eine Ressource wurde in einem Branch in {{repoType}} gelöscht.",
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Eine Ressource wurde in einem Branch in {{repoType}} aktualisiert."
   },
   "provisioning": {
@@ -16277,6 +16340,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

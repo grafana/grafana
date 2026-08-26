@@ -30,6 +30,14 @@ var enrolledWithoutSearchFields = map[string]bool{
 	"dashboard.grafana.app/notebooks": true,
 }
 
+// trashAllowlist holds the kinds allowed to serve the trash endpoint.
+//
+// Trash grants access to whoever deleted the object, or to folder admins, which
+// only makes sense for kinds that live in folders.
+var trashAllowlist = map[string]bool{
+	"dashboard.grafana.app/dashboards": true,
+}
+
 // enrolled reports whether a kind gets the search endpoints at all.
 //
 // Declared fields stand in for "someone reviewed this kind". Search works
@@ -41,8 +49,8 @@ func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
 // Build returns the search and trash routes to mount, or nil when both are off or
 // there is no client to serve them with.
 //
-// The two are switched separately because trash authorizes on a different rule
-// that has not been reviewed yet. See searchapi.ConfigKeyTrash.
+// The two are switched separately because trash grants access differently from
+// search. See trashAllowlist and searchapi.ConfigKeyTrash.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -147,7 +155,7 @@ func BuildForServedGroupVersions(
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled && kind.HasTrashEndpoint() {
+				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

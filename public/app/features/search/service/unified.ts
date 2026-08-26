@@ -34,7 +34,7 @@ import {
   type SearchQuery,
   type SearchResultMeta,
 } from './types';
-import { appendFrame, filterSearchResults, replaceCurrentFolderQuery } from './utils';
+import { appendFrame, replaceCurrentFolderQuery } from './utils';
 
 const searchURI = `${v0alphaBaseURL}/search`;
 
@@ -145,8 +145,9 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      const data = await deletedDashboardsCache.get();
-      const results = filterSearchResults(data, query);
+      // Both the filtering and the sorting happen behind this call: in the browser today,
+      // on the server once the trash endpoint is switched on.
+      const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
       rsp = await this.fetchResponse(uri);

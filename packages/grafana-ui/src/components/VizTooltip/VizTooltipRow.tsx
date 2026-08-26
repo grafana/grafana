@@ -57,8 +57,21 @@ export const VizTooltipRow = ({
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
+  delta,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
+
+  const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
+
+  const deltaNode =
+    delta == null ? null : (
+      <span
+        className={delta.numeric > 0 ? styles.deltaPositive : delta.numeric < 0 ? styles.deltaNegative : undefined}
+      >{` ${deltaDisplay}`}</span>
+    );
+
+  // the delta is a separate node for coloring, but copying the value should keep both values
+  const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
   const innerValueScrollStyle: CSSProperties = showValueScroll
     ? {
@@ -198,6 +211,7 @@ export const VizTooltipRow = ({
         {!isPinned ? (
           <div className={styles.value} style={innerValueScrollStyle}>
             {value}
+            {deltaNode}
           </div>
         ) : (
           <>
@@ -210,10 +224,11 @@ export const VizTooltipRow = ({
             <div
               className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
-              onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
+              onClick={() => copyToClipboard(copyText ? copyText.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
             >
               {value}
+              {deltaNode}
             </div>
           </>
         )}
@@ -266,6 +281,12 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
+  }),
+  deltaPositive: css({
+    color: theme.colors.success.text,
+  }),
+  deltaNegative: css({
+    color: theme.colors.error.text,
   }),
   copy: css({
     cursor: 'pointer',
