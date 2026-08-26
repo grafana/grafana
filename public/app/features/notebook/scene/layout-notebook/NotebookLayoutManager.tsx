@@ -139,11 +139,28 @@ export class NotebookLayoutManager
     return undefined;
   }
 
+  /**
+   * The cells that are part of the notebook, as opposed to the ones that are part of the editor.
+   *
+   * Editing keeps an empty block at the bottom ready to type in (see appendSystemCell), and nothing
+   * about it came from the person editing. Saving it wrote an empty paragraph into notebooks that were
+   * only opened, and it would have created a notebook out of a blank page nobody typed in.
+   *
+   * Only the last one, and only when it is empty: an empty block anywhere else is one somebody left
+   * there on purpose.
+   */
+  public contentCells(): NotebookCellItem[] {
+    const { cells } = this.state;
+    const last = cells[cells.length - 1];
+
+    return last && isEmptyMarkdown(last.state.content) ? cells.slice(0, -1) : cells;
+  }
+
   // Serialization lives here instead of in a helper file, so that this file never has to import the
   // serializer. If both files imported each other they would form a cycle, which is what this layout
   // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
   public serialize(): NotebookLayoutKind {
-    const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
+    const cells: NotebookLayoutItemKind[] = this.contentCells().map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
@@ -755,7 +772,7 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
  * typeable markdown slot either, so a panel ending up last must still get a fresh empty cell appended
  * after it, exactly like any other non-empty trailing content would.
  */
-function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
+export function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
   return content?.kind === 'Markdown' && content.spec.text === '';
 }
 

@@ -17,6 +17,7 @@ import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/
 
 import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
+import { isEmptyMarkdown } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
@@ -35,13 +36,28 @@ const UNKNOWN_SURVIVORS_WARNING =
  * catches that case, but it checks the REQUEST, and only the OUTCOME shows which cells survived.
  */
 function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec): string[] {
-  const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
-  const survived = new Set(cellNames(applied));
-  const dropped = [...new Set(cellNames(requested))].filter((name) => !survived.has(name));
+  const survived = new Set(applied.layout.spec.cells.map((cell) => cell.spec.element.name));
+  const dropped = [...new Set(requestedCellNames(requested))].filter((name) => !survived.has(name));
 
   return dropped.length > 0
     ? [`These cells were not applied and are missing from the notebook: ${dropped.join(', ')}.`]
     : [];
+}
+
+/**
+ * The cells a spec asks for, minus a trailing empty block. Editing keeps one of those at the bottom and
+ * the save model leaves it out (see `NotebookLayoutManager.contentCells`), so counting it here would
+ * report a cell as lost when nothing was lost.
+ *
+ * `cells` is guarded because this spec comes from the caller, and Go marshals an empty slice as `null`.
+ */
+function requestedCellNames(spec: NotebookSpec): string[] {
+  const cells = spec.layout.spec.cells ?? [];
+  const last = cells[cells.length - 1];
+  const lastElement = last ? spec.elements?.[last.spec.element.name] : undefined;
+  const endsWithEmptyBlock = lastElement?.kind === 'Cell' && isEmptyMarkdown(lastElement.spec.content);
+
+  return (endsWithEmptyBlock ? cells.slice(0, -1) : cells).map((cell) => cell.spec.element.name);
 }
 
 // Strict, unlike the dashboard APPLY_SPEC it otherwise mirrors: mistype `validate` here and the spec

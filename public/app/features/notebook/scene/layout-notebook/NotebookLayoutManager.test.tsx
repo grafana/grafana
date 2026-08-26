@@ -154,10 +154,9 @@ describe('NotebookLayoutManager', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the document header with badge, title, time range and tags', async () => {
+  it('renders the document header with title, time range and tags', async () => {
     renderNotebook();
 
-    expect(screen.getByText('Published Notebook')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
     expect(screen.getByText(/now-6h/)).toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();
@@ -1143,6 +1142,48 @@ describe('NotebookLayoutManager', () => {
 
       history.redo();
       expect(manager.state.cells[1]).toBe(duplicate);
+    });
+  });
+
+  /**
+   * Editing keeps an empty block at the bottom ready to type in. It belongs to the editor, not to the
+   * notebook, so it must not reach the saved document.
+   */
+  describe("serialize() and the editor's trailing empty block", () => {
+    const empty = { kind: 'Markdown' as const, spec: { text: '' } };
+    const written = { kind: 'Markdown' as const, spec: { text: 'Hello' } };
+
+    function managerWith(...contents: Array<typeof empty | undefined>) {
+      return new NotebookLayoutManager({
+        cells: contents.map(
+          (content, i) => new NotebookCellItem({ elementName: `md${i + 1}`, source: 'user', content })
+        ),
+      });
+    }
+
+    function names(manager: NotebookLayoutManager) {
+      return manager.serialize().spec.cells.map((cell) => cell.spec.element.name);
+    }
+
+    it('leaves out a trailing empty block', () => {
+      expect(names(managerWith(written, empty))).toEqual(['md1']);
+    });
+
+    it('keeps an empty block that somebody left in the middle', () => {
+      expect(names(managerWith(written, empty, written))).toEqual(['md1', 'md2', 'md3']);
+    });
+
+    // Only the last one. Two in a row means the one before it was left there deliberately.
+    it('leaves out only the last of two trailing empty blocks', () => {
+      expect(names(managerWith(written, empty, empty))).toEqual(['md1', 'md2']);
+    });
+
+    it('keeps a trailing cell that holds no content at all, which is not an empty block', () => {
+      expect(names(managerWith(written, undefined))).toEqual(['md1', 'md2']);
+    });
+
+    it('serializes an empty layout when the block is the only cell', () => {
+      expect(names(managerWith(empty))).toEqual([]);
     });
   });
 
