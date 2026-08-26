@@ -15,6 +15,11 @@ import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasourc
 
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
+const notify = { success: jest.fn(), warning: jest.fn(), error: jest.fn() };
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => notify,
+}));
+
 const server = setupMswServer();
 const wrapper = () => getWrapper({ renderWithRouter: true });
 
@@ -58,6 +63,7 @@ beforeEach(() => {
   postState.lastPayload = null;
   grantUserRole('Admin');
   setupAlertmanagersStatus(server);
+  notify.success.mockClear();
 });
 
 describe('useAutoSyncConfiguration — state resolution', () => {
@@ -190,6 +196,24 @@ describe('useAutoSyncConfiguration — save / disable', () => {
     });
 
     expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' });
+    expect(notify.success).toHaveBeenCalledWith('Mimir Alertmanager auto-sync enabled');
+  });
+
+  it('does not show a success toast when save is called with { silent: true }', async () => {
+    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+    setupAdminConfigPost(server, postState, 200);
+
+    const { result } = renderHook(() => useAutoSyncConfiguration(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current.state.kind).toBe('unconfigured'));
+
+    act(() => result.current.setSelectedUid('mimir-uid'));
+    await act(async () => {
+      await result.current.save(undefined, { silent: true });
+    });
+
+    expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' });
+    expect(notify.success).not.toHaveBeenCalled();
   });
 
   it('clears the selection override after a successful save so the picker re-syncs to the saved UID', async () => {
