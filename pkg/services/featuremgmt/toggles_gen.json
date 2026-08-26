@@ -2855,6 +2855,7 @@
         "name": "grafana.assetSriChecks",
         "resourceVersion": "1782832293915",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-26T10:54:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-30 15:11:33.915164 +0000 UTC"
         }
