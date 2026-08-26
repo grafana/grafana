@@ -4,7 +4,7 @@ import { type Unsubscribable } from 'rxjs';
 import { SceneObjectStateChangedEvent, type SceneObjectStateChangedPayload } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { updateNotebook } from '../api/notebookResource';
+import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../types';
 
@@ -257,11 +257,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    const { uid } = this.scene.state;
-    if (!uid) {
-      return;
-    }
-
     this.changePending = false;
 
     let spec: NotebookSpec;
@@ -286,7 +281,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
 
-    this.inFlightSave = updateNotebook(uid, spec)
+    // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
+    // write is what creates it. Everything either branch does afterwards is the same.
+    const { uid } = this.scene.state;
+
+    this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
         this.recordWritten(spec, serialized);
         this.hasSavedOnce = true;
@@ -316,6 +315,24 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           this.saveNow();
         }
       });
+  }
+
+  /**
+   * Writes the spec, creating the notebook if this is its first save.
+   *
+   * The uid is adopted onto the scene before this resolves, so a save queued behind this one updates the
+   * notebook that was just created rather than creating a second. Only reached with something to write,
+   * which is what stops a blank notebook nobody typed in from being created at all.
+   */
+  private write(uid: string | undefined, spec: NotebookSpec): Promise<{ generation?: number }> {
+    if (uid) {
+      return updateNotebook(uid, spec);
+    }
+
+    return createNotebook(spec).then(({ uid: created, generation }) => {
+      this.scene.setState({ uid: created });
+      return { generation };
+    });
   }
 }
 
