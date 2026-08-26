@@ -6,20 +6,31 @@ import { moveElement } from '../element/moveElement';
 interface ReorderAutoGridItemsProps {
   layout: AutoGridLayout;
   movedItem: AutoGridItem;
-  fromChildren: AutoGridItem[];
-  toChildren: AutoGridItem[];
+  fromIndex: number;
+  toIndex: number;
+}
+
+export function moveToIndex(children: AutoGridItem[], panelKey: string, index: number): AutoGridItem[] {
+  const current = children.find((child) => child.state.body.state.key === panelKey);
+  if (!current) {
+    return children;
+  }
+
+  const rest = children.filter((child) => child !== current);
+  rest.splice(Math.min(index, rest.length), 0, current);
+  return rest;
 }
 
 /**
  * Records a single undoable move covering a whole drag gesture that reordered panels within one
- * AutoGridLayout, from the order before the drag to the order after.
+ * AutoGridLayout, from the index before the drag to the index after.
  */
-export function reorderAutoGridItems({ layout, movedItem, fromChildren, toChildren }: ReorderAutoGridItemsProps): void {
-  const changed = fromChildren.length !== toChildren.length || fromChildren.some((child, i) => child !== toChildren[i]);
-
-  if (!changed) {
+export function reorderAutoGridItems({ layout, movedItem, fromIndex, toIndex }: ReorderAutoGridItemsProps): void {
+  if (fromIndex === toIndex) {
     return;
   }
+
+  const panelKey = movedItem.state.body.state.key!;
 
   moveElement({
     source: layout,
@@ -28,11 +39,11 @@ export function reorderAutoGridItems({ layout, movedItem, fromChildren, toChildr
     // would otherwise get the sidebar hijacked to the last one after every drop.
     selectOnMove: false,
     perform: () => {
-      layout.setState({ children: toChildren });
+      layout.setState({ children: moveToIndex(layout.state.children, panelKey, toIndex) });
       layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
     },
     undo: () => {
-      layout.setState({ children: fromChildren });
+      layout.setState({ children: moveToIndex(layout.state.children, panelKey, fromIndex) });
       layout.publishEvent(new ObjectsReorderedOnCanvasEvent(layout), true);
     },
   });

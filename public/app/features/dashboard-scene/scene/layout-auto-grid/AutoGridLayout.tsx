@@ -217,11 +217,12 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     // reordered within the same layout (moving between layouts is handled by the orchestrator)
     if (!droppedElsewhere && draggedGridItem && startSnapshot) {
+      const finalOrder = this.state.draggedChildren ?? startSnapshot;
       reorderAutoGridItems({
         layout: this,
         movedItem: draggedGridItem,
-        fromChildren: startSnapshot,
-        toChildren: this.state.draggedChildren ?? startSnapshot,
+        fromIndex: startSnapshot.findIndex((child) => child === draggedGridItem),
+        toIndex: finalOrder.findIndex((child) => child === draggedGridItem),
       });
     }
 
