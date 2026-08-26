@@ -376,11 +376,11 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    make devenv sources=self-instrumentation
    ```
 
-   Prefer `jaegeronly` over the plain `jaeger` block: `jaeger` also starts Loki and promtail and requires the Loki Docker log-driver plugin, whereas `jaegeronly` has no such dependency.
+   Prefer `jaegeronly` over the plain `jaeger` block, since `jaeger` also starts Loki and promtail and requires the Loki Docker log-driver plugin, whereas `jaegeronly` has no such dependency.
 
 1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
-   There is no `enabled` flag — setting an exporter `address` is what turns tracing on. Tracing config is read at **startup**, so restart the backend after editing `custom.ini`.
+   There is no `enabled` flag, to turn tracing on you need to set an exporter `address`. Tracing configuration is read at **startup**, so restart the backend after editing `custom.ini`.
 
    For the `jaegeronly` block, use the Jaeger exporter:
 
@@ -407,7 +407,7 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 
 1. Provision the data sources
 
-   `make devenv` only starts the containers — it does not provision data sources. Run the setup script (from inside `devenv`) to symlink `devenv/datasources.yaml` into `conf/provisioning/datasources/`:
+   `make devenv` only starts the containers but it doesn't provision data sources. Run the setup script (from inside `devenv`) to symlink `devenv/datasources.yaml` into `conf/provisioning/datasources/`:
 
    ```bash
    cd devenv
@@ -426,7 +426,7 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
    - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
 
-### Troubleshooting local tracing
+### Troubleshoot local tracing
 
 - **`http://localhost:16686` refused.** The `self-instrumentation` block has no Jaeger. Use Explore with the `gdev-tempo` data source instead.
 - **No Tempo/Jaeger data source in Explore.** The setup script wasn't run. Check for the `dev.yaml` symlink under `conf/provisioning/datasources/`.
