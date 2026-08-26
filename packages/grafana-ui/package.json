@@ -79,6 +79,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/serialize": "^1.3.3",
     "@floating-ui/react": "^0.27.19",
+    "@grafana/assistant": "^0.1.34",
     "@grafana/data": "13.3.0-pre",
     "@grafana/e2e-selectors": "13.3.0-pre",
     "@grafana/faro-web-sdk": "^2.8.2",

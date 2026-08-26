@@ -6,7 +6,25 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelStatus } from './PanelStatus';
 import { type PanelStatusItem } from './types';
 
+const mockUseAssistant = jest.fn().mockReturnValue({ isLoading: false, isAvailable: true });
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: () => mockUseAssistant(),
+  OpenAssistantButton: ({ title, onClick }: { title: string; onClick?: () => void }) => (
+    <button onClick={onClick}>{title}</button>
+  ),
+  createAssistantContextItem: jest.fn((type: string, params: { title: string; data: unknown }) => ({
+    type,
+    ...params,
+  })),
+}));
+
 describe('PanelStatus', () => {
+  beforeEach(() => {
+    mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: true });
+  });
+
+
   describe('legacy single message', () => {
     it('renders an error button with the message as tooltip', () => {
       render(<PanelStatus message="Something went wrong" />);
@@ -118,6 +136,55 @@ describe('PanelStatus', () => {
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
       expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
+    });
+
+    it('does not render an Investigate errors button when the assistant is unavailable', async () => {
+      mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: false });
+
+      render(<PanelStatus items={items} />);
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Investigate errors' })).not.toBeInTheDocument();
+    });
+
+    it('renders a single Investigate errors button covering all items when the assistant is available', async () => {
+      render(
+        <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      expect(await screen.findAllByRole('button', { name: 'Investigate errors' })).toHaveLength(1);
+    });
+
+    it('builds structured assistant context from all items and the panel title', async () => {
+      const { createAssistantContextItem } = jest.requireMock('@grafana/assistant');
+      createAssistantContextItem.mockClear();
+
+      render(
+        <PanelStatus
+          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
+          panelTitle="My panel"
+        />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await screen.findByRole('button', { name: 'Investigate errors' });
+
+      expect(createAssistantContextItem).toHaveBeenCalledWith(
+        'structured',
+        expect.objectContaining({
+          title: 'Panel errors and notices',
+          data: expect.objectContaining({
+            panelTitle: 'My panel',
+            items: [
+              { severity: 'error', message: 'Preparing expression failed' },
+              { severity: 'warning', message: 'Query marked as big' },
+              { severity: 'info', message: 'Window size adjusted' },
+            ],
+          }),
+        })
+      );
     });
   });
 

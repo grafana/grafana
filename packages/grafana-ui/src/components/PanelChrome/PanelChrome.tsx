@@ -428,6 +428,7 @@ export function PanelChrome({
                   items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                  panelTitle={typeof title === 'string' ? title : undefined}
                 />
               </div>
             )}
@@ -452,6 +453,7 @@ export function PanelChrome({
                     items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
+                    panelTitle={typeof title === 'string' ? title : undefined}
                   />
                 </div>
               )}

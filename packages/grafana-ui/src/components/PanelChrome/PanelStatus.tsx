@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
+import { OpenAssistantButton, createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -22,6 +23,8 @@ export interface Props {
   /** Opens the inspector "Errors and notices" tab. */
   onClick?: (e: React.SyntheticEvent) => void;
   ariaLabel?: string;
+  /** Panel title, used to ground the "Investigate errors" assistant prompt/context. */
+  panelTitle?: string;
 }
 
 const SEVERITY_RANK: Record<PanelStatusSeverity, number> = {
@@ -41,9 +44,9 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
   return severity === 'info' ? 'info-circle' : 'exclamation-triangle';
 }
 
-export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
+export function PanelStatus({ message, items, onClick, ariaLabel = 'status', panelTitle }: Props) {
   if (items && items.length > 0) {
-    return <PanelStatusPopover items={items} onInspect={onClick} ariaLabel={ariaLabel} />;
+    return <PanelStatusPopover items={items} onInspect={onClick} ariaLabel={ariaLabel} panelTitle={panelTitle} />;
   }
 
   return (
@@ -63,10 +66,35 @@ interface PanelStatusPopoverProps {
   items: PanelStatusItem[];
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
+  panelTitle?: string;
 }
 
-function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
+// Prompt text sent to the assistant is intentionally not translated (matching
+// QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM,
+// not rendered UI copy, so it stays in English regardless of UI locale.
+function buildAssistantPrompt(items: PanelStatusItem[], panelTitle?: string): string {
+  const subject = panelTitle ? `the panel "${panelTitle}"` : 'this panel';
+  const hasError = items.some((item) => item.severity === 'error');
+  return hasError
+    ? `Investigate and fix the query errors causing ${subject} to fail.`
+    : `Investigate the query notices for ${subject} and explain what they mean and what I should do about them.`;
+}
+
+function buildAssistantContext(items: PanelStatusItem[], panelTitle?: string) {
+  return [
+    createAssistantContextItem('structured', {
+      title: t('grafana-ui.panel-chrome.assistant-context-errors-and-notices', 'Panel errors and notices'),
+      data: {
+        panelTitle,
+        items: items.map((item) => ({ severity: item.severity, message: item.text })),
+      },
+    }),
+  ];
+}
+
+function PanelStatusPopover({ items, onInspect, ariaLabel, panelTitle }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
+  const { isAvailable } = useAssistant();
   const topSeverity = getTopSeverity(items);
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
@@ -76,11 +104,23 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         <span className={styles.popoverTitle}>
           {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
         </span>
-        {onInspect && (
-          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
-          </Button>
-        )}
+        <Stack direction="row" gap={0.5} alignItems="center">
+          {isAvailable && (
+            <OpenAssistantButton
+              origin="grafana/panel-status-popover"
+              prompt={buildAssistantPrompt(sortedItems, panelTitle)}
+              context={buildAssistantContext(sortedItems, panelTitle)}
+              title={t('grafana-ui.panel-chrome.investigate-errors', 'Investigate errors')}
+              size="sm"
+              iconOnlyButton
+            />
+          )}
+          {onInspect && (
+            <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+              {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+            </Button>
+          )}
+        </Stack>
       </div>
       <Stack direction="column" gap={1}>
         {sortedItems.map((item, index) => (

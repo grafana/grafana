@@ -2383,7 +2383,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.34, @grafana/assistant@npm:^0.1.24":
+"@grafana/assistant@npm:0.1.34, @grafana/assistant@npm:^0.1.24, @grafana/assistant@npm:^0.1.34":
   version: 0.1.34
   resolution: "@grafana/assistant@npm:0.1.34"
   dependencies:
@@ -3249,6 +3249,7 @@ __metadata:
     "@emotion/serialize": "npm:^1.3.3"
     "@faker-js/faker": "npm:^9.0.0"
     "@floating-ui/react": "npm:^0.27.19"
+    "@grafana/assistant": "npm:^0.1.34"
     "@grafana/data": "npm:13.3.0-pre"
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.8.2"
