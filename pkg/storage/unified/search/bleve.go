@@ -2515,10 +2515,14 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	textQuery := b.buildTextQuery(searchrequest, req)
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
-		// An index built before deleted documents were being kept holds none, so trash
-		// would read as empty when it is really unavailable until the index rebuilds.
-		if !b.keepsDeletedDocuments && b.wantsDeletedDocuments {
-			return nil, resource.NewServiceUnavailableError("trash is not available for this resource until its search index has been rebuilt")
+		// An index that does not keep deleted documents cannot distinguish an empty
+		// trash from unavailable trash, so fail instead of returning a misleading result.
+		if !b.keepsDeletedDocuments {
+			message := "trash is not available for this resource because indexing deleted documents is disabled"
+			if b.wantsDeletedDocuments {
+				message = "trash is not available for this resource until its search index has been rebuilt"
+			}
+			return nil, resource.NewServiceUnavailableError(message)
 		}
 		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
 			expirationThreshold = t
@@ -2974,8 +2978,8 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	if strings.Contains(req.Query, "*") {
 		// Wildcard query is expensive, should be used with caution.
 		// When QueryFields is set, search across each named field (only Name is
-		// used; Type and Boost are ignored because bleve wildcards don't support
-		// analyzers or meaningful relevance scoring).
+		// used; Boost is ignored because bleve wildcards don't support analyzers
+		// or meaningful relevance scoring).
 		// When QueryFields is empty, default to title.
 		if len(req.QueryFields) > 0 {
 			for _, field := range req.QueryFields {
@@ -3092,7 +3096,6 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 			out = append(out, titleQueryFields()...)
 			continue
 		}
-		// Type is dropped: the query comes from the field's mapping.
 		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
 			Name:  resolveFieldName(b.fields, f.Name),
 			Boost: f.Boost,

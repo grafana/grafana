@@ -13,7 +13,6 @@ import (
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var dashboardsGVR = schema.GroupVersionResource{
@@ -108,7 +107,6 @@ func TestTranslateSearchQuery_TextAndFilters(t *testing.T) {
 	require.Len(t, req.QueryFields, 2)
 	assert.Equal(t, "title", req.QueryFields[0].Name)
 	assert.Equal(t, "panel_title", req.QueryFields[1].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_TEXT, req.QueryFields[0].Type)
 	// neutral boost so hits are scored (backend applies boost unconditionally).
 	assert.Equal(t, float32(1), req.QueryFields[0].Boost)
 	assert.Equal(t, float32(1), req.QueryFields[1].Boost)
@@ -503,6 +501,59 @@ func TestTranslateTrashQuery_ExplicitFieldsAddDeletedRV(t *testing.T) {
 	req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
 	require.Empty(t, errs)
 	assert.Equal(t, []string{"title", trashFieldDeletedRV}, req.Fields)
+}
+
+// Deleted documents keep their tags, so a caller listing trash can show them and
+// narrow the list to one, exactly as live search does. Faceting and sorting are
+// out: trash rejects facets outright, and ordering by a list of values has no
+// defined meaning.
+func TestTranslateTrashQuery_Tags(t *testing.T) {
+	t.Run("returnable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Fields = []string{trashFieldTitle, trashFieldTags}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		assert.Equal(t, []string{trashFieldTitle, trashFieldTags, trashFieldDeletedRV}, req.Fields)
+	})
+
+	t.Run("filterable", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "In", Values: []string{"prod", "team-a"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, trashFieldTags, req.Options.Fields[0].Key)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "team-a"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("filterable with NotIn", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "NotIn", Values: []string{"prod"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "notin", req.Options.Fields[0].Operator)
+	})
+
+	t.Run("not sortable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Sort = []searchv0.SortField{{Field: trashFieldTags, Direction: "asc"}}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		assert.Nil(t, req)
+		require.NotEmpty(t, errs)
+		assert.Equal(t, "sort[0].field", errs[0].Field)
+	})
+
+	t.Run("not facetable", func(t *testing.T) {
+		q := trashQuery(nil)
+		q.Fields = []string{trashFieldTags}
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		assert.Empty(t, req.Facet, "trash never facets")
+	})
 }
 
 func TestTranslateTrashQuery_TextAndFilter(t *testing.T) {
