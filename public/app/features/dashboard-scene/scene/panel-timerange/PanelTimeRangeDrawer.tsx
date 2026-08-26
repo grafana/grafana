@@ -34,7 +34,7 @@ export const getCompareOptions = () => [
   { label: t('dashboard.panel.time-range-settings.compare-month-before', 'Month before'), value: '1M' },
 ];
 
-export const getCompareColorModeOptions = (): Array<ComboboxOption<TimeCompareColorMode>> => [
+const getCompareColorModeOptions = (): Array<ComboboxOption<TimeCompareColorMode>> => [
   {
     label: t('dashboard.panel.time-range-settings.compare-color-mode-standard', 'Standard'),
     value: TimeCompareColorMode.Standard,
