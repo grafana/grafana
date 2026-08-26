@@ -117,6 +117,22 @@ var (
 		Grants: []string{string(org.RoleEditor)},
 	}
 
+	alertsProducerWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.producers:writer",
+			DisplayName: "Alert Producer Writer",
+			Description: "Publish alerts from a trusted producer",
+			Group:       models.AlertRolesGroup,
+			// The wildcard producer-source scope suits single-producer deployments;
+			// grant the action with a specific source scope to bind an identity to
+			// one producer source.
+			Permissions: []accesscontrol.Permission{{
+				Action: accesscontrol.ActionAlertingInstancesProducerWrite,
+				Scope:  accesscontrol.ScopeAlertingProducersAll,
+			}},
+		},
+	}
+
 	receiversReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.receivers:reader",
@@ -538,7 +554,7 @@ var alertmanagerImportsAdminRole = accesscontrol.RoleRegistration{
 func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 	return []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
-		instancesReaderRole, instancesWriterRole,
+		instancesReaderRole, instancesWriterRole, alertsProducerWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
 		externalNotificationsReaderRole, externalNotificationsWriterRole, deprecatedActionsRole,

@@ -120,6 +120,7 @@ type UnifiedAlertingSettings struct {
 	DefaultConfiguration                      string
 	Enabled                                   *bool                               // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	AllowedIntegrations                       map[schema.IntegrationType]struct{} // nil means all allowed
+	AlertsProducerAllowedSources              map[string]struct{}                 // nil means no trusted alert producers are registered
 	DisabledOrgs                              map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
@@ -320,6 +321,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 				return err
 			}
 			uaCfg.AllowedIntegrations[iType] = struct{}{}
+		}
+	}
+
+	producerSourcesStr := valueAsString(ua, "alerts_producer_allowed_sources", "")
+	if producerSourcesStr != "" {
+		uaCfg.AlertsProducerAllowedSources = make(map[string]struct{})
+		for _, source := range util.SplitString(producerSourcesStr) {
+			uaCfg.AlertsProducerAllowedSources[source] = struct{}{}
 		}
 	}
 

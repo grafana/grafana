@@ -470,6 +470,39 @@ func TestReadAllowedIntegrations(t *testing.T) {
 	}
 }
 
+func TestReadAlertsProducerAllowedSources(t *testing.T) {
+	testCases := []struct {
+		name  string
+		value string
+		want  map[string]struct{}
+	}{
+		{name: "blank rejects every source", value: "", want: nil},
+		{
+			name:  "configured sources build an allowlist",
+			value: "producer_a, synthetic_checks",
+			want: map[string]struct{}{
+				"producer_a":       {},
+				"synthetic_checks": {},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := ini.Empty()
+			sec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = sec.NewKey("alerts_producer_allowed_sources", tc.value)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+			require.NoError(t, cfg.ReadUnifiedAlertingSettings(f))
+			require.Equal(t, tc.want, cfg.UnifiedAlerting.AlertsProducerAllowedSources)
+		})
+	}
+}
+
 func TestQueriesServedByLoki(t *testing.T) {
 	testCases := []struct {
 		name         string

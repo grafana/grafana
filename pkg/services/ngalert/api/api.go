@@ -132,7 +132,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			ruleAuthzService,
 			api.SilenceLimitsProvider,
 		),
-		receiverAuthz: accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+		receiverAuthz:          accesscontrol.NewReceiverAccess[ReceiverStatus](api.AccessControl, false),
+		alertsRouter:           api.AlertsRouter,
+		apiMetrics:             m,
+		producerAllowedSources: api.Cfg.UnifiedAlerting.AlertsProducerAllowedSources,
 	}), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(

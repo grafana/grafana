@@ -419,7 +419,8 @@
       "duration": "for {{time}}"
     },
     "alert-group-filter": {
-      "clear-filters": "Clear filters"
+      "clear-filters": "Clear filters",
+      "producer-alerts": "Producer alerts"
     },
     "alert-groups": {
       "body-grafana-alerted-delivered": "Grafana is configured to send alerts to external alertmanagers only. No alerts are expected to be available here for the selected Alertmanager.",

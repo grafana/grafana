@@ -119,6 +119,15 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
+// swagger:route POST /alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
+//
+// publish alerts from a trusted producer
+//
+//     Responses:
+//       200: Ack
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route GET /alertmanager/grafana/api/v2/alerts/groups alertmanager RouteGetGrafanaAMAlertGroups
 //
 // get alertmanager alerts
@@ -543,7 +552,7 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts
+// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`

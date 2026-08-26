@@ -31,6 +31,10 @@ const (
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
 
+	// FlagAlertingAlertsProducerAPI
+	// Allow trusted producers to publish alerts to Grafana Alerting
+	FlagAlertingAlertsProducerAPI = "alertingAlertsProducerAPI"
+
 	// FlagAlertingRuleGroupSortByFolderFullpath
 	// Sort alert rule groups by folder full path in the Prometheus rules API
 	FlagAlertingRuleGroupSortByFolderFullpath = "alertingRuleGroupSortByFolderFullpath"

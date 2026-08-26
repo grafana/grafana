@@ -5726,6 +5726,45 @@
     "tags": [
      "alertmanager"
     ]
+   },
+   "post": {
+    "description": "publish alerts from a trusted producer",
+    "operationId": "RoutePostGrafanaAMAlerts",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "PostableAlerts",
+      "schema": {
+       "items": {
+        "$ref": "#/definitions/postableAlert"
+       },
+       "type": "array"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
    }
   },
   "/alertmanager/grafana/api/v2/alerts/groups": {

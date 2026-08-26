@@ -307,6 +307,19 @@
     },
     {
       "metadata": {
+        "name": "alertingAlertsProducerAPI",
+        "resourceVersion": "1787690592972",
+        "creationTimestamp": "2026-08-25T20:43:12Z"
+      },
+      "spec": {
+        "description": "Allow trusted producers to publish alerts to Grafana Alerting",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingBacktesting",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2022-12-14T14:44:14Z"

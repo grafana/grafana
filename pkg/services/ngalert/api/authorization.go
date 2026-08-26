@@ -249,6 +249,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
+		eval = ac.EvalPermission(ac.ActionAlertingInstancesProducerWrite)
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":

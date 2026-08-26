@@ -75,6 +75,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "alertingAlertsProducerAPI",
+			Description: "Allow trusted producers to publish alerts to Grafana Alerting",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:        "alertingRuleGroupSortByFolderFullpath",
 			Description: "Sort alert rule groups by folder full path in the Prometheus rules API",
 			Stage:       FeatureStageExperimental,

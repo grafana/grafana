@@ -129,6 +129,10 @@ func (f *AlertmanagerApiHandler) handleRoutePostAMAlerts(ctx *contextmodel.ReqCo
 	return s.RoutePostAMAlerts(ctx, body)
 }
 
+func (f *AlertmanagerApiHandler) handleRoutePostGrafanaAMAlerts(ctx *contextmodel.ReqContext, body apimodels.PostableAlerts) response.Response {
+	return f.GrafanaSvc.RoutePostAMAlerts(ctx, body)
+}
+
 func (f *AlertmanagerApiHandler) handleRouteDeleteGrafanaSilence(ctx *contextmodel.ReqContext, id string) response.Response {
 	return f.GrafanaSvc.RouteDeleteSilence(ctx, id)
 }

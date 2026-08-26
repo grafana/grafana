@@ -521,6 +521,10 @@ const (
 	// External alerting instances actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingInstancesExternalWrite = "alert.instances.external:write"
 	ActionAlertingInstancesExternalRead  = "alert.instances.external:read"
+	// Trusted alerts producer action. Always evaluated with a producer-source
+	// scope (see ScopeAlertingProducersProvider) so one producer identity cannot
+	// publish or resolve another registered producer's alerts.
+	ActionAlertingInstancesProducerWrite = "alert.instances.producer:write"
 
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
@@ -577,6 +581,12 @@ var (
 	}
 
 	ScopeSettingsLDAP = Scope("settings", "auth.ldap", "*")
+
+	// Alerting producer scopes bind a producer identity to the alert sources it
+	// may publish as. The scoped resource UID is the producer source name.
+	ScopeAlertingProducersRoot     = "alert.producers"
+	ScopeAlertingProducersProvider = NewScopeProvider(ScopeAlertingProducersRoot)
+	ScopeAlertingProducersAll      = ScopeAlertingProducersProvider.GetResourceAllScope()
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"

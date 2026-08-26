@@ -128,6 +128,18 @@
     ]
   },
   {
+    "name": "fixed:alerting.producers:writer",
+    "displayName": "Alert Producer Writer",
+    "description": "Publish alerts from a trusted producer",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "alert.instances.producer:write",
+        "scope": "alert.producers:*"
+      }
+    ]
+  },
+  {
     "name": "fixed:alerting.notifications:reader",
     "displayName": "Notifications Reader",
     "description": "Read notification policies and contact points in Grafana and external providers",

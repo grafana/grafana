@@ -114,6 +114,26 @@ describe('AlertDetails', () => {
     });
   });
 
+  describe('See source button — trusted producer', () => {
+    it('uses a source-agnostic label and does not require rule read permission', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+      const alert = mockAlertmanagerAlert({
+        status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
+        labels: { grafana_alert_source: 'producer_a' },
+        generatorURL: 'https://producer.example.com/findings/123',
+      });
+
+      renderAlertDetails(alert, amSource);
+
+      expect(screen.getByRole('link', { name: /see source/i })).toHaveAttribute(
+        'href',
+        'https://producer.example.com/findings/123'
+      );
+      expect(screen.queryByRole('link', { name: /watcher/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('See source button — external source', () => {
     it('always shows See source button regardless of rule read permission', () => {
       const amSource = setupMimirAlertmanager();

@@ -11,6 +11,7 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	prommodel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -19,8 +20,10 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -31,13 +34,16 @@ type receiversAuthz interface {
 }
 
 type AlertmanagerSrv struct {
-	log            log.Logger
-	ac             accesscontrol.AccessControl
-	mam            *notifier.MultiOrgAlertmanager
-	crypto         notifier.Crypto
-	silenceSvc     SilenceService
-	featureManager featuremgmt.FeatureToggles
-	receiverAuthz  receiversAuthz
+	log                    log.Logger
+	ac                     accesscontrol.AccessControl
+	mam                    *notifier.MultiOrgAlertmanager
+	crypto                 notifier.Crypto
+	silenceSvc             SilenceService
+	featureManager         featuremgmt.FeatureToggles
+	receiverAuthz          receiversAuthz
+	alertsRouter           *sender.AlertsRouter
+	apiMetrics             *metrics.API
+	producerAllowedSources map[string]struct{}
 }
 
 type UnknownReceiverError struct {
@@ -110,6 +116,151 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) res
 	}
 
 	return response.JSON(http.StatusOK, groups)
+}
+
+const (
+	producerAlertSourceLabel = "grafana_alert_source"
+	producerMaxBatchSize     = 100
+	producerMaxLabels        = 64
+	producerMaxAnnotations   = 64
+	producerMaxFieldBytes    = 4096
+)
+
+var producerReservedLabels = map[string]struct{}{
+	"grafana_folder":               {},
+	"__alert_rule_uid__":           {},
+	"__alert_rule_namespace_uid__": {},
+	"__alert_rule_namespace__":     {},
+}
+
+func (srv AlertmanagerSrv) RoutePostAMAlerts(c *contextmodel.ReqContext, alerts apimodels.PostableAlerts) response.Response {
+	if !srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingAlertsProducerAPI) { //nolint:staticcheck // AlertmanagerSrv uses the injected feature manager consistently.
+		return response.Error(http.StatusNotFound, "not found", nil)
+	}
+	source := producerAlertMetricSource(alerts, srv.producerAllowedSources)
+	if err := validateProducerAlerts(alerts, srv.producerAllowedSources); err != nil {
+		if srv.apiMetrics != nil {
+			srv.apiMetrics.ProducerAlertsRejected.WithLabelValues(source).Add(float64(max(1, len(alerts.PostableAlerts))))
+		}
+		return ErrResp(http.StatusBadRequest, err, err.Error())
+	}
+	// The route-level authorization check proves the caller holds the producer
+	// action; the source-scoped check here binds that identity to each source in
+	// the batch so one producer cannot publish or resolve another's alerts.
+	for _, batchSource := range producerBatchSources(alerts) {
+		evaluator := accesscontrol.EvalPermission(
+			accesscontrol.ActionAlertingInstancesProducerWrite,
+			accesscontrol.ScopeAlertingProducersProvider.GetResourceScopeUID(batchSource),
+		)
+		allowed, err := srv.ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to evaluate producer source access")
+		}
+		if !allowed {
+			if srv.apiMetrics != nil {
+				srv.apiMetrics.ProducerAlertsRejected.WithLabelValues(batchSource).Add(float64(max(1, len(alerts.PostableAlerts))))
+			}
+			return ErrResp(http.StatusForbidden,
+				fmt.Errorf("the caller is not authorized to publish alerts for source %q", batchSource),
+				"producer source access denied")
+		}
+	}
+	if srv.alertsRouter == nil {
+		return ErrResp(http.StatusServiceUnavailable, errors.New("alerts router is unavailable"), "alerts router is unavailable")
+	}
+	srv.alertsRouter.SendAlerts(c.Req.Context(), c.GetOrgID(), alerts)
+	if srv.apiMetrics != nil {
+		acceptedBySource := make(map[string]int)
+		resolvedBySource := make(map[string]int)
+		now := time.Now()
+		for _, alert := range alerts.PostableAlerts {
+			source := alert.Labels[producerAlertSourceLabel]
+			acceptedBySource[source]++
+			if !time.Time(alert.EndsAt).After(now) {
+				resolvedBySource[source]++
+			}
+		}
+		for source, accepted := range acceptedBySource {
+			srv.apiMetrics.ProducerAlertsAccepted.WithLabelValues(source).Add(float64(accepted))
+			srv.apiMetrics.ProducerAlertsResolved.WithLabelValues(source).Add(float64(resolvedBySource[source]))
+			srv.apiMetrics.ProducerSourcesActive.WithLabelValues(source).Set(1)
+		}
+	}
+	return response.JSON(http.StatusOK, util.DynMap{"message": "alerts accepted"})
+}
+
+// producerBatchSources returns the distinct, already-validated source label
+// values in a batch, in first-appearance order.
+func producerBatchSources(alerts apimodels.PostableAlerts) []string {
+	seen := make(map[string]struct{}, 1)
+	sources := make([]string, 0, 1)
+	for _, alert := range alerts.PostableAlerts {
+		source := alert.Labels[producerAlertSourceLabel]
+		if _, ok := seen[source]; ok {
+			continue
+		}
+		seen[source] = struct{}{}
+		sources = append(sources, source)
+	}
+	return sources
+}
+
+func producerAlertMetricSource(alerts apimodels.PostableAlerts, allowedSources map[string]struct{}) string {
+	if len(alerts.PostableAlerts) == 0 {
+		return "unknown"
+	}
+	source := alerts.PostableAlerts[0].Labels[producerAlertSourceLabel]
+	if _, registered := allowedSources[source]; registered {
+		return source
+	}
+	return "unregistered"
+}
+
+func validateProducerAlerts(alerts apimodels.PostableAlerts, allowedSources map[string]struct{}) error {
+	if len(alerts.PostableAlerts) == 0 {
+		return errors.New("at least one alert is required")
+	}
+	if len(alerts.PostableAlerts) > producerMaxBatchSize {
+		return fmt.Errorf("batch exceeds the %d alert limit", producerMaxBatchSize)
+	}
+	for i, alert := range alerts.PostableAlerts {
+		if time.Time(alert.EndsAt).IsZero() {
+			return fmt.Errorf("alert %d: endsAt is required", i)
+		}
+		if len(alert.Labels) == 0 {
+			return fmt.Errorf("alert %d: labels are required", i)
+		}
+		if len(alert.Labels) > producerMaxLabels || len(alert.Annotations) > producerMaxAnnotations {
+			return fmt.Errorf("alert %d: too many labels or annotations", i)
+		}
+		source := alert.Labels[producerAlertSourceLabel]
+		if source == "" {
+			return fmt.Errorf("alert %d: %s is required", i, producerAlertSourceLabel)
+		}
+		if _, registered := allowedSources[source]; !registered {
+			return fmt.Errorf("alert %d: %s %q is not registered", i, producerAlertSourceLabel, source)
+		}
+		for name, value := range alert.Labels {
+			if !prommodel.LegacyValidation.IsValidLabelName(name) {
+				return fmt.Errorf("alert %d: invalid label name %q", i, name)
+			}
+			if len(name)+len(value) > producerMaxFieldBytes {
+				return fmt.Errorf("alert %d: label %q is too large", i, name)
+			}
+			if _, reserved := producerReservedLabels[name]; reserved {
+				return fmt.Errorf("alert %d: label %q is reserved", i, name)
+			}
+		}
+		for name, value := range alert.Annotations {
+			if !prommodel.LegacyValidation.IsValidLabelName(name) {
+				return fmt.Errorf("alert %d: invalid annotation name %q", i, name)
+			}
+			if len(name)+len(value) > producerMaxFieldBytes {
+				return fmt.Errorf("alert %d: annotation %q is too large", i, name)
+			}
+		}
+	}
+	return nil
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response.Response {

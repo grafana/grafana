@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +18,9 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -663,4 +667,127 @@ func asGettableHistoricUserConfigs(t *testing.T, r response.Response) []apimodel
 	err := json.Unmarshal(r.Body(), &body)
 	require.NoError(t, err)
 	return body
+}
+
+// permissionsAccessControl evaluates the real evaluator against a fixed
+// permission set, so producer-scope wildcard semantics are exercised.
+type permissionsAccessControl struct {
+	permissions map[string][]string
+}
+
+func (f permissionsAccessControl) Evaluate(_ context.Context, _ identity.Requester, evaluator ac.Evaluator) (bool, error) {
+	return evaluator.Evaluate(f.permissions), nil
+}
+
+func (f permissionsAccessControl) RegisterScopeAttributeResolver(string, ac.ScopeAttributeResolver) {
+}
+
+func (f permissionsAccessControl) WithoutResolvers() ac.AccessControl { return f }
+
+func (f permissionsAccessControl) InvalidateResolverCache(int64, string) {}
+
+func TestRoutePostProducerAlertsSourceScope(t *testing.T) {
+	allowedSources := map[string]struct{}{"producer_a": {}, "producer_b": {}}
+	alerts := apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{
+		EndsAt: strfmt.DateTime(time.Now().Add(time.Hour)),
+		Alert: amv2.Alert{Labels: amv2.LabelSet{
+			"alertname": "ProducerAlert", "grafana_alert_source": "producer_a",
+		}},
+	}}}
+	newRequest := func(t *testing.T) *contextmodel.ReqContext {
+		t.Helper()
+		req, err := http.NewRequest(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts", nil)
+		require.NoError(t, err)
+		return &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: 1}}
+	}
+	newSrv := func(permissions map[string][]string) AlertmanagerSrv {
+		return AlertmanagerSrv{
+			featureManager:         featuremgmt.WithFeatures(featuremgmt.FlagAlertingAlertsProducerAPI),
+			ac:                     permissionsAccessControl{permissions: permissions},
+			producerAllowedSources: allowedSources,
+		}
+	}
+
+	t.Run("a source-scoped grant admits its own source", func(t *testing.T) {
+		srv := newSrv(map[string][]string{
+			ac.ActionAlertingInstancesProducerWrite: {ac.ScopeAlertingProducersProvider.GetResourceScopeUID("producer_a")},
+		})
+		// Passing authorization reaches the nil alerts router, not a 403.
+		require.Equal(t, http.StatusServiceUnavailable, srv.RoutePostAMAlerts(newRequest(t), alerts).Status())
+	})
+
+	t.Run("the wildcard fixed-role scope admits every source", func(t *testing.T) {
+		srv := newSrv(map[string][]string{
+			ac.ActionAlertingInstancesProducerWrite: {ac.ScopeAlertingProducersAll},
+		})
+		require.Equal(t, http.StatusServiceUnavailable, srv.RoutePostAMAlerts(newRequest(t), alerts).Status())
+	})
+
+	t.Run("a grant for another source is denied", func(t *testing.T) {
+		srv := newSrv(map[string][]string{
+			ac.ActionAlertingInstancesProducerWrite: {ac.ScopeAlertingProducersProvider.GetResourceScopeUID("producer_b")},
+		})
+		require.Equal(t, http.StatusForbidden, srv.RoutePostAMAlerts(newRequest(t), alerts).Status())
+	})
+
+	t.Run("an unscoped legacy grant is denied", func(t *testing.T) {
+		srv := newSrv(map[string][]string{
+			ac.ActionAlertingInstancesProducerWrite: {},
+		})
+		require.Equal(t, http.StatusForbidden, srv.RoutePostAMAlerts(newRequest(t), alerts).Status())
+	})
+}
+
+func TestRoutePostProducerAlertsReturnsNotFoundWhenToggleIsOff(t *testing.T) {
+	req, err := http.NewRequest(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts", nil)
+	require.NoError(t, err)
+	srv := AlertmanagerSrv{featureManager: featuremgmt.WithFeatures()}
+
+	result := srv.RoutePostAMAlerts(&contextmodel.ReqContext{Context: &web.Context{Req: req}}, apimodels.PostableAlerts{})
+
+	require.Equal(t, http.StatusNotFound, result.Status())
+}
+
+func TestValidateProducerAlerts(t *testing.T) {
+	allowedSources := map[string]struct{}{
+		"producer_a":       {},
+		"synthetic_checks": {},
+	}
+	endsAt := strfmt.DateTime(time.Now().Add(time.Hour))
+	valid := amv2.PostableAlert{
+		EndsAt: endsAt,
+		Alert: amv2.Alert{Labels: amv2.LabelSet{
+			"alertname": "ProducerAlert", "grafana_alert_source": "producer_a",
+		}},
+	}
+	tests := []struct {
+		name   string
+		alerts apimodels.PostableAlerts
+		valid  bool
+	}{
+		{name: "valid", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{valid}}, valid: true},
+		{name: "empty batch", alerts: apimodels.PostableAlerts{}},
+		{name: "missing endsAt", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Alert: valid.Alert}}}},
+		{name: "another registered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "synthetic_checks"}}}}}, valid: true},
+		{name: "missing source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x"}}}}}},
+		{name: "unregistered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "unknown"}}}}}},
+		{name: "reserved rule label", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "producer_a", "grafana_folder": "folder"}}}}}},
+		{name: "invalid label name", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "producer_a", "bad-label": "x"}}}}}},
+	}
+	require.ErrorContains(t, validateProducerAlerts(apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{valid}}, nil), "is not registered")
+	require.Equal(t, "producer_a", producerAlertMetricSource(apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{valid}}, allowedSources))
+	unregistered := valid
+	unregistered.Labels = amv2.LabelSet{"grafana_alert_source": "attacker-controlled"}
+	require.Equal(t, "unregistered", producerAlertMetricSource(apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{unregistered}}, allowedSources))
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateProducerAlerts(tt.alerts, allowedSources)
+			if tt.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
 }

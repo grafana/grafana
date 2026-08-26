@@ -54,6 +54,11 @@ export interface FeatureToggles {
   */
   alertingBacktesting?: boolean;
   /**
+  * Allow trusted producers to publish alerts to Grafana Alerting
+  * @default false
+  */
+  alertingAlertsProducerAPI?: boolean;
+  /**
   * Sort alert rule groups by folder full path in the Prometheus rules API
   * @default false
   */
