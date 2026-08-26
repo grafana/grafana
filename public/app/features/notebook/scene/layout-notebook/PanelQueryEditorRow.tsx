@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
@@ -33,7 +33,6 @@ interface Props {
  */
 export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, range, onRunQuery, startOpen }: Props) {
   const { settings: dsSettings } = useDataSourceInstanceSettings(query.datasource);
-  // Hides the row's own drag-to-reorder handle: reordering isn't supported here
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(Boolean(startOpen));
 
@@ -53,8 +52,10 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
     return <DataSourcePicker current={query.datasource} onChange={onChangeDataSource} />;
   }
 
+  const isOnlyQuery = queries.length <= 1;
+
   return (
-    <div className={styles.hideDragHandle}>
+    <div className={cx(styles.hideDragHandle, isOnlyQuery && styles.hideRemoveButton)}>
       <QueryEditorRow
         data={data}
         query={query}
@@ -67,7 +68,7 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
         onRunQuery={onRunQuery}
         onAddQuery={(copy) => setQueryRunnerQueries(queryRunner, addQuery(queries, copy))}
         onRemoveQuery={(target) => {
-          if (queries.length <= 1) {
+          if (isOnlyQuery) {
             return;
           }
           setQueryRunnerQueries(
@@ -91,6 +92,11 @@ function getStyles() {
     hideDragHandle: css({
       '&& div:has(> [data-testid="icon-draggabledots"])': {
         display: 'none',
+      },
+    }),
+    hideRemoveButton: css({
+      '&& button:has([data-testid="icon-trash-alt"])': {
+        visibility: 'hidden',
       },
     }),
   };
