@@ -16,6 +16,7 @@ declare module "@openfeature/core" {
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
+    | "provisioningExport"
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
@@ -49,6 +50,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
     | "kubernetesTeamsApi"
+    | "dashboard.recentlyDeletedViaTrash"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -60,7 +62,6 @@ declare module "@openfeature/core" {
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
     | "splashScreen"
-    | "grafana.newPreferencesPage"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
@@ -75,10 +76,12 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
+    | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "table.refresh"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
@@ -91,7 +94,11 @@ declare module "@openfeature/core" {
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
     | "grafana.unifiedDataSourcePicker"
-    | "rawPrometheus.tableNg";
+    | "rawPrometheus.tableNg"
+    | "datasources.queryGateway"
+    | "grafana.panelPluginTransformations"
+    | "grafana.dashboardsAutoHeightPanels"
+    | "grafana.dashboardAutoGridDefault";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

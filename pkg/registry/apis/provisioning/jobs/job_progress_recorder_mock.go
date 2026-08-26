@@ -289,6 +289,40 @@ func (_c *MockJobProgressRecorder_Record_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// RecordDryRun provides a mock function with given fields: ctx, result
+func (_m *MockJobProgressRecorder) RecordDryRun(ctx context.Context, result JobResourceResult) {
+	_m.Called(ctx, result)
+}
+
+// MockJobProgressRecorder_RecordDryRun_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordDryRun'
+type MockJobProgressRecorder_RecordDryRun_Call struct {
+	*mock.Call
+}
+
+// RecordDryRun is a helper method to define mock.On call
+//   - ctx context.Context
+//   - result JobResourceResult
+func (_e *MockJobProgressRecorder_Expecter) RecordDryRun(ctx interface{}, result interface{}) *MockJobProgressRecorder_RecordDryRun_Call {
+	return &MockJobProgressRecorder_RecordDryRun_Call{Call: _e.mock.On("RecordDryRun", ctx, result)}
+}
+
+func (_c *MockJobProgressRecorder_RecordDryRun_Call) Run(run func(ctx context.Context, result JobResourceResult)) *MockJobProgressRecorder_RecordDryRun_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(JobResourceResult))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_RecordDryRun_Call) Return() *MockJobProgressRecorder_RecordDryRun_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_RecordDryRun_Call) RunAndReturn(run func(context.Context, JobResourceResult)) *MockJobProgressRecorder_RecordDryRun_Call {
+	_c.Run(run)
+	return _c
+}
+
 // ResetResults provides a mock function with given fields: keepWarnings
 func (_m *MockJobProgressRecorder) ResetResults(keepWarnings bool) {
 	_m.Called(keepWarnings)

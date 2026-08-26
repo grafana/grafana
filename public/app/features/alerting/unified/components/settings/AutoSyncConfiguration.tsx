@@ -15,19 +15,19 @@ interface AutoSyncConfigurationProps {
 
 export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
-  const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
+  const { state, autoSyncEligibleAlertmanagers, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
     useAutoSyncConfiguration();
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const options = useMemo<Array<SelectableValue<string>>>(
     () =>
-      mimirCortexDatasources.map((ds) => ({
+      autoSyncEligibleAlertmanagers.map((ds) => ({
         value: ds.uid,
         label: ds.name,
         imgUrl: ds.typeLogoUrl,
       })),
-    [mimirCortexDatasources]
+    [autoSyncEligibleAlertmanagers]
   );
 
   const operatorManaged = isOperatorManaged(state);
@@ -46,7 +46,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
   const saveDisabledTooltip = savingWouldBreakSync
     ? t(
         'alerting.settings.auto-sync.save-disabled-staged-config',
-        'Revert the staged configuration before enabling auto-sync.'
+        'Promote or revert the staged configuration before enabling auto-sync.'
       )
     : t(
         'alerting.settings.auto-sync.save-disabled-no-selection',
@@ -219,8 +219,8 @@ function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflict
       }
     >
       <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body" values={{ identifier }}>
-        Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot. Revert
-        it below to free auto-sync.
+        Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot. Promote
+        or revert it below to free auto-sync.
       </Trans>
     </Alert>
   );

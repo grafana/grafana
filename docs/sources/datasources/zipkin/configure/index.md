@@ -17,7 +17,7 @@ labels:
 menuTitle: Configure
 title: Configure the Zipkin data source
 weight: 100
-review_date: 2026-04-08
+review_date: 2026-08-11
 ---
 
 # Configure the Zipkin data source

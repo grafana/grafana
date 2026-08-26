@@ -1,6 +1,10 @@
 import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -10,9 +14,12 @@ import {
   mapDashboardLayoutSections,
   visitDashboardLayoutSections,
 } from 'app/features/dashboard/utils/visitDashboardLayoutSections';
-import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import {
+  ExportDatasourceName,
+  ExportLabel,
+  type LibraryElementExport,
+} from 'app/features/dashboard-scene/scene/export/exporters';
 
-import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
 import { LibraryElementKind } from '../../../library-panels/types';
 import {
@@ -171,7 +178,7 @@ export async function extractV1Inputs(dashboard: unknown): Promise<DashboardInpu
         // Expression datasources do not need user input
         if (inputModel.pluginId !== ExpressionDatasourceRef.type) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          (inputModel as DataSourceInput).description = getDataSourceDescription(input);
+          (inputModel as DataSourceInput).description = await getDataSourceDescription(input);
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           inputs.dataSources.push(inputModel as DataSourceInput);
         }
@@ -306,7 +313,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
 
   for (const [label, dsType] of Object.entries(dsTypes)) {
     try {
-      const datasource = await getDataSourceSrv().get({ type: dsType });
+      const datasource = await getDataSourceInstance({ type: dsType });
       if (datasource.meta?.builtIn) {
         continue;
       }
@@ -314,7 +321,7 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       // datasource not found, still add it as an input so the user can pick one
     }
 
-    const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
+    const dsInfo = await getDataSourceInstanceList({ pluginId: dsType });
     const originalName = dsNames[label];
     const matchedDatasource = originalName ? dsInfo.find((ds) => ds.name === originalName) : undefined;
     const prompt = dsInfo.length > 0 ? `Select a ${dsType} data source` : `No ${dsType} data sources found`;
@@ -341,9 +348,9 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
   return inputs;
 }
 
-function getDataSourceDescription(input: Record<string, unknown>): string {
+async function getDataSourceDescription(input: Record<string, unknown>): Promise<string> {
   const pluginId = String(input.pluginId ?? '');
-  const dsInfo = getDataSourceSrv().getList({ pluginId });
+  const dsInfo = await getDataSourceInstanceList({ pluginId });
 
   if (dsInfo.length === 0) {
     return `No data sources of type ${pluginId} found`;
@@ -370,10 +377,10 @@ export interface InterpolateInputMapping {
  * Converts InputMapping[] (the format used by the community/suggested dashboard flow)
  * into the shape that applyV1Inputs expects and applies the substitution.
  */
-export function interpolateV1Dashboard(
+export async function interpolateV1Dashboard(
   dashboard: DashboardJson,
   inputMappings: InterpolateInputMapping[]
-): DashboardJson {
+): Promise<DashboardJson> {
   const rawInputs = dashboard.__inputs;
   const dsInputs: DataSourceInput[] = (rawInputs ?? [])
     .filter((input) => input.type === 'datasource' && 'pluginId' in input && typeof input.pluginId === 'string')
@@ -422,7 +429,7 @@ export function interpolateV1Dashboard(
       continue;
     }
 
-    const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+    const settings = await getDataSourceInstanceSettings(mapping.value);
     if (!settings) {
       throw new Error(
         `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`

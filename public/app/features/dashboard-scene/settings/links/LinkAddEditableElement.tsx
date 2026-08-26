@@ -76,7 +76,7 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useSidebarOptions(
+function useDashboardSidebarOptions(
   this: LinkEditEditableElement,
   linkEdit: LinkEdit,
   isNewElement: boolean
@@ -216,7 +216,9 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useSidebarOptions = useSidebarOptions.bind(this, this.linkEdit);
+  public useSidebarOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+    return useDashboardSidebarOptions.call(this, this.linkEdit, isNewElement);
+  }
 
   public onDuplicate() {
     duplicateLink(this.linkEdit.state.dashboardRef.resolve(), this.linkEdit.state.linkIndex);

@@ -14,10 +14,7 @@ interface Props {
    * owns; the layout manager renders it standalone.
    */
   index: number;
-  /**
-   * Not wired up yet. Edit mode owns cell insertion, so until it passes a handler the menu is inert
-   * by construction rather than by a scattering of empty click handlers.
-   */
+  /** Insertion belongs to the layout manager; without a handler the menu is inert. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Stable class name the parent cell frame's hover rule targets. Carries no styles of its own — the
@@ -38,7 +35,7 @@ export function NotebookAddBlockDivider({ index, onAdd, className }: Props) {
     <div className={cx(styles.divider, className, isMenuOpen && styles.revealed)}>
       <span className={styles.line} />
       <Dropdown
-        overlay={<NotebookBlockTypeMenu index={index} onAdd={onAdd} />}
+        overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, index)} />}
         placement="bottom-start"
         onVisibleChange={setIsMenuOpen}
       >
@@ -70,6 +67,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   button: css({
     borderRadius: theme.shape.radius.pill,
+    position: 'relative',
+    zIndex: 2,
   }),
   line: css({
     flex: 1,

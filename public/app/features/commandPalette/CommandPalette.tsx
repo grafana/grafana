@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
@@ -18,7 +17,7 @@ import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
-import { useSearchResults } from './actions/dashboardActions';
+import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { bucketQueryLength } from './bucketQueryLength';
@@ -43,8 +42,7 @@ export function CommandPalette() {
  * @constructor
  */
 function CommandPaletteContents() {
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const { query, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
@@ -65,11 +63,14 @@ function CommandPaletteContents() {
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
-  // Call both hooks unconditionally (rules-of-hooks), then require both: the backend
-  // vector-search endpoint flag and the command-palette flag
+  // Call all hooks unconditionally (rules-of-hooks), then require both: the backend
+  // vector-search endpoint flag and the command-palette flag. Hybrid search (also
+  // gated on the command-palette flag) supersedes the deep search column — its
+  // results already cover the semantic matches, so showing both would duplicate them.
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled;
+  const hybridSearchEnabled = useHybridSearchEnabled();
+  const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled && !hybridSearchEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
     show: !currentRootActionId,
@@ -88,11 +89,15 @@ function CommandPaletteContents() {
   // Report interaction when opened/closed
   useEffect(() => {
     resetCommandPaletteInputMode();
-    reportInteraction('command_palette_opened');
+    reportInteraction('command_palette_opened', {
+      isHybridSearchEnabled: hybridSearchEnabled,
+      isDeepSearchEnabled: deepSearchEnabled,
+    });
     return () => {
       reportInteraction('command_palette_closed', undefined, { silent: true });
     };
-  }, []);
+    // This could inflate the opened closed numbers, but I assume nobody is going to change these through UI that much.
+  }, [hybridSearchEnabled, deepSearchEnabled]);
 
   // CUJ-only signal: debounce typing into the palette so we record one event
   // per typing burst instead of one per keystroke. Skip the initial empty render.
@@ -148,7 +153,7 @@ function CommandPaletteContents() {
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
               />
-              {deepSearchEnabled && <AskAssistantPill />}
+              {(deepSearchEnabled || hybridSearchEnabled) && <AskAssistantPill />}
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
@@ -163,6 +168,7 @@ function CommandPaletteContents() {
               showDeepSearch={showDeepSearch}
               onNavigate={queryToggle}
               deepSearchEnabled={deepSearchEnabled}
+              hybridSearchEnabled={hybridSearchEnabled}
             />
           </div>
         </FocusScope>
@@ -178,8 +184,7 @@ function CommandPaletteContents() {
  * @constructor
  */
 function AncestorBreadcrumbs() {
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const { actions, currentRootActionId } = useKBar((state) => ({
     actions: state.actions,
@@ -212,6 +217,7 @@ interface RenderResultsProps {
   onNavigate: () => void;
   // For event reporting
   deepSearchEnabled: boolean;
+  hybridSearchEnabled: boolean;
 }
 
 const RenderResults = ({
@@ -223,12 +229,12 @@ const RenderResults = ({
   showDeepSearch,
   onNavigate,
   deepSearchEnabled,
+  hybridSearchEnabled,
 }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query, activeIndex } = useKBar((state) => ({ activeIndex: state.activeIndex }));
   const { isAvailable: isAssistantAvailable } = useAssistant();
-  const lateralSpace = getCommandPalettePosition();
-  const styles = useStyles2(getSearchStyles, lateralSpace);
+  const styles = useStyles2(getSearchStyles);
 
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
@@ -284,15 +290,23 @@ const RenderResults = ({
         // Destination URL of the dashboard/page, unset for actions that don't navigate
         target: params.url,
         isDeepSearchEnabled: deepSearchEnabled,
+        isHybridSearchEnabled: hybridSearchEnabled,
         isDeepSearchAction: params.deepSearch,
         // Whether the deep search column had finished loading at selection time
         isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
         deepSearchItemsCount: deepSearchResults.length,
-        // Number of selectable items in the old search column
+        // Number of selectable items in the old or hybrid search column
         itemsCount: items.filter((item) => typeof item !== 'string').length,
       });
     },
-    [showDeepSearch, isFetchingDeepSearchResults, deepSearchResults.length, items, deepSearchEnabled]
+    [
+      showDeepSearch,
+      isFetchingDeepSearchResults,
+      deepSearchResults.length,
+      items,
+      deepSearchEnabled,
+      hybridSearchEnabled,
+    ]
   );
 
   const keywordListRef = useRef<HTMLDivElement | null>(null);
@@ -551,14 +565,6 @@ const RenderResults = ({
   );
 };
 
-const getCommandPalettePosition = () => {
-  const input = document.querySelector(`[data-testid="${selectors.components.NavToolbar.commandPaletteTrigger}"]`);
-  const inputRightPosition = input?.getBoundingClientRect().right ?? 0;
-  const screenWidth = document.body.clientWidth;
-  const lateralSpace = screenWidth - inputRightPosition;
-  return lateralSpace;
-};
-
 // Denominator for Deep Search Discovery/Adoption: fire once per settled deep
 // search render. useDeepSearchResults already debounces the fetch, so keying
 // off its fetching flag settling to false gives one event per result set
@@ -585,7 +591,8 @@ function useDeepSearchResultsShownReporting(
   }, [isFetchingDeepSearchResults, showDeepSearch, deepSearchResultsLength, deepSearchEnabled, searchQueryLength]);
 }
 
-const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
+const getSearchStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
@@ -603,20 +610,13 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     animator: css({
       width: '100%',
-      maxWidth: theme.breakpoints.values.md,
-      background: theme.colors.background.primary,
+      maxWidth: theme.breakpoints.values.lg,
+      background: theme.colors.background[visualRefreshEnabled ? 'page' : 'primary'],
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,
       border: `1px solid ${theme.colors.border.weak}`,
       overflow: 'hidden',
       boxShadow: theme.shadows.z3,
-      [theme.breakpoints.up('lg')]: {
-        position: 'fixed',
-        right: lateralSpace,
-        left: lateralSpace,
-        maxWidth: 'unset',
-        width: 'unset',
-      },
     }),
     loadingBarContainer: css({
       position: 'absolute',

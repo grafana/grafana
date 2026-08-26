@@ -3,6 +3,7 @@ package search_test
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log"
 	"slices"
@@ -352,7 +353,6 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 				{
 					Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-					Type:  resourcepb.QueryFieldType_TEXT,
 					Boost: 1,
 				},
 			},
@@ -751,6 +751,126 @@ func TestTitleSetFilterExactMatch(t *testing.T) {
 	})
 }
 
+// TestLabelFilterExactMatch covers label selectors, which compare whole values
+// case-sensitively. /search does not re-apply the selector to the resource, so
+// whatever the index returns is the answer.
+func TestLabelFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"name1": {"team": "Team Alpha"},
+			"name2": {"team": "alpha"},
+			"name3": {"team": "Team Beta"},
+		})
+		return index
+	}
+
+	for _, operator := range []string{"in", "="} {
+		t.Run(operator+" on a label matches the whole value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team Alpha"), []string{"name1"})
+		})
+
+		t.Run(operator+" on a label does not match a word of the value", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "Team"), nil)
+			// "alpha" is a word of name1's value, and the whole value of name2.
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "alpha"), []string{"name2"})
+		})
+
+		t.Run(operator+" on a label is case sensitive", func(t *testing.T) {
+			checkSearchQuery(t, seed(t), labelFilterQuery(operator, "team", "team alpha"), nil)
+		})
+	}
+
+	t.Run("in on a label matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team Alpha", "Team Beta"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on a label excludes the whole value only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team Alpha"), []string{"name2", "name3"})
+		// The failure mode here is excluding too much.
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team"), []string{"name1", "name2", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "alpha"), []string{"name1", "name3"})
+	})
+
+	t.Run("wildcard label values still match", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "team", "Team*"), []string{"name1", "name3"})
+		checkSearchQuery(t, seed(t), labelFilterQuery("notin", "team", "Team*"), []string{"name2"})
+	})
+
+	t.Run("filter on a label the document does not carry matches nothing", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), labelFilterQuery("in", "other", "Team Alpha"), nil)
+	})
+
+	t.Run("values sharing a word do not match each other", func(t *testing.T) {
+		// Label values are identifiers, and a hyphen is a word boundary to the text
+		// analyzer, which is how these used to match each other.
+		index := newTestDashboardsIndex(t, threshold, 4, noop)
+		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+			"ops":    {"team": "platform-ops"},
+			"eng":    {"team": "platform-engineering"},
+			"foo":    {"env": "foo"},
+			"foobar": {"env": "foo-bar"},
+		})
+		checkSearchQuery(t, index, labelFilterQuery("in", "team", "platform-ops"), []string{"ops"})
+		checkSearchQuery(t, index, labelFilterQuery("in", "env", "foo"), []string{"foo"})
+		checkSearchQuery(t, index, labelFilterQuery("notin", "env", "foo"), []string{"eng", "foobar", "ops"})
+	})
+
+	t.Run("a label is returned as written", func(t *testing.T) {
+		// Stored values are not analyzed, so retrieval is unaffected by the mapping.
+		q := labelFilterQuery("in", "team", "Team Alpha")
+		q.Fields = []string{"labels.team"}
+		res, err := seed(t).Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, "Team Alpha", string(res.Results.Rows[0].Cells[0]))
+	})
+}
+
+func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
+	items := make([]*resource.BulkIndexItem, 0, len(docsWithLabels))
+	for name, labels := range docsWithLabels {
+		items = append(items, &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:   1,
+				Name: name,
+				Key: &resourcepb.ResourceKey{
+					Name:      name,
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+				},
+				Title:  name,
+				Labels: labels,
+			},
+		})
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+}
+
+func labelFilterQuery(operator, key string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
 // TestPublicFieldNameFilter checks the filter path resolves a public field name
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
@@ -806,7 +926,7 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		return &resourcepb.ResourceSearchRequest{
 			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
 			Query:       text,
-			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Boost: 1}},
 			Limit:       100000,
 		}
 	}
@@ -824,8 +944,9 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:          t.TempDir(),
-		FileThreshold: threshold, // use in-memory for tests
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1162,10 +1283,11 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                 t.TempDir(),
-		FileThreshold:        threshold, // use in-memory for tests
-		PostRankAuthzEnabled: true,
-		PostRankAuthz:        cfg,
+		Root:                  t.TempDir(),
+		FileThreshold:         threshold, // use in-memory for tests
+		IndexDeletedDocuments: true,
+		PostRankAuthzEnabled:  true,
+		PostRankAuthz:         cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -3219,4 +3341,202 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 			})
 		}
 	})
+}
+
+// tags are indexed on deleted documents too, so trash can show them and narrow by
+// one. Unlike the trash-only fields this reuses the standard tags mapping every
+// index already has, so the round trip is what needs proving: a field with no
+// column definition is dropped from the response without complaint.
+func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	deleted := func(name, title string, tags []string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
+				},
+				Title: title, Name: name, Tags: tags,
+				IsDeleted: new(true),
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			deleted("prod-only", "Alpha one", []string{"prod"}),
+			deleted("prod-and-team", "Alpha two", []string{"prod", "team-a"}),
+			deleted("untagged", "Alpha three", nil),
+			// A live document with the same tag, to prove the trash scope still applies.
+			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
+				},
+				Title: "Alpha live", Name: "live", Tags: []string{"prod"},
+			}},
+		}})
+	})
+
+	tagFilter := func(op selection.Operator, values ...string) *resourcepb.ResourceSearchRequest {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_TAGS,
+			Operator: string(op),
+			Values:   values,
+		}}
+		return q
+	}
+
+	t.Run("filtering by one tag", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.In, "prod"), []string{"prod-only", "prod-and-team"})
+	})
+
+	// One of the two documents carries this tag, so a passing filter cannot be the
+	// scope clause alone.
+	t.Run("filtering by a second tag on the same document", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.In, "team-a"), []string{"prod-and-team"})
+	})
+
+	t.Run("excluding a tag", func(t *testing.T) {
+		checkSearchQueryUnordered(t, index, tagFilter(selection.NotIn, "prod"), []string{"untagged"})
+	})
+
+	t.Run("returning the values", func(t *testing.T) {
+		q := tagFilter(selection.In, "prod", "team-a")
+		q.Fields = []string{resource.SEARCH_FIELD_TAGS}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Results.Columns, 1, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
+
+		rows := res.Results.Rows
+		require.Len(t, rows, 2)
+		require.Equal(t, "prod-and-team", rows[0].Key.Name)
+		// An array column is JSON, unlike the scalar trash columns.
+		var tags []string
+		require.NoError(t, json.Unmarshal(rows[0].Cells[0], &tags))
+		require.ElementsMatch(t, []string{"prod", "team-a"}, tags)
+	})
+
+	// tags is a standard field, so unlike deleted_by it stays usable on live search.
+	t.Run("live search still filters on tags", func(t *testing.T) {
+		q := tagFilter(selection.In, "prod")
+		q.IsDeleted = false
+		checkSearchQueryUnordered(t, index, q, []string{"live"})
+	})
+}
+
+// The mapping and the query have to agree on a field's type, and neither side
+// fails loudly when they don't, so these filters run against a real index
+// instead of asserting on query shapes.
+func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "rules.alerting.grafana.app",
+		Resource:  "rules",
+	}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "paused", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "panelID", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	})
+
+	rule := func(name string, paused bool, panelID int64) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
+				},
+				Name:   name,
+				Title:  name,
+				RV:     1,
+				Fields: map[string]any{"paused": paused, "panelID": panelID},
+			},
+		}
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		rule("rule-paused", true, 10),
+		rule("rule-active", false, 20),
+	}}))
+
+	filter := func(field, operator string, values ...string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: values}},
+			},
+			Limit: 100,
+		}
+	}
+
+	for _, tc := range []struct {
+		name     string
+		query    *resourcepb.ResourceSearchRequest
+		expected []string
+	}{
+		{"boolean equals", filter("paused", "=", "true"), []string{"rule-paused"}},
+		{"boolean not in", filter("paused", "notin", "true"), []string{"rule-active"}},
+		{"number equals", filter("panelID", "=", "10"), []string{"rule-paused"}},
+		{"number in", filter("panelID", "in", "10", "20"), []string{"rule-paused", "rule-active"}},
+		{"number greater than", filter("panelID", "gt", "15"), []string{"rule-active"}},
+		{"number greater than or equal", filter("panelID", "gte", "20"), []string{"rule-active"}},
+		{"number less than", filter("panelID", "lt", "20"), []string{"rule-paused"}},
+		{"number less than or equal", filter("panelID", "lte", "15"), []string{"rule-paused"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQueryUnordered(t, index, tc.query, tc.expected)
+		})
+	}
+
+	// A value that does not parse, or a comparison the field's type has no
+	// meaning for, is a caller mistake. Answering with an empty page would look
+	// like a rule set with nothing in it.
+	for _, tc := range []struct {
+		name  string
+		query *resourcepb.ResourceSearchRequest
+	}{
+		{"boolean value that is not true or false", filter("paused", "=", "yes")},
+		{"boolean compared with a range", filter("paused", "gt", "true")},
+		{"number value that is not a number", filter("panelID", "=", "ten")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
+			require.NoError(t, err, "a bad request comes back in the response, not as an error")
+			require.NotNil(t, res.Error)
+			require.Equal(t, int32(400), res.Error.Code)
+		})
+	}
+}
+
+// newTestIndexWithTypedFields creates a test index whose kind declares the
+// given search fields, so non-string types keep their declared mapping.
+func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, sfds []resource.SearchFieldDefinition) resource.ResourceIndex {
+	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
+	provider := resource.NewMapProvider(
+		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
+	)
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: threshold,
+		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	return index
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,6 +46,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"description": "description for the test playlist",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
+		"updated": 1719828672000,
 		"updatedBy": "user:XYZ",
 		"manager": {
 			"kind": "repo",
@@ -386,5 +388,66 @@ func TestStandardDocumentBuilder_SpecFields(t *testing.T) {
 		doc := build(t, `{"title": "Checkout latency", "tags": ["incident"], "description": "d"}`)
 		assert.Equal(t, "Checkout latency", doc.Title)
 		assert.Equal(t, "nb1", doc.Name)
+	})
+}
+
+// created and updated are declared retrieve-capable for every kind, so a list page
+// can render them straight out of a search response. They are only as good as what
+// the builder indexes.
+func TestStandardDocumentBuilder_Timestamps(t *testing.T) {
+	ctx := context.Background()
+	builder := StandardDocumentBuilder(nil)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "notebooks",
+		Name:      "nb1",
+	}
+
+	build := func(t *testing.T, metadata string) *IndexableDocument {
+		t.Helper()
+		body := []byte(`{
+			"apiVersion": "dashboard.grafana.app/v2beta1",
+			"kind": "Notebook",
+			"metadata": ` + metadata + `,
+			"spec": {"title": "Checkout latency"}
+		}`)
+		doc, err := builder.BuildDocument(ctx, key, 1, body)
+		require.NoError(t, err)
+		return doc
+	}
+
+	t.Run("reads the creation timestamp", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Created)
+	})
+
+	t.Run("leaves created at zero without a creation timestamp", func(t *testing.T) {
+		assert.Zero(t, build(t, `{"name": "nb1"}`).Created)
+	})
+
+	t.Run("reads the updated timestamp", func(t *testing.T) {
+		doc := build(t, `{
+			"name": "nb1",
+			"creationTimestamp": "2026-07-02T14:00:00Z",
+			"annotations": {"grafana.app/updatedTimestamp": "2026-07-03T09:30:00Z"}
+		}`)
+		assert.Equal(t, time.Date(2026, 7, 3, 9, 30, 0, 0, time.UTC).UnixMilli(), doc.Updated)
+	})
+
+	// An object that has never been written since creation carries no annotation, and
+	// updated stays zero rather than borrowing created — callers decide how to display
+	// "never updated".
+	t.Run("leaves updated at zero without the annotation", func(t *testing.T) {
+		assert.Zero(t, build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`).Updated)
+	})
+
+	// An unparseable annotation must not land in the index as a bogus time, and must
+	// not cost the resource its document either.
+	t.Run("leaves updated at zero when the annotation is malformed", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "annotations": {"grafana.app/updatedTimestamp": "yesterday"}}`)
+		assert.Zero(t, doc.Updated)
+		assert.Equal(t, "Checkout latency", doc.Title, "the rest of the document should still be built")
 	})
 }
