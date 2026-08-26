@@ -1,9 +1,31 @@
 import { type DropResult } from '@hello-pangea/dnd';
 
 import { VariableHide } from '@grafana/data';
-import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
+import { removeVariable } from '../../actions/variable/removeVariable';
+
+export function confirmDeleteVariable(variable: SceneVariable) {
+  appEvents.publish(
+    new ShowConfirmModalEvent({
+      title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
+      text: t('dashboard-scene.variable-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+        name: variable.state.name,
+      }),
+      yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
+      onConfirm: () => {
+        const set = variable.parent;
+        if (set instanceof SceneVariableSet) {
+          removeVariable({ source: set, removedObject: variable });
+        }
+      },
+    })
+  );
+}
 
 export interface ListIds {
   visible: string;
