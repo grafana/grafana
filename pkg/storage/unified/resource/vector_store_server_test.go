@@ -241,7 +241,7 @@ func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	resp, err := s.Upsert(vsAuthedCtx(), &resourcepb.VectorUpsertRequest{
 		Namespace: "ns", Group: "g", Resource: "r",
 		Inputs: []*resourcepb.EmbeddingInput{
-			{Uid: "u1", Content: "hello", Title: "One", Metadata: []byte(`{"k":"v"}`)},
+			{Uid: "u1", Content: "hello", Title: "One", Folder: "fold-1", Metadata: []byte(`{"k":"v"}`)},
 			{Uid: "u2", Subresource: "chunk/1", Content: "world", Title: "Two"},
 		},
 	})
@@ -259,9 +259,11 @@ func TestVectorStore_UpsertHappyPath(t *testing.T) {
 	assert.Equal(t, "test/model-1", rows[0].Model)
 	assert.Equal(t, "u1", rows[0].UID)
 	assert.Equal(t, "One", rows[0].Title)
+	assert.Equal(t, "fold-1", rows[0].Folder)
 	assert.Equal(t, "hello", rows[0].Content)
 	assert.NotEmpty(t, rows[0].Embedding)
 	assert.Equal(t, "chunk/1", rows[1].Subresource)
+	assert.Empty(t, rows[1].Folder, "folder is optional and per-input")
 }
 
 func TestVectorStore_UpsertValidation(t *testing.T) {
@@ -289,6 +291,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
 		{"oversized multibyte uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("ü", 257) }},
 		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
+		{"oversized folder", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Folder = strings.Repeat("f", 257) }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -334,9 +337,9 @@ func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
 		Namespace: "ns", Group: "g", Resource: "r", Uid: "ent-1",
 		Inputs: []*resourcepb.EmbeddingInput{
-			{Subresource: "chunk/1", Content: "same", Title: "T1", Metadata: []byte(`{"embeddedAt":2}`)},
-			{Subresource: "chunk/2", Content: "new", Title: "T2"},
-			{Subresource: "chunk/4", Content: "brand", Title: "T4"},
+			{Subresource: "chunk/1", Content: "same", Title: "T1", Folder: "fold-2", Metadata: []byte(`{"embeddedAt":2}`)},
+			{Subresource: "chunk/2", Content: "new", Title: "T2", Folder: "fold-2"},
+			{Subresource: "chunk/4", Content: "brand", Title: "T4", Folder: "fold-2"},
 		},
 	})
 	require.NoError(t, err)
@@ -353,7 +356,11 @@ func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
 	require.Len(t, call.Changed, 2) // chunk/2 + chunk/4 embedded
 	require.Len(t, call.MetadataOnly, 1)
 	assert.Equal(t, "chunk/1", call.MetadataOnly[0].Subresource)
+	assert.Equal(t, "fold-2", call.MetadataOnly[0].Folder, "folder refreshes even without re-embed")
 	assert.JSONEq(t, `{"embeddedAt":2}`, string(call.MetadataOnly[0].Metadata))
+	for _, v := range call.Changed {
+		assert.Equal(t, "fold-2", v.Folder)
+	}
 }
 
 func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
