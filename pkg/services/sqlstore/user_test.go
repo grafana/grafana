@@ -14,7 +14,7 @@ import (
 func TestIntegrationGetOrCreateOrg(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss, _ := InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	err := ss.WithDbSession(context.Background(), func(sess *DBSession) error {
 		// Create the org only:

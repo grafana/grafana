@@ -14,7 +14,11 @@ import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
 import { SectionEmptyState } from './SectionEmptyState';
 
-export function QueriesAndTransformationsView() {
+interface QueriesAndTransformationsViewProps {
+  showButtonLabels?: boolean;
+}
+
+export function QueriesAndTransformationsView({ showButtonLabels = false }: QueriesAndTransformationsViewProps) {
   const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { pendingExpression, pendingSavedQuery, pendingTransformation, multiSelectMode } = useQueryEditorUIContext();
@@ -45,7 +49,9 @@ export function QueriesAndTransformationsView() {
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
-        headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
+        headerAction={
+          <AddCardButton variant="query" alwaysVisible showLabel={showButtonLabels} onAdd={expandQueries} />
+        }
       >
         {queries.length > 0 && (
           <DraggableList
@@ -67,7 +73,14 @@ export function QueriesAndTransformationsView() {
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
-        headerAction={<AddCardButton variant="transformation" alwaysVisible onAdd={expandTransformations} />}
+        headerAction={
+          <AddCardButton
+            variant="transformation"
+            alwaysVisible
+            showLabel={showButtonLabels}
+            onAdd={expandTransformations}
+          />
+        }
       >
         {transformations.length > 0 && (
           <DraggableList

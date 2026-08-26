@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -45,7 +46,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-	orgService, err := orgimpl.ProvideService(env.SQLStore, env.Cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(env.SQLStore), env.Cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	// Create a user to make authenticated requests

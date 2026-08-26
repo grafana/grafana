@@ -14,7 +14,12 @@ async function openDashboardSettings(
   selectors: E2ESelectorGroups,
   components: Components
 ) {
-  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+  const sidebar = new Sidebar({
+    page,
+    getByGrafanaSelector: dashboardPage.getByGrafanaSelector.bind(dashboardPage),
+    selectors,
+    components,
+  });
   const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
   const optionsButton = sidebar.toolbar.getButton('Options');
   // The first edit-button click can be swallowed before the scene is interactive; re-click only

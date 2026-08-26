@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Abilita registri di base"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "API batch",
+      "description-batch-api": "Esegue query su più risorse in un'unica richiesta, migliorando le prestazioni delle dashboard di grandi dimensioni. Richiede il ruolo <2>Monitoring Reader</2> nell'ambito della sottoscrizione su <6>metrics.monitor.azure.com</6>. Potrebbero essere applicati <9>costi aggiuntivi</9> dopo il livello gratuito.",
+      "label-enable-batch-api": "Abilita API batch"
     },
     "config-editor": {
       "description-additional-settings": "Le impostazioni aggiuntive sono opzionali e possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include Proxy Socks sicuro, timeout della richiesta e cookie inoltrati.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Carica abbonamenti"
     },
     "dimension-fields": {
-      "aria-label-remove": "Rimuovi",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensioni",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operazione",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Spazio dei nomi metrico"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "È possibile selezionare elementi dello stesso tipo di risorsa tra sottoscrizioni e regioni. Le risorse in diverse sottoscrizioni o regioni vengono interrogate in richieste separate e potrebbero avere esiti negativi in modo indipendente. Per selezionare risorse di un tipo diverso, deseleziona prima l'opzione attualmente selezionata.",
+      "selection-notice-standard": "È possibile selezionare elementi dello stesso tipo di risorsa e della stessa posizione. Per selezionare risorse di un tipo o di una posizione diversi, deseleziona prima l'opzione attualmente selezionata."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funzionalità"
     },
     "nested-row": {
       "text-loading": "Caricamento in corso..."
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Ordina i risultati in base a una o più colonne in ordine crescente o decrescente."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Caricamento interrotto dopo {{maxPages}} pagine; alcuni risultati potrebbero essere omessi.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Si è verificato un errore durante la richiesta di metadati da Azure Monitor"

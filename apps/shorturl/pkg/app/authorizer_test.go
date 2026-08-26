@@ -52,24 +52,9 @@ func TestGetAuthorizer(t *testing.T) {
 		})
 	}
 
-	// Updating the status subresource (lastSeenAt) is part of the read flow and
-	// must be available to any authenticated user, including org role None.
-	for _, verb := range []string{"update", "patch"} {
-		t.Run(verb+" of the status subresource is allowed for any authenticated user", func(t *testing.T) {
-			for _, role := range allRoles {
-				decision, _, err := auth.Authorize(newContext(role), authorizer.AttributesRecord{
-					ResourceRequest: true,
-					Verb:            verb,
-					Subresource:     "status",
-				})
-				require.NoError(t, err)
-				require.Equal(t, authorizer.DecisionAllow, decision, "role %s should be allowed to %s status", role, verb)
-			}
-		})
-	}
-
-	// list/watch, delete and updates to the resource itself are restricted to
-	// admins.
+	// list/watch, delete and updates to the resource or its status subresource
+	// are restricted to admins. The goto redirect bumps lastSeenAt on the status
+	// subresource under a provisioning identity, so it does not need this grant.
 	restrictedCases := []struct {
 		verb        string
 		subresource string
@@ -80,6 +65,8 @@ func TestGetAuthorizer(t *testing.T) {
 		{"deletecollection", ""},
 		{"update", ""},
 		{"patch", ""},
+		{"update", "status"},
+		{"patch", "status"},
 	}
 	for _, tc := range restrictedCases {
 		name := tc.verb

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -125,22 +126,27 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver  accesscontrol.ActionResolver
-	cache           *localcache.CacheService
-	cfg             *setting.Cfg
-	features        featuremgmt.FeatureToggles
-	log             log.Logger
-	registrations   accesscontrol.RegistrationList
-	rolesMu         sync.RWMutex
-	roles           map[string]*accesscontrol.RoleDTO
-	store           accesscontrol.Store
-	seeder          *seeding.Seeder
-	permRegistry    permreg.PermissionRegistry
-	isInitialized   bool
-	sql             db.DB
-	serverLock      *serverlock.ServerLockService
-	singleFlight    singleflight.Group
-	zanzanaResolver *ZanzanaPermissionResolver
+	actionResolver        accesscontrol.ActionResolver
+	cache                 *localcache.CacheService
+	cfg                   *setting.Cfg
+	features              featuremgmt.FeatureToggles
+	log                   log.Logger
+	registrations         accesscontrol.RegistrationList
+	rolesMu               sync.RWMutex
+	roles                 map[string]*accesscontrol.RoleDTO
+	store                 accesscontrol.Store
+	seeder                *seeding.Seeder
+	permRegistry          permreg.PermissionRegistry
+	isInitialized         bool
+	sql                   db.DB
+	serverLock            *serverlock.ServerLockService
+	singleFlight          singleflight.Group
+	userPermissionsClient accesscontrol.UserPermissionsClient
+	zanzanaResolver       *ZanzanaPermissionResolver
+}
+
+func (s *Service) SetUserPermissionsClient(client accesscontrol.UserPermissionsClient) {
+	s.userPermissionsClient = client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -157,6 +163,36 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx)) {
+		if s.userPermissionsClient == nil {
+			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
+		}
+		return s.userPermissionsClient.GetUserPermissions(ctx, user, options)
+	}
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+// GetLocalUserPermissions evaluates effective local permissions without delegating back to AuthZ.
+func (s *Service) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.GetLocalUserPermissions")
+	defer span.End()
+
+	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+	defer timer.ObserveDuration()
+
+	return s.getLocalUserPermissions(ctx, user, options)
+}
+
+func (s *Service) getLocalUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	permissions, err := s.GetRBACUserPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+}
+
+func (s *Service) GetRBACUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	var permissions []accesscontrol.Permission
 	var err error
 
@@ -170,14 +206,14 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 		return nil, err
 	}
 
-	return s.mergeZanzanaUserPermissions(ctx, user, permissions, options), nil
+	return permissions, nil
 }
 
 func (s *Service) mergeZanzanaUserPermissions(ctx context.Context, user identity.Requester, legacy []accesscontrol.Permission, options accesscontrol.Options) []accesscontrol.Permission {
 	if s.zanzanaResolver == nil {
 		return legacy
 	}
-	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
+	if options.SkipZanzanaCache || !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
 		return s.zanzanaResolver.MergeCurrentUser(ctx, user, legacy, s.log)
 	}
 

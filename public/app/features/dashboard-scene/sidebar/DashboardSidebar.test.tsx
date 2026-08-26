@@ -12,6 +12,10 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
+import { changeVariableName } from '../actions/variable/changeVariableName';
+import { changeVariableType } from '../actions/variable/changeVariableType';
+import { removeVariable } from '../actions/variable/removeVariable';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -29,7 +33,6 @@ import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './outline/DashboardOutline';
-import { dashboardEditActions } from './shared';
 import { type DashboardSidebarLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -74,6 +77,43 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.state.selectionContext.selected).toHaveLength(1);
       expect(sidebar.getSelectedObject()).toBe(panel1);
+    });
+
+    it('selects the newly created group after grouping panels', () => {
+      const panel1 = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const panel2 = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'P2' });
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({
+          children: [new AutoGridItem({ body: panel1 }), new AutoGridItem({ body: panel2 })],
+        }),
+      });
+      const dashboard = new DashboardScene({ isEditing: true, body: layout });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(dashboard);
+
+      const sidebar = dashboard.state.sidebar;
+      sidebar.selectObject(panel1, { force: true });
+      sidebar.selectObject(panel2, { multi: true });
+
+      groupSelectionInto({ source: dashboard, items: [panel1, panel2], target: 'tab' });
+
+      const selectedObject = sidebar.getSelectedObject();
+      expect(selectedObject).toBeInstanceOf(TabItem);
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+      expect(sidebar.state.isNewElement).toBe(true);
+
+      if (!(selectedObject instanceof TabItem)) {
+        throw new Error('expected tab item');
+      }
+
+      // The selected group is the tab wrapping the grouped panels (the very instances).
+      const groupedPanels = selectedObject.getLayout().getVizPanels();
+      expect(groupedPanels[0] === panel1).toBe(true);
+      expect(groupedPanels[1] === panel2).toBe(true);
+
+      // Undoing the grouping clears the selection of the (now removed) group.
+      sidebar.undoAction();
+      expect(sidebar.state.selectionContext.selected).toHaveLength(0);
     });
 
     it('Clear selection should select dashboard when docked', () => {
@@ -258,7 +298,7 @@ describe('DashboardSidebar', () => {
     sidebar.selectObject(variable, { force: true });
 
     const changedVariable = new ConstantVariable({ name: 'service' });
-    dashboardEditActions.changeVariableType({
+    changeVariableType({
       source: variableSet,
       oldVariable: variable,
       newVariable: changedVariable,
@@ -295,7 +335,7 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
@@ -327,14 +367,14 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
     });
     expect(variableSet.state.variables).toEqual([local]);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'env',
       newValue: 'localVar',
@@ -361,14 +401,14 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    dashboardEditActions.changeVariableName({
+    changeVariableName({
       source: local,
       oldValue: 'localVar',
       newValue: 'env',
     });
     expect(variableSet.state.variables).toEqual([local]);
 
-    dashboardEditActions.removeVariable({
+    removeVariable({
       source: variableSet,
       removedObject: local,
     });

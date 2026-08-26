@@ -8,8 +8,8 @@ import { serializeIgnorePredefinedVariables } from './predefinedVariableDenyList
 import { formatPredefinedVariablesAnnotationLabel } from './predefinedVariablesMetadata';
 
 describe('formatPredefinedVariablesAnnotationLabel', () => {
-  it('labels absent annotation as All', () => {
-    expect(formatPredefinedVariablesAnnotationLabel(undefined)).toBe('All');
+  it('labels absent annotation as None', () => {
+    expect(formatPredefinedVariablesAnnotationLabel(undefined)).toBe('None');
   });
 
   it('labels empty denylist as All', () => {

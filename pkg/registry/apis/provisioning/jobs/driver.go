@@ -251,6 +251,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			string(d.currentJob.Spec.Action),
 			string(d.currentJob.Status.State),
 			sumTotalChanges(d.currentJob.Status.Summary),
+			sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
 	}
@@ -270,12 +271,20 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		"warningCount", len(status.Warnings),
 		"message", status.Message,
 	}
-	switch {
-	case err != nil:
-		logger.Error("job failed", append(logFields, "error", err)...)
-	case status.State == provisioning.JobStateError:
-		logger.Error("job completed with errors", logFields...)
-	case status.State == provisioning.JobStateWarning:
+	if err != nil {
+		logFields = append(logFields, "error", err)
+	}
+	// Key the log level off the final job state, not off err: a worker can return
+	// an error that maps to a warning state (e.g. a feature disabled by
+	// configuration), which should not be logged or alerted as a failure.
+	switch status.State {
+	case provisioning.JobStateError:
+		if err != nil {
+			logger.Error("job failed", logFields...)
+		} else {
+			logger.Error("job completed with errors", logFields...)
+		}
+	case provisioning.JobStateWarning:
 		logger.Warn("job completed with warnings", logFields...)
 	default:
 		logger.Info("job complete", logFields...)
@@ -519,6 +528,22 @@ func sumTotalChanges(summaries []*provisioning.JobResourceSummary) int {
 			continue
 		}
 		total += int(s.TotalChanges)
+	}
+	return total
+}
+
+// sumTotalDryRun totals the resources a job processed while doing its work.
+func sumTotalDryRun(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		if action == provisioning.JobActionPullRequest {
+			total += int(s.Create + s.Update + s.Delete + s.Noop)
+		} else {
+			total += int(s.TotalChanges)
+		}
 	}
 	return total
 }
