@@ -127,7 +127,7 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.mongodb.org/mongo-driver v1.17.6 // indirect
+	go.mongodb.org/mongo-driver v1.17.7 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/bridges/prometheus v0.64.0 // indirect
 	go.opentelemetry.io/contrib/exporters/autoexport v0.64.0 // indirect
