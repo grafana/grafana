@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Input, Modal, Text, useStyles2 } from '@grafana/ui';
 
+import { getRandomSurprisePrompt } from './surprisePrompts';
+
 interface Props {
   /** Receives the prompt as typed; the modal composes the request and hands it off. */
   onSubmitPrompt: (prompt: string) => void;
@@ -30,6 +32,11 @@ export function PromptForm({ onSubmitPrompt, onDismiss }: Props) {
       return;
     }
     onSubmitPrompt(trimmedPrompt);
+  };
+
+  const handleSurpriseMe = () => {
+    const randomPrompt = getRandomSurprisePrompt();
+    setPrompt(randomPrompt);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -63,6 +70,17 @@ export function PromptForm({ onSubmitPrompt, onDismiss }: Props) {
         data-testid="dashboard-prompt-input"
       />
 
+      <Button
+        variant="secondary"
+        fill="text"
+        icon="arrow-random"
+        onClick={handleSurpriseMe}
+        className={styles.surpriseButton}
+        data-testid="dashboard-prompt-surprise-button"
+      >
+        <Trans i18nKey="dashboard-prompt.prompt.surprise">Surprise Me!</Trans>
+      </Button>
+
       <Modal.ButtonRow>
         <Button variant="secondary" fill="outline" onClick={onDismiss}>
           <Trans i18nKey="dashboard-prompt.prompt.cancel">Cancel</Trans>
@@ -83,6 +101,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
+    }),
+    surpriseButton: css({
+      alignSelf: 'flex-start',
+      marginTop: theme.spacing(-1),
     }),
   };
 }
