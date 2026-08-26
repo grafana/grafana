@@ -17,9 +17,11 @@ export const defaultOperatorState = (): OperatorState => ({
 	state: "success",
 });
 
-// Condition mirrors metav1.Condition. Inlined because the app-sdk codegen
-// here can't reference metav1.Condition from CUE. Field semantics are
-// k8s-standard; reason values are produced by SyncReason in the syncer.
+/**
+ * Condition mirrors metav1.Condition. Inlined because the app-sdk codegen
+ * here can't reference metav1.Condition from CUE. Field semantics are
+ * k8s-standard; reason values are produced by SyncReason in the syncer.
+ */
 export interface Condition {
 	type: string;
 	status: "True" | "False" | "Unknown";
