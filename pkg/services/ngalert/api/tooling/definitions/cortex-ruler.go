@@ -107,7 +107,7 @@ import (
 //     Responses:
 //       202: UpdateNamespaceRulesResponse
 //       403: ForbiddenError
-//       404: NotFound.
+//       404: NotFound
 //
 
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
