@@ -6310,7 +6310,7 @@
         "global-section": "Global",
         "pane-header": "Cross-dashboard variables",
         "title": "Cross-dashboard",
-        "tooltip": "Choose which global and folder variables this dashboard receives"
+        "tooltip": "Choose global and folder variables"
       },
       "dashboard-options": {
         "annotations": "Annotations",
