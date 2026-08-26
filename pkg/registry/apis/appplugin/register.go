@@ -91,6 +91,9 @@ type AppPluginAPIBuilder struct {
 
 	// Get values from storage
 	getter getter
+
+	// Manifest kind storage by resource, used to dispatch admission hooks.
+	kinds map[schema.GroupVersionResource]*kindStore
 }
 
 func NewAppPluginAPIBuilder(
@@ -306,7 +309,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			return err
 		}
 	}
-	getters := make(map[schema.GroupVersionResource]rest.Getter)
+	kinds := make(map[schema.GroupVersionResource]*kindStore)
 
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
@@ -315,7 +318,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 		storage[settingsRI.StoragePath()] = settingsStorage
-		getters[gv.WithResource(apppluginV0.APP_RESOURCE_NAME)] = settingsStorage.(rest.Getter)
 
 		provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
 			return b.getPluginContext(ctx, gv.Version)
@@ -355,7 +357,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 							kind.Kind, gv.String(), resource)
 					}
 					storage[resource] = store
-					getters[gv.WithResource(resource)] = store
+					kinds[gv.WithResource(resource)] = store
 
 					if store.hasStatus {
 						storage[resource+"/status"] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store.Store)
@@ -367,12 +369,17 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	}
 
+	b.kinds = kinds
+
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
-		store, ok := getters[gvr]
+		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
+			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
+		}
+
+		store, ok := kinds[gvr]
 		if !ok {
-			// A wiring mistake rather than a bad request: every served resource
-			// registers here. Named so the plugin ID and version are visible.
+			// This indicates a setup error not a bad request
 			return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
 		}
 		return store.Get(ctx, name, &v1.GetOptions{})

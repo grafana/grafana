@@ -41,6 +41,11 @@ type kindStore struct {
 	// used for admission hooks
 	admission pluginv3.AdmissionServiceClient
 
+	// mutation and validation are the operations the manifest declared each
+	// admission capability for. Nil when the kind declares none.
+	mutation   admissionOps
+	validation admissionOps
+
 	// hasStatus prevents main-resource writes from changing status.
 	hasStatus bool
 
@@ -83,6 +88,20 @@ func newKindStore(
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
 		admission:     admission,
+	}
+
+	if kind.Admission != nil {
+		if kind.Admission.SupportsAnyMutation() {
+			wrap.mutation = newAdmissionOps(kind.Admission.Mutation.Operations)
+		}
+		if kind.Admission.SupportsAnyValidation() {
+			wrap.validation = newAdmissionOps(kind.Admission.Validation.Operations)
+		}
+		// A declared hook fails the request when it cannot be reached, so a missing
+		// client would reject every write. Surface it at startup instead.
+		if admission == nil && (wrap.mutation != nil || wrap.validation != nil) {
+			return nil, fmt.Errorf("kind %s declares admission capabilities but has no plugin client", gvk.Kind)
+		}
 	}
 
 	// A kind may legally omit its schema; serve it without body validation.
