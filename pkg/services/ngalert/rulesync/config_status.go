@@ -3,6 +3,8 @@ package rulesync
 import (
 	"time"
 
+	prommodel "github.com/prometheus/common/model"
+
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
 
@@ -194,4 +196,21 @@ func externalRulerSyncLastAppliedHashFromConfig(c *alertingrulesv0alpha1.Config)
 		return ""
 	}
 	return *c.Status.ExternalRulerSync.LastAppliedHash
+}
+
+// externalRulerSyncPollIntervalFromConfig returns the configured poll interval,
+// or defaultRulerSyncPollInterval when unset, unparseable (the CUE pattern
+// already validates the string at admission time; this is a defensive
+// fallback, not the primary guard), or c is nil.
+func externalRulerSyncPollIntervalFromConfig(c *alertingrulesv0alpha1.Config) time.Duration {
+	if c == nil ||
+		c.Spec.ExternalRulerSync == nil ||
+		c.Spec.ExternalRulerSync.PollInterval == nil {
+		return defaultRulerSyncPollInterval
+	}
+	d, err := prommodel.ParseDuration(*c.Spec.ExternalRulerSync.PollInterval)
+	if err != nil {
+		return defaultRulerSyncPollInterval
+	}
+	return time.Duration(d)
 }
