@@ -11,6 +11,7 @@ import { dashboardsNavEntry } from './sections/dashboards.navEntry';
 import { drilldownNavEntry, exploreNavEntry } from './sections/explore.navEntry';
 import { helpNavEntry } from './sections/help.navEntry';
 import { getHomeNode } from './sections/home.navEntry';
+import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
 import { applyAppSubUrl, buildEntries, type NavEntryBuilder, pruneEmptyNavSections, sortNavTree } from './utils';
@@ -71,6 +72,7 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   dashboardsNavEntry,
   exploreNavEntry,
   drilldownNavEntry,
+  notebooksNavEntry,
   profileNavEntry,
   alertingNavEntry,
   connectionsNavEntry,
