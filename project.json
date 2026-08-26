@@ -21,7 +21,7 @@
           "target": "build"
         }
       ],
-      "outputs": ["{workspaceRoot}/public/build"],
+      "outputs": ["{workspaceRoot}/public/build", "{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
     "dev": {
