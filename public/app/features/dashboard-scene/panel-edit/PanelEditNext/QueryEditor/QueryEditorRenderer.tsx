@@ -16,15 +16,15 @@ import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import { QueryCoauthoringHostProvider } from './QueryCoauthoringHostContext';
-import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import { QueryCoauthoringHostProvider } from './coauthoring/QueryCoauthoringHostContext';
+import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringRegistrationV1,
-} from './internalCoauthoringContract';
-import { type QueryPreview } from './queryPreview';
+} from './coauthoring/internalCoauthoringContract';
+import { type QueryPreview } from './coauthoring/queryPreview';
 
 const PROMETHEUS_DATASOURCE_TYPE = 'prometheus';
 

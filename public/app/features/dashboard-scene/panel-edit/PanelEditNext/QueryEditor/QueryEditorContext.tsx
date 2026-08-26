@@ -14,7 +14,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
-import { type QueryPreview } from './queryPreview';
+import { type QueryPreview } from './coauthoring/queryPreview';
 import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
 export interface PendingExpression {

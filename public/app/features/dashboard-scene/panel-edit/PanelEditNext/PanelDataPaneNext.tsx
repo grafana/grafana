@@ -31,7 +31,7 @@ import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
-import { startQueryPreview, type QueryPreview } from './QueryEditor/queryPreview';
+import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
 import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
