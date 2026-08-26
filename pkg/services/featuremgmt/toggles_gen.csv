@@ -226,7 +226,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
-2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2025-07-03,foldersAppPlatformAPI,GA,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
