@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/grafana/grafana-app-sdk/resource"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
@@ -141,9 +138,10 @@ type ExternalRulerSyncer struct {
 // NewExternalRulerSyncer constructs an ExternalRulerSyncer. The ruler config GET
 // is routed through the datasource proxy service (transport, auth and egress
 // validation are handled there). The operator-level external_ruler_uid ini
-// setting is always the enable signal for itself (no flag); per-org sync driven
-// by the rules Config resource's spec.externalRulerSync.datasourceUid is
-// additionally gated by the alerting.syncExternalRuler feature flag.
+// setting is always the enable signal for itself; per-org sync driven by the
+// rules Config resource's spec.externalRulerSync.datasourceUid needs no
+// separate flag either — an org Admin setting that field is itself the
+// enable signal, the same way the ini setting is for the operator.
 func NewExternalRulerSyncer(
 	settings *setting.UnifiedAlertingSettings,
 	logger log.Logger,
@@ -208,20 +206,12 @@ func (s *ExternalRulerSyncer) orgServiceContext(ctx context.Context, orgID int64
 	return identity.WithServiceIdentityForSingleNamespaceContext(ctx, ns), ns
 }
 
-// rulerSyncAPIEnabled reports whether the alerting.syncExternalRuler feature
-// flag is on — the gate for the Config-resource-driven (per-org) sync path.
-// The operator ini override never needs this flag.
-func rulerSyncAPIEnabled(ctx context.Context) bool {
-	client := openfeature.NewDefaultClient()
-	return client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalRuler, false, openfeature.TransactionContext(ctx))
-}
-
 // resolvedRulerSync is the effective external-ruler-sync configuration for one
 // org, after applying the ini override and target/promote defaults. A zero
 // value (uid == "") means sync isn't configured for the org; origin == ""
-// additionally means the API path wasn't even reachable (flag off, or no
-// client wired) — callers should treat that as "nothing to report" rather
-// than seeding Config status.
+// additionally means the API path wasn't even reachable (no client wired) —
+// callers should treat that as "nothing to report" rather than seeding
+// Config status.
 type resolvedRulerSync struct {
 	uid       string             // datasource to sync rules from
 	targetUID string             // recording-rules write target (defaults to uid)
@@ -242,18 +232,19 @@ type resolvedRulerSync struct {
 
 // resolveExternalRulerConfig computes the effective sync config for the org.
 // The operator-level ExternalRulerUID ini setting takes precedence over the
-// per-org value and, unlike the API path, requires no feature flag —
-// pre-existing, always-on behavior that must not regress; the ini path has no
-// target or promote override, so the target is always the query datasource and
-// promote is always false there. The per-org value is read from the rules
-// Config k8s resource and is gated by the alerting.syncExternalRuler flag; if
-// its client can't be constructed the sync fails for this tick rather than
-// falling back to anything.
+// per-org value — pre-existing, always-on behavior that must not regress; the
+// ini path has no target or promote override, so the target is always the
+// query datasource and promote is always false there. The per-org value is
+// read from the rules Config k8s resource, with no feature flag of its own
+// (an Admin setting spec.externalRulerSync.datasourceUid is itself the enable
+// signal, same as the ini setting is for the operator); if its client can't
+// be constructed the sync fails for this tick rather than falling back to
+// anything.
 func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedRulerSync, error) {
 	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
 		return resolvedRulerSync{uid: iniUID, targetUID: iniUID, origin: originIni, pollInterval: defaultRulerSyncPollInterval}, nil
 	}
-	if !rulerSyncAPIEnabled(ctx) || s.clientGenerator == nil {
+	if s.clientGenerator == nil {
 		return resolvedRulerSync{pollInterval: defaultRulerSyncPollInterval}, nil
 	}
 
@@ -355,9 +346,9 @@ func (s *ExternalRulerSyncer) recordPromotionCommitted(ctx context.Context, orgI
 
 // recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
 // the singleton if absent (writeStatus creates on missing). Best-effort. Called
-// only when the API path is reachable (flag on) but no datasourceUid is set —
-// an install that never touches the API path never gets a Config resource
-// created for it.
+// only when the API path is reachable (client wired) but no datasourceUid is
+// set — an install that never touches the API path never gets a Config
+// resource created for it.
 func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
 	now := time.Now()
 	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
@@ -367,11 +358,10 @@ func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int
 
 // Run checks all orgs at baselineCheckInterval until ctx is cancelled. Always
 // starts the ticker: sync can be enabled either operator-wide via the
-// external_ruler_uid ini setting or per-org via the rules Config resource
-// (behind the alerting.syncExternalRuler flag), and only a per-org tick can
-// tell which — see resolveExternalRulerConfig. Each org's real sync cadence is
-// its own resolved pollInterval; dueForSync makes checking an org that isn't
-// due yet a cheap in-memory no-op.
+// external_ruler_uid ini setting or per-org via the rules Config resource,
+// and only a per-org tick can tell which — see resolveExternalRulerConfig.
+// Each org's real sync cadence is its own resolved pollInterval; dueForSync
+// makes checking an org that isn't due yet a cheap in-memory no-op.
 func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
 	s.logger.Info("Starting external ruler syncer", "check_interval", baselineCheckInterval)
 	ticker := time.NewTicker(baselineCheckInterval)

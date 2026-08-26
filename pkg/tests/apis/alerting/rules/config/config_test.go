@@ -18,7 +18,6 @@ import (
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -43,21 +42,18 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-// getTestHelper boots an in-process Grafana with the external-ruler sync
-// feature flag enabled. The flag is required for the datasource admission
-// validator to run (with it off the validator short-circuits with "sync is
-// disabled on this instance"); see newExternalRulerSyncDatasourceValidator in
-// pkg/registry/apps/alerting/rules/register.go. No poll-interval override is
-// needed here: the syncer's own baselineCheckInterval (10s, fixed, not
-// operator-configurable) already keeps seedSingleton's wait short.
-// NGAlertAdminConfigPollInterval is a different, unrelated knob (AlertsRouter's
-// own cadence) and has no effect on this syncer at all.
+// getTestHelper boots an in-process Grafana for the rules Config resource.
+// No feature toggle is needed: neither the sync worker's Config-resource path
+// nor its datasource admission validator (newExternalRulerSyncDatasourceValidator
+// in pkg/registry/apps/alerting/rules/register.go) is flag-gated — setting
+// spec.externalRulerSync.datasourceUid is itself the enable signal. No
+// poll-interval override is needed either: the syncer's own
+// baselineCheckInterval (10s, fixed, not operator-configurable) already keeps
+// seedSingleton's wait short. NGAlertAdminConfigPollInterval is a different,
+// unrelated knob (AlertsRouter's own cadence) and has no effect on this
+// syncer at all.
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingSyncExternalRuler,
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func ptr[T any](v T) *T { return &v }
@@ -110,11 +106,12 @@ func newConfig(name string) *alertingrulesv0alpha1.Config {
 }
 
 // seedSingleton brings the "default" singleton into existence the way
-// production does — by waiting for the sync worker's own flag-on-but-
+// production does — by waiting for the sync worker's own reachable-but-
 // unconfigured tick to seed it (create is service-identity only; humans only
-// ever read/update the already-seeded object). getTestHelper shortens the
-// poll interval so this stays fast; require.Eventually absorbs the remaining
-// race with the first tick and unified-storage read-after-write lag.
+// ever read/update the already-seeded object). The syncer's fixed 10s
+// baselineCheckInterval already keeps this fast; require.Eventually absorbs
+// the remaining race with the first tick and unified-storage read-after-write
+// lag.
 func seedSingleton(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper) {
 	t.Helper()
 	adminClient := newConfigClient(t, helper.Org1.Admin)
@@ -272,8 +269,7 @@ func TestIntegrationConfigCreate(t *testing.T) {
 }
 
 // TestIntegrationConfigValidator verifies the datasource admission validator
-// for spec.externalRulerSync.datasourceUid (active because the sync feature
-// flag is enabled in getTestHelper):
+// for spec.externalRulerSync.datasourceUid:
 //   - setting a non-existent UID is rejected ("datasource not found").
 //   - clearing / leaving the UID unset is always allowed.
 //

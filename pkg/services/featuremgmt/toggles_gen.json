@@ -209,7 +209,8 @@
       "metadata": {
         "name": "alerting.syncExternalRuler",
         "resourceVersion": "1782807464063",
-        "creationTimestamp": "2026-06-30T08:17:44Z"
+        "creationTimestamp": "2026-06-30T08:17:44Z",
+        "deletionTimestamp": "2026-08-26T11:06:54Z"
       },
       "spec": {
         "description": "Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana",

@@ -58,8 +58,8 @@ func computePromotedStatus(prev *alertingrulesv0alpha1.ConfigStatus, uid string,
 
 // computeNotConfiguredStatus returns prev with only the ExternalRulerSynced
 // condition updated to Unknown/NotConfigured (used when the API path is
-// reachable — the alerting.syncExternalRuler flag is on — but no datasourceUid
-// is configured). Everything else rides through unchanged: observedGeneration,
+// reachable but no datasourceUid is configured). Everything else rides
+// through unchanged: observedGeneration,
 // externalRulerSync (kept as the last-attempt context, its documented meaning)
 // and any sibling conditions. The Synced condition is a current-state snapshot,
 // and its lastTransitionTime advances only on a flip to Unknown, so consecutive
