@@ -60,6 +60,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/web/webtest"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/migueleliasweb/go-github-mock/src/mock"
+	_ "github.com/open-feature/go-sdk/openfeature/testing"
 	_ "github.com/openfga/openfga/pkg/server/test"
 	_ "github.com/openfga/openfga/pkg/storage/test"
 	_ "github.com/prometheus/client_golang/prometheus/testutil"

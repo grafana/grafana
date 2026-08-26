@@ -885,7 +885,6 @@
       "close": "關閉",
       "create": "建立",
       "delete": "刪除",
-      "deleting": "正在刪除…",
       "edit": "編輯",
       "export": "匯出",
       "export-all": "匯出全部",
@@ -1618,6 +1617,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1688,7 +1691,6 @@
       "review": {
         "autosync-badge": "",
         "back": "警示規則",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "篩選",
         "folder": "目標資料夾",
@@ -1707,7 +1709,6 @@
         "routing": "通知路由",
         "routing-none": "未選取政策樹",
         "routing-tree": "政策樹：{{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "警示規則不會匯入。",
         "rules-title": "警示規則",
         "skipped": "已跳過",
@@ -2479,13 +2480,10 @@
         "route-count_other": "{{count}} 條路由"
       },
       "delete": {
-        "confirm": "是的，刪除政策",
-        "warning-1": "刪除此通知政策將永久移除該政策。",
-        "warning-2": "您確定要刪除這個政策嗎？"
-      },
-      "delete-modal": {
-        "permanently-remove": "此動作將永久移除 <1>{{routeName}}</1> 通知政策。",
-        "title-delete-notification-policy": "刪除通知政策"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "使用以逗號分隔的比對條件清單來篩選路由，例如：<1>severity=critical, region=EMEA</1>",
       "generated-policies": "自動產生的政策",
@@ -2529,7 +2527,8 @@
         "reset": "重設",
         "resetting": "正在重設...",
         "title-delete-notification-policy": "刪除通知政策",
-        "title-reset-notification-policy": "重設通知政策"
+        "title-reset-notification-policy": "重設通知政策",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "請稍候，我們正在更新您的通知政策。",
@@ -3803,7 +3802,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "刪除通知政策"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3852,6 +3851,8 @@
       "title-notification-policies": "通知政策"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "無法匯入資源",
@@ -5978,6 +5979,9 @@
       "description": "面板、文字和程式碼儲存格的縱向序列",
       "name": "筆記本",
       "pill": "已發布的筆記本",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "時間"
     },
     "on-create-new-row": {
@@ -6813,6 +6817,11 @@
       "info-box-content": "儀表板連結可讓您將其他儀表板及網站的連結直接放在儀表板標題下方。<2>了解更多</2>",
       "title": "尚未新增儀表板連結"
     }
+  },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
   },
   "dashboard-prompt": {
     "datasource-entry": {
@@ -8684,6 +8693,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "目前的查詢和時間範圍沒有可用的容量資訊。"
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "收合{{name}}",
       "error": "無法載入指標",
@@ -8696,6 +8710,7 @@
       "loading-values": "正在載入值…",
       "no-metrics": "未找到任何指標",
       "search-placeholder": "搜尋指標",
+      "show-metric-details": "",
       "show-more": "顯示更多",
       "show-more-metrics": "顯示更多指標",
       "show-more-values": "顯示更多值",
@@ -9002,15 +9017,16 @@
       "split-widen": "擴大窗格"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "開啟分享追蹤選項選單",
+      "aria-label-share-dropdown": "",
       "critical-path": "關鍵路徑",
       "critical-path-tooltip": "選取關鍵路徑中的跨度，即決定追蹤最短持續時間的最長相依任務序列。",
       "duration": "持續時間",
       "errors": "錯誤",
       "errors-tooltip": "選取狀態等於錯誤的跨度。",
       "export-started": "匯出已開始",
+      "feedback-group": "",
       "filters": "篩選條件",
-      "give-feedback": "意見回饋",
+      "give-feedback-item": "",
       "high-latency": "高延遲",
       "high-latency-tooltip": "選取追蹤中 10% 最長的跨度 (p90)。",
       "link-copied": "連結已復製到剪貼簿",
@@ -9018,13 +9034,12 @@
       "path": "路徑",
       "route": "路徑",
       "services": "服務",
-      "share": "分享",
       "share-copy-link": "複製連結",
       "share-export-json": "匯出為 JSON",
-      "share-tooltip": "分享追蹤",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "開始時間",
       "target": "目標",
-      "title-share-thoughts-about-tracing-grafana": "分享對於在 Grafana 中進行追蹤的想法。",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "追蹤 ID",
       "url": "網址"
@@ -11198,6 +11213,13 @@
       "show": "顯示",
       "switch": "建議遵循所選解決方案",
       "switchSolution": "切換解決方案",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "針對您的堆疊的建議"
     },
     "solutions": {
@@ -11242,6 +11264,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12830,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12805,6 +12852,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12822,6 +12877,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12865,7 +12921,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13592,6 +13649,7 @@
       "behind-branch-text": "此資源位於 {{repoType}} 的分支後方。",
       "branch-targets": "",
       "delete-from-branch": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到此資源",
+      "move-from-branch": "",
       "not-saved": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到儲存到已設定預設分支的目前版本",
       "open-in-repo-button": "在 {{repoType}} 中開啟",
       "open-pull-request-in-repo": "在 {{repoType}} 中開啟拉取請求",
@@ -13603,6 +13661,7 @@
     "title-created-branch-in-repo": "已在 {{repoType}} 的分支中建立新資源。",
     "title-deleted-resource-in-branch": "已在 {{repoType}} 的分支中刪除資源。",
     "title-loaded-pull-request-in-repo": "此資源是從您剛剛在 {{repoType}} 中建立的分支載入，且只有您可以查看",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "已在 {{repoType}} 的分支中更新資源。"
   },
   "provisioning": {
@@ -16147,6 +16206,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

@@ -363,29 +363,71 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-1. Start Jaeger
+1. Start a tracing backend
+
+   Pick one of the following `devenv` blocks:
 
    ```bash
-   make devenv sources=jaeger
+   # Simplest: Jaeger all-in-one, with its own UI at http://localhost:16686
+   make devenv sources=jaegeronly
+
+   # Full self-observability stack (Tempo + Prometheus + Loki + Pyroscope + Alloy),
+   # for inspecting Grafana's own telemetry. No Jaeger UI; traces are viewed in Grafana.
+   make devenv sources=self-instrumentation
    ```
+
+   Prefer `jaegeronly` over the plain `jaeger` block, since `jaeger` also starts Loki and promtail and requires the Loki Docker log-driver plugin, whereas `jaegeronly` has no such dependency.
 
 1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
-   To enable tracing in Grafana, you must set the address in your `config.ini` file:
+   There is no `enabled` flag, to turn tracing on you need to set an exporter `address`. Tracing configuration is read at **startup**, so restart the backend after editing `custom.ini`.
+
+   For the `jaegeronly` block, use the Jaeger exporter:
 
    ```ini
    [tracing.opentelemetry.jaeger]
    address = http://localhost:14268/api/traces
    ```
 
+   For the `self-instrumentation` (Tempo) block, use the OTLP exporter:
+
+   ```ini
+   [tracing.opentelemetry.otlp]
+   address = localhost:4317
+   insecure = true
+   ```
+
+   While testing, you can force full sampling so every request produces a trace:
+
+   ```ini
+   [tracing.opentelemetry]
+   sampler_type = const
+   sampler_param = 1
+   ```
+
+1. Provision the data sources
+
+   `make devenv` only starts the containers but it doesn't provision data sources. Run the setup script (from inside `devenv`) to symlink `devenv/datasources.yaml` into `conf/provisioning/datasources/`:
+
+   ```bash
+   cd devenv
+   ./setup.sh
+   ```
+
+   This provides the `gdev-tempo` (`http://localhost:3200`), `gdev-jaeger`, and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for details. Alternatively, add the data source by hand under **Connections > Data sources**.
+
 1. Search/browse collected logs and traces in Grafana Explore
 
-   You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
+   Open Grafana Explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-   Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+   You can then inspect any log message that includes a `traceID` and from there click the trace data source (`gdev-jaeger` or `gdev-tempo`) to split the view and inspect the trace in question.
 
-   You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
+1. Search or browse collected traces
+   - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
+   - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
 
-1. Search or browse collected traces in Jaeger UI
+### Troubleshoot local tracing
 
-   You can open `http://localhost:16686` to use the Jaeger UI for browsing and searching traces.
+- **`http://localhost:16686` refused.** The `self-instrumentation` block has no Jaeger. Use Explore with the `gdev-tempo` data source instead.
+- **No Tempo/Jaeger data source in Explore.** The setup script wasn't run. Check for the `dev.yaml` symlink under `conf/provisioning/datasources/`.
+- **No spans appear.** Confirm the exporter block is in `custom.ini` and that the backend was restarted after editing it (tracing is read at startup).

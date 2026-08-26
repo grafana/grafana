@@ -1,7 +1,13 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame, dateTime, type TimeRange } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { getCompareSeriesIdentityKey, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
+import {
+  getCompareSeriesIdentityKey,
+  getComparisonFieldPairs,
+  getTimezones,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -857,5 +863,174 @@ describe('prepareGraphableFields gap filling for compare frames (#125104)', () =
 
     expect(frames[0].length).toBeGreaterThan(3);
     expect(frames[0].fields[1].values).toContain(null);
+  });
+});
+
+describe('getComparisonFieldPairs', () => {
+  /**
+   * Aligned frames arrive from GraphNG's outer join: `state.origin` points back into the
+   * pre-join frames, and `state.seriesIndex` has already been assigned by setClassicPaletteIdxs
+   * (which runs regardless of palette and gives a compare series the same index as its current-period counterpart).
+   */
+  function alignedField(seriesIndex: number | undefined, frameIndex: number, fieldIndex = 1) {
+    return {
+      name: 'value',
+      type: FieldType.number,
+      config: {},
+      values: [1, 2],
+      state: { seriesIndex, origin: { frameIndex, fieldIndex } },
+    };
+  }
+
+  function timeField() {
+    return {
+      name: 'time',
+      type: FieldType.time,
+      config: {},
+      values: [1, 2],
+      state: { origin: { frameIndex: 0, fieldIndex: 0 } },
+    };
+  }
+
+  function currentFrame(refId = 'A') {
+    return { refId, length: 2, fields: [] };
+  }
+
+  function compareFrame(refId = 'A-compare') {
+    return {
+      refId,
+      length: 2,
+      meta: { timeCompare: { diffMs: -86400000, isTimeShiftQuery: true } },
+      fields: [],
+    };
+  }
+
+  it('pairs a compare field with its current-period counterpart in both directions', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    const pairs = getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]);
+
+    expect(pairs).toEqual(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+  });
+
+  it('returns an empty map when no frame is a comparison frame', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(1, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+  });
+
+  it('pairs each series independently when one query returns multiple series', () => {
+    // two current-period series (seriesIndex 0 and 1) each with a compare counterpart
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0, 1), alignedField(1, 0, 2), alignedField(0, 1, 1), alignedField(1, 1, 2)],
+    };
+
+    const pairs = getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]);
+
+    expect(pairs).toEqual(
+      new Map([
+        [1, 3],
+        [3, 1],
+        [2, 4],
+        [4, 2],
+      ])
+    );
+  });
+
+  it('does not pair two current-period series that share an index', () => {
+    // a shared seriesIndex only means "same color" - without a compare frame it is not a pair
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+  });
+
+  it('does not pair two compare series that share a series index', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [compareFrame('A-compare'), compareFrame('B-compare')]).size).toBe(0);
+  });
+
+  it('skips a group of more than two fields sharing one index', () => {
+    // ambiguous - we cannot tell which compare series belongs to which current-period one
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1), alignedField(0, 1, 2)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(0);
+  });
+
+  it('ignores fields with no assigned series index', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(undefined, 0), alignedField(undefined, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(0);
+  });
+
+  it('pairs against the real seriesIndex assignment', () => {
+    // Guards the coupling this relies on: setClassicPaletteIdxs is what makes a compare field
+    // share its counterpart's seriesIndex, and getComparisonFieldPairs reads that back.
+    const main = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [10, 20], labels: { host: 'a' } },
+      ],
+    });
+    const compare = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 8], labels: { host: 'a' } },
+      ],
+    });
+
+    setClassicPaletteIdxs([main, compare], createTheme(), 0);
+
+    const alignedFrame = {
+      length: 2,
+      fields: [
+        timeField(),
+        { ...main.fields[1], state: { ...main.fields[1].state, origin: { frameIndex: 0, fieldIndex: 1 } } },
+        { ...compare.fields[1], state: { ...compare.fields[1].state, origin: { frameIndex: 1, fieldIndex: 1 } } },
+      ],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [main, compare])).toEqual(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+  });
+
+  it('reads compare-ness from the source frames, not the aligned frame', () => {
+    const alignedFrame = { length: 2, fields: [timeField(), alignedField(0, 0), alignedField(0, 1)] };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(2);
+
+    // same aligned frame, but neither source frame is a comparison query now
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
   });
 });
