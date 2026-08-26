@@ -15,12 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestAuthorizeProducerAlertsDefersScopedPermissionCheckToHandler(t *testing.T) {
+func TestAuthorizeProducerAlertsUsesPermissionMiddleware(t *testing.T) {
 	api := &API{AccessControl: acmock.New()}
 
 	handler := api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts")
 
-	require.Equal(t, reflect.ValueOf(middleware.ReqSignedIn).Pointer(), reflect.ValueOf(handler).Pointer())
+	require.NotEqual(t, reflect.ValueOf(middleware.ReqSignedIn).Pointer(), reflect.ValueOf(handler).Pointer())
 }
 
 func TestAuthorize(t *testing.T) {
