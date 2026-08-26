@@ -189,8 +189,6 @@ export const FlagKeys = {
   TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
-  /** Enables value type filtering in Traces Drilldown */
-  TracesDrilldownUseValueTypeFiltering: "tracesDrilldown.useValueTypeFiltering",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -1161,17 +1159,6 @@ export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
-};
-
-/**
- * Enables value type filtering in Traces Drilldown
- *
- * **Details:**
- * - flag key: `tracesDrilldown.useValueTypeFiltering`
- * - default value: `false`
- */
-export const useFlagTracesDrilldownUseValueTypeFiltering = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("tracesDrilldown.useValueTypeFiltering", false, options).value;
 };
 
 /**
