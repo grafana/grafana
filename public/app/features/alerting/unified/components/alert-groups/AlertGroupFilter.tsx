@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -19,9 +20,9 @@ interface Props {
 }
 
 export const AlertGroupFilter = ({ groups }: Props) => {
+  const [matcherFilterKey, setMatcherFilterKey] = useState(0);
   const [queryParams, setQueryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
-  const matcherFilterKey = `matcher-${queryString ?? ''}`;
   const producerAlertsQuery = 'grafana_alert_source=~".+"';
 
   const styles = useStyles2(getStyles);
@@ -34,6 +35,12 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       contactPoint: null,
       receivers: null,
     });
+    setMatcherFilterKey((key) => key + 1);
+  };
+
+  const showProducerAlerts = () => {
+    setQueryParams({ queryString: producerAlertsQuery });
+    setMatcherFilterKey((key) => key + 1);
   };
 
   const showClearButton = !!(groupBy.length > 0 || queryString || alertState || receivers.length > 0);
@@ -52,7 +59,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
               size="sm"
               variant="secondary"
               fill={queryString === producerAlertsQuery ? 'solid' : 'outline'}
-              onClick={() => setQueryParams({ queryString: producerAlertsQuery })}
+              onClick={showProducerAlerts}
             >
               <Trans i18nKey="alerting.alert-group-filter.producer-alerts">Producer alerts</Trans>
             </Button>
