@@ -1,14 +1,12 @@
-import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
-import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, Icon, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
-import { QueryCoauthoringFeedback, type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
+import { QueryCoauthoringFeedback } from './QueryCoauthoringFeedback';
 import {
   QueryCoauthoringClarificationAction,
   QueryCoauthoringFallback,
@@ -19,218 +17,22 @@ import {
   QueryCoauthoringProposal,
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
-import {
-  type QueryEditorCoauthoringAdapterV1,
-  type QueryEditorCoauthoringContextV1,
-  type QueryEditorCoauthoringProposalResultV1,
-} from './internalCoauthoringContract';
-import {
-  buildAssistantHandoffContext,
-  buildAssistantHandoffInstructions,
-  buildAssistantHandoffPrompt,
-  buildCoauthoringSystemPrompt,
-  type QueryFallback,
-  type QueryProposal,
-  selectionSummary,
-} from './queryCoauthoringPrompts';
-import {
-  createQueryCoauthoringRequest,
-  type QueryCoauthoringRequestError,
-  type QueryCoauthoringRequestOutcome,
-} from './queryCoauthoringRequest';
-import {
-  type QueryCoauthoringHandoffSource,
-  trackQueryCoauthoringContinuedInAssistant,
-  trackQueryCoauthoringDismissed,
-  trackQueryCoauthoringGenerationStopped,
-  trackQueryCoauthoringOpened,
-  trackQueryCoauthoringPromptSubmitted,
-  trackQueryCoauthoringProposalAccepted,
-} from './queryCoauthoringTracking';
-import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
+import { selectionSummary } from './queryCoauthoringPrompts';
+import { useQueryCoauthoringSession, type QueryCoauthoringSessionOptions } from './useQueryCoauthoringSession';
 import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
 
-interface QueryClarification {
-  message: string;
-}
-
-interface PreparedQueryProposal extends QueryProposal {
-  context: QueryEditorCoauthoringContextV1;
-  prepared: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
-}
-
-interface StagedFallback extends QueryFallback {
-  context: QueryEditorCoauthoringContextV1;
-}
-
-interface Props {
-  adapter: QueryEditorCoauthoringAdapterV1;
-  invocationId: string;
+interface Props extends QueryCoauthoringSessionOptions {
   portalTarget: HTMLElement;
-  datasourceType: string;
-  onBaseline: (query: DataQuery) => boolean;
-  onAccept: (query: DataQuery) => boolean;
-  onPreview: (query: DataQuery) => boolean;
-  onRevertPreview: () => void;
-  isPreviewRunning?: boolean;
-  timeRange?: { from: number; to: number };
 }
 
-const ITERATION_NUDGE_THRESHOLD = 3;
-
-export function QueryCoauthoring({
-  adapter,
-  invocationId,
-  portalTarget,
-  datasourceType,
-  onBaseline,
-  onAccept,
-  onPreview,
-  onRevertPreview,
-  isPreviewRunning = false,
-  timeRange,
-}: Props) {
-  const {
-    isLoading: isAssistantLoading,
-    isAvailable: isAssistantAvailable,
-    openAssistant: openAvailableAssistant,
-  } = useAssistant();
-  const {
-    cancelIdentification,
-    clear: clearInvocation,
-    context,
-    contextError,
-    isIdentifying,
-    loadContext,
-    readContext,
-    selectionExplanation,
-  } = useQueryCoauthoringInvocation({
-    adapter,
-    invocationId,
-    isAssistantAvailable,
-    datasourceType,
-    timeRange,
-    onBaseline,
-  });
-  const { generate, isGenerating, cancel, reset } = useInlineAssistant();
+export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const [intent, setIntent] = useState('');
-  const [proposal, setProposal] = useState<PreparedQueryProposal>();
-  const [fallback, setFallback] = useState<StagedFallback>();
-  const [clarification, setClarification] = useState<QueryClarification>();
-  const [error, setError] = useState<QueryCoauthoringRequestError>();
-  const [feedback, setFeedback] = useState<QueryCoauthoringFeedbackState>();
-  const [submittedIterationCount, setSubmittedIterationCount] = useState(0);
-  const [iterationNudgeDismissed, setIterationNudgeDismissed] = useState(false);
   const promptMessageId = useId();
   const availableHeight = useQueryCoauthoringViewport(portalTarget);
-  const generationIdRef = useRef(0);
-  const submittedIntentsRef = useRef<string[]>([]);
-  const promptUserGestureRef = useRef(false);
-  const previewActiveRef = useRef(false);
-  const trackedOpenRef = useRef(false);
-  const onRevertPreviewRef = useRef(onRevertPreview);
   const containerRef = useRef<HTMLDivElement>(null);
-  const showIterationNudge = submittedIterationCount >= ITERATION_NUDGE_THRESHOLD;
-  const shouldShowIterationNudge =
-    showIterationNudge &&
-    !iterationNudgeDismissed &&
-    Boolean(context) &&
-    Boolean(clarification) &&
-    !isGenerating &&
-    !proposal &&
-    !fallback &&
-    !error &&
-    !contextError;
-  const showPrompt =
-    isAssistantAvailable &&
-    !isGenerating &&
-    !proposal &&
-    !fallback &&
-    !error &&
-    !contextError &&
-    !shouldShowIterationNudge;
-  const focusState = isAssistantLoading
-    ? 'loading'
-    : !isAssistantAvailable
-      ? 'unavailable'
-      : isGenerating
-        ? 'working'
-        : contextError
-          ? 'context-error'
-          : error
-            ? 'error'
-            : shouldShowIterationNudge
-              ? 'iteration-nudge'
-              : fallback
-                ? 'fallback'
-                : proposal
-                  ? 'proposal'
-                  : 'prompt';
+  const session = useQueryCoauthoringSession(sessionOptions);
+  const focusState = session.state.kind;
   const previousFocusStateRef = useRef(focusState);
-  onRevertPreviewRef.current = onRevertPreview;
-
-  const revertQueryPreview = useCallback(() => {
-    if (!previewActiveRef.current) {
-      return;
-    }
-    previewActiveRef.current = false;
-    onRevertPreviewRef.current();
-  }, []);
-
-  const clearSession = useCallback(() => {
-    generationIdRef.current++;
-    clearInvocation();
-    cancel();
-    reset();
-    revertQueryPreview();
-    setIntent('');
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
-    setFeedback(undefined);
-    setSubmittedIterationCount(0);
-    setIterationNudgeDismissed(false);
-    submittedIntentsRef.current = [];
-    promptUserGestureRef.current = false;
-  }, [cancel, clearInvocation, reset, revertQueryPreview]);
-
-  const closeFeedback = useCallback(() => {
-    setFeedback(undefined);
-  }, []);
-
-  const dismiss = useCallback(() => {
-    clearSession();
-    adapter.dismiss();
-  }, [adapter, clearSession]);
-
-  const dismissPopover = useCallback(() => {
-    trackQueryCoauthoringDismissed({ datasourceType });
-    dismiss();
-  }, [datasourceType, dismiss]);
-
-  useEffect(() => {
-    if (trackedOpenRef.current) {
-      return;
-    }
-    trackedOpenRef.current = true;
-    trackQueryCoauthoringOpened({ datasourceType });
-  }, [datasourceType]);
-
-  useEffect(() => {
-    if (!isAssistantAvailable) {
-      return;
-    }
-
-    const generationId = generationIdRef;
-
-    return () => {
-      generationId.current++;
-      cancel();
-      revertQueryPreview();
-    };
-  }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview]);
 
   useEffect(() => {
     const previousFocusState = previousFocusStateRef.current;
@@ -263,153 +65,6 @@ export function QueryCoauthoring({
     };
   }, [focusState]);
 
-  const stop = () => {
-    trackQueryCoauthoringGenerationStopped({ datasourceType });
-    generationIdRef.current++;
-    cancel();
-    revertQueryPreview();
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
-  };
-
-  const submit = async (nextIntent = intent) => {
-    const trimmedIntent = nextIntent.trim();
-    if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
-      return;
-    }
-    cancelIdentification();
-    const generationId = ++generationIdRef.current;
-
-    let submittedContext: QueryEditorCoauthoringContextV1;
-    try {
-      submittedContext = await readContext();
-    } catch {
-      return;
-    }
-    if (generationId !== generationIdRef.current) {
-      return;
-    }
-
-    trackQueryCoauthoringPromptSubmitted({
-      datasourceType,
-      promptStage: clarification ? 'clarification' : 'initial',
-    });
-    submittedIntentsRef.current.push(trimmedIntent);
-    promptUserGestureRef.current = false;
-
-    setSubmittedIterationCount((count) => count + 1);
-
-    setProposal(undefined);
-    setFallback(undefined);
-    setClarification(undefined);
-    setError(undefined);
-
-    const request = createQueryCoauthoringRequest({
-      adapter,
-      invocationId,
-      context: submittedContext,
-      isCurrent: () => generationId === generationIdRef.current,
-    });
-    const handleOutcome = (outcome: QueryCoauthoringRequestOutcome) => {
-      if (outcome.status === 'ignored') {
-        return;
-      }
-      if (outcome.status === 'clarification') {
-        setIntent('');
-        setClarification({ message: outcome.message });
-        return;
-      }
-      if (outcome.status === 'fallback') {
-        setFallback({ ...outcome.fallback, context: submittedContext });
-        return;
-      }
-      if (outcome.status === 'error') {
-        setError(outcome.error);
-        return;
-      }
-      if (!onPreview(outcome.prepared.query)) {
-        setError({
-          message: t(
-            'query-editor-coauthoring.error-preview-failed',
-            'The query proposal could not be previewed. Try again.'
-          ),
-          retryable: true,
-        });
-        return;
-      }
-      previewActiveRef.current = true;
-      setProposal({ ...outcome.proposal, context: submittedContext, prepared: outcome.prepared });
-    };
-
-    await generate({
-      origin: 'grafana/panel-edit-next/query-coauthoring',
-      agentName: 'query-coauthor',
-      agentId: 'grafana.query.coauthor.v1',
-      prompt: trimmedIntent,
-      systemPrompt: buildCoauthoringSystemPrompt(submittedContext, datasourceType, timeRange),
-      tools: request.tools,
-      onComplete: (completionText) => handleOutcome(request.complete(completionText)),
-      onError: () => handleOutcome(request.fail()),
-    });
-  };
-
-  const accept = useCallback(() => {
-    if (!proposal) {
-      return;
-    }
-    if (!onAccept(proposal.prepared.query)) {
-      setError({
-        message: t(
-          'query-editor-coauthoring.error-accept-failed',
-          'The query proposal could not be accepted. Try again.'
-        ),
-        retryable: true,
-      });
-      return;
-    }
-
-    previewActiveRef.current = false;
-    trackQueryCoauthoringProposalAccepted({ datasourceType });
-    dismiss();
-  }, [datasourceType, dismiss, onAccept, proposal]);
-
-  const continueInAssistant = (sourceState: QueryCoauthoringHandoffSource, reason?: string) => {
-    const activeContext = proposal?.context ?? fallback?.context ?? context;
-    if (!activeContext || !openAvailableAssistant) {
-      return;
-    }
-    const intentHistory = [...submittedIntentsRef.current];
-    const pendingIntent = intent.trim();
-    if (pendingIntent && pendingIntent !== intentHistory.at(-1)) {
-      intentHistory.push(pendingIntent);
-    }
-    const originalIntent = intentHistory[0] ?? '';
-    const latestIntent = intentHistory.at(-1) ?? '';
-    openAvailableAssistant({
-      origin: 'grafana/panel-edit-next/query-coauthoring',
-      mode: 'dashboarding',
-      autoSend: false,
-      prompt: buildAssistantHandoffPrompt(originalIntent, latestIntent, activeContext),
-      context: [
-        createAssistantContextItem('structured', {
-          hidden: false,
-          title: t('query-editor-coauthoring.assistant-context-title', 'Query coauthoring context'),
-          data: buildAssistantHandoffContext(activeContext, datasourceType, timeRange, proposal, reason, intentHistory),
-        }),
-        createAssistantContextItem('structured', {
-          hidden: true,
-          bypassLimits: true,
-          title: t('query-editor-coauthoring.assistant-instructions-title', 'Query coauthoring instructions'),
-          data: buildAssistantHandoffInstructions(),
-        }),
-      ],
-    });
-    trackQueryCoauthoringContinuedInAssistant({ datasourceType, sourceState });
-    dismiss();
-  };
-
   const onKeyDownCapture = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (event.key !== 'Escape') {
@@ -417,14 +72,16 @@ export function QueryCoauthoring({
       }
       event.preventDefault();
       event.stopPropagation();
-      if (feedback) {
-        closeFeedback();
+      if (session.feedback) {
+        session.closeFeedback();
       } else {
-        dismissPopover();
+        session.dismiss();
       }
     },
-    [closeFeedback, dismissPopover, feedback]
+    [session]
   );
+
+  const state = session.state;
 
   return createPortal(
     <div
@@ -436,17 +93,17 @@ export function QueryCoauthoring({
       onKeyDownCapture={onKeyDownCapture}
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
-      {isAssistantLoading && (
-        <QueryCoauthoringHeader onClose={dismissPopover} pulse>
+      {state.kind === 'assistant-loading' && (
+        <QueryCoauthoringHeader onClose={session.dismiss} pulse>
           <Spinner size="sm" />
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="query-editor-coauthoring.checking-assistant">Checking Assistant availability...</Trans>
           </Text>
         </QueryCoauthoringHeader>
       )}
-      {!isAssistantLoading && !isAssistantAvailable && (
+      {state.kind === 'assistant-unavailable' && (
         <>
-          <QueryCoauthoringHeader onClose={dismissPopover}>
+          <QueryCoauthoringHeader onClose={session.dismiss}>
             <Text variant="bodySmall" weight="medium">
               <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant is not available</Trans>
             </Text>
@@ -461,17 +118,17 @@ export function QueryCoauthoring({
               </Trans>
             </Alert>
             <Stack justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={dismissPopover}>
+              <Button size="sm" variant="secondary" onClick={session.dismiss}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
             </Stack>
           </Stack>
         </>
       )}
-      {showPrompt && (
+      {state.kind === 'prompt' && (
         <>
-          <QueryCoauthoringHeader onClose={dismissPopover} pulse={!context || isIdentifying}>
-            {!context || isIdentifying ? (
+          <QueryCoauthoringHeader onClose={session.dismiss} pulse={!state.context || state.isIdentifying}>
+            {!state.context || state.isIdentifying ? (
               <QueryCoauthoringLiveStatus>
                 <Icon name="ai-sparkle" size="sm" />
                 <Text variant="bodySmall" color="secondary">
@@ -480,7 +137,7 @@ export function QueryCoauthoring({
                   </Trans>
                 </Text>
               </QueryCoauthoringLiveStatus>
-            ) : clarification ? (
+            ) : state.clarification ? (
               <Text variant="body" color="secondary">
                 <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
               </Text>
@@ -490,64 +147,56 @@ export function QueryCoauthoring({
               </Text>
             )}
           </QueryCoauthoringHeader>
-          {context && !isIdentifying && (
+          {state.context && !state.isIdentifying && (
             <div
               className={styles.body}
               data-testid={selectors.components.QueryEditorCoauthoring.container}
               role="region"
               aria-label={
-                clarification
+                state.clarification
                   ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
                   : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
               }
             >
               <Text id={promptMessageId} variant="body">
-                {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
+                {state.clarification?.message ?? state.selectionExplanation ?? selectionSummary(state.context)}
               </Text>
             </div>
           )}
-        </>
-      )}
-      {showPrompt && (
-        <>
           <QueryCoauthoringPromptInput
-            key={clarification ? `clarification-${submittedIterationCount}` : 'initial'}
-            focusTrigger={`${clarification ? `clarification-${submittedIterationCount}` : 'initial'}-${
-              selectionExplanation ? 'identified' : 'reading'
+            key={state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}
+            focusTrigger={`${state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}-${
+              state.selectionExplanation ? 'identified' : 'reading'
             }`}
-            userGestureRef={promptUserGestureRef}
-            value={intent}
+            userGestureRef={state.promptUserGestureRef}
+            value={state.intent}
             placeholder={
-              clarification
+              state.clarification
                 ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
                 : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
             }
             ariaLabel={
-              clarification
+              state.clarification
                 ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                 : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
             }
-            ariaDescribedBy={context && !isIdentifying ? promptMessageId : undefined}
+            ariaDescribedBy={state.context && !state.isIdentifying ? promptMessageId : undefined}
             actionLabel={
-              clarification
+              state.clarification
                 ? t('query-editor-coauthoring.continue', 'Continue')
                 : t('query-editor-coauthoring.submit', 'Coauthor')
             }
-            disabled={!intent.trim() || !context || contextError}
-            onChange={setIntent}
-            onSubmit={() => void submit()}
+            disabled={!state.intent.trim() || !state.context}
+            onChange={state.setIntent}
+            onSubmit={state.submit}
           />
-          {clarification && (
-            <QueryCoauthoringClarificationAction
-              onContinue={() => continueInAssistant('clarification', clarification.message)}
-            />
-          )}
+          {state.clarification && <QueryCoauthoringClarificationAction onContinue={state.continueInAssistant} />}
         </>
       )}
-      {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} onStop={stop} />}
-      {isAssistantAvailable && contextError && (
+      {state.kind === 'working' && <QueryCoauthoringWorking context={state.context} onStop={state.stop} />}
+      {state.kind === 'context-error' && (
         <>
-          <QueryCoauthoringHeader onClose={dismissPopover}>
+          <QueryCoauthoringHeader onClose={session.dismiss}>
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.context-error">Could not read the selected query context</Trans>
             </Text>
@@ -558,64 +207,64 @@ export function QueryCoauthoring({
               title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
             />
             <Stack gap={1} justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={dismissPopover}>
+              <Button size="sm" variant="secondary" onClick={session.dismiss}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
-              <Button size="sm" variant="secondary" onClick={loadContext}>
+              <Button size="sm" variant="secondary" onClick={state.retry}>
                 <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
               </Button>
             </Stack>
           </Stack>
         </>
       )}
-      {isAssistantAvailable && error && (
+      {state.kind === 'error' && (
         <>
-          <QueryCoauthoringHeader onClose={dismissPopover}>
+          <QueryCoauthoringHeader onClose={session.dismiss}>
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.error">Query coauthoring error</Trans>
             </Text>
           </QueryCoauthoringHeader>
           <Stack direction="column" gap={1}>
-            <Alert severity="error" title={error.message} />
+            <Alert severity="error" title={state.error.message} />
             <Stack gap={1} justifyContent="flex-end">
-              {error.retryable && (
-                <Button size="sm" variant="secondary" onClick={() => setError(undefined)}>
+              {state.retry && (
+                <Button size="sm" variant="secondary" onClick={state.retry}>
                   <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
                 </Button>
               )}
-              <Button size="sm" variant="secondary" onClick={dismissPopover}>
+              <Button size="sm" variant="secondary" onClick={session.dismiss}>
                 <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
               </Button>
             </Stack>
           </Stack>
         </>
       )}
-      {isAssistantAvailable && shouldShowIterationNudge && (
+      {state.kind === 'iteration-nudge' && (
         <QueryCoauthoringIterationNudge
-          onContinueHere={() => setIterationNudgeDismissed(true)}
-          onContinueInAssistant={() => continueInAssistant('iteration_nudge')}
+          onContinueHere={state.continueHere}
+          onContinueInAssistant={state.continueInAssistant}
         />
       )}
-      {isAssistantAvailable && fallback && (
+      {state.kind === 'fallback' && (
         <QueryCoauthoringFallback
-          reason={fallback.reason}
-          onClose={dismissPopover}
-          onFeedback={setFeedback}
-          onContinue={(reason) => continueInAssistant('fallback', reason)}
+          reason={state.fallback.reason}
+          onClose={session.dismiss}
+          onFeedback={state.setFeedback}
+          onContinue={state.continueInAssistant}
         />
       )}
-      {isAssistantAvailable && proposal && (
+      {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
-          why={proposal.why}
-          changes={proposal.prepared.changes}
-          isPreviewRunning={isPreviewRunning}
-          onFeedback={setFeedback}
-          onClose={dismissPopover}
-          onContinue={() => continueInAssistant('proposal')}
-          onAccept={accept}
+          why={state.proposal.why}
+          changes={state.proposal.prepared.changes}
+          isPreviewRunning={state.isPreviewRunning}
+          onFeedback={state.setFeedback}
+          onClose={session.dismiss}
+          onContinue={state.continueInAssistant}
+          onAccept={state.accept}
         />
       )}
-      {isAssistantAvailable && feedback && <QueryCoauthoringFeedback feedback={feedback} onClose={closeFeedback} />}
+      {session.feedback && <QueryCoauthoringFeedback feedback={session.feedback} onClose={session.closeFeedback} />}
     </div>,
     portalTarget
   );
