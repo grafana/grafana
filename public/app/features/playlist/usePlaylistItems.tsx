@@ -6,17 +6,33 @@ import { type DashboardPickerDTO } from 'app/core/components/Select/DashboardPic
 import { type PlaylistItemUI } from './types';
 import { loadDashboards } from './utils';
 
-export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
-  const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
+let nextPlaylistItemId = 0;
 
-  // Attach dashboards if any were missing
+function createLocalId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `playlist-item-${Date.now()}-${nextPlaylistItemId++}`;
+}
+
+function withLocalId(item: PlaylistItemUI): PlaylistItemUI {
+  return item.localId ? item : { ...item, localId: createLocalId() };
+}
+
+export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
+  const [items, setItems] = useState<PlaylistItemUI[]>(() => (playlistItems ?? []).map(withLocalId));
+
+  // Attach dashboards to any items still missing them. Merge onto the current state so an
+  // in-flight load cannot clobber item settings edited while it was running.
   useAsync(async () => {
-    for (const item of items) {
-      if (!item.dashboards) {
-        setItems(await loadDashboards(items));
-        return;
-      }
+    if (items.every((item) => item.dashboards)) {
+      return;
     }
+    const loaded = await loadDashboards(items);
+    const loadedById = new Map(loaded.map((item) => [item.localId, item]));
+    setItems((current) => {
+      return current.map((item) => {
+        const loadedItem = loadedById.get(item.localId);
+        return item.dashboards || !loadedItem ? item : { ...item, dashboards: loadedItem.dashboards };
+      });
+    });
   }, [items]);
 
   const addByUID = useCallback(
@@ -30,6 +46,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
         {
           type: 'dashboard_by_uid',
           value: dashboard.uid,
+          localId: createLocalId(),
         },
       ]);
     },
@@ -46,6 +63,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
       const newItem: PlaylistItemUI = {
         type: 'dashboard_by_tag',
         value: tag,
+        localId: createLocalId(),
       };
       setItems([...items, newItem]);
     },
@@ -74,5 +92,59 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     [items]
   );
 
-  return { items, addByUID, addByTag, deleteItem, moveItem };
+  const duplicateItem = useCallback((index: number) => {
+    setItems((current) => {
+      const source = current[index];
+      if (!source) {
+        return current;
+      }
+
+      const duplicate: PlaylistItemUI = {
+        ...source,
+        dashboardView: source.dashboardView ? { ...source.dashboardView } : undefined,
+        dashboards: source.dashboards ? [...source.dashboards] : undefined,
+        localId: createLocalId(),
+      };
+      const copy = current.slice();
+      copy.splice(index + 1, 0, duplicate);
+      return copy;
+    });
+  }, []);
+
+  const updateItemInterval = useCallback((index: number, interval: string) => {
+    setItems((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const copy = prev.slice();
+      // Empty means "no per-item interval" so playback falls back to the global interval.
+      copy[index] = { ...copy[index], interval: interval || undefined };
+      return copy;
+    });
+  }, []);
+
+  const updateItemDashboardView = useCallback((index: number, queryString: string) => {
+    setItems((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const copy = prev.slice();
+      copy[index] = {
+        ...copy[index],
+        dashboardView: queryString ? { queryString } : undefined,
+      };
+      return copy;
+    });
+  }, []);
+
+  return {
+    items,
+    addByUID,
+    addByTag,
+    deleteItem,
+    duplicateItem,
+    moveItem,
+    updateItemInterval,
+    updateItemDashboardView,
+  };
 }
