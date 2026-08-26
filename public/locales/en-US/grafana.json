@@ -13030,6 +13030,7 @@
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
+      "select-query": "Select query",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",

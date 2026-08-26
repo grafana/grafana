@@ -23,26 +23,33 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: ({
     dataSource,
     query,
+    app,
     onChange,
     onChangeDataSource,
     onRunQuery,
     onAddQuery,
     onRemoveQuery,
+    onReplace,
+    onReplaceQueries,
     isOpen,
   }: {
     dataSource: DataSourceInstanceSettings;
     query: DataQuery;
+    app?: string;
     onChange: (query: DataQuery) => void;
     onChangeDataSource?: (settings: DataSourceInstanceSettings) => void;
     onRunQuery: () => void;
     onAddQuery: (query: DataQuery) => void;
     onRemoveQuery: (query: DataQuery) => void;
+    onReplace?: (query: DataQuery) => void;
+    onReplaceQueries?: (queries: DataQuery[]) => void;
     isOpen?: boolean;
   }) => (
     <div data-testid={`row-${query.refId}`}>
       <span data-testid={`resolved-datasource-${query.refId}`}>{dataSource.uid}</span>
       <span data-testid={`current-query-${query.refId}`}>{JSON.stringify(query)}</span>
       <span data-testid={`is-open-${query.refId}`}>{String(Boolean(isOpen))}</span>
+      <span data-testid={`app-${query.refId}`}>{app}</span>
       <button onClick={() => onChange({ ...query, expr: 'up' } as DataQuery)}>edit query {query.refId}</button>
       {onChangeDataSource && (
         <button
@@ -56,6 +63,19 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
           untouched — proving the wiring (not this stub) is what assigns a fresh one. */}
       <button onClick={() => onAddQuery(query)}>duplicate query {query.refId}</button>
       <button onClick={() => onRemoveQuery(query)}>remove query {query.refId}</button>
+      <button onClick={() => onReplace?.({ refId: 'lib', expr: 'from-library' } as DataQuery)}>
+        replace query {query.refId}
+      </button>
+      <button
+        onClick={() =>
+          onReplaceQueries?.([
+            { refId: 'lib-1', expr: 'from-library-1' } as DataQuery,
+            { refId: 'lib-2', expr: 'from-library-2' } as DataQuery,
+          ])
+        }
+      >
+        replace with two queries {query.refId}
+      </button>
     </div>
   ),
 }));
@@ -193,6 +213,13 @@ describe('PanelQueryEditor', () => {
     await user.click(await screen.findByRole('button', { name: 'edit query A' }));
 
     expect(runner.state.queries[0]).toEqual(expect.objectContaining({ refId: 'A', hide: false, expr: 'up' }));
+  });
+
+  it('identifies itself to the row as the notebook app', async () => {
+    const { panel, cell } = buildPanel();
+    render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    expect(await screen.findByTestId('app-A')).toHaveTextContent('notebook');
   });
 
   it('switches datasource from the row header without losing the query spec', async () => {
@@ -429,6 +456,41 @@ describe('PanelQueryEditor', () => {
       expect(runner.state.queries.map((q) => q.refId)).toEqual(['A']);
     });
 
+    it('replaces a query via the saved-query action, keeping its refId', async () => {
+      const { panel, cell } = buildPanel([{ expr: 'up' }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'replace query A' }));
+
+      expect(runner.state.queries).toHaveLength(1);
+      expect(runner.state.queries[0]).toEqual(expect.objectContaining({ refId: 'A', expr: 'from-library' }));
+    });
+
+    it('replaces a query with several from a saved entry, assigning fresh refIds to the rest', async () => {
+      const { panel, cell } = buildPanel([{ expr: 'up' }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'replace with two queries A' }));
+
+      expect(runner.state.queries).toHaveLength(2);
+      expect(runner.state.queries[0]).toEqual(expect.objectContaining({ refId: 'A', expr: 'from-library-1' }));
+      expect(runner.state.queries[1]).toEqual(expect.objectContaining({ refId: 'B', expr: 'from-library-2' }));
+    });
+
+    it('replacing one row from the library does not disturb the other', async () => {
+      const { panel, cell } = buildPanel([{}, {}]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+      const originalB = runner.state.queries[1];
+
+      await user.click(await screen.findByRole('button', { name: 'replace query A' }));
+
+      expect(runner.state.queries[0]).toEqual(expect.objectContaining({ refId: 'A', expr: 'from-library' }));
+      expect(runner.state.queries[1]).toBe(originalB);
+    });
+
     it('refuses to remove the last remaining query', async () => {
       const { panel, cell } = buildPanel();
       const runner = getQueryRunnerFor(panel)!;
@@ -547,6 +609,19 @@ describe('PanelQueryEditor', () => {
       expect(history.state.undoLabel).toBe('Duplicate query');
       act(() => history.undo());
       expect(runner.state.queries.map((q) => q.refId)).toEqual(['A']);
+    });
+
+    it('undoes selecting a saved query', async () => {
+      const { panel, cell, history } = buildPanel([{ expr: 'up' }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries[0];
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'replace query A' }));
+
+      expect(history.state.undoLabel).toBe('Select query');
+      act(() => history.undo());
+      expect(runner.state.queries[0]).toEqual(before);
     });
 
     it('undoes removing a query', async () => {

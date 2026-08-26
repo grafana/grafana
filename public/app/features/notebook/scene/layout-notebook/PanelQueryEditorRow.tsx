@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
+import { CoreApp, getNextRefId, type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneQueryRunner } from '@grafana/scenes';
@@ -69,6 +69,35 @@ export function PanelQueryEditorRow({
     setIsOpen(true);
   };
 
+  const onReplaceQuery = (replacement: DataQuery) => {
+    applyQueries(
+      cell,
+      queryRunner,
+      queries.map((q, i) => (i === index ? { ...replacement, refId: query.refId } : q)),
+      t('notebooks.history.select-query', 'Select query')
+    );
+  };
+
+  const onReplaceQueries = (replacements: DataQuery[]) => {
+    if (replacements.length === 0) {
+      return;
+    }
+
+    const newQueries = [...queries];
+    const staged: DataQuery[] = [];
+    replacements.forEach((replacement, i) => {
+      if (i === 0) {
+        staged.push({ ...replacement, refId: query.refId });
+      } else {
+        const taken = [...newQueries.filter((_, qi) => qi !== index), ...staged];
+        staged.push({ ...replacement, refId: getNextRefId(taken) });
+      }
+    });
+    newQueries.splice(index, 1, ...staged);
+
+    applyQueries(cell, queryRunner, newQueries, t('notebooks.history.select-query', 'Select query'));
+  };
+
   if (!dsSettings) {
     return <DataSourcePicker current={query.datasource} onChange={onChangeDataSource} />;
   }
@@ -84,8 +113,11 @@ export function PanelQueryEditorRow({
         id={query.refId}
         index={index}
         dataSource={dsSettings}
+        app={CoreApp.Notebook}
         onChangeDataSource={onChangeDataSource}
         onChange={onChangeQuery}
+        onReplace={onReplaceQuery}
+        onReplaceQueries={onReplaceQueries}
         onRunQuery={onRunQuery}
         onAddQuery={(copy) =>
           applyQueries(
