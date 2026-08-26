@@ -1055,13 +1055,10 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderTitles(c *contextmodel.ReqCo
 	folderTitles := map[string]string{}
 	for _, item := range items {
 		folderUID := item.GetAnnotations()[utils.AnnoKeyFolder]
-		if folderUID == "" {
-			continue
-		}
 		if _, found := folderTitles[folderUID]; found {
 			continue
 		}
-		if folderUID == ac.GeneralFolderUID {
+		if folderUID == "" || folderUID == ac.GeneralFolderUID {
 			folderTitles[folderUID] = dashboards.RootFolderName
 			continue
 		}

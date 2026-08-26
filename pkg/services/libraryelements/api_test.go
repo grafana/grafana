@@ -268,17 +268,35 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 
 func TestResolveFolderTitlesUsesLegacyRootName(t *testing.T) {
 	handler := &libraryElementsK8sHandler{}
-	items := []unstructured.Unstructured{{Object: map[string]interface{}{
-		"metadata": map[string]interface{}{
-			"annotations": map[string]interface{}{
-				"grafana.app/folder": accesscontrol.GeneralFolderUID,
+	items := []unstructured.Unstructured{
+		{Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"grafana.app/folder": accesscontrol.GeneralFolderUID,
+				},
 			},
-		},
-	}}}
+		}},
+		{Object: map[string]interface{}{
+			"metadata": map[string]interface{}{},
+		}},
+	}
 
 	titles := handler.resolveFolderTitles(&contextmodel.ReqContext{}, items)
 
 	require.Equal(t, dashboards.RootFolderName, titles[accesscontrol.GeneralFolderUID])
+	require.Equal(t, dashboards.RootFolderName, titles[""])
+}
+
+func TestFilterK8sLibraryPanelsSearchesEmptyFolderUIDAsGeneral(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{"name": "panel"},
+		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+
+	query := model.SearchLibraryElementsQuery{SearchString: "general"}
+
+	require.Len(t, handler.filterK8sLibraryPanels(nil, items, query, nil), 1)
 }
 
 func TestFilterLibraryPanelsByPermission(t *testing.T) {
