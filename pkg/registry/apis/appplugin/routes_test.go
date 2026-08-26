@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emicklei/go-restful/v3"
@@ -164,20 +165,30 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 	require.Contains(t, byPath, "clusterkinds/{name}/rebuild", "cluster kinds mount at the group version root")
 	require.NotContains(t, byPath, "testkinds/{name}/status", "status is served by the kind store")
 
-	// The {name} segment must be documented or it is missing from the spec.
-	params := byPath["testkinds/{name}/reload"].Spec.Post.Parameters
-	require.Len(t, params, 1)
-	require.Equal(t, nameParameter, params[0].Name)
-	require.Equal(t, "path", params[0].In)
-	require.True(t, params[0].Required)
+	// Every path segment must be documented or it is missing from the spec.
+	pathParams := func(op *spec3.Operation) []string {
+		out := []string{}
+		for _, p := range op.Parameters {
+			require.Equal(t, "path", p.In)
+			require.True(t, p.Required)
+			out = append(out, p.Name)
+		}
+		return out
+	}
+	require.Equal(t, []string{namespaceParameter, nameParameter},
+		pathParams(byPath["testkinds/{name}/reload"].Spec.Post),
+		"namespaced kind routes mount under {namespace}/{name}")
+	require.Equal(t, []string{nameParameter},
+		pathParams(byPath["clusterkinds/{name}/rebuild"].Spec.Post),
+		"cluster kind routes have no namespace segment")
 
-	// The manifest's own operation must not gain the parameter.
+	// The manifest's own operation must not gain the parameters.
 	require.Empty(t, manifest.Versions[1].Kinds[0].Routes["/reload"].Post.Parameters)
 }
 
-// A route that already documents {name} must not have it added twice; the
-// duplicate would be rejected when the web service is built.
-func TestWithNameParameterIsIdempotent(t *testing.T) {
+// A route that already documents a path parameter must not have it added twice;
+// the duplicate would be rejected when the web service is built.
+func TestWithPathParametersIsIdempotent(t *testing.T) {
 	declared := &spec3.Parameter{ParameterProps: spec3.ParameterProps{
 		Name: nameParameter, In: "path", Required: true, Description: "declared by the plugin",
 	}}
@@ -189,11 +200,39 @@ func TestWithNameParameterIsIdempotent(t *testing.T) {
 		Post: nil,
 	}
 
-	out := withNameParameter(props)
+	out := withPathParameters(props, namespacePathParameter(), namePathParameter())
 
-	require.Len(t, out.Get.Parameters, 1)
+	require.Len(t, out.Get.Parameters, 2)
 	require.Same(t, declared, out.Get.Parameters[0])
+	require.Equal(t, namespaceParameter, out.Get.Parameters[1].Name)
 	require.Nil(t, out.Post)
+}
+
+// Namespaced version routes mount under {namespace}, so the segment must be
+// documented on each of their operations.
+func TestVersionRouteNamespaceParameter(t *testing.T) {
+	b := &AppPluginAPIBuilder{
+		manifest:   testManifest(t),
+		pluginJSON: plugins.JSONData{ID: "example-app"},
+	}
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
+	require.NotNil(t, routes)
+
+	for _, h := range routes.Namespace {
+		if strings.Contains(h.Path, "{"+nameParameter+"}") {
+			continue // kind routes are covered by TestGetAPIRoutesKindRoutes
+		}
+		require.Equal(t, "foobar", h.Path)
+		require.Len(t, h.Spec.Get.Parameters, 1)
+		require.Equal(t, namespaceParameter, h.Spec.Get.Parameters[0].Name)
+		require.Equal(t, "path", h.Spec.Get.Parameters[0].In)
+		require.True(t, h.Spec.Get.Parameters[0].Required)
+	}
+
+	// Cluster routes have no namespace segment to document.
+	for _, h := range routes.Root {
+		require.Empty(t, h.Spec.Get.Parameters)
+	}
 }
 
 func TestRouteHandlerRouteInfo(t *testing.T) {

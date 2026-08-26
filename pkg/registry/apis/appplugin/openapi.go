@@ -45,13 +45,13 @@ func kindOpenAPIName(gvk schema.GroupVersionKind) string {
 // unstructuredOpenAPIDefinition adds the GVK metadata required by server-side apply.
 func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) common.OpenAPIDefinition {
 	s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
-	gvks := []interface{}{}
+	gvks := []any{}
 	for _, version := range b.manifest.Versions {
 		if !version.Served {
 			continue
 		}
 		for _, kind := range version.Kinds {
-			gvks = append(gvks, map[string]interface{}{
+			gvks = append(gvks, map[string]any{
 				"group":   b.manifest.Group,
 				"version": version.Name,
 				"kind":    kind.Kind + kindSuffix,

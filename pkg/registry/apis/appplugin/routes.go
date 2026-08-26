@@ -24,9 +24,15 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// nameParameter is the path parameter carrying the parent object's name on a
-// kind subresource route.
-const nameParameter = "name"
+const (
+	// namespaceParameter is the path parameter carrying the namespace on routes
+	// mounted under /namespaces/{namespace}.
+	namespaceParameter = "namespace"
+
+	// nameParameter is the path parameter carrying the parent object's name on a
+	// kind subresource route.
+	nameParameter = "name"
+)
 
 // reservedSubresources are served by the kind store itself, so a manifest kind
 // route may not claim them.
@@ -53,7 +59,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	routes := &builder.APIRoutes{}
 	reserved := reservedResourceNames(version)
 
-	addVersionRoute := func(dst *[]builder.APIRouteHandler, path string, props spec3.PathProps) {
+	addVersionRoute := func(dst *[]builder.APIRouteHandler, path string, props spec3.PathProps, params ...*spec3.Parameter) {
 		path = strings.TrimPrefix(path, "/")
 		if root, _, _ := strings.Cut(path, "/"); reserved[root] {
 			logging.DefaultLogger.Warn("skipping manifest route that shadows a resource path",
@@ -62,7 +68,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		}
 		*dst = append(*dst, builder.APIRouteHandler{
 			Path:    path,
-			Spec:    &props,
+			Spec:    withPathParameters(props, params...),
 			Schemas: version.Routes.Schemas,
 			Handler: b.routeHandler(gv, "", path),
 		})
@@ -71,7 +77,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		addVersionRoute(&routes.Root, path, props)
 	}
 	for path, props := range version.Routes.Namespaced {
-		addVersionRoute(&routes.Namespace, path, props)
+		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
 	}
 
 	for _, kind := range version.Kinds {
@@ -81,8 +87,10 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		}
 		// Cluster kinds have no namespace segment to mount under.
 		dst := &routes.Namespace
+		params := []*spec3.Parameter{namespacePathParameter(), namePathParameter()}
 		if kind.Scope == clusterScope {
 			dst = &routes.Root
+			params = []*spec3.Parameter{namePathParameter()}
 		}
 
 		for path, props := range kind.Routes {
@@ -94,7 +102,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			}
 			*dst = append(*dst, builder.APIRouteHandler{
 				Path:    plural + "/{" + nameParameter + "}/" + path,
-				Spec:    withNameParameter(props),
+				Spec:    withPathParameters(props, params...),
 				Schemas: version.Routes.Schemas,
 				Handler: b.routeHandler(gv, plural, path),
 			})
@@ -176,9 +184,38 @@ func reservedResourceNames(version app.ManifestVersion) map[string]bool {
 	return reserved
 }
 
-// withNameParameter documents the {name} segment that kind routes mount under.
-// The operations are copied because they are shared with the loaded manifest.
-func withNameParameter(props spec3.PathProps) *spec3.PathProps {
+// namespacePathParameter documents the {namespace} segment that namespaced
+// routes mount under.
+func namespacePathParameter() *spec3.Parameter {
+	return &spec3.Parameter{
+		ParameterProps: spec3.ParameterProps{
+			Name:        namespaceParameter,
+			In:          "path",
+			Required:    true,
+			Example:     "default",
+			Description: "workspace",
+			Schema:      spec.StringProperty(),
+		},
+	}
+}
+
+// namePathParameter documents the {name} segment that kind routes mount under.
+func namePathParameter() *spec3.Parameter {
+	return &spec3.Parameter{
+		ParameterProps: spec3.ParameterProps{
+			Name:        nameParameter,
+			In:          "path",
+			Required:    true,
+			Description: "name of the parent resource",
+			Schema:      spec.StringProperty(),
+		},
+	}
+}
+
+// withPathParameters documents the path segments a route is mounted under, since
+// a path parameter missing from the spec makes the operation invalid. The
+// operations are copied because they are shared with the loaded manifest.
+func withPathParameters(props spec3.PathProps, params ...*spec3.Parameter) *spec3.PathProps {
 	out := props
 	for _, op := range []**spec3.Operation{
 		&out.Get, &out.Head, &out.Delete, &out.Post,
@@ -187,25 +224,23 @@ func withNameParameter(props spec3.PathProps) *spec3.PathProps {
 		if *op == nil {
 			continue
 		}
-		*op = operationWithNameParameter(**op)
+		*op = operationWithPathParameters(**op, params...)
 	}
 	return &out
 }
 
-func operationWithNameParameter(op spec3.Operation) *spec3.Operation {
-	if slices.ContainsFunc(op.Parameters, func(p *spec3.Parameter) bool {
-		return p != nil && p.Name == nameParameter && p.In == "path"
-	}) {
-		return &op
+func operationWithPathParameters(op spec3.Operation, params ...*spec3.Parameter) *spec3.Operation {
+	// Each operation gets its own copy so the spec has no aliased parameters.
+	declared := slices.Clone(op.Parameters)
+	for _, param := range params {
+		if slices.ContainsFunc(declared, func(p *spec3.Parameter) bool {
+			return p != nil && p.Name == param.Name && p.In == "path"
+		}) {
+			continue
+		}
+		p := *param
+		declared = append(declared, &p)
 	}
-	op.Parameters = append(slices.Clone(op.Parameters), &spec3.Parameter{
-		ParameterProps: spec3.ParameterProps{
-			Name:        nameParameter,
-			In:          "path",
-			Required:    true,
-			Description: "name of the parent resource",
-			Schema:      spec.StringProperty(),
-		},
-	})
+	op.Parameters = declared
 	return &op
 }
