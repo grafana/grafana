@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { NumberInput } from './NumberInput';
 
@@ -6,12 +7,16 @@ const setup = (min?: number, max?: number) => {
   const onChange = jest.fn();
   render(<NumberInput value={15} onChange={onChange} max={max} min={min} />);
   return {
-    input: screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement,
+    input: screen.getByRole('spinbutton'),
     onChange,
   };
 };
 
 describe('NumberInput', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('updated input correctly', () => {
     const data = setup();
 
@@ -59,10 +64,12 @@ describe('NumberInput', () => {
     ];
 
     tests.forEach((test, i) => {
-      fireEvent.blur(data.input, { target: { value: test.value } });
+      const input = screen.getByRole('spinbutton');
+      fireEvent.change(input, { target: { value: test.value } });
+      fireEvent.blur(input);
       expect(data.onChange).toHaveBeenCalledWith(test.onChangeCalledWith);
       expect(data.onChange).toBeCalledTimes(i + 1);
-      expect(data.input).toHaveValue(test.expected);
+      expect(screen.getByRole('spinbutton')).toHaveValue(test.expected);
     });
   });
 
@@ -99,11 +106,81 @@ describe('NumberInput', () => {
     ];
 
     tests.forEach((test, i) => {
-      input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
-      fireEvent.blur(input, { target: { value: test.value } });
+      input = screen.getByRole('spinbutton');
+      fireEvent.change(input, { target: { value: test.value } });
+      fireEvent.blur(input);
       expect(data.onChange).toHaveBeenCalledWith(test.onChangeCalledWith);
       expect(data.onChange).toBeCalledTimes(i + 1);
-      expect(screen.getByTestId('input-wrapper').firstChild?.firstChild).toHaveValue(test.expected);
+      expect(screen.getByRole('spinbutton')).toHaveValue(test.expected);
     });
+  });
+
+  it('shows the allowed range while the value is in range', () => {
+    render(<NumberInput value={5} onChange={jest.fn()} min={1} max={200} />);
+
+    expect(screen.getByText('Range: 1 to 200')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('does not clamp or show an error while typing an out of range value', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '-9');
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(input).toHaveValue(-9);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText('Range: 1 to 200')).toBeInTheDocument();
+
+    jest.useRealTimers();
+  });
+
+  it('clamps on blur and keeps the out of range message until the value is edited', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '-9');
+    await user.tab();
+
+    expect(onChange).toHaveBeenCalledWith(1);
+    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    expect(screen.getByRole('alert')).toHaveTextContent('Out of range. Range: 1 to 200');
+    expect(screen.getByText('Range: 1 to 200')).toBeInTheDocument();
+
+    await user.type(input, '2');
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('emits in-range values after the debounce without showing an error', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '8');
+    expect(onChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(onChange).toHaveBeenCalledWith(8);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    jest.useRealTimers();
   });
 });
