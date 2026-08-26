@@ -3249,6 +3249,7 @@
         "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
         "operator-managed-title": "Managed by operator",
         "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
@@ -3256,6 +3257,7 @@
         "picker-empty": "No Mimir or Cortex datasources available",
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
         "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
@@ -7011,8 +7013,12 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "Repeated panels can't be copied individually",
+      "copy-clipboard-tooltip": "Copy to clipboard",
       "delete-tooltip": "Delete",
+      "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
+      "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "settings": "Settings"
     },
     "conversion-warning-banner": {
@@ -7448,6 +7454,9 @@
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": "Edit visualization"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -9131,6 +9140,10 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
+        "title": "Understand your services faster"
+      },
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
@@ -9138,6 +9151,18 @@
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
+      },
+      "frontend-observability-promo": {
+        "body": "Frontend Observability links trace attributes to sessions, errors, and performance — so you can see what users experienced when a span ran.",
+        "title": "Debug real user sessions"
+      },
+      "knowledge-graph-promo": {
+        "body": "Knowledge Graph correlates services, infrastructure, and insights from your traces — helping you navigate from a span attribute to related entities and assertions.",
+        "title": "See the full picture"
+      },
+      "kubernetes-promo": {
+        "body": "Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.",
+        "title": "Drill into your cluster"
       },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
@@ -12956,6 +12981,7 @@
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
+        "loading-editor": "Loading editor",
         "tooltip-bold": "Bold",
         "tooltip-bulleted-list": "Bulleted list",
         "tooltip-code": "Code",
