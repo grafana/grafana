@@ -498,8 +498,9 @@ export const convertRawToRange = (
   fiscalYearStartMonth?: number,
   format?: string
 ): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
+  const now = Date.now();
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format, now });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format, now });
 
   return {
     from,

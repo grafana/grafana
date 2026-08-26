@@ -43,6 +43,35 @@ describe('Range Utils', () => {
       expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
     });
 
+    it.each([
+      { from: 'now-6h', to: 'now', duration: 21_600_000 },
+      { from: 'now-6h', to: 'now-1h', duration: 18_000_000 },
+      { from: 'now', to: 'now', duration: 0 },
+    ])('should preserve the duration from $from to $to while the clock advances', ({ from, to, duration }) => {
+      let now = Date.parse('2024-07-05T12:00:00.000Z');
+      const clock = jest.spyOn(Date, 'now').mockImplementation(() => now++);
+
+      try {
+        const timeRange = convertRawToRange({ from, to }, 'utc');
+        expect(timeRange.to.valueOf() - timeRange.from.valueOf()).toBe(duration);
+      } finally {
+        clock.mockRestore();
+      }
+    });
+
+    it('should round both endpoints to the same day when the clock crosses midnight', () => {
+      let now = Date.parse('2024-07-05T23:59:59.998Z');
+      const clock = jest.spyOn(Date, 'now').mockImplementation(() => now++);
+
+      try {
+        const timeRange = convertRawToRange({ from: 'now/d', to: 'now/d' }, 'utc');
+        expect(timeRange.from.toISOString()).toBe('2024-07-05T00:00:00.000Z');
+        expect(timeRange.to.toISOString()).toBe('2024-07-05T23:59:59.999Z');
+      } finally {
+        clock.mockRestore();
+      }
+    });
+
     it('should leave the raw part intact if it has calculations', () => {
       const timeRange = {
         from: 'now-6h',
