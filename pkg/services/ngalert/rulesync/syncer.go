@@ -464,6 +464,14 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 // for orgs that aren't due yet, without a per-org goroutine or timer. SyncOrg
 // itself does not call this — it's the "do the sync now" unit; callers (this
 // loop, tests, a possible future per-org trigger) decide when that's due.
+//
+// This shared-ticker-plus-due-check is a pragmatic choice, not the ideal one:
+// a real per-org timer would fire exactly on interval instead of within
+// [0, baselineCheckInterval) of it, and wouldn't re-check every org on every
+// baseline tick. It avoids a goroutine/timer per org (and the churn of
+// restarting one on every spec change) at the cost of that jitter — acceptable
+// given baselineCheckInterval is small relative to any realistic pollInterval.
+// Revisit if per-org precision ever matters more than that simplicity.
 func (s *ExternalRulerSyncer) dueForSync(orgID int64) bool {
 	s.lastAttemptMu.RLock()
 	defer s.lastAttemptMu.RUnlock()
