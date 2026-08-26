@@ -21,12 +21,13 @@ import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unst
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { QueryEditorPanel, QueryEditorRenderer, synchronizeCoauthoringBaselineQuery } from './QueryEditorRenderer';
+import { QueryEditorPanel, QueryEditorRenderer } from './QueryEditorRenderer';
 import { type QueryCoauthoringHost, useQueryCoauthoringHost } from './coauthoring/QueryCoauthoringHostContext';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringRegistrationV1,
 } from './coauthoring/internalCoauthoringContract';
+import { synchronizeCoauthoringBaselineQuery } from './coauthoring/useQueryProposalTransaction';
 import {
   ds1SettingsMock,
   mockActions,
