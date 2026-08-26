@@ -2174,16 +2174,19 @@ func TestStaleResults(t *testing.T) {
 		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(clk.Now()))(),
 		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
+		eval.ResultGen(eval.WithState(eval.Normal), eval.WithEvaluatedAt(clk.Now()))(),
 	}
 
 	state1 := getCacheID(t, rule, initResults[0])
 	state2 := getCacheID(t, rule, initResults[1])
 	state3 := getCacheID(t, rule, initResults[2])
+	state4 := getCacheID(t, rule, initResults[3])
 
 	initStates := map[data.Fingerprint]struct{}{
 		state1: {},
 		state2: {},
 		state3: {},
+		state4: {},
 	}
 
 	// Init
@@ -2194,16 +2197,20 @@ func TestStaleResults(t *testing.T) {
 	checkExpectedStateTransitions(t, processed, initStates)
 
 	// Check that it returns just those state transitions that needs to be sent.
-	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal state3.
+	checkExpectedStateTransitions(t, statesToSend, map[data.Fingerprint]struct{}{state1: {}, state2: {}}) // Does not contain the Normal states.
 
 	currentStates := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 	statesMap := checkExpectedStates(t, currentStates, initStates)
 	require.Equal(t, eval.Alerting, statesMap[state2].State) // make sure the state is alerting because we need it to be resolved later
-	// Model a series which resolved in an earlier evaluation and was notified.
-	// A later MissingSeries transition must still produce a new resolution event.
+	// Model series which resolved in an earlier evaluation and were notified.
+	// A later MissingSeries transition must still produce a new resolution event
+	// for the Normal state, but not for a Pending state that retained the timestamp.
 	resolvedAt := clk.Now()
 	statesMap[state3].ResolvedAt = &resolvedAt
 	statesMap[state3].LastSentAt = &resolvedAt
+	statesMap[state4].State = eval.Pending
+	statesMap[state4].ResolvedAt = &resolvedAt
+	statesMap[state4].LastSentAt = &resolvedAt
 
 	staleDuration := 2 * time.Duration(rule.IntervalSeconds) * time.Second
 	clk.Add(staleDuration)
@@ -2215,7 +2222,10 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
+		var statesToSend state.StateTransitions
+		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, func(_ context.Context, states state.StateTransitions) {
+			statesToSend = states
+		})
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {
@@ -2226,11 +2236,19 @@ func TestStaleResults(t *testing.T) {
 			assert.Equal(t, clk.Now(), s.EndsAt)
 			if s.CacheID == state2 || s.CacheID == state3 {
 				assert.Equalf(t, clk.Now(), *s.ResolvedAt, "Returned stale state should have ResolvedAt set")
+			} else if s.CacheID == state4 {
+				assert.Equal(t, resolvedAt, *s.ResolvedAt, "Pending state's retained ResolvedAt must not be refreshed")
 			}
 			key, err := s.GetAlertInstanceKey()
 			require.NoError(t, err)
 			expectedStaleKeys = append(expectedStaleKeys, key)
 		}
+		sentIDs := make([]data.Fingerprint, 0, len(statesToSend))
+		for _, sent := range statesToSend {
+			sentIDs = append(sentIDs, sent.CacheID)
+		}
+		assert.Contains(t, sentIDs, state3)
+		assert.NotContains(t, sentIDs, state4)
 	})
 
 	t.Run("should remove stale states from cache", func(t *testing.T) {
