@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, DeleteButton, EmptyState, IconButton, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { MoveDirection } from '../AnnotationsEditView';
@@ -49,7 +49,6 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
     return <>{anno.name}</>;
   };
 
-  const dataSourceSrv = getDataSourceSrv();
   return (
     <Stack direction="column">
       {annotations.length > 0 && (
@@ -83,7 +82,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                     </td>
                   )}
                   <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
-                    {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
+                    <AnnotationDataSourceName datasource={annotation.datasource} />
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
                     {idx !== 0 && (
@@ -167,6 +166,11 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
     </Stack>
   );
 };
+
+function AnnotationDataSourceName({ datasource }: { datasource: AnnotationQuery['datasource'] }) {
+  const { settings } = useDataSourceInstanceSettings(datasource);
+  return <>{settings?.name || datasource?.uid}</>;
+}
 
 const getStyles = () => ({
   table: css({
