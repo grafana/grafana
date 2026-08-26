@@ -22,12 +22,13 @@ const currentUserPermissionsPath = "users/~/permissions"
 
 // Handler serves the current identity's effective permissions.
 type Handler struct {
-	client authlib.UserPermissionsClient
+	client            authlib.UserPermissionsClient
+	useExternalGroups bool
 }
 
 // NewHandler creates a current-user permissions handler backed by AuthZ.
-func NewHandler(client authlib.UserPermissionsClient) *Handler {
-	return &Handler{client: client}
+func NewHandler(client authlib.UserPermissionsClient, useExternalGroups bool) *Handler {
+	return &Handler{client: client, useExternalGroups: useExternalGroups}
 }
 
 // GetAPIRoutes returns the current-user permissions route.
@@ -70,7 +71,14 @@ func (h *Handler) handle(w http.ResponseWriter, req *http.Request) {
 		errhttp.Write(ctx, apierrors.NewForbidden(iam.Resource("users"), "~", fmt.Errorf("identity namespace does not match request namespace")), w)
 		return
 	}
-	response, err := h.client.GetUserPermissions(ctx, delegatedAuthInfo{AuthInfo: info}, authlib.GetUserPermissionsRequest{
+	groups := info.GetGroups()
+	if h.useExternalGroups {
+		if externalGroupsInfo, ok := info.(interface{ GetExternalGroups() []string }); ok {
+			groups = externalGroupsInfo.GetExternalGroups()
+		}
+	}
+
+	response, err := h.client.GetUserPermissions(ctx, delegatedAuthInfo{AuthInfo: info, groups: groups}, authlib.GetUserPermissionsRequest{
 		Namespace: namespace,
 	})
 	if err != nil {
@@ -89,6 +97,11 @@ func (h *Handler) handle(w http.ResponseWriter, req *http.Request) {
 
 type delegatedAuthInfo struct {
 	authlib.AuthInfo
+	groups []string
+}
+
+func (i delegatedAuthInfo) GetGroups() []string {
+	return i.groups
 }
 
 func (delegatedAuthInfo) GetTokenDelegatedPermissions() []string {

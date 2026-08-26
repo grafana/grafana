@@ -188,7 +188,7 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
-		userPermissions: userpermissions.NewHandler(userPermissionsClient),
+		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		ofClient:        openfeature.NewDefaultClient(),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
@@ -244,7 +244,8 @@ func NewAPIService(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
 		),
-		userPermissions:            userpermissions.NewHandler(userPermissionsClient),
+		// Standalone AuthInfo already carries the selected groups claim from its signed token.
+		userPermissions:            userpermissions.NewHandler(userPermissionsClient, false),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,

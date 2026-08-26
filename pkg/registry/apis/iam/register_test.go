@@ -67,7 +67,7 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 			b := &IdentityAccessManagementAPIBuilder{
 				ofClient:        openfeature.NewDefaultClient(),
 				display:         display.NewDisplayHandler(),
-				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}),
+				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
 			}
 			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
 			found := false

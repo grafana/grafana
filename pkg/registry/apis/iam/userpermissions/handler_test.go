@@ -39,11 +39,13 @@ func TestHandlerReturnsCurrentUserPermissions(t *testing.T) {
 			Permissions: []authlib.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:example"}},
 		},
 	}
-	handler := NewHandler(client)
+	handler := NewHandler(client, false)
 	caller := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		UserUID:   "u1",
-		Namespace: "org-1",
+		Type:           authlib.TypeUser,
+		UserUID:        "u1",
+		Namespace:      "org-1",
+		Groups:         []string{"team-uid"},
+		ExternalGroups: []string{"idp-group"},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/namespaces/org-1/users/~/permissions", nil)
 	ctx := authlib.WithAuthInfo(req.Context(), caller)
@@ -62,11 +64,30 @@ func TestHandlerReturnsCurrentUserPermissions(t *testing.T) {
 	require.Equal(t, "org-1", client.request.Namespace)
 	require.False(t, client.request.SkipCache)
 	require.Equal(t, []string{userPermissionsDelegatedGrant}, client.info.GetTokenDelegatedPermissions())
+	require.Equal(t, []string{"team-uid"}, client.info.GetGroups())
+}
+
+func TestHandlerUsesExternalGroupsWhenConfigured(t *testing.T) {
+	client := &fakeUserPermissionsClient{}
+	handler := NewHandler(client, true)
+	caller := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		UserUID:        "u1",
+		Namespace:      "org-1",
+		Groups:         []string{"team-uid"},
+		ExternalGroups: []string{"idp-group"},
+	}
+	rec := httptest.NewRecorder()
+
+	handler.handle(rec, permissionsRequest(t, caller, "org-1"))
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, []string{"idp-group"}, client.info.GetGroups())
 }
 
 func TestHandlerRejectsNamespaceMismatch(t *testing.T) {
 	client := &fakeUserPermissionsClient{}
-	handler := NewHandler(client)
+	handler := NewHandler(client, false)
 	caller := &identity.StaticRequester{
 		Type:      authlib.TypeUser,
 		UserUID:   "u1",
@@ -85,7 +106,7 @@ func TestHandlerRejectsNamespaceMismatch(t *testing.T) {
 }
 
 func TestHandlerReturnsEmptyPermissionsArray(t *testing.T) {
-	handler := NewHandler(&fakeUserPermissionsClient{})
+	handler := NewHandler(&fakeUserPermissionsClient{}, false)
 	req := permissionsRequest(t, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "org-1"}, "org-1")
 	rec := httptest.NewRecorder()
 
@@ -96,7 +117,7 @@ func TestHandlerReturnsEmptyPermissionsArray(t *testing.T) {
 }
 
 func TestHandlerRejectsMissingIdentity(t *testing.T) {
-	handler := NewHandler(&fakeUserPermissionsClient{})
+	handler := NewHandler(&fakeUserPermissionsClient{}, false)
 	rec := httptest.NewRecorder()
 
 	handler.handle(rec, permissionsRequest(t, nil, "org-1"))
@@ -105,7 +126,7 @@ func TestHandlerRejectsMissingIdentity(t *testing.T) {
 }
 
 func TestHandlerReturnsInternalErrorWhenAuthZFails(t *testing.T) {
-	handler := NewHandler(&fakeUserPermissionsClient{err: errors.New("boom")})
+	handler := NewHandler(&fakeUserPermissionsClient{err: errors.New("boom")}, false)
 	req := permissionsRequest(t, &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "org-1"}, "org-1")
 	rec := httptest.NewRecorder()
 
