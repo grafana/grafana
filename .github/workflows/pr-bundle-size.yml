@@ -70,6 +70,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           sparse-checkout: .github/actions/build-frontend
+          sparse-checkout-cone-mode: false
           path: .shared-actions
           persist-credentials: false
 
