@@ -3296,15 +3296,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:         "tracesDrilldown.useValueTypeFiltering",
-			Description:  "Enables value type filtering in Traces Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Generate:     Generate{React: true},
-			Expression:   "false",
-			HideFromDocs: true,
-		},
-		{
 			Name:         "grafana.dashboardsAutoHeightPanels",
 			Description:  "Enables the auto-height feature for dashboard panels",
 			Stage:        FeatureStageExperimental,
