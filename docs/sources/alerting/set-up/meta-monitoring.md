@@ -167,6 +167,8 @@ In the **Logs** view, you can review details for individual alerts by selecting 
 
 Alternatively, you can access the [History page](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) in Grafana to visualize and filter state changes for individual alerts or all alerts.
 
+If you have enabled notification history, you can also refer to [View notification history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-notification-history/) to review sent notifications and delivery outcomes in the **History** page **Notifications** tab.
+
 ## Metrics for Mimir-managed alerts
 
 To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.

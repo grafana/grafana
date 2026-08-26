@@ -1,61 +1,23 @@
 import { useEffect } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import { Stepper } from './Stepper';
 import { StepperStateProvider, useStepperState } from './StepperState';
-import { type ImportMethod, StepKey } from './types';
+import { StepKey } from './types';
 
-/**
- * Seeds the new first "Import method" step as completed so the existing stepper
- * mechanics tests (which exercise the later steps) can navigate past it.
- */
-function MethodStepSeeder() {
-  const { setStepCompleted, setVisitedStep } = useStepperState();
-  useEffect(() => {
-    setVisitedStep(StepKey.Method);
-    setStepCompleted(StepKey.Method, true);
-  }, [setStepCompleted, setVisitedStep]);
-  return null;
-}
-
-function FormWrapper({ children, method = 'stage' }: { children: React.ReactNode; method?: ImportMethod }) {
-  const formAPI = useForm<{ importMethod: ImportMethod }>({ defaultValues: { importMethod: method } });
-  return <FormProvider {...formAPI}>{children}</FormProvider>;
-}
-
-const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey, method?: ImportMethod) => {
-  return render(
-    <FormWrapper method={method}>
-      <StepperStateProvider initialStep={initialStep}>
-        <MethodStepSeeder />
-        {ui}
-      </StepperStateProvider>
-    </FormWrapper>
-  );
+const renderWithProvider = (ui: React.ReactElement, initialStep?: StepKey) => {
+  return render(<StepperStateProvider initialStep={initialStep}>{ui}</StepperStateProvider>);
 };
 
 describe('Stepper', () => {
   const user = userEvent.setup();
 
-  it('should render the full import rail with the new method step first', () => {
+  it('should render the three-step rail', () => {
     renderWithProvider(<Stepper />);
 
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
     expect(screen.getByText(/notification resources/i)).toBeInTheDocument();
     expect(screen.getByText(/alert rules/i)).toBeInTheDocument();
     expect(screen.getByText(/review & import/i)).toBeInTheDocument();
-  });
-
-  it('collapses to a two-step rail for the autosync method', () => {
-    renderWithProvider(<Stepper />, StepKey.Method, 'autosync');
-
-    expect(screen.getByText(/import method/i)).toBeInTheDocument();
-    expect(screen.getByText(/review & enable/i)).toBeInTheDocument();
-    // The import-only steps are not rendered at all for autosync.
-    expect(screen.queryByText(/notification resources/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/alert rules/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/review & import/i)).not.toBeInTheDocument();
   });
 
   it('should highlight the active step', () => {
@@ -246,5 +208,34 @@ describe('Stepper', () => {
     const svg = indicator?.querySelector('svg');
     expect(svg).toBeInTheDocument();
     expect(indicator).not.toHaveTextContent('1');
+  });
+
+  it('keeps Rules gated by completion/skip like any other step, with no force-skip special-case', async () => {
+    // Regression for the auto-sync force-skip bug: Rules used to be permanently disabled,
+    // struck through, and unreachable from the rail whenever Auto-sync was selected. Stepper no
+    // longer knows about Auto-sync at all, so this exercises Rules through the same gating as
+    // any other step.
+    const TestComponent = () => {
+      const { activeStep, setStepCompleted, setVisitedStep } = useStepperState();
+      useEffect(() => {
+        setVisitedStep(StepKey.Notifications);
+        setStepCompleted(StepKey.Notifications, true);
+      }, [setStepCompleted, setVisitedStep]);
+      return (
+        <div>
+          <div data-testid="active-step">{activeStep}</div>
+          <Stepper />
+        </div>
+      );
+    };
+
+    renderWithProvider(<TestComponent />, StepKey.Notifications);
+
+    const rulesButton = screen.getByRole('button', { name: /alert rules/i });
+    expect(rulesButton).toBeEnabled();
+    expect(rulesButton).not.toHaveStyle('text-decoration: line-through');
+
+    await user.click(rulesButton);
+    expect(screen.getByTestId('active-step')).toHaveTextContent(StepKey.Rules);
   });
 });

@@ -10,6 +10,10 @@
 
     <base href="[[.AppSubUrl]]/" />
 
+    [[range $asset := .Assets.CSSFiles]]
+    <link rel="stylesheet" href="[[$asset.FilePath]]" />
+    [[end]]
+
     [[ if eq .ThemeType "light" ]]
     <link rel="stylesheet" href="[[.Assets.Light]]" />
     [[ else ]]

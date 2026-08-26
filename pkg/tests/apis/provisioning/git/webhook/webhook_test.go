@@ -427,7 +427,7 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 	// stale secure name makes the server reject this status patch with
 	// "secure value not found" even though the patch itself doesn't touch secure.
 	expiredTimestamp := int64(1)
-	patch := []byte(fmt.Sprintf(`{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp))
+	patch := fmt.Appendf(nil, `{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 		assert.NoError(collect, err)

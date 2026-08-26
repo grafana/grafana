@@ -38,7 +38,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const { alertRules, loading } = useAlertingContext();
   const styles = useStyles2(getStyles);
 
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const selectedCardId = getSelectedStackedItem(selectedQuery, selectedTransformation)?.id ?? null;
   useScrollSelectedCardIntoView(contentRef, selectedCardId);

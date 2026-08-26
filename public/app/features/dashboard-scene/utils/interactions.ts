@@ -7,6 +7,8 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
+import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+
 let isScenesContextSet = false;
 
 type DashboardLibraryTrackingInfo = {
@@ -106,11 +108,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_variable_button_clicked', properties);
   },
 
-  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addLinkButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
-  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addFilterButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_filter_button_clicked', properties);
   },
 
@@ -152,9 +154,26 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
+  // dashboards_global_variables_loaded
+  // after global/folder variables are resolved for a V2 dashboard load
+  globalVariablesLoaded: (properties: {
+    global_count: number;
+    folder_count: number;
+    total_count: number;
+    mode?: GlobalVariablesMode;
+  }) => {
+    reportDashboardInteraction('global_variables_loaded', properties);
+  },
+
+  // dashboards_global_variables_mode_changed
+  // when a user changes the predefined variables radio (None / All / Global / Folder)
+  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
+    reportDashboardInteraction('global_variables_mode_changed', properties);
+  },
+
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
-  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_annotation_button_clicked', properties);
   },
   // dashboards_annotations_reordered

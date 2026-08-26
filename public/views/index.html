@@ -308,13 +308,17 @@
       window.__grafanaRenderBindingSupported = true;
       [[end]]
 
+      [[if .UseLuxon]]
+      window.__grafanaUseLuxon = true;
+      [[end]]
+
       [[if .AssetSriChecksEnabled]]
         // For enabling SRI checks on dynamically loaded Grafana assets
         window.__grafanaAssetSriChecksEnabled = true;
       [[end]]
 
-      [[if .NewPreferencesPage]]
-        window.__grafanaNewPreferencesPage = true;
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
 
       // FEMT index.html uses this, and we want to keep the index.ts the same for both
@@ -356,7 +360,7 @@
       };
 
       [[if .Assets.ContentDeliveryURL]]
-        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
+        window.public_cdn_path = '[[.Assets.ContentDeliveryURL]][[.Assets.PublicPath]]';
       [[end]]
       [[if .Nonce]]
         window.nonce = '[[.Nonce]]';

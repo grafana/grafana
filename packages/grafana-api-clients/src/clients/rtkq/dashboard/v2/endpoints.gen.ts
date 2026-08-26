@@ -404,6 +404,7 @@ export type DashboardQueryOptionsSpec = {
   timeCompare?: string;
   timeFrom?: string;
   timeShift?: string;
+  timeTo?: string;
 };
 export type DashboardMatcherConfig = {
   /** The matcher id. This is used to find the matcher implementation from registry. */
@@ -698,6 +699,7 @@ export type DashboardAutoGridRepeatOptions = {
 export type DashboardAutoGridLayoutItemSpec = {
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   element: DashboardElementReference;
+  fitContent?: boolean;
   repeat?: DashboardAutoGridRepeatOptions;
 };
 export type DashboardAutoGridLayoutItemKind = {
@@ -708,8 +710,14 @@ export type DashboardAutoGridLayoutSpec = {
   columnWidth?: number;
   columnWidthMode: string;
   fillScreen?: boolean;
+  fitContent?: boolean;
   items: DashboardAutoGridLayoutItemKind[];
+  matchRowHeights?: boolean;
   maxColumnCount?: number;
+  maxHeight?: number;
+  maxHeightMode?: string;
+  minHeight?: number;
+  minHeightMode?: string;
   rowHeight?: number;
   rowHeightMode: string;
 };

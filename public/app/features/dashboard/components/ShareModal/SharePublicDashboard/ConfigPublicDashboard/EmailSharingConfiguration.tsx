@@ -144,7 +144,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
       <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
         <Field
           label={t('public-dashboard.config.can-view-dashboard-radio-button-label', 'Can view dashboard')}
-          className={styles.field}
+          noMargin
         >
           <Controller
             name="shareType"
@@ -185,7 +185,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               description={t('public-dashboard.email-sharing.invite-field-desc', 'Invite people by email')}
               error={errors.email?.message}
               invalid={!!errors.email?.message || undefined}
-              className={styles.field}
+              noMargin
             >
               <div className={styles.emailContainer}>
                 <Input
@@ -234,10 +234,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flexWrap: 'wrap',
     gap: theme.spacing(3),
-  }),
-  field: css({
-    label: 'field-noMargin',
-    marginBottom: 0,
   }),
   emailContainer: css({
     label: 'emailContainer',

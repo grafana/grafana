@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
@@ -57,12 +58,14 @@ export interface DataSourceSettingsK8s {
   secure?: Record<string, Record<string, string>>;
 }
 
-const getDataSourceK8sGroup = (uid: string): string => {
-  for (const [key, ds] of Object.entries(config.datasources)) {
-    if (key.startsWith('--')) {
+const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
+  const instances = await getDataSourceInstanceList({ all: true });
+  for (const ds of instances) {
+    // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
+    if (ds.name.startsWith('--')) {
       continue;
     }
-    if (config.datasources[key].uid === uid) {
+    if (ds.uid === uid) {
       return ds.type + '.datasource.grafana.app';
     }
   }
@@ -194,7 +197,7 @@ const getSecretName = async (datasourceUid: string, fieldName: string): Promise<
 const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
-  let k8sGroup = getDataSourceK8sGroup(k8sName);
+  let k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
@@ -334,11 +337,15 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
     .then((response) => response.datasource);
 };
 
-export const deleteDataSource = (uid: string) => {
+export const deleteDataSource = async (uid: string) => {
   let deleteUrl = `/api/datasources/uid/${uid}`;
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let namespace = config.namespace;
-    let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
+    let k8sGroup = await getDataSourceK8sGroup(uid);
+    if (k8sGroup === '') {
+      throw Error(`Could not find data source group with uid: "${uid}"`);
+    }
+    let apiVersion = `${k8sGroup}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
   }
   return getBackendSrv().delete(deleteUrl);

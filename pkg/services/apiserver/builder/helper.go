@@ -24,7 +24,6 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
-	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -86,8 +85,15 @@ var PathRewriters = []filters.PathRewriter{
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
+	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// Runs inside DefaultBuildHandlerChain so RequestInfo and the resource-named
+		// request span are available: marks watch spans so long-running watch
+		// connections can be told apart from GET/LIST and filtered out downstream,
+		// and records how long the watch takes to establish.
+		handler = filters.WithWatchInstrumentation(handler, watchMetrics.observeEstablishment)
 
 		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
 		// and injects it into the k8s audit event context (used for audit log suppression).
@@ -102,9 +108,16 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
+		// Must wrap DefaultBuildHandlerChain: it reports a client disconnect as a 504
+		// timeout, and this rewrites that to 499. See filters.WithCanceledRequestStatus.
+		handler = filters.WithCanceledRequestStatus(handler)
+
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
-		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Skip the top-level "KubernetesAPI" span for watch requests: their span
+		// would stay open for the whole long-running connection. See
+		// filters.WithWatchInstrumentation for the upstream request span.
+		handler = withoutWatchServerSpan(handler, c.TracerProvider)
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false

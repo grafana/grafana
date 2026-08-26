@@ -3,11 +3,16 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 )
+
+// likeEscaper escapes LIKE/ILIKE pattern metacharacters so a query value is
+// matched as a literal substring rather than a wildcard pattern.
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
 
 // tagCache is an LRU cache with TTL for tag queries
 type tagCache struct {
@@ -65,15 +70,15 @@ func (c *tagCache) set(key string, tags []Tag) {
 }
 
 // cacheKey generates a cache key for tag queries
-func tagCacheKey(namespace, prefix string, limit int) string {
-	return fmt.Sprintf("%s:%s:%d", namespace, prefix, limit)
+func tagCacheKey(namespace, prefix, contains string, limit int) string {
+	return fmt.Sprintf("%s:%s:%s:%d", namespace, prefix, contains, limit)
 }
 
 // ListTags implements the TagProvider interface.
 // We use a cache here because tag queries can be expensive, and they don't change frequently.
 func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
 	// Try cache first
-	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit)
+	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Contains, opts.Limit)
 	if cached, ok := s.tagCache.get(cacheKey); ok {
 		if s.metrics != nil {
 			s.metrics.TagCacheHits.Inc()
@@ -94,10 +99,15 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 	args := []any{namespace}
 	argNum := 2
 
-	// Add prefix filter if specified
-	if opts.Prefix != "" {
+	// Add prefix/contains filter if specified.
+	switch {
+	case opts.Prefix != "":
 		query += fmt.Sprintf(" AND tag LIKE $%d", argNum)
-		args = append(args, opts.Prefix+"%")
+		args = append(args, likeEscaper.Replace(opts.Prefix)+"%")
+		argNum++
+	case opts.Contains != "":
+		query += fmt.Sprintf(" AND tag ILIKE $%d", argNum)
+		args = append(args, "%"+likeEscaper.Replace(opts.Contains)+"%")
 		argNum++
 	}
 

@@ -630,7 +630,7 @@ func TestFactory_Mutate(t *testing.T) {
 	t.Run("calls mutate only for matching type", func(t *testing.T) {
 		localExtra := &MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
-		localExtra.On("Mutate", mock.Anything, mock.Anything).Return(nil)
+		localExtra.On("Mutate", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		gitExtra := &MockExtra{}
 		gitExtra.On("Type").Return(provisioning.GitRepositoryType)
@@ -649,7 +649,7 @@ func TestFactory_Mutate(t *testing.T) {
 			},
 		}
 
-		err = factory.Mutate(context.Background(), repo)
+		err = factory.Mutate(context.Background(), repo, nil)
 		require.NoError(t, err)
 
 		localExtra.AssertExpectations(t)
@@ -667,7 +667,7 @@ func TestFactory_Mutate(t *testing.T) {
 		require.NoError(t, err)
 
 		// Pass a non-repository object
-		err = factory.Mutate(context.Background(), &provisioning.Connection{})
+		err = factory.Mutate(context.Background(), &provisioning.Connection{}, nil)
 		require.NoError(t, err)
 
 		localExtra.AssertNotCalled(t, "Mutate")
@@ -689,17 +689,23 @@ func TestFactory_Mutate(t *testing.T) {
 			},
 		}
 
-		err = factory.Mutate(context.Background(), repo)
+		err = factory.Mutate(context.Background(), repo, nil)
 		require.NoError(t, err) // Mutate returns nil for unsupported types
 
 		localExtra.AssertNotCalled(t, "Mutate")
 	})
 
-	t.Run("propagates error from extra.Mutate", func(t *testing.T) {
-		expectedError := errors.New("mutate failed")
+	t.Run("forwards the exact old object to the matching extra", func(t *testing.T) {
+		oldRepo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{IntervalSeconds: 30},
+			},
+		}
+
 		localExtra := &MockExtra{}
 		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
-		localExtra.On("Mutate", mock.Anything, mock.Anything).Return(expectedError)
+		localExtra.On("Mutate", mock.Anything, mock.Anything, oldRepo).Return(nil)
 
 		enabled := map[provisioning.RepositoryType]struct{}{
 			provisioning.LocalRepositoryType: {},
@@ -713,7 +719,31 @@ func TestFactory_Mutate(t *testing.T) {
 			},
 		}
 
-		err = factory.Mutate(context.Background(), repo)
+		err = factory.Mutate(context.Background(), repo, oldRepo)
+		require.NoError(t, err)
+
+		localExtra.AssertExpectations(t)
+	})
+
+	t.Run("propagates error from extra.Mutate", func(t *testing.T) {
+		expectedError := errors.New("mutate failed")
+		localExtra := &MockExtra{}
+		localExtra.On("Type").Return(provisioning.LocalRepositoryType)
+		localExtra.On("Mutate", mock.Anything, mock.Anything, mock.Anything).Return(expectedError)
+
+		enabled := map[provisioning.RepositoryType]struct{}{
+			provisioning.LocalRepositoryType: {},
+		}
+		factory, err := ProvideFactory(enabled, []Extra{localExtra})
+		require.NoError(t, err)
+
+		repo := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+			},
+		}
+
+		err = factory.Mutate(context.Background(), repo, nil)
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
 

@@ -32,16 +32,19 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    clean: env.react19 ? false : true,
+    // rspack writes into a subdirectory of this one; without keep, cleaning deletes it.
+    clean: { keep: 'rspack' },
     path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {
       if (pathData.chunk?.name === 'boot') {
         return '[name].js';
       }
-      return env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js';
+      return '[name].[contenthash].js';
     },
-    chunkFilename: env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].js',
     publicPath: 'public/build/',
+    // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
+    trustedTypes: { policyName: 'grafana#webpack' },
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],
@@ -50,6 +53,8 @@ export default (env: Env = {}): Configuration => ({
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: require.resolve('prismjs'),
+      // Core injects the real implementation during bootstrap only when Luxon is disabled.
+      'moment-timezone$': path.resolve(grafanaRoot, 'public/app/core/legacyMomentShim.ts'),
       // due to our webpack configuration not understanding package.json `exports`
       // correctly we must alias this package to the correct file
       // the alternative to this alias is to copy-paste the file into our
@@ -85,22 +90,6 @@ export default (env: Env = {}): Configuration => ({
     },
   ],
   plugins: [
-    ...(env.react19
-      ? [
-          new webpack.NormalModuleReplacementPlugin(/^react$/, (resource) => {
-            resource.request = resource.request.replace('react', 'react-19');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react-dom/, (resource) => {
-            resource.request = resource.request.replace('react-dom', 'react-dom-19');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-runtime$/, (resource) => {
-            resource.request = resource.request.replace('react/jsx-runtime', 'react-19/jsx-runtime');
-          }),
-          new webpack.NormalModuleReplacementPlugin(/^react\/jsx-dev-runtime/, (resource) => {
-            resource.request = resource.request.replace('react/jsx-dev-runtime', 'react-19/jsx-dev-runtime');
-          }),
-        ]
-      : []),
     new CorsWorkerPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -113,7 +102,7 @@ export default (env: Env = {}): Configuration => ({
       ],
     }),
     new MiniCssExtractPlugin({
-      filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
+      filename: 'grafana.[name].[contenthash].css',
     }),
     new webpack.EnvironmentPlugin(envConfig),
   ],

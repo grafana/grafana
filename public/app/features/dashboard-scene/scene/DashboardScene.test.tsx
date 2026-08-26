@@ -2726,10 +2726,17 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
-      // First refresh: inject all (no denylist). Fetch stays pending.
+      // First refresh: inject all (explicit empty denylist). Fetch stays pending.
       const staleRefresh = scene.refreshPredefinedVariables();
 
       // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
@@ -2786,10 +2793,17 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
-      // First: All (no denylist)
+      // First: All (explicit empty denylist)
       const firstRefresh = scene.refreshPredefinedVariables();
 
       // Second: Folder only (deny globals) — starts while first fetch is still pending.
@@ -2831,7 +2845,14 @@ describe('DashboardScene', () => {
 
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [] }),
-        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+        meta: {
+          folderUid: 'folder-1',
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
+        },
       });
 
       await scene.refreshPredefinedVariables();
@@ -2878,7 +2899,11 @@ describe('DashboardScene', () => {
       scene.setState({
         meta: {
           ...scene.state.meta,
-          k8s: { annotations: {} },
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+            },
+          },
         },
       });
       const staleRefresh = scene.refreshPredefinedVariables();
@@ -3242,6 +3267,40 @@ describe('DashboardScene', () => {
 
       expect(pageNav.text).toBe('Edit panel');
       expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+  });
+
+  describe('getDefaultLayout', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('returns a clone of the persisted layout preference regardless of the auto grid flag', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const defaultLayoutTemplate = DefaultGridLayoutManager.createEmpty();
+      const scene = buildTestScene({ preferences: { defaultLayoutTemplate } });
+
+      const layout = scene.getDefaultLayout();
+
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(layout).not.toBe(defaultLayoutTemplate);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to auto grid when no preference is persisted and the auto grid flag is enabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': true });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(AutoGridLayoutManager.descriptor.id);
+    });
+
+    it('falls back to custom grid when no preference is persisted and the auto grid flag is disabled', () => {
+      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      const scene = buildTestScene();
+
+      expect(scene.getDefaultLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.getDefaultLayoutType()).toBe(DefaultGridLayoutManager.descriptor.id);
     });
   });
 });

@@ -102,6 +102,15 @@ export const {
   useUpdateVariableMutation,
   useDeleteVariableMutation,
   useReplaceVariableMutation,
+  // The generated notebook mutations invalidate the coarse 'Notebook' tag, which covers both
+  // this endpoint and the hand-written search query in the notebooks feature — that query
+  // tags itself into the same namespace so create/delete refetch it too.
+  useListNotebookQuery,
+  useCreateNotebookMutation,
+  // Lazy, because the list response is flattened for the table: exporting a row has to fetch that
+  // notebook's spec on demand rather than every row's up front.
+  useLazyGetNotebookQuery,
+  useDeleteNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
@@ -112,4 +121,7 @@ export type {
   ListVariableApiResponse,
   CreateVariableApiArg,
   UpdateVariableApiArg,
+  Notebook,
+  NotebookList,
+  NotebookSpec,
 } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
