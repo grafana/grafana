@@ -1120,6 +1120,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/api-enterprise-spec.json @grafanabot
 /public/openapi3.json @grafanabot
 /public/app/app.ts @grafana/grafana-frontend-platform
+/public/app/polyfills.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/grafana-frontend-platform
