@@ -73,6 +73,10 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		moreInfo := ""
 		if resp != nil {
 			moreInfo = fmt.Sprintf("Status: %s\nMessage: %s\nJSONDetails: %s", resp.Status, resp.Message, resp.JSONDetails)
+		} else if err != nil {
+			// Without this, a health check that could not run at all reports a failure
+			// with no information, as the error is otherwise only logged.
+			moreInfo = fmt.Sprintf("Error: %s", err)
 		}
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailureWithMoreInfo(
 			advisor.CheckReportFailureSeverityHigh,

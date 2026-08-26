@@ -2,6 +2,7 @@ package datasourcecheck
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -135,6 +136,37 @@ func TestCheck_Run(t *testing.T) {
 		assert.Len(t, failures, 1)
 		assert.Equal(t, "health-check", failures[0].StepID)
 		assert.Contains(t, *failures[0].MoreInfo, "test message")
+	})
+
+	t.Run("should report the error when the datasource health check cannot run", func(t *testing.T) {
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
+		}
+
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		// No result, only an error: the failure must still say what went wrong.
+		mockPluginClient := &MockPluginClient{err: errors.New("404: Plugin not found")}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true}
+
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &checks.HealthCheckerImpl{
+				PluginContextProvider: mockPluginContextProvider,
+				PluginClient:          mockPluginClient,
+			},
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Len(t, failures, 1)
+		assert.Equal(t, "health-check", failures[0].StepID)
+		assert.Contains(t, *failures[0].MoreInfo, "404: Plugin not found")
 	})
 
 	t.Run("should skip health check when datasource plugin is frontend-only", func(t *testing.T) {
