@@ -1,6 +1,8 @@
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { InlineField } from '@grafana/ui';
+
 import { NumberInput } from './NumberInput';
 
 const setup = (min?: number, max?: number) => {
@@ -182,5 +184,55 @@ describe('NumberInput', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     jest.useRealTimers();
+  });
+
+  it('keeps a parent InlineField label when no id is passed', () => {
+    render(
+      <InlineField label="Window size">
+        <NumberInput value={5} onChange={jest.fn()} min={1} max={10} />
+      </InlineField>
+    );
+
+    expect(screen.getByRole('spinbutton', { name: 'Window size' })).toBeInTheDocument();
+  });
+
+  it('keeps a trailing decimal after the debounce so typing can continue', async () => {
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    fireEvent.change(input, { target: { value: '1.' } });
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(onChange).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: '1.5' } });
+    await act(async () => {
+      jest.advanceTimersByTime(500);
+    });
+
+    expect(onChange).toHaveBeenCalledWith(1.5);
+
+    jest.useRealTimers();
+  });
+
+  it('keeps the out of range message after a second blur without editing', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, '-9');
+    await user.tab();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Out of range. Range: 1 to 200');
+
+    fireEvent.blur(screen.getByRole('spinbutton'));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Out of range. Range: 1 to 200');
   });
 });

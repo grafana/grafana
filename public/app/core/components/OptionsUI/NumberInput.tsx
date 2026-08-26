@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Field, Input, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Input, useStyles2 } from '@grafana/ui';
 
 interface Props {
   id?: string;
@@ -29,6 +29,10 @@ function isInRange(n: number, min?: number, max?: number) {
     return false;
   }
   return true;
+}
+
+function isIncompleteNumericInput(txt: string) {
+  return txt === '-' || txt === '+' || txt === '.' || txt === '-.' || txt.endsWith('.');
 }
 
 function getRangeText(min?: number, max?: number) {
@@ -59,54 +63,82 @@ export const NumberInput = memo(
     const [inputCorrected, setInputCorrected] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const rangeId = useId();
+    const errorId = useId();
     const styles = useStyles2(getStyles);
     const rangeText = getRangeText(min, max);
 
     useEffect(() => {
-      setText(isNaN(value!) ? '' : `${value}`);
+      setText((current) => {
+        if (current !== '' && Number.isFinite(Number(current)) && Number(current) === value) {
+          return current;
+        }
+        return isNaN(value!) ? '' : `${value}`;
+      });
     }, [value]);
 
-    const commitValue = useCallback((raw?: string) => {
-      const txt = raw ?? inputRef.current?.value ?? '';
-      if (txt === '') {
-        setInputCorrected(false);
-        if (value !== undefined) {
-          onChange(undefined);
+    const emitInRangeValue = useCallback(
+      (raw?: string) => {
+        const txt = raw ?? inputRef.current?.value ?? '';
+        if (txt === '' || isIncompleteNumericInput(txt)) {
+          return;
         }
-        return;
-      }
+        const parsed = Number(txt);
+        if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
+          return;
+        }
+        if (parsed !== value) {
+          onChange(parsed);
+        }
+      },
+      [min, max, value, onChange]
+    );
 
-      const parsed = Number(txt);
-      if (!Number.isFinite(parsed)) {
-        setText(value == null || Number.isNaN(value) ? '' : `${value}`);
-        setInputCorrected(false);
-        return;
-      }
+    const commitValue = useCallback(
+      (raw?: string) => {
+        const txt = raw ?? inputRef.current?.value ?? '';
+        if (txt === '') {
+          setInputCorrected(false);
+          if (value !== undefined) {
+            onChange(undefined);
+          }
+          return;
+        }
 
-      let next = parsed;
-      let corrected = false;
-      if (min != null && next < min) {
-        next = min;
-        corrected = true;
-      } else if (max != null && next > max) {
-        next = max;
-        corrected = true;
-      }
+        const parsed = Number(txt);
+        if (!Number.isFinite(parsed)) {
+          setText(value == null || Number.isNaN(value) ? '' : `${value}`);
+          setInputCorrected(false);
+          return;
+        }
 
-      setText(`${next}`);
-      setInputCorrected(corrected);
-      if (next !== value) {
-        onChange(next);
-      }
-    }, [min, max, value, onChange]);
+        let next = parsed;
+        let corrected = false;
+        if (min != null && next < min) {
+          next = min;
+          corrected = true;
+        } else if (max != null && next > max) {
+          next = max;
+          corrected = true;
+        }
 
-    const commitValueDebounced = useMemo(() => debounce(commitValue, 500), [commitValue]);
+        setText(`${next}`);
+        if (corrected) {
+          setInputCorrected(true);
+        }
+        if (next !== value) {
+          onChange(next);
+        }
+      },
+      [min, max, value, onChange]
+    );
+
+    const emitInRangeValueDebounced = useMemo(() => debounce(emitInRangeValue, 500), [emitInRangeValue]);
 
     useEffect(() => {
       return () => {
-        commitValueDebounced.cancel();
+        emitInRangeValueDebounced.cancel();
       };
-    }, [commitValueDebounced]);
+    }, [emitInRangeValueDebounced]);
 
     const handleChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,47 +146,49 @@ export const NumberInput = memo(
         setText(next);
         setInputCorrected(false);
 
-        if (next === '') {
-          commitValueDebounced.cancel();
+        if (next === '' || isIncompleteNumericInput(next)) {
+          emitInRangeValueDebounced.cancel();
           return;
         }
 
         const parsed = Number(next);
         if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
-          commitValueDebounced.cancel();
+          emitInRangeValueDebounced.cancel();
           return;
         }
 
-        commitValueDebounced();
+        emitInRangeValueDebounced();
       },
-      [commitValueDebounced, min, max]
+      [emitInRangeValueDebounced, min, max]
     );
 
     const handleBlur = useCallback(
       (e: React.FocusEvent<HTMLInputElement>) => {
-        commitValueDebounced.cancel();
+        emitInRangeValueDebounced.cancel();
         commitValue(e.currentTarget.value);
       },
-      [commitValue, commitValueDebounced]
+      [commitValue, emitInRangeValueDebounced]
     );
 
     const handleKeyPress = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-          commitValueDebounced.cancel();
+          emitInRangeValueDebounced.cancel();
           commitValue(e.currentTarget.value);
         }
       },
-      [commitValue, commitValueDebounced]
+      [commitValue, emitInRangeValueDebounced]
     );
 
-    const describedBy = rangeText ? rangeId : undefined;
+    const describedBy = [rangeText ? rangeId : undefined, inputCorrected ? errorId : undefined]
+      .filter(Boolean)
+      .join(' ');
     const errorMessage = rangeText
       ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
       : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
 
-    const renderInput = () => {
-      return (
+    return (
+      <div>
         <Input
           type="number"
           id={id}
@@ -171,27 +205,18 @@ export const NumberInput = memo(
           disabled={fieldDisabled}
           width={width}
           suffix={suffix}
-          aria-describedby={inputCorrected ? undefined : describedBy}
-        />
-      );
-    };
-
-    return (
-      <div>
-        <Field
           invalid={inputCorrected}
-          error={inputCorrected ? errorMessage : undefined}
-          validationMessageHorizontalOverflow={true}
-          htmlFor={id}
-          noMargin
-          style={inputCorrected ? { direction: 'rtl' } : undefined}
-        >
-          {renderInput()}
-        </Field>
+          aria-describedby={describedBy || undefined}
+        />
         {rangeText && (
           <div id={rangeId} className={styles.rangeHint}>
             {rangeText}
           </div>
+        )}
+        {inputCorrected && (
+          <FieldValidationMessage id={errorId} horizontal>
+            {errorMessage}
+          </FieldValidationMessage>
         )}
       </div>
     );
