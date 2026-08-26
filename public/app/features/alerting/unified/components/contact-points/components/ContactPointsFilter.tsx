@@ -1,8 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Input, Stack } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { Field, FilterInput, Stack } from '@grafana/ui';
 
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 
@@ -12,7 +12,7 @@ const ContactPointsFilter = () => {
   const defaultValue = searchParams.get('search') ?? '';
   const [searchValue, setSearchValue] = useState(defaultValue);
 
-  const [_, cancel] = useDebounce(
+  const [, cancel] = useDebounce(
     () => {
       setSearchParams({ search: searchValue }, true);
     },
@@ -20,40 +20,28 @@ const ContactPointsFilter = () => {
     [setSearchParams, searchValue]
   );
 
-  const clear = useCallback(() => {
-    cancel();
-    setSearchValue('');
-    setSearchParams({ search: '' }, true);
-  }, [cancel, setSearchParams]);
-
-  const hasInput = Boolean(defaultValue);
-
   return (
     <Stack direction="row" alignItems="end" gap={0.5}>
       <Field
         noMargin
         label={t('alerting.contact-points-filter.label-search-by-name-or-type', 'Search by name or type')}
       >
-        <Input
-          aria-label={t('alerting.contact-points-filter.aria-label-search-contact-points', 'search contact points')}
+        <FilterInput
           placeholder={t('alerting.contact-points-filter.placeholder-search', 'Search')}
           width={46}
-          prefix={<Icon name="search" />}
-          onChange={(event) => {
-            setSearchValue(event.currentTarget.value);
+          // the search term is handed to uFuzzy as a plain needle, so escaping regex characters would break matching
+          escapeRegex={false}
+          onChange={(value) => {
+            setSearchValue(value);
+
+            if (value === '') {
+              cancel();
+              setSearchParams({ search: '' }, true);
+            }
           }}
           value={searchValue}
         />
       </Field>
-      <Button
-        variant="secondary"
-        icon="times"
-        onClick={() => clear()}
-        disabled={!hasInput}
-        aria-label={t('alerting.contact-points-filter.aria-label-clear', 'clear')}
-      >
-        <Trans i18nKey="alerting.contact-points-filter.clear">Clear</Trans>
-      </Button>
     </Stack>
   );
 };
