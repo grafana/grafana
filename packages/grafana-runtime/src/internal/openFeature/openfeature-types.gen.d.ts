@@ -32,6 +32,7 @@ declare module "@openfeature/core" {
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
+    | "playlistsRBAC"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"

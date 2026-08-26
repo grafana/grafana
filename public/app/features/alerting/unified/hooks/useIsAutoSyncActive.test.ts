@@ -87,7 +87,7 @@ describe('useIsAutoSyncActive', () => {
   });
 
   it('reports an ini-configured sync as active, using its datasource UID', async () => {
-    setupAutoSyncConfig(server, { statusUid: INI_UID, statusOrigin: 'ini' });
+    setupAutoSyncConfig(server, { statusUid: INI_UID, origin: 'ini' });
 
     const wrapper = getWrapper({ renderWithRouter: false });
     const { result } = renderHook(() => useIsAutoSyncActive(), { wrapper });

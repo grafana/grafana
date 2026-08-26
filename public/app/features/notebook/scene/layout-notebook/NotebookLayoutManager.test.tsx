@@ -183,9 +183,10 @@ describe('NotebookLayoutManager', () => {
     // One insertion point per gap: above the first cell, between each pair, and below the last —
     // three real cells by the time this renders (the trailing empty cell the invariant appends after
     // renderNotebook's collapsed panel counts as a fourth gap), so four dividers, not three.
-    it('renders an insertion point above, between and below the cells in edit mode', () => {
+    it('renders an insertion point above, between and below the cells in edit mode', async () => {
       renderNotebook(true);
 
+      await screen.findAllByRole('textbox', { name: 'Markdown' });
       expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(4);
     });
 
@@ -237,8 +238,8 @@ describe('NotebookLayoutManager', () => {
   // placeholder-showing markdown editor, and offers the same "/" menu any empty markdown cell does
   // (see NotebookCellRenderer/NotebookLayoutManager's own setCellContent doc comment).
   describe('the trailing empty cell', () => {
-    function trailingTextbox() {
-      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+    async function trailingTextbox() {
+      const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
       return editors[editors.length - 1];
     }
 
@@ -249,10 +250,10 @@ describe('NotebookLayoutManager', () => {
     });
 
     // A brand-new notebook gets its first cell for free, so a reader can start typing immediately.
-    it('gives an empty notebook its first cell', () => {
+    it('gives an empty notebook its first cell', async () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getAllByRole('textbox', { name: 'Markdown' })).toHaveLength(1);
+      expect(await screen.findAllByRole('textbox', { name: 'Markdown' })).toHaveLength(1);
     });
 
     // A notebook whose last cell already has content — including a non-markdown or collapsed one —
@@ -266,16 +267,16 @@ describe('NotebookLayoutManager', () => {
 
     // A markdown cell is a real cell rendered through the exact same path as any other — it isn't
     // excluded from the notebook's own drag-and-drop wiring the way the old dedicated prompt was.
-    it('renders like any other cell, inside its own draggable frame', () => {
+    it('renders like any other cell, inside its own draggable frame', async () => {
       renderManager(buildManager([], true));
 
-      expect(trailingTextbox().closest('[data-rfd-draggable-id]')).not.toBeNull();
+      expect((await trailingTextbox()).closest('[data-rfd-draggable-id]')).not.toBeNull();
     });
 
     it('opens the block type menu on a lone "/"', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), '/');
+      await user.type(await trailingTextbox(), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -288,7 +289,7 @@ describe('NotebookLayoutManager', () => {
     it('leaves plain typing alone', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), 'Hello');
+      await user.type(await trailingTextbox(), 'Hello');
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
@@ -298,10 +299,11 @@ describe('NotebookLayoutManager', () => {
     it('closes the menu once the "/" is backspaced away', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), '/');
+      const editor = await trailingTextbox();
+      await user.type(editor, '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      await user.type(trailingTextbox(), '{Backspace}');
+      await user.type(editor, '{Backspace}');
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
@@ -309,7 +311,7 @@ describe('NotebookLayoutManager', () => {
     it('reveals a second, empty trailing cell as soon as the first has content', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), 'Hello');
+      await user.type(await trailingTextbox(), 'Hello');
 
       const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
       expect(editors).toHaveLength(2);
@@ -323,7 +325,7 @@ describe('NotebookLayoutManager', () => {
     it('reveals a further cell from a lone "/" the same way any other keystroke does', async () => {
       const { user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), '/');
+      await user.type(await trailingTextbox(), '/');
 
       expect(screen.getAllByRole('textbox', { name: 'Markdown' })).toHaveLength(2);
     });
@@ -333,7 +335,7 @@ describe('NotebookLayoutManager', () => {
     it('keeps typing into each newly revealed trailing cell without disturbing the others', async () => {
       const { manager, user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), 'Hello');
+      await user.type(await trailingTextbox(), 'Hello');
       const sibling = screen.getAllByRole('textbox', { name: 'Markdown' })[1];
       await user.type(sibling, 'World');
 
@@ -352,7 +354,7 @@ describe('NotebookLayoutManager', () => {
     it('converts the trailing cell in place and keeps the caret on it', async () => {
       const { manager, user } = renderManager(buildManager([], true));
 
-      await user.type(trailingTextbox(), '/');
+      await user.type(await trailingTextbox(), '/');
       await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
 
       expect(cellNames(manager)).toEqual(['paragraph-1', 'paragraph-2']);
@@ -506,7 +508,7 @@ describe('NotebookLayoutManager', () => {
     // *current* last "Markdown" textbox rather than caching one, since the trailing-invariant may have
     // already appended a new one by the time this runs.
     async function pickFromTrailingCellMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
-      const editors = screen.getAllByRole('textbox', { name: 'Markdown' });
+      const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
       await user.type(editors[editors.length - 1], '/');
       await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
