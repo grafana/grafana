@@ -135,6 +135,18 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: TITLE })).toBeInTheDocument();
   });
 
+  // Edit mode can be left without the field ever closing, so trimming on close alone saves the padding.
+  it('trims the title it reports before the field is closed', async () => {
+    const { user, onChange } = setup();
+
+    await user.click(getTrigger());
+    await user.clear(getInput());
+    await user.type(getInput(), '  Q3  ');
+
+    expect(onChange).toHaveBeenLastCalledWith('Q3');
+    expect(getInput()).toBeInTheDocument();
+  });
+
   it('trims the title it settles on', async () => {
     const { user, onChange } = setup();
 

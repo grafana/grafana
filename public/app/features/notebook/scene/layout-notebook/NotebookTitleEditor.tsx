@@ -52,16 +52,19 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
 
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const next = event.currentTarget.value;
+    const trimmed = next.trim();
+    // The draft keeps the raw text so spaces can be typed; only what is reported is trimmed. Trimming
+    // on close alone would miss edit mode being left without a blur, and save the padding.
     setDraft(next);
 
     // Never report an empty title: it is required, and autosave would write the notebook nameless.
     // Holding the last real one back is what lets the field stay open with an error rather than block.
-    if (!next.trim()) {
+    if (!trimmed) {
       return;
     }
 
     setShowEmptyError(false);
-    onChange(next);
+    onChange(trimmed);
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
