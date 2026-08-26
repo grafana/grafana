@@ -43,11 +43,13 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 		// When requesting dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
 		var shim conversionShim
+		history := historySource{client: client}
 		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
 			shim = newDashboardConversionShim(gvr, clients)
+			history.resolver = newDashboardHistoryResolver(gvr, clients, client)
 		}
 
-		if err := exportResource(ctx, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
+		if err := exportResource(ctx, options, client, shim, history, repositoryResources, progress, generateNewUIDs); err != nil {
 			return fmt.Errorf("export %s: %w", gvr.Resource, err)
 		}
 	}
@@ -79,9 +81,10 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	// conversion shim, so repeated references to the same kind don't re-run
 	// discovery.
 	type resolvedKind struct {
-		client dynamic.ResourceInterface
-		gvr    schema.GroupVersionResource
-		shim   conversionShim
+		client  dynamic.ResourceInterface
+		gvr     schema.GroupVersionResource
+		shim    conversionShim
+		history historySource
 	}
 	resolved := make(map[schema.GroupVersionKind]resolvedKind)
 
@@ -91,9 +94,9 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	type pendingResource struct {
 		item *unstructured.Unstructured
 		shim conversionShim
-		// client is kept so a history replay can list the resource's stored
-		// versions through the same client that fetched it.
-		client dynamic.ResourceInterface
+		// history is kept so a replay can read the resource's stored versions
+		// through a client resolved for the version it is stored in.
+		history historySource
 	}
 	var pending []pendingResource
 
@@ -123,10 +126,11 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 				continue
 			}
 
-			rk = resolvedKind{client: client, gvr: gvr}
+			rk = resolvedKind{client: client, gvr: gvr, history: historySource{client: client}}
 			// Dashboards may need their original apiVersion preserved on export.
 			if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
 				rk.shim = newDashboardConversionShim(gvr, clients)
+				rk.history.resolver = newDashboardHistoryResolver(gvr, clients, client)
 			}
 			resolved[gvk] = rk
 		}
@@ -160,7 +164,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 				folderUIDs = append(folderUIDs, folder)
 			}
 		}
-		pending = append(pending, pendingResource{item: item, shim: rk.shim, client: rk.client})
+		pending = append(pending, pendingResource{item: item, shim: rk.shim, history: rk.history})
 	}
 
 	if err := exportFolderAncestry(ctx, options, folderClient, repositoryResources, progress, folderUIDs); err != nil {
@@ -168,7 +172,7 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	}
 
 	for _, p := range pending {
-		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true, p.client); err != nil {
+		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true, p.history); err != nil {
 			return err
 		}
 	}
@@ -205,6 +209,7 @@ func exportResource(ctx context.Context,
 	options provisioning.ExportJobOptions,
 	client dynamic.ResourceInterface,
 	shim conversionShim,
+	history historySource,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	generateNewUIDs bool,
@@ -212,7 +217,7 @@ func exportResource(ctx context.Context,
 	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
 	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false, client)
+		return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, false, history)
 	})
 }
 
@@ -230,7 +235,7 @@ func exportItem(ctx context.Context,
 	progress jobs.JobProgressRecorder,
 	generateNewUIDs bool,
 	explicitlyRequested bool,
-	historyClient dynamic.ResourceInterface,
+	history historySource,
 ) error {
 	gvk := item.GroupVersionKind()
 	name := item.GetName()
@@ -284,8 +289,8 @@ func exportItem(ctx context.Context,
 	// version is itself part of the history, so writing both would duplicate it.
 	// Regenerating UIDs is deliberately incompatible — that produces new
 	// resources, which have no prior history to replay.
-	if options.History && historyClient != nil && !generateNewUIDs {
-		return exportItemHistory(ctx, historyClient, item, options, repositoryResources, progress)
+	if options.History && history.client != nil && !generateNewUIDs {
+		return exportItemHistory(ctx, history, item, options, repositoryResources, progress)
 	}
 
 	if shim != nil {

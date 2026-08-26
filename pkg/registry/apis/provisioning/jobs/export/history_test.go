@@ -164,7 +164,7 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), historySource{client: client}, &item, options, repoResources, progress))
 	})
 
 	t.Run("a version identical to the previous one produces no commit and is not an error", func(t *testing.T) {
@@ -186,7 +186,7 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), historySource{client: client}, &item, options, repoResources, progress))
 	})
 
 	t.Run("falls back to the live object when nothing is stored", func(t *testing.T) {
@@ -203,7 +203,7 @@ func TestExportItemHistory(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		require.NoError(t, exportItemHistory(context.Background(), client, &item, options, repoResources, progress))
+		require.NoError(t, exportItemHistory(context.Background(), historySource{client: client}, &item, options, repoResources, progress))
 	})
 }
 
@@ -246,6 +246,65 @@ func TestExportItemHistory_PinsEveryVersionToOnePath(t *testing.T) {
 	progress.On("Record", mock.Anything, mock.Anything).Return()
 	progress.On("TooManyErrors").Return(nil)
 
-	require.NoError(t, exportItemHistory(context.Background(), client, &item,
+	require.NoError(t, exportItemHistory(context.Background(), historySource{client: client}, &item,
+		provisioningV0.ExportJobOptions{}, repoResources, progress))
+}
+
+func TestExportItemHistory_ReadsFromTheStoredVersion(t *testing.T) {
+	// A dashboard stored as v0alpha1 and read over the v1 API comes back
+	// converted; writing that conversion produces a file the loader cannot read.
+	// The replay must read history from the version the resource is stored in.
+	item := createDashboardObject("abc")
+	require.NoError(t, unstructured.SetNestedField(item.Object, "v0alpha1", "status", "conversion", "storedVersion"))
+
+	stored := &historyClientStub{items: []unstructured.Unstructured{versionAt("abc", "100", time.Time{})}}
+	served := &historyClientStub{items: []unstructured.Unstructured{
+		versionAt("abc", "100", time.Time{}),
+		versionAt("abc", "200", time.Time{}),
+	}}
+
+	var resolvedFor string
+	source := historySource{
+		client: served,
+		resolver: func(_ context.Context, o *unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+			resolvedFor, _, _ = unstructured.NestedString(o.Object, "status", "conversion", "storedVersion")
+			return stored, nil
+		},
+	}
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).Return("dash.json", nil).Once()
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
+		Return("dash.json", 10, nil).Once()
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	require.NoError(t, exportItemHistory(context.Background(), source, &item,
+		provisioningV0.ExportJobOptions{}, repoResources, progress))
+
+	require.Equal(t, "v0alpha1", resolvedFor, "the resolver should see the stored version")
+	require.Len(t, stored.calls, 1, "history should be read from the resolved client")
+	require.Empty(t, served.calls, "the served-version client should not be used")
+}
+
+func TestExportItemHistory_ResolverFailureIsRecorded(t *testing.T) {
+	item := createDashboardObject("abc")
+	source := historySource{
+		client: &historyClientStub{},
+		resolver: func(context.Context, *unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+			return nil, fmt.Errorf("no client for version")
+		},
+	}
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("ResourceFilePath", mock.Anything, mock.Anything, mock.Anything).Return("dash.json", nil).Once()
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	require.NoError(t, exportItemHistory(context.Background(), source, &item,
 		provisioningV0.ExportJobOptions{}, repoResources, progress))
 }

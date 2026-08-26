@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -17,6 +19,62 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
+
+// historySource carries what a history replay needs beyond the resource itself:
+// the client for its kind, and -- for kinds whose stored version may differ from
+// the version the API serves -- a resolver that picks the client to read history
+// from. Grouping them keeps the per-item export signature from growing again.
+type historySource struct {
+	client   dynamic.ResourceInterface
+	resolver historyClientResolver
+}
+
+// historyClientResolver returns the client whose group version matches the
+// version a resource is actually stored in.
+type historyClientResolver func(ctx context.Context, item *unstructured.Unstructured) (dynamic.ResourceInterface, error)
+
+// newDashboardHistoryResolver mirrors the rule the export conversion shim applies
+// when picking a version to read a dashboard back at, without its side effect.
+//
+// The shim re-fetches the *live* object, which is correct for a current-state
+// export and destroys a history replay. The version choice, though, is needed in
+// both: a dashboard stored as v0alpha1 and read over the v1 API comes back
+// converted, and writing that conversion produces a file the loader cannot read.
+// Reading history from the stored version's endpoint avoids the conversion
+// entirely, for every version at once.
+func newDashboardHistoryResolver(gvr schema.GroupVersionResource, clients resources.ResourceClients, fallback dynamic.ResourceInterface) historyClientResolver {
+	versionClients := make(map[string]dynamic.ResourceInterface)
+
+	return func(ctx context.Context, item *unstructured.Unstructured) (dynamic.ResourceInterface, error) {
+		storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+		if storedVersion == "" {
+			return fallback, nil
+		}
+
+		// v0 is read as v1 instead: a v0alpha1-labeled file cannot be loaded once
+		// synced back, and v0 maps to v1 losslessly. Same rule as the export shim.
+		fetchVersion := storedVersion
+		if strings.HasPrefix(storedVersion, "v0") {
+			fetchVersion = resources.DashboardResource.Version
+		}
+
+		if client, ok := versionClients[fetchVersion]; ok {
+			return client, nil
+		}
+
+		client, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
+			Group:    gvr.Group,
+			Version:  fetchVersion,
+			Resource: gvr.Resource,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("get client for version %s: %w", fetchVersion, err)
+		}
+		versionClients[fetchVersion] = client
+
+		return client, nil
+	}
+}
 
 // listHistory returns every stored version of a single resource, oldest first.
 //
@@ -108,7 +166,7 @@ func withVersionTimestamp(ctx context.Context, item *unstructured.Unstructured) 
 // layer reports that as ErrNothingToCommit, which is skipped rather than
 // failed, so no-op saves collapse instead of creating empty commits.
 func exportItemHistory(ctx context.Context,
-	client dynamic.ResourceInterface,
+	source historySource,
 	item *unstructured.Unstructured,
 	options provisioning.ExportJobOptions,
 	repositoryResources resources.RepositoryResources,
@@ -132,6 +190,18 @@ func exportItemHistory(ctx context.Context,
 			WithError(fmt.Errorf("resolving repository path for %s: %w", name, err))
 		progress.Record(ctx, result.Build())
 		return progress.TooManyErrors()
+	}
+
+	client := source.client
+	if source.resolver != nil {
+		client, err = source.resolver(ctx, item)
+		if err != nil {
+			result := jobs.NewGVKResult(name, gvk).
+				WithAction(repository.FileActionCreated).
+				WithError(fmt.Errorf("resolving history client for %s: %w", name, err))
+			progress.Record(ctx, result.Build())
+			return progress.TooManyErrors()
+		}
 	}
 
 	versions, err := listHistory(ctx, client, name)
@@ -181,12 +251,11 @@ func writeHistoricalVersion(ctx context.Context,
 	options provisioning.ExportJobOptions,
 	repositoryResources resources.RepositoryResources,
 ) error {
-	// The conversion shim is deliberately not applied here. It exists to recover
-	// the originally stored apiVersion of the *current* object, and it does so by
-	// re-fetching the live resource — which would replace every historical version
-	// with current content and collapse the whole replay into one commit. The
-	// history endpoint already returns each version at the apiVersion it was
-	// stored with, so there is nothing to reconstruct.
+	// No conversion shim here. The shim recovers a resource's stored apiVersion by
+	// re-fetching the live object, which would replace every historical version
+	// with current content. The equivalent for a replay is to read the history
+	// from the stored version's endpoint in the first place, which is what
+	// historySource.resolver arranges before this point.
 
 	// Strip the manager annotations a version may carry from a period when the
 	// resource was already provisioned: they describe the resource's state at
