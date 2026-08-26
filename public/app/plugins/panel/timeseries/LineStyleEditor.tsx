@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 
 import { type StandardEditorProps, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';
-import { IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
+import { Field, IconButton, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 type LineFill = 'solid' | 'dash' | 'dot' | 'accessible';
 
@@ -42,6 +42,7 @@ const dotOptions: Array<SelectableValue<string>> = [
 type Props = StandardEditorProps<LineStyle, unknown>;
 
 export const LineStyleEditor = ({ value, onChange }: Props) => {
+  const dashPatternId = useId();
   const lineFillOptions: Array<SelectableValue<LineFill>> = [
     {
       label: t('timeseries.line-style-editor.line-fill-options.label-solid', 'Solid'),
@@ -83,7 +84,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
   const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'accessible';
 
   return (
-    <Stack wrap={true} alignItems="flex-end">
+    <Stack direction="column" gap={1}>
       <RadioButtonGroup
         value={value?.fill || 'solid'}
         options={lineFillOptions}
@@ -101,35 +102,43 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
         }}
       />
       {hasDashPattern && (
-        <>
-          <Select
-            allowCustomValue={true}
-            options={options}
-            value={current}
-            width={20}
-            onChange={(v) => {
-              onChange({
-                ...value,
-                dash: parseText(v.value ?? ''),
-              });
-            }}
-            formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
-          />
-          <div>
-            &nbsp;
-            <a
-              title={t(
-                'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
-                'The input expects a segment list'
-              )}
-              href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
-            </a>
-          </div>
-        </>
+        <Stack wrap={true} alignItems="flex-start">
+          <Field
+            noMargin
+            htmlFor={dashPatternId}
+            label={t('timeseries.line-style-editor.label-dash-pattern', 'Dash pattern')}
+            description={t(
+              'timeseries.line-style-editor.description-dash-pattern',
+              'Comma or space separated lengths. Example: 10, 20'
+            )}
+          >
+            <Select
+              inputId={dashPatternId}
+              allowCustomValue={true}
+              options={options}
+              value={current}
+              width={20}
+              onChange={(v) => {
+                onChange({
+                  ...value,
+                  dash: parseText(v.value ?? ''),
+                });
+              }}
+              formatCreateLabel={(text) => `Segments: ${parseText(text).join(', ')}`}
+            />
+          </Field>
+          <a
+            title={t(
+              'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
+              'The input expects a segment list'
+            )}
+            href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
+          </a>
+        </Stack>
       )}
     </Stack>
   );

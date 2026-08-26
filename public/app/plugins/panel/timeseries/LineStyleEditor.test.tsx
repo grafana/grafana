@@ -117,7 +117,28 @@ describe('LineStyleEditor', () => {
         />
       );
 
-      expect(screen.getByRole('combobox')).toBeInTheDocument();
+      expect(
+        screen.getByRole('combobox', {
+          name: 'Dash pattern Comma or space separated lengths. Example: 10, 20',
+        })
+      ).toBeInTheDocument();
+    });
+
+    it('labels the dash pattern combobox and explains the input format', () => {
+      render(
+        <LineStyleEditor
+          value={{ fill: 'dash', dash: [10, 10] }}
+          onChange={jest.fn()}
+          context={mockContext}
+          item={mockItem}
+        />
+      );
+
+      expect(
+        screen.getByRole('combobox', {
+          name: 'Dash pattern Comma or space separated lengths. Example: 10, 20',
+        })
+      ).toBeInTheDocument();
     });
 
     it('should show default segments when dash array is empty', () => {

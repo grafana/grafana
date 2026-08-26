@@ -16555,6 +16555,8 @@
       "name-faceted-filter": "Series visibility"
     },
     "line-style-editor": {
+      "description-dash-pattern": "Comma or space separated lengths. Example: 10, 20",
+      "label-dash-pattern": "Dash pattern",
       "line-fill-options": {
         "label-accessible": "Accessible",
         "label-dash": "Dash",

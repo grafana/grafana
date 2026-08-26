@@ -12,7 +12,7 @@ import { type ScalarDimensionOptions } from '../types';
 
 type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
 
-export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
+export const ScalarDimensionEditor = ({ value, context, onChange, item, id }: Props) => {
   const { settings } = item;
 
   const fixedValueOption = useMemo(
@@ -109,7 +109,8 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
           </InlineField>
         </InlineFieldRow>
         <Combobox
-          aria-label={t('dimensions.scalar-dimension-editor.label', 'Scalar')}
+          id={id}
+          aria-label={id ? undefined : t('dimensions.scalar-dimension-editor.label', 'Scalar')}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}
