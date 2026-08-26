@@ -411,4 +411,70 @@ describe('NotebookAutosave', () => {
 
     expect(savedTexts()).toEqual(['typed just before hiding']);
   });
+
+  describe('abandon', () => {
+    // The whole reason abandon exists: delete navigates away, the scene tears down, and teardown
+    // flushes. Without the latch that flush writes the spec back to a notebook the server has just
+    // removed, and a successful delete reports itself as a failed save.
+    it('does not write a pending edit when the scene is torn down', async () => {
+      const scene = activateEditing();
+      editFirstCell(scene, 'Hello world');
+
+      scene.autosave.abandon();
+      deactivate?.();
+      deactivate = undefined;
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    // The debounce is cancelled outright, so time passing on its own writes nothing either.
+    it('does not write a pending edit when the debounce comes due', async () => {
+      const scene = activateEditing();
+      editFirstCell(scene, 'Hello world');
+
+      scene.autosave.abandon();
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    // The latch, not just the cancelled debounce: the change subscription is still live while the
+    // scene tears down, so an edit landing after abandon must not schedule a fresh save.
+    it('ignores an edit made after it', async () => {
+      const scene = activateEditing();
+
+      scene.autosave.abandon();
+      editFirstCell(scene, 'Written after the delete');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    // The latch alone would already stop the write - saveNow checks it. This pins the cancel as well,
+    // so a scene on its way out does not leave a debounce timer holding it alive for another 15s.
+    it('releases the scheduled save rather than leaving the timer running', () => {
+      const scene = activateEditing();
+      editFirstCell(scene, 'Hello world');
+      // Relative rather than an absolute count: the scene has timers of its own, and this is only
+      // claiming that abandon drops the one the debounce scheduled.
+      const scheduled = jest.getTimerCount();
+
+      scene.autosave.abandon();
+
+      expect(jest.getTimerCount()).toBeLessThan(scheduled);
+    });
+
+    // The status line sits in the toolbar beside the delete. Leaving it on 'pending' would have the
+    // page claim unsaved changes while it navigates away from a notebook that no longer exists.
+    it('stops the notebook reporting unsaved changes', () => {
+      const scene = activateEditing();
+      editFirstCell(scene, 'Hello world');
+      expect(scene.autosave.state.status).toBe('pending');
+
+      scene.autosave.abandon();
+
+      expect(scene.autosave.state.status).toBe('idle');
+    });
+  });
 });
