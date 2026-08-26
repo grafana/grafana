@@ -109,7 +109,12 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 	// "<datasource type>.<datasource UID>".
 	logger := s.logger.FromContext(ctx)
 	namespace := k8srequest.NamespaceValue(ctx)
-	obj, err := s.ruleGetter.Get(ctx, datasourceName, &metav1.GetOptions{})
+
+	// Authorization for the caller is complete before this handler runs. Use an
+	// internal service identity for the mode-aware rule and Team storage reads so
+	// their own authorization does not depend on the calling service's permissions.
+	storageCtx, _ := identity.WithServiceIdentity(ctx, 0)
+	obj, err := s.ruleGetter.Get(storageCtx, datasourceName, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -124,17 +129,12 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		return response, nil
 	}
 
-	// Membership evaluation is internal IAM work. Use a service identity so a
-	// subject does not need permission to read Team resources merely to have
-	// their own datasource policy evaluated.
-	//
 	// Looking up only the teams referenced by this rule keeps work proportional
 	// to the datasource policy and works through the same mode-aware Team store.
 	// The tradeoff is one Team read, including its full membership list, per key.
 	// A reverse membership lookup can therefore be cheaper when a rule references
 	// many teams, but it returns every team for the user and legacy numeric rule
 	// keys would still need separate resolution.
-	teamCtx, _ := identity.WithServiceIdentity(ctx, 0)
 	missingTeamKeys := make([]string, 0)
 	for teamKey, filters := range allRules.Spec.TeamFilters {
 		if _, err := strconv.ParseInt(teamKey, 10, 64); err == nil {
@@ -144,7 +144,7 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 			logger.Warn("TeamLBACRule contains numeric team key; using legacy-ID compatibility lookup",
 				"namespace", namespace, "datasource", datasourceName, "teamKey", teamKey)
 		}
-		team, err := s.getTeam(teamCtx, teamKey)
+		team, err := s.getTeam(storageCtx, teamKey)
 		if err != nil {
 			return nil, err
 		}
