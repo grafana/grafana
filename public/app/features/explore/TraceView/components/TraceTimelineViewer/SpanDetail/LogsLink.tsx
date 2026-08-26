@@ -45,7 +45,6 @@ import {
 import { usePanelContext, useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
-const TRACES_DRILLDOWN_APP_ID = 'grafana-exploretraces-app';
 const LOGS_DRILLDOWN_APP_ID = 'grafana-lokiexplore-app';
 
 /** Persists which Loki query variation found logs for a given trace + logs datasource pair. */
@@ -143,14 +142,11 @@ type LogsCheckResult = {
 };
 
 /**
- * Assume Drilldown when the app is unknown or resolve it via path name.
+ * Assume Drilldown when the app is unknown (Traces Drilldown and other plugins).
+ * For other contexts, app will be defined (CoreApp value) or undefined (Explore).
  */
 export function isDrilldownContext(app?: CoreApp | string): boolean {
-  if (app === CoreApp.Unknown) {
-    return true;
-  }
-  const pathname = locationService.getLocation()?.pathname ?? '';
-  return pathname.includes(`/a/${TRACES_DRILLDOWN_APP_ID}`) || pathname.includes(`/a/${LOGS_DRILLDOWN_APP_ID}`);
+  return app === CoreApp.Unknown;
 }
 
 /**

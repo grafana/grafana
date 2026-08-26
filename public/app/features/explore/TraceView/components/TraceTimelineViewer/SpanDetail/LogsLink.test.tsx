@@ -13,7 +13,7 @@ import {
   store,
   toDataFrame,
 } from '@grafana/data';
-import { locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
@@ -676,42 +676,6 @@ describe('LogsLinkButton', () => {
     });
   });
 
-  it('uses the Open in Logs Drilldown extension path on a Traces Drilldown URL', async () => {
-    jest.spyOn(locationService, 'getLocation').mockReturnValue({
-      pathname: '/a/grafana-exploretraces-app/explore',
-      search: '',
-      state: undefined,
-      hash: '',
-    });
-    mockDatasourceReturningFrames([logsFrame], 'loki');
-    const interpolatedQuery: LokiQuery = {
-      refId: 'A',
-      datasource: { uid: 'logs-ds-uid', type: 'loki' },
-      expr: '{job="api"} |= "trace1"',
-    };
-    usePluginLinksMock.mockReturnValue({
-      isLoading: false,
-      links: [
-        {
-          id: '',
-          pluginId: 'grafana-lokiexplore-app',
-          path: '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid',
-          type: PluginExtensionTypes.link,
-          title: '',
-          description: '',
-        },
-      ],
-    });
-
-    render(
-      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
-    );
-
-    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid');
-    jest.mocked(locationService.getLocation).mockRestore();
-  });
-
   it('keeps the Explore href in a drilldown context when the extension does not return a path', async () => {
     mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: LokiQuery = {
@@ -1180,10 +1144,6 @@ describe('addNoSpanIdFallback', () => {
 });
 
 describe('isDrilldownContext', () => {
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it.each([
     [CoreApp.Unknown, true],
     [CoreApp.Explore, false],
@@ -1191,33 +1151,7 @@ describe('isDrilldownContext', () => {
     ['grafana-exploretraces-app', false],
     ['grafana-lokiexplore-app', false],
     [undefined, false],
-  ])('app %s → %s when the URL is not a drilldown app', (app, expected) => {
-    jest.spyOn(locationService, 'getLocation').mockReturnValue({
-      pathname: '/explore',
-      search: '',
-      state: undefined,
-      hash: '',
-    });
+  ])('app %s → %s', (app, expected) => {
     expect(isDrilldownContext(app)).toBe(expected);
-  });
-
-  it('treats the standalone Traces Drilldown URL as drilldown when panel context is unset', () => {
-    jest.spyOn(locationService, 'getLocation').mockReturnValue({
-      pathname: '/a/grafana-exploretraces-app/explore',
-      search: '',
-      state: undefined,
-      hash: '',
-    });
-    expect(isDrilldownContext(undefined)).toBe(true);
-  });
-
-  it('treats the standalone Logs Drilldown URL as drilldown when panel context is unset', () => {
-    jest.spyOn(locationService, 'getLocation').mockReturnValue({
-      pathname: '/a/grafana-lokiexplore-app/explore',
-      search: '',
-      state: undefined,
-      hash: '',
-    });
-    expect(isDrilldownContext(undefined)).toBe(true);
   });
 });
