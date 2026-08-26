@@ -4392,8 +4392,8 @@
       "delete-button": "Delete",
       "delete-modal-folder-empty_one": "Selected folder is empty",
       "delete-modal-folder-empty_other": "Selected folders are empty",
-      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "delete-modal-folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain resources that will be deleted",
       "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
@@ -4404,8 +4404,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "move-modal-folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4445,8 +4445,8 @@
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
       "folder-empty_other": "Selected folders are empty",
-      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain resources that will be deleted",
       "success-title": "Resources deleted successfully"
     },
     "bulk-move-resources-form": {
@@ -4464,8 +4464,8 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "success-title": "Resources moved successfully",
@@ -4503,7 +4503,7 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
-      "folder-not-empty": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty": "Selected folder contains resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
@@ -9131,6 +9131,10 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
+        "title": "Understand your services faster"
+      },
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
@@ -9138,6 +9142,18 @@
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
+      },
+      "frontend-observability-promo": {
+        "body": "Frontend Observability links trace attributes to sessions, errors, and performance — so you can see what users experienced when a span ran.",
+        "title": "Debug real user sessions"
+      },
+      "knowledge-graph-promo": {
+        "body": "Knowledge Graph correlates services, infrastructure, and insights from your traces — helping you navigate from a span attribute to related entities and assertions.",
+        "title": "See the full picture"
+      },
+      "kubernetes-promo": {
+        "body": "Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.",
+        "title": "Drill into your cluster"
       },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
