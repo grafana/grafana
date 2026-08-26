@@ -850,6 +850,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
+/public/app/core/components/AccentBoxBadge/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad

@@ -12,8 +12,18 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
-import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
+import {
+  getSectionFiltersCount,
+  AddSectionFilterButton,
+  SectionFiltersCategoryTitle,
+  SectionFiltersList,
+} from '../../sidebar/SectionFiltersList';
+import {
+  getSectionVariablesCount,
+  AddSectionVariableButton,
+  SectionVariablesCategoryTitle,
+  SectionVariablesList,
+} from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -64,6 +74,9 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
       title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
       id: SidebarCategoryType.TabSectionVariables,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionVariablesCount(model),
+      headerActions: <AddSectionVariableButton sectionOwner={model} />,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
       ),
@@ -86,6 +99,9 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
       title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
       id: SidebarCategoryType.TabSectionFilters,
       isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionFiltersCount(model),
+      headerActions: <AddSectionFilterButton sectionOwner={model} />,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
 
