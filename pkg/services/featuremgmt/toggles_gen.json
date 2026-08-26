@@ -6665,7 +6665,8 @@
       "metadata": {
         "name": "tracesDrilldown.useValueTypeFiltering",
         "resourceVersion": "1787032167500",
-        "creationTimestamp": "2026-08-18T05:49:27Z"
+        "creationTimestamp": "2026-08-18T05:49:27Z",
+        "deletionTimestamp": "2026-08-25T08:29:12Z"
       },
       "spec": {
         "description": "Enables value type filtering in Traces Drilldown",
