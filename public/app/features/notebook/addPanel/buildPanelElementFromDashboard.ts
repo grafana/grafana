@@ -147,9 +147,27 @@ async function resolveDatasource(
  * Round-tripped through JSON so a macro is found wherever a datasource keeps it. Shadowing through
  * `scopedVars` would be shorter, but a format suffix still applies to the shadow's value, mangling
  * `$__from:date:iso`; stashing the whole reference does not.
+ *
+ * Deliberately wider than what scenes resolves today: only `__from`, `__to`, `__interval` and
+ * `__interval_ms` have macros, but `registerVariableMacro` is public and Grafana already uses it, so
+ * a list matching the registry exactly would silently narrow the moment one is added.
  */
-const TIME_MACRO =
-  /\$(?:\{\s*(?:__interval_ms|__interval|__from|__to)\b[^}]*\}|(?:__interval_ms|__interval|__from|__to)\b(?::[\w:.-]+)?)/g;
+const TIME_MACRO_NAMES = [
+  // Longest first, so `$__interval_ms` is not matched as `$__interval` with a suffix.
+  '__interval_ms',
+  '__interval',
+  '__rate_interval',
+  '__range_ms',
+  '__range_s',
+  '__range',
+  '__from',
+  '__to',
+].join('|');
+
+const TIME_MACRO = new RegExp(
+  `\\$(?:\\{\\s*(?:${TIME_MACRO_NAMES})\\b[^}]*\\}|(?:${TIME_MACRO_NAMES})\\b(?::[\\w:.-]+)?)`,
+  'g'
+);
 const MACRO_PLACEHOLDER = 'grafana_notebook_time_macro';
 
 function preserveTimeMacros<T>(value: T, interpolate: (value: T) => T): T {

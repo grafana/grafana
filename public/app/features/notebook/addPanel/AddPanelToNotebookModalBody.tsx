@@ -144,6 +144,13 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
 
   const isSubmitting = submitState.loading;
 
+  // The duplicate-title check reads `picker.rows`, which is empty until the first page lands and keeps
+  // filling after it, so submitting before then would accept a name that is already taken. Only the
+  // create route uses those titles. It stays best-effort either way — the rows carry whatever filters
+  // are set, and stop at the accumulation ceiling — but a name it does find really is taken, so this
+  // only ever removes false negatives.
+  const isCheckingTitles = saveTarget === 'new' && (picker.isLoading || picker.isReloading || picker.isLoadingMore);
+
   return (
     <>
       {/* Padded at the bottom as well as the top: Modal's content area scrolls and has no bottom
@@ -257,7 +264,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         <Button
           type="submit"
           form={FORM_ID}
-          disabled={isSubmitting || (saveTarget === 'existing' && !selected)}
+          disabled={isSubmitting || isCheckingTitles || (saveTarget === 'existing' && !selected)}
           icon={isSubmitting ? 'spinner' : undefined}
         >
           <Trans i18nKey="notebooks.add-panel.submit">Add to notebook</Trans>

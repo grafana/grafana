@@ -61,7 +61,11 @@ describe('buildPanelElementFromDashboard', () => {
           .replace('$service', 'checkout')
           .replace(/\$__from\b/g, '1700000000000')
           .replace(/\$__to\b/g, '1700003600000')
-          .replace(/\$__interval\b/g, '30s'),
+          .replace(/\$__interval\b/g, '30s')
+          // Scenes has no macro for these two, so nothing rewrites them today. The mock tries anyway,
+          // or the assertion below would hold against a datasource that never attempted them.
+          .replace(/\$__range\b/g, '3600s')
+          .replace(/\$__rate_interval\b/g, '2m'),
       }))
     );
   });
@@ -226,13 +230,12 @@ describe('buildPanelElementFromDashboard', () => {
   // row claimed otherwise. Explore can freeze them; it opens on the range it was handed.
   describe('the Grafana time macros', () => {
     it('stay dynamic, so the panel follows whatever range the notebook is on', async () => {
-      const element = await buildPanelElementFromDashboard(
-        buildPanel([{ refId: 'A', ...{ expr: 'rate(errors{job="$service"}[$__interval]) $__from $__to' } }])
-      );
+      const expr = 'rate(errors{job="$service"}[$__interval]) $__from $__to $__range $__rate_interval';
+      const element = await buildPanelElementFromDashboard(buildPanel([{ refId: 'A', ...{ expr } }]));
 
       // `$service` still resolved — that is what this function exists for.
       expect(element.kind === 'Panel' && element.spec.data.spec.queries[0].spec.query.spec).toMatchObject({
-        expr: 'rate(errors{job="checkout"}[$__interval]) $__from $__to',
+        expr: 'rate(errors{job="checkout"}[$__interval]) $__from $__to $__range $__rate_interval',
       });
     });
 

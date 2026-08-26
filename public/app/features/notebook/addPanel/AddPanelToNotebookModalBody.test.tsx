@@ -65,6 +65,7 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     isTruncated: false,
     isLoading: false,
     isReloading: false,
+    isLoadingMore: false,
     error: undefined,
     searchQuery: '',
     setSearchQuery: jest.fn(),
@@ -119,6 +120,47 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  // The create route refuses a name that is already taken, and it checks against the picker's rows —
+  // which are empty until the first page lands and keep filling after it.
+  describe('creating while the notebook list is still loading', () => {
+    function submitButton() {
+      return screen.getByRole('button', { name: 'Add to notebook' });
+    }
+
+    it('cannot be submitted before the first page arrives', async () => {
+      setPicker({ rows: [], isLoading: true });
+      renderModal();
+
+      expect(submitButton()).toBeDisabled();
+    });
+
+    // Rows keep accumulating after `isLoading` goes false, so gating on that alone would still accept
+    // a name held by a notebook on a later page.
+    it('cannot be submitted while later pages are still arriving', async () => {
+      setPicker({ isLoadingMore: true });
+      renderModal();
+
+      expect(submitButton()).toBeDisabled();
+    });
+
+    it('can be submitted once the rows have stopped arriving', async () => {
+      renderModal();
+
+      expect(submitButton()).toBeEnabled();
+    });
+
+    // The gate belongs to the create route only — picking an existing notebook does not consult the
+    // titles, so a slow walk must not block it.
+    it('does not block choosing an existing notebook', async () => {
+      setPicker({ isLoadingMore: true });
+      const { user } = renderModal();
+      await chooseExisting(user);
+      await user.click(selectNotebook('Q2 latency regression'));
+
+      expect(submitButton()).toBeEnabled();
+    });
+  });
 
   describe('the notebook cards', () => {
     // Card offers a radio alongside the heading button, but it is inert and cannot be grouped with the
