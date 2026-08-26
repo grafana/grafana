@@ -69,9 +69,7 @@ interface PanelStatusPopoverProps {
   panelTitle?: string;
 }
 
-// Prompt text sent to the assistant is intentionally not translated (matching
-// QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM,
-// not rendered UI copy, so it stays in English regardless of UI locale.
+// Prompt text sent to the assistant is intentionally not translated
 function buildAssistantPrompt(items: PanelStatusItem[], panelTitle?: string): string {
   const subject = panelTitle ? `the panel "${panelTitle}"` : 'this panel';
   const hasError = items.some((item) => item.severity === 'error');
