@@ -166,28 +166,6 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	})
 }
 
-func TestAPIEndpoint_PatchUserPreferences_globalHomeSentinel(t *testing.T) {
-	// No GetDashboard expectation: saving the sentinel must skip the dashboard lookup.
-	dashSvc := dashboards.NewFakeDashboardService(t)
-
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
-		hs.preferenceService = preftest.NewPreferenceServiceFake()
-		hs.DashboardService = dashSvc
-	})
-
-	input := strings.NewReader(`{ "homeDashboardUID": "` + pref.GlobalHomeDashboardUID + `" }`)
-	req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
-		UserID:  1,
-		OrgID:   1,
-		OrgRole: org.RoleAdmin,
-	})
-	response, err := server.SendJSON(req)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, response.StatusCode)
-	require.NoError(t, response.Body.Close())
-}
-
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 

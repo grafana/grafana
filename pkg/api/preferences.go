@@ -127,8 +127,8 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
 		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
-		if query.UID == "" || query.UID == pref.GlobalHomeDashboardUID {
-			// clear the deprecated ID; the sentinel is not a real dashboard, so skip the lookup
+		if query.UID == "" {
+			// clear the value
 			defaultDash := int64(0)
 			dashboardID = &defaultDash
 		} else {

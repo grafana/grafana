@@ -310,54 +310,6 @@ func TestGetWithDefaults_teams(t *testing.T) {
 	}
 }
 
-func TestGetWithDefaults_globalHomeSentinel(t *testing.T) {
-	newService := func() *Service {
-		return &Service{
-			store:    newFake(),
-			defaults: prefsFromConfig(setting.NewCfg()),
-		}
-	}
-
-	t.Run("user sentinel wins over team and org dashboards", func(t *testing.T) {
-		prefService := newService()
-		insertPrefs(t, prefService.store,
-			pref.Preference{OrgID: 1, HomeDashboardUID: "org-dash"},
-			pref.Preference{OrgID: 1, TeamID: 2, HomeDashboardUID: "team-dash"},
-			pref.Preference{OrgID: 1, UserID: 1, HomeDashboardUID: pref.GlobalHomeDashboardUID},
-		)
-
-		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1, Teams: []int64{2}}
-		preference, err := prefService.GetWithDefaults(context.Background(), query)
-		require.NoError(t, err)
-		assert.Equal(t, "", preference.HomeDashboardUID)
-	})
-
-	t.Run("org-only sentinel resolves to empty", func(t *testing.T) {
-		prefService := newService()
-		insertPrefs(t, prefService.store,
-			pref.Preference{OrgID: 1, HomeDashboardUID: pref.GlobalHomeDashboardUID},
-		)
-
-		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
-		preference, err := prefService.GetWithDefaults(context.Background(), query)
-		require.NoError(t, err)
-		assert.Equal(t, "", preference.HomeDashboardUID)
-	})
-
-	t.Run("team sentinel overrides org dashboard without user pref", func(t *testing.T) {
-		prefService := newService()
-		insertPrefs(t, prefService.store,
-			pref.Preference{OrgID: 1, HomeDashboardUID: "org-dash"},
-			pref.Preference{OrgID: 1, TeamID: 2, HomeDashboardUID: pref.GlobalHomeDashboardUID},
-		)
-
-		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1, Teams: []int64{2}}
-		preference, err := prefService.GetWithDefaults(context.Background(), query)
-		require.NoError(t, err)
-		assert.Equal(t, "", preference.HomeDashboardUID)
-	})
-}
-
 func TestPatch_toCreate(t *testing.T) {
 	prefService := &Service{
 		store:    newFake(),

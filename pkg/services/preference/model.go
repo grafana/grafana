@@ -12,9 +12,10 @@ import (
 var ErrPrefNotFound = errors.New("preference not found")
 
 // GlobalHomeDashboardUID is a reserved homeDashboardUID value meaning the owner
-// explicitly chose the global home page: the user > team > org preference
-// fallback stops, and the instance default home applies. It is never a real
-// dashboard UID.
+// explicitly chose the global home page. It is never a real dashboard UID.
+// Only the app-platform merged preferences API resolves it (stopping the
+// user > team > org fallback in favor of the instance default home); legacy
+// endpoints treat it as an opaque UID.
 const GlobalHomeDashboardUID = "global-home"
 
 type Preference struct {
