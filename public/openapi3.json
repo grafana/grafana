@@ -2756,6 +2756,11 @@
             },
             "type": "array"
           },
+          "policy": {
+            "description": "Name of the notification policy to route alerts through.\nMutually exclusive with all other fields, cannot be used with contact point routing via the \"receiver\" field.",
+            "example": "\"Alerting Team\"",
+            "type": "string"
+          },
           "receiver": {
             "description": "Name of the receiver to send notifications to.",
             "example": "grafana-default-email",
@@ -3943,6 +3948,26 @@
           "$ref": "#/components/schemas/EmbeddedContactPoint"
         },
         "type": "array"
+      },
+      "ConvertAlertmanagerResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string"
+          },
+          "rename_resources": {
+            "$ref": "#/components/schemas/RenameResources"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/MergeStats"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "ConvertPrometheusResponse": {
         "properties": {
@@ -5389,7 +5414,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -5412,8 +5436,9 @@
           "identifier": {
             "type": "string"
           },
-          "merge_matchers": {
-            "$ref": "#/components/schemas/Matchers"
+          "managed_by": {
+            "description": "ManagedBy is \"manual\" or \"auto-sync\", computed server-side so callers don't need configs:get\nto tell the two apart.",
+            "type": "string"
           },
           "template_files": {
             "additionalProperties": {
@@ -6180,6 +6205,9 @@
           },
           "uid": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6288,7 +6316,6 @@
             "type": "integer"
           },
           "last_applied": {
-            "format": "date-time",
             "type": "string"
           },
           "template_file_provenances": {
@@ -6314,6 +6341,10 @@
               "internal",
               "external"
             ],
+            "type": "string"
+          },
+          "external_alertmanager_uid": {
+            "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being\nsynced, or empty if sync is not configured for this org.",
             "type": "string"
           }
         },
@@ -6383,7 +6414,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -6509,6 +6539,9 @@
             "$ref": "#/components/schemas/URL"
           }
         },
+        "type": "object"
+      },
+      "Gone": {
         "type": "object"
       },
       "HTTPClientConfig": {
@@ -6854,6 +6887,52 @@
         },
         "type": "object"
       },
+      "InhibitionRule": {
+        "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+        "properties": {
+          "equal": {
+            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "source_match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "source_match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "source_matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "target_match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "target_match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "target_matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          }
+        },
+        "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
+        "type": "object"
+      },
       "InspectType": {
         "format": "int64",
         "title": "InspectType is a type for the Inspect property of a Notice.",
@@ -6863,7 +6942,6 @@
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           },
           "lastNotifyAttemptDuration": {
@@ -7016,21 +7094,10 @@
         "format": "int64",
         "type": "integer"
       },
-      "Label": {
-        "properties": {
-          "Name": {
-            "type": "string"
-          }
-        },
-        "title": "Label is a key/value pair of strings.",
-        "type": "object"
-      },
       "Labels": {
-        "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-        "items": {
-          "$ref": "#/components/schemas/Label"
-        },
-        "type": "array"
+        "description": "Each name and value is preceded by its length, encoded as a single byte\nfor size 0-254, or the following 3 bytes little-endian, if the first byte is 255.\nMaximum length allowed is 2^24 or 16MB.\nNames are in order.",
+        "title": "Labels is implemented by a single flat string holding name/value pairs.",
+        "type": "object"
       },
       "LibraryElementArrayResponse": {
         "properties": {
@@ -7294,6 +7361,19 @@
         },
         "type": "object"
       },
+      "ManagedInhibitionRules": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/InhibitionRule"
+        },
+        "type": "object"
+      },
+      "ManagedRoutes": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Route"
+        },
+        "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
+        "type": "object"
+      },
       "ManagerKind": {
         "description": "It can be a user or a tool or a generic API client.\n+enum",
         "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
@@ -7352,6 +7432,44 @@
           "$ref": "#/components/schemas/Matcher"
         },
         "type": "array"
+      },
+      "MergeStats": {
+        "properties": {
+          "added_inhibition_rules": {
+            "description": "AddedInhibitionRules contains the names of inhibition rules added",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_receivers": {
+            "description": "AddedReceivers contains the names of receivers added (post-rename if renamed)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_route": {
+            "description": "AddedRoute is the identifier of the routing sub-tree added to the configuration",
+            "type": "string"
+          },
+          "added_templates": {
+            "description": "AddedTemplates contains the names of templates added",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_time_intervals": {
+            "description": "AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "title": "MergeStats describes which resources were added during configuration merge.",
+        "type": "object"
       },
       "Metadata": {
         "additionalProperties": {
@@ -8512,105 +8630,29 @@
       "PostableApiReceiver": {
         "description": "nolint:revive",
         "properties": {
-          "discord_configs": {
-            "items": {
-              "$ref": "#/components/schemas/DiscordConfig"
-            },
-            "type": "array"
-          },
-          "email_configs": {
-            "items": {
-              "$ref": "#/components/schemas/EmailConfig"
-            },
-            "type": "array"
-          },
           "grafana_managed_receiver_configs": {
             "items": {
               "$ref": "#/components/schemas/PostableGrafanaReceiver"
             },
             "type": "array"
           },
-          "jira_configs": {
-            "items": {
-              "$ref": "#/components/schemas/JiraConfig"
-            },
-            "type": "array"
-          },
-          "msteams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
-            },
-            "type": "array"
-          },
-          "msteamsv2_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsV2Config"
-            },
-            "type": "array"
-          },
           "name": {
-            "description": "A unique identifier for this receiver.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PostableApiTemplate": {
+        "description": "nolint:revive",
+        "properties": {
+          "content": {
             "type": "string"
           },
-          "opsgenie_configs": {
-            "items": {
-              "$ref": "#/components/schemas/OpsGenieConfig"
-            },
-            "type": "array"
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
           },
-          "pagerduty_configs": {
-            "items": {
-              "$ref": "#/components/schemas/PagerdutyConfig"
-            },
-            "type": "array"
-          },
-          "pushover_configs": {
-            "items": {
-              "$ref": "#/components/schemas/PushoverConfig"
-            },
-            "type": "array"
-          },
-          "slack_configs": {
-            "items": {
-              "$ref": "#/components/schemas/SlackConfig"
-            },
-            "type": "array"
-          },
-          "sns_configs": {
-            "items": {
-              "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "telegram_configs": {
-            "items": {
-              "$ref": "#/components/schemas/TelegramConfig"
-            },
-            "type": "array"
-          },
-          "victorops_configs": {
-            "items": {
-              "$ref": "#/components/schemas/VictorOpsConfig"
-            },
-            "type": "array"
-          },
-          "webex_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WebexConfig"
-            },
-            "type": "array"
-          },
-          "webhook_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WebhookConfig"
-            },
-            "type": "array"
-          },
-          "wechat_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WechatConfig"
-            },
-            "type": "array"
+          "name": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8695,6 +8737,9 @@
           },
           "uid": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8773,6 +8818,10 @@
               "external"
             ],
             "type": "string"
+          },
+          "external_alertmanager_uid": {
+            "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync\nconfiguration from. Empty string disables sync for this org.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -8835,6 +8884,18 @@
               "$ref": "#/components/schemas/ExtraConfiguration"
             },
             "type": "array"
+          },
+          "managed_inhibition_rules": {
+            "$ref": "#/components/schemas/ManagedInhibitionRules"
+          },
+          "managed_routes": {
+            "$ref": "#/components/schemas/ManagedRoutes"
+          },
+          "managed_templates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PostableApiTemplate"
+            },
+            "type": "object"
           },
           "template_files": {
             "additionalProperties": {
@@ -9840,6 +9901,26 @@
         "properties": {
           "url": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RenameResources": {
+        "description": "RenameResources describes which resources were renamed to avoid conflicts",
+        "properties": {
+          "receivers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Receivers maps old receiver names to new receiver names",
+            "type": "object"
+          },
+          "time_intervals": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "TimeIntervals maps old time interval names to new time interval names",
+            "type": "object"
           }
         },
         "type": "object"
@@ -11778,6 +11859,9 @@
       "TempUserStatus": {
         "type": "string"
       },
+      "TemplateKind": {
+        "type": "string"
+      },
       "TestRulePayload": {
         "properties": {
           "expr": {
@@ -11809,6 +11893,9 @@
               "$ref": "#/components/schemas/postableAlert"
             },
             "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
           },
           "name": {
             "description": "Name of the template file.",
@@ -13006,7 +13093,6 @@
         "properties": {
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13105,7 +13191,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -13183,7 +13268,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "fingerprint": {
@@ -13192,7 +13276,6 @@
           },
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13207,7 +13290,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13215,7 +13297,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13261,7 +13342,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13276,7 +13356,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13284,7 +13363,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13319,7 +13397,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13331,7 +13408,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13339,7 +13415,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13458,12 +13533,10 @@
           },
           "endsAt": {
             "description": "ends at\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           },
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13471,7 +13544,6 @@
           },
           "startsAt": {
             "description": "starts at\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13500,7 +13572,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13512,7 +13583,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13657,7 +13727,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "matchers": {
@@ -13665,7 +13734,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -25796,6 +25864,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Create a contact point.",
@@ -25945,6 +26023,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Delete a contact point.",
@@ -26013,6 +26101,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Update an existing contact point.",
@@ -26398,6 +26496,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Create a new mute timing.",
@@ -26814,6 +26922,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Clears the notification policy tree.",
@@ -26904,6 +27022,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Sets the notification policy tree.",

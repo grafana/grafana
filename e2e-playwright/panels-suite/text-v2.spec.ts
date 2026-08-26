@@ -12,6 +12,7 @@ const CODE_PANEL = '5';
 // Render mode needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
+const HANDLEBARS_PANEL = '5';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -170,6 +171,106 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       // A single render cannot resolve per-row fields, so the macro stays literal.
       await expect(preview.locator('.user-card')).toHaveCount(1);
       await expect(preview).toContainText('${__data.fields.Id}');
+    });
+
+    test('colors each row from its own threshold', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const header = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Panel.title('Threshold colors: fleet health')
+      );
+      // Dashboards only render panels once they are scrolled into view.
+      await header.scrollIntoViewIfNeeded();
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
+
+      // Asserted before reading styles: evaluateAll does not wait for the render.
+      const cpu = panel.locator('.fleet-card__cpu');
+      await expect(cpu).toHaveCount(5);
+
+      const readColors = (locator: typeof cpu) =>
+        locator.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).color));
+
+      // CPU 94, 71, 38, 83, 17 against steps at 70 and 90: red, yellow, green, yellow, green.
+      const cpuColors = await readColors(cpu);
+      expect(new Set(cpuColors).size).toBe(3);
+      expect(cpuColors[1]).toBe(cpuColors[3]);
+      expect(cpuColors[2]).toBe(cpuColors[4]);
+      expect(cpuColors[0]).not.toBe(cpuColors[1]);
+
+      // Availability's inverted override makes 99.9% green; the defaults would make it red.
+      const availabilityColors = await readColors(panel.locator('.fleet-card__availability'));
+      expect(availabilityColors[1]).toBe(cpuColors[2]);
+    });
+
+    test('turns mapped numeric codes into a readable digest', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const header = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Panel.title('Value mappings: on-call digest')
+      );
+      await header.scrollIntoViewIfNeeded();
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
+      const severity = panel.locator('.digest__severity');
+
+      await expect(severity).toHaveText(['🔴 page on-call', '🟠 degraded', '🟢 stable', '🟡 watch', '🟢 stable']);
+
+      await expect(panel.locator('.digest__code')).toHaveText([
+        'server error',
+        'client error',
+        'OK',
+        'server error',
+        'OK',
+      ]);
+
+      await expect(panel.locator('.digest__deploy')).toHaveText([
+        'moments ago',
+        'within the hour',
+        'today',
+        'over a day ago',
+        'never',
+      ]);
+
+      await expect(panel).toContainText('server error (503)');
+
+      // Every color here comes from the mapping that matched, not from a threshold.
+      // Asserted after toHaveText, which waits for the render that evaluateAll would not.
+      const severityColors = await severity.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).color));
+      expect(new Set(severityColors).size).toBe(4);
+      expect(severityColors[2]).toBe(severityColors[4]);
+    });
+  });
+
+  test.describe('handlebars', () => {
+    test('evaluates expressions against the query data', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Handlebars support')),
+      });
+
+      // Below the fold, so the panel doesn't query until it scrolls into view.
+      await panel.scrollIntoViewIfNeeded();
+
+      // One row per user of the panel's csv_content query.
+      await expect(panel.locator('tbody tr')).toHaveCount(5);
+      await expect(panel).toContainText('John Smith');
+
+      // {{#unless}} filters the list down to the two users who are not active.
+      await expect(panel.locator('li')).toHaveCount(2);
+      await expect(panel.locator('li')).toContainText(['Jessica Johnson', 'Priya Raman']);
+    });
+
+    test('evaluates expressions in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: HANDLEBARS_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview).toContainText('John Smith');
+      await expect(preview).not.toContainText('{{#each data}}');
     });
   });
 });

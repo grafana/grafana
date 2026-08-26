@@ -55,6 +55,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private saveAgainWhenIdle = false;
   private changePending = false;
   private hasSavedOnce = false;
+  /** Latched by `abandon`, for a notebook that is being deleted. Nothing writes again after it. */
+  private abandoned = false;
 
   public constructor(private scene: NotebookScene) {
     super({ status: 'idle' });
@@ -145,6 +147,22 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.scheduleSave.flush();
   }
 
+  /**
+   * Gives up on saving, for a notebook that is about to stop existing.
+   *
+   * Delete is the only caller. Without this, both the pending debounce and the teardown flush that
+   * `start` returns would write the spec back to a resource the server has already removed, turning a
+   * successful delete into a failed save. Cancelling the debounce alone would very nearly do, but the
+   * change subscription can still fire while the scene tears down, so the flag is what makes it certain.
+   *
+   * A save already in flight is left to land; the delete simply follows it.
+   */
+  public abandon(): void {
+    this.abandoned = true;
+    this.scheduleSave.cancel();
+    this.setState({ status: 'idle', errorMessage: undefined });
+  }
+
   private stop(): void {
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.changeSub?.unsubscribe();
@@ -161,7 +179,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private scheduleSave = debounce(() => this.saveNow(), IDLE_BEFORE_SAVE_MS, { maxWait: MAX_WAIT_MS });
 
   private schedule(): void {
-    if (!this.hasSomethingToWrite()) {
+    if (this.abandoned || !this.hasSomethingToWrite()) {
       return;
     }
 
@@ -229,6 +247,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   private saveNow(): void {
+    if (this.abandoned) {
+      return;
+    }
+
     // Two writes in flight can land out of order and let the older spec win.
     if (this.inFlight) {
       this.saveAgainWhenIdle = true;

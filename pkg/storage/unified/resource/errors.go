@@ -89,6 +89,22 @@ func IsResourceVersionExpired(err error) bool {
 	return false
 }
 
+// ErrorFromResponse resolves the outcome of a unified storage call — which
+// reports failure either through a transport error or through a response that
+// embeds an ErrorResult — into a single error, so callers need one error
+// branch. The transport error is returned untouched to keep its gRPC status,
+// cancellation semantics and errors.Is/As chain intact; a response-embedded
+// result is converted to a typed Kubernetes error. Callers that need an ErrorResult
+// representation for status checks can convert the returned error with AsErrorResult.
+// Attached or response-embedded details are preserved when available.
+// Returns nil only when the call fully succeeded.
+func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+	if err != nil {
+		return err
+	}
+	return GetError(respErr)
+}
+
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
 	st, ok := grpcstatus.FromError(err)
 	if !ok || st == nil {
@@ -169,7 +185,9 @@ func newRequiredFieldError(
 	}
 }
 
-// Convert golang errors to status result errors that can be returned to a client
+// AsErrorResult converts golang errors to status result errors that can be returned to a client.
+// Returns the first status details entity that matches the resourcepb.ErrorResult type, if given. If multiple entries
+// are given in the status details array, only the first matching one is used; all others are discarded.
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if err == nil {
 		return nil
@@ -278,4 +296,51 @@ func (e ValidationError) Error() string {
 
 func NewValidationError(field, value, msg string) error {
 	return ValidationError{Field: field, Value: value, Msg: msg}
+}
+
+// grpcCodeFromHTTPStatus is lossy in a way runtime.HTTPStatusFromCode is not:
+// several gRPC codes collapse onto the same HTTP status going out
+// (AlreadyExists and Aborted both become 409, InvalidArgument /
+// FailedPrecondition / OutOfRange all become 400), so coming back we pick the
+// code that unified storage actually produces for that status.
+// An unmapped code labels as Unknown — a signal to add a mapping, not a silent
+// mislabel.
+// This is just a helper to set the correct codes in metric labels
+func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
+	switch httpCode {
+	case http.StatusOK:
+		return grpccodes.OK
+	case http.StatusBadRequest:
+		return grpccodes.InvalidArgument
+	case http.StatusUnauthorized:
+		return grpccodes.Unauthenticated
+	case http.StatusForbidden:
+		return grpccodes.PermissionDenied
+	case http.StatusNotFound:
+		return grpccodes.NotFound
+	case http.StatusRequestTimeout:
+		return grpccodes.DeadlineExceeded
+	case http.StatusConflict:
+		return grpccodes.AlreadyExists
+	case http.StatusPreconditionFailed:
+		return grpccodes.FailedPrecondition
+	case http.StatusRequestedRangeNotSatisfiable:
+		return grpccodes.OutOfRange
+	case http.StatusUnprocessableEntity:
+		return grpccodes.InvalidArgument
+	case http.StatusTooManyRequests:
+		return grpccodes.ResourceExhausted
+	case http.StatusInternalServerError:
+		return grpccodes.Internal
+	case http.StatusNotImplemented:
+		return grpccodes.Unimplemented
+	case http.StatusServiceUnavailable:
+		return grpccodes.Unavailable
+	case http.StatusGatewayTimeout:
+		return grpccodes.DeadlineExceeded
+	case 499:
+		return grpccodes.Canceled
+	}
+
+	return grpccodes.Unknown
 }
