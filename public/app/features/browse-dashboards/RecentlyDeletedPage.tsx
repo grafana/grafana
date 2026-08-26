@@ -3,12 +3,15 @@ import { memo, useEffect } from 'react';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { Trans, t } from '@grafana/i18n';
+import { useFlagDashboardRecentlyDeletedViaTrash } from '@grafana/runtime/internal';
+import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
+
+import { deletedDashboardsCache } from '../search/service/deletedDashboardsCache';
 
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
 import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
@@ -25,6 +28,9 @@ const RecentlyDeletedPage = memo(() => {
 
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
+
+  const viaTrash = useFlagDashboardRecentlyDeletedViaTrash();
+  const trashUnavailable = viaTrash && deletedDashboardsCache.isTrashUnavailable();
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
   const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
@@ -80,7 +86,27 @@ const RecentlyDeletedPage = memo(() => {
                 height={height}
                 searchStateManager={stateManager}
                 searchState={searchState}
-                emptyState={<RecentlyDeletedEmptyState searchState={searchState} />}
+                // Trash being unavailable produces an empty result, which would otherwise
+                // read as "nothing was deleted" — the wrong answer, so it replaces the
+                // empty state rather than sitting above it.
+                emptyState={
+                  trashUnavailable ? (
+                    <Alert
+                      severity="warning"
+                      title={t('recently-deleted.unavailable.title', 'Recently deleted is unavailable')}
+                    >
+                      {/* Covers both reasons the server reports: an index still being built,
+                          which clears on its own, and deleted-document indexing turned off,
+                          which does not. The two are one status code, so one message. */}
+                      <Trans i18nKey="recently-deleted.unavailable.body">
+                        The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an
+                        administrator to check the search index configuration.
+                      </Trans>
+                    </Alert>
+                  ) : (
+                    <RecentlyDeletedEmptyState searchState={searchState} />
+                  )
+                }
               />
             )}
           </AutoSizer>

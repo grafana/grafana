@@ -202,6 +202,44 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const availabilityColors = await readColors(panel.locator('.fleet-card__availability'));
       expect(availabilityColors[1]).toBe(cpuColors[2]);
     });
+
+    test('turns mapped numeric codes into a readable digest', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const header = dashboardPage.getByGrafanaSelector(
+        selectors.components.Panels.Panel.title('Value mappings: on-call digest')
+      );
+      await header.scrollIntoViewIfNeeded();
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, { root: header });
+      const severity = panel.locator('.digest__severity');
+
+      await expect(severity).toHaveText(['🔴 page on-call', '🟠 degraded', '🟢 stable', '🟡 watch', '🟢 stable']);
+
+      await expect(panel.locator('.digest__code')).toHaveText([
+        'server error',
+        'client error',
+        'OK',
+        'server error',
+        'OK',
+      ]);
+
+      await expect(panel.locator('.digest__deploy')).toHaveText([
+        'moments ago',
+        'within the hour',
+        'today',
+        'over a day ago',
+        'never',
+      ]);
+
+      await expect(panel).toContainText('server error (503)');
+
+      // Every color here comes from the mapping that matched, not from a threshold.
+      // Asserted after toHaveText, which waits for the render that evaluateAll would not.
+      const severityColors = await severity.evaluateAll((nodes) => nodes.map((node) => getComputedStyle(node).color));
+      expect(new Set(severityColors).size).toBe(4);
+      expect(severityColors[2]).toBe(severityColors[4]);
+    });
   });
 
   test.describe('handlebars', () => {

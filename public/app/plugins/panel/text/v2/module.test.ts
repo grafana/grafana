@@ -102,8 +102,8 @@ describe('field config', () => {
     return ids;
   }
 
-  it('registers thresholds as the only field config option', async () => {
-    expect(await getFieldConfigIds(true)).toEqual([FieldConfigProperty.Thresholds]);
+  it('registers value mappings and thresholds as the only field config options', async () => {
+    expect(await getFieldConfigIds(true)).toEqual([FieldConfigProperty.Mappings, FieldConfigProperty.Thresholds]);
   });
 
   it('registers no field config at all when the text.newFeatures flag is off', async () => {
