@@ -592,6 +592,10 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onInvestigateErrors', () => {
+    // The assistant-availability check resolves asynchronously (see setDashboardPanelContext.ts),
+    // so tests need to let that microtask settle before reading/calling context.onInvestigateErrors.
+    const flushAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
+
     beforeEach(() => {
       getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
         key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? true : defaultValue
@@ -599,26 +603,39 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('is not set when the new panel query errors UI feature flag is disabled', () => {
+      // No flush needed: the availability check is only scheduled inside the feature-flag
+      // branch, so with the flag off there's nothing async to wait for.
       stubFFEnabled(false);
+      mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
 
       expect(context.onInvestigateErrors).toBeUndefined();
     });
 
-    it('does nothing when the assistant is unavailable', async () => {
+    it('is not set when the assistant is unavailable', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(false));
 
       const { context } = buildTestScene({});
-      await context.onInvestigateErrors?.();
+      await flushAsync();
 
-      expect(mockOpenAssistant).not.toHaveBeenCalled();
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('is set once the availability check resolves', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+      await flushAsync();
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
     });
 
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
+      await flushAsync();
       await context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).not.toHaveBeenCalled();
@@ -628,6 +645,7 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { vizPanel, context } = buildTestScene({});
+      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -662,6 +680,7 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantSidebarOpen.mockReturnValue(false);
 
       const { vizPanel, context } = buildTestScene({});
+      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -687,6 +706,7 @@ describe('setDashboardPanelContext', () => {
       mockGetActiveAssistantChatId.mockReturnValue('active-chat-id');
 
       const { vizPanel, context } = buildTestScene({});
+      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -709,6 +729,7 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { vizPanel, context } = buildTestScene({});
+      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {

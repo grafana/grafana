@@ -120,15 +120,15 @@ describe('PanelStatus', () => {
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
     });
 
-    it('does not render an Investigate errors button when no onInvestigateErrors is provided', async () => {
+    it('does not render a Fix with Assistant button when no onInvestigateErrors is provided', async () => {
       render(<PanelStatus items={items} />);
 
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
       expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Investigate errors' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
     });
 
-    it('renders a single Investigate errors button and calls onInvestigateErrors when clicked', async () => {
+    it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
       const onInvestigateErrors = jest.fn();
       render(
         <PanelStatus
@@ -138,7 +138,7 @@ describe('PanelStatus', () => {
       );
 
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
-      const button = await screen.findByRole('button', { name: 'Investigate errors' });
+      const button = await screen.findByRole('button', { name: 'Fix with Assistant' });
 
       await userEvent.click(button);
       expect(onInvestigateErrors).toHaveBeenCalledTimes(1);

@@ -86,27 +86,21 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
   const content = (
     <div className={styles.popover}>
       <div className={styles.popoverHeader}>
-        <span className={styles.popoverTitle}>
-          {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
-        </span>
-        <Stack direction="row" gap={0.5} alignItems="center">
+        <Stack direction="row" gap={1} alignItems="center">
+          <span className={styles.popoverTitle}>
+            {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
+          </span>
           {onInvestigateErrors && (
-            <Button
-              size="sm"
-              variant="secondary"
-              fill="text"
-              icon="ai-sparkle"
-              tooltip={t('grafana-ui.panel-chrome.investigate-errors', 'Investigate errors')}
-              aria-label={t('grafana-ui.panel-chrome.investigate-errors', 'Investigate errors')}
-              onClick={onInvestigateErrors}
-            />
-          )}
-          {onInspect && (
-            <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-              {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+            <Button size="sm" variant="secondary" fill="text" icon="ai-sparkle" onClick={onInvestigateErrors}>
+              {t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')}
             </Button>
           )}
         </Stack>
+        {onInspect && (
+          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+          </Button>
+        )}
       </div>
       <Stack direction="column" gap={1}>
         {sortedItems.map((item, index) => (

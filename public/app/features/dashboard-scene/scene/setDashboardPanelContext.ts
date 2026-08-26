@@ -227,7 +227,15 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
-    context.onInvestigateErrors = () => investigatePanelErrorsWithAssistant(vizPanel);
+
+    // Checked once: assistant availability doesn't change during a session, and the panel
+    // re-renders naturally (e.g. once data finishes loading) soon after this resolves, so the
+    // action appears without needing a live subscription to keep it in sync.
+    firstValueFrom(isAssistantAvailable()).then((available) => {
+      if (available) {
+        context.onInvestigateErrors = () => investigatePanelErrorsWithAssistant(vizPanel);
+      }
+    });
   }
 }
 
