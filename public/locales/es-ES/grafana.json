@@ -1624,6 +1624,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1694,7 +1698,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Reglas de alerta",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtro",
         "folder": "Carpeta de destino",
@@ -1713,7 +1716,6 @@
         "routing": "Enrutamiento de notificaciones",
         "routing-none": "No se ha seleccionado ningún árbol de políticas.",
         "routing-tree": "Árbol de políticas: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Las reglas de alerta no se importarán.",
         "rules-title": "Reglas de alerta",
         "skipped": "Omitidas",
@@ -3880,6 +3882,8 @@
       "title-notification-policies": "Políticas de notificación"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Error al importar los recursos",
@@ -6870,6 +6874,11 @@
       "title": "Aún no se han añadido enlaces del panel de control"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9072,15 +9081,16 @@
       "split-widen": "Agrandar panel"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Abrir menú de opciones de compartir traza",
+      "aria-label-share-dropdown": "",
       "critical-path": "Ruta crítica",
       "critical-path-tooltip": "Selecciona los intervalos en la ruta crítica, la secuencia más larga de tareas dependientes que determina la duración mínima de la traza.",
       "duration": "Duración",
       "errors": "Errores",
       "errors-tooltip": "Selecciona los intervalos donde el estado es igual a error.",
       "export-started": "Exportación iniciada",
+      "feedback-group": "",
       "filters": "Filtros",
-      "give-feedback": "Comentarios",
+      "give-feedback-item": "",
       "high-latency": "Latencia alta",
       "high-latency-tooltip": "Selecciona el 10 % de los intervalos más largos de la traza (p90).",
       "link-copied": "Enlace copiado al portapapeles",
@@ -9088,13 +9098,12 @@
       "path": "Ruta",
       "route": "Ruta",
       "services": "Servicios",
-      "share": "Compartir",
       "share-copy-link": "Copiar enlace",
       "share-export-json": "Exportar como JSON",
-      "share-tooltip": "Compartir traza",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Fecha de inicio",
       "target": "Destino",
-      "title-share-thoughts-about-tracing-grafana": "Comparte tu opinión sobre el trazado en Grafana.",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
       "trace-id": "ID de traza",
       "url": "URL"
@@ -12945,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13008,7 +13025,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
