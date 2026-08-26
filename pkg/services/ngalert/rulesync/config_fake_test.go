@@ -92,19 +92,6 @@ func (f *fakeConfigClient) setSpecWithPromote(orgID int64, datasourceUID, target
 	f.objects[obj.GetNamespace()] = obj
 }
 
-// setErr makes Get for orgID return err (simulating a storage failure).
-func (f *fakeConfigClient) setErr(orgID int64, err error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.getErr[f.nsMapper(orgID)] = err
-}
-
-func (f *fakeConfigClient) getCallCount(orgID int64) int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.getCalls[f.nsMapper(orgID)]
-}
-
 // statusFor returns the last-written status for orgID, or nil if none exists.
 func (f *fakeConfigClient) statusFor(orgID int64) *alertingrulesv0alpha1.ConfigStatus {
 	f.mu.Lock()
