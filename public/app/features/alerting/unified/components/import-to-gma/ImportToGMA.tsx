@@ -228,7 +228,11 @@ function ImportWizardContent() {
 
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
-  const { save: saveAutoSync } = useAutoSyncConfiguration();
+  const {
+    save: saveAutoSync,
+    isReady: isAutoSyncReady,
+    notReadyMessage: autoSyncNotReadyMessage,
+  } = useAutoSyncConfiguration();
   const notifyApp = useAppNotification();
 
   const formAPI = useForm<ImportFormValues>({
@@ -383,6 +387,18 @@ function ImportWizardContent() {
       // Mutually exclusive: Auto-sync only applies to the datasource source, so at most one of
       // these branches runs.
       if (willEnableAutoSync) {
+        // Humans can't create the Config singleton, so a not-yet-seeded one means saveAutoSync
+        // would silently fail after the user already confirmed — bail out with the real reason
+        // instead of the generic error, matching the settings page's isReady gate.
+        if (!isAutoSyncReady) {
+          setImportStatus('error');
+          trackImportToGMAError({ notificationsSource: trackedNotificationsSource });
+          notifyApp.error(
+            t('alerting.import-to-gma.autosync-not-ready-title', 'Auto-sync is still initializing'),
+            autoSyncNotReadyMessage
+          );
+          return;
+        }
         const enabled = await saveAutoSync(values.notificationsDatasourceUID, { silent: true });
         if (!enabled) {
           setImportStatus('error');
@@ -494,7 +510,16 @@ function ImportWizardContent() {
         stringifyErrorLike(err)
       );
     }
-  }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
+  }, [
+    getValues,
+    importNotifications,
+    importRules,
+    rulesFromDatasource,
+    saveAutoSync,
+    isAutoSyncReady,
+    autoSyncNotReadyMessage,
+    notifyApp,
+  ]);
 
   const handleCancelConfirm = useCallback(() => {
     // Only allow closing if not importing

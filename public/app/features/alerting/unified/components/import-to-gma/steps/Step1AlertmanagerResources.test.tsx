@@ -7,12 +7,9 @@ import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'te
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
-import {
-  setupAdminConfigGet,
-  setupAlertmanagersStatus,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
-import { setupAutoSyncConfigAbsent } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
+import { setupAutoSyncConfig, setupAutoSyncConfigAbsent } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -535,8 +532,10 @@ describe('Step1AlertmanagerResources', () => {
 
       beforeEach(() => {
         setupDataSources(alertmanagerDataSource, mimirDataSource);
-        // useAutoSyncConfiguration now gates its Config and datasources queries on this permission
-        // (not just the Admin role), so it must be granted here too or both queries get skipped.
+        // useAutoSyncConfiguration gates its Config and datasources queries on
+        // ActionAlertingNotificationsConfigRead, which grantUserRole('Admin') alone doesn't imply
+        // here since roles and permissions are mocked independently. Also repeats the outer
+        // beforeEach's Write grant, since grantUserPermissions replaces rather than extends it.
         grantUserPermissions([
           AccessControlAction.AlertingNotificationsWrite,
           AccessControlAction.ActionAlertingNotificationsConfigRead,
@@ -544,7 +543,7 @@ describe('Step1AlertmanagerResources', () => {
         // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
         // render below fires these two queries regardless of what the test exercises — mock them
         // by default for the whole block rather than per test.
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
       });
 

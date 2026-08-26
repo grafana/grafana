@@ -1613,6 +1613,7 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
+      "autosync-not-ready-title": "Auto-sync is still initializing",
       "confirm": {
         "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
         "autosync-confirm": "Enable auto-sync",
