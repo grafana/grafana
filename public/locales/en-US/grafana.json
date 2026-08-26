@@ -6045,6 +6045,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "Comparison tooltip delta color",
+        "compare-color-mode-description": "Colors delta between original and comparison value in the tooltip. Increase in value is green for standard, red for inverted, or the series color for same as value.",
+        "compare-color-mode-inverted": "Inverted",
+        "compare-color-mode-same-as-value": "Same as value",
+        "compare-color-mode-standard": "Standard",
         "compare-day-before": "Day before",
         "compare-month-before": "Month before",
         "compare-week-before": "Week before",

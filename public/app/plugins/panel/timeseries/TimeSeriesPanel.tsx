@@ -218,6 +218,7 @@ export const TimeSeriesPanel = ({
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
                       comparisonFieldPairs={compFieldPairs}
+                      deltaColorMode={options.timeCompare?.colorMode}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );

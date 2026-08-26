@@ -9,7 +9,7 @@ import {
   type LinkModel,
   usePluginContext,
 } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, type TimeCompareColorMode, TooltipDisplayMode } from '@grafana/schema';
 import {
   type AdHocFilterModel,
   type FilterByGroupedLabelsModel,
@@ -56,6 +56,8 @@ export interface TimeSeriesTooltipProps {
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
   comparisonFieldPairs?: Map<number, number>;
+  /** How the time-comparison delta is colored. Defaults to `TimeCompareColorMode.Standard`. */
+  deltaColorMode?: TimeCompareColorMode;
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -79,6 +81,7 @@ export const TimeSeriesTooltip = ({
   filterByGroupedLabels,
   assistantContext,
   comparisonFieldPairs,
+  deltaColorMode,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -112,7 +115,8 @@ export const TimeSeriesTooltip = ({
     },
     hideZeros,
     _rest,
-    compareFieldIdx
+    compareFieldIdx,
+    deltaColorMode
   );
 
   let footer: ReactNode;
