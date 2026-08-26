@@ -20,7 +20,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test.skip('can add a new datasource variable', async ({ page, gotoDashboardPage, selectors }) => {
+    test('can add a new datasource variable', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({
         uid: PAGE_UNDER_TEST,
         queryParams: new URLSearchParams({ orgId: '1', editview: 'variables' }),
@@ -43,8 +43,6 @@ test.describe(
       );
       await labelInput.fill('Variable under test');
 
-      // If this is failing, make sure there are Prometheus datasources named "gdev-prometheus" and "gdev-slow-prometheus"
-      // Or update to match available gdev datasources for testing
       const datasourceSelect = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
       );
@@ -54,8 +52,18 @@ test.describe(
       const previewOptions = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
       );
-      await expect(previewOptions.first()).toContainText('gdev-prometheus');
-      await expect(previewOptions.last()).toContainText('gdev-slow-prometheus');
+      
+      // Wait for preview options to populate after selecting datasource type
+      await expect(previewOptions.first()).toBeVisible({ timeout: 15000 });
+      
+      // Verify the expected provisioned datasources are present
+      // Note: Other tests may create temporary datasources (e.g., e2e-diagnostics-prometheus-*)
+      // so we explicitly check for our expected ones rather than relying on position
+      const gdevPrometheus = previewOptions.filter({ hasText: 'gdev-prometheus' });
+      const gdevSlowPrometheus = previewOptions.filter({ hasText: 'gdev-slow-prometheus' });
+      
+      await expect(gdevPrometheus.first()).toBeVisible();
+      await expect(gdevSlowPrometheus.first()).toBeVisible();
 
       // Navigate back to the homepage and change the selected variable value
       await dashboardPage
