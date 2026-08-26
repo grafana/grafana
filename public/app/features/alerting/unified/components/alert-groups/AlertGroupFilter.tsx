@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -20,10 +19,9 @@ interface Props {
 }
 
 export const AlertGroupFilter = ({ groups }: Props) => {
-  const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const [queryParams, setQueryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
-  const matcherFilterKey = `matcher-${filterKey}`;
+  const matcherFilterKey = `matcher-${queryString ?? ''}`;
   const producerAlertsQuery = 'grafana_alert_source=~".+"';
 
   const styles = useStyles2(getStyles);
@@ -36,7 +34,6 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       contactPoint: null,
       receivers: null,
     });
-    setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
 
   const showClearButton = !!(groupBy.length > 0 || queryString || alertState || receivers.length > 0);

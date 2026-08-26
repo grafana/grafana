@@ -222,6 +222,9 @@ describe('AlertGroups', () => {
     await user.click(await byRole('button', { name: 'Producer alerts' }).find());
 
     await waitFor(() => {
+      expect(byTestId(selectors.pages.Alerting.searchInput).get()).toHaveValue('grafana_alert_source=~".+"');
+    });
+    await waitFor(() => {
       expect(
         requests.some((request) => new URL(request.url).searchParams.get('filter') === 'grafana_alert_source=~".+"')
       ).toBe(true);
