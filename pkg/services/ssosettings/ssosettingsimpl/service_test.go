@@ -1080,6 +1080,55 @@ func TestService_List(t *testing.T) {
 	}
 }
 
+func TestService_ListStored(t *testing.T) {
+	t.Parallel()
+
+	env := setupTestEnv(t, false, false, false)
+	env.store.ExpectedSSOSettings = []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": base64.RawStdEncoding.EncodeToString([]byte("client_secret")),
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": base64.RawStdEncoding.EncodeToString([]byte("other_secret")),
+			},
+			Source: models.DB,
+		},
+	}
+	env.secrets.On("Decrypt", mock.Anything, []byte("client_secret"), mock.Anything).Return([]byte("decrypted-client-secret"), nil).Once()
+	env.secrets.On("Decrypt", mock.Anything, []byte("other_secret"), mock.Anything).Return([]byte("decrypted-other-secret"), nil).Once()
+
+	actual, err := env.service.ListStored(context.Background())
+
+	require.NoError(t, err)
+	// Only the stored providers, decrypted, with no system defaults merged in.
+	require.ElementsMatch(t, []*models.SSOSettings{
+		{
+			Provider: "github",
+			Settings: map[string]any{
+				"enabled":       true,
+				"client_secret": "decrypted-client-secret",
+			},
+			Source: models.DB,
+		},
+		{
+			Provider: "okta",
+			Settings: map[string]any{
+				"enabled":      false,
+				"other_secret": "decrypted-other-secret",
+			},
+			Source: models.DB,
+		},
+	}, actual)
+}
+
 func TestService_ListWithRedactedSecrets(t *testing.T) {
 	t.Parallel()
 
