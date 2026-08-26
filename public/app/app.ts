@@ -47,6 +47,8 @@ import {
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  getFeatureFlagClient,
+  FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
   setExpressionDataSourceInstance,
@@ -96,6 +98,8 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { loadUserPermissions } from './core/services/userPermissions';
+import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -243,6 +247,14 @@ export class GrafanaApp {
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
+
+      // The multi-tenant frontend service ships a reduced boot with no user
+      // permissions, so fetch them from the AuthZ user-permissions API and
+      // populate contextSrv before the nav and route guards read them.
+      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.AuthzUserPermissions, false)) {
+        contextSrv.user.permissions = await loadUserPermissions();
+      }
+
       initExtensions();
 
       initAlerting();
