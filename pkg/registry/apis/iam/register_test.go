@@ -1,6 +1,7 @@
 package iam
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"reflect"
@@ -23,7 +24,9 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -31,8 +34,56 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+type noopUserPermissionsClient struct{}
+
+func (noopUserPermissionsClient) GetUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	return authlib.GetUserPermissionsResponse{}, nil
+}
+
+func (noopUserPermissionsClient) InvalidateUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) error {
+	return nil
+}
+
+func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		enabled bool
+		want    bool
+	}{
+		{name: "route absent when disabled", enabled: false, want: false},
+		{name: "route registered when enabled", enabled: true, want: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+				featuremgmt.FlagAuthzUserPermissions: {
+					Key:            featuremgmt.FlagAuthzUserPermissions,
+					DefaultVariant: "default",
+					Variants:       map[string]any{"default": tt.enabled},
+				},
+			})
+			require.NoError(t, openfeature.SetProviderAndWait(provider))
+			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+			b := &IdentityAccessManagementAPIBuilder{
+				ofClient:        openfeature.NewDefaultClient(),
+				display:         display.NewDisplayHandler(),
+				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
+			}
+			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+			found := false
+			for _, route := range routes.Namespace {
+				if route.Path == "users/~/permissions" {
+					found = true
+				}
+			}
+			require.Equal(t, tt.want, found)
+		})
+	}
+}
+
 func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 	b := NewAPIService(
+		nil,
 		nil,
 		legacysql.NewDatabaseProvider(nil),
 		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},

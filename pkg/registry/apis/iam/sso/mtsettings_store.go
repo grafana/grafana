@@ -115,6 +115,7 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 
 	section := sectionFor(ssoSetting.Name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
+	resolveSecrets(desired, nil)
 	for key, val := range desired {
 		if err := s.writer.Upsert(ctx, &settingsvc.Setting{Section: section, Key: key, Value: valueToString(val)}); err != nil {
 			return nil, apierrors.NewInternalError(err)
@@ -179,19 +180,11 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 	section := sectionFor(name)
 	desired := ssoSetting.Spec.Settings.UnstructuredContent()
 
-	// A read redacts secrets to a placeholder, so a read-then-write round-trip
-	// would persist the placeholder as the secret. Restore the stored value for
-	// any secret the client sent back unchanged (mirrors the legacy mergeSecrets).
+	var stored map[string]any
 	if !created {
-		stored := current.Spec.Settings.Object
-		for key, val := range desired {
-			if str, ok := val.(string); ok && str == setting.RedactedPassword && isSecretField(key) {
-				if prev, ok := stored[key]; ok {
-					desired[key] = prev
-				}
-			}
-		}
+		stored = current.Spec.Settings.Object
 	}
+	resolveSecrets(desired, stored)
 
 	// Upsert every desired key first — a required value is never removed before
 	// its replacement is durable.
@@ -344,6 +337,21 @@ func isSecretField(key string) bool {
 		}
 	}
 	return false
+}
+
+// resolveSecrets restores a placeholder secret from its stored value, or drops the key
+// when there's no real value to restore, so the placeholder is never persisted.
+func resolveSecrets(desired map[string]any, stored map[string]any) {
+	for key, val := range desired {
+		if str, ok := val.(string); !ok || str != setting.RedactedPassword || !isSecretField(key) {
+			continue
+		}
+		if prev, ok := stored[key].(string); ok && prev != "" && prev != setting.RedactedPassword {
+			desired[key] = prev
+		} else {
+			delete(desired, key)
+		}
+	}
 }
 
 // redactSecrets is a copy of the ssosettings redaction (IsSecretField/removeSecrets in
