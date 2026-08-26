@@ -4032,7 +4032,7 @@
             "default": ""
           },
           "operator": {
-            "description": "Operator is \"In\" or \"NotIn\" in v1.",
+            "description": "Operator is \"In\", \"NotIn\" or \"All\" in v1. \"In\" matches any of the values, \"NotIn\" excludes all of them, and \"All\" requires the field to hold every value, which only a field holding a list of values can do.",
             "type": "string",
             "default": ""
           },
@@ -4332,7 +4332,7 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {

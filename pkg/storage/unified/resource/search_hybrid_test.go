@@ -620,27 +620,49 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
-func TestHybridSearch_LexicalEmbeddedErrorCodes(t *testing.T) {
-	// Embedded codes with retry semantics survive; anything else is a
-	// server fault for a server-built request.
+func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
+	// Embedded codes with retry semantics survive; anything else is a server
+	// fault for a server-built request. Both ways the lexical leg reports an
+	// ErrorResult must yield the same code.
 	cases := map[int32]codes.Code{
 		http.StatusServiceUnavailable:  codes.Unavailable,
 		http.StatusTooManyRequests:     codes.ResourceExhausted,
 		http.StatusBadRequest:          codes.Internal,
 		http.StatusInternalServerError: codes.Internal,
 	}
-	for embedded, want := range cases {
-		idx := &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
-		}}
-		s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-		s.search = &fakeSearchBackend{idx: idx}
 
-		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-			Key: validKey(), Query: "q",
-		})
-		require.Error(t, err)
-		assert.Equal(t, want, status.Code(err), "embedded code %d", embedded)
+	// The wrapper status is deliberately one that would win status.Code if the
+	// details result were merged with it instead of replacing it — that is how
+	// a server-built request's own 400 used to reach the caller as
+	// InvalidArgument.
+	forms := map[string]func(*testing.T, int32) *hybridFakeIndex{
+		"response-embedded": func(_ *testing.T, embedded int32) *hybridFakeIndex {
+			return &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
+				Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+			}}
+		},
+		"grpc details": func(t *testing.T, embedded int32) *hybridFakeIndex {
+			st, err := status.New(codes.InvalidArgument, "wrapper").WithDetails(
+				&resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+			)
+			require.NoError(t, err)
+			return &hybridFakeIndex{err: st.Err()}
+		},
+	}
+
+	for form, newIndex := range forms {
+		for embedded, want := range cases {
+			t.Run(fmt.Sprintf("%s/%d", form, embedded), func(t *testing.T) {
+				s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+				s.search = &fakeSearchBackend{idx: newIndex(t, embedded)}
+
+				_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+					Key: validKey(), Query: "q",
+				})
+				require.Error(t, err)
+				assert.Equal(t, want, status.Code(err))
+			})
+		}
 	}
 }
 
