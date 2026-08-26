@@ -462,20 +462,7 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 			continue
 		}
 
-		// Wrap the repository build in its own span: this is where the repo's
-		// token and commit-signing-key secrets are decrypted via the secrets
-		// service. The decrypt gRPC client is already traced, so giving it a
-		// descriptive parent makes those cross-service calls visible in the job
-		// trace instead of hanging anonymously under process_job.
-		buildCtx, buildSpan := tracing.Start(ctx, "provisioning.jobs.build_repository",
-			attribute.String("repository.name", repoName),
-			attribute.String("repository.namespace", namespace),
-		)
-		repo, err := d.repoGetter.GetRepository(buildCtx, namespace, repoName)
-		if err != nil {
-			buildSpan.RecordError(err)
-		}
-		buildSpan.End()
+		repo, err := d.repoGetter.GetRepository(ctx, namespace, repoName)
 		if err != nil {
 			if apierrors.IsNotFound(err) && IsOrphanCleanupAction(job.Spec.Action) {
 				logger.Info("repository not found -- expected for orphan cleanup job")

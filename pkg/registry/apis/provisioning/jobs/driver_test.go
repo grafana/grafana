@@ -9,9 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/attribute"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -453,51 +450,6 @@ func TestProcessJob_HealthyRepo_CallsWorker(t *testing.T) {
 	require.NoError(t, err)
 
 	worker.AssertCalled(t, "Process", mock.Anything, mockRepo, mock.Anything, recorder)
-}
-
-// TestProcessJob_EmitsBuildRepositorySpan verifies the repository build — where the
-// repo's token and commit-signing-key secrets are decrypted via the secrets service —
-// runs under its own span, so those cross-service decrypt calls have a descriptive
-// parent in the job trace instead of hanging anonymously under process_job.
-func TestProcessJob_EmitsBuildRepositorySpan(t *testing.T) {
-	recorder := tracetest.NewSpanRecorder()
-	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
-	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
-
-	worker := &MockWorker{}
-	repoGetter := &MockRepoGetter{}
-	progress := &MockJobProgressRecorder{}
-	driver := setupDriverForProcessJob(worker, repoGetter)
-	driver.currentJob = makeTestJob("1")
-
-	repoCfg := makeRepoConfig("test-repo", nil, nil)
-	mockRepo := &repository.MockRepository{}
-	mockRepo.On("Config").Return(repoCfg)
-
-	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
-	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
-		Return(mockRepo, nil)
-	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, progress).Return(nil)
-
-	// tracing.Start derives its tracer from the span in the context, so seed a real
-	// parent span from the recording provider before processing the job.
-	ctx, parent := tp.Tracer("test").Start(context.Background(), "test.root")
-	err := driver.processJob(ctx, progress)
-	parent.End()
-	require.NoError(t, err)
-
-	var buildSpan sdktrace.ReadOnlySpan
-	for _, s := range recorder.Ended() {
-		if s.Name() == "provisioning.jobs.build_repository" {
-			buildSpan = s
-			break
-		}
-	}
-	require.NotNil(t, buildSpan, "expected a provisioning.jobs.build_repository span")
-
-	attrs := buildSpan.Attributes()
-	assert.Contains(t, attrs, attribute.String("repository.name", "test-repo"))
-	assert.Contains(t, attrs, attribute.String("repository.namespace", "test-ns"))
 }
 
 func TestProcessJob_HealthyRepo_WorkerError_PropagatesError(t *testing.T) {
