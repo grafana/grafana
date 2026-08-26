@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Badge, Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type ResourcePermission } from './types';
 
@@ -78,7 +78,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
                 : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
             }
           >
-            <Badge icon="lock" color="red" />
+            <Icon name="lock" />
           </Tooltip>
         )}
       </td>

@@ -34,6 +34,7 @@ export function getFilterTableStyles(theme: GrafanaTheme2) {
         lineHeight: '30px',
         height: '30px',
         whiteSpace: 'nowrap',
+        verticalAlign: 'middle',
       },
 
       '.link-td': {
