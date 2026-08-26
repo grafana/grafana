@@ -164,6 +164,20 @@ class DeletedDashboardsCache {
     return this.searchTrash(query);
   }
 
+  /**
+   * Every deleted dashboard, for building the tag filter's options.
+   *
+   * Separate from `search` because it asks a different question from the one the page is showing,
+   * and the banner reads state that `search` maintains. Filling a dropdown must not change what
+   * the page says about its own results.
+   */
+  async searchAllForOptions(): Promise<SearchHit[]> {
+    if (!isTrashEnabled()) {
+      return this.get();
+    }
+    return this.searchTrash({}, { reportState: false });
+  }
+
   async get(): Promise<SearchHit[]> {
     const table = await this.getAsTable();
     const uids = new Set<string>();
@@ -239,7 +253,10 @@ class DeletedDashboardsCache {
     };
   }
 
-  private async searchTrash(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
+  private async searchTrash(
+    query: DeletedDashboardsQuery,
+    { reportState = true }: { reportState?: boolean } = {}
+  ): Promise<SearchHit[]> {
     // Every part of the query the server sees belongs in the key. Leaving one out serves a
     // result for a different query, which looks exactly like the filter being ignored. Tags are
     // sorted so the same set picked in a different order shares one entry.
@@ -264,15 +281,19 @@ class DeletedDashboardsCache {
 
     if (result.failed) {
       if (isCurrent) {
-        this.trashUnavailable = result.unavailable;
         // A failure is not cached: an index being rebuilt becomes available on its own, and
         // keeping the empty list would leave the page stuck until the next delete or restore.
         this.trashCache.delete(key);
       }
+      if (isCurrent && reportState) {
+        this.trashUnavailable = result.unavailable;
+        // There is no list, so nothing was left out of one.
+        this.trashTruncated = false;
+      }
       return [];
     }
 
-    if (isCurrent) {
+    if (isCurrent && reportState) {
       this.trashUnavailable = false;
       this.trashTruncated = result.truncated;
     }
@@ -314,8 +335,11 @@ class DeletedDashboardsCache {
         pages++;
       } while (items.length < DELETED_DASHBOARDS_LIMIT && continueToken && pages < MAX_TRASH_PAGES);
 
-      // A token left over means the server had more than we were willing to take.
-      return { failed: false, items, truncated: Boolean(continueToken) };
+      // Only the row ceiling is reported, because that is the number the banner names. Stopping
+      // at the page cap also leaves rows behind, but saying "limited to 1000" would be wrong when
+      // far fewer came back.
+      const truncated = items.length >= DELETED_DASHBOARDS_LIMIT && Boolean(continueToken);
+      return { failed: false, items, truncated };
     } catch (error) {
       // 503 is the one failure the server distinguishes for us: trash is on, but this index
       // has not been rebuilt to hold deleted documents. Anything else, including a server

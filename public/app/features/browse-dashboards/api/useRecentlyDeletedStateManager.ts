@@ -67,7 +67,7 @@ export class TrashStateManager extends SearchStateManager {
     try {
       // Unfiltered, so the options cover everything in trash rather than the current results.
       // Trash rejects facets, so counting the rows is the only way to build this.
-      const deletedHits = await deletedDashboardsCache.search({});
+      const deletedHits = await deletedDashboardsCache.searchAllForOptions();
       const tagCounts = new Map<string, number>();
 
       deletedHits.forEach((hit) => {

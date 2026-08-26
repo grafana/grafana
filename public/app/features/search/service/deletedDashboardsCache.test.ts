@@ -935,10 +935,11 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     expect(mockFetchTrashPage).toHaveBeenCalledTimes(2);
   });
 
+  const fullPage = () => Array.from({ length: DELETED_DASHBOARDS_LIMIT }, (_, i) => makeItem(`dash-${i}`));
+
   it('reports truncation only when the server still had rows to give', async () => {
     // The ceiling reached with a token left over: the list on screen is not everything.
-    const fullPage = Array.from({ length: DELETED_DASHBOARDS_LIMIT }, (_, i) => makeItem(`dash-${i}`));
-    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage, 'more-to-come'));
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
     await deletedDashboardsCache.search({ query: 'truncated' });
     expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
 
@@ -946,6 +947,45 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-2')]));
     await deletedDashboardsCache.search({ query: 'complete' });
     expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+  });
+
+  it('does not call short pages truncated just because a token came back', async () => {
+    // Stopping at the page cap also leaves rows behind, but the banner names 1000, and far
+    // fewer than that came back.
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')], 'never-clears'));
+
+    await deletedDashboardsCache.search({ query: 'short-pages' });
+
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+  });
+
+  it('clears truncation when the fetch fails', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    mockFetchTrashPage.mockRejectedValueOnce({ status: 503, data: {} });
+    await deletedDashboardsCache.search({ query: 'then-fails' });
+
+    // No list came back, so nothing was left out of one.
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(false);
+
+    consoleError.mockRestore();
+  });
+
+  it('building the tag options does not disturb what the page reports', async () => {
+    // The page is showing a truncated list.
+    mockFetchTrashPage.mockResolvedValueOnce(page(fullPage(), 'more-to-come'));
+    await deletedDashboardsCache.search({ query: 'truncated' });
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
+
+    // The tag dropdown asks an unfiltered question, which is not what is on screen.
+    mockFetchTrashPage.mockResolvedValueOnce(page([makeItem('dash-1')]));
+    await deletedDashboardsCache.searchAllForOptions();
+
+    expect(deletedDashboardsCache.isTrashTruncated()).toBe(true);
   });
 
   it('reports trash unavailable on 503, and retries rather than caching the failure', async () => {
