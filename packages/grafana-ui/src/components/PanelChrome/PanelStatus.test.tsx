@@ -24,7 +24,6 @@ describe('PanelStatus', () => {
     mockUseAssistant.mockReturnValue({ isLoading: false, isAvailable: true });
   });
 
-
   describe('legacy single message', () => {
     it('renders an error button with the message as tooltip', () => {
       render(<PanelStatus message="Something went wrong" />);
@@ -149,9 +148,7 @@ describe('PanelStatus', () => {
     });
 
     it('renders a single Investigate errors button covering all items when the assistant is available', async () => {
-      render(
-        <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />
-      );
+      render(<PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />);
 
       await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
       expect(await screen.findAllByRole('button', { name: 'Investigate errors' })).toHaveLength(1);
