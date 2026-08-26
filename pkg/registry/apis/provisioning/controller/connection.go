@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -58,6 +61,7 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
+	tracer            tracing.Tracer
 
 	// processed classifies each delivery (encapsulating the NATS/apiserver
 	// backend) and counts the start of each reconcile by what enqueued it.
@@ -80,10 +84,12 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
 	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
 		conns:     conns,
+		tracer:    tracer,
 		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
@@ -240,7 +246,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) error {
+func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) (err error) {
 	logger := cc.logger.With("key", item.key)
 	ctx = logging.Context(ctx, logger)
 
@@ -249,6 +255,21 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
 	}
+
+	// The worker loop carries no active span, so this opens a fresh trace per
+	// reconcile whose children show where the reconcile spends its time.
+	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile_connection",
+		trace.WithAttributes(
+			attribute.String("connection.namespace", namespace),
+			attribute.String("connection.name", name),
+		),
+	)
+	defer span.End()
+	defer func() {
+		if err != nil {
+			tracing.Error(span, err)
+		}
+	}()
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the informer.ConnectionGetter's concern, not the controller's.
@@ -313,17 +334,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Determine the main triggering condition
+	var reason string
 	switch {
 	case hasSpecChanged:
+		reason = "spec_changed"
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
+		reason = "health_stale"
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
 	case shouldRefreshToken:
+		reason = "token_refresh"
 		logger.Info("token must be refreshed or generated")
 	default:
+		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
 	}
+	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
 	var patchOperations []map[string]interface{}
 
@@ -360,7 +387,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check")
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(healthCtx, conn)
+	healthSpan.End()
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
 		return fmt.Errorf("update health status: %w", err)
@@ -390,7 +419,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
-		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
+		patchCtx, patchSpan := cc.tracer.Start(ctx, "provisioning.controller.apply_status",
+			trace.WithAttributes(attribute.Int("patch.operations", len(patchOperations))),
+		)
+		err := cc.statusPatcher.Patch(patchCtx, conn, patchOperations...)
+		patchSpan.End()
+		if err != nil {
 			return fmt.Errorf("failed to update connection status: %w", err)
 		}
 	}
