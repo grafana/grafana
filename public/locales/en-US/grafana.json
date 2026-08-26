@@ -12948,6 +12948,7 @@
     "add-panel": {
       "cancel": "Cancel",
       "card-author": "By {{author}}",
+      "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
       "create-description": "Description",
       "create-description-help": "Optional context for collaborators",

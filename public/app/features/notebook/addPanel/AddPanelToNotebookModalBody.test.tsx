@@ -89,10 +89,7 @@ function panel(): PanelKind {
   return { ...base, spec: { ...base.spec, id: 1, title: 'p95 latency' } };
 }
 
-/**
- * Card renders its radio as readOnly and puts the click handler on the heading button, so that
- * button is what actually selects a notebook.
- */
+/** The heading button is the card's only control, and is what actually selects a notebook. */
 function selectNotebook(title: string) {
   return screen.getByRole('button', { name: title });
 }
@@ -122,6 +119,29 @@ describe('AddPanelToNotebookModalBody', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  describe('the notebook cards', () => {
+    // Card offers a radio alongside the heading button, but it is inert and cannot be grouped with the
+    // others - hiding it left every card with a second tab stop and nothing to see at it.
+    it('offer one control each, not a heading button and a radio', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(await screen.findByRole('button', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(screen.queryAllByRole('radio', { name: /latency|checkout/i })).toHaveLength(0);
+    });
+
+    // The outline says which card is chosen to anyone who can see it; this is what says so to anyone
+    // who cannot.
+    it('say which one is chosen', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+      await user.click(await screen.findByRole('button', { name: 'Q2 latency regression' }));
+
+      expect(screen.getByRole('button', { name: 'Q2 latency regression (selected)' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Checkout error spike' })).toBeInTheDocument();
+    });
+  });
 
   describe('adding to an existing notebook', () => {
     it('cannot be submitted until a notebook is chosen', async () => {
