@@ -135,7 +135,7 @@
     "permissions": [
       {
         "action": "alert.instances.producer:write",
-        "scope": "alert.producers:*"
+        "scope": "alert.producers:uid:*"
       }
     ]
   },

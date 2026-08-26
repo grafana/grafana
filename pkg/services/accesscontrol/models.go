@@ -586,7 +586,7 @@ var (
 	// may publish as. The scoped resource UID is the producer source name.
 	ScopeAlertingProducersRoot     = "alert.producers"
 	ScopeAlertingProducersProvider = NewScopeProvider(ScopeAlertingProducersRoot)
-	ScopeAlertingProducersAll      = ScopeAlertingProducersProvider.GetResourceAllScope()
+	ScopeAlertingProducersAll      = ScopeAlertingProducersProvider.GetResourceScopeUID("*")
 
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"
