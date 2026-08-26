@@ -777,7 +777,7 @@ func (s *Storage) GuaranteedUpdate(
 		req.Value = v.raw.Bytes()
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err := resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
+		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			resErr := resource.AsErrorResult(err)
 			if attempt < MaxUpdateAttempts && resErr.Code == http.StatusConflict {
 				// Delete the secure values this attempt created; the next attempt recreates them.
