@@ -566,7 +566,7 @@ func validateOnDelete(ctx context.Context,
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", err)
+		return fmt.Errorf("could not verify if folder is empty: %w", err)
 	}
 
 	if resp.Stats == nil {
