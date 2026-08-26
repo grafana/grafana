@@ -210,7 +210,7 @@ function useHasLogs(
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid, inDrilldown]);
+  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid, dynamicTraceToLogsEnabled]);
 
   useEffect(() => {
     if (presence !== 'absent' || !dynamicTraceToLogsEnabled) {
