@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { type AlertState, type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
@@ -23,6 +24,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
   const [queryParams, setQueryParams] = useQueryParams();
   const { groupBy = [], queryString, alertState, receivers = [] } = getFiltersFromUrlParams(queryParams);
   const matcherFilterKey = `matcher-${filterKey}`;
+  const producerAlertsQuery = 'grafana_alert_source=~".+"';
 
   const styles = useStyles2(getStyles);
 
@@ -48,6 +50,16 @@ export const AlertGroupFilter = ({ groups }: Props) => {
             defaultQueryString={queryString}
             onFilterChange={(value) => setQueryParams({ queryString: value ? value : null })}
           />
+          {config.featureToggles.alertingAlertsProducerAPI && (
+            <Button
+              size="sm"
+              variant="secondary"
+              fill={queryString === producerAlertsQuery ? 'solid' : 'outline'}
+              onClick={() => setQueryParams({ queryString: producerAlertsQuery })}
+            >
+              <Trans i18nKey="alerting.alert-group-filter.producer-alerts">Producer alerts</Trans>
+            </Button>
+          )}
           <GroupBy
             groups={groups}
             groupBy={groupBy}

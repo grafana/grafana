@@ -3,6 +3,7 @@ import { render, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -13,6 +14,7 @@ import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
 const server = setupMswServer();
+const originalProducerAPIToggle = config.featureToggles.alertingAlertsProducerAPI;
 
 const dataSources = {
   am: mockDataSource({
@@ -63,6 +65,7 @@ describe('AlertGroups', () => {
 
   afterEach(() => {
     server.resetHandlers();
+    config.featureToggles.alertingAlertsProducerAPI = originalProducerAPIToggle;
   });
 
   it('loads and shows groups', async () => {
@@ -188,6 +191,40 @@ describe('AlertGroups', () => {
     renderAmNotifications();
     await waitFor(() => {
       expect(ui.group.getAll()).toHaveLength(1);
+    });
+  });
+
+  it('shows trusted producer alerts by default', async () => {
+    config.featureToggles.alertingAlertsProducerAPI = true;
+    mockAlertGroupsResponse([
+      mockAlertGroup({
+        labels: {},
+        alerts: [mockAlertmanagerAlert({ labels: { grafana_alert_source: 'producer_a' } })],
+      }),
+    ]);
+
+    renderAmNotifications();
+
+    expect(await ui.group.findAll()).toHaveLength(1);
+  });
+
+  it('filters all trusted producer sources without naming a specific product', async () => {
+    config.featureToggles.alertingAlertsProducerAPI = true;
+    const requests: Request[] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', ({ request }) => {
+        requests.push(request);
+        return HttpResponse.json([]);
+      })
+    );
+
+    const { user } = renderAmNotifications();
+    await user.click(await byRole('button', { name: 'Producer alerts' }).find());
+
+    await waitFor(() => {
+      expect(
+        requests.some((request) => new URL(request.url).searchParams.get('filter') === 'grafana_alert_source=~".+"')
+      ).toBe(true);
     });
   });
 
