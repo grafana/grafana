@@ -8,7 +8,7 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { ToggleViewPanePaneEvent } from '../sidebar/events';
 
-import { FanoutPanelByTimeWindow } from './FanoutByTimeWindow';
+import { FanoutPanel } from './FanoutPanel';
 import { ViewPanelSidePane } from './ViewPanelSidePane';
 
 export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel; showControlsPane?: boolean }) {
@@ -29,7 +29,7 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   const context = usePanelSceneContextObject(panel);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
-  const { fanoutMode, fanoutByTime } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
+  const { fanoutMode, fanoutWindowCount } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
 
   // Open pane on mount
   useEffect(() => {
@@ -58,12 +58,7 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
 
   return (
     <SceneContext.Provider value={context}>
-      <FanoutPanelByTimeWindow
-        panel={panel}
-        panelDataIn={data!}
-        fanoutByTime={fanoutByTime}
-        fanoutByData={fanoutMode}
-      />
+      <FanoutPanel panel={panel} panelDataIn={data} fanoutMode={fanoutMode} windowCount={fanoutWindowCount} />
     </SceneContext.Provider>
   );
 }

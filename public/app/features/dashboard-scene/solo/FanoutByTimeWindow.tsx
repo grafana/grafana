@@ -1,98 +1,45 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type AbsoluteTimeRange, type PanelData, type TimeRange, rangeUtil, toUtc } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { SceneTimeRange, type VizConfig, type VizPanel } from '@grafana/scenes';
 import { SceneContext, SceneContextObject, useQueryRunner, VizPanel as VizPanelReact } from '@grafana/scenes-react';
-import { useTheme2, type ElementSelectionContextState, ElementSelectionContext, Badge } from '@grafana/ui';
+import { Badge } from '@grafana/ui';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 import { getQueryRunnerFor } from '../utils/utils';
 
-import { FanoutByData } from './FanoutByData';
+import { type SplitGroup, type TimeWindowSplitGroup } from './FanoutPanel';
 
-export function FanoutPanelByTimeWindow({
-  panel,
-  panelDataIn,
-  fanoutByData,
-  fanoutByTime,
-}: {
-  panel: VizPanel;
-  panelDataIn: PanelData;
-  fanoutByTime?: string;
-  fanoutByData?: string;
-}) {
-  const theme = useTheme2();
+export function createTimeWindowGroups(
+  panel: VizPanel,
+  data: PanelData,
+  timeWindow: string,
+  windowCount: number
+): SplitGroup[] {
+  // Time window is normally just a unit (h, d, w, M) which needs a count to be a valid interval string
+  const shiftAmountMs = rangeUtil.intervalToMs(/^\d/.test(timeWindow) ? timeWindow : `1${timeWindow}`);
 
-  const selectionContext: ElementSelectionContextState = useMemo(() => {
-    return {
-      enabled: false,
-      selected: [],
-      onSelect: () => {},
-      onClear: () => {},
-    };
-  }, []);
-
-  if (!fanoutByTime) {
-    return <FanoutByData panel={panel} panelDataIn={panelDataIn} fanoutMode={fanoutByData} />;
-  }
-
-  const groups = createTimeWindowGroups(panel, fanoutByTime);
-
-  const style: CSSProperties = {
-    display: 'grid',
-    flexGrow: 1,
-    gridTemplateColumns: `repeat(auto-fit, minmax(100%, 1fr))`,
-    gridAutoRows: `minmax(250px, auto)`,
-    columnGap: theme.spacing(1),
-    rowGap: theme.spacing(1),
-    height: '100%',
-  };
-
-  return (
-    <ElementSelectionContext.Provider value={selectionContext}>
-      <div style={style}>
-        {groups.map((group, index) => {
-          if (index === 0) {
-            return <FanoutByData key={index} panel={panel} panelDataIn={panelDataIn} fanoutMode={fanoutByData} />;
-          }
-
-          return <VizPanelTimeWindow key={index} group={group} />;
-        })}
-      </div>
-    </ElementSelectionContext.Provider>
-  );
-}
-
-interface SplitGroup {
-  timeRange: TimeRange;
-  timeShift: string;
-  panel: VizPanel;
-}
-
-function createTimeWindowGroups(panel: VizPanel, timeWindow: string): SplitGroup[] {
-  const windowCount = 5;
-  const shiftAmountMs = rangeUtil.intervalToMs(timeWindow);
-  const groups: SplitGroup[] = [];
+  /**
+   * The most recent window is the panel time range unmodified, so we can render the data the panel already has
+   */
+  const groups: SplitGroup[] = [{ type: 'data', name: panel.state.title, frames: data.series }];
 
   let timeRange = panel.getTimeRange();
 
-  for (let index = 0; index < windowCount; index++) {
-    if (index > 0) {
-      timeRange = toTimeRange(getShiftedTimeRange(-1, timeRange, shiftAmountMs));
-    }
+  for (let index = 1; index <= windowCount; index++) {
+    timeRange = toTimeRange(getShiftedTimeRange(-1, timeRange, shiftAmountMs));
 
-    const newSceneTimeRange = new SceneTimeRange({});
-    newSceneTimeRange.onTimeRangeChange(timeRange);
+    const shiftedTimeRange = new SceneTimeRange({});
+    shiftedTimeRange.onTimeRangeChange(timeRange);
 
     groups.push({
-      timeShift: index === 0 ? '' : `Time shifted -${index}${timeWindow}`,
-      timeRange,
-      panel:
-        index === 0
-          ? panel
-          : panel.clone({
-              $timeRange: newSceneTimeRange,
-            }),
+      type: 'timeWindow',
+      name: panel.state.title,
+      timeShift: t('dashboard.fanout-by-time.time-shift-badge', 'Time shifted -{{shift}}', {
+        shift: `${index}${timeWindow}`,
+      }),
+      panel: panel.clone({ $timeRange: shiftedTimeRange }),
     });
   }
 
@@ -106,7 +53,7 @@ function toTimeRange({ from, to }: AbsoluteTimeRange): TimeRange {
   return { from: fromUtc, to: toUtcValue, raw: { from: fromUtc, to: toUtcValue } };
 }
 
-function VizPanelTimeWindow({ group }: { group: SplitGroup }) {
+export function FanoutTimeWindowGroup({ group, viz }: { group: TimeWindowSplitGroup; viz: VizConfig }) {
   const context = useTimeWindowContext(group.panel);
 
   if (!context) {
@@ -115,21 +62,12 @@ function VizPanelTimeWindow({ group }: { group: SplitGroup }) {
 
   return (
     <SceneContext.Provider value={context}>
-      <VizPanelReactWrapper group={group} />
+      <TimeWindowQuery group={group} viz={viz} />
     </SceneContext.Provider>
   );
 }
 
-function VizPanelReactWrapper({ group }: { group: SplitGroup }) {
-  const viz: VizConfig = {
-    pluginId: group.panel.state.pluginId,
-    pluginVersion: group.panel.state.pluginVersion ?? '0.0.0',
-    options: {
-      ...group.panel.state.options,
-    },
-    fieldConfig: group.panel.state.fieldConfig,
-  };
-
+function TimeWindowQuery({ group, viz }: { group: TimeWindowSplitGroup; viz: VizConfig }) {
   const queryRunner = getQueryRunnerFor(group.panel);
 
   const data = useQueryRunner({
@@ -140,7 +78,7 @@ function VizPanelReactWrapper({ group }: { group: SplitGroup }) {
 
   return (
     <VizPanelReact
-      title={group.panel.state.title}
+      title={group.name}
       viz={viz}
       dataProvider={data}
       headerActions={<Badge color="blue" text={group.timeShift} />}

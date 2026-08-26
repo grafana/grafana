@@ -5786,6 +5786,9 @@
         "label": "Export dashboard menu"
       }
     },
+    "fanout-by-time": {
+      "time-shift-badge": "Time shifted -{{shift}}"
+    },
     "filters-overview": {
       "apply": "Apply",
       "apply-close": "Apply and close",
@@ -6495,14 +6498,15 @@
       "view-panel": {
         "disabled": "Disabled",
         "fanout-by-series": "By series",
-        "fanout-by-time-12h": "12 hours",
-        "fanout-by-time-1d": "1 day",
-        "fanout-by-time-1h": "1 hour",
-        "fanout-by-time-1w": "1 week",
-        "fanout-by-time-category": "Fan-out by time window",
-        "fanout-category": "Fan-out by series or label",
-        "fanout-labels": "Labels",
-        "fanout-no-labels": "Data has no labels",
+        "fanout-by-time-1d": "Day",
+        "fanout-by-time-1h": "Hour",
+        "fanout-by-time-1M": "Month",
+        "fanout-by-time-1w": "Week",
+        "fanout-category": "Fan-out",
+        "fanout-labels": "By label",
+        "fanout-no-labels": "No labels found",
+        "fanout-time-window": "By time window",
+        "fanout-window-count": "Window count",
         "pane-header": "View panel",
         "quick-toggles": "Quick toggles",
         "title": "View panel controls"

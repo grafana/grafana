@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo } from 'react';
 
 import {
   type PanelData,
@@ -10,86 +10,37 @@ import {
 } from '@grafana/data';
 import { SceneDataNode, type VizConfig, type VizPanel } from '@grafana/scenes';
 import { VizPanel as VizPanelReact } from '@grafana/scenes-react';
-import { useTheme2, Spinner, type ElementSelectionContextState, ElementSelectionContext } from '@grafana/ui';
 
+import { type DataSplitGroup } from './FanoutPanel';
 import { bySeriesMode, getLabelFromMode } from './ViewPanelSidePane';
 
-export function FanoutByData({
-  panel,
+export function FanoutDataGroup({
+  group,
+  viz,
   panelDataIn,
-  fanoutMode,
 }: {
-  panel: VizPanel;
+  group: DataSplitGroup;
+  viz: VizConfig;
   panelDataIn: PanelData;
-  fanoutMode?: string;
 }) {
-  const theme = useTheme2();
-  const viz: VizConfig = {
-    pluginId: panel.state.pluginId,
-    pluginVersion: panel.state.pluginVersion ?? '0.0.0',
-    options: {
-      ...panel.state.options,
-    },
-    fieldConfig: panel.state.fieldConfig,
-  };
-
-  const selectionContext: ElementSelectionContextState = useMemo(() => {
-    return {
-      enabled: false,
-      selected: [],
-      onSelect: () => {},
-      onClear: () => {},
-    };
-  }, []);
-
-  if (!panelDataIn) {
-    return <Spinner />;
-  }
-
-  const groups = groupDataByMode(panel, panelDataIn, fanoutMode, theme);
-
-  const style: CSSProperties = {
-    display: 'grid',
-    flexGrow: 1,
-    gridTemplateColumns: `repeat(auto-fit, minmax(100%, 1fr))`,
-    gridAutoRows: `minmax(250px, auto)`,
-    columnGap: theme.spacing(1),
-    rowGap: theme.spacing(1),
-    height: '100%',
-  };
-
-  return (
-    <ElementSelectionContext.Provider value={selectionContext}>
-      <div style={style}>
-        {groups.map((group, index) => {
-          const dataNode = new SceneDataNode({
-            data: {
-              ...panelDataIn,
-              series: group.frames,
-            },
-          });
-          return <VizPanelReact key={index} title={group.name} viz={viz} dataProvider={dataNode} />;
-        })}
-      </div>
-    </ElementSelectionContext.Provider>
+  const dataNode = useMemo(
+    () => new SceneDataNode({ data: { ...panelDataIn, series: group.frames } }),
+    [panelDataIn, group.frames]
   );
+
+  return <VizPanelReact title={group.name} viz={viz} dataProvider={dataNode} />;
 }
 
-interface SplitGroup {
-  name: string;
-  frames: DataFrame[];
-}
-
-function groupDataByMode(
+export function createDataGroups(
   panel: VizPanel,
   data: PanelData,
   mode: string | undefined,
   theme: GrafanaTheme2
-): SplitGroup[] {
+): DataSplitGroup[] {
   const fieldConfig = panel.state.fieldConfig.defaults;
 
   if (!mode) {
-    return [{ name: panel.state.title, frames: data.series }];
+    return [{ type: 'data', name: panel.state.title, frames: data.series }];
   }
 
   if (mode === bySeriesMode) {
@@ -114,6 +65,7 @@ function groupDataByMode(
       }
 
       return {
+        type: 'data' as const,
         name: getFrameDisplayName(frame, 0),
         frames: [frame],
       };
@@ -124,7 +76,7 @@ function groupDataByMode(
   return groupDataFramesByLabel(data, label);
 }
 
-export function groupDataFramesByLabel(data: PanelData, label: string): SplitGroup[] {
+export function groupDataFramesByLabel(data: PanelData, label: string): DataSplitGroup[] {
   const groups: Record<string, DataFrame[]> = {};
 
   for (const frame of data.series) {
@@ -147,6 +99,7 @@ export function groupDataFramesByLabel(data: PanelData, label: string): SplitGro
   }
 
   return Object.entries(groups).map(([name, frames]) => ({
+    type: 'data',
     name,
     frames,
   }));
