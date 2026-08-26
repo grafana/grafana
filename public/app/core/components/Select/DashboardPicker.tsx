@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { forwardRef, useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -16,6 +16,7 @@ interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'on
   onChange?: (value?: DashboardPickerDTO) => void;
   /** Offer a reserved "Global Home" entry that stops the user > team > org home dashboard fallback. */
   includeGlobalHomeOption?: boolean;
+  showUnknown?: boolean;
 }
 
 export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
@@ -54,18 +55,9 @@ const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
 export const DashboardPicker = forwardRef<HTMLElement, Props>(
-  (
-    {
-      value,
-      onChange,
-      placeholder = 'Select dashboard',
-      noOptionsMessage = 'No dashboards found',
-      includeGlobalHomeOption,
-      ...props
-    },
-    ref
-  ) => {
+  ({ value, onChange, placeholder, noOptionsMessage, showUnknown, includeGlobalHomeOption, ...props }, ref) => {
     const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
+    const abortRef = useRef<AbortController | null>(null);
 
     // This is required because the async select does not match the raw uid value
     // We can not use a simple Select because the dashboard search should not return *everything*
@@ -79,43 +71,68 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
         setCurrent(getGlobalHomeOption());
         return;
       }
+      const abortController = new AbortController();
+      abortRef.current = abortController;
+      const setCurrentIfLatest = (next: SelectableValue<DashboardPickerDTO>) => {
+        if (!abortController.signal.aborted) {
+          setCurrent(next);
+        }
+      };
 
       (async () => {
         // value was manually changed from outside or we are rendering for the first time.
         // We need to fetch dashboard information.
-        const api = await getDashboardAPI();
-        const dto = await api.getDashboardDTO(value, undefined);
+        try {
+          const api = await getDashboardAPI();
+          const dto = await api.getDashboardDTO(value, undefined);
 
-        if (isDashboardV2Resource(dto)) {
-          setCurrent({
-            value: {
-              uid: dto.metadata.name,
-              name: dto.spec.title,
-              folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
-              folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
-            },
-            label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
-          });
-        } else {
-          if (dto.dashboard) {
-            setCurrent({
+          if (isDashboardV2Resource(dto)) {
+            setCurrentIfLatest({
               value: {
-                uid: dto.dashboard.uid,
-                name: dto.dashboard.title,
-                folderTitle: dto.meta.folderTitle,
-                folderUid: dto.meta.folderUid,
+                uid: dto.metadata.name,
+                name: dto.spec.title,
+                folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
+                folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
               },
-              label: formatLabel(dto.meta?.folderTitle, dto.dashboard.title),
+              label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
+            });
+          } else {
+            if (dto.dashboard) {
+              setCurrentIfLatest({
+                value: {
+                  uid: dto.dashboard.uid,
+                  name: dto.dashboard.title,
+                  folderTitle: dto.meta.folderTitle,
+                  folderUid: dto.meta.folderUid,
+                },
+                label: formatLabel(dto.meta?.folderTitle, dto.dashboard.title),
+              });
+            }
+          }
+        } catch {
+          if (showUnknown) {
+            const name = t('dashboard-picker.unknown-dashboard', 'Unknown dashboard ({{uid}})', { uid: value });
+            setCurrentIfLatest({
+              value: {
+                uid: value,
+                name,
+              },
+              label: name,
             });
           }
         }
       })();
+
+      return () => {
+        abortController.abort();
+      };
       // we don't need to rerun this effect every time `current` changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value, includeGlobalHomeOption]);
+    }, [value, includeGlobalHomeOption, showUnknown]);
 
     const onPicked = useCallback(
       (sel: SelectableValue<DashboardPickerDTO>) => {
+        abortRef.current?.abort();
         setCurrent(sel);
         onChange?.(sel?.value);
       },
@@ -134,8 +151,8 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       <AsyncSelect
         loadOptions={includeGlobalHomeOption ? loadOptionsWithGlobalHome : getDashboards}
         onChange={onPicked}
-        placeholder={placeholder}
-        noOptionsMessage={noOptionsMessage}
+        placeholder={placeholder ?? t('dashboard-picker.placeholder', 'Select dashboard')}
+        noOptionsMessage={noOptionsMessage ?? t('dashboard-picker.no-options', 'No dashboards found')}
         value={current}
         defaultOptions={true}
         {...props}

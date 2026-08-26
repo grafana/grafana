@@ -348,6 +348,7 @@ export const PoliciesTree = ({
           setResetRoute(null);
         }}
         routeName={resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ''}
+        route={resetRoute}
         isActualDefaultPolicy={isDefaultRoutingTreeName(routeName)}
       />
     </>

@@ -7,7 +7,6 @@ awsconfig
 /.awcache
 /dist
 /public/build
-/public/build-rspack
 /public/build-swagger
 /public/build-swagger-rspack
 /emails/dist
@@ -86,6 +85,7 @@ public/css/*.min.css
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/add-e2e-selectors/
+!.claude/skills/frontend-testing-strategy/
 !.claude/skills/panel-testing-strategy/
 
 .eslintcache

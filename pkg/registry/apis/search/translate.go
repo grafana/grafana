@@ -35,10 +35,12 @@ const (
 	MaxFacetLimit     = 1000
 )
 
-// Trash-specific field names. title and folder reuse the standard field names.
+// Trash-specific field names. title, folder and tags reuse the standard field
+// names.
 const (
 	trashFieldTitle        = resource.SEARCH_FIELD_TITLE
 	trashFieldFolder       = resource.SEARCH_FIELD_FOLDER
+	trashFieldTags         = resource.SEARCH_FIELD_TAGS
 	trashFieldDeletedBy    = "deleted_by"
 	trashFieldDeletionTime = "deletion_time"
 	trashFieldDeletedRV    = "deleted_rv"
@@ -147,6 +149,11 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 // fieldSet so the shared validators enforce the trash rules. Capabilities
 // mirror the design: text on title; filter on folder/deleted_by; sort on
 // title/folder/deleted_by/deletion_time; all retrievable.
+//
+// tags is filterable and retrievable, as it is for live search, so a caller can
+// show the tags a deleted object had and narrow the list to one. Faceting is left
+// out because trash rejects facets outright, and sorting because ordering by a
+// list of values has no defined meaning.
 func trashFieldSet() *fieldSet {
 	def := func(name string, caps ...resource.SearchCapability) resource.SearchFieldDefinition {
 		return resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString, Capabilities: caps}
@@ -157,9 +164,21 @@ func trashFieldSet() *fieldSet {
 	for _, d := range resource.TrashSearchFieldDefinitions() {
 		trash[d.Name] = d
 	}
+	// tags is taken from the standard declarations for the same reason, so trash and
+	// live search agree it holds a list of strings, with faceting dropped.
+	var tags resource.SearchFieldDefinition
+	for _, d := range resource.StandardSearchFieldDefinitions() {
+		if d.Name == trashFieldTags {
+			tags = d
+			tags.Capabilities = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+			break
+		}
+	}
+
 	return &fieldSet{byName: map[string]resource.SearchFieldDefinition{
 		trashFieldTitle:        def(trashFieldTitle, resource.SearchCapabilityText, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
 		trashFieldFolder:       def(trashFieldFolder, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
+		trashFieldTags:         tags,
 		trashFieldDeletedBy:    trash[trashFieldDeletedBy],
 		trashFieldDeletionTime: trash[trashFieldDeletionTime],
 		trashFieldDeletedRV:    trash[trashFieldDeletedRV],
@@ -581,7 +600,6 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 	for _, f := range fields {
 		req.QueryFields = append(req.QueryFields, &resourcepb.ResourceSearchRequest_QueryField{
 			Name: f,
-			Type: resourcepb.QueryFieldType_TEXT,
 			// The backend applies boost unconditionally, so a zero value would
 			// zero-score every hit. v1 has no per-leaf boost, so use a neutral 1.
 			Boost: 1,
