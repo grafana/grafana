@@ -1624,6 +1624,10 @@
         "autosync-error-title": "Auto-sync Failed",
         "autosync-importing-body": "Enabling Auto-sync. Please wait...",
         "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-title": "Rules Import Failed",
+        "autosync-rules-imported-note": "Your selected alert rules were also imported.",
+        "autosync-rules-note": "Your selected alert rules will also be imported.",
         "autosync-success-body": "Auto-sync enabled. Redirecting...",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
@@ -1698,7 +1702,6 @@
       "review": {
         "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
-        "back-notifications": "Notification resources",
         "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
@@ -1717,7 +1720,6 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
-        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1745,7 +1747,7 @@
       "step1": {
         "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
-        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
@@ -3880,6 +3882,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
+      "autosync-rules-imported-note": "Your alert rules were also imported.",
       "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
       "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
@@ -6869,6 +6873,11 @@
       "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "title": "There are no dashboard links added yet"
     }
+  },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
   },
   "dashboard-prompt": {
     "datasource-entry": {
@@ -12945,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "Are you sure you want to delete \"{{title}}\"?",
+      "confirm": "Delete",
+      "error": "Failed to delete notebook",
+      "in-progress": "Deleting...",
+      "success": "Notebook deleted",
+      "title": "Delete"
+    },
     "export": {
       "copied": "Notebook copied as Markdown",
       "copy-markdown": "Copy as Markdown",
@@ -13008,7 +13025,8 @@
     "view": {
       "copy-link": "Copy link",
       "mode-edit": "Edit",
-      "mode-view": "View"
+      "mode-view": "View",
+      "more-actions": "More actions"
     }
   },
   "notifications": {
