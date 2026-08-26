@@ -868,7 +868,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		obj.Secure.Token.Create = token
 	}
 
-	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build_repository", repoSpanAttrs(obj))
+	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
 	repo, err := rc.repoFactory.Build(buildCtx, obj)
 	buildSpan.End()
 	if err != nil {
@@ -1175,7 +1175,7 @@ func (rc *RepositoryController) generateRepositoryToken(
 	obj *provisioning.Repository,
 	c *provisioning.Connection,
 ) (_ common.RawSecureValue, _ []map[string]any, err error) {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.generate_repository_token", repoSpanAttrs(obj))
+	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.generate_token", repoSpanAttrs(obj))
 	defer span.End()
 	defer func() {
 		if err != nil {

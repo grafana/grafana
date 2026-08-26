@@ -269,7 +269,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	// The worker loop carries no active span, so this opens a fresh trace per
 	// reconcile whose children show where the reconcile spends its time.
-	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile_connection",
+	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile",
 		trace.WithAttributes(
 			attribute.String("connection.namespace", namespace),
 			attribute.String("connection.name", name),
@@ -311,7 +311,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
-	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build_connection", connSpanAttrs(conn))
+	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build", connSpanAttrs(conn))
 	c, err := cc.connectionFactory.Build(buildCtx, conn)
 	buildSpan.End()
 	if err != nil {
@@ -378,7 +378,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_connection_token", connSpanAttrs(conn))
+		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
 		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
 		tokenSpan.End()
 		if err != nil {
