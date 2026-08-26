@@ -21,7 +21,7 @@ interface Props {
   onBaseline: (query: DataQuery) => boolean;
 }
 
-export interface QueryCoauthoringHost {
+interface QueryCoauthoringHost {
   datasourceType: string;
   previewPhase: 'idle' | 'pending' | 'running' | 'complete';
   timeRange?: { from: number; to: number };
