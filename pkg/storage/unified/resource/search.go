@@ -825,7 +825,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return errResp, nil
 	}
 
-	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
@@ -884,26 +883,20 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// External rows aren't unified-storage resources — the authz service
-	// has nothing to answer for them, so per-result checks are skipped
-	// and the caller does its own post-filtering.
-	var allowed map[vectorAuthzKey]bool
-	if !coll.IsExternal {
-		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil, status.FromContextError(ctx.Err()).Err()
-			}
-			s.log.Error("vector search: authz batch check", "err", err)
-			return nil, status.Error(codes.Internal, "authz batch check")
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
 		}
+		s.log.Error("vector search: authz batch check", "err", err)
+		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
+		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -2337,8 +2330,8 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 
 // buildDeletedDocument builds the document for an object that is in the trash.
 // Trash serves a fixed field set, so the kind's builder is skipped: it would only
-// add live-only fields, at about twice the cost. Its title comes from the same
-// FindTitle, so trash and live search agree.
+// add live-only fields, at about twice the cost. Title and tags come from the same
+// place live search reads them, so the two agree.
 //
 // Fields are listed rather than cleared, so a field added to IndexableDocument
 // later cannot reach trash documents by accident.
@@ -2362,6 +2355,14 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 
 		IsDeleted: new(true),
 		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// Tags come from the marker's spec, which is the whole object as it was, so this
+	// costs no extra read. A spec that is missing or not an object leaves them unset,
+	// exactly as it leaves the title falling back to the name.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+		}
 	}
 	// The deletion marker records the deleting user as the last updater, which is
 	// also what listFromTrash reads, so both trash views name the same user.
