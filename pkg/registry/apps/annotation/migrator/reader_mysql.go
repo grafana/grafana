@@ -3,7 +3,9 @@ package migrator
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -19,16 +21,35 @@ func NewMySQLReader(db *sql.DB) *MySQLReader {
 	return &MySQLReader{db: db}
 }
 
-func (r *MySQLReader) CountUserAnnotations(ctx context.Context, orgID int64) (int64, error) {
-	var count int64
-	err := r.db.QueryRowContext(ctx,
-		"SELECT COUNT(*) FROM annotation WHERE org_id = ? AND alert_id = 0",
-		orgID,
-	).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("counting legacy user annotations: %w", err)
+// Totals reads the count and the highest id in one aggregate
+func (r *MySQLReader) Totals(ctx context.Context, orgID int64) (LegacyTotals, error) {
+	const query = "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM annotation " +
+		"WHERE org_id = ? AND alert_id = 0"
+
+	var totals LegacyTotals
+	if err := r.db.QueryRowContext(ctx, query, orgID).Scan(&totals.Count, &totals.MaxID); err != nil {
+		return LegacyTotals{}, fmt.Errorf("reading legacy annotation totals: %w", err)
 	}
-	return count, nil
+	return totals, nil
+}
+
+// LatestChange returns the newest point on the legacy `updated` timeline.
+func (r *MySQLReader) LatestChange(ctx context.Context, orgID int64) (UpdateCursor, error) {
+	const query = "SELECT COALESCE(a.updated, 0), a.id FROM annotation a " +
+		"WHERE a.org_id = ? AND a.alert_id = 0 " +
+		"ORDER BY a.updated DESC, a.id DESC " +
+		"LIMIT 1"
+
+	var cursor UpdateCursor
+	err := r.db.QueryRowContext(ctx, query, orgID).Scan(&cursor.Updated, &cursor.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		// No user annotations: the zero cursor is the start of the timeline.
+		return UpdateCursor{}, nil
+	}
+	if err != nil {
+		return UpdateCursor{}, fmt.Errorf("reading latest legacy annotation change: %w", err)
+	}
+	return cursor, nil
 }
 
 // legacySelectFrom is the shared column list + source for reading legacy
@@ -138,6 +159,10 @@ func (r *MySQLReader) readTags(ctx context.Context, ids []int64) (map[int64][]st
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterating legacy tags: %w", err)
+	}
+
+	for id := range result {
+		slices.Sort(result[id])
 	}
 
 	return result, nil
