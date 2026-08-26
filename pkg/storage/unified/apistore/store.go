@@ -46,14 +46,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
-const (
-	MaxUpdateRetries = 10
-)
-
 var updateRetryConfig = backoff.Config{
 	MinBackoff: 10 * time.Millisecond,
 	MaxBackoff: 250 * time.Millisecond,
-	MaxRetries: MaxUpdateRetries,
+	MaxRetries: 10,
 }
 
 var (
