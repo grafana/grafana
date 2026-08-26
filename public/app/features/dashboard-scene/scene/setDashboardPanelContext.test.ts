@@ -713,7 +713,9 @@ describe('setDashboardPanelContext', () => {
         $data: new SceneDataNode({
           data: {
             state: LoadingState.Done,
-            series: [{ name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'slow query' }] } }],
+            series: [
+              { name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'slow query' }] } },
+            ],
             timeRange: getDefaultTimeRange(),
           },
         }),

@@ -54,10 +54,7 @@ function formatError(error: DataQueryError): string {
   }
 }
 
-export function buildEntries(
-  data: DataFrame[] | undefined,
-  errors: DataQueryError[] | undefined
-): InspectableEntry[] {
+export function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | undefined): InspectableEntry[] {
   const entries: InspectableEntry[] = [];
 
   for (const error of errors ?? []) {
