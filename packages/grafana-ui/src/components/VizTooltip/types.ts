@@ -35,6 +35,12 @@ export enum VizTooltipColorPlacement {
 }
 
 /** @alpha */
+export interface VizTooltipDelta {
+  text: string; //Formatted, carrying the field's unit and decimal formatting (e.g. `'5 B'`, `'1.5 s'`).
+  numeric: number; //Raw numeric delta
+}
+
+/** @alpha */
 export interface VizTooltipItem {
   /** Display label for this row. */
   label: string;
@@ -52,6 +58,8 @@ export interface VizTooltipItem {
   lineStyle?: LineStyle;
   /** When true the row's color indicator is rendered hollow, indicating the field is not shown in the visualization. */
   isHiddenFromViz?: boolean;
+  /** Used for the difference between series on a viz with time comparison*/
+  delta?: VizTooltipDelta;
 
   /**
    * Numeric representation of `value` used for sorting rows.

@@ -32,7 +32,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields } from './utils';
+import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -165,6 +165,7 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
+        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames!);
         return (
           <>
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
@@ -216,6 +217,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      comparisonFieldPairs={compFieldPairs}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );
