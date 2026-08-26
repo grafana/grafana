@@ -143,7 +143,7 @@ type LogsCheckResult = {
 };
 
 /**
- * Asume Drilldown when the app is unknown or resolve it via path name.
+ * Assume Drilldown when the app is unknown or resolve it via path name.
  */
 export function isDrilldownContext(app?: CoreApp | string): boolean {
   if (app === CoreApp.Unknown) {
