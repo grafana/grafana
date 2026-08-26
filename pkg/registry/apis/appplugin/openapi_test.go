@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -141,6 +143,53 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	for name := range oas.Components.Schemas {
 		require.NotContains(t, name, ".v0alpha1.", "other versions must not be injected into this version's spec")
 	}
+}
+
+func TestPostProcessManifestKindPostExample(t *testing.T) {
+	manifest := testManifest(t)
+	version := "v1alpha1"
+	b := &AppPluginAPIBuilder{manifest: manifest}
+
+	root := "/apis/" + manifest.Group + "/" + version + "/"
+	base := root + "namespaces/{namespace}/testkinds"
+	oas := &spec3.OpenAPI{
+		Paths: &spec3.Paths{Paths: map[string]*spec3.Path{
+			base: {PathProps: spec3.PathProps{
+				Post: &spec3.Operation{OperationProps: spec3.OperationProps{
+					RequestBody: &spec3.RequestBody{RequestBodyProps: spec3.RequestBodyProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
+						},
+					}},
+				}},
+			}},
+		}},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	}
+
+	b.postProcessManifestKinds(oas, root, version)
+
+	example, ok := oas.Paths.Paths[base].Post.RequestBody.Content["application/json"].Example.(*unstructured.Unstructured)
+	require.True(t, ok, "expected an unstructured example on the POST body")
+	require.Equal(t, manifest.Group+"/"+version, example.GetAPIVersion())
+	require.Equal(t, "TestKind", example.GetKind())
+
+	// A namespaced kind that does not set folderScoped is folder-scoped, and
+	// storage requires the folder, so the example must carry the annotation.
+	require.Equal(t, "{folder-name}", example.GetAnnotations()[utils.AnnoKeyFolder])
+
+	// The spec property is a $ref, and Foo/Bar/Baz are refs nested inside it:
+	// every level must be resolved so the example is a usable request body.
+	require.Equal(t, map[string]any{
+		"testField": "example",
+		"foo": map[string]any{
+			"foo": "example",
+			"bar": map[string]any{
+				"value": "example",
+				"baz":   map[string]any{"value": 0},
+			},
+		},
+	}, example.Object["spec"])
 }
 
 func TestSpecVersion(t *testing.T) {

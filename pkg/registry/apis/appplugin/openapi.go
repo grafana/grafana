@@ -297,7 +297,7 @@ func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *
 				example.SetAPIVersion(info.gvk.GroupVersion().String())
 				example.SetKind(info.gvk.Kind)
 				example.SetGenerateName("x")
-				if info.kind.FolderScoped != nil && *info.kind.FolderScoped {
+				if info.kind != nil && isFolderScoped(*info.kind) {
 					example.SetAnnotations(map[string]string{
 						utils.AnnoKeyFolder: "{folder-name}",
 					})
@@ -305,7 +305,7 @@ func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *
 
 				// SPEC -- TODO? add an example in the manifest
 				if prop := info.specProperty(); prop != nil {
-					if v := info.exampleValue(prop, map[string]bool{}); v != nil {
+					if v := info.exampleValue(prop, map[string]bool{}, "spec"); v != nil {
 						example.Object["spec"] = v
 					}
 				}
@@ -396,7 +396,7 @@ func refName(ref spec.Ref) string {
 // exampleValue builds a placeholder value for a schema, resolving $refs against
 // the manifest definitions. visited holds the refs on the current path so a
 // self-referencing kind (a tree node containing itself) terminates.
-func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool) any {
+func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool, parent string) any {
 	if s == nil {
 		return nil
 	}
@@ -425,22 +425,22 @@ func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool)
 			if prop.ReadOnly {
 				continue
 			}
-			obj[k] = info.exampleValue(&prop, visited)
+			obj[k] = info.exampleValue(&prop, visited, k)
 		}
 		return obj
 	case s.Type.Contains("array"):
 		if s.Items != nil && s.Items.Schema != nil {
-			return []any{info.exampleValue(s.Items.Schema, visited)}
+			return []any{info.exampleValue(s.Items.Schema, visited, parent)}
 		}
 		return []any{}
 	case s.Type.Contains("object"):
 		obj := map[string]any{}
 		if s.AdditionalProperties != nil && s.AdditionalProperties.Schema != nil {
-			obj["key"] = info.exampleValue(s.AdditionalProperties.Schema, visited)
+			obj["key"] = info.exampleValue(s.AdditionalProperties.Schema, visited, parent)
 		}
 		return obj
 	case s.Type.Contains("string"):
-		return exampleString(s.Format)
+		return exampleString(s.Format, parent)
 	case s.Type.Contains("integer"):
 		return 0
 	case s.Type.Contains("number"):
@@ -453,7 +453,7 @@ func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool)
 
 // exampleString returns a value that satisfies the common string formats, since
 // a plain "example" is rejected by clients validating format.
-func exampleString(format string) string {
+func exampleString(format string, key string) string {
 	switch format {
 	case "date-time":
 		return "2020-01-02T15:04:05Z"
@@ -464,11 +464,11 @@ func exampleString(format string) string {
 	case "uuid":
 		return "00000000-0000-0000-0000-000000000000"
 	case "email":
-		return "user@example.com"
+		return key + "@example.com"
 	case "uri", "url":
-		return "https://example.com"
+		return "https://" + key + ".com"
 	case "byte":
 		return "ZXhhbXBsZQ=="
 	}
-	return "example"
+	return key
 }

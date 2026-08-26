@@ -30,6 +30,14 @@ import (
 // clusterScope is the manifest value for kinds that live outside a namespace.
 const clusterScope = "Cluster"
 
+func isFolderScoped(kind app.ManifestVersionKind) bool {
+	if kind.Scope == clusterScope {
+		return false
+	}
+	// namespaced resources are folder scoped by default
+	return kind.FolderScoped == nil || *kind.FolderScoped
+}
+
 // kindStore applies a manifest kind's storage and REST strategies.
 type kindStore struct {
 	*registry.Store
@@ -115,8 +123,8 @@ func newKindStore(
 		_, wrap.hasStatus = def.Schema.Properties["status"]
 	}
 
-	// Register before CompleteWithOptions resolves this resource. Cluster kinds cannot use folders.
-	folder := (kind.FolderScoped == nil || *kind.FolderScoped) && !clusterScoped
+	// Register before CompleteWithOptions resolves this resource.
+	folder := isFolderScoped(kind)
 	opts.StorageOptsRegister(gr, apistore.StorageOptions{
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
