@@ -304,11 +304,15 @@ async function resolveUserDisplays(keys: string[]): Promise<Map<string, LibraryE
     ).data;
     for (const display of result.display ?? []) {
       const key = `${display.identity.type}:${display.identity.name ?? ''}`;
-      users.set(key, {
+      const user = {
         avatarUrl: display.avatarURL ?? '',
         id: display.internalId ?? 0,
         name: display.displayName,
-      });
+      };
+      users.set(key, user);
+      if (display.internalId !== undefined) {
+        users.set(`${display.identity.type}:${display.internalId}`, user);
+      }
     }
   } catch {
     // display resolution is best effort; the DTO falls back to empty users

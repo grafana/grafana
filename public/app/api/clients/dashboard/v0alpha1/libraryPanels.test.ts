@@ -285,6 +285,40 @@ describe('libraryPanelsK8sClient request options', () => {
     expect(result.meta?.updatedBy).toEqual({ avatarUrl: '', id: 0, name: '' });
   });
 
+  it('resolves a legacy numeric user key through the IAM internal ID', async () => {
+    const resource = makeResource();
+    resource.metadata.annotations!['grafana.app/createdBy'] = 'user:1';
+    fetch.mockImplementation(({ url }) => {
+      if (url.endsWith('/librarypanels/panel-uid')) {
+        return of({ data: resource });
+      }
+      if (url.endsWith('/folders/folder-uid')) {
+        return of({ data: { spec: { title: 'Folder' } } });
+      }
+      if (url.includes('iam.grafana.app/v0alpha1/display')) {
+        return of({
+          data: {
+            display: [
+              {
+                displayName: 'Creator',
+                identity: { type: 'user', name: 'creator-uid' },
+                internalId: 1,
+              },
+            ],
+          },
+        });
+      }
+      if (url === '/api/library-elements/panel-uid/connections') {
+        return of({ data: { result: [] } });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+
+    const result = await libraryPanelsK8sClient.get('panel-uid');
+
+    expect(result.meta?.createdBy).toEqual({ avatarUrl: '', id: 1, name: 'Creator' });
+  });
+
   it('returns a successful create when best-effort enrichment fails', async () => {
     const resource = makeResource();
     resource.metadata.annotations!['grafana.app/createdBy'] = 'user:creator';
