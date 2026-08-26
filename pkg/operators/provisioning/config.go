@@ -295,7 +295,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, c.registry, supportedResources...)
 	c.clients = clients
 	return clients, nil
 }

@@ -20,7 +20,7 @@ var (
 
 func TestResourceClients_SupportedResources(t *testing.T) {
 	t.Run("falls back to the static base set when none is configured", func(t *testing.T) {
-		clients, err := NewClientFactory(nil).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, nil).Clients(context.Background(), "default")
 		require.NoError(t, err)
 
 		assert.Equal(t, SupportedProvisioningResources, clients.SupportedResources())
@@ -30,7 +30,7 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		active := SupportedResource{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)}
 		disabled := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityDisabled)}
 
-		clients, err := NewClientFactory(nil, active, disabled).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, nil, active, disabled).Clients(context.Background(), "default")
 		require.NoError(t, err)
 
 		// Disabled resources are not acted on, so they are excluded from the active set.
