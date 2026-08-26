@@ -116,7 +116,6 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor, maxWidth?: number) =
       height: '1lh',
       flexShrink: 0,
     }),
-    // only used when `maxWidth` is set — default (no maxWidth) keeps wrapping onto multiple lines instead
     truncatedText: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
