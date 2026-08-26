@@ -2665,12 +2665,8 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		Namespace: nsr.Namespace,
 		Kinds:     []string{nsr.GroupResource()},
 	})
-	if err != nil {
-		s.degraded(ctx, "check_quota", "get_stats_failed", nsr, err)
-		return nil
-	}
-	if statsRsp.Error != nil {
-		s.degraded(ctx, "check_quota", "stats_error", nsr, errors.New(statsRsp.Error.Message))
+	if err := ErrorFromResponse(statsRsp.GetError(), err); err != nil {
+		s.degraded(ctx, "check_quota", "stats_error", nsr, err)
 		return nil
 	}
 	stats := statsRsp.Stats

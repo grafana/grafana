@@ -1638,6 +1638,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1708,7 +1712,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Pravidla výstrah",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtr",
         "folder": "Cílová složka",
@@ -1727,7 +1730,6 @@
         "routing": "Směrování oznámení",
         "routing-none": "Není vybrán žádný strom zásad",
         "routing-tree": "Strom zásad: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Pravidla výstrah nebudou importována.",
         "rules-title": "Pravidla výstrah",
         "skipped": "Přeskočeno",
@@ -3942,6 +3944,8 @@
       "title-notification-policies": "Zásady oznamování"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Nepodařilo se importovat zdroje",
@@ -6982,6 +6986,11 @@
       "title": "Nejsou k dispozici žádné odkazy na nástěnku"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9200,15 +9209,16 @@
       "split-widen": "Rozšířit podokno"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Otevřít nabídku možností sdílení trasování",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritická cesta",
       "critical-path-tooltip": "Vybírá rozsahy v kritické cestě – nejdelší sekvenci závislých úkolů určujících minimální dobu trvání trasování.",
       "duration": "Doba trvání",
       "errors": "Chyby",
       "errors-tooltip": "Vybere rozsahy, kde se stav rovná chybě.",
       "export-started": "Export zahájen",
+      "feedback-group": "",
       "filters": "Filtry",
-      "give-feedback": "Zpětná vazba",
+      "give-feedback-item": "",
       "high-latency": "Vysoká prodleva",
       "high-latency-tooltip": "Vybírá 10 % nejdelších rozsahů ve stopě (p90).",
       "link-copied": "Odkaz byl zkopírován do schránky",
@@ -9216,13 +9226,12 @@
       "path": "Cesta",
       "route": "Trasa",
       "services": "Služby",
-      "share": "Sdílet",
       "share-copy-link": "Kopírovat odkaz",
       "share-export-json": "Exportovat jako JSON",
-      "share-tooltip": "Sdílet trasování",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Čas zahájení",
       "target": "Cíl",
-      "title-share-thoughts-about-tracing-grafana": "Podělte se o svůj názor na trasování v Grafaně.",
       "tooltip-url": "{{route}} nebo {{url}} nebo {{target}} nebo {{path}}",
       "trace-id": "ID trasování",
       "url": "Adresa URL"
@@ -13149,6 +13158,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13216,7 +13233,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {

@@ -3399,7 +3399,11 @@ func (b *bleveIndex) usesExactTermFilter(key string) bool {
 	return ok && kf.filterable
 }
 
-// Convert a "requirement" into a bleve query
+// Convert a "requirement" into a bleve query.
+//
+// Combining rules for several values: "=" is an AND, so the field must hold
+// every value, while "in" is an OR, so at least one is enough. The numeric path
+// (numberOrBoolSetQuery) follows the same rules.
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
 	// Boolean and numeric fields are indexed in their native form, which a term
 	// or match query cannot reach, so they take a separate path.
@@ -3492,8 +3496,7 @@ func numberOrBoolQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query
 	}
 }
 
-// Combining rules follow the string path: "=" with several values is an AND,
-// "in" is an OR.
+// Combining rules follow the string path, see requirementQuery.
 func numberOrBoolSetQuery(nb numberOrBoolField, req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
 	op := selection.Operator(req.Operator)
 	if op == selection.DoubleEquals && len(req.Values) != 1 {

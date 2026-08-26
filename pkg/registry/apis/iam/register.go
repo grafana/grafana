@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
 	teamlbacapi "github.com/grafana/grafana/pkg/registry/apis/iam/teamlbac"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -78,6 +79,7 @@ func RegisterAPIService(
 	sql db.DB,
 	ac accesscontrol.AccessControl,
 	accessClient types.AccessClient,
+	userPermissionsClient types.UserPermissionsClient,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
 	roleApiInstaller RoleApiInstaller,
@@ -186,7 +188,8 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
-		ofClient: openfeature.NewDefaultClient(),
+		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
+		ofClient:        openfeature.NewDefaultClient(),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
@@ -198,6 +201,7 @@ func RegisterAPIService(
 
 func NewAPIService(
 	accessClient types.AccessClient,
+	userPermissionsClient types.UserPermissionsClient,
 	dbProvider legacysql.LegacyDatabaseProvider,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
 	roleApiInstaller RoleApiInstaller,
@@ -240,6 +244,8 @@ func NewAPIService(
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
 		),
+		// Standalone AuthInfo already carries the selected groups claim from its signed token.
+		userPermissions:            userpermissions.NewHandler(userPermissionsClient, false),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
@@ -882,6 +888,16 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		},
 	}
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["display"] = schema
+
+	schema = oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"]
+	schema.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "UserPermission"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			AllOf: []spec.Schema{
@@ -1008,6 +1024,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
+	enableUserPermissionsApi := client.Boolean(ctx, featuremgmt.FlagAuthzUserPermissions, false, openfeature.TransactionContext(ctx))
 
 	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
@@ -1026,8 +1043,11 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
-	routes := make([]*builder.APIRoutes, 0, 1+len(searchRoutes))
+	routes := make([]*builder.APIRoutes, 0, 2+len(searchRoutes))
 	routes = append(routes, b.display.GetAPIRoutes(defs))
+	if enableUserPermissionsApi && b.userPermissions != nil {
+		routes = append(routes, b.userPermissions.GetAPIRoutes(defs))
+	}
 	routes = append(routes, searchRoutes...)
 	return mergeAPIRoutes(routes...)
 }

@@ -1,0 +1,124 @@
+name: Bundle size
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  MAX_BUNDLE_SIZE_INCREASE: 51200
+
+jobs:
+  detect-changes:
+    if: github.event.pull_request.draft == false
+    name: Detect frontend changes
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    outputs:
+      frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: true # required by the change-detection action to fetch history
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/pr-bundle-size.yml
+
+  build:
+    if: needs.detect-changes.outputs.frontend-src == 'true'
+    name: Build ${{ matrix.target }} frontend
+    needs: detect-changes
+    runs-on: ubuntu-x64-large
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    outputs:
+      base: ${{ steps.stats.outputs.base }}
+      pr: ${{ steps.stats.outputs.pr }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: base
+            commit: ${{ github.event.pull_request.base.sha }}
+          - target: pr
+            commit: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout ${{ matrix.target }} commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ matrix.commit }}
+          persist-credentials: false
+
+      - name: Checkout shared build action
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .github/actions/build-frontend
+          sparse-checkout-cone-mode: false
+          path: .shared-actions
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+
+      - name: Build frontend
+        uses: ./.shared-actions/.github/actions/build-frontend
+
+      - name: Record bundle sizes
+        id: stats
+        env:
+          OUTPUT_NAME: ${{ matrix.target }}
+        run: |
+          {
+            echo "${OUTPUT_NAME}<<EOF"
+            node scripts/cli/reportBundleSizeStats.mts
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  bundle-size:
+    name: Check bundle size impact
+    needs: build
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR commit
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Test bundle size check
+        run: node --test scripts/cli/checkBundleSize.test.mjs
+
+      - name: Compare bundle sizes
+        env:
+          BASE_STATS: ${{ needs.build.outputs.base }}
+          PR_STATS: ${{ needs.build.outputs.pr }}
+        run: |
+          set -o pipefail
+          printf '%s\n' "$BASE_STATS" > "$RUNNER_TEMP/base-bundle-sizes.txt"
+          printf '%s\n' "$PR_STATS" > "$RUNNER_TEMP/pr-bundle-sizes.txt"
+          node scripts/cli/checkBundleSize.mjs \
+            "$RUNNER_TEMP/base-bundle-sizes.txt" \
+            "$RUNNER_TEMP/pr-bundle-sizes.txt" \
+            "$MAX_BUNDLE_SIZE_INCREASE" | tee -a "$GITHUB_STEP_SUMMARY"
