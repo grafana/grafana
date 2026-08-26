@@ -19,6 +19,8 @@ import { useGuides } from './useGuides';
 
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
+const GET_STARTED_OPTION_VALUE = 'get-started';
+
 interface Option {
   value: string;
   label: string;
@@ -88,7 +90,7 @@ export function Overview({ solutions }: OverviewProps) {
       ...(!guides || guides.length > 0
         ? [
             {
-              value: 'get-started',
+              value: GET_STARTED_OPTION_VALUE,
               label: t('home.overview.options.get-started', 'Get started'),
               icon: 'rocket' as const,
               highlight: true,
@@ -99,7 +101,16 @@ export function Overview({ solutions }: OverviewProps) {
     ],
     [cards, cardsLoading, groups, guides]
   );
-  const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
+  // Empty instances onboard through guides: with no live solution, an unset preference defaults
+  // to Get started instead of All solutions. An explicit pick always wins, and once a solution
+  // goes live the unset default returns to All solutions.
+  const settledWithoutLiveSolutions = !cardsLoading && !!cards && cards.every((card) => card.kind !== 'live');
+  const showGuidesByDefault =
+    settledWithoutLiveSolutions && options.some((option) => option.value === GET_STARTED_OPTION_VALUE);
+  const [stored, setStored] = useStoredString(
+    HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY,
+    showGuidesByDefault ? GET_STARTED_OPTION_VALUE : options[0].value
+  );
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
 
   const ref = useRef<HTMLDivElement>(null);

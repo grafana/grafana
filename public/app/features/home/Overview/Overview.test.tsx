@@ -25,6 +25,16 @@ const datasource: DataSourceInstanceListItem = {
   isDefault: true,
 };
 
+const guide = {
+  id: 'app-monitoring',
+  title: 'Set up app monitoring',
+  description: 'Visualize traces, metrics, and logs from services you build and run.',
+  icon: 'apps' as const,
+  color: '#ff780a',
+  cta: 'Start setup',
+  href: '#',
+};
+
 function solution(id: SolutionId, overrides: Partial<Solution> = {}): Solution {
   return {
     id,
@@ -59,6 +69,8 @@ describe('Overview', () => {
   });
 
   it("shows 'Get started' while guides load and hides it when they settle empty", async () => {
+    // An explicit stored pick keeps the empty-instance default off; this test drives the menu.
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
     mockUseGuides.mockReturnValue(undefined);
     const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
@@ -74,22 +86,11 @@ describe('Overview', () => {
   });
 
   it('renders guide skeletons and then the loaded guide', async () => {
-    const guide = {
-      id: 'app-monitoring',
-      title: 'Set up app monitoring',
-      description: 'Visualize traces, metrics, and logs from services you build and run.',
-      icon: 'apps' as const,
-      color: '#ff780a',
-      cta: 'Start setup',
-      href: '#',
-    };
     mockUseGuides.mockReturnValue(undefined);
-    const { user, rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
+    const { rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    await screen.findByText('No solutions were found.');
-    await user.click(screen.getByRole('button', { name: /all solutions/i }));
-    await user.click(screen.getByRole('menuitem', { name: 'Get started' }));
-
+    // Guides still loading + no live solution: the unset default already lands on Get started.
+    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
     const heading = screen.getByText('Recommended getting started guides').parentElement;
     expect(heading).not.toBeNull();
     expect(within(heading!).queryByText('0')).not.toBeInTheDocument();
@@ -100,16 +101,54 @@ describe('Overview', () => {
     expect(screen.getByRole('link', { name: guide.title })).toBeInTheDocument();
   });
 
+  it('defaults to Get started when no solution is live and guides are available', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    const metrics = solution('metrics', {
+      title: 'Metrics & infrastructure',
+      offer: async () => ({
+        availability: 'enable',
+        description: 'Connect Prometheus-compatible metrics.',
+        cta: { label: 'Enable', href: '/plugins/grafana-metricsdrilldown-app/', action: 'enable' },
+      }),
+    });
+
+    render(<Overview solutions={[metrics]} />);
+
+    // An available (offer-only) solution is not "enabled": guides still win the default.
+    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: guide.title })).toBeInTheDocument();
+  });
+
+  it('keeps the All solutions default when a solution is live', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+
+    render(<Overview solutions={[metrics]} />);
+
+    expect(await screen.findByRole('heading', { name: metrics.title })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
+  });
+
+  it('respects a stored preference over the empty-instance default', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
+
+    render(<Overview solutions={EMPTY_SOLUTIONS} />);
+
+    expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
+  });
+
+  it('falls back to All solutions on an empty instance when guides settle empty', async () => {
+    mockUseGuides.mockReturnValue([]);
+
+    render(<Overview solutions={EMPTY_SOLUTIONS} />);
+
+    expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
+  });
+
   it('selects the overview option from the hash anchor', async () => {
-    const guide = {
-      id: 'app-monitoring',
-      title: 'Set up app monitoring',
-      description: 'Visualize traces, metrics, and logs from services you build and run.',
-      icon: 'apps' as const,
-      color: '#ff780a',
-      cta: 'Start setup',
-      href: '#',
-    };
     const scrollIntoView = jest.fn();
     const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
@@ -117,7 +156,8 @@ describe('Overview', () => {
     try {
       mockUseGuides.mockReturnValue([guide]);
 
-      render(<Overview solutions={EMPTY_SOLUTIONS} />, { historyOptions: { initialEntries: ['/#get-started'] } });
+      const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: async () => datasource });
+      render(<Overview solutions={[metrics]} />, { historyOptions: { initialEntries: ['/#get-started'] } });
 
       await waitFor(() => expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument());
       expect(screen.getByText('Recommended getting started guides')).toBeInTheDocument();
