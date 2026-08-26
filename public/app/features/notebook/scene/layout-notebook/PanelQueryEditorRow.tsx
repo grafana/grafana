@@ -95,7 +95,7 @@ function getStyles() {
       },
     }),
     hideRemoveButton: css({
-      '&& button:has([data-testid="icon-trash-alt"])': {
+      '&& div:has(+ div > [data-testid="icon-draggabledots"])': {
         visibility: 'hidden',
       },
     }),
