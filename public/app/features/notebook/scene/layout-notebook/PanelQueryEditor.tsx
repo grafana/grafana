@@ -11,11 +11,13 @@ import { addQuery } from 'app/core/utils/query';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
 
+import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelQueryEditorRow } from './PanelQueryEditorRow';
-import { setQueryRunnerQueries } from './setQueryRunnerQueries';
+import { applyQueries } from './applyQueries';
 
 interface Props {
   panel: VizPanel;
+  cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
 }
@@ -26,7 +28,7 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel, autoFocus }: Props) {
+export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
@@ -70,7 +72,12 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
           // `datasource: undefined`, which setQueryRunnerQueries treats as a different datasource and
           // wrongly flips the runner to Mixed.
           onClick={() =>
-            setQueryRunnerQueries(queryRunner, addQuery(queries, undefined, queries[0]?.datasource ?? undefined))
+            applyQueries(
+              cell,
+              queryRunner,
+              addQuery(queries, undefined, queries[0]?.datasource ?? undefined),
+              t('notebooks.history.add-query', 'Add query')
+            )
           }
         >
           {t('notebook.cell.query.add', 'Add query')}
@@ -83,6 +90,7 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
       {queries.map((query, index) => (
         <PanelQueryEditorRow
           key={query.refId}
+          cell={cell}
           queryRunner={queryRunner}
           queries={queries}
           query={query}

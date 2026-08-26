@@ -1,3 +1,4 @@
+import { act } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
@@ -99,9 +100,10 @@ jest.mock('@grafana/runtime/unstable', () => ({
 }));
 
 /**
- * A real Panel VizPanel, built the same way NotebookLayoutManager's buildVisualizationPanel does —
- * parented under a scene that carries a $timeRange, since PanelQueryEditor reads the panel's own
- * SceneQueryRunner and the shared time range straight off the scene graph rather than through props.
+ * A real Panel VizPanel, its owning NotebookCellItem, and the notebook scene's undo/redo history —
+ * built the same way NotebookLayoutManager's buildVisualizationPanel does, parented under a scene
+ * that carries a $timeRange, since PanelQueryEditor reads the panel's own SceneQueryRunner and the
+ * shared time range straight off the scene graph rather than through props.
  *
  * `queries`, when given, fully replaces the panel's single default query — one partial per row,
  * each assigned its own refId (A, B, C, ...) so multi-row tests can address a specific one.
@@ -120,17 +122,16 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
     );
   }
 
-  new NotebookScene({
+  const cell = new NotebookCellItem({ elementName: 'query-1', source: 'user', body: panel });
+  const scene = new NotebookScene({
     title: 'Test notebook',
-    body: new NotebookLayoutManager({
-      cells: [new NotebookCellItem({ elementName: 'query-1', source: 'user', body: panel })],
-    }),
+    body: new NotebookLayoutManager({ cells: [cell] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
   });
 
-  return panel;
+  return { panel, cell, history: scene.editHistory };
 }
 
 beforeEach(() => {
@@ -140,16 +141,16 @@ beforeEach(() => {
 
 describe('PanelQueryEditor', () => {
   it('resolves the panel’s own query datasource', async () => {
-    const panel = buildPanel();
-    render(<PanelQueryEditor panel={panel} />);
+    const { panel, cell } = buildPanel();
+    render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     expect(await screen.findByTestId('resolved-datasource-A')).toHaveTextContent('default-uid');
   });
 
   it('offers a datasource picker when nothing resolves', async () => {
     resolvedSettings = undefined;
-    const panel = buildPanel();
-    render(<PanelQueryEditor panel={panel} />);
+    const { panel, cell } = buildPanel();
+    render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     expect(await screen.findByRole('button', { name: 'pick a datasource' })).toBeInTheDocument();
     expect(screen.queryByTestId('resolved-datasource-A')).not.toBeInTheDocument();
@@ -157,9 +158,9 @@ describe('PanelQueryEditor', () => {
 
   it('writes a picked datasource straight onto the runner', async () => {
     resolvedSettings = undefined;
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'pick a datasource' }));
 
@@ -172,8 +173,8 @@ describe('PanelQueryEditor', () => {
 
   it('opens the row once a datasource is picked for the first time', async () => {
     resolvedSettings = undefined;
-    const panel = buildPanel();
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { panel, cell } = buildPanel();
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     const pickButton = await screen.findByRole('button', { name: 'pick a datasource' });
     // Only resolves *after* the picker has had its chance to render — this mock has no per-ref
     // control, only a single global on/off switch.
@@ -185,9 +186,9 @@ describe('PanelQueryEditor', () => {
   });
 
   it('preserves refId and hide when the query editor reports an edit', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'edit query A' }));
 
@@ -195,9 +196,9 @@ describe('PanelQueryEditor', () => {
   });
 
   it('switches datasource from the row header without losing the query spec', async () => {
-    const panel = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
+    const { panel, cell } = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
     const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
 
@@ -211,8 +212,8 @@ describe('PanelQueryEditor', () => {
   // it, a reader who switches datasource on an already-collapsed row is left looking at a chevron,
   // not the now-likely-stale query for the datasource they just switched to.
   it('opens the row when the datasource is switched on an already-configured row', async () => {
-    const panel = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { panel, cell } = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
 
     await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
@@ -221,10 +222,10 @@ describe('PanelQueryEditor', () => {
   });
 
   it('runs the query from the Run button', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
 
@@ -232,10 +233,10 @@ describe('PanelQueryEditor', () => {
   });
 
   it('runs the query from the row itself', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'run from row A' }));
 
@@ -247,12 +248,12 @@ describe('PanelQueryEditor', () => {
   // returning tabular data (e.g. a CSV with no time field) would otherwise land on a timeseries panel
   // that can only say "Data is missing a time field".
   it('applies the suggested visualization before running the query', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
     const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
     getVizSuggestionForQuery.mockResolvedValue({ pluginId: 'table', options: { showHeader: true } });
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
 
@@ -265,13 +266,13 @@ describe('PanelQueryEditor', () => {
   });
 
   it('still runs the query when the suggestion fails', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
     // Expected and logged, not swallowed silently — see PanelQueryEditor's own catch block.
     jest.spyOn(console, 'error').mockImplementation(() => {});
     getVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
 
@@ -279,10 +280,10 @@ describe('PanelQueryEditor', () => {
   });
 
   it('does not re-fetch the suggestion on a repeat click with an unchanged query', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     const runButton = await screen.findByRole('button', { name: 'Run query' });
 
     await user.click(runButton);
@@ -297,9 +298,9 @@ describe('PanelQueryEditor', () => {
   });
 
   it('fetches a fresh suggestion after the query changes', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
     await user.click(await screen.findByRole('button', { name: 'Run query' }));
     await waitFor(() => expect(getVizSuggestionForQuery).toHaveBeenCalledTimes(1));
@@ -312,12 +313,12 @@ describe('PanelQueryEditor', () => {
   });
 
   it('retries the suggestion fetch after a previous attempt failed', async () => {
-    const panel = buildPanel();
+    const { panel, cell } = buildPanel();
     const runner = getQueryRunnerFor(panel)!;
     const runQueries = jest.spyOn(runner, 'runQueries');
     jest.spyOn(console, 'error').mockImplementation(() => {});
     getVizSuggestionForQuery.mockRejectedValueOnce(new Error('datasource unreachable'));
-    const { user } = render(<PanelQueryEditor panel={panel} />);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
     const runButton = await screen.findByRole('button', { name: 'Run query' });
 
     await user.click(runButton);
@@ -337,10 +338,20 @@ describe('PanelQueryEditor', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('still writes queries when rendered without an owning cell', async () => {
+    const { panel } = buildPanel();
+    const runner = getQueryRunnerFor(panel)!;
+    const { user } = render(<PanelQueryEditor panel={panel} />);
+
+    await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+
+    expect(runner.state.queries[0]).toEqual(expect.objectContaining({ expr: 'up' }));
+  });
+
   describe('row collapse state', () => {
     it('starts collapsed by default', async () => {
-      const panel = buildPanel();
-      render(<PanelQueryEditor panel={panel} />);
+      const { panel, cell } = buildPanel();
+      render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
     });
@@ -349,8 +360,8 @@ describe('PanelQueryEditor', () => {
     // NotebookCellRenderer's own doc comment. Opening the row automatically then means the reader who
     // just added the block sees its editor immediately, instead of having to know to click a chevron.
     it('starts open when the cell was just added or converted', async () => {
-      const panel = buildPanel();
-      render(<PanelQueryEditor panel={panel} autoFocus />);
+      const { panel, cell } = buildPanel();
+      render(<PanelQueryEditor panel={panel} cell={cell} autoFocus />);
 
       expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
     });
@@ -358,17 +369,17 @@ describe('PanelQueryEditor', () => {
 
   describe('multiple queries', () => {
     it('renders one row per query', async () => {
-      const panel = buildPanel([{}, {}]);
-      render(<PanelQueryEditor panel={panel} />);
+      const { panel, cell } = buildPanel([{}, {}]);
+      render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       expect(await screen.findByTestId('row-A')).toBeInTheDocument();
       expect(screen.getByTestId('row-B')).toBeInTheDocument();
     });
 
     it('adds a fresh query via the header button, without touching the existing one', async () => {
-      const panel = buildPanel();
+      const { panel, cell } = buildPanel();
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
       const before = runner.state.queries[0];
 
       await user.click(await screen.findByRole('button', { name: 'Add query' }));
@@ -386,9 +397,9 @@ describe('PanelQueryEditor', () => {
     // existing real one — flipping the runner to Mixed even though only one real datasource was ever
     // in play, and Mixed can't dispatch a target with no datasource of its own.
     it('gives a newly added query the existing datasource, so the runner does not flip to Mixed', async () => {
-      const panel = buildPanel([{ datasource: { uid: 'default-uid', type: 'testdata' } }]);
+      const { panel, cell } = buildPanel([{ datasource: { uid: 'default-uid', type: 'testdata' } }]);
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'Add query' }));
 
@@ -398,9 +409,9 @@ describe('PanelQueryEditor', () => {
     });
 
     it('duplicates a query via its own row action, with a fresh refId', async () => {
-      const panel = buildPanel([{ expr: 'up' }]);
+      const { panel, cell } = buildPanel([{ expr: 'up' }]);
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'duplicate query A' }));
 
@@ -409,9 +420,9 @@ describe('PanelQueryEditor', () => {
     });
 
     it('removes a query via its own row action', async () => {
-      const panel = buildPanel([{}, {}]);
+      const { panel, cell } = buildPanel([{}, {}]);
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'remove query B' }));
 
@@ -419,9 +430,9 @@ describe('PanelQueryEditor', () => {
     });
 
     it('refuses to remove the last remaining query', async () => {
-      const panel = buildPanel();
+      const { panel, cell } = buildPanel();
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'remove query A' }));
 
@@ -429,9 +440,9 @@ describe('PanelQueryEditor', () => {
     });
 
     it('edits one row without disturbing the other', async () => {
-      const panel = buildPanel([{}, {}]);
+      const { panel, cell } = buildPanel([{}, {}]);
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
       const originalB = runner.state.queries[1];
 
       await user.click(await screen.findByRole('button', { name: 'edit query A' }));
@@ -445,12 +456,12 @@ describe('PanelQueryEditor', () => {
     // rows point at different datasources, the runner-level one has to become Mixed, or the second
     // query would silently run against whatever the first row's datasource is instead of its own.
     it('flips the runner to the Mixed datasource once two rows diverge', async () => {
-      const panel = buildPanel([
+      const { panel, cell } = buildPanel([
         { datasource: { uid: 'default-uid', type: 'testdata' } },
         { datasource: { uid: 'default-uid', type: 'testdata' } },
       ]);
       const runner = getQueryRunnerFor(panel)!;
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'switch datasource B' }));
 
@@ -459,18 +470,120 @@ describe('PanelQueryEditor', () => {
     });
 
     it('collapses back off Mixed once every row shares a datasource again', async () => {
-      const panel = buildPanel([
+      const { panel, cell } = buildPanel([
         { datasource: { uid: 'default-uid', type: 'testdata' } },
         { datasource: { uid: 'other-uid', type: 'other-type' } },
       ]);
       const runner = getQueryRunnerFor(panel)!;
       expect(runner.state.datasource).toEqual({ uid: '-- Mixed --', type: 'mixed' });
-      const { user } = render(<PanelQueryEditor panel={panel} />);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
 
       await user.click(await screen.findByRole('button', { name: 'remove query B' }));
 
       expect(runner.state.queries).toHaveLength(1);
       expect(runner.state.datasource).toEqual({ uid: 'default-uid', type: 'testdata' });
+    });
+  });
+
+  describe('undo/redo', () => {
+    it('records editing a query as an undoable step', async () => {
+      const { panel, cell, history } = buildPanel();
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries[0];
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+
+      expect(history.state.canUndo).toBe(true);
+      expect(history.state.undoLabel).toBe('Edit query');
+
+      act(() => history.undo());
+      expect(runner.state.queries[0]).toEqual(before);
+      expect(history.state.canRedo).toBe(true);
+
+      act(() => history.redo());
+      expect(runner.state.queries[0]).toEqual(expect.objectContaining({ expr: 'up' }));
+    });
+
+    it('coalesces rapid edits to the same row into one undo step', async () => {
+      const { panel, cell, history } = buildPanel();
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries[0];
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+      const editButton = await screen.findByRole('button', { name: 'edit query A' });
+
+      await user.click(editButton);
+      await user.click(editButton);
+
+      expect(history.state.undoLabel).toBe('Edit query');
+      act(() => history.undo());
+      expect(runner.state.queries[0]).toEqual(before);
+      // One undo step took it all the way back — a separate step per click would have needed two.
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    it('undoes adding a query', async () => {
+      const { panel, cell, history } = buildPanel();
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'Add query' }));
+
+      expect(history.state.undoLabel).toBe('Add query');
+      act(() => history.undo());
+      expect(runner.state.queries).toHaveLength(1);
+
+      act(() => history.redo());
+      expect(runner.state.queries).toHaveLength(2);
+    });
+
+    it('undoes duplicating a query', async () => {
+      const { panel, cell, history } = buildPanel([{ expr: 'up' }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'duplicate query A' }));
+
+      expect(history.state.undoLabel).toBe('Duplicate query');
+      act(() => history.undo());
+      expect(runner.state.queries.map((q) => q.refId)).toEqual(['A']);
+    });
+
+    it('undoes removing a query', async () => {
+      const { panel, cell, history } = buildPanel([{}, {}]);
+      const runner = getQueryRunnerFor(panel)!;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'remove query B' }));
+
+      expect(history.state.undoLabel).toBe('Remove query');
+      act(() => history.undo());
+      expect(runner.state.queries.map((q) => q.refId)).toEqual(['A', 'B']);
+    });
+
+    it('undoes switching a row’s datasource', async () => {
+      const { panel, cell, history } = buildPanel([{ datasource: { uid: 'default-uid', type: 'testdata' } }]);
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries[0].datasource;
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+
+      expect(history.state.undoLabel).toBe('Switch datasource');
+      act(() => history.undo());
+      expect(runner.state.queries[0].datasource).toEqual(before);
+    });
+
+    it('does not coalesce a datasource switch with an in-flight text edit on the same row', async () => {
+      const { panel, cell, history } = buildPanel([{ datasource: { uid: 'default-uid', type: 'testdata' } }]);
+      const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+      await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+      await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+
+      expect(history.state.undoLabel).toBe('Switch datasource');
+      act(() => history.undo());
+      expect(history.state.undoLabel).toBe('Edit query');
     });
   });
 });

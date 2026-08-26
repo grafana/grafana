@@ -1,8 +1,11 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { type NotebookLayoutKind } from 'app/features/notebook/types';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type NotebookEditHistory } from '../NotebookEditHistory';
@@ -94,6 +97,7 @@ jest.mock('./PanelQueryEditor', () => ({
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
+import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
 
@@ -154,6 +158,19 @@ function buildNarrativeCells(names: string[]) {
 
 function cellNames(manager: NotebookLayoutManager) {
   return manager.state.cells.map((cell) => cell.state.elementName);
+}
+
+function panelCell(elementName: string, queries?: DataQuery[]) {
+  const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+  const runner = getQueryRunnerFor(panel)!;
+  if (queries) {
+    setQueryRunnerQueries(runner, queries);
+  }
+  return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), runner };
+}
+
+function withExpr(query: DataQuery, expr: string): DataQuery {
+  return { ...query, expr } as DataQuery;
 }
 
 describe('NotebookLayoutManager', () => {
@@ -1055,6 +1072,148 @@ describe('NotebookLayoutManager', () => {
       } finally {
         jest.useRealTimers();
       }
+    });
+  });
+
+  describe('setCellQueries', () => {
+    it('applies the queries to the cell’s own query runner', () => {
+      const { cell, runner } = panelCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const edited = [withExpr(runner.state.queries[0], 'up')];
+
+      manager.setCellQueries(cell, edited);
+
+      expect(runner.state.queries).toEqual(edited);
+    });
+
+    it('is a no-op for a cell with no query runner', () => {
+      const narrative = new NotebookCellItem({
+        elementName: 'text',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: 'hi' } },
+      });
+      const manager = new NotebookLayoutManager({ cells: [narrative] });
+
+      // Would throw if it tried to read a query runner off a cell that has none.
+      expect(() => manager.setCellQueries(narrative, [])).not.toThrow();
+    });
+
+    it('coalesces rapid queries edits into one undo action', () => {
+      const { cell, runner } = panelCell('query');
+      const before = runner.state.queries;
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.setCellQueries(cell, [withExpr(before[0], 'up')]);
+      manager.setCellQueries(cell, [withExpr(before[0], 'up | limit 10')]);
+
+      expect(history.state.canUndo).toBe(true);
+      expect(history.state.undoLabel).toBe('Edit query');
+
+      act(() => history.undo());
+      expect(runner.state.queries).toEqual(before);
+      expect(history.state.canRedo).toBe(true);
+
+      act(() => history.redo());
+      expect(runner.state.queries).toEqual([withExpr(before[0], 'up | limit 10')]);
+    });
+
+    it('drops a queries edit that returns to its starting value', () => {
+      const { cell, runner } = panelCell('query');
+      const before = runner.state.queries;
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.setCellQueries(cell, [withExpr(before[0], 'up')]);
+      manager.setCellQueries(cell, before);
+
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    it('closes a pending queries edit when the notebook is deactivated', () => {
+      const { cell, runner } = panelCell('query');
+      const before = runner.state.queries;
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+      const deactivate = manager.activate();
+
+      manager.setCellQueries(cell, [withExpr(before[0], 'up')]);
+      deactivate();
+      manager.setCellQueries(cell, [withExpr(before[0], 'up | limit 5')]);
+
+      expect(history.state.canUndo).toBe(true);
+      history.undo();
+      expect(runner.state.queries).toEqual([withExpr(before[0], 'up')]);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const { cell, runner } = panelCell('query');
+        const before = runner.state.queries;
+        const manager = new NotebookLayoutManager({ cells: [cell] });
+        const history = attachHistory(manager);
+
+        manager.setCellQueries(cell, [withExpr(before[0], 'up')]);
+        jest.advanceTimersByTime(801);
+        manager.setCellQueries(cell, [withExpr(before[0], 'up | limit 5')]);
+
+        history.undo();
+        expect(runner.state.queries).toEqual([withExpr(before[0], 'up')]);
+        history.undo();
+        expect(runner.state.queries).toEqual(before);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('is flushed by a discrete action, as its own independent undo step', () => {
+      const { cell, runner } = panelCell('query');
+      const before = runner.state.queries;
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.setCellQueries(cell, [withExpr(before[0], 'up')]);
+      manager.addCell('code', 1);
+
+      expect(history.state.undoLabel).toBe('Add block');
+      history.undo();
+      expect(cellNames(manager)).toEqual(['query']);
+      expect(history.state.undoLabel).toBe('Edit query');
+
+      history.undo();
+      expect(runner.state.queries).toEqual(before);
+    });
+  });
+
+  describe('runQueryEdit', () => {
+    it('records a discrete, correctly labeled undo step', () => {
+      const { cell, runner } = panelCell('query');
+      const before = runner.state.queries;
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+      const added = [...before, { ...before[0], refId: 'B' }];
+
+      manager.runQueryEdit(cell, 'Add query', added);
+
+      expect(runner.state.queries).toEqual(added);
+      expect(history.state.undoLabel).toBe('Add query');
+
+      act(() => history.undo());
+      expect(runner.state.queries).toEqual(before);
+
+      act(() => history.redo());
+      expect(runner.state.queries).toEqual(added);
+    });
+
+    it('is a no-op when the queries are unchanged', () => {
+      const { cell, runner } = panelCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+      const history = attachHistory(manager);
+
+      manager.runQueryEdit(cell, 'Remove query', runner.state.queries);
+
+      expect(history.state.canUndo).toBe(false);
     });
   });
 

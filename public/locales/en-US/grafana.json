@@ -12963,13 +12963,18 @@
     },
     "history": {
       "add-block": "Add block",
+      "add-query": "Add query",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
+      "duplicate-query": "Duplicate query",
       "edit-block": "Edit block",
+      "edit-query": "Edit query",
       "move-block": "Move block",
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
+      "remove-query": "Remove query",
       "split-block": "Split block",
+      "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
     },

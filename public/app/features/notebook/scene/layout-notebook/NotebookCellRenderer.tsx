@@ -53,7 +53,7 @@ export function NotebookCellRenderer({
   }
 
   if (panel) {
-    return <PanelCell panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
+    return <PanelCell cell={cell} panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   if (narrative) {
@@ -74,12 +74,22 @@ export function NotebookCellRenderer({
   return null;
 }
 
-function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing: boolean; autoFocus?: boolean }) {
+function PanelCell({
+  cell,
+  panel,
+  isEditing,
+  autoFocus,
+}: {
+  cell: NotebookCellItem;
+  panel: VizPanel;
+  isEditing: boolean;
+  autoFocus?: boolean;
+}) {
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor panel={panel} autoFocus={autoFocus} />}
+      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
       <div className={styles.panel}>
         <panel.Component model={panel} />
       </div>

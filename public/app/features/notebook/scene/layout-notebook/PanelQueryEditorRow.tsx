@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
@@ -10,9 +11,12 @@ import { addQuery } from 'app/core/utils/query';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 
-import { setQueryRunnerQueries } from './setQueryRunnerQueries';
+import { type NotebookCellItem } from './NotebookCellItem';
+import { applyQueries } from './applyQueries';
 
 interface Props {
+  /** See PanelQueryEditor's own `cell` prop doc comment. */
+  cell?: NotebookCellItem;
   queryRunner: SceneQueryRunner;
   queries: DataQuery[];
   query: DataQuery;
@@ -27,24 +31,41 @@ interface Props {
 /**
  * One row of the notebook panel's inline query editor — datasource picker until one resolves, then
  * the real row. Each row resolves and displays its own query's datasource independently, unlike
- * dashboard panel editing's shared group selector. Every write still goes through
- * setQueryRunnerQueries, which keeps the runner-level datasource (what actually decides where a query
- * runs) correct underneath.
+ * dashboard panel editing's shared group selector. Every write still goes through applyQueries,
+ * which keeps the runner-level datasource (what actually decides where a query runs) correct
+ * underneath and records the edit on the notebook's undo/redo stack when a cell is known.
  */
-export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, range, onRunQuery, startOpen }: Props) {
+export function PanelQueryEditorRow({
+  cell,
+  queryRunner,
+  queries,
+  query,
+  index,
+  data,
+  range,
+  onRunQuery,
+  startOpen,
+}: Props) {
   const { settings: dsSettings } = useDataSourceInstanceSettings(query.datasource);
   const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(Boolean(startOpen));
 
   const onChangeQuery = (updated: DataQuery) => {
-    setQueryRunnerQueries(
+    applyQueries(
+      cell,
       queryRunner,
       queries.map((q, i) => (i === index ? updated : q))
     );
   };
 
   const onChangeDataSource = (settings: DataSourceInstanceSettings) => {
-    onChangeQuery({ ...query, datasource: { uid: settings.uid, type: settings.type } });
+    const updated = { ...query, datasource: { uid: settings.uid, type: settings.type } };
+    applyQueries(
+      cell,
+      queryRunner,
+      queries.map((q, i) => (i === index ? updated : q)),
+      t('notebooks.history.switch-datasource', 'Switch datasource')
+    );
     setIsOpen(true);
   };
 
@@ -66,14 +87,23 @@ export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, 
         onChangeDataSource={onChangeDataSource}
         onChange={onChangeQuery}
         onRunQuery={onRunQuery}
-        onAddQuery={(copy) => setQueryRunnerQueries(queryRunner, addQuery(queries, copy))}
+        onAddQuery={(copy) =>
+          applyQueries(
+            cell,
+            queryRunner,
+            addQuery(queries, copy),
+            t('notebooks.history.duplicate-query', 'Duplicate query')
+          )
+        }
         onRemoveQuery={(target) => {
           if (isOnlyQuery) {
             return;
           }
-          setQueryRunnerQueries(
+          applyQueries(
+            cell,
             queryRunner,
-            queries.filter((q) => q !== target)
+            queries.filter((q) => q !== target),
+            t('notebooks.history.remove-query', 'Remove query')
           );
         }}
         range={range}

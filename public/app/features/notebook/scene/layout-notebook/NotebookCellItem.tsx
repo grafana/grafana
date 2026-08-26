@@ -1,4 +1,5 @@
 import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
 import { type CellContentKind } from '../../types';
@@ -44,6 +45,14 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
   /** Converts this cell's content to `type` in place — see NotebookLayoutManager.convertCell. */
   public onConvert(type: NotebookBlockType): void {
     this.getParentLayout().convertCell(this, type);
+  }
+
+  public onQueryChange(queries: DataQuery[]): void {
+    this.getParentLayout().setCellQueries(this, queries);
+  }
+
+  public onQueryStructureChange(label: string, queries: DataQuery[]): void {
+    this.getParentLayout().runQueryEdit(this, label, queries);
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */
