@@ -31,7 +31,7 @@ const (
 //
 // All node types are modelled so the schema is future-proof, but v1 only
 // accepts a narrow subset (top-level single leaf or a single and of leaves;
-// text, filter and range leaves; In/NotIn filter operators). Everything else is
+// text, filter and range leaves; In/NotIn/All filter operators). Everything else is
 // rejected with 422 Unprocessable Entity by the validation layer. exists is
 // sketched for a future version and always rejected today.
 //
@@ -72,7 +72,9 @@ type TextPredicate struct {
 // +k8s:deepcopy-gen=true
 type FilterPredicate struct {
 	Field string `json:"field"`
-	// Operator is "In" or "NotIn" in v1.
+	// Operator is "In", "NotIn" or "All" in v1. "In" matches any of the values,
+	// "NotIn" excludes all of them, and "All" requires the field to hold every
+	// value, which only a field holding a list of values can do.
 	Operator string   `json:"operator"`
 	Values   []string `json:"values"`
 }
