@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { ASSISTANT_PLUGIN_ID, useAssistant } from '@grafana/assistant';
-import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Button, useStyles2 } from '@grafana/ui';
 import {
@@ -10,14 +10,8 @@ import {
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
 
+import { getActiveAssistantChatId } from './assistantSidebarState';
 import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
-
-// Active conversation id stored by the assistant app.
-const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
-
-function getActiveAssistantChatId(): string | undefined {
-  return store.get(ACTIVE_ASSISTANT_CHAT_ID_KEY) ?? undefined;
-}
 
 interface AssistantTooltipButtonProps {
   series: DataFrame;

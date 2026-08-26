@@ -119,6 +119,30 @@ describe('PanelStatus', () => {
       expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
     });
+
+    it('does not render an Investigate errors button when no onInvestigateErrors is provided', async () => {
+      render(<PanelStatus items={items} />);
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Investigate errors' })).not.toBeInTheDocument();
+    });
+
+    it('renders a single Investigate errors button and calls onInvestigateErrors when clicked', async () => {
+      const onInvestigateErrors = jest.fn();
+      render(
+        <PanelStatus
+          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
+          onInvestigateErrors={onInvestigateErrors}
+        />
+      );
+
+      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      const button = await screen.findByRole('button', { name: 'Investigate errors' });
+
+      await userEvent.click(button);
+      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('renders nothing meaningful when neither message nor items are provided', () => {

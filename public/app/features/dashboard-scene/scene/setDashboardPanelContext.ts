@@ -1,3 +1,6 @@
+import { firstValueFrom } from 'rxjs';
+
+import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
@@ -6,9 +9,14 @@ import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
+import {
+  getActiveAssistantChatId,
+  isAssistantSidebarOpen,
+} from 'app/core/components/AssistantTooltip/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { buildEntries } from '../inspect/StandardErrorsAndNoticesInspector';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
@@ -219,7 +227,63 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
+    context.onInvestigateErrors = () => investigatePanelErrorsWithAssistant(vizPanel);
   }
+}
+
+/**
+ * Checks the panel's current errors/notices (mirroring the "Errors and notices" inspector tab)
+ * to decide whether there's anything to investigate, then opens the assistant with a reference
+ * to the panel itself rather than a text snapshot of its errors.
+ *
+ * Attaching the panel this way (name/panelId/panelKey) mirrors the assistant's own "select a
+ * panel as context" picker (PanelSelectButton in grafana-assistant-app), so the assistant
+ * resolves it through the same path and can inspect the panel's live queries/data with its own
+ * tools instead of trusting a frozen description we send in the prompt.
+ */
+async function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
+  const available = await firstValueFrom(isAssistantAvailable());
+  if (!available) {
+    return;
+  }
+
+  const panelData = sceneGraph.getData(vizPanel).state.data;
+  const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
+  const entries = buildEntries(panelData?.series, errors);
+
+  if (entries.length === 0) {
+    return;
+  }
+
+  const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text');
+  const panelKey = vizPanel.state.key;
+  const hasError = entries.some((entry) => entry.severity === 'error');
+  // Prompt text sent to the assistant is intentionally not translated (matching
+  // QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM, not rendered
+  // UI copy, so it stays in English regardless of UI locale.
+  const prompt = hasError
+    ? 'Investigate and fix the query errors causing this panel to fail.'
+    : 'Investigate the query notices for this panel and explain what they mean and what I should do about them.';
+
+  // When the assistant is already docked open, target its active chat instead of just
+  // republishing the same "open" props — otherwise the sidebar being open already swallows this.
+  openAssistant({
+    origin: 'grafana/panel-status-popover',
+    mode: 'assistant',
+    prompt,
+    autoSend: true,
+    appendContext: true,
+    chatId: isAssistantSidebarOpen() ? getActiveAssistantChatId() : undefined,
+    context: [
+      createAssistantContextItem('structured', {
+        data: {
+          name: `Panel: ${panelTitle}`,
+          panelId: panelKey?.split('-')[1],
+          panelKey,
+        },
+      }),
+    ],
+  });
 }
 
 /**

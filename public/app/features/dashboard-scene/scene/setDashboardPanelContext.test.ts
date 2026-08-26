@@ -1,14 +1,18 @@
+import { of } from 'rxjs';
+
 import {
   type AdHocVariableModel,
   CoreApp,
   EventBusSrv,
+  getDefaultTimeRange,
   type GroupByVariableModel,
+  LoadingState,
   type Scope,
   type VariableModel,
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { GroupByVariable, SceneDataNode, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
@@ -29,6 +33,23 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
+}));
+
+const mockIsAssistantAvailable = jest.fn();
+const mockOpenAssistant = jest.fn();
+
+jest.mock('@grafana/assistant', () => ({
+  isAssistantAvailable: () => mockIsAssistantAvailable(),
+  openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
+  createAssistantContextItem: (type: string, params: object) => ({ type, ...params }),
+}));
+
+const mockIsAssistantSidebarOpen = jest.fn();
+const mockGetActiveAssistantChatId = jest.fn();
+
+jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+  isAssistantSidebarOpen: () => mockIsAssistantSidebarOpen(),
+  getActiveAssistantChatId: () => mockGetActiveAssistantChatId(),
 }));
 
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
@@ -67,6 +88,10 @@ beforeEach(() => {
   mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
   stubFFEnabled(false);
+  mockIsAssistantAvailable.mockReset().mockReturnValue(of(false));
+  mockOpenAssistant.mockReset();
+  mockIsAssistantSidebarOpen.mockReset().mockReturnValue(false);
+  mockGetActiveAssistantChatId.mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
@@ -563,6 +588,144 @@ describe('setDashboardPanelContext', () => {
 
       await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('onInvestigateErrors', () => {
+    beforeEach(() => {
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? true : defaultValue
+      );
+    });
+
+    it('is not set when the new panel query errors UI feature flag is disabled', () => {
+      stubFFEnabled(false);
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('does nothing when the assistant is unavailable', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(false));
+
+      const { context } = buildTestScene({});
+      await context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when the panel currently has no errors or notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+      await context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
+    it('opens the assistant with a fix-errors prompt when the panel has a query error', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      await context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'grafana/panel-status-popover',
+          prompt: expect.stringContaining('fix the query errors'),
+          // Attaches a reference to the panel itself (matching the assistant's own
+          // "select a panel as context" picker) rather than a text snapshot of its errors.
+          context: [
+            expect.objectContaining({
+              type: 'structured',
+              data: expect.objectContaining({ panelId: '4', panelKey: 'panel-4' }),
+            }),
+          ],
+        })
+      );
+    });
+
+    it('does not target a chat when the assistant sidebar is closed', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockIsAssistantSidebarOpen.mockReturnValue(false);
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      await context.onInvestigateErrors?.();
+
+      expect(mockGetActiveAssistantChatId).not.toHaveBeenCalled();
+      expect(mockOpenAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
+    });
+
+    it('targets the active chat when the assistant sidebar is already open', async () => {
+      // Otherwise this silently does nothing: opening the assistant while it's already docked
+      // open just republishes the same props instead of landing in the active conversation.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockIsAssistantSidebarOpen.mockReturnValue(true);
+      mockGetActiveAssistantChatId.mockReturnValue('active-chat-id');
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      await context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ appendContext: true, chatId: 'active-chat-id' })
+      );
+    });
+
+    it('opens the assistant with an explain-notices prompt when the panel only has notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Done,
+            series: [{ name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'slow query' }] } }],
+            timeRange: getDefaultTimeRange(),
+          },
+        }),
+      });
+
+      await context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('Investigate the query notices'),
+        })
+      );
     });
   });
 });

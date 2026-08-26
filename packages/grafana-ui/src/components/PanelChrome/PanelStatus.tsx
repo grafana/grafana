@@ -22,6 +22,11 @@ export interface Props {
   /** Opens the inspector "Errors and notices" tab. */
   onClick?: (e: React.SyntheticEvent) => void;
   ariaLabel?: string;
+  /**
+   * Triggers an AI-assisted investigation of the panel's errors/notices. The host (e.g.
+   * dashboard) owns what this does; PanelStatus only decides whether to show the action.
+   */
+  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
 }
 
 const SEVERITY_RANK: Record<PanelStatusSeverity, number> = {
@@ -41,9 +46,16 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
   return severity === 'info' ? 'info-circle' : 'exclamation-triangle';
 }
 
-export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
+export function PanelStatus({ message, items, onClick, ariaLabel = 'status', onInvestigateErrors }: Props) {
   if (items && items.length > 0) {
-    return <PanelStatusPopover items={items} onInspect={onClick} ariaLabel={ariaLabel} />;
+    return (
+      <PanelStatusPopover
+        items={items}
+        onInspect={onClick}
+        ariaLabel={ariaLabel}
+        onInvestigateErrors={onInvestigateErrors}
+      />
+    );
   }
 
   return (
@@ -63,9 +75,10 @@ interface PanelStatusPopoverProps {
   items: PanelStatusItem[];
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
+  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
 }
 
-function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverProps) {
+function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
@@ -76,11 +89,24 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
         <span className={styles.popoverTitle}>
           {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
         </span>
-        {onInspect && (
-          <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
-            {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
-          </Button>
-        )}
+        <Stack direction="row" gap={0.5} alignItems="center">
+          {onInvestigateErrors && (
+            <Button
+              size="sm"
+              variant="secondary"
+              fill="text"
+              icon="ai-sparkle"
+              tooltip={t('grafana-ui.panel-chrome.investigate-errors', 'Investigate errors')}
+              aria-label={t('grafana-ui.panel-chrome.investigate-errors', 'Investigate errors')}
+              onClick={onInvestigateErrors}
+            />
+          )}
+          {onInspect && (
+            <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+              {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
+            </Button>
+          )}
+        </Stack>
       </div>
       <Stack direction="column" gap={1}>
         {sortedItems.map((item, index) => (

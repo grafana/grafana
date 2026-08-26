@@ -19,7 +19,7 @@ export interface StandardErrorsAndNoticesInspectorProps {
 
 type Severity = QueryResultMetaNotice['severity'];
 
-interface InspectableEntry {
+export interface InspectableEntry {
   severity: Severity;
   title?: string;
   content: string;
@@ -54,7 +54,10 @@ function formatError(error: DataQueryError): string {
   }
 }
 
-function buildEntries(data: DataFrame[] | undefined, errors: DataQueryError[] | undefined): InspectableEntry[] {
+export function buildEntries(
+  data: DataFrame[] | undefined,
+  errors: DataQueryError[] | undefined
+): InspectableEntry[] {
   const entries: InspectableEntry[] = [];
 
   for (const error of errors ?? []) {
