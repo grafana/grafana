@@ -8,7 +8,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
-import { setupAutoSyncConfigWriteError, setupStatefulAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
 
@@ -136,6 +140,17 @@ async function importWith(user: ReturnType<typeof render>['user']) {
   const dialog = await screen.findByRole('dialog');
   await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 }
+
+describe('ImportWizardGate — gating on mount', () => {
+  it('blocks the wizard when auto-sync is already active, even before the Config query resolves', async () => {
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+
+    render(<ImportWizardGate />);
+
+    expect(await screen.findByText(/auto-sync is enabled/i)).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /import notification resources/i })).not.toBeInTheDocument();
+  });
+});
 
 describe('ImportToGMA wizard — stage analytics', () => {
   it('tracks success and lands on the Import settings tab', async () => {
