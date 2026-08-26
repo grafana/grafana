@@ -47,7 +47,7 @@ import (
 )
 
 const (
-	MaxUpdateRetries = 5
+	MaxUpdateRetries = 10
 )
 
 var updateRetryConfig = backoff.Config{
