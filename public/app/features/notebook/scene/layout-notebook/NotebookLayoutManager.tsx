@@ -670,7 +670,7 @@ export class NotebookLayoutManager
 
   // Flushes both coalescing edit kinds before a discrete action starts, so neither is left sitting
   // underneath it on the undo stack, still open.
-  private commitPendingEdits(): void {
+  public commitPendingEdits(): void {
     this.commitContentEdits();
     this.commitQueriesEdits();
   }
