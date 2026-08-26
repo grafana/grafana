@@ -33,24 +33,32 @@ describe('ColorValueEditor', () => {
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
 
-  it('exposes the color name as a button so keyboard users can open the picker', () => {
+  it('uses the color name as a label for the swatch, not a second button', () => {
     render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
 
-    expect(screen.getByRole('button', { name: '#ff0000' })).toHaveAttribute('type', 'button');
+    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const colorName = screen.getByText('#ff0000');
+
+    expect(colorName.tagName).toBe('LABEL');
+    expect(colorName).toHaveAttribute('for', swatch.getAttribute('id'));
+    expect(screen.getAllByRole('button', { name: 'Pick a color' })).toHaveLength(1);
   });
 
-  it('exposes the placeholder as a button when no color is set', () => {
+  it('uses the placeholder as a label for the swatch when no color is set', () => {
     render(<ColorValueEditor value={undefined} onChange={jest.fn()} details />);
 
-    expect(screen.getByRole('button', { name: 'Select color' })).toHaveAttribute('type', 'button');
+    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const placeholder = screen.getByText('Select color');
+
+    expect(placeholder.tagName).toBe('LABEL');
+    expect(placeholder).toHaveAttribute('for', swatch.getAttribute('id'));
   });
 
-  it.each(['{Enter}', '[Space]'] as const)('opens the color picker from the keyboard with %s', async (key) => {
+  it('opens the color picker when the color name label is clicked', async () => {
     const user = userEvent.setup();
     render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
 
-    screen.getByRole('button', { name: '#ff0000' }).focus();
-    await user.keyboard(key);
+    await user.click(screen.getByText('#ff0000'));
 
     expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
