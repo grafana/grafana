@@ -142,6 +142,32 @@ export function QueryCoauthoring({
     !fallback &&
     !error &&
     !contextError;
+  const showPrompt =
+    isAssistantAvailable &&
+    !isGenerating &&
+    !proposal &&
+    !fallback &&
+    !error &&
+    !contextError &&
+    !shouldShowIterationNudge;
+  const focusState = isAssistantLoading
+    ? 'loading'
+    : !isAssistantAvailable
+      ? 'unavailable'
+      : isGenerating
+        ? 'working'
+        : contextError
+          ? 'context-error'
+          : error
+            ? 'error'
+            : shouldShowIterationNudge
+              ? 'iteration-nudge'
+              : fallback
+                ? 'fallback'
+                : proposal
+                  ? 'proposal'
+                  : 'prompt';
+  const previousFocusStateRef = useRef(focusState);
   onRevertPreviewRef.current = onRevertPreview;
 
   const revertQueryPreview = useCallback(() => {
@@ -205,6 +231,37 @@ export function QueryCoauthoring({
       revertQueryPreview();
     };
   }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview]);
+
+  useEffect(() => {
+    const previousFocusState = previousFocusStateRef.current;
+    previousFocusStateRef.current = focusState;
+    if (focusState === previousFocusState || focusState === 'prompt') {
+      return;
+    }
+
+    const activeElement = document.activeElement;
+    let firstFocusFrame = requestAnimationFrame(() => {
+      firstFocusFrame = 0;
+      secondFocusFrame = requestAnimationFrame(() => {
+        secondFocusFrame = 0;
+        const container = containerRef.current;
+        const currentActiveElement = document.activeElement;
+        if (container && (currentActiveElement === activeElement || currentActiveElement === document.body)) {
+          container.focus();
+        }
+      });
+    });
+    let secondFocusFrame = 0;
+
+    return () => {
+      if (firstFocusFrame) {
+        cancelAnimationFrame(firstFocusFrame);
+      }
+      if (secondFocusFrame) {
+        cancelAnimationFrame(secondFocusFrame);
+      }
+    };
+  }, [focusState]);
 
   const stop = () => {
     trackQueryCoauthoringGenerationStopped({ datasourceType });
@@ -411,94 +468,82 @@ export function QueryCoauthoring({
           </Stack>
         </>
       )}
-      {isAssistantAvailable &&
-        !isGenerating &&
-        !proposal &&
-        !fallback &&
-        !error &&
-        !contextError &&
-        !shouldShowIterationNudge && (
-          <>
-            <QueryCoauthoringHeader onClose={dismissPopover} pulse={!context || isIdentifying}>
-              {!context || isIdentifying ? (
-                <QueryCoauthoringLiveStatus>
-                  <Icon name="ai-sparkle" size="sm" />
-                  <Text variant="bodySmall" color="secondary">
-                    <Trans i18nKey="query-editor-coauthoring.reading-highlighted-query">
-                      Reading highlighted query...
-                    </Trans>
-                  </Text>
-                </QueryCoauthoringLiveStatus>
-              ) : clarification ? (
-                <Text variant="body" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
+      {showPrompt && (
+        <>
+          <QueryCoauthoringHeader onClose={dismissPopover} pulse={!context || isIdentifying}>
+            {!context || isIdentifying ? (
+              <QueryCoauthoringLiveStatus>
+                <Icon name="ai-sparkle" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.reading-highlighted-query">
+                    Reading highlighted query...
+                  </Trans>
                 </Text>
-              ) : (
-                <Text variant="body" color="secondary">
-                  <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
-                </Text>
-              )}
-            </QueryCoauthoringHeader>
-            {context && !isIdentifying && (
-              <div
-                className={styles.body}
-                data-testid={selectors.components.QueryEditorCoauthoring.container}
-                role="region"
-                aria-label={
-                  clarification
-                    ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
-                    : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
-                }
-              >
-                <Text id={promptMessageId} variant="body">
-                  {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
-                </Text>
-              </div>
+              </QueryCoauthoringLiveStatus>
+            ) : clarification ? (
+              <Text variant="body" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.clarification-title">Detail requested</Trans>
+              </Text>
+            ) : (
+              <Text variant="body" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+              </Text>
             )}
-          </>
-        )}
-      {isAssistantAvailable &&
-        !isGenerating &&
-        !proposal &&
-        !fallback &&
-        !error &&
-        !contextError &&
-        !shouldShowIterationNudge && (
-          <>
-            <QueryCoauthoringPromptInput
-              key={clarification ? `clarification-${submittedIterationCount}` : 'initial'}
-              focusTrigger={`${clarification ? `clarification-${submittedIterationCount}` : 'initial'}-${
-                selectionExplanation ? 'identified' : 'reading'
-              }`}
-              userGestureRef={promptUserGestureRef}
-              value={intent}
-              placeholder={
+          </QueryCoauthoringHeader>
+          {context && !isIdentifying && (
+            <div
+              className={styles.body}
+              data-testid={selectors.components.QueryEditorCoauthoring.container}
+              role="region"
+              aria-label={
                 clarification
-                  ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
-                  : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+                  ? t('query-editor-coauthoring.clarification-message', 'Clarification message')
+                  : t('query-editor-coauthoring.highlighted-query-summary', 'Highlighted query summary')
               }
-              ariaLabel={
-                clarification
-                  ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
-                  : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
-              }
-              ariaDescribedBy={context && !isIdentifying ? promptMessageId : undefined}
-              actionLabel={
-                clarification
-                  ? t('query-editor-coauthoring.continue', 'Continue')
-                  : t('query-editor-coauthoring.submit', 'Coauthor')
-              }
-              disabled={!intent.trim() || !context || contextError}
-              onChange={setIntent}
-              onSubmit={() => void submit()}
+            >
+              <Text id={promptMessageId} variant="body">
+                {clarification?.message ?? selectionExplanation ?? selectionSummary(context)}
+              </Text>
+            </div>
+          )}
+        </>
+      )}
+      {showPrompt && (
+        <>
+          <QueryCoauthoringPromptInput
+            key={clarification ? `clarification-${submittedIterationCount}` : 'initial'}
+            focusTrigger={`${clarification ? `clarification-${submittedIterationCount}` : 'initial'}-${
+              selectionExplanation ? 'identified' : 'reading'
+            }`}
+            userGestureRef={promptUserGestureRef}
+            value={intent}
+            placeholder={
+              clarification
+                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
+                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+            }
+            ariaLabel={
+              clarification
+                ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
+                : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
+            }
+            ariaDescribedBy={context && !isIdentifying ? promptMessageId : undefined}
+            actionLabel={
+              clarification
+                ? t('query-editor-coauthoring.continue', 'Continue')
+                : t('query-editor-coauthoring.submit', 'Coauthor')
+            }
+            disabled={!intent.trim() || !context || contextError}
+            onChange={setIntent}
+            onSubmit={() => void submit()}
+          />
+          {clarification && (
+            <QueryCoauthoringClarificationAction
+              onContinue={() => continueInAssistant('clarification', clarification.message)}
             />
-            {clarification && (
-              <QueryCoauthoringClarificationAction
-                onContinue={() => continueInAssistant('clarification', clarification.message)}
-              />
-            )}
-          </>
-        )}
+          )}
+        </>
+      )}
       {isAssistantAvailable && isGenerating && <QueryCoauthoringWorking context={context} onStop={stop} />}
       {isAssistantAvailable && contextError && (
         <>

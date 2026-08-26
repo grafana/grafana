@@ -60,12 +60,15 @@ export function synchronizeCoauthoringBaselineQuery(
     return false;
   }
 
-  const normalizedBaseline = { ...baseline, refId: currentQuery.refId };
-  if (isEqual(currentQuery, normalizedBaseline)) {
+  if (currentQuery.refId !== baseline.refId) {
+    return false;
+  }
+
+  if (isEqual(currentQuery, baseline)) {
     return true;
   }
 
-  updateQuery(normalizedBaseline, currentQuery.refId);
+  updateQuery(baseline, currentQuery.refId);
   return true;
 }
 

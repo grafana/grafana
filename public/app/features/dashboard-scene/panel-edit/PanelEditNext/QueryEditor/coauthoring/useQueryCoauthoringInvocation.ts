@@ -23,6 +23,8 @@ interface QueryCoauthoringInvocationOptions {
   onBaseline: (query: DataQuery) => boolean;
 }
 
+class StaleQueryCoauthoringInvocationError extends Error {}
+
 export function useQueryCoauthoringInvocation({
   adapter,
   invocationId,
@@ -41,6 +43,7 @@ export function useQueryCoauthoringInvocation({
   const [contextError, setContextError] = useState(false);
   const [selectionExplanation, setSelectionExplanation] = useState<string>();
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1> | undefined>(undefined);
+  const invocationEpochRef = useRef(0);
   const identificationIdRef = useRef(0);
   const onBaselineRef = useRef(onBaseline);
   const identifySelectionRef = useRef(identifySelection);
@@ -56,7 +59,14 @@ export function useQueryCoauthoringInvocation({
   const loadContext = useCallback(() => {
     setContext(undefined);
     setContextError(false);
+    const invocationEpoch = ++invocationEpochRef.current;
     const contextPromise = adapter.readInvocation(invocationId).then(({ baseline, context }) => {
+      if (invocationEpoch !== invocationEpochRef.current) {
+        throw new StaleQueryCoauthoringInvocationError();
+      }
+      if (context.revision !== invocationId) {
+        throw new Error('The query coauthoring invocation revision does not match the requested invocation.');
+      }
       if (!onBaselineRef.current(baseline)) {
         throw new Error('The query coauthoring baseline is no longer current.');
       }
@@ -70,7 +80,7 @@ export function useQueryCoauthoringInvocation({
         }
       },
       () => {
-        if (contextPromiseRef.current === contextPromise) {
+        if (contextPromiseRef.current === contextPromise && invocationEpoch === invocationEpochRef.current) {
           setContextError(true);
         }
       }
@@ -78,6 +88,7 @@ export function useQueryCoauthoringInvocation({
   }, [adapter, invocationId]);
 
   const readContext = useCallback(async () => {
+    const invocationEpoch = invocationEpochRef.current;
     try {
       if (context) {
         return context;
@@ -86,12 +97,20 @@ export function useQueryCoauthoringInvocation({
         return await contextPromiseRef.current;
       }
       const invocation = await adapter.readInvocation(invocationId);
+      if (invocationEpoch !== invocationEpochRef.current) {
+        throw new StaleQueryCoauthoringInvocationError();
+      }
+      if (invocation.context.revision !== invocationId) {
+        throw new Error('The query coauthoring invocation revision does not match the requested invocation.');
+      }
       if (!onBaselineRef.current(invocation.baseline)) {
         throw new Error('The query coauthoring baseline is no longer current.');
       }
       return invocation.context;
     } catch (error) {
-      setContextError(true);
+      if (!(error instanceof StaleQueryCoauthoringInvocationError)) {
+        setContextError(true);
+      }
       throw error;
     }
   }, [adapter, context, invocationId]);
@@ -102,6 +121,7 @@ export function useQueryCoauthoringInvocation({
   }, [cancelAssistantIdentification]);
 
   const clear = useCallback(() => {
+    invocationEpochRef.current++;
     identificationIdRef.current++;
     cancelAssistantIdentification();
     resetIdentification();
@@ -156,8 +176,11 @@ export function useQueryCoauthoringInvocation({
     }
 
     const identificationState = identificationIdRef;
+    const invocationEpoch = invocationEpochRef;
     loadContext();
     return () => {
+      invocationEpoch.current++;
+      contextPromiseRef.current = undefined;
       identificationState.current++;
       cancelAssistantIdentification();
     };

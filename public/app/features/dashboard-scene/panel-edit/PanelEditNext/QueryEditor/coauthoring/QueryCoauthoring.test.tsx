@@ -32,6 +32,14 @@ let mockInlineAssistantHookCall = 0;
 let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
 jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: (type: string, params: Record<string, unknown>) => ({
     node: { data: { type, params, data: params.data } },
@@ -175,6 +183,7 @@ async function setup(
   return {
     anchorElement,
     capability: adapter,
+    context,
     dismissInvocation,
     baseline,
     queryText: context.query,
@@ -422,6 +431,41 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(mockGenerate).not.toHaveBeenCalled();
     expect(onPreview).not.toHaveBeenCalled();
+  });
+
+  it('does not synchronize a baseline after dismissal wins the invocation-read race', async () => {
+    const initial = await setup(0, false);
+    initial.unmount();
+    initial.onBaseline.mockClear();
+    initial.dismissInvocation.mockClear();
+    const invocation = deferred<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>();
+    initial.readInvocation.mockReturnValueOnce(invocation.promise);
+
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+
+    await act(async () => {
+      invocation.resolve({ baseline: initial.baseline, context: initial.context });
+      await invocation.promise;
+    });
+
+    expect(initial.dismissInvocation).toHaveBeenCalledTimes(1);
+    expect(initial.onBaseline).not.toHaveBeenCalled();
+  });
+
+  it('does not synchronize a baseline from a different invocation revision', async () => {
+    const initial = await setup(0, false);
+    initial.unmount();
+    initial.onBaseline.mockClear();
+    initial.readInvocation.mockResolvedValueOnce({
+      baseline: initial.baseline,
+      context: { ...initial.context, revision: 'stale-revision' },
+    });
+
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+
+    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
+    expect(initial.onBaseline).not.toHaveBeenCalled();
   });
 
   it('does not start generation after unmount wins the context-read race', async () => {
@@ -1264,6 +1308,64 @@ describe('QueryCoauthoring', () => {
       drainAnimationFrames();
 
       expect(secondClarificationPrompt).toHaveFocus();
+    } finally {
+      mockIsGenerating = false;
+      requestAnimationFrameSpy.mockRestore();
+      cancelAnimationFrameSpy.mockRestore();
+    }
+  });
+
+  it('keeps focus in the dialog while moving from the prompt through building to a proposal', async () => {
+    let nextAnimationFrameId = 1;
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextAnimationFrameId++;
+      animationFrames.set(id, callback);
+      return id;
+    });
+    const cancelAnimationFrameSpy = jest
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((id) => animationFrames.delete(id));
+    const drainAnimationFrames = () => {
+      while (animationFrames.size > 0) {
+        const [[id, callback]] = animationFrames;
+        animationFrames.delete(id);
+        act(() => callback(0));
+      }
+    };
+
+    try {
+      const { queryCoauthoringProps, rerender, stagePreview, user } = await setup();
+      const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      drainAnimationFrames();
+      expect(prompt).toHaveFocus();
+
+      await user.type(prompt, 'Use increase');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+
+      mockIsGenerating = true;
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      drainAnimationFrames();
+
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+      expect(dialog).toHaveFocus();
+
+      mockIsGenerating = false;
+      await act(async () => {
+        await request.tools[0].invoke({
+          proposedQuery: 'increase(http_requests_total[5m])',
+          why: ['Returns the increase over the selected range.'],
+        });
+        request.onComplete('');
+      });
+      rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+      drainAnimationFrames();
+
+      expect(stagePreview).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+      expect(dialog).toHaveFocus();
     } finally {
       mockIsGenerating = false;
       requestAnimationFrameSpy.mockRestore();

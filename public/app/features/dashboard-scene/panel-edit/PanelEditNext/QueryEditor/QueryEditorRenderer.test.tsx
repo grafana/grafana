@@ -232,14 +232,19 @@ describe('QueryEditorRenderer', () => {
   it('synchronizes only a baseline that differs from the current query', () => {
     const updateQuery = jest.fn();
     const currentQuery: TestQuery = { refId: 'A', legendFormat: 'series-a' };
-    const equalBaseline: TestQuery = { refId: 'other', legendFormat: 'series-a' };
-    const differentBaseline: TestQuery = { refId: 'other', legendFormat: 'series-b' };
+    const equalBaseline: TestQuery = { refId: 'A', legendFormat: 'series-a' };
+    const differentBaseline: TestQuery = { refId: 'A', legendFormat: 'series-b' };
+    const staleBaseline: TestQuery = { refId: 'B', legendFormat: 'series-c' };
 
     expect(synchronizeCoauthoringBaselineQuery(currentQuery, equalBaseline, updateQuery)).toBe(true);
     expect(updateQuery).not.toHaveBeenCalled();
 
     expect(synchronizeCoauthoringBaselineQuery(currentQuery, differentBaseline, updateQuery)).toBe(true);
     expect(updateQuery).toHaveBeenCalledWith({ refId: 'A', legendFormat: 'series-b' }, 'A');
+
+    updateQuery.mockClear();
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, staleBaseline, updateQuery)).toBe(false);
+    expect(updateQuery).not.toHaveBeenCalled();
   });
 
   it('remounts the query editor when the datasource instance changes', () => {
