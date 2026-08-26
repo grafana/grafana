@@ -1,8 +1,81 @@
+import { screen } from '@testing-library/react';
+import { act, render } from 'test/test-utils';
+
+import { FlagKeys } from '@grafana/runtime/internal';
+import { defaultCustomVariableSpec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import { DashboardInteractions } from '../../utils/interactions';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 
-import { updateDashboardScopeVariable, type PredefinedVariablesDashboard } from './DashboardPredefinedVariablesOptions';
+import {
+  DashboardPredefinedVariablesOptions,
+  updateDashboardScopeVariable,
+  type PredefinedVariablesDashboard,
+} from './DashboardPredefinedVariablesOptions';
+
+const mockFetchPredefinedVariables = jest.fn();
+
+jest.mock('../../utils/predefinedVariables', () => ({
+  ...jest.requireActual('../../utils/predefinedVariables'),
+  fetchPredefinedVariables: (...args: unknown[]) => mockFetchPredefinedVariables(...args),
+}));
+
+jest.mock('app/core/hooks/useQueryParams', () => ({
+  useQueryParams: () => [{}, () => {}],
+}));
+
+jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
+  useLocalStorage: () => [{ isExpanded: true }, () => {}],
+}));
+
+function createDashboard(annotations: Record<string, string> = {}): PredefinedVariablesDashboard {
+  const meta = {
+    canSave: true,
+    folderUid: 'folder-1',
+    k8s: { annotations: { ...annotations } },
+  };
+
+  return {
+    state: {
+      uid: 'dash-1',
+      meta,
+    },
+    useState: () => ({ meta }),
+    setState: jest.fn((next) => {
+      Object.assign(meta, next.meta ?? {});
+    }),
+    serializer: {
+      getK8SMetadata: () => ({ annotations: { ...meta.k8s?.annotations } }),
+      setK8SAnnotations: jest.fn((next) => {
+        meta.k8s = { ...(meta.k8s ?? {}), annotations: next };
+      }),
+    },
+    refreshPredefinedVariables: jest.fn().mockResolvedValue(undefined),
+    managedResourceCannotBeEdited: () => false,
+  } as unknown as PredefinedVariablesDashboard;
+}
+
+function makeCandidate(name: string, origin: 'global' | 'folder'): VariableKind {
+  return {
+    kind: 'CustomVariable',
+    spec: {
+      ...defaultCustomVariableSpec(),
+      name,
+      origin: toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' }),
+    },
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
 
 describe('updateDashboardScopeVariable', () => {
   let modeChangedSpy: jest.SpyInstance;
@@ -16,32 +89,6 @@ describe('updateDashboardScopeVariable', () => {
   afterEach(() => {
     modeChangedSpy.mockRestore();
   });
-
-  function createDashboard(annotations: Record<string, string> = {}): PredefinedVariablesDashboard {
-    const meta = {
-      canSave: true,
-      k8s: { annotations: { ...annotations } },
-    };
-
-    return {
-      state: {
-        uid: 'dash-1',
-        meta,
-      },
-      useState: () => ({ meta }),
-      setState: jest.fn((next) => {
-        Object.assign(meta, next.meta ?? {});
-      }),
-      serializer: {
-        getK8SMetadata: () => ({ annotations: { ...meta.k8s?.annotations } }),
-        setK8SAnnotations: jest.fn((next) => {
-          meta.k8s = { ...(meta.k8s ?? {}), annotations: next };
-        }),
-      },
-      refreshPredefinedVariables: jest.fn().mockResolvedValue(undefined),
-      managedResourceCannotBeEdited: () => false,
-    } as unknown as PredefinedVariablesDashboard;
-  }
 
   it('writes a name array when checking one global and does not report radio analytics', () => {
     const dashboard = createDashboard();
@@ -87,5 +134,51 @@ describe('updateDashboardScopeVariable', () => {
     expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
       '{"global":["region","env"],"folder":"none"}'
     );
+  });
+});
+
+describe('DashboardPredefinedVariablesOptions', () => {
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardGlobalVariables]: true });
+  });
+
+  afterEach(() => {
+    mockFetchPredefinedVariables.mockReset();
+  });
+
+  afterAll(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
+  it('shows checkboxes after a delayed list load without expanding Global or Folder', async () => {
+    const fetch = deferred<VariableKind[] | null>();
+    mockFetchPredefinedVariables.mockReturnValue(fetch.promise);
+
+    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+
+    expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
+    expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
+
+    await act(async () => {
+      fetch.resolve([makeCandidate('env', 'global'), makeCandidate('cluster', 'folder')]);
+    });
+
+    expect(await screen.findByRole('checkbox', { name: 'env' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
+    expect(screen.getByText('env')).toBeVisible();
+    expect(screen.getByText('cluster')).toBeVisible();
+  });
+
+  it('shows a load error instead of the empty copy when the list fetch fails', async () => {
+    mockFetchPredefinedVariables.mockResolvedValue(null);
+
+    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+
+    expect(await screen.findByText('Could not load global and folder variables.')).toBeInTheDocument();
+    expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
+    expect(screen.queryByText('No folder variables in this folder.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 });

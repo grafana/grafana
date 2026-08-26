@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Checkbox, Counter, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Checkbox, Counter, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables, type ObjectMeta } from 'app/features/apiserver/types';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
@@ -87,11 +87,13 @@ interface Props {
   dashboard: PredefinedVariablesDashboard;
 }
 
+type CandidatesLoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; variables: VariableKind[] };
+
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditSelection = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
-  const [candidates, setCandidates] = useState<VariableKind[]>([]);
+  const [loadState, setLoadState] = useState<CandidatesLoadState>({ status: 'loading' });
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   const selection = useMemo(() => {
@@ -108,10 +110,17 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
     }
 
     let cancelled = false;
+    setLoadState({ status: 'loading' });
     void fetchPredefinedVariables(meta.folderUid).then((vars) => {
-      if (!cancelled && vars) {
-        setCandidates(vars);
+      if (cancelled) {
+        return;
       }
+      // null is fetch failure; [] is a successful empty list. Do not fold failure into empty.
+      if (vars === null) {
+        setLoadState({ status: 'error' });
+        return;
+      }
+      setLoadState({ status: 'ready', variables: vars });
     });
 
     return () => {
@@ -123,6 +132,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
     return null;
   }
 
+  const candidates = loadState.status === 'ready' ? loadState.variables : [];
   const globalVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'global');
   const folderVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'folder');
 
@@ -134,32 +144,42 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
           'Choose which global and folder-scoped variables this dashboard receives.'
         )}
       </Text>
-      <div>
-        <ScopeCheckboxSection
-          scope="global"
-          variables={globalVars}
-          selection={selection}
-          canEdit={canEditSelection}
-          emptyLabel={t(
-            'dashboard.sidebar.cross-dashboard-variables.empty-global',
-            'No global variables in this organization.'
-          )}
-          sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.global-section', 'Global')}
-          dashboard={dashboard}
-        />
-        <ScopeCheckboxSection
-          scope="folder"
-          variables={folderVars}
-          selection={selection}
-          canEdit={canEditSelection}
-          emptyLabel={t(
-            'dashboard.sidebar.cross-dashboard-variables.empty-folder',
-            'No folder variables in this folder.'
-          )}
-          sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.folder-section', 'Folder')}
-          dashboard={dashboard}
-        />
-      </div>
+      {loadState.status === 'loading' && <Spinner />}
+      {loadState.status === 'error' && (
+        <Text variant="bodySmall" color="secondary">
+          {t('dashboard.sidebar.cross-dashboard-variables.load-error', 'Could not load global and folder variables.')}
+        </Text>
+      )}
+      {/* Mount after the list is known. itemsCount=0 on first paint makes OptionsPaneCategory
+          initialize collapsed and never reopen when the checkboxes arrive. */}
+      {loadState.status === 'ready' && (
+        <div>
+          <ScopeCheckboxSection
+            scope="global"
+            variables={globalVars}
+            selection={selection}
+            canEdit={canEditSelection}
+            emptyLabel={t(
+              'dashboard.sidebar.cross-dashboard-variables.empty-global',
+              'No global variables in this organization.'
+            )}
+            sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.global-section', 'Global')}
+            dashboard={dashboard}
+          />
+          <ScopeCheckboxSection
+            scope="folder"
+            variables={folderVars}
+            selection={selection}
+            canEdit={canEditSelection}
+            emptyLabel={t(
+              'dashboard.sidebar.cross-dashboard-variables.empty-folder',
+              'No folder variables in this folder.'
+            )}
+            sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.folder-section', 'Folder')}
+            dashboard={dashboard}
+          />
+        </div>
+      )}
     </Stack>
   );
 }

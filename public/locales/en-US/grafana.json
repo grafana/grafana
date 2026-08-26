@@ -6308,6 +6308,7 @@
         "empty-global": "No global variables in this organization.",
         "folder-section": "Folder",
         "global-section": "Global",
+        "load-error": "Could not load global and folder variables.",
         "pane-header": "Cross-dashboard variables",
         "title": "Cross-dashboard",
         "tooltip": "Choose global and folder variables"
