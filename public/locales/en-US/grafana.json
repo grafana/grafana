@@ -14834,8 +14834,6 @@
       "give-feedback-link": "Give feedback",
       "oauth-app-connection-label": "Connection",
       "oauth-app-creation-default-error": "Failed to create connection",
-      "oauth-app-no-connections": "No connections found",
-      "oauth-app-no-connections-message": "You don't have any connections for this provider yet. Please select \"Connect to a new app\" to create one.",
       "select-connection": "Select a connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",

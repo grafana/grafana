@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -91,6 +91,7 @@ const getAuthTypeOptions = (
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const styles = useStyles2(getStyles);
   const { control, watch, setValue } = useFormContext<WizardFormData>();
+  const [isConnectionAuthorizing, setIsConnectionAuthorizing] = useState(false);
   const { data: frontendSettings, isLoading: settingsLoading } = useGetFrontendSettingsQuery();
   const [githubAuthType, githubAppMode, githubAppConnectionName, repoType] = watch([
     'githubAuthType',
@@ -167,6 +168,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
             render={({ field: { onChange, value } }) => (
               <RadioButtonGroup<GitHubAuthType>
                 className={styles.authTypeRadios}
+                disabled={isConnectionAuthorizing}
                 value={value}
                 onChange={(nextValue) => {
                   onChange(nextValue);
@@ -190,6 +192,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
               provider={repoType}
               kind={githubAuthType === 'github-app' ? 'app' : 'oauth'}
               onGitHubAppSubmit={onGitHubAppSubmit}
+              onAuthorizingChange={setIsConnectionAuthorizing}
             />
             {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
           </>

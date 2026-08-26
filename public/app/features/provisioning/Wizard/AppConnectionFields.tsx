@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Alert, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -27,9 +27,15 @@ interface AppConnectionFieldsProps {
   provider: ConnectionProvider;
   kind: 'app' | 'oauth';
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
+  onAuthorizingChange: (isAuthorizing: boolean) => void;
 }
 
-export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppConnectionFieldsProps) {
+export function AppConnectionFields({
+  provider,
+  kind,
+  onGitHubAppSubmit,
+  onAuthorizingChange,
+}: AppConnectionFieldsProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -37,6 +43,15 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
+
+  const [isAuthorizing, setIsAuthorizing] = useState(false);
+  const handleAuthorizingChange = useCallback(
+    (authorizing: boolean) => {
+      setIsAuthorizing(authorizing);
+      onAuthorizingChange(authorizing);
+    },
+    [onAuthorizingChange]
+  );
 
   const connectionType = toConnectionType(provider, kind);
   const {
@@ -66,6 +81,8 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
           render={({ field: { ref, onChange, ...field } }) => (
             <RadioButtonGroup
               className={styles.appModeRadios}
+              disabled={isAuthorizing}
+              disabledOptions={hasNoConnections ? ['existing'] : undefined}
               options={[
                 {
                   value: 'existing',
@@ -93,29 +110,19 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
               {extractErrorMessage(connectionListError)}
             </Alert>
           ) : null}
-          {hasNoConnections && (
-            <Alert severity="info" title={t('provisioning.wizard.oauth-app-no-connections', 'No connections found')}>
-              <Trans i18nKey="provisioning.wizard.oauth-app-no-connections-message">
-                You don&apos;t have any connections for this provider yet. Please select &quot;Connect to a new
-                app&quot; to create one.
-              </Trans>
-            </Alert>
-          )}
-          {!hasNoConnections && (
-            <Field
-              noMargin
-              label={t('provisioning.wizard.oauth-app-connection-label', 'Connection')}
-              error={errors?.githubApp?.connectionName?.message}
-              invalid={Boolean(errors?.githubApp?.connectionName?.message)}
-            >
-              <ConnectionSelect
-                options={connectionOptions}
-                isLoading={isLoading}
-                placeholder={t('provisioning.wizard.select-connection', 'Select a connection')}
-                required={t('provisioning.wizard.github-app-error-required', 'Connection is required')}
-              />
-            </Field>
-          )}
+          <Field
+            noMargin
+            label={t('provisioning.wizard.oauth-app-connection-label', 'Connection')}
+            error={errors?.githubApp?.connectionName?.message}
+            invalid={Boolean(errors?.githubApp?.connectionName?.message)}
+          >
+            <ConnectionSelect
+              options={connectionOptions}
+              isLoading={isLoading}
+              placeholder={t('provisioning.wizard.select-connection', 'Select a connection')}
+              required={t('provisioning.wizard.github-app-error-required', 'Connection is required')}
+            />
+          </Field>
         </Stack>
       )}
 
@@ -125,6 +132,7 @@ export function AppConnectionFields({ provider, kind, onGitHubAppSubmit }: AppCo
           provider={provider}
           kind={kind}
           onGitHubAppSubmit={onGitHubAppSubmit}
+          onAuthorizingChange={handleAuthorizingChange}
           onAuthorized={(name) => onGitHubAppSubmit({ success: true, connectionName: name })}
         />
       )}
@@ -136,11 +144,19 @@ interface NewConnectionFieldsProps {
   provider: ConnectionProvider;
   kind: 'app' | 'oauth';
   onAuthorized: (connectionName: string) => void;
+  /** Reports pending OAuth authorization so ancestors can lock navigation that would unmount it */
+  onAuthorizingChange: (isAuthorizing: boolean) => void;
   /** Reports the creation result for the GitHub App kind */
   onGitHubAppSubmit?: (result: ConnectionCreationResult) => void;
 }
 
-function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }: NewConnectionFieldsProps) {
+function NewConnectionFields({
+  provider,
+  kind,
+  onAuthorized,
+  onGitHubAppSubmit,
+  onAuthorizingChange,
+}: NewConnectionFieldsProps) {
   const type = toConnectionType(provider, kind);
   const credentialForm = useForm<ConnectionFormData>({
     defaultValues: getConnectionFormDefaults(type),
@@ -149,6 +165,12 @@ function NewConnectionFields({ provider, kind, onAuthorized, onGitHubAppSubmit }
 
   const { save, request, submitError, setSubmitError, isAuthorizing, cancelAuthorization } =
     useSaveConnection(onAuthorized);
+
+  useEffect(() => {
+    onAuthorizingChange(isAuthorizing);
+    // Reset on unmount so ancestors re-enable their radios.
+    return () => onAuthorizingChange(false);
+  }, [isAuthorizing, onAuthorizingChange]);
 
   const handleCreateGitHubApp = async () => {
     // Reset any existing step errors
