@@ -136,9 +136,6 @@ Cross-filtering is supported for the following visualizations:
 | Visualization  | Requires Group by |
 | -------------- | ----------------- |
 | Bar chart      | no                |
-| Histogram      | yes               |
-| State timeline | yes               |
-| Status history | yes               |
 | Table          | no                |
 | Time series    | yes               |
 
