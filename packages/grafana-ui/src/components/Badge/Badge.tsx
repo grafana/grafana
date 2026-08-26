@@ -20,10 +20,12 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;
+  //When set, truncates `text` with an ellipsis
+  maxWidth?: number;
 }
 
-const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(getStyles, color);
+const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, maxWidth, className, ...otherProps }) => {
+  const styles = useStyles2(getStyles, color, maxWidth);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && (
@@ -31,7 +33,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, cla
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {text}
+      {maxWidth ? <span className={styles.truncatedText}>{text}</span> : text}
     </div>
   );
 
@@ -64,7 +66,7 @@ const getSkeletonStyles = () => ({
   }),
 });
 
-const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
+const getStyles = (theme: GrafanaTheme2, color: BadgeColor, maxWidth?: number) => {
   let sourceColor = theme.visualization.getColorByName(color);
   let borderColor = '';
   let bgColor = '';
@@ -99,6 +101,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'flex-start',
+      maxWidth,
 
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.accent.main}`,
@@ -109,6 +112,14 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       display: 'inline-flex',
       alignItems: 'center',
       height: '1lh',
+      flexShrink: 0,
+    }),
+    // only used when `maxWidth` is set — default (no maxWidth) keeps wrapping onto multiple lines instead
+    truncatedText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      minWidth: 0,
     }),
   };
 };
