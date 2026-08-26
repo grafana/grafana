@@ -27,6 +27,8 @@ export const FlagKeys = {
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
+  /** Route user permission snapshots through the AuthZ service. */
+  AuthzUserPermissions: "authz.userPermissions",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
@@ -268,6 +270,17 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
  */
 export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.fullscreenWorkspace", false, options).value;
+};
+
+/**
+ * Route user permission snapshots through the AuthZ service.
+ *
+ * **Details:**
+ * - flag key: `authz.userPermissions`
+ * - default value: `false`
+ */
+export const useFlagAuthzUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("authz.userPermissions", false, options).value;
 };
 
 /**

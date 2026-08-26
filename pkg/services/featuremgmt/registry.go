@@ -1132,7 +1132,7 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{Go: true},
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:         "zanzana",
