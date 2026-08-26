@@ -885,7 +885,6 @@
       "close": "닫기",
       "create": "생성",
       "delete": "삭제",
-      "deleting": "삭제 중…",
       "edit": "편집",
       "export": "내보내기",
       "export-all": "모두 내보내기",
@@ -1618,6 +1617,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1688,7 +1691,6 @@
       "review": {
         "autosync-badge": "",
         "back": "경고 규칙",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "필터",
         "folder": "대상 폴더",
@@ -1707,7 +1709,6 @@
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "경고 규칙은 가져오지 않습니다.",
         "rules-title": "경고 규칙",
         "skipped": "건너뜀",
@@ -2479,13 +2480,10 @@
         "route-count_other": "{{count}}개 경로"
       },
       "delete": {
-        "confirm": "삭제 진행",
-        "warning-1": "이 알림 정책을 삭제하면 영구적으로 제거됩니다.",
-        "warning-2": "정말로 이 정책을 삭제하시겠어요?"
-      },
-      "delete-modal": {
-        "permanently-remove": "이 작업을 수행하면 <1>{{routeName}}</1> 알림 정책이 영구적으로 제거됩니다.",
-        "title-delete-notification-policy": "알림 정책 삭제"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "다음과 같이 쉼표로 구분된 일치 조건의 목록을 사용하여 경로를 필터링합니다. 예:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "자동 생성된 정책",
@@ -2529,7 +2527,8 @@
         "reset": "초기화",
         "resetting": "초기화 중...",
         "title-delete-notification-policy": "알림 정책 삭제",
-        "title-reset-notification-policy": "알림 정책 초기화"
+        "title-reset-notification-policy": "알림 정책 초기화",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "알림 정책을 업데이트하는 동안 잠시 기다려 주세요.",
@@ -3803,7 +3802,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "알림 정책 삭제"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3852,6 +3851,8 @@
       "title-notification-policies": "알림 정책"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "리소스 가져오기 실패",
@@ -5978,6 +5979,9 @@
       "description": "패널, 텍스트 및 코드 셀을 세로로 배열한 시퀀스",
       "name": "노트북",
       "pill": "게시된 노트북",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "시간"
     },
     "on-create-new-row": {
@@ -6813,6 +6817,11 @@
       "info-box-content": "대시보드 링크를 사용하면 대시보드 헤더 바로 아래에 다른 대시보드 및 웹사이트에 대한 링크를 배치할 수 있습니다. <2>자세히 알아보기</2>",
       "title": "아직 추가된 대시보드 링크 없음"
     }
+  },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
   },
   "dashboard-prompt": {
     "datasource-entry": {
@@ -8684,6 +8693,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "현재 쿼리 및 시간 범위에 대해 사용할 수 있는 볼륨 정보가 없습니다."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "{{name}} 접기",
       "error": "메트릭을 불러오지 못했습니다",
@@ -8696,6 +8710,7 @@
       "loading-values": "값 로딩 중...",
       "no-metrics": "메트릭을 찾을 수 없음",
       "search-placeholder": "메트릭 검색",
+      "show-metric-details": "",
       "show-more": "더 보기",
       "show-more-metrics": "더 많은 메트릭 표시",
       "show-more-values": "더 많은 값 표시",
@@ -9002,15 +9017,16 @@
       "split-widen": "창 확대"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "공유 추적 옵션 메뉴 열기",
+      "aria-label-share-dropdown": "",
       "critical-path": "임계 경로",
       "critical-path-tooltip": "임계 경로(최소 추적 기간을 결정하는 가장 긴 종속 작업 시퀀스) 내 구간을 선택합니다.",
       "duration": "지속 시간",
       "errors": "오류",
       "errors-tooltip": "상태가 오류인 구간을 선택합니다.",
       "export-started": "내보내기가 시작되었습니다",
+      "feedback-group": "",
       "filters": "필터",
-      "give-feedback": "피드백",
+      "give-feedback-item": "",
       "high-latency": "고지연(High latency)",
       "high-latency-tooltip": "경로에서 가장 긴 구간 10%를 선택합니다(p90).",
       "link-copied": "클립보드에 링크 복사되었습니다",
@@ -9018,13 +9034,12 @@
       "path": "경로",
       "route": "라우트",
       "services": "서비스",
-      "share": "공유",
       "share-copy-link": "링크 복사",
       "share-export-json": "JSON으로 내보내기",
-      "share-tooltip": "트레이스 공유",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "시작 시간",
       "target": "대상",
-      "title-share-thoughts-about-tracing-grafana": "Grafana에서 트레이싱에 대한 의견을 공유하세요.",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
       "trace-id": "트레이스 ID",
       "url": "URL"
@@ -11198,6 +11213,13 @@
       "show": "표시",
       "switch": "권장 사항은 선택한 솔루션에 따라 제공됩니다",
       "switchSolution": "솔루션 전환",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "스택 권장 사항"
     },
     "solutions": {
@@ -11242,6 +11264,18 @@
         "names_other": "",
         "series_other": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_other": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -12796,7 +12830,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -12805,6 +12852,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12822,6 +12877,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12865,7 +12921,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13592,6 +13649,7 @@
       "behind-branch-text": "이 리소스는 {{repoType}}의 브랜치보다 이전 상태입니다.",
       "branch-targets": "",
       "delete-from-branch": "이 브랜치가 병합될 때까지 조직의 다른 Grafana 사용자에게는 이 리소스가 계속 표시됩니다.",
+      "move-from-branch": "",
       "not-saved": "이 브랜치가 머지될 때까지 조직의 다른 Grafana 사용자에게는 구성된 기본 브랜치에 저장된 현재 버전이 계속 표시됩니다",
       "open-in-repo-button": "{{repoType}}에서 열기",
       "open-pull-request-in-repo": "{{repoType}}에서 풀 요청 열기",
@@ -13603,6 +13661,7 @@
     "title-created-branch-in-repo": "{{repoType}}의 브랜치에 새 리소스가 생성되었습니다.",
     "title-deleted-resource-in-branch": "{{repoType}}의 브랜치에서 리소스가 삭제되었습니다.",
     "title-loaded-pull-request-in-repo": "이 리소스는 방금 {{repoType}}에 생성한 브랜치에서 로드되며 본인만 볼 수 있습니다",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "{{repoType}}의 브랜치에서 리소스가 업데이트되었습니다."
   },
   "provisioning": {
@@ -16147,6 +16206,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {
