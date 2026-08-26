@@ -711,14 +711,15 @@ func (s *Storage) GuaranteedUpdate(
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
-			resErr := resource.AsErrorResult(err)
-			if resErr.Code == http.StatusNotFound {
-				if !ignoreNotFound {
-					return apierrors.NewNotFound(s.gr, req.Key.Name)
-				}
-			} else {
+			if resource.AsErrorResult(err).Code != http.StatusNotFound {
 				return err
 			}
+			if !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
+			// A NotFound reported as a transport error leaves readResponse nil, so
+			// substitute an empty response and let the upsert path below handle it.
+			readResponse = &resourcepb.ReadResponse{}
 		}
 
 		// Upsert?  (create because it does not already exist)
@@ -809,7 +810,7 @@ func (s *Storage) GuaranteedUpdate(
 }
 
 func isRetryableStorageError(err error) bool {
-	return apierrors.IsConflict(err)
+	return resource.IsConflict(err)
 }
 
 func retriesExhausted(ctx context.Context, bo *backoff.Backoff, lastErr error) error {
