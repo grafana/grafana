@@ -90,6 +90,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       padding: visualRefreshEnabled ? '3px 8px' : '3px 6px',
       borderRadius: visualRefreshEnabled ? theme.shape.radius.pill : theme.shape.radius.sm,
       gap: visualRefreshEnabled ? theme.spacing.x0_5 : undefined,
+      height: visualRefreshEnabled ? '22px' : undefined,
     }),
     hover: css({
       '&:hover': {
