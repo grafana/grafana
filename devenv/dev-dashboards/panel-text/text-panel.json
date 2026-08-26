@@ -254,6 +254,354 @@
             }
           }
         }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Threshold colors: fleet health",
+          "description": "Per-row rendering colored by thresholds. CPU uses the panel defaults; Errors and Availability each override them, and Availability inverts the scale so high is good.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "service,cpu,errors,availability\ncheckout,94,142,97.4\npayments,71,8,99.9\nsearch,38,1,100\nrecommendations,83,37,99.5\nnotifications,17,260,96.1"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "renderMode": "perRow",
+                "content": "<div style=\"margin-bottom:6px;padding:6px 10px;border-left:3px solid ${__data.fields.cpu.color};border-radius:3px;background:rgba(204,204,220,0.05)\">\n\n  <div style=\"display:flex;gap:10px;align-items:baseline;font-size:14px\">\n    <strong style=\"flex-grow:1\">${__data.fields.service}</strong>\n    <span>CPU <b class=\"fleet-card__cpu\" style=\"color:${__data.fields.cpu.color}\">${__data.fields.cpu}%</b></span>\n    <span>5xx <b style=\"color:${__data.fields.errors.color}\">${__data.fields.errors}</b></span>\n    <span>Up <b class=\"fleet-card__availability\" style=\"color:${__data.fields.availability.color}\">${__data.fields.availability}%</b></span>\n  </div>\n\n  <div style=\"margin-top:5px;height:4px;border-radius:2px;background:rgba(204,204,220,0.12)\">\n    <div style=\"width:${__data.fields.cpu}%;height:4px;border-radius:2px;background:${__data.fields.cpu.color}\"></div>\n  </div>\n\n</div>"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 70,
+                        "color": "#EAB839"
+                      },
+                      {
+                        "value": 90,
+                        "color": "red"
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "errors"
+                    },
+                    "properties": [
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "value": null,
+                              "color": "green"
+                            },
+                            {
+                              "value": 20,
+                              "color": "#EAB839"
+                            },
+                            {
+                              "value": 100,
+                              "color": "red"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "availability"
+                    },
+                    "properties": [
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "value": null,
+                              "color": "red"
+                            },
+                            {
+                              "value": 99,
+                              "color": "#EAB839"
+                            },
+                            {
+                              "value": 99.9,
+                              "color": "green"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Value mappings: on-call digest",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_content",
+                        "csvContent": "service,severity,http_code,minutes_since_deploy\ncheckout,3,503,2\npayments,2,429,41\nsearch,0,200,190\nrecommendations,1,500,2880\nnotifications,0,204,"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "mode": "html",
+                "renderMode": "perRow",
+                "content": "<div style=\"display:flex;gap:8px;align-items:baseline;margin-bottom:4px;padding:4px 8px;border-left:3px solid ${__data.fields.severity.color};border-radius:3px;background:rgba(204,204,220,0.05);font-size:13px;white-space:nowrap\">\n\n  <strong style=\"flex:0 0 116px;overflow:hidden;text-overflow:ellipsis\">${__data.fields.service}</strong>\n\n  <span class=\"digest__severity\" style=\"flex:0 0 108px;color:${__data.fields.severity.color}\">${__data.fields.severity}</span>\n\n  <span style=\"flex:1 1 auto;overflow:hidden;text-overflow:ellipsis\"><b class=\"digest__code\" style=\"color:${__data.fields.http_code.color}\">${__data.fields.http_code}</b> (${__data.fields.http_code.numeric})</span>\n\n  <em class=\"digest__deploy\" style=\"flex:0 0 auto;opacity:0.7\">${__data.fields.minutes_since_deploy}</em>\n\n</div>"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "severity"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "value",
+                            "options": {
+                              "0": {
+                                "text": "🟢 stable",
+                                "color": "green",
+                                "index": 0
+                              },
+                              "1": {
+                                "text": "🟡 watch",
+                                "color": "#EAB839",
+                                "index": 1
+                              },
+                              "2": {
+                                "text": "🟠 degraded",
+                                "color": "orange",
+                                "index": 2
+                              },
+                              "3": {
+                                "text": "🔴 page on-call",
+                                "color": "red",
+                                "index": 3
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "http_code"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 200,
+                              "to": 299,
+                              "result": {
+                                "text": "OK",
+                                "color": "green",
+                                "index": 0
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 300,
+                              "to": 399,
+                              "result": {
+                                "text": "redirect",
+                                "color": "blue",
+                                "index": 1
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 400,
+                              "to": 499,
+                              "result": {
+                                "text": "client error",
+                                "color": "#EAB839",
+                                "index": 2
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 500,
+                              "to": 599,
+                              "result": {
+                                "text": "server error",
+                                "color": "red",
+                                "index": 3
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "minutes_since_deploy"
+                    },
+                    "properties": [
+                      {
+                        "id": "mappings",
+                        "value": [
+                          {
+                            "type": "special",
+                            "options": {
+                              "match": "null",
+                              "result": {
+                                "text": "never",
+                                "index": 0
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": null,
+                              "to": 5,
+                              "result": {
+                                "text": "moments ago",
+                                "index": 1
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 5,
+                              "to": 60,
+                              "result": {
+                                "text": "within the hour",
+                                "index": 2
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 60,
+                              "to": 1440,
+                              "result": {
+                                "text": "today",
+                                "index": 3
+                              }
+                            }
+                          },
+                          {
+                            "type": "range",
+                            "options": {
+                              "from": 1440,
+                              "to": null,
+                              "result": {
+                                "text": "over a day ago",
+                                "index": 4
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -322,6 +670,32 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 16,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 24,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
               }
             }
           }

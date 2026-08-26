@@ -900,7 +900,6 @@
       "close": "Zavřít",
       "create": "Vytvořit",
       "delete": "Odstranit",
-      "deleting": "Probíhá odstraňování…",
       "edit": "Upravit",
       "export": "Exportovat",
       "export-all": "Exportovat vše",
@@ -1639,6 +1638,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1709,7 +1712,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Pravidla výstrah",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtr",
         "folder": "Cílová složka",
@@ -1728,7 +1730,6 @@
         "routing": "Směrování oznámení",
         "routing-none": "Není vybrán žádný strom zásad",
         "routing-tree": "Strom zásad: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Pravidla výstrah nebudou importována.",
         "rules-title": "Pravidla výstrah",
         "skipped": "Přeskočeno",
@@ -2527,13 +2528,13 @@
         "route-count_other": "{{count}} tras"
       },
       "delete": {
-        "confirm": "Ano, odstranit zásadu",
-        "warning-1": "Odstraněním těchto zásad oznamování dojde k jejich trvalému odebrání.",
-        "warning-2": "Určitě chcete zásady odstranit?"
-      },
-      "delete-modal": {
-        "permanently-remove": "Tato akce trvale odebere zásadu oznamování <1>{{routeName}}</1>.",
-        "title-delete-notification-policy": "Odstranit zásadu oznamování"
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": "",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "filter-description": "Filtrujte trasy pomocí seznamu odpovídajících osob oddělených čárkami, např.:<1>závažnost = kritická, region = EMEA</1>",
       "generated-policies": "Automaticky generované zásady",
@@ -2580,7 +2581,11 @@
         "reset": "Obnovit",
         "resetting": "Obnovování…",
         "title-delete-notification-policy": "Odstranit zásadu oznamování",
-        "title-reset-notification-policy": "Obnovit zásadu oznamování"
+        "title-reset-notification-policy": "Obnovit zásadu oznamování",
+        "warning-child-routes_one": "",
+        "warning-child-routes_few": "",
+        "warning-child-routes_many": "",
+        "warning-child-routes_other": ""
       },
       "update": {
         "please-wait": "Počkejte prosím, aktualizujeme vaše zásady oznamování.",
@@ -3890,7 +3895,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Odstranit zásadu oznamování"
+        "title-delete-notification-policy": ""
       }
     },
     "use-edit-configuration-drawer": {
@@ -3939,6 +3944,8 @@
       "title-notification-policies": "Zásady oznamování"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Nepodařilo se importovat zdroje",
@@ -6098,6 +6105,9 @@
       "description": "Vertikální sekvence panelů, textu a buněk kódu",
       "name": "Poznámkový blok",
       "pill": "Zveřejněný poznámkový blok",
+      "tags": "",
+      "tags-custom-value": "",
+      "tags-placeholder": "",
       "time": "Čas"
     },
     "on-create-new-row": {
@@ -6975,6 +6985,11 @@
       "info-box-content": "Odkazy na nástěnku umožňují umístit odkazy na jiné nástěnky a webové stránky přímo pod záhlaví nástěnky. <2>Zjistěte víc</2>",
       "title": "Nejsou k dispozici žádné odkazy na nástěnku"
     }
+  },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
   },
   "dashboard-prompt": {
     "datasource-entry": {
@@ -8858,6 +8873,11 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
     },
+    "metric-detail-panel": {
+      "aria-label": "",
+      "close": "",
+      "from-query": ""
+    },
     "metrics-list": {
       "collapse-metric": "Sbalit {{name}}",
       "error": "Metriky se nepodařilo načíst",
@@ -8870,6 +8890,7 @@
       "loading-values": "Načítání hodnot…",
       "no-metrics": "Nebyly nalezeny žádné metriky",
       "search-placeholder": "Hledat metriky",
+      "show-metric-details": "",
       "show-more": "Zobrazit více",
       "show-more-metrics": "Zobrazit více metrik",
       "show-more-values": "Zobrazit více hodnot",
@@ -9188,15 +9209,16 @@
       "split-widen": "Rozšířit podokno"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Otevřít nabídku možností sdílení trasování",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritická cesta",
       "critical-path-tooltip": "Vybírá rozsahy v kritické cestě – nejdelší sekvenci závislých úkolů určujících minimální dobu trvání trasování.",
       "duration": "Doba trvání",
       "errors": "Chyby",
       "errors-tooltip": "Vybere rozsahy, kde se stav rovná chybě.",
       "export-started": "Export zahájen",
+      "feedback-group": "",
       "filters": "Filtry",
-      "give-feedback": "Zpětná vazba",
+      "give-feedback-item": "",
       "high-latency": "Vysoká prodleva",
       "high-latency-tooltip": "Vybírá 10 % nejdelších rozsahů ve stopě (p90).",
       "link-copied": "Odkaz byl zkopírován do schránky",
@@ -9204,13 +9226,12 @@
       "path": "Cesta",
       "route": "Trasa",
       "services": "Služby",
-      "share": "Sdílet",
       "share-copy-link": "Kopírovat odkaz",
       "share-export-json": "Exportovat jako JSON",
-      "share-tooltip": "Sdílet trasování",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Čas zahájení",
       "target": "Cíl",
-      "title-share-thoughts-about-tracing-grafana": "Podělte se o svůj názor na trasování v Grafaně.",
       "tooltip-url": "{{route}} nebo {{url}} nebo {{target}} nebo {{path}}",
       "trace-id": "ID trasování",
       "url": "Adresa URL"
@@ -11420,6 +11441,13 @@
       "show": "Zobrazit",
       "switch": "Doporučení se řídí vybraným řešením",
       "switchSolution": "Přepnout řešení",
+      "synthetic-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
       "title": "Doporučení pro váš stack"
     },
     "solutions": {
@@ -11500,6 +11528,24 @@
         "stats-hosts_few": "",
         "stats-hosts_many": "",
         "stats-hosts_other": ""
+      },
+      "synthetics": {
+        "create-check": "",
+        "description": "",
+        "failing-worst": "",
+        "setup-hint": "",
+        "stats": "",
+        "success-trend": "",
+        "title": "",
+        "view-checks": "",
+        "checks_one": "",
+        "checks_few": "",
+        "checks_many": "",
+        "checks_other": "",
+        "failing_one": "",
+        "failing_few": "",
+        "failing_many": "",
+        "failing_other": ""
       },
       "traces": {
         "description": "",
@@ -13090,7 +13136,20 @@
       "delete-confirm-title": "",
       "delete-confirm-yes": "",
       "drag-handle": "",
-      "duplicate": ""
+      "duplicate": "",
+      "markdown": {
+        "aria-label-editor": "",
+        "format-bold": "",
+        "format-italic": "",
+        "format-strikethrough": "",
+        "tooltip-bold": "",
+        "tooltip-bulleted-list": "",
+        "tooltip-code": "",
+        "tooltip-italic": "",
+        "tooltip-link": "",
+        "tooltip-numbered-list": "",
+        "tooltip-strikethrough": ""
+      }
     },
     "errors": {
       "entity": "",
@@ -13099,6 +13158,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13116,6 +13183,7 @@
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "split-block": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13165,7 +13233,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13892,6 +13961,7 @@
       "behind-branch-text": "Tento zdroj je za větví v úložišti {{repoType}}.",
       "branch-targets": "",
       "delete-from-branch": "Zbytek uživatelů Grafany ve vaší organizaci i nadále uvidí tento zdroj, dokud nebude tato větev sloučena",
+      "move-from-branch": "",
       "not-saved": "Zbytek uživatelů Grafany ve vaší organizaci bude i nadále vidět aktuální verzi uloženou do nakonfigurované výchozí větve, dokud nebude tato větev sloučena",
       "open-in-repo-button": "Otevřít v úložišti {{repoType}}",
       "open-pull-request-in-repo": "Otevřít žádost o stažení v úložišti {{repoType}}",
@@ -13903,6 +13973,7 @@
     "title-created-branch-in-repo": "Ve větvi úložiště {{repoType}} byl vytvořen nový zdroj.",
     "title-deleted-resource-in-branch": "Ve větvi úložiště {{repoType}} byl odstraněn zdroj.",
     "title-loaded-pull-request-in-repo": "Tento zdroj je načten z větve, kterou jste právě vytvořili v úložišti {{repoType}}, a je viditelný pouze pro vás",
+    "title-moved-resource-in-branch": "",
     "title-updated-resource-in-branch": "Ve větvi úložiště {{repoType}} byl aktualizován zdroj."
   },
   "provisioning": {
@@ -16537,6 +16608,7 @@
       "render-mode": ""
     },
     "render": {
+      "handlebars-error": "",
       "truncated": ""
     },
     "render-mode": {

@@ -850,6 +850,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
+/public/app/core/components/AccentBoxBadge/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad
@@ -920,6 +921,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
 /public/app/core/navigation/ @grafana/grafana-frontend-navigation
+/public/app/core/navtree/ @grafana/grafana-frontend-navigation
+/public/app/core/navtree/sections/dashboards.navEntry.ts @grafana/grafana-frontend-navigation @grafana/dashboards-squad
+/public/app/core/navtree/sections/profile.navEntry.ts @grafana/grafana-frontend-navigation @grafana/grafana-frontend-platform
 /public/app/core/journeys/ @grafana/dashboards-squad
 /scripts/cuj-new.ts @grafana/dashboards-squad
 /scripts/cuj-smoke.ts @grafana/dashboards-squad
@@ -1290,6 +1294,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
 /.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
+/.github/actions/build-frontend @grafana/grafana-frontend-platform
 /.github/actions/build-go @grafana/grafana-operator-experience-squad
 /.github/actions/build-targz @grafana/grafana-operator-experience-squad
 /.github/actions/bundle-schema-types @grafana/grafana-frontend-platform
@@ -1337,6 +1342,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/external-pr-weekly-digest.yml @grafana/grafana-community-support
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
+/.github/workflows/pr-bundle-size.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-squad
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
