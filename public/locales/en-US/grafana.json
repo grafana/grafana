@@ -16371,6 +16371,7 @@
       "tooltip-bold": "Bold",
       "tooltip-bullet-list": "Bullet list",
       "tooltip-checklist": "Checklist",
+      "tooltip-diagram": "Mermaid diagram",
       "tooltip-heading": "Heading",
       "tooltip-insert-variable": "Insert variable",
       "tooltip-italic": "Italic",
