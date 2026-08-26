@@ -1,13 +1,14 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ScalarDimensionConfig } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
 
 import { type CanvasElementItem, type CanvasElementOptions, type CanvasElementProps, defaultBgColor } from '../element';
+
+import { dronePropellerSpin } from './droneMotionStyles';
 
 interface DroneTopData {
   bRightRotorRPM?: number;
@@ -26,15 +27,8 @@ interface DroneTopConfig {
 }
 
 const DroneTopDisplay = ({ data }: CanvasElementProps<DroneTopConfig, DroneTopData>) => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
-  const fRightRotorAnimation = `spin ${data?.fRightRotorRPM ? 60 / Math.abs(data.fRightRotorRPM) : 0}s linear infinite`;
-
-  const fLeftRotorAnimation = `spin ${data?.fLeftRotorRPM ? 60 / Math.abs(data.fLeftRotorRPM) : 0}s linear infinite`;
-
-  const bRightRotorAnimation = `spin ${data?.bRightRotorRPM ? 60 / Math.abs(data.bRightRotorRPM) : 0}s linear infinite`;
-
-  const bLeftRotorAnimation = `spin ${data?.bLeftRotorRPM ? 60 / Math.abs(data.bLeftRotorRPM) : 0}s linear infinite`;
 
   const droneTopTransformStyle = `rotate(${data?.yawAngle ? data.yawAngle : 0}deg)`;
 
@@ -56,23 +50,19 @@ const DroneTopDisplay = ({ data }: CanvasElementProps<DroneTopConfig, DroneTopDa
       />
       <g className="propeller-group">
         <path
-          className={`${styles.propeller} ${styles.propellerCW}`}
-          style={{ animation: bRightRotorAnimation }}
+          className={cx(styles.propeller, css(dronePropellerSpin(theme, 'normal', data?.bRightRotorRPM)))}
           d=" M 461.563 418.77 L 463.992 416.34 Q 465.495 407.116 466.461 400.395 C 467.426 393.675 469.363 388.087 474.731 383.284 Q 533.862 341.514 538.196 338.859 C 542.529 336.203 548.345 334.299 551.492 338.29 C 554.639 342.282 553.481 346.02 549.419 350.082 L 471.147 428.354 L 461.563 418.77 Z  M 427.729 471.772 L 425.299 474.202 Q 423.797 483.426 422.831 490.146 C 421.866 496.867 419.929 502.454 414.561 507.257 Q 355.43 549.028 351.096 551.683 C 346.763 554.338 340.947 556.243 337.8 552.251 C 334.653 548.26 335.811 544.522 339.873 540.46 L 418.145 462.187 L 427.729 471.772 Z "
         />
         <path
-          className={`${styles.propeller} ${styles.propellerCCW}`}
-          style={{ animation: fRightRotorAnimation }}
+          className={cx(styles.propeller, css(dronePropellerSpin(theme, 'reverse', data?.fRightRotorRPM)))}
           d=" M 461.563 135.773 L 463.992 138.203 Q 465.495 147.426 466.461 154.147 C 467.426 160.868 469.363 166.455 474.731 171.258 Q 533.862 213.028 538.196 215.684 C 542.529 218.339 548.345 220.244 551.492 216.252 C 554.639 212.26 553.481 208.523 549.419 204.46 L 471.147 126.188 L 461.563 135.773 Z  M 427.729 82.77 L 425.299 80.34 Q 423.797 71.117 422.831 64.396 C 421.866 57.675 419.929 52.088 414.561 47.285 Q 355.43 5.515 351.096 2.859 C 346.763 0.204 340.947 -1.701 337.8 2.291 C 334.653 6.282 335.811 10.02 339.873 14.082 L 418.145 92.355 L 427.729 82.77 Z "
         />
         <path
-          className={`${styles.propeller} ${styles.propellerCCW}`}
-          style={{ animation: bLeftRotorAnimation }}
+          className={cx(styles.propeller, css(dronePropellerSpin(theme, 'reverse', data?.bLeftRotorRPM)))}
           d=" M 125.563 471.772 L 127.993 474.202 Q 129.496 483.426 130.461 490.146 C 131.427 496.867 133.363 502.454 138.731 507.257 Q 197.863 549.028 202.196 551.683 C 206.53 554.338 212.345 556.243 215.492 552.251 C 218.639 548.26 217.482 544.522 213.419 540.46 L 135.148 462.187 L 125.563 471.772 Z  M 91.73 418.77 L 89.3 416.34 Q 87.797 407.116 86.832 400.395 C 85.866 393.675 83.93 388.087 78.562 383.284 Q 19.431 341.514 15.097 338.859 C 10.763 336.203 4.948 334.299 1.801 338.29 C -1.346 342.282 -0.189 346.02 3.874 350.082 L 82.146 428.354 L 91.73 418.77 Z "
         />
         <path
-          className={`${styles.propeller} ${styles.propellerCW}`}
-          style={{ animation: fLeftRotorAnimation }}
+          className={cx(styles.propeller, css(dronePropellerSpin(theme, 'normal', data?.fLeftRotorRPM)))}
           d=" M 125.563 82.77 L 127.993 80.34 Q 129.496 71.117 130.461 64.396 C 131.427 57.675 133.363 52.088 138.731 47.285 Q 197.863 5.515 202.196 2.859 C 206.53 0.204 212.345 -1.701 215.492 2.291 C 218.639 6.282 217.482 10.02 213.419 14.083 L 135.147 92.355 L 125.563 82.77 Z  M 91.73 135.773 L 89.3 138.203 Q 87.797 147.426 86.832 154.147 C 85.866 160.868 83.93 166.455 78.562 171.258 Q 19.431 213.028 15.097 215.684 C 10.763 218.339 4.948 220.243 1.801 216.252 C -1.346 212.26 -0.189 208.523 3.874 204.46 L 82.146 126.188 L 91.73 135.773 Z "
         />
       </g>
@@ -166,7 +156,7 @@ export const droneTopItem: CanvasElementItem = {
   },
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   propeller: css({
     transformOrigin: '50% 50%',
     transformBox: 'fill-box',
@@ -179,15 +169,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
         transform: 'rotate(360deg)',
       },
     },
-  }),
-  propellerCW: css({
-    // TODO: figure out what styles to apply when prefers-reduced-motion is set
-    // eslint-disable-next-line @grafana/no-unreduced-motion
-    animationDirection: 'normal',
-  }),
-  propellerCCW: css({
-    // TODO: figure out what styles to apply when prefers-reduced-motion is set
-    // eslint-disable-next-line @grafana/no-unreduced-motion
-    animationDirection: 'reverse',
   }),
 });
