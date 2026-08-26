@@ -112,11 +112,6 @@ func newPluginRegistration(pluginRegistry registry.Service) *PluginRegistration 
 
 // Initialize registers the plugin with the plugin registry.
 func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if err := r.pluginRegistry.Add(ctx, p); err != nil {
-		r.log.Error("Could not register plugin", "pluginId", p.ID, "error", err)
-		return nil, err
-	}
-
 	// Retain this build under its content buildHash so build-addressed asset serving
 	// (FR-001) can resolve the active build from the retained-build registry: a client
 	// that pinned this build's chunks resolves them from any replica running it, and a
@@ -124,6 +119,11 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 	// recovers from by reloading. Best-effort: legacy/active serving is unaffected if
 	// this fails. Uses a type assertion so the registry.Service interface is not widened
 	// for its many fake implementers.
+	//
+	// This must happen before Add: Add makes the plugin active, at which point boot data
+	// can advertise its buildHash. If the build were retained afterwards, a client hitting
+	// that window would pin a hash that BuildFile does not yet serve, get a 410 and reload
+	// for nothing. Retaining first closes that window (relevant for runtime installs/updates).
 	if br, ok := r.pluginRegistry.(interface {
 		AddBuild(context.Context, string, *plugins.Plugin) error
 	}); ok && p.FS != nil {
@@ -134,6 +134,11 @@ func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) 
 				r.log.Warn("Could not retain plugin build", "pluginId", p.ID, "error", aerr)
 			}
 		}
+	}
+
+	if err := r.pluginRegistry.Add(ctx, p); err != nil {
+		r.log.Error("Could not register plugin", "pluginId", p.ID, "error", err)
+		return nil, err
 	}
 
 	if !p.IsCorePlugin() {
