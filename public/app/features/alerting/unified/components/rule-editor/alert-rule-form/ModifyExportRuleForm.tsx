@@ -22,7 +22,7 @@ import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../uti
 import { rulerRuleType } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { type ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
+import { type ExportFormats, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
@@ -221,7 +221,7 @@ const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaR
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
 
-  const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
+  const formatProviders = Object.values(allGrafanaExportProviders);
 
   return (
     <GrafanaExportDrawer
