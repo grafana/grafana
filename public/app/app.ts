@@ -89,6 +89,8 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { navTreeInitialized } from './core/reducers/navBarTree';
+import { navIndexInitialized } from './core/reducers/navModel';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -143,6 +145,7 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
+import { dispatch } from './store/store';
 
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
@@ -249,10 +252,13 @@ export class GrafanaApp {
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
 
       // The multi-tenant frontend service ships a reduced boot with no user
-      // permissions, so fetch them from the AuthZ user-permissions API and
-      // populate contextSrv before the nav and route guards read them.
+      // permissions. Fetch them from the AuthZ user-permissions API (via RTK
+      // Query, so the result is cached) and rebuild the nav tree — configureStore
+      // built it with an empty permission set, and its sections are permission-gated.
       if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.AuthzUserPermissions, false)) {
         contextSrv.user.permissions = await loadUserPermissions();
+        dispatch(navTreeInitialized());
+        dispatch(navIndexInitialized());
       }
 
       initExtensions();

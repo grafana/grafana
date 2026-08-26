@@ -7,6 +7,9 @@ import { type UserPermission } from 'app/types/accessControl';
  * Loads the current user's effective permissions from the multi-tenant AuthZ
  * user-permissions API as an action-keyed lookup map. Isolated here so the
  * underlying API can be swapped without touching callers.
+ *
+ * Goes through the RTK Query client so the result is cached and shared with any
+ * later useGetCurrentUserPermissionsQuery consumers.
  */
 export async function loadUserPermissions(): Promise<UserPermission> {
   try {
