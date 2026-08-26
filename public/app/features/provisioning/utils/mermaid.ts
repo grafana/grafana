@@ -1,6 +1,7 @@
 import { type Mermaid } from 'mermaid';
 
 import { textUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 /** Selector for the fenced code blocks marked as mermaid by `marked` (```mermaid). */
 export const MERMAID_CODE_SELECTOR = 'code.language-mermaid';
@@ -23,6 +24,11 @@ let mermaidPromise: Promise<Mermaid> | undefined;
 function loadMermaid(): Promise<Mermaid> {
   if (!mermaidPromise) {
     mermaidPromise = import('mermaid').then((mod) => mod.default);
+    // Don't cache a rejected import: a transient chunk-load failure would
+    // otherwise poison the cache and flag every diagram until a full reload.
+    mermaidPromise.catch(() => {
+      mermaidPromise = undefined;
+    });
   }
   return mermaidPromise;
 }
@@ -35,6 +41,10 @@ let diagramCounter = 0;
 function flagError(target: Element, signal?: { cancelled: boolean }) {
   if (!signal?.cancelled && target.isConnected) {
     target.classList.add(MERMAID_ERROR_CLASS);
+    if (target instanceof HTMLElement) {
+      // Hint that this block was meant to be a diagram, not an ordinary code block.
+      target.title = t('browse-dashboards.readme.mermaid-error', "Couldn't render mermaid diagram");
+    }
   }
 }
 

@@ -122,6 +122,8 @@ describe('renderMermaidDiagrams', () => {
 
     const failed = container.querySelector(`.${MERMAID_ERROR_CLASS}`);
     expect(failed).not.toBeNull();
+    // A title hints the block was meant to be a diagram, not ordinary code.
+    expect(failed?.getAttribute('title')).toBeTruthy();
     // Source stays visible so the rest of the README is unaffected.
     expect(container.querySelector(MERMAID_CODE_SELECTOR)?.textContent).toBe('not a valid diagram');
     expect(container.querySelector(`.${MERMAID_DIAGRAM_CLASS}`)).toBeNull();

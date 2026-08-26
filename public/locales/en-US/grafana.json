@@ -4605,6 +4605,7 @@
       "empty-message": "Add a README to describe what's in this folder and where to find the right dashboards.",
       "load-error-retry": "Try again",
       "load-error-title": "Couldn't load README",
+      "mermaid-error": "Couldn't render mermaid diagram",
       "parse-error": "Unable to display README content."
     },
     "recently-viewed": {
