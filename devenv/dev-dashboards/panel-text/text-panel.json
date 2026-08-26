@@ -602,6 +602,43 @@
             }
           }
         }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Mermaid diagrams",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "## Mermaid diagrams\n\n```mermaid\ngraph TD\n  A[Query] --> B{Threshold breached?}\n  B -->|Yes| C[Page on-call]\n  B -->|No| D[Record metric]\n```\n\n### Sequence\n\n```mermaid\nsequenceDiagram\n  Grafana->>Datasource: query\n  Datasource-->>Grafana: frames\n```\n\n### Invalid syntax falls back to the source\n\n```mermaid\ngraph TD\n  A -->\n```\n",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -696,6 +733,19 @@
               "element": {
                 "kind": "ElementReference",
                 "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 24,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
               }
             }
           }

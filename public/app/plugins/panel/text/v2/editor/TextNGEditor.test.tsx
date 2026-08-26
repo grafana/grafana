@@ -21,6 +21,19 @@ afterAll(() => {
   setTestFlags({});
 });
 
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
+}));
+
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -644,5 +657,23 @@ describe('TextNGEditor handlebars preview', () => {
     );
 
     expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
+  });
+
+  it('renders mermaid diagrams in the preview', async () => {
+    render(
+      <TextNGEditor
+        content={'```mermaid\ngraph TD\n  A --> B\n```'}
+        mode={TextMode.Markdown}
+        showLineNumbers={false}
+        series={series}
+        replaceVariables={(target) => target}
+        onChange={jest.fn()}
+        view="preview"
+        onViewChange={jest.fn()}
+      />
+    );
+
+    const preview = screen.getByTestId(PREVIEW_TEST_ID);
+    await waitFor(() => expect(preview.querySelector('.textng-mermaid svg')).not.toBeNull());
   });
 });

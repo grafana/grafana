@@ -16376,6 +16376,10 @@
     "frame-picker": {
       "label": "Query"
     },
+    "mermaid": {
+      "invalid-syntax": "invalid diagram syntax",
+      "render-error": "Diagram error: {{message}}"
+    },
     "options": {
       "render-mode": "Render mode"
     },

@@ -13,6 +13,7 @@ const CODE_PANEL = '5';
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
 const HANDLEBARS_PANEL = '5';
+const MERMAID_PANEL = '7';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -271,6 +272,34 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(preview).toContainText('John Smith');
       await expect(preview).not.toContainText('{{#each data}}');
+    });
+  });
+
+  test.describe('mermaid', () => {
+    test('renders diagrams in the panel', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Mermaid diagrams')),
+      });
+      await panel.scrollIntoViewIfNeeded();
+
+      // The flowchart and the sequence diagram render; the third fence is invalid on purpose.
+      await expect(panel.locator('.textng-mermaid svg')).toHaveCount(2);
+      await expect(panel.locator('.textng-mermaid-error')).toHaveCount(1);
+
+      // htmlLabels is off, so label text has to survive as SVG text.
+      await expect(panel.locator('.textng-mermaid svg').first()).toContainText('Page on-call');
+    });
+
+    test('renders diagrams in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: MERMAID_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview.locator('.textng-mermaid svg')).toHaveCount(2);
     });
   });
 });

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -11,6 +10,7 @@ import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
+import { TextNGHtmlView } from '../TextNGHtmlView';
 import { catchTemplateError, interpolateTemplate } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
@@ -227,12 +227,7 @@ export function TextNGEditor({
         <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
       </div>
     ) : (
-      <DangerouslySetHtmlContent
-        allowRerender
-        html={previewHtml}
-        className={cx('markdown-html', styles.fullHeight)}
-        data-testid={testId}
-      />
+      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
     );
   };
 
