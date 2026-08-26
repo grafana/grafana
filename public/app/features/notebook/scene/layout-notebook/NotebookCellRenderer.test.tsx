@@ -88,7 +88,8 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      // MarkdownCell reaches its editor through a lazy()/Suspense boundary.
+      await user.type(await screen.findByLabelText('Markdown'), '/');
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -101,7 +102,7 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), 'Hello');
+      await user.type(await screen.findByLabelText('Markdown'), 'Hello');
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
@@ -112,10 +113,11 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      const editor = await screen.findByLabelText('Markdown');
+      await user.type(editor, '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      await user.type(screen.getByLabelText('Markdown'), '{Backspace}');
+      await user.type(editor, '{Backspace}');
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
 
@@ -130,7 +132,7 @@ describe('NotebookCellRenderer', () => {
         </div>
       );
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Outside' }));
@@ -141,7 +143,7 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
       await user.keyboard('{Escape}');
@@ -155,10 +157,11 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      const editor = await screen.findByLabelText('Markdown');
+      await user.type(editor, '/');
       expect(screen.getByRole('menu')).toBeInTheDocument();
 
-      await user.click(screen.getByLabelText('Markdown'));
+      await user.click(editor);
       expect(screen.getByRole('menu')).toBeInTheDocument();
     });
 
@@ -166,7 +169,7 @@ describe('NotebookCellRenderer', () => {
       const cell = buildMarkdownCellInLayout();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       await user.click(screen.getByRole('menuitem', { name: 'Paragraph' }));
 
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
@@ -180,7 +183,7 @@ describe('NotebookCellRenderer', () => {
       const onFocusRequest = jest.fn();
       const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
 
-      await user.type(screen.getByLabelText('Markdown'), '/');
+      await user.type(await screen.findByLabelText('Markdown'), '/');
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
       expect(onFocusRequest).toHaveBeenCalledTimes(1);

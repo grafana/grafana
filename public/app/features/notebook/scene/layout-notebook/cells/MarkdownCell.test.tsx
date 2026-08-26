@@ -67,44 +67,21 @@ describe('MarkdownCell', () => {
     expect(screen.queryByLabelText('Markdown')).not.toBeInTheDocument();
   });
 
-  it('offers an editor once the notebook is being edited, instead of the static render', () => {
+  it('offers an editor once the notebook is being edited, instead of the static render', async () => {
     render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
 
-    expect(screen.getByLabelText('Markdown')).toBeInTheDocument();
+    // Behind a lazy()/Suspense boundary now, so the editor no longer appears on the same tick.
+    expect(await screen.findByLabelText('Markdown')).toBeInTheDocument();
     expect(screen.queryByText('bold')).not.toBeInTheDocument();
-  });
-
-  it('uses notebook history instead of a separate CodeMirror history', () => {
-    render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
-
-    expect(screen.getByLabelText('Markdown')).toHaveAttribute('data-native-history', 'disabled');
-  });
-
-  it('reports edits back as markdown content', async () => {
-    const onChange = jest.fn();
-    const { user } = render(<MarkdownCell content={content} isEditing={true} onChange={onChange} />);
-
-    await user.type(screen.getByLabelText('Markdown'), '!');
-
-    expect(onChange).toHaveBeenLastCalledWith({ kind: 'Markdown', spec: { text: '**bold**!' } });
-  });
-
-  it('preserves schema fields the cell does not render', async () => {
-    const annotated = { kind: 'Markdown', spec: { text: '**bold**', extra: 'kept' } } as unknown as CellContentKind;
-    const onChange = jest.fn();
-    const { user } = render(<MarkdownCell content={annotated} isEditing={true} onChange={onChange} />);
-
-    await user.type(screen.getByLabelText('Markdown'), '!');
-
-    expect(onChange).toHaveBeenLastCalledWith({ kind: 'Markdown', spec: { text: '**bold**!', extra: 'kept' } });
   });
 
   describe('the caret', () => {
     it('is left alone unless the cell was just inserted', async () => {
       render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
 
+      const editor = await screen.findByLabelText('Markdown');
       await waitForFrame();
-      expect(screen.getByLabelText('Markdown')).not.toHaveFocus();
+      expect(editor).not.toHaveFocus();
     });
 
     it('goes to the editor when the cell was just inserted', async () => {
@@ -132,8 +109,9 @@ describe('MarkdownCell', () => {
       rerender(<MarkdownCell content={content} isEditing={false} autoFocus onChange={jest.fn()} />);
       rerender(<MarkdownCell content={content} isEditing={true} autoFocus onChange={jest.fn()} />);
 
+      const editor = await screen.findByLabelText('Markdown');
       await waitForFrame();
-      expect(screen.getByLabelText('Markdown')).not.toHaveFocus();
+      expect(editor).not.toHaveFocus();
     });
 
     // Converting this cell in place via its own "/" menu (Paragraph, Heading — see

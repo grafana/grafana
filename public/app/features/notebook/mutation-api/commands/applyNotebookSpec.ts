@@ -19,7 +19,6 @@ import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
-import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookEdit } from './permissions';
@@ -90,6 +89,14 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
         notebookSpec = payload.spec as unknown as NotebookSpec;
       }
+
+      // Dynamically imported rather than a top-level import: this module is the only thing in the
+      // notebook mutation-api that reaches NotebookScene/NotebookLayoutManager/the cell renderers, and
+      // this handler is the only caller — a static import here would pull the whole notebook editing UI
+      // into whatever bundle references this command, even for callers that never invoke it.
+      const { transformNotebookToScene } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
+      );
 
       // The same transform the page loader uses, so an applied spec and a loaded one cannot produce
       // different scenes.

@@ -12956,6 +12956,7 @@
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
+        "loading-editor": "Loading editor",
         "tooltip-bold": "Bold",
         "tooltip-bulleted-list": "Bulleted list",
         "tooltip-code": "Code",
