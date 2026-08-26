@@ -87,12 +87,10 @@ function PanelCell({ panel, isEditing, autoFocus }: { panel: VizPanel; isEditing
   );
 }
 
-// Transformations sit between the queries and what's on screen, so editing the raw queries here
-// wouldn't reflect (or let the reader touch) what actually reaches the panel — that needs a real,
-// transformation-aware editor, not this lightweight one. Library panels are excluded for a different
-// reason: vizPanelToSchemaV2 serializes any panel carrying LibraryPanelBehavior only as a reference to
-// the shared library panel (kind, name, uid) — never as a full PanelKind with its own queries — so any
-// edit made here would look like it saved and then be silently discarded on the next save/reload.
+// Excludes panels with transformations: this lightweight editor only touches raw queries, not what a
+// transformation turns them into. Also excludes library panels: vizPanelToSchemaV2 serializes them
+// only as a reference to the shared library panel, so any query edit made here would be silently
+// discarded on the next save/reload.
 export function isEditableQueryPanel(panel: VizPanel): boolean {
   const queryRunner = getQueryRunnerFor(panel);
   if (!queryRunner || isLibraryPanel(panel)) {

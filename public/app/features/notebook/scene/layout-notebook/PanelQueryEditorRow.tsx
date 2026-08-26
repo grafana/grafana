@@ -26,12 +26,10 @@ interface Props {
 
 /**
  * One row of the notebook panel's inline query editor — datasource picker until one resolves, then
- * the real row. Each row resolves and displays its own query's datasource independently rather than
- * through one shared group selector the way dashboard panel editing's QueryEditorRows does — every
- * row here already worked this way before multi-query support existed, and repeating it keeps this
- * editor's UI simple. Every query-array write still goes through setQueryRunnerQueries, though, so the
- * runner-level datasource (what actually decides where a query runs, independent of what a row
- * displays — see that function's own comment) stays correct underneath.
+ * the real row. Each row resolves and displays its own query's datasource independently, unlike
+ * dashboard panel editing's shared group selector. Every write still goes through
+ * setQueryRunnerQueries, which keeps the runner-level datasource (what actually decides where a query
+ * runs) correct underneath.
  */
 export function PanelQueryEditorRow({ queryRunner, queries, query, index, data, range, onRunQuery, startOpen }: Props) {
   const { settings: dsSettings } = useDataSourceInstanceSettings(query.datasource);

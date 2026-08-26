@@ -29,15 +29,10 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
 
-  // Picks a visualization that actually fits the query's result shape instead of the panel staying
-  // stuck on whatever it started as — the same suggestion pipeline UnconfiguredPanel's "Use saved
-  // query" button already runs on a dashboard, via VizPanel.changePluginType rather than
-  // DashboardScene.changePanelPlugin (a thin wrapper around the same call) so it works with no
-  // DashboardScene above this panel. Reflects only the first query — getVizSuggestionForQuery takes
-  // one query, not the combined shape of several; a true multi-query suggestion would mean awaiting
-  // the real run below and reading its settled series back, which is more than this needs yet. Runs
-  // the query twice — once here for the shape, once for real through the panel's own runner — the
-  // same trade-off that flow already accepts. A failed suggestion must not block the real run.
+  // Picks a visualization fitting the query's result shape, same suggestion pipeline as
+  // UnconfiguredPanel's "Use saved query" button. Only reflects the first query — a true multi-query
+  // suggestion would need the real run's settled series. Runs the query twice (once for the
+  // suggestion, once for real), and a failed suggestion must not block the real run.
   const [runState, runQuery] = useAsyncFn(async () => {
     if (!queryRunner || queries.length === 0) {
       return;
@@ -67,12 +62,9 @@ export function PanelQueryEditor({ panel, autoFocus }: Props) {
           variant="secondary"
           fill="text"
           size="sm"
-          // Hints the new query at the existing datasource: addQuery only applies a hint when the
-          // query doesn't already have one, so this is a no-op once every row already picked
-          // something, but a bare `addQuery(queries)` would otherwise hand the new row `datasource:
-          // undefined` — a value setQueryRunnerQueries has to treat as distinct from every other
-          // row's real uid, incorrectly flipping the runner to Mixed even though only one real
-          // datasource is in play, and Mixed can't dispatch a target with no datasource at all.
+          // Hints the new query at the existing datasource — a bare `addQuery(queries)` would hand it
+          // `datasource: undefined`, which setQueryRunnerQueries treats as a different datasource and
+          // wrongly flips the runner to Mixed.
           onClick={() =>
             setQueryRunnerQueries(queryRunner, addQuery(queries, undefined, queries[0]?.datasource ?? undefined))
           }

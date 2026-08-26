@@ -597,6 +597,27 @@ describe('NotebookLayoutManager', () => {
       expect(trailing.state.body?.state.pluginId).toBe('timeseries');
     });
 
+    // Two cells may legally share one elementName (see NotebookCellItem.onContentChange); converting
+    // only one of them must not leave both pointing at the same `elements` map key.
+    it('gives the converted cell a fresh element name when it shares one with a sibling', () => {
+      const shared = new NotebookCellItem({
+        elementName: 'shared',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: 'a' } },
+      });
+      const sibling = new NotebookCellItem({
+        elementName: 'shared',
+        source: 'user',
+        content: { kind: 'Markdown', spec: { text: 'a' } },
+      });
+      const manager = buildManager([shared, sibling]);
+
+      manager.convertCell(shared, 'visualization');
+
+      expect(shared.state.elementName).not.toBe('shared');
+      expect(sibling.state.elementName).toBe('shared');
+    });
+
     // The trailing-invariant bootstrap is the only affordance an empty notebook has, so this is the
     // sole path to a first cell.
     it('gives an empty notebook its first cell', async () => {

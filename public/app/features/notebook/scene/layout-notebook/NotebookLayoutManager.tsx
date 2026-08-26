@@ -333,17 +333,24 @@ export class NotebookLayoutManager
   /**
    * Turns an existing narrative cell into a panel cell in place, for the "/" menu's Visualization pick
    * — addCell's own buildPanelCell builds the fresh-insert equivalent. Bypasses setCellContent's
-   * content-diffing undo/coalescing machinery entirely: that machinery is built around comparing two
-   * CellContentKind values, which doesn't apply to a content -> body transition.
+   * content-diffing undo/coalescing machinery, which is built around comparing two CellContentKind
+   * values and doesn't apply to a content -> body transition.
    */
   private convertCellToPanel(cell: NotebookCellItem): void {
     const previousContent = cell.state.content;
+    const previousElementName = cell.state.elementName;
     const panel = this.buildVisualizationPanel();
+    // A sibling cell may legally still reference previousElementName (see onContentChange); give the
+    // converted cell a fresh one only then, so serialize() doesn't collapse both into one entry.
+    const hasSharedName = this.state.cells.some(
+      (other) => other !== cell && other.state.elementName === previousElementName
+    );
+    const elementName = hasSharedName ? this.nextElementName(previousElementName) : previousElementName;
 
     this.executeEdit({
       label: t('notebooks.history.add-block', 'Add block'),
-      perform: () => cell.setElementBody(panel),
-      undo: () => cell.setState({ body: undefined, content: previousContent }),
+      perform: () => cell.setElementBody(panel, elementName),
+      undo: () => cell.setState({ body: undefined, content: previousContent, elementName: previousElementName }),
     });
   }
 
