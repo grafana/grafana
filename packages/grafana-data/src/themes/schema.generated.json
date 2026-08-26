@@ -1308,11 +1308,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             },
             "red": {
@@ -1328,11 +1323,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             },
             "green": {
@@ -1348,11 +1338,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             },
             "orange": {
@@ -1368,11 +1353,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             },
             "purple": {
@@ -1388,11 +1368,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             },
             "darkgrey": {
@@ -1408,11 +1383,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "text",
-                "background",
-                "border"
-              ],
               "additionalProperties": false
             }
           },
