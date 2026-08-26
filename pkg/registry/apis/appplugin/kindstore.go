@@ -8,9 +8,11 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
@@ -59,6 +61,10 @@ type kindStore struct {
 
 	// validator is nil when the kind has no schema.
 	validator validation.SchemaValidator
+
+	// fieldManager tracks managedFields on create, which the generic create
+	// handler cannot do for an unstructured kind. See newKindFieldManager.
+	fieldManager *managedfields.FieldManager
 }
 
 var (
@@ -122,6 +128,13 @@ func newKindStore(
 		wrap.validator = newKindSchemaValidator(def.Schema, defs)
 		_, wrap.hasStatus = def.Schema.Properties["status"]
 	}
+
+	// GetResetFields needs hasStatus, which the schema block above resolves.
+	fieldManager, err := newKindFieldManager(gvk, wrap.GetResetFields())
+	if err != nil {
+		return nil, fmt.Errorf("kind %s: %w", gvk.Kind, err)
+	}
+	wrap.fieldManager = fieldManager
 
 	// Register before CompleteWithOptions resolves this resource.
 	folder := isFolderScoped(kind)
@@ -233,6 +246,30 @@ func (s *kindStore) ObjectKinds(runtime.Object) ([]schema.GroupVersionKind, bool
 // Recognizes implements [runtime.ObjectTyper].
 func (s *kindStore) Recognizes(gvk schema.GroupVersionKind) bool {
 	return gvk == s.gvk
+}
+
+// Create fills in the managedFields the generic create handler could not.
+//
+// That handler diffs the submitted object against an empty live object it asks
+// the scheme for, which for an unstructured kind carries no GVK, so the diff
+// fails and it strips managedFields off the object it hands us. Redo the diff
+// here, against a live object that has its GVK. See newKindFieldManager.
+func (s *kindStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	return s.Store.Create(ctx, s.trackManagedFields(obj, options), createValidation, options)
+}
+
+func (s *kindStore) trackManagedFields(obj runtime.Object, options *metav1.CreateOptions) runtime.Object {
+	if _, ok := obj.(*unstructured.Unstructured); !ok {
+		return obj
+	}
+	manager := defaultFieldManager
+	if options != nil && options.FieldManager != "" {
+		manager = options.FieldManager
+	}
+	live := &unstructured.Unstructured{}
+	live.SetGroupVersionKind(s.gvk)
+	// UpdateNoErrors clears managedFields rather than failing the write.
+	return s.fieldManager.UpdateNoErrors(live, obj, manager)
 }
 
 // PrepareForCreate removes status when it is a subresource.

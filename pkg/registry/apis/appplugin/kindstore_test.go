@@ -33,6 +33,11 @@ func testKindStore(clusterScoped, hasStatus bool) *kindStore {
 	}
 	// mirror the newKindStore wiring so scope checks route through the store
 	s.Store = &registry.Store{CreateStrategy: s, UpdateStrategy: s, DeleteStrategy: s}
+	fieldManager, err := newKindFieldManager(s.gvk, s.GetResetFields())
+	if err != nil {
+		panic(err)
+	}
+	s.fieldManager = fieldManager
 	return s
 }
 
@@ -188,6 +193,7 @@ func TestKindStoreIgnoresNonUnstructured(t *testing.T) {
 	require.NotPanics(t, func() {
 		s.PrepareForCreate(context.Background(), other)
 		s.PrepareForUpdate(context.Background(), other, other)
+		require.Same(t, other, s.trackManagedFields(other, &metav1.CreateOptions{}))
 	})
 	require.Empty(t, s.Validate(context.Background(), other),
 		"an object that is not unstructured cannot be schema checked")

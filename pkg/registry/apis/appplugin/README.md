@@ -62,14 +62,21 @@ This is the part worth understanding before you rely on a validation rule. The o
 create is:
 
 1. **Mutating admission** — the plugin is called, and its returned object is applied
-2. `Store.create` fills uid and creationTimestamp, and **generates the name** from `generateName`
-3. `rest.BeforeCreate` runs `PrepareForCreate` (**strips `status`**, sets `generation: 1`),
+2. `kindStore.Create` records **managedFields** for the request's field manager
+3. `Store.create` fills uid and creationTimestamp, and **generates the name** from `generateName`
+4. `rest.BeforeCreate` runs `PrepareForCreate` (**strips `status`**, sets `generation: 1`),
    then the OpenAPI **schema validation**, then ObjectMeta validation
-4. **Validating admission** — skipped when the mutating phase already ran
-5. Persist
+5. **Validating admission** — skipped when the mutating phase already ran
+6. Persist
+
+Step 2 belongs to the generic create handler everywhere else, but that handler diffs
+against an empty object it asks the scheme for, and for a kind served as unstructured the
+scheme returns one with no apiVersion or kind — see `newKindFieldManager`. A consequence
+of running it here instead: fields a mutation hook adds are owned by the request's field
+manager, where an in-tree mutation would leave them unowned.
 
 The plugin's `object_bytes` is the object **as submitted** — step 1's input. Its verdict is
-therefore computed before its own mutation is applied, and before steps 2 and 3 happen at
+therefore computed before its own mutation is applied, and before steps 3 and 4 happen at
 all. Three consequences:
 
 - On a `generateName` create the plugin sees `metadata.name` empty. It cannot validate the
@@ -79,13 +86,13 @@ all. Three consequences:
 - Server-assigned uid and creationTimestamp are not visible.
 
 If a kind needs the post-strategy view for an operation, declare **validation only** for
-that operation — then the call moves to step 4 and sees everything above. What you cannot
+that operation — then the call moves to step 5 and sees everything above. What you cannot
 have on a single operation is both a mutation hook and a post-strategy validation view.
 That is a property of having one RPC, not of this wiring.
 
 ### Schema validation is not weakened by the skip
 
-Step 3 runs strictly **after** the mutation and strictly **before** validating admission.
+Step 4 runs strictly **after** the mutation and strictly **before** validating admission.
 A plugin that mutates its object into a shape the kind's OpenAPI schema rejects is still
 caught, by `validateAgainstSchema` in the REST strategy. Dropping the plugin's second call
 costs visibility, never enforcement.
