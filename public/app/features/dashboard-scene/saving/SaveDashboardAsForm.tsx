@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
-  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyUseCrossDashboardVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
 } from 'app/features/apiserver/types';
@@ -45,9 +45,9 @@ export function nextMetaAfterSaveAsFolderChange(
   provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>
 ): DashboardMeta {
   const currentAnnotations = currentMeta.k8s?.annotations ?? {};
-  const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
+  const useCrossDashboardVariables = currentAnnotations[AnnoKeyUseCrossDashboardVariables];
 
-  // Drop previous folder's manager annotations; keep everything else (including denylist).
+  // Drop previous folder's manager annotations; keep everything else (including the selection).
   const preservedAnnotations = Object.fromEntries(
     Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
   );
@@ -61,7 +61,9 @@ export function nextMetaAfterSaveAsFolderChange(
       annotations: {
         ...preservedAnnotations,
         ...provisionedMeta.k8s?.annotations,
-        ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
+        ...(useCrossDashboardVariables !== undefined
+          ? { [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables }
+          : {}),
       },
     },
   };
@@ -135,11 +137,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
 
     const data = getValues();
 
-    // Only forward the denylist annotation. Spreading full getK8SMetadata() would include
+    // Only forward the selection annotation. Spreading full getK8SMetadata() would include
     // name/resourceVersion and turn Save As into an update of the source dashboard.
-    const ignoreValue =
-      dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables] ??
-      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    const useCrossDashboardVariables =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
 
     const result = await onSaveDashboard(dashboard, {
       overwrite,
@@ -152,11 +154,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
-      ...(ignoreValue !== undefined
+      ...(useCrossDashboardVariables !== undefined
         ? {
             k8s: {
               annotations: {
-                [AnnoKeyIgnorePredefinedVariables]: ignoreValue,
+                [AnnoKeyUseCrossDashboardVariables]: useCrossDashboardVariables,
               },
             },
           }

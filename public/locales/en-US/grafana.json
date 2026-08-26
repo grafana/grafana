@@ -6302,6 +6302,16 @@
         "title-controls-menu": "Controls menu",
         "title-hidden": "Hidden"
       },
+      "cross-dashboard-variables": {
+        "description": "Choose which global and folder-scoped variables this dashboard receives.",
+        "empty-folder": "No folder variables in this folder.",
+        "empty-global": "No global variables in this organization.",
+        "folder-section": "Folder",
+        "global-section": "Global",
+        "pane-header": "Cross-dashboard variables",
+        "title": "Cross-dashboard",
+        "tooltip": "Choose which global and folder variables this dashboard receives"
+      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6405,17 +6415,6 @@
           "empty": "(empty)",
           "no-title": "<no title>"
         }
-      },
-      "predefined-variables": {
-        "all": "All",
-        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
-        "folder": "Folder",
-        "global": "Global",
-        "label": "Predefined variables",
-        "none": "None",
-        "pane-header": "Predefined variables",
-        "title": "Predefined variables",
-        "tooltip": "Choose which global and folder variables this dashboard receives"
       },
       "redo": "Redo",
       "row": {
@@ -7028,6 +7027,13 @@
       "recommendation": "Once the feature is enabled again, your dashboards will render normally in their Dynamic Dashboard format. Because of this, we strongly recommend not making changes to these dashboards until the feature is turned back on, as edits made in classic mode may lead to unexpected results. Alternatively, you can save a copy of the dashboard using the \"Save as copy\" option, in the save dashboard menu.",
       "save-warning": "Any dashboard created as or converted to a Dynamic Dashboard will open as a classic dashboard. Saving the dashboard could lead to losing already set up Dynamic Dashboard features."
     },
+    "cross-dashboard-variables": {
+      "label-all": "All",
+      "label-custom": "Custom",
+      "label-folder": "Folder",
+      "label-global": "Global",
+      "label-none": "None"
+    },
     "custom-variable-form": {
       "custom-options": "Custom options",
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
@@ -7495,13 +7501,6 @@
         }
       },
       "title-close": "Close"
-    },
-    "predefined-variables": {
-      "label-all": "All",
-      "label-custom": "Custom",
-      "label-folder": "Folder",
-      "label-global": "Global",
-      "label-none": "None"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",

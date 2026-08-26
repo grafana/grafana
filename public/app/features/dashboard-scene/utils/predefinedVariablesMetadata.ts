@@ -1,28 +1,23 @@
 import { t } from '@grafana/i18n';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  DENY_ALL_FOLDER_PREDEFINED,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-} from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { parseIgnorePredefinedVariables } from './predefinedVariableDenyList';
+import { getGlobalVariablesMode, parseUseCrossDashboardVariables } from './crossDashboardVariablesSelection';
 
-/** Current denylist annotation value on the live dashboard (meta.k8s is source of truth in the editor). */
+/** Current selection annotation value on the live dashboard (meta.k8s is source of truth in the editor). */
 export function getPredefinedVariablesAnnotation(dashboard: DashboardScene): string | undefined {
-  const fromMeta = dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+  const fromMeta = dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   if (typeof fromMeta === 'string') {
     return fromMeta;
   }
-  const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+  const fromSerializer = dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   return typeof fromSerializer === 'string' ? fromSerializer : undefined;
 }
 
-/** Whether the denylist annotation differs from the edit-session baseline. */
+/** Whether the selection annotation differs from the edit-session baseline. */
 export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScene): boolean {
-  const initial = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+  const initial = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
   const current = getPredefinedVariablesAnnotation(dashboard);
   return (initial ?? undefined) !== (current ?? undefined);
 }
@@ -30,25 +25,20 @@ export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScen
 /** Human-readable label for save-diff UI (metadata is not part of Spec JSON). */
 export function formatPredefinedVariablesAnnotationLabel(annotation: string | undefined): string {
   if (annotation === undefined) {
-    return t('dashboard-scene.predefined-variables.label-none', 'None');
+    return t('dashboard-scene.cross-dashboard-variables.label-none', 'None');
   }
-  const denyList = parseIgnorePredefinedVariables({ [AnnoKeyIgnorePredefinedVariables]: annotation });
-  if (denyList === undefined) {
-    return t('dashboard-scene.predefined-variables.label-none', 'None');
+  const selection = parseUseCrossDashboardVariables({ [AnnoKeyUseCrossDashboardVariables]: annotation });
+  const mode = getGlobalVariablesMode(selection);
+  switch (mode) {
+    case 'all':
+      return t('dashboard-scene.cross-dashboard-variables.label-all', 'All');
+    case 'none':
+      return t('dashboard-scene.cross-dashboard-variables.label-none', 'None');
+    case 'global':
+      return t('dashboard-scene.cross-dashboard-variables.label-global', 'Global');
+    case 'folder':
+      return t('dashboard-scene.cross-dashboard-variables.label-folder', 'Folder');
+    default:
+      return t('dashboard-scene.cross-dashboard-variables.label-custom', 'Custom');
   }
-  if (denyList.length === 0) {
-    return t('dashboard-scene.predefined-variables.label-all', 'All');
-  }
-  if (denyList.includes(DENY_ALL_PREDEFINED)) {
-    return t('dashboard-scene.predefined-variables.label-none', 'None');
-  }
-  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
-    // Mode names the bucket to KEEP, so folder:* deny → Global.
-    return t('dashboard-scene.predefined-variables.label-global', 'Global');
-  }
-  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
-    // Mode names the bucket to KEEP, so global:* deny → Folder.
-    return t('dashboard-scene.predefined-variables.label-folder', 'Folder');
-  }
-  return t('dashboard-scene.predefined-variables.label-custom', 'Custom');
 }

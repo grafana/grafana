@@ -1,20 +1,24 @@
-import { useMemo } from 'react';
+import { css } from '@emotion/css';
+import { useEffect, useMemo, useState } from 'react';
 
-import { type SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
-import { Field, RadioButtonGroup } from '@grafana/ui';
-import { AnnoKeyIgnorePredefinedVariables, type ObjectMeta } from 'app/features/apiserver/types';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Checkbox, Counter, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AnnoKeyUseCrossDashboardVariables, type ObjectMeta } from 'app/features/apiserver/types';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
-import { DashboardInteractions } from '../../utils/interactions';
 import {
-  denyListFromGlobalVariablesMode,
-  getGlobalVariablesMode,
-  parseIgnorePredefinedVariables,
-  serializeIgnorePredefinedVariables,
-  type GlobalVariablesMode,
-} from '../../utils/predefinedVariableDenyList';
+  isScopeNameSelected,
+  parseUseCrossDashboardVariables,
+  toggleScopeName,
+  writeUseCrossDashboardVariables,
+  type PredefinedVariableScope,
+  type UseCrossDashboardVariables,
+} from '../../utils/crossDashboardVariablesSelection';
+import { fetchPredefinedVariables, getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 /** Narrow host surface so this pane does not import DashboardScene (circular dep). */
 export type PredefinedVariablesDashboard = DashboardSceneLike & {
@@ -38,21 +42,16 @@ function readAnnotationMap(dashboard: PredefinedVariablesDashboard): Record<stri
   return merged;
 }
 
-export function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: GlobalVariablesMode) {
-  const fromMode = getGlobalVariablesMode(parseIgnorePredefinedVariables(readAnnotationMap(dashboard)));
-  const nextDenyList = denyListFromGlobalVariablesMode(mode);
+function persistSelection(dashboard: PredefinedVariablesDashboard, selection: UseCrossDashboardVariables) {
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
-
-  // Mode 'all' maps to [] (explicit opt-in). Persist the list (including empty) as JSON.
-  annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList ?? []);
+  writeUseCrossDashboardVariables(annotations, selection);
 
   const nextMetaK8s: Partial<ObjectMeta> = {
     ...(meta.k8s ?? {}),
     annotations,
   };
 
-  // Keep serializer metadata in sync so getK8SMetadata() save paths also pick this up.
   dashboard.serializer.setK8SAnnotations(annotations);
 
   // Changing meta triggers the change tracker; hasMetadataChanges includes this annotation
@@ -64,14 +63,24 @@ export function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard,
     },
   });
 
-  DashboardInteractions.globalVariablesModeChanged({
-    from_mode: fromMode,
-    to_mode: mode,
-  });
-
-  // Update the live variable set immediately so controls match the denylist without a reload.
-  // Discard restores the edit-session baseline (including prior predefined variables).
   void dashboard.refreshPredefinedVariables();
+}
+
+export function updateDashboardScopeVariable(
+  dashboard: PredefinedVariablesDashboard,
+  scope: PredefinedVariableScope,
+  name: string,
+  checked: boolean,
+  allNamesInScope: string[]
+) {
+  const current = parseUseCrossDashboardVariables(readAnnotationMap(dashboard)) ?? {
+    global: 'none' as const,
+    folder: 'none' as const,
+  };
+  persistSelection(dashboard, {
+    ...current,
+    [scope]: toggleScopeName(current[scope], name, checked, allNamesInScope),
+  });
 }
 
 interface Props {
@@ -80,61 +89,192 @@ interface Props {
 
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
-  const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
+  const canEditSelection = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
+  const [candidates, setCandidates] = useState<VariableKind[]>([]);
 
-  const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
-  const mode = useMemo(() => {
-    return getGlobalVariablesMode(
-      parseIgnorePredefinedVariables(
-        annotationValue !== undefined
-          ? { [AnnoKeyIgnorePredefinedVariables]: annotationValue }
-          : readAnnotationMap(dashboard)
-      )
+  const annotationValue = meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
+  const selection = useMemo(() => {
+    return parseUseCrossDashboardVariables(
+      annotationValue !== undefined
+        ? { [AnnoKeyUseCrossDashboardVariables]: annotationValue }
+        : readAnnotationMap(dashboard)
     );
   }, [annotationValue, dashboard]);
+
+  useEffect(() => {
+    if (!globalDashboardVariablesEnabled) {
+      return;
+    }
+
+    let cancelled = false;
+    void fetchPredefinedVariables(meta.folderUid).then((vars) => {
+      if (!cancelled && vars) {
+        setCandidates(vars);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [globalDashboardVariablesEnabled, meta.folderUid]);
 
   if (!globalDashboardVariablesEnabled) {
     return null;
   }
 
-  const options: Array<SelectableValue<GlobalVariablesMode>> = [
-    {
-      label: t('dashboard.sidebar.predefined-variables.none', 'None'),
-      value: 'none',
-    },
-    {
-      label: t('dashboard.sidebar.predefined-variables.all', 'All'),
-      value: 'all',
-    },
-    {
-      label: t('dashboard.sidebar.predefined-variables.global', 'Global'),
-      value: 'global',
-    },
-    {
-      label: t('dashboard.sidebar.predefined-variables.folder', 'Folder'),
-      value: 'folder',
-    },
-  ];
+  const globalVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'global');
+  const folderVars = candidates.filter((variable) => getPredefinedOrigin(variable.spec.origin)?.type === 'folder');
 
   return (
-    <Field
-      label={t('dashboard.sidebar.predefined-variables.label', 'Predefined variables')}
-      description={t(
-        'dashboard.sidebar.predefined-variables.description',
-        'This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.'
-      )}
-      noMargin
-      disabled={!canEditDenyList}
-    >
-      <RadioButtonGroup
-        options={options}
-        value={mode}
-        onChange={(value) => updateDashboardDenyList(dashboard, value)}
-        size="sm"
-        fullWidth
-        disabled={!canEditDenyList}
-      />
-    </Field>
+    <Stack direction="column" gap={2}>
+      <Text variant="bodySmall" color="secondary">
+        {t(
+          'dashboard.sidebar.cross-dashboard-variables.description',
+          'Choose which global and folder-scoped variables this dashboard receives.'
+        )}
+      </Text>
+      <div>
+        <ScopeCheckboxSection
+          scope="global"
+          variables={globalVars}
+          selection={selection}
+          canEdit={canEditSelection}
+          emptyLabel={t(
+            'dashboard.sidebar.cross-dashboard-variables.empty-global',
+            'No global variables in this organization.'
+          )}
+          sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.global-section', 'Global')}
+          dashboard={dashboard}
+        />
+        <ScopeCheckboxSection
+          scope="folder"
+          variables={folderVars}
+          selection={selection}
+          canEdit={canEditSelection}
+          emptyLabel={t(
+            'dashboard.sidebar.cross-dashboard-variables.empty-folder',
+            'No folder variables in this folder.'
+          )}
+          sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.folder-section', 'Folder')}
+          dashboard={dashboard}
+        />
+      </div>
+    </Stack>
   );
+}
+
+interface ScopeCheckboxSectionProps {
+  scope: PredefinedVariableScope;
+  variables: VariableKind[];
+  selection: UseCrossDashboardVariables | undefined;
+  canEdit: boolean;
+  emptyLabel: string;
+  sectionLabel: string;
+  dashboard: PredefinedVariablesDashboard;
+}
+
+function ScopeCheckboxSection({
+  scope,
+  variables,
+  selection,
+  canEdit,
+  emptyLabel,
+  sectionLabel,
+  dashboard,
+}: ScopeCheckboxSectionProps) {
+  const styles = useStyles2(getScopeSectionStyles);
+  const scopeSelection = selection?.[scope] ?? 'none';
+  const allNames = variables.map((variable) => variable.spec.name);
+  const categoryId = `cross-dashboard-variables-${scope}`;
+
+  return (
+    <div className={styles.container}>
+      <OptionsPaneCategory
+        id={categoryId}
+        title={sectionLabel}
+        itemsCount={variables.length}
+        headerActionPlacement="left"
+        compactIcons
+        isNested
+        isDashboardSidebar
+        className={styles.category}
+        renderTitle={() => (
+          <span className={styles.title}>
+            {sectionLabel}
+            <Counter value={variables.length} />
+          </span>
+        )}
+      >
+        {variables.length === 0 ? (
+          <Text variant="bodySmall" color="secondary">
+            {emptyLabel}
+          </Text>
+        ) : (
+          <ul className={styles.list}>
+            {variables.map((variable) => (
+              <li key={variable.spec.name} className={styles.listItem}>
+                <Checkbox
+                  label={variable.spec.name}
+                  value={isScopeNameSelected(scopeSelection, variable.spec.name)}
+                  disabled={!canEdit}
+                  onChange={(event) =>
+                    updateDashboardScopeVariable(
+                      dashboard,
+                      scope,
+                      variable.spec.name,
+                      event.currentTarget.checked,
+                      allNames
+                    )
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </OptionsPaneCategory>
+    </div>
+  );
+}
+
+function getScopeSectionStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      '&:last-child': {
+        marginBottom: theme.spacing(1),
+      },
+    }),
+    category: css({
+      // OptionsPaneCategory adds spacing(2) when nested+expanded; keep Global/Folder tighter.
+      '&&': {
+        marginBottom: theme.spacing(0.5),
+      },
+    }),
+    title: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    list: css({
+      listStyle: 'none',
+      margin: 0,
+      padding: 0,
+    }),
+    listItem: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: theme.spacing(4),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      '&:hover, &:focus-within': {
+        color: theme.colors.text.maxContrast,
+        backgroundColor: theme.colors.action.hover,
+        boxShadow: `-${theme.spacing(1)} 0 0 0 ${theme.colors.action.hover}`,
+      },
+    }),
+  };
 }

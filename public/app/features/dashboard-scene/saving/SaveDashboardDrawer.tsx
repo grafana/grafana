@@ -1,7 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
@@ -118,7 +118,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   const renderBody = () => {
     if (showDiff) {
-      const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+      const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
       const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
       return (
         <SaveDashboardDiff

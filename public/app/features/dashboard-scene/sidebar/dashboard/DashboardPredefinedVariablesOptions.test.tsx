@@ -1,11 +1,10 @@
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { serializeIgnorePredefinedVariables } from '../../utils/predefinedVariableDenyList';
 
-import { updateDashboardDenyList, type PredefinedVariablesDashboard } from './DashboardPredefinedVariablesOptions';
+import { updateDashboardScopeVariable, type PredefinedVariablesDashboard } from './DashboardPredefinedVariablesOptions';
 
-describe('updateDashboardDenyList', () => {
+describe('updateDashboardScopeVariable', () => {
   let modeChangedSpy: jest.SpyInstance;
 
   beforeEach(() => {
@@ -44,31 +43,49 @@ describe('updateDashboardDenyList', () => {
     } as unknown as PredefinedVariablesDashboard;
   }
 
-  it('reports mode change from all to none', () => {
-    // Explicit opt-in (`[]`) is mode all; absent annotation is opt-out (none).
-    const dashboard = createDashboard({
-      [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
-    });
+  it('writes a name array when checking one global and does not report radio analytics', () => {
+    const dashboard = createDashboard();
 
-    updateDashboardDenyList(dashboard, 'none');
+    updateDashboardScopeVariable(dashboard, 'global', 'env', true, ['region', 'env']);
 
-    expect(modeChangedSpy).toHaveBeenCalledWith({
-      from_mode: 'all',
-      to_mode: 'none',
-    });
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":["env"],"folder":"none"}'
+    );
+    expect(modeChangedSpy).not.toHaveBeenCalled();
     expect(dashboard.refreshPredefinedVariables).toHaveBeenCalled();
   });
 
-  it('reports mode change from none to folder', () => {
+  it('unchecking one name from all writes the remaining names', () => {
     const dashboard = createDashboard({
-      [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables(['*']),
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":"all","folder":"none"}',
     });
 
-    updateDashboardDenyList(dashboard, 'folder');
+    updateDashboardScopeVariable(dashboard, 'global', 'env', false, ['region', 'env']);
 
-    expect(modeChangedSpy).toHaveBeenCalledWith({
-      from_mode: 'none',
-      to_mode: 'folder',
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":["region"],"folder":"none"}'
+    );
+  });
+
+  it('unchecking the last name omits the annotation', () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["env"],"folder":"none"}',
     });
+
+    updateDashboardScopeVariable(dashboard, 'global', 'env', false, ['region', 'env']);
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBeUndefined();
+  });
+
+  it('checking every listed name stays a name array instead of all', () => {
+    const dashboard = createDashboard({
+      [AnnoKeyUseCrossDashboardVariables]: '{"global":["region"],"folder":"none"}',
+    });
+
+    updateDashboardScopeVariable(dashboard, 'global', 'env', true, ['region', 'env']);
+
+    expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
+      '{"global":["region","env"],"folder":"none"}'
+    );
   });
 });

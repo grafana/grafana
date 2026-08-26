@@ -1,11 +1,13 @@
 import {
-  AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
+  AnnoKeyUseCrossDashboardVariables,
   ManagerKind,
 } from 'app/features/apiserver/types';
 
 import { nextMetaAfterSaveAsFolderChange } from './SaveDashboardAsForm';
+
+const selectionAnnotation = '{"global":"all","folder":"none"}';
 
 describe('nextMetaAfterSaveAsFolderChange', () => {
   it('preserves k8s name and resourceVersion when switching folders', () => {
@@ -16,7 +18,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
           name: 'dash-uid',
           resourceVersion: '42',
           annotations: {
-            [AnnoKeyIgnorePredefinedVariables]: 'global',
+            [AnnoKeyUseCrossDashboardVariables]: selectionAnnotation,
           },
         },
       },
@@ -27,7 +29,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
     expect(next.folderUid).toBe('new-folder');
     expect(next.k8s?.name).toBe('dash-uid');
     expect(next.k8s?.resourceVersion).toBe('42');
-    expect(next.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe('global');
+    expect(next.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(selectionAnnotation);
   });
 
   it('overlays provisioned manager annotations without dropping identity fields', () => {
@@ -38,7 +40,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
           name: 'dash-uid',
           resourceVersion: '7',
           annotations: {
-            [AnnoKeyIgnorePredefinedVariables]: 'global',
+            [AnnoKeyUseCrossDashboardVariables]: selectionAnnotation,
           },
         },
       },
@@ -55,7 +57,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
 
     expect(next.k8s?.name).toBe('dash-uid');
     expect(next.k8s?.annotations).toEqual({
-      [AnnoKeyIgnorePredefinedVariables]: 'global',
+      [AnnoKeyUseCrossDashboardVariables]: selectionAnnotation,
       [AnnoKeyManagerIdentity]: 'my-repo',
       [AnnoKeyManagerKind]: ManagerKind.Repo,
     });
@@ -70,7 +72,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
           annotations: {
             [AnnoKeyManagerIdentity]: 'my-repo',
             [AnnoKeyManagerKind]: ManagerKind.Repo,
-            [AnnoKeyIgnorePredefinedVariables]: 'global',
+            [AnnoKeyUseCrossDashboardVariables]: selectionAnnotation,
           },
         },
       },
@@ -79,7 +81,7 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
     );
 
     expect(next.k8s?.annotations).toEqual({
-      [AnnoKeyIgnorePredefinedVariables]: 'global',
+      [AnnoKeyUseCrossDashboardVariables]: selectionAnnotation,
     });
   });
 });

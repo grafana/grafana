@@ -1,10 +1,3 @@
-import {
-  DENY_ALL_FOLDER_PREDEFINED,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-} from 'app/features/apiserver/types';
-
-import { serializeIgnorePredefinedVariables } from './predefinedVariableDenyList';
 import { formatPredefinedVariablesAnnotationLabel } from './predefinedVariablesMetadata';
 
 describe('formatPredefinedVariablesAnnotationLabel', () => {
@@ -12,29 +5,23 @@ describe('formatPredefinedVariablesAnnotationLabel', () => {
     expect(formatPredefinedVariablesAnnotationLabel(undefined)).toBe('None');
   });
 
-  it('labels empty denylist as All', () => {
-    expect(formatPredefinedVariablesAnnotationLabel(serializeIgnorePredefinedVariables([]))).toBe('All');
+  it('labels both-all as All', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"all"}')).toBe('All');
   });
 
-  it('labels deny-all as None', () => {
-    expect(formatPredefinedVariablesAnnotationLabel(serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]))).toBe(
-      'None'
-    );
+  it('labels both-none as None', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"none"}')).toBe('None');
   });
 
-  it('labels folder:* deny as Global', () => {
-    expect(
-      formatPredefinedVariablesAnnotationLabel(serializeIgnorePredefinedVariables([DENY_ALL_FOLDER_PREDEFINED]))
-    ).toBe('Global');
+  it('labels global-only as Global', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"all","folder":"none"}')).toBe('Global');
   });
 
-  it('labels global:* deny as Folder', () => {
-    expect(
-      formatPredefinedVariablesAnnotationLabel(serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]))
-    ).toBe('Folder');
+  it('labels folder-only as Folder', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"all"}')).toBe('Folder');
   });
 
-  it('labels custom lists as Custom', () => {
-    expect(formatPredefinedVariablesAnnotationLabel(serializeIgnorePredefinedVariables(['env']))).toBe('Custom');
+  it('labels name lists as Custom', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":["env"],"folder":"none"}')).toBe('Custom');
   });
 });

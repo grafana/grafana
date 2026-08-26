@@ -7,7 +7,7 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
-import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+import { type GlobalVariablesMode } from './crossDashboardVariablesSelection';
 
 let isScenesContextSet = false;
 
