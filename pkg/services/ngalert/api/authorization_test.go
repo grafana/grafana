@@ -4,14 +4,24 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/go-openapi/loads"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/middleware"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+func TestAuthorizeProducerAlertsDefersScopedPermissionCheckToHandler(t *testing.T) {
+	api := &API{AccessControl: acmock.New()}
+
+	handler := api.authorize(http.MethodPost, "/api/alertmanager/grafana/api/v2/alerts")
+
+	require.Equal(t, reflect.ValueOf(middleware.ReqSignedIn).Pointer(), reflect.ValueOf(handler).Pointer())
+}
 
 func TestAuthorize(t *testing.T) {
 	json, err := os.ReadFile(filepath.Join("tooling", "spec.json"))

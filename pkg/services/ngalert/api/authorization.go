@@ -250,7 +250,9 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts":
 		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
 	case http.MethodPost + "/api/alertmanager/grafana/api/v2/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesProducerWrite)
+		// The source scope comes from the validated request body, so the handler
+		// performs the action and per-source scope checks.
+		return middleware.ReqSignedIn
 
 	// Grafana Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/grafana/api/v1/alerts":
