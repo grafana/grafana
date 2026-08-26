@@ -17,7 +17,12 @@ import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderR
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
-import { MERMAID_DIAGRAM_CLASS, MERMAID_ERROR_CLASS, renderMermaidDiagrams } from '../../utils/mermaid';
+import {
+  MERMAID_DIAGRAM_CLASS,
+  MERMAID_ERROR_CLASS,
+  MERMAID_ERROR_NOTICE_CLASS,
+  renderMermaidDiagrams,
+} from '../../utils/mermaid';
 
 import { FolderReadmeEvents } from './analytics/main';
 
@@ -460,6 +465,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // Failed diagram: keep the source visible but signal it couldn't render.
     [`& .${MERMAID_ERROR_CLASS}`]: {
       borderLeft: `3px solid ${theme.colors.error.border}`,
+    },
+    [`& .${MERMAID_ERROR_NOTICE_CLASS}`]: {
+      color: theme.colors.error.text,
+      fontSize: theme.typography.bodySmall.fontSize,
+      marginBottom: theme.spacing(0.5),
     },
   }),
 });

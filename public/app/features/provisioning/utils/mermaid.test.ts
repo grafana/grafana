@@ -1,6 +1,12 @@
 import mermaid from 'mermaid';
 
-import { MERMAID_DIAGRAM_CLASS, MERMAID_ERROR_CLASS, MERMAID_CODE_SELECTOR, renderMermaidDiagrams } from './mermaid';
+import {
+  MERMAID_DIAGRAM_CLASS,
+  MERMAID_ERROR_CLASS,
+  MERMAID_ERROR_NOTICE_CLASS,
+  MERMAID_CODE_SELECTOR,
+  renderMermaidDiagrams,
+} from './mermaid';
 
 jest.mock('mermaid', () => ({
   __esModule: true,
@@ -122,8 +128,10 @@ describe('renderMermaidDiagrams', () => {
 
     const failed = container.querySelector(`.${MERMAID_ERROR_CLASS}`);
     expect(failed).not.toBeNull();
-    // A title hints the block was meant to be a diagram, not ordinary code.
-    expect(failed?.getAttribute('title')).toBeTruthy();
+    // A visible, accessible notice tells keyboard/SR users the diagram failed.
+    const notice = container.querySelector(`.${MERMAID_ERROR_NOTICE_CLASS}`);
+    expect(notice?.textContent).toBeTruthy();
+    expect(notice?.getAttribute('role')).toBe('status');
     // Source stays visible so the rest of the README is unaffected.
     expect(container.querySelector(MERMAID_CODE_SELECTOR)?.textContent).toBe('not a valid diagram');
     expect(container.querySelector(`.${MERMAID_DIAGRAM_CLASS}`)).toBeNull();
