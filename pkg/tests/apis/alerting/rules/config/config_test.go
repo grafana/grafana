@@ -47,14 +47,16 @@ func TestMain(m *testing.M) {
 // feature flag enabled. The flag is required for the datasource admission
 // validator to run (with it off the validator short-circuits with "sync is
 // disabled on this instance"); see newExternalRulerSyncDatasourceValidator in
-// pkg/registry/apps/alerting/rules/register.go. The poll interval is shortened
-// so seedSingleton's wait for the sync worker's own seed pass stays fast.
+// pkg/registry/apps/alerting/rules/register.go. No poll-interval override is
+// needed here: the syncer's own baselineCheckInterval (10s, fixed, not
+// operator-configurable) already keeps seedSingleton's wait short.
+// NGAlertAdminConfigPollInterval is a different, unrelated knob (AlertsRouter's
+// own cadence) and has no effect on this syncer at all.
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAlertingSyncExternalRuler,
 		},
-		NGAlertAdminConfigPollInterval: 200 * time.Millisecond,
 	})
 }
 

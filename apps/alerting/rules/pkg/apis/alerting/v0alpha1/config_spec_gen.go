@@ -37,6 +37,13 @@ type ConfigV0alpha1SpecExternalRulerSync struct {
 	// while the operator ini override `unified_alerting.external_ruler_uid` is
 	// set.
 	Promote *bool `json:"promote,omitempty"`
+	// pollInterval sets how often this org's rules are re-synced from
+	// datasourceUid. Empty defaults to 1m. The worker checks orgs against a
+	// short internal baseline and only does real work for an org once its own
+	// pollInterval has elapsed, so this is a lower bound, not a guarantee —
+	// an org's actual sync can lag slightly past its configured interval. Has
+	// no effect on the operator ini path, which always uses the 1m default.
+	PollInterval *string `json:"pollInterval,omitempty"`
 }
 
 // NewConfigV0alpha1SpecExternalRulerSync creates a new ConfigV0alpha1SpecExternalRulerSync object.
