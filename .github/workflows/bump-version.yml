@@ -41,7 +41,7 @@ jobs:
           github_app: grafana-writer
           permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
       - name: Checkout Grafana
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:

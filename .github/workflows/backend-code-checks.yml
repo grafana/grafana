@@ -30,7 +30,7 @@ jobs:
       changed: ${{ steps.detect-changes.outputs.backend }}
       dev-dashboards-changed: ${{ steps.detect-changes.outputs.dev-dashboards }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: true # required to get more history in the changed-files action
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
     name: Validate Backend Configs
     runs-on: ubuntu-x64
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Setup Go

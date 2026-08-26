@@ -21,7 +21,7 @@ jobs:
     name: Verify ${{ inputs.targz-artifact-name }}
     runs-on: ubuntu-x64-large
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
