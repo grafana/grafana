@@ -31,6 +31,8 @@ export const FlagKeys = {
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
+  /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
+  DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables the Assistant button in the dashboard templates card */
@@ -290,6 +292,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.notebooks", false, options).value;
+};
+
+/**
+ * Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser
+ *
+ * **Details:**
+ * - flag key: `dashboard.recentlyDeletedViaTrash`
+ * - default value: `false`
+ */
+export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
 };
 
 /**

@@ -50,6 +50,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
     | "kubernetesTeamsApi"
+    | "dashboard.recentlyDeletedViaTrash"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
