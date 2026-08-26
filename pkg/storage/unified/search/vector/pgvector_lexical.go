@@ -42,7 +42,9 @@ func searchFilterPredicates(filters []SearchFilter) (uids, folders []string, gro
 }
 
 // LexicalSearch runs postgres FTS over stored content:
-// websearch_to_tsquery + ts_rank_cd, best chunk per uid.
+// websearch_to_tsquery + ts_rank_cd, best chunk per uid. No
+// validateResource: q.Resource is a freshly-resolved partition key, used
+// only as a query parameter, never interpolated.
 func (b *pgvectorBackend) LexicalSearch(ctx context.Context, q LexicalQuery) (hits []LexicalHit, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.LexicalSearch")
 	defer func() {
@@ -60,8 +62,6 @@ func (b *pgvectorBackend) LexicalSearch(ctx context.Context, q LexicalQuery) (hi
 		attribute.Int("filter_count", len(q.Filters)),
 	)
 
-	// No validateResource: Resource is a freshly-resolved partition key,
-	// used only as a query parameter.
 	req := &sqlVectorCollectionLexicalSearchRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Resource:    q.Resource,

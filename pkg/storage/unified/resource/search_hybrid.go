@@ -235,13 +235,13 @@ func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInf
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
-	sem := make([]vector.VectorSearchResult, 0, len(results))
+	kept := results[:0]
 	for _, r := range results {
 		if allowed[vectorAuthzKey{r.UID, r.Folder}] {
-			sem = append(sem, r)
+			kept = append(kept, r)
 		}
 	}
-	return sem, nil
+	return kept, nil
 }
 
 // lexicalUIDSet returns the UIDs the lexical leg matched.
@@ -522,8 +522,10 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 
 	fromLex := lexicalUIDSet(lex)
 	// Held aside, not appended: a both-legs hit gets the same chunks from
-	// the semantic leg.
-	lexChunks := make(map[string]*resourcepb.HybridSearchChunk, len(lex))
+	// the semantic leg. Only the external leg's hits carry chunk content
+	// (bleve doesn't), so this stays nil for internal collections — a nil
+	// map read below is a safe no-op.
+	var lexChunks map[string]*resourcepb.HybridSearchChunk
 	for i, h := range lex {
 		r := get(h.uid)
 		r.Score += 1.0 / float64(rrfK+i+1)
@@ -532,6 +534,9 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
 		if h.chunkContent != "" {
+			if lexChunks == nil {
+				lexChunks = make(map[string]*resourcepb.HybridSearchChunk, len(lex))
+			}
 			lexChunks[h.uid] = &resourcepb.HybridSearchChunk{
 				Subresource: h.chunkSubresource,
 				Content:     h.chunkContent,
