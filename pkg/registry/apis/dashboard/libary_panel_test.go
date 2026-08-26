@@ -26,8 +26,8 @@ func TestLibraryPanelStoreTranslatesMissingFolderAsNotFound(t *testing.T) {
 	err := store.translateLegacyError("panel-a", dashboards.ErrFolderNotFound)
 
 	require.True(t, apierrors.IsNotFound(err))
-	statusError, ok := err.(*apierrors.StatusError)
-	require.True(t, ok)
+	var statusError *apierrors.StatusError
+	require.ErrorAs(t, err, &statusError)
 	require.Equal(t, "folder.grafana.app", statusError.Status().Details.Group)
 }
 
