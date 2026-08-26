@@ -4,17 +4,14 @@ import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import {
-  type AllRowsContext,
-  buildAllRowsContext,
-  buildRows,
-  type CompiledTemplate,
-  compileTemplate,
-} from './handlebars';
+import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
 import { transformContent } from './utils';
 
-/** Caps the rows either render mode will touch, since the edit preview re-interpolates on every keystroke. */
+/** Ceiling for the `maxRows` option, so a typed value cannot hang the panel. */
 export const MAX_RENDERED_ROWS = 1000;
+
+/** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
+export const MAX_RENDERED_CHARS = 100_000;
 
 /** What to render, built from either the panel options or the editor's draft. */
 export interface TextTemplate {
@@ -23,6 +20,7 @@ export interface TextTemplate {
   series?: DataFrame[];
   renderMode?: RenderMode;
   format?: string;
+  maxRows?: number;
 }
 
 /** A finished render pass, or the error that stopped it. */
@@ -54,56 +52,37 @@ function handlebarsEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
 }
 
+// A cleared or zeroed field falls back to the ceiling.
+function resolveMaxRows(maxRows?: number): number {
+  return maxRows ? Math.max(1, Math.min(Math.floor(maxRows), MAX_RENDERED_ROWS)) : MAX_RENDERED_ROWS;
+}
+
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series = [], renderMode, format } = template;
+  const maxRows = resolveMaxRows(template.maxRows);
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
     handlebarsEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, compiled);
+    return interpolateEveryRow(template, series, replaceVariables, maxRows, compiled);
   }
 
   if (!compiled) {
     return replaceVariables(content, {}, format);
   }
 
-  let readRows = false;
-  const rows = trackRowAccess(buildAllRowsContext(series, MAX_RENDERED_ROWS), () => {
-    readRows = true;
-  });
+  const rendered = replaceVariables(compiled(buildAllRowsContext(series, maxRows)), {}, format);
 
-  const blocks = [replaceVariables(compiled(rows), {}, format)];
-
-  if (readRows && countRows(series) > MAX_RENDERED_ROWS) {
-    blocks.push(truncationNotice());
-  }
-
-  return joinBlocks(blocks, mode);
+  // A Once template emits one string, so the row limit cannot bound its size.
+  return rendered.length > MAX_RENDERED_CHARS ? cutToMaxChars(rendered) : rendered;
 }
 
-// Content that never reads the capped collections cannot be under-counting, so
-// only a template that touched them earns the truncation notice.
-function trackRowAccess(context: AllRowsContext, onRead: () => void): AllRowsContext {
-  return {
-    get data() {
-      onRead();
-      return context.data;
-    },
-    get frames() {
-      onRead();
-      return context.frames;
-    },
-  };
-}
-
-function countRows(series: DataFrame[]): number {
-  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
-}
-
-function truncationNotice(): string {
-  return t('textng.render.truncated', 'Showing the first {{maxRows}} rows.', { maxRows: MAX_RENDERED_ROWS });
+// Cut on a line break so the tail lands between elements rather than inside a tag.
+function cutToMaxChars(rendered: string): string {
+  const boundary = rendered.lastIndexOf('\n', MAX_RENDERED_CHARS);
+  return rendered.slice(0, boundary > 0 ? boundary : MAX_RENDERED_CHARS);
 }
 
 // Markdown needs a blank line between blocks, because `breaks` is off.
@@ -115,11 +94,12 @@ function interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
+  maxRows: number,
   compiled?: CompiledTemplate
 ): string {
   const { content, mode, format } = template;
-  const totalRows = countRows(series);
   const blocks: string[] = [];
+  let renderedChars = 0;
 
   for (const [frameIndex, frame] of series.entries()) {
     const field = frame.fields[0];
@@ -127,7 +107,7 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
+    const rowCount = Math.min(frame.length, maxRows - blocks.length);
     const rows = compiled ? buildRows(frame, series, rowCount) : [];
 
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -137,18 +117,19 @@ function interpolateEveryRow(
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const templated = compiled ? compiled(rows[rowIndex]) : content;
+      const block = replaceVariables(compiled ? compiled(rows[rowIndex]) : content, scopedVars, format);
 
-      blocks.push(replaceVariables(templated, scopedVars, format));
+      blocks.push(block);
+      renderedChars += block.length;
+
+      if (renderedChars >= MAX_RENDERED_CHARS) {
+        break;
+      }
     }
 
-    if (blocks.length >= MAX_RENDERED_ROWS) {
+    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxRows) {
       break;
     }
-  }
-
-  if (totalRows > MAX_RENDERED_ROWS) {
-    blocks.push(truncationNotice());
   }
 
   return joinBlocks(blocks, mode);

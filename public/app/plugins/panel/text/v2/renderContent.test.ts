@@ -20,6 +20,7 @@ import {
   catchTemplateError,
   hasRenderableData,
   interpolateTemplate,
+  MAX_RENDERED_CHARS,
   MAX_RENDERED_ROWS,
   renderContent,
 } from './renderContent';
@@ -50,6 +51,13 @@ const regions = toDataFrame({
   fields: [{ name: 'host', type: FieldType.string, values: ['db-1'] }],
 });
 
+/** Rows numbered 0..n, so a rendered block names its own row index. */
+function numberedFrame(rowCount: number) {
+  return toDataFrame({
+    fields: [{ name: 'n', type: FieldType.number, values: Array.from({ length: rowCount }, (_, i) => i) }],
+  });
+}
+
 /** The real macro registry, so ${__data.*} resolution is not faked. */
 function createReplaceVariables(): InterpolateFunction {
   const templateSrv = initTemplateSrv('hello', []);
@@ -60,9 +68,15 @@ function interpolate(
   content: string,
   series: DataFrame[] | undefined,
   renderMode: RenderMode | undefined,
-  mode = TextMode.Markdown
+  mode = TextMode.Markdown,
+  maxRows?: number
 ) {
-  return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
+  return interpolateTemplate({ content, series, renderMode, mode, maxRows }, createReplaceVariables());
+}
+
+/** `interpolate` with an explicit row limit, in markdown mode. */
+function withLimit(content: string, series: DataFrame[], renderMode: RenderMode, maxRows?: number) {
+  return interpolate(content, series, renderMode, TextMode.Markdown, maxRows);
 }
 
 const theme = createTheme();
@@ -164,18 +178,46 @@ describe('interpolateTemplate', () => {
       );
     });
 
-    it('caps the number of rendered rows', () => {
-      const big = toDataFrame({
-        fields: [
-          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
-        ],
-      });
+    it('renders at most the requested number of rows', () => {
+      const blocks = withLimit('${__data.fields.n}', [numberedFrame(50)], RenderMode.PerRow, 10).split('\n\n');
 
-      const blocks = interpolate('${__data.fields.n}', [big], RenderMode.PerRow).split('\n\n');
+      expect(blocks).toHaveLength(10);
+      expect(blocks[9]).toBe('9');
+    });
 
-      expect(blocks).toHaveLength(MAX_RENDERED_ROWS + 1);
+    it('renders every row when the limit is never reached', () => {
+      expect(withLimit('${__data.fields.n}', [numberedFrame(3)], RenderMode.PerRow, 10)).toBe('0\n\n1\n\n2');
+    });
+
+    it.each([
+      ['unset, on a panel saved before the option existed', undefined],
+      ['zero', 0],
+      ['not a number', NaN],
+    ])('renders every row up to the hard ceiling when the limit is %s', (_name, maxRows) => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+      const blocks = withLimit('${__data.fields.n}', series, RenderMode.PerRow, maxRows).split('\n\n');
+
+      expect(blocks).toHaveLength(MAX_RENDERED_ROWS);
       expect(blocks[MAX_RENDERED_ROWS - 1]).toBe(String(MAX_RENDERED_ROWS - 1));
-      expect(blocks[MAX_RENDERED_ROWS]).toContain(String(MAX_RENDERED_ROWS));
+    });
+
+    it.each([
+      ['above the hard ceiling', MAX_RENDERED_ROWS + 500, MAX_RENDERED_ROWS],
+      ['below one', -5, 1],
+    ])('clamps a row limit %s', (_name, maxRows, expected) => {
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+      const blocks = withLimit('${__data.fields.n}', series, RenderMode.PerRow, maxRows).split('\n\n');
+
+      expect(blocks).toHaveLength(expected);
+      expect(blocks[expected - 1]).toBe(String(expected - 1));
+    });
+
+    it('stops at the size backstop before reaching the row limit', () => {
+      const row = 'x'.repeat(1000);
+      const blocks = interpolate(row, [numberedFrame(MAX_RENDERED_ROWS)], RenderMode.PerRow).split('\n\n');
+
+      expect(blocks).toHaveLength(MAX_RENDERED_CHARS / row.length);
+      expect(blocks.length).toBeLessThan(MAX_RENDERED_ROWS);
     });
   });
 
@@ -193,16 +235,30 @@ describe('interpolateTemplate', () => {
     });
 
     it('caps the rows a Once template can iterate, so a huge frame cannot lock up the browser', () => {
-      const big = toDataFrame({
-        fields: [
-          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
-        ],
-      });
-
-      // The truncation notice follows the template output as its own block.
-      const [rendered] = interpolate('{{#each data}}{{n}},{{/each}}', [big], RenderMode.Once).split('\n\n');
+      const series = [numberedFrame(MAX_RENDERED_ROWS + 10)];
+      const rendered = interpolate('{{#each data}}{{n}},{{/each}}', series, RenderMode.Once);
 
       expect(rendered.split(',').filter(Boolean)).toHaveLength(MAX_RENDERED_ROWS);
+    });
+
+    it('applies the row limit to Once as well, so both modes see the same rows', () => {
+      const template = '{{#each data}}{{n}},{{/each}}';
+      const rendered = withLimit(template, [numberedFrame(50)], RenderMode.Once, 10);
+
+      expect(rendered.split(',').filter(Boolean)).toHaveLength(10);
+    });
+
+    it('truncates a Once template that passes the size backstop', () => {
+      const row = 'x'.repeat(1000);
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: Array.from({ length: 400 }, () => row) }],
+      });
+
+      const rendered = interpolate('{{#each data}}{{n}}\n{{/each}}', [wide], RenderMode.Once);
+
+      expect(rendered.length).toBeLessThanOrEqual(MAX_RENDERED_CHARS);
+      // Every line is whole, so the cut landed on a line break rather than mid-row.
+      expect(rendered.split('\n').every((line) => line === row)).toBe(true);
     });
 
     it('exposes every frame for Once', () => {
@@ -234,24 +290,6 @@ describe('interpolateTemplate', () => {
 
     it('throws on a broken template, so the panel can surface the error', () => {
       expect(() => interpolate('{{#each data}}', [hosts], RenderMode.Once)).toThrow();
-    });
-
-    describe('truncation notice', () => {
-      const big = toDataFrame({
-        fields: [
-          { name: 'n', type: FieldType.number, values: Array.from({ length: MAX_RENDERED_ROWS + 10 }, (_, i) => i) },
-        ],
-      });
-
-      it('says so when a Once template only saw the capped rows', () => {
-        expect(interpolate('{{data.length}}', [big], RenderMode.Once)).toBe(
-          `${MAX_RENDERED_ROWS}\n\nShowing the first ${MAX_RENDERED_ROWS} rows.`
-        );
-      });
-
-      it('is left off content that never read the rows, since nothing was truncated', () => {
-        expect(interpolate('# Status', [big], RenderMode.Once)).toBe('# Status');
-      });
     });
   });
 });

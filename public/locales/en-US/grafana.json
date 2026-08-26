@@ -16337,11 +16337,12 @@
       "label": "Query"
     },
     "options": {
+      "max-rows": "Row limit",
+      "max-rows-description": "Rows of query data to render. High values can slow the panel, especially with complex HTML.",
       "render-mode": "Render mode"
     },
     "render": {
-      "handlebars-error": "Handlebars error: {{message}}",
-      "truncated": "Showing the first {{maxRows}} rows."
+      "handlebars-error": "Handlebars error: {{message}}"
     },
     "render-mode": {
       "once": "Once",
