@@ -224,54 +224,56 @@ describe('NotebookDocumentHeader', () => {
       expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
-    it('offers the pencil once the notebook is being edited', () => {
+    // The heading itself is the control now, rather than a pencil beside it, so it keeps naming the
+    // notebook while the button it became says what it does.
+    it('is the heading and the way into editing it once the notebook is being edited', () => {
       setup({ isEditing: true });
 
+      expect(screen.getByRole('heading', { name: 'Q2 latency regression' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
     });
 
-    it('reports the new title once it is submitted', async () => {
+    it('reports the new title as it is typed', async () => {
       const { user, onTitleChange } = setup({ isEditing: true });
 
       await user.click(screen.getByRole('button', { name: 'Edit title' }));
-      const input = screen.getByRole('textbox', { name: 'Name' });
+      const input = screen.getByRole('textbox', { name: 'Title' });
       await user.clear(input);
-      await user.type(input, 'Q3 latency regression{enter}');
+      await user.type(input, 'Q3');
 
-      expect(onTitleChange).toHaveBeenCalledWith('Q3 latency regression');
+      expect(onTitleChange).toHaveBeenLastCalledWith('Q3');
     });
 
-    // The scene's title is a required string, and a notebook with no name is not something to save.
-    it('refuses an emptied title rather than reporting one', async () => {
-      const { user, onTitleChange } = setup({ isEditing: true });
-
-      await user.click(screen.getByRole('button', { name: 'Edit title' }));
-      await user.clear(screen.getByRole('textbox', { name: 'Name' }));
-      await user.keyboard('{enter}');
-
-      expect(screen.getByText('Please enter a title')).toBeInTheDocument();
-      expect(onTitleChange).not.toHaveBeenCalled();
-    });
-
-    // EditableTitle takes its width from whatever it is dropped into, which no type or snapshot
-    // protects. Inside a column Stack aligned to flex-start, its own `flex: 1` addresses the height
-    // axis and the row shrink-wraps, so without a full-width wrapper the field collapses to the
-    // browser's default input size. Same problem, and same fix, as the tags row.
-    it('gives the editing field the whole line rather than letting it shrink to content', async () => {
-      const { user } = setup({ isEditing: true });
-
-      await user.click(screen.getByRole('button', { name: 'Edit title' }));
-      const form = screen.getByRole('textbox', { name: 'Name' }).closest('form');
-
-      expect(form?.parentElement).toHaveStyle({ width: '100%' });
-    });
-
-    // The read-only branch renders nothing for an empty title. Were the editable one to do the same,
-    // a notebook that lost its title would lose the only control that can give it another.
-    it('still offers the pencil on a notebook whose title is empty', () => {
+    // The read-only branch renders nothing for an empty title. Were the editable one to do the same, a
+    // notebook that lost its title would lose the only control that can give it another.
+    it('still offers a way in on a notebook whose title is empty', () => {
       setup({ isEditing: true, title: '' });
 
       expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Add a title' })).toBeInTheDocument();
+    });
+
+    // Autosave stops counting changes the moment the notebook leaves edit mode, and it can be left
+    // without the field ever blurring — the browser's Back button dropping `?edit=true` does exactly
+    // that. Nothing covered this before.
+    it('keeps a title typed but never blurred when the notebook leaves edit mode', async () => {
+      const { user, rerender } = setup({ isEditing: true, title: 'Q2 latency regression' });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      await user.clear(screen.getByRole('textbox', { name: 'Title' }));
+      await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Q3 latency regression');
+
+      rerender(
+        <NotebookDocumentHeader
+          title="Q3 latency regression"
+          tags={['latency']}
+          timeFrom="now-6h"
+          timeTo="now"
+          isEditing={false}
+        />
+      );
+
+      expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
     });
   });
 });

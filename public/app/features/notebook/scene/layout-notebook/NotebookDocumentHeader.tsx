@@ -1,11 +1,11 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Box, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
-import { EditableTitle } from 'app/core/components/Page/EditableTitle';
+import { Badge, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
 
 import { getNeutralTagListStyle } from '../../tagColors';
 
 import { NotebookTagPicker } from './NotebookTagPicker';
+import { NotebookTitleEditor } from './NotebookTitleEditor';
 
 const TAGS_INPUT_ID = 'notebook-tags';
 
@@ -43,15 +43,7 @@ export function NotebookDocumentHeader({
     <Stack direction="column" gap={1} alignItems="flex-start">
       <Badge text={t('dashboard.notebook-layout.pill', 'Published Notebook')} color="blue" icon="book" />
       {canEditTitle && onTitleChange ? (
-        // Rendered whatever the title is, unlike the read-only branch below: an emptied title would
-        // otherwise take the only control that can put one back with it.
-        //
-        // Full width for the same reason the tags row is: EditableTitle sizes itself from its parent,
-        // and the outer Stack aligns to flex-start, so without this the field shrinks to the browser's
-        // default input size instead of taking the line.
-        <Box width="100%">
-          <EditableTitle value={title ?? ''} onEdit={async (next) => onTitleChange(next)} />
-        </Box>
+        <NotebookTitleEditor title={title ?? ''} onChange={onTitleChange} />
       ) : title ? (
         <Text element="h1" variant="h1">
           {title}

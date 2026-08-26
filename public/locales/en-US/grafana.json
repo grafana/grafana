@@ -6021,7 +6021,11 @@
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
-      "time": "Time"
+      "time": "Time",
+      "title-edit": "Edit title",
+      "title-label": "Title",
+      "title-placeholder": "Add a title",
+      "title-required": "Please enter a title"
     },
     "on-create-new-row": {
       "new-row": {
