@@ -4394,7 +4394,7 @@
       "delete-modal-folder-empty_other": "Selected folders are empty",
       "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
       "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
-      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
+      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
       "delete-modal-title": "Delete",
@@ -12665,7 +12665,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -15234,8 +15234,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -15250,6 +15250,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {
