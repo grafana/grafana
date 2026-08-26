@@ -22,13 +22,17 @@ describe('buildStaticNavTree', () => {
     });
 
     it('orders sections by sort weight', () => {
-      setup({ permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER] });
+      setup({
+        permissions: [...DASHBOARD_READER, ...ALERT_RULES_READER, AccessControlAction.DataSourcesExplore],
+      });
 
       expect(ids(buildStaticNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
         NavID.dashboards,
+        NavID.explore,
+        NavID.drilldown,
         NavID.alerting,
         NavID.connections,
         NavID.cfg,
