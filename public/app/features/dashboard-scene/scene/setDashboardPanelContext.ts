@@ -228,13 +228,13 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
 
-    // Checked once: assistant availability doesn't change during a session, and the panel
-    // re-renders naturally (e.g. once data finishes loading) soon after this resolves, so the
-    // action appears without needing a live subscription to keep it in sync.
-    firstValueFrom(isAssistantAvailable()).then((available) => {
-      if (available) {
-        context.onInvestigateErrors = () => investigatePanelErrorsWithAssistant(vizPanel);
-      }
+    // A live subscription, not a one-shot check: the assistant app plugin can still be loading
+    // when this runs (its extension registration lands whenever its bundle finishes fetching),
+    // so availability can flip from false to true shortly after. forceRender() is needed because
+    // mutating `context` doesn't itself trigger a re-render.
+    isAssistantAvailable().subscribe((available) => {
+      context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;
+      vizPanel.forceRender();
     });
   }
 }

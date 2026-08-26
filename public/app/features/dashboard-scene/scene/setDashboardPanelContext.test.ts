@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import {
   type AdHocVariableModel,
@@ -592,10 +592,6 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onInvestigateErrors', () => {
-    // The assistant-availability check resolves asynchronously (see setDashboardPanelContext.ts),
-    // so tests need to let that microtask settle before reading/calling context.onInvestigateErrors.
-    const flushAsync = () => new Promise((resolve) => setTimeout(resolve, 0));
-
     beforeEach(() => {
       getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
         key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? true : defaultValue
@@ -603,8 +599,6 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('is not set when the new panel query errors UI feature flag is disabled', () => {
-      // No flush needed: the availability check is only scheduled inside the feature-flag
-      // branch, so with the flag off there's nothing async to wait for.
       stubFFEnabled(false);
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
@@ -613,29 +607,44 @@ describe('setDashboardPanelContext', () => {
       expect(context.onInvestigateErrors).toBeUndefined();
     });
 
-    it('is not set when the assistant is unavailable', async () => {
+    it('is not set when the assistant is unavailable', () => {
       mockIsAssistantAvailable.mockReturnValue(of(false));
 
       const { context } = buildTestScene({});
-      await flushAsync();
 
       expect(context.onInvestigateErrors).toBeUndefined();
     });
 
-    it('is set once the availability check resolves', async () => {
+    it('is set once the assistant reports available', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
-      await flushAsync();
 
       expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+    });
+
+    it('picks up availability reported after the initial (stale) check, and forces a re-render', () => {
+      // The assistant app plugin can still be loading when this runs, so the very first
+      // emission can be `false` even though the plugin registers moments later. A live
+      // subscription (not a one-shot check) needs to catch that second emission.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      availability.next(true);
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalled();
     });
 
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
-      await flushAsync();
       await context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).not.toHaveBeenCalled();
@@ -645,7 +654,6 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { vizPanel, context } = buildTestScene({});
-      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -680,7 +688,6 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantSidebarOpen.mockReturnValue(false);
 
       const { vizPanel, context } = buildTestScene({});
-      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -706,7 +713,6 @@ describe('setDashboardPanelContext', () => {
       mockGetActiveAssistantChatId.mockReturnValue('active-chat-id');
 
       const { vizPanel, context } = buildTestScene({});
-      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
@@ -729,7 +735,6 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { vizPanel, context } = buildTestScene({});
-      await flushAsync();
       vizPanel.setState({
         $data: new SceneDataNode({
           data: {
