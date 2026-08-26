@@ -1,0 +1,288 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 6 },
+              { "color": "red", "value": 12 }
+            ]
+          },
+          "unit": "h",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "orders",
+          "startValue": 1.2,
+          "min": 0.2,
+          "max": 4,
+          "spread": 0.15,
+          "noise": 0.08
+        }
+      ],
+      "title": "orders freshness",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 6 },
+              { "color": "red", "value": 12 }
+            ]
+          },
+          "unit": "h",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "customers",
+          "startValue": 2.4,
+          "min": 0.5,
+          "max": 8,
+          "spread": 0.2,
+          "noise": 0.1
+        }
+      ],
+      "title": "customers freshness",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 2 },
+              { "color": "red", "value": 4 }
+            ]
+          },
+          "unit": "h",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "events",
+          "startValue": 0.6,
+          "min": 0.1,
+          "max": 3,
+          "spread": 0.1,
+          "noise": 0.05
+        }
+      ],
+      "title": "events freshness",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 12 },
+              { "color": "red", "value": 24 }
+            ]
+          },
+          "unit": "h",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "finance",
+          "startValue": 9.5,
+          "min": 4,
+          "max": 28,
+          "spread": 0.8,
+          "noise": 0.4
+        }
+      ],
+      "title": "finance freshness",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "mappings": [],
+          "unit": "s",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 5 },
+      "id": 5,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "dbt-daily",
+          "startValue": 2400,
+          "min": 900,
+          "max": 5400,
+          "spread": 120,
+          "noise": 60
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "alias": "dbt-hourly",
+          "startValue": 420,
+          "min": 180,
+          "max": 1200,
+          "spread": 40,
+          "noise": 20
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "C",
+          "scenarioId": "random_walk",
+          "alias": "fivetran-sync",
+          "startValue": 780,
+          "min": 240,
+          "max": 2100,
+          "spread": 70,
+          "noise": 35
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "D",
+          "scenarioId": "random_walk",
+          "alias": "reverse-etl",
+          "startValue": 310,
+          "min": 90,
+          "max": 900,
+          "spread": 30,
+          "noise": 15
+        }
+      ],
+      "title": "Job duration",
+      "type": "timeseries"
+    }
+  ],
+  "preload": true,
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["pipelines", "elt", "dbt", "demo"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "ELT freshness",
+  "uid": "demo-pipe-freshness",
+  "version": 1
+}

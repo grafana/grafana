@@ -1,0 +1,401 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 4 }]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "active warehouses",
+          "startValue": 3,
+          "min": 2,
+          "max": 3,
+          "spread": 0.05,
+          "noise": 0.02
+        }
+      ],
+      "title": "Active warehouses",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 8 },
+              { "color": "red", "value": 20 }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "queued queries",
+          "startValue": 6,
+          "min": 0,
+          "max": 28,
+          "spread": 1.5,
+          "noise": 0.8
+        }
+      ],
+      "title": "Queued queries",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 40 },
+              { "color": "red", "value": 70 }
+            ]
+          },
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "credits / hour",
+          "startValue": 32,
+          "min": 12,
+          "max": 80,
+          "spread": 2,
+          "noise": 1
+        }
+      ],
+      "title": "Credits this hour",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 3 },
+              { "color": "red", "value": 8 }
+            ]
+          },
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "failed queries",
+          "startValue": 2,
+          "min": 0,
+          "max": 12,
+          "spread": 0.6,
+          "noise": 0.4
+        }
+      ],
+      "title": "Failed queries",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "mappings": [],
+          "unit": "none",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "analytics-wh",
+          "startValue": 14,
+          "min": 4,
+          "max": 36,
+          "spread": 1.2,
+          "noise": 0.5
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "alias": "transform-wh",
+          "startValue": 22,
+          "min": 8,
+          "max": 48,
+          "spread": 1.8,
+          "noise": 0.7
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "C",
+          "scenarioId": "random_walk",
+          "alias": "adhoc-wh",
+          "startValue": 5,
+          "min": 0,
+          "max": 18,
+          "spread": 0.8,
+          "noise": 0.4
+        }
+      ],
+      "title": "Credits by warehouse",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "mappings": [],
+          "unit": "none",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "options": {
+        "legend": { "calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "analytics-wh",
+          "startValue": 18,
+          "min": 2,
+          "max": 64,
+          "spread": 2,
+          "noise": 1
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "alias": "transform-wh",
+          "startValue": 36,
+          "min": 8,
+          "max": 80,
+          "spread": 3,
+          "noise": 1.2
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "C",
+          "scenarioId": "random_walk",
+          "alias": "adhoc-wh",
+          "startValue": 7,
+          "min": 0,
+          "max": 24,
+          "spread": 1,
+          "noise": 0.5
+        }
+      ],
+      "title": "Query concurrency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "mappings": [],
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "id": 7,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "analytics-wh",
+          "startValue": 180000000000,
+          "min": 20000000000,
+          "max": 420000000000,
+          "spread": 15000000000,
+          "noise": 8000000000
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "alias": "transform-wh",
+          "startValue": 310000000000,
+          "min": 40000000000,
+          "max": 780000000000,
+          "spread": 22000000000,
+          "noise": 10000000000
+        },
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "C",
+          "scenarioId": "random_walk",
+          "alias": "adhoc-wh",
+          "startValue": 45000000000,
+          "min": 1000000000,
+          "max": 140000000000,
+          "spread": 8000000000,
+          "noise": 4000000000
+        }
+      ],
+      "title": "Bytes scanned",
+      "type": "timeseries"
+    }
+  ],
+  "preload": true,
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": ["warehouse", "analytics", "demo"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Warehouse overview",
+  "uid": "demo-wh-overview",
+  "version": 1
+}

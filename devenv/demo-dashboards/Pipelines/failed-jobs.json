@@ -1,0 +1,110 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 80 }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "status" },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": { "type": "color-text" }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "failed": { "color": "red", "index": 0, "text": "failed" } } },
+                  { "type": "value", "options": { "timed_out": { "color": "orange", "index": 1, "text": "timed out" } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "csv_content",
+          "alias": "failed jobs",
+          "csvContent": "time,model,warehouse,status,error\n2026-08-26T06:12:01Z,fct_orders,transform-wh,failed,Compilation error: missing relation raw.orders_v2\n2026-08-26T05:48:22Z,stg_events,analytics-wh,timed_out,Statement exceeded 30m warehouse timeout\n2026-08-26T04:03:11Z,dim_customers,transform-wh,failed,Unique test failed on customer_id (14 rows)\n2026-08-26T02:17:44Z,finance_daily,adhoc-wh,failed,Access denied to schema finance_raw\n2026-08-25T22:09:18Z,fivetran_stripe,transform-wh,failed,Sync aborted: source API 429\n2026-08-25T18:41:05Z,reverse_etl_salesforce,analytics-wh,timed_out,Queue wait exceeded SLA (18m)\n2026-08-25T14:22:50Z,int_sessions,transform-wh,failed,Incremental merge conflict on session_sk"
+        }
+      ],
+      "title": "Failed warehouse and ELT jobs",
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "testdata", "uid": "demo-testdata" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 10 },
+      "id": 2,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "testdata", "uid": "demo-testdata" },
+          "refId": "A",
+          "scenarioId": "logs",
+          "alias": "job runner",
+          "lines": 40,
+          "levelColumn": true
+        }
+      ],
+      "title": "Job runner logs",
+      "type": "logs"
+    }
+  ],
+  "preload": true,
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["pipelines", "elt", "errors", "demo"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Failed jobs",
+  "uid": "demo-pipe-failed-jobs",
+  "version": 1
+}

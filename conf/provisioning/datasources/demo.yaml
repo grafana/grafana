@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: Analytics warehouse
+    type: testdata
+    uid: demo-testdata
+    access: proxy
+    orgId: 1
+    isDefault: true
