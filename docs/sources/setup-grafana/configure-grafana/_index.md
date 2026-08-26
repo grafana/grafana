@@ -779,6 +779,12 @@ When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP res
 The main goal is to mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking).
 Default is `false`.
 
+#### `asset_sri_checks_enabled`
+
+Set to `true` to enable [Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) checks on Grafana's own JavaScript assets. This helps protect against tampered or poisoned JavaScript assets being served to your users. Default is `false`.
+
+Don't enable this setting if a reverse proxy, CDN, or other network intermediary rewrites the contents of JavaScript responses, because doing so causes the integrity checks to fail and Grafana to stop loading.
+
 #### `strict_transport_security`
 
 Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. Only use this when HTTPS is enabled in your configuration, or when there is another upstream system that ensures your application does HTTPS (like a frontend load balancer). HSTS tells browsers that the site should only be accessed using HTTPS.
