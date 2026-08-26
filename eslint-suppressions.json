@@ -1441,11 +1441,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/DashboardScene.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
