@@ -567,6 +567,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("re-rotates when previous token is replayed and current is unseen (previously silently returned the stale token, causing forced logouts)", func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+
 			initial, current := rotateOnceForReplay(t)
 
 			before, err := ctx.getAuthTokenByID(current.Id)
@@ -624,6 +626,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("regression: replaying original token within SkipRotationTime after a concurrent rotation returns a stale token silently, causing a forced logout", func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
+
 			advanceTime(SkipRotationTime + time.Second)
 			initial, err := ctx.tokenService.CreateToken(context.Background(), &auth.CreateTokenCommand{
 				User:      usr,
