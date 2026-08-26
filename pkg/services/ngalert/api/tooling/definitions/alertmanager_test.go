@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,16 @@ func TestPostableAlertsUnmarshalJSON(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(`[{"labels":{"alertname":"ProducerAlert"}}]`), &alerts))
 	require.Len(t, alerts.PostableAlerts, 1)
 	require.Equal(t, "ProducerAlert", alerts.PostableAlerts[0].Labels["alertname"])
+}
+
+func TestPostableAlertsUnmarshalJSONPreservesArrayErrors(t *testing.T) {
+	input := []byte(`[{"startsAt":"not-a-timestamp"}]`)
+	var expected []amv2.PostableAlert
+	expectedErr := json.Unmarshal(input, &expected)
+	require.Error(t, expectedErr)
+
+	var alerts PostableAlerts
+	require.EqualError(t, json.Unmarshal(input, &alerts), expectedErr.Error())
 }
 
 func Test_GettableStatusUnmarshalJSON(t *testing.T) {

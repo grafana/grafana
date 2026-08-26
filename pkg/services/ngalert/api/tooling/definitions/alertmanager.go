@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -559,19 +560,17 @@ type PostableAlerts struct {
 }
 
 func (a *PostableAlerts) UnmarshalJSON(data []byte) error {
-	var alerts []amv2.PostableAlert
-	if err := json.Unmarshal(data, &alerts); err == nil {
-		a.PostableAlerts = alerts
+	if trimmed := bytes.TrimSpace(data); len(trimmed) > 0 && trimmed[0] == '{' {
+		type postableAlerts PostableAlerts
+		var wrapped postableAlerts
+		if err := json.Unmarshal(data, &wrapped); err != nil {
+			return err
+		}
+		*a = PostableAlerts(wrapped)
 		return nil
 	}
 
-	type postableAlerts PostableAlerts
-	var wrapped postableAlerts
-	if err := json.Unmarshal(data, &wrapped); err != nil {
-		return err
-	}
-	*a = PostableAlerts(wrapped)
-	return nil
+	return json.Unmarshal(data, &a.PostableAlerts)
 }
 
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
