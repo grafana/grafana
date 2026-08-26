@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
@@ -198,6 +199,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 		}
 	}
 
+	info := &operationInfo{defs: defs}
 	gvk := schema.GroupVersionKind{Group: b.manifest.Group}
 	for _, v := range b.manifest.Versions {
 		if v.Name != version || !v.Served {
@@ -216,11 +218,16 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 				base = root + strings.ToLower(kind.Plural)
 			}
 
+			info.kind = &kind
+			info.gvk = gvk
+			info.name = name
+
 			// PATCH requests contain patch documents, not full resources.
 			for _, path := range []string{base, base + "/{name}", base + "/{name}/status"} {
 				if p := oas.Paths.Paths[path]; p != nil {
 					for _, op := range []*spec3.Operation{p.Get, p.Put, p.Post} {
-						setOperationRequestResponseBodies(op, ref)
+						info.isPOST = p.Post == op
+						setOperationRequestResponseBodies(op, ref, info)
 					}
 					setOperationResponseBodies(p.Patch, ref)
 				}
@@ -277,13 +284,34 @@ func setResponseSchemaRef(op *spec3.Operation, code int, ref spec.Ref) {
 }
 
 // setOperationRequestResponseBodies updates an operation's request and responses.
-func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref) {
+func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *operationInfo) {
 	if op == nil {
 		return
 	}
 	if op.RequestBody != nil {
 		for _, mt := range op.RequestBody.Content {
 			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+
+			if info.isPOST {
+				example := &unstructured.Unstructured{}
+				example.SetAPIVersion(info.gvk.GroupVersion().String())
+				example.SetKind(info.gvk.Kind)
+				example.SetGenerateName("x")
+				if info.kind.FolderScoped != nil && *info.kind.FolderScoped {
+					example.SetAnnotations(map[string]string{
+						utils.AnnoKeyFolder: "{folder-name}",
+					})
+				}
+
+				// SPEC -- TODO? add an example in the manifest
+				if prop := info.specProperty(); prop != nil {
+					if v := info.exampleValue(prop, map[string]bool{}); v != nil {
+						example.Object["spec"] = v
+					}
+				}
+
+				mt.Example = example
+			}
 		}
 	}
 	setOperationResponseBodies(op, ref)
@@ -331,4 +359,116 @@ func defaultSchema() *pluginschema.PluginSchema {
 			},
 		},
 	}
+}
+
+type operationInfo struct {
+	defs   map[string]common.OpenAPIDefinition
+	gvk    schema.GroupVersionKind
+	kind   *app.ManifestVersionKind
+	name   string // schema name {group}.{version}.{kind}
+	isPOST bool
+}
+
+// specProperty returns the kind's spec property. It is usually a $ref into the
+// manifest definitions, so it must be resolved before it can be walked.
+func (info *operationInfo) specProperty() *spec.Schema {
+	def, ok := info.defs[info.name]
+	if !ok {
+		return nil
+	}
+	prop, ok := def.Schema.Properties["spec"]
+	if !ok {
+		return nil
+	}
+	return &prop
+}
+
+// refName returns the definition key a $ref points at. Manifest refs are
+// written as "#/components/schemas/{group}.{version}.{Kind}{Field}".
+func refName(ref spec.Ref) string {
+	s := ref.String()
+	if i := strings.LastIndex(s, "/"); i >= 0 {
+		return s[i+1:]
+	}
+	return s
+}
+
+// exampleValue builds a placeholder value for a schema, resolving $refs against
+// the manifest definitions. visited holds the refs on the current path so a
+// self-referencing kind (a tree node containing itself) terminates.
+func (info *operationInfo) exampleValue(s *spec.Schema, visited map[string]bool) any {
+	if s == nil {
+		return nil
+	}
+	if name := refName(s.Ref); name != "" {
+		def, ok := info.defs[name]
+		if !ok || visited[name] {
+			// Unknown (eg ObjectMeta) or recursive -- stop expanding here.
+			return map[string]any{}
+		}
+		visited[name] = true
+		defer delete(visited, name)
+		s = &def.Schema
+	}
+	switch {
+	case s.Example != nil:
+		return s.Example
+	case s.Default != nil:
+		return s.Default
+	case len(s.Enum) > 0:
+		return s.Enum[0]
+	}
+	switch {
+	case len(s.Properties) > 0:
+		obj := map[string]any{}
+		for k, prop := range s.Properties {
+			if prop.ReadOnly {
+				continue
+			}
+			obj[k] = info.exampleValue(&prop, visited)
+		}
+		return obj
+	case s.Type.Contains("array"):
+		if s.Items != nil && s.Items.Schema != nil {
+			return []any{info.exampleValue(s.Items.Schema, visited)}
+		}
+		return []any{}
+	case s.Type.Contains("object"):
+		obj := map[string]any{}
+		if s.AdditionalProperties != nil && s.AdditionalProperties.Schema != nil {
+			obj["key"] = info.exampleValue(s.AdditionalProperties.Schema, visited)
+		}
+		return obj
+	case s.Type.Contains("string"):
+		return exampleString(s.Format)
+	case s.Type.Contains("integer"):
+		return 0
+	case s.Type.Contains("number"):
+		return 0.0
+	case s.Type.Contains("boolean"):
+		return false
+	}
+	return nil
+}
+
+// exampleString returns a value that satisfies the common string formats, since
+// a plain "example" is rejected by clients validating format.
+func exampleString(format string) string {
+	switch format {
+	case "date-time":
+		return "2020-01-02T15:04:05Z"
+	case "date":
+		return "2020-01-02"
+	case "duration":
+		return "5m"
+	case "uuid":
+		return "00000000-0000-0000-0000-000000000000"
+	case "email":
+		return "user@example.com"
+	case "uri", "url":
+		return "https://example.com"
+	case "byte":
+		return "ZXhhbXBsZQ=="
+	}
+	return "example"
 }
