@@ -167,6 +167,8 @@ func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *Exter
 		namespaceStore:    fakeNamespaceStore{},
 		folderPermissions: &recordingFolderPermissions{},
 		lastSyncHash:      make(map[int64]uint64),
+		lastAttemptAt:     make(map[int64]time.Time),
+		lastPollInterval:  make(map[int64]time.Duration),
 	}
 }
 
@@ -354,9 +356,10 @@ func TestRun_StopsOnContextCancel(t *testing.T) {
 	// Run always starts the poll loop now: sync can be enabled per-org via the
 	// rules Config resource even when external_ruler_uid is unset, and only a
 	// per-org tick (resolveExternalRulerConfig) can tell which. Run itself
-	// must still exit cleanly on cancellation regardless.
+	// must still exit cleanly on cancellation regardless. Run's ticker uses the
+	// fixed baselineCheckInterval (10s), so ctx.Done() always wins the select
+	// first — no settings knob to configure here anymore.
 	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
-	s.settings.AdminConfigPollInterval = time.Minute // long enough that ctx.Done() always wins the select first
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
@@ -368,6 +371,60 @@ func TestRun_StopsOnContextCancel(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Run did not return after context cancellation")
 	}
+}
+
+type fakeOrgStore struct {
+	ids []int64
+}
+
+func (f *fakeOrgStore) FetchOrgIds(context.Context) ([]int64, error) {
+	return f.ids, nil
+}
+
+func TestDueForSync(t *testing.T) {
+	s := newTestSyncer(t, &fakeFetcher{}, &fakeRuleService{})
+
+	assert.True(t, s.dueForSync(1), "an org never attempted is always due")
+
+	s.recordAttempt(1, time.Hour)
+	assert.False(t, s.dueForSync(1), "an org attempted within its own interval is not due yet")
+
+	s.lastAttemptAt[1] = time.Now().Add(-2 * time.Hour)
+	assert.True(t, s.dueForSync(1), "an org past its own interval is due again")
+
+	// An invalid/zero cached interval falls back to defaultRulerSyncPollInterval
+	// rather than treating the org as permanently due or never due.
+	s.recordAttempt(2, 0)
+	s.lastAttemptAt[2] = time.Now().Add(-30 * time.Second)
+	assert.False(t, s.dueForSync(2), "zero interval falls back to the default (1m), not yet elapsed")
+	s.lastAttemptAt[2] = time.Now().Add(-2 * time.Minute)
+	assert.True(t, s.dueForSync(2), "zero interval falls back to the default (1m), which has now elapsed")
+}
+
+func TestSyncAllOrgs_SkipsOrgsNotYetDue(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	// Org 1 was already synced well within its (default) interval; org 2 has
+	// never been attempted, so only org 2 should be worked this tick.
+	s.recordAttempt(1, time.Hour)
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 1, fetch.calls, "only the due org should have been fetched")
+}
+
+func TestSyncAllOrgs_SyncsAllDueOrgs(t *testing.T) {
+	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
+	s := newTestSyncer(t, fetch, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.orgStore = &fakeOrgStore{ids: []int64{1, 2}}
+
+	s.syncAllOrgs(context.Background())
+
+	assert.Equal(t, 2, fetch.calls, "both never-attempted orgs are due")
 }
 
 func TestSyncOrg_NoOpWhenUnconfigured(t *testing.T) {
