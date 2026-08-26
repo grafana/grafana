@@ -37,15 +37,17 @@ describe('loadUserPermissions', () => {
     });
   });
 
+  // A successful response with no permissions is the real answer, so it stays an
+  // empty map — only a failed request resolves to null.
   it('returns an empty map for an empty response', async () => {
     mockResponse(Promise.resolve({ permissions: [] }));
     expect(await loadUserPermissions()).toEqual({});
   });
 
-  it('returns an empty map and logs the error when the request fails', async () => {
+  it('returns null and logs the error when the request fails', async () => {
     mockResponse(Promise.reject(new Error('boom')));
 
-    expect(await loadUserPermissions()).toEqual({});
+    expect(await loadUserPermissions()).toBeNull();
     expect(logError).toHaveBeenCalledTimes(1);
   });
 });

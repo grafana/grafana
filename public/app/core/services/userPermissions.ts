@@ -10,8 +10,13 @@ import { type UserPermission } from 'app/types/accessControl';
  *
  * Goes through the RTK Query client so the result is cached and shared with any
  * later useGetCurrentUserPermissionsQuery consumers.
+ *
+ * Resolves to null when the request fails, rather than to an empty map: callers
+ * must be able to keep whatever permissions boot already gave them instead of
+ * replacing them with "no permissions". A successful response carrying no
+ * permissions still resolves to an empty map, because that is the real answer.
  */
-export async function loadUserPermissions(): Promise<UserPermission> {
+export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
     const { permissions }: UserPermissions = await dispatch(
       iamAPIv0alpha1.endpoints.getCurrentUserPermissions.initiate(undefined, { subscribe: false })
@@ -23,6 +28,6 @@ export async function loadUserPermissions(): Promise<UserPermission> {
     }, {});
   } catch (error) {
     logError(error instanceof Error ? error : new Error('Failed to load user permissions'));
-    return {};
+    return null;
   }
 }

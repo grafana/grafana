@@ -255,10 +255,27 @@ export class GrafanaApp {
       // permissions. Fetch them from the AuthZ user-permissions API (via RTK
       // Query, so the result is cached) and rebuild the nav tree — configureStore
       // built it with an empty permission set, and its sections are permission-gated.
-      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.AuthzUserPermissions, false)) {
-        contextSrv.user.permissions = await loadUserPermissions();
-        dispatch(navTreeInitialized());
-        dispatch(navIndexInitialized());
+      //
+      // Gated on the nav flag too: the client-built tree is what needs these
+      // permissions, and without it the rebuild below would only re-derive the
+      // bootdata tree. Both flag reads share the parked OpenFeature gap
+      // documented on isClientNavTreeEnabled (buildStaticNavTree.ts) — a failed
+      // or slow OFREP fetch resolves to the false default and skips this, which
+      // leaves boot's own permissions in place.
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.AuthzUserPermissions, false)
+      ) {
+        // Only replace boot's permissions on a successful response: the legacy
+        // boot path populates a real map from /bootdata, and a failed request
+        // must not downgrade the session to "no permissions".
+        const permissions = await loadUserPermissions();
+        if (permissions) {
+          contextSrv.user.permissions = permissions;
+          dispatch(navTreeInitialized());
+          dispatch(navIndexInitialized());
+        }
       }
 
       initExtensions();
