@@ -26,7 +26,7 @@ import { AddFilterButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
-function useSidebarOptions(this: DashboardEditableElement, dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
+function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
@@ -108,7 +108,9 @@ export class DashboardEditableElement implements EditableDashboardElement {
     ];
   }
 
-  public useSidebarOptions = useSidebarOptions.bind(this, this.dashboard);
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
+    return useDashboardSidebarOptions.call(this, this.dashboard);
+  }
 
   public renderTopButton(): ReactNode {
     return (
