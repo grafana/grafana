@@ -23,6 +23,15 @@ export function canCreateNotebooks(): boolean {
 }
 
 /**
+ * Delete is a separate action from write: a user who may edit a notebook is not automatically allowed
+ * to remove it. Org-level for the same reason canEditNotebooks is — the list carries no per-resource
+ * access info, so there is nothing to check a single notebook against.
+ */
+export function canDeleteNotebooks(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.DashboardsDelete);
+}
+
+/**
  * Either permission is enough to open the picker, because it offers two routes: adding to a notebook
  * that already exists needs write, and creating one needs create. The modal hides whichever tab the
  * user cannot use.
