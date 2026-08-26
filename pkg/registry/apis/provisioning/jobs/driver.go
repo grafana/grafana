@@ -251,6 +251,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			string(d.currentJob.Spec.Action),
 			string(d.currentJob.Status.State),
 			sumTotalChanges(d.currentJob.Status.Summary),
+			sumTotalDryRun(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
 	}
@@ -527,6 +528,22 @@ func sumTotalChanges(summaries []*provisioning.JobResourceSummary) int {
 			continue
 		}
 		total += int(s.TotalChanges)
+	}
+	return total
+}
+
+// sumTotalDryRun totals the resources a job processed while doing its work.
+func sumTotalDryRun(action provisioning.JobAction, summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		if action == provisioning.JobActionPullRequest {
+			total += int(s.Create + s.Update + s.Delete + s.Noop)
+		} else {
+			total += int(s.TotalChanges)
+		}
 	}
 	return total
 }
