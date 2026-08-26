@@ -363,25 +363,26 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 }
 
 func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
-	d.sendAlerts(ctx, key.OrgID, d.logger.New(key.LogContext()...), alerts)
+	_ = d.sendAlerts(ctx, key.OrgID, d.logger.New(key.LogContext()...), alerts)
 }
 
 // SendAlerts routes alerts produced outside the rule evaluator through the same
 // internal/external and HA delivery path as rule-evaluated alerts.
-func (d *AlertsRouter) SendAlerts(ctx context.Context, orgID int64, alerts definitions.PostableAlerts) {
-	d.sendAlerts(ctx, orgID, d.logger.New("org_id", orgID, "alert_source", "producer"), alerts)
+func (d *AlertsRouter) SendAlerts(ctx context.Context, orgID int64, alerts definitions.PostableAlerts) error {
+	return d.sendAlerts(ctx, orgID, d.logger.New("org_id", orgID, "alert_source", "producer"), alerts)
 }
 
-func (d *AlertsRouter) sendAlerts(ctx context.Context, orgID int64, logger log.Logger, alerts definitions.PostableAlerts) {
+func (d *AlertsRouter) sendAlerts(ctx context.Context, orgID int64, logger log.Logger, alerts definitions.PostableAlerts) error {
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")
-		return
+		return nil
 	}
 	// Send alerts to local notifier if they need to be handled internally
 	// or if no external AMs have been discovered yet.
 	d.adminConfigMtx.RLock()
 	defer d.adminConfigMtx.RUnlock()
 	var localNotifierExist, externalNotifierExist bool
+	var deliveryErr error
 	if d.sendAlertsTo[orgID] == models.ExternalAlertmanagers && len(d.alertmanagersFor(orgID)) > 0 {
 		logger.Debug("All alerts for the given org should be routed to external notifiers only. skipping the internal notifier.")
 	} else {
@@ -391,6 +392,7 @@ func (d *AlertsRouter) sendAlerts(ctx context.Context, orgID int64, logger log.L
 			localNotifierExist = true
 			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
+				deliveryErr = fmt.Errorf("put alerts in local notifier: %w", err)
 			}
 			if d.broadcastAlerts {
 				d.multiOrgNotifier.BroadcastAlerts(orgID, alerts)
@@ -414,8 +416,10 @@ func (d *AlertsRouter) sendAlerts(ctx context.Context, orgID int64, logger log.L
 	}
 
 	if !localNotifierExist && !externalNotifierExist {
+		deliveryErr = errors.New("no external or internal notifier available")
 		logger.Error("No external or internal notifier - alerts not delivered", "count", len(alerts.PostableAlerts))
 	}
+	return deliveryErr
 }
 
 // AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.

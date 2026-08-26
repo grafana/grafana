@@ -558,6 +558,22 @@ type PostableAlerts struct {
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
 }
 
+func (a *PostableAlerts) UnmarshalJSON(data []byte) error {
+	var alerts []amv2.PostableAlert
+	if err := json.Unmarshal(data, &alerts); err == nil {
+		a.PostableAlerts = alerts
+		return nil
+	}
+
+	type postableAlerts PostableAlerts
+	var wrapped postableAlerts
+	if err := json.Unmarshal(data, &wrapped); err != nil {
+		return err
+	}
+	*a = PostableAlerts(wrapped)
+	return nil
+}
+
 // swagger:parameters RoutePostAlertingConfig RoutePostGrafanaAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body

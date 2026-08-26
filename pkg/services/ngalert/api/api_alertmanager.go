@@ -182,7 +182,9 @@ func (srv AlertmanagerSrv) RoutePostAMAlerts(c *contextmodel.ReqContext, alerts 
 	if srv.alertsRouter == nil {
 		return ErrResp(http.StatusServiceUnavailable, errors.New("alerts router is unavailable"), "alerts router is unavailable")
 	}
-	srv.alertsRouter.SendAlerts(c.Req.Context(), c.GetOrgID(), alerts)
+	if err := srv.alertsRouter.SendAlerts(c.Req.Context(), c.GetOrgID(), alerts); err != nil {
+		return ErrResp(http.StatusServiceUnavailable, err, "failed to deliver alerts")
+	}
 	if srv.apiMetrics != nil {
 		acceptedBySource := make(map[string]int)
 		resolvedBySource := make(map[string]int)

@@ -32,6 +32,27 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestSendAlertsReturnsLocalNotifierError(t *testing.T) {
+	alertsRouter := NewAlertsRouter(
+		notifier.NewTestMultiOrgAlertmanager(t),
+		nil,
+		clock.New(),
+		nil,
+		nil,
+		0,
+		nil,
+		nil,
+		featuremgmt.WithFeatures(),
+		false,
+		nil,
+	)
+	alerts := definitions.PostableAlerts{PostableAlerts: []models2.PostableAlert{{}}}
+
+	err := alertsRouter.SendAlerts(context.Background(), 1, alerts)
+
+	require.ErrorContains(t, err, "put alerts in local notifier")
+}
+
 func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

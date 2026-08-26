@@ -16,6 +16,13 @@ import (
 //go:embed test-data/*.*
 var testData embed.FS
 
+func TestPostableAlertsUnmarshalJSON(t *testing.T) {
+	var alerts PostableAlerts
+	require.NoError(t, json.Unmarshal([]byte(`[{"labels":{"alertname":"ProducerAlert"}}]`), &alerts))
+	require.Len(t, alerts.PostableAlerts, 1)
+	require.Equal(t, "ProducerAlert", alerts.PostableAlerts[0].Labels["alertname"])
+}
+
 func Test_GettableStatusUnmarshalJSON(t *testing.T) {
 	incoming, err := testData.ReadFile(path.Join("test-data", "gettable-status.json"))
 	require.Nil(t, err)
