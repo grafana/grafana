@@ -789,10 +789,10 @@ func (rc *RepositoryController) process(key string) (err error) {
 			repoSpanAttrs(obj),
 			trace.WithAttributes(attribute.Int("patch.operations", len(ops))),
 		)
+		defer patchSpan.End()
 		if patchErr := rc.statusPatcher.Patch(patchCtx, obj, ops...); patchErr != nil {
 			return fmt.Errorf("status patch operations failed: %w", patchErr)
 		}
-		patchSpan.End()
 		return nil
 	}
 	defer func() {
@@ -1114,7 +1114,7 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 	_, webhookCapable := repo.(repository.WebhookRepository)
-	hasWebhookToManage := webhookCapable && len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty()
+	hasWebhookToManage := webhookCapable && (len(obj.Spec.Workflows) > 0 || !repository.GetID(obj.Status.Webhook).IsEmpty())
 
 	// Suppress the hook retry while the hook-failure cooldown is active, or while
 	// the repository just failed its health check (it's known unreachable, so any

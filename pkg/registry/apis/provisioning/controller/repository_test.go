@@ -2711,13 +2711,18 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	require.NoError(t, indexer.Add(repo))
 	repoLister := listers.NewRepositoryLister(indexer)
 
-	// Patch is variadic; testify's mock.On requires the exact number of
-	// arguments to be listed. This repo fixture deterministically produces 5
-	// patch ops (health, observedGeneration, two condition adds, fieldErrors)
-	// on the one and only expected call.
+	// This repo fixture deterministically produces 4 patch ops (health,
+	// observedGeneration, two condition adds) on the one and only expected
+	// call; fieldErrors is not patched since both sides are already empty.
 	statusPatcher := mocks.NewStatusPatcher(t)
 	statusPatcher.
-		On("Patch", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		On(
+			"Patch",
+			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}")).
 		Once().
 		Return(assert.AnError)
 
