@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
 import { adminNavEntry } from './sections/admin.navEntry';
 import { dashboardsNavEntry } from './sections/dashboards.navEntry';
@@ -60,13 +61,14 @@ export function getInitialNavTree(): NavModelItem[] {
 /**
  * The static sections of the nav tree: each entry declares the gate that makes
  * it visible and how to build it. Home is not listed — it is unconditional and
- * seeds the tree. The entries are defined in ./sections; this module only
- * composes them.
+ * seeds the tree. The entries are defined in ./sections (and by the owning
+ * feature, e.g. alerting); this module only composes them.
  */
 const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
   profileNavEntry,
+  alertingNavEntry,
   adminNavEntry,
   helpNavEntry,
   bookmarksNavEntry,

@@ -9,6 +9,7 @@ import { navIds as ids, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
+const ALERT_RULES_READER = [AccessControlAction.AlertingRuleRead];
 
 describe('buildStaticNavTree', () => {
   describe('sections', () => {
@@ -21,13 +22,14 @@ describe('buildStaticNavTree', () => {
     });
 
     it('orders sections by sort weight', () => {
-      setup({ permissions: DASHBOARD_READER });
+      setup({ permissions: [AccessControlAction.DashboardsRead, AccessControlAction.AlertingRuleRead] });
 
       expect(ids(buildStaticNavTree())).toEqual([
         NavID.home,
         NavID.bookmarks,
         NavID.starred,
         NavID.dashboards,
+        NavID.alerting,
         NavID.cfg,
         NavID.profile,
         NavID.help,
@@ -146,6 +148,95 @@ describe('buildStaticNavTree', () => {
         expect(Boolean(playlists)).toBe(visible);
       }
     );
+  });
+
+  describe('alerting section', () => {
+    it('is omitted when unified alerting is disabled', () => {
+      setup({ permissions: ALERT_RULES_READER, config: { unifiedAlertingEnabled: false } });
+
+      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+    });
+
+    it('shows the history item only when state history queries are served by Loki', () => {
+      const history = () => findById(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [], 'alerts-history');
+      const withStateHistory = (stateHistory?: { backend?: string; primary?: string }) => {
+        setup({ permissions: ALERT_RULES_READER });
+        config.unifiedAlerting = { ...config.unifiedAlerting, stateHistory };
+      };
+
+      withStateHistory({ backend: 'loki' });
+      expect(history()).toBeDefined();
+
+      withStateHistory({ backend: 'multiple', primary: 'loki' });
+      expect(history()).toBeDefined();
+
+      withStateHistory({ backend: 'multiple', primary: 'annotations' });
+      expect(history()).toBeUndefined();
+
+      withStateHistory({ backend: 'annotations' });
+      expect(history()).toBeUndefined();
+
+      withStateHistory(undefined);
+      expect(history()).toBeUndefined();
+    });
+
+    it('is omitted when no alerting child is accessible', () => {
+      setup();
+      expect(findById(buildStaticNavTree(), NavID.alerting)).toBeUndefined();
+    });
+
+    it('uses legacy ids without the V2 navigation toggle', () => {
+      setup({
+        permissions: [
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingNotificationsRead,
+          AccessControlAction.AlertingInstanceRead,
+        ],
+      });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+        'alert-list',
+        'receivers',
+        'am-routes',
+        'silences',
+        'groups',
+      ]);
+    });
+
+    it('groups notification items and renames rules under V2 navigation', () => {
+      setup({
+        permissions: [
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingNotificationsRead,
+          AccessControlAction.AlertingInstanceRead,
+        ],
+        featureToggles: { alertingNavigationV2: true },
+      });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toEqual([
+        'alert-rules',
+        'notification-config',
+        'silences',
+        'groups',
+      ]);
+    });
+
+    it('hides alert groups under V2 with triage but keeps alert activity', () => {
+      setup({
+        permissions: [AccessControlAction.AlertingInstanceRead],
+        featureToggles: { alertingNavigationV2: true, alertingTriage: true },
+      });
+
+      const children = ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? []);
+      expect(children).toContain('alert-activity');
+      expect(children).not.toContain('groups');
+    });
+
+    it('adds admin-only items for org admins', () => {
+      setup({ permissions: ALERT_RULES_READER, orgRole: 'Admin' });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.alerting)?.children ?? [])).toContain('alerting-admin');
+    });
   });
 
   describe('administration section', () => {
