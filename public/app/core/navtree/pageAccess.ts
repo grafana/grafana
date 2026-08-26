@@ -13,6 +13,8 @@ export const dashboardVariablesAccess = () =>
 export const snapshotsAccess = () => contextSrv.hasPermission(AccessControlAction.SnapshotsRead);
 export const playlistsAccess = () => contextSrv.hasPermission(AccessControlAction.PlaylistsRead);
 
+export const dataSourcesExploreAccess = () => contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+
 export const serviceAccountsAccess = () =>
   hasAny(AccessControlAction.ServiceAccountsRead, AccessControlAction.ServiceAccountsCreate);
 export const migrateToCloudAccess = () => contextSrv.hasPermission(AccessControlAction.MigrationAssistantMigrate);
