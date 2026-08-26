@@ -30,7 +30,7 @@ import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import {
@@ -150,16 +150,6 @@ export class RowsLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
