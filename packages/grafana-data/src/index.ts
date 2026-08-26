@@ -52,9 +52,13 @@ export {
   isTimeSeriesField,
   getRowUniqueId,
   addRow,
-  alignTimeRangeCompareData,
-  shouldAlignTimeCompare,
 } from './dataframe/utils';
+export {
+  alignTimeRangeCompareData,
+  isTimeCompareFrame,
+  shouldAlignTimeCompare,
+  withComparisonSuffix,
+} from './dataframe/timeCompare';
 export {
   StreamingDataFrame,
   StreamingFrameAction,
@@ -942,6 +946,7 @@ export {
   isTruthy,
   isObject,
 } from './types/data';
+export { type TimeCompareMeta } from './types/timeCompare';
 export { GAUGE_DEFAULT_MINIMUM, GAUGE_DEFAULT_MAXIMUM, DEFAULT_SAML_NAME } from './types/constants';
 
 // deprecated
