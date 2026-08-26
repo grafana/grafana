@@ -1599,6 +1599,8 @@ github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745 h1:kGigNSum3b7XJjemh
 github.com/grafana/dskit v0.0.0-20260814134254-4a836a70f745/go.mod h1:dLUEt5k1Zv21//kvSk8ZR4kXjCq5oALBLu2LupLhj5k=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f h1:gxaqz5StufMU078tWFuf8CUi4PZtITBxjM2TZV7NOFw=
 github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f/go.mod h1:KFvJP5m5GQ837CN7rUbWIiPdw1JZgeRJTEyp2O5U0is=
+github.com/grafana/e2e v0.1.2-0.20260504080022-0f57c9f0da68 h1:+GLaDMc1zkYNTMHZq3ljGaRSm1IcOxQvpBNn0YUyh60=
+github.com/grafana/e2e v0.1.2-0.20260504080022-0f57c9f0da68/go.mod h1:o6aUPNFrl7H0XjIdBpXSU2Gou6vVwctVBuSvWPN7Ogg=
 github.com/grafana/go-mysql-server v0.20.2-grafana-4 h1:70qz2gm74BgXAiWaDdoldiRr0lUggw4BbkTCucA6K80=
 github.com/grafana/go-mysql-server v0.20.2-grafana-4/go.mod h1:Oy0XD/nfIkwVBMud5aY8Rvqw8Rbi+2yCxW84a9391+A=
 github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f h1:5xkjl5Y/j2QefJKOtTfyD1wXlVsQ2yEXmd0u82h5obs=
@@ -1647,6 +1649,8 @@ github.com/grafana/sqlds/v5 v5.3.0 h1:wQoI9x0ACedTwsnD6PWcwMEue836QwLJcTNirAVIw3
 github.com/grafana/sqlds/v5 v5.3.0/go.mod h1:8GfxmJ5jiiKx4ztrxAvYaggAzpOEZ1ACXqo9OOhnazI=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 h1:kE5kdMnyPJmlNUdWhahfzqPYB3vM8DtAxgWymbB8nOA=
 github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0/go.mod h1:zsoFhLpNKV0zyDbgvTtmSnDIN+NBtFiqCj/Xa1w+Cg4=
+github.com/grafana/tempo v1.5.1-0.20260813170847-f0f3ed59197b h1:A+YDpv4dGsQ2G9WMEz1MeXXt4UkGs5M6DpVuS3p78A0=
+github.com/grafana/tempo v1.5.1-0.20260813170847-f0f3ed59197b/go.mod h1:KgL9nzDFfPDfHbsDKHezj8k4DF2VmNgqtOf8ikTzW+k=
 github.com/grafana/vitess v0.0.0-grafana-2 h1:acOPRrYMU8ZhDUC99WAxiB8fIZtgQ4/JjcaY6YIjQcE=
 github.com/grafana/vitess v0.0.0-grafana-2/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/graph-gophers/graphql-go v1.9.0 h1:yu0ucKHLc5qGpRwLYKIWtr9bOoxovkWasuBrPQwlHls=
@@ -1981,6 +1985,7 @@ github.com/minio/md5-simd v1.1.2 h1:Gdi1DZK69+ZVMoNHRXJyNcxrMA4dSxoYHZSQbirFg34=
 github.com/minio/md5-simd v1.1.2/go.mod h1:MzdKDxYpY2BT9XQFocsiZf/NKVtR7nkE4RoEpN+20RM=
 github.com/minio/minio-go/v7 v7.0.100 h1:ShkWi8Tyj9RtU57OQB2HIXKz4bFgtVib0bbT1sbtLI8=
 github.com/minio/minio-go/v7 v7.0.100/go.mod h1:EtGNKtlX20iL2yaYnxEigaIvj0G0GwSDnifnG8ClIdw=
+github.com/minio/minio-go/v7 v7.1.0 h1:QEt5IStDpxgGjEdtOgpiZ5QhmSl3ax7qy61vi2SwHO8=
 github.com/mitchellh/cli v1.0.0/go.mod h1:hNIlj7HEI86fIcpObd7a0FcrxTWetlwJDGcceTlRvqc=
 github.com/mitchellh/cli v1.1.0/go.mod h1:xcISNoH86gajksDmfB23e/pu+B+GeFRMYmoHXxx3xhI=
 github.com/mitchellh/cli v1.1.5/go.mod h1:v8+iFts2sPIKUV1ltktPXMCC8fumSKFItNcD2cLtRR4=
@@ -2481,8 +2486,10 @@ github.com/trivago/tgo v1.0.7/go.mod h1:w4dpD+3tzNIIiIfkWWa85w5/B77tlvdZckQ+6PkF
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/twmb/franz-go v1.20.7 h1:P4MGSXJjjAPP3NRGPCks/Lrq+j+twWMVl1qYCVgNmWY=
 github.com/twmb/franz-go v1.20.7/go.mod h1:0bRX9HZVaoueqFWhPZNi2ODnJL7DNa6mK0HeCrC2bNU=
+github.com/twmb/franz-go v1.21.0 h1:J3uB/poWgHD6VIilER2uCPFAZHDRXVFT+11pBgRKod4=
 github.com/twmb/franz-go/pkg/kadm v1.17.2 h1:g5f1sAxnTkYC6G96pV5u715HWhxd66hWaDZUAQ8xHY8=
 github.com/twmb/franz-go/pkg/kadm v1.17.2/go.mod h1:ST55zUB+sUS+0y+GcKY/Tf1XxgVilaFpB9I19UubLmU=
+github.com/twmb/franz-go/pkg/kadm v1.18.0 h1:WRf/LZmDdcDXwX7WMbtDU++v+b3NzYh2bCGoPMmzirw=
 github.com/twmb/franz-go/pkg/kmsg v1.13.1 h1:fG5kItwysTk5UXqVwb64EpQEy3TydF3vYYK21nUQ+bI=
 github.com/twmb/franz-go/pkg/kmsg v1.13.1/go.mod h1:+DPt4NC8RmI6hqb8G09+3giKObE6uD2Eya6CfqBpeJY=
 github.com/ua-parser/uap-go v0.0.0-20251207011819-db9adb27a0b8 h1:yS0rzVnj7Z/ZeHzvv5erQbO2b8gyTL4CeMNodl9SJMQ=
