@@ -607,12 +607,10 @@ func shouldUseIncrementalSync(
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {
-	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job")
+	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.add_sync_job", repoSpanAttrs(obj))
 	defer span.End()
 
 	span.SetAttributes(
-		attribute.String("repository", obj.GetName()),
-		attribute.String("namespace", obj.Namespace),
 		attribute.Bool("incremental", syncOptions != nil && syncOptions.Incremental),
 	)
 
