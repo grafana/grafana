@@ -423,7 +423,6 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
    You can then inspect any log message that includes a `traceID` and from there click the trace data source (`gdev-jaeger` or `gdev-tempo`) to split the view and inspect the trace in question.
 
 1. Search or browse collected traces
-
    - With `jaegeronly`: open `http://localhost:16686` to use the Jaeger UI.
    - With `self-instrumentation`: there is no standalone UI. In Grafana Explore, select the `gdev-tempo` data source and run a TraceQL query such as `{}` (search by service name `grafana`).
 
