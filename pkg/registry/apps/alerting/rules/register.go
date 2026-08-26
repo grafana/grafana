@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	searchauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -219,18 +220,31 @@ func validateNotificationSettingsFields(ns alertingv0alpha1.AlertRuleNotificatio
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			switch a.GetResource() {
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			attr = ruleSearchReadAttributes(attr)
+			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
-				return recordingrule.Authorize(ctx, authz, a)
+				return recordingrule.Authorize(ctx, authz, attr)
 			case alertrule.ResourceInfo.GroupResource().Resource:
-				return alertrule.Authorize(ctx, authz, a)
+				return alertrule.Authorize(ctx, authz, attr)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
-				return rulesequence.Authorize(ctx, authz, a)
+				return rulesequence.Authorize(ctx, authz, attr)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
 	)
+}
+
+// ruleSearchReadAttributes restates the compatibility POST as the list it
+// performs. Kubernetes parses /{resource}/searchRules as a create of an object
+// named searchRules, which would otherwise require rule-create permission.
+func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
+	resourceName := attr.GetResource()
+	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
+	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
+		return searchauthorizer.AsReadAttributes(attr)
+	}
+	return attr
 }
 
 func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {

@@ -28,9 +28,7 @@ func TestMain(m *testing.M) {
 
 const searchFolder = "search-folder"
 
-// The resource segments the two search endpoints are mounted under. They are the
-// resource names, because the routes sit where the generic search API mounts:
-// .../namespaces/{ns}/{resource}/search.
+// The resource segments the two search endpoints are mounted under.
 const (
 	alertRules     = "alertrules"
 	recordingRules = "recordingrules"
@@ -116,6 +114,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom", "disk_bytes_total")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
+	viewerRC := helper.Org1.Viewer.RESTClient(t, &v0alpha1.GroupVersion)
 	// search posts to one kind's endpoint. There is no cross-kind search: the
 	// kind is the path, so searching both means two calls.
 	search := func(t *testing.T, resourceName string, q *query) searchv0.SearchResults {
@@ -127,7 +126,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 		require.NoError(t, err)
 
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "search").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
 			Body(payload).
 			DoRaw(ctx)
 		require.NoError(t, err)
@@ -140,6 +139,24 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.Dual
 		t.Helper()
 		return search(t, alertRules, q)
 	}
+
+	t.Run("viewer may search without rule-create permission", func(t *testing.T) {
+		payload, err := json.Marshal(newQuery().body)
+		require.NoError(t, err)
+
+		for _, resourceName := range []string{alertRules, recordingRules} {
+			raw, err := viewerRC.Post().
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", resourceName, "searchRules").
+				Body(payload).
+				DoRaw(ctx)
+			require.NoError(t, err, resourceName)
+
+			var resp searchv0.SearchResults
+			require.NoError(t, json.Unmarshal(raw, &resp), resourceName)
+			require.Equal(t, searchv0.APIVERSION, resp.APIVersion, resourceName)
+			require.Equal(t, searchv0.KindSearchResults, resp.Kind, resourceName)
+		}
+	})
 
 	// The envelope identifies the generic search contract, not the alerting group
 	// that happens to serve it: that is what lets the generic endpoint take these

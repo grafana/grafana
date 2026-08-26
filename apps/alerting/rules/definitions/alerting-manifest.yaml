@@ -687,9 +687,9 @@ spec:
     name: v0alpha1
     routes:
       namespaced:
-        /alertrules/search:
+        /alertrules/searchRules:
           post:
-            operationId: listAlertRuleSearchV0alpha1
+            operationId: listAlertRuleSearchRulesV0alpha1
             requestBody:
               content:
                 application/json:
@@ -718,17 +718,17 @@ spec:
                       kind:
                         type: string
                       labelSelector:
-                        $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchLabelSelector'
+                        $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector'
                       limit:
                         description: limit is the page size. Zero uses the default;
                           larger values are clamped.
                         type: integer
                       sort:
                         items:
-                          $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchSortField'
+                          $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField'
                         type: array
                       where:
-                        $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode'
+                        $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
                         description: |-
                           where is the search predicate tree. Omitting it matches every rule of the
                           kind, subject to labelSelector and per-rule authorisation.
@@ -752,7 +752,7 @@ spec:
                         facets:
                           additionalProperties:
                             items:
-                              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1FacetValue'
+                              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue'
                             type: array
                           description: |-
                             facets holds term counts per requested facet field. Counts are computed
@@ -760,7 +760,7 @@ spec:
                           type: object
                         items:
                           items:
-                            $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchResultHit'
+                            $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit'
                           type: array
                         kind:
                           description: 'Kind is a string value representing the REST
@@ -769,7 +769,7 @@ spec:
                             be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                           type: string
                         metadata:
-                          $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchResultsMetadata'
+                          $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata'
                       required:
                       - metadata
                       - items
@@ -777,9 +777,9 @@ spec:
                       - kind
                       type: object
                 description: Default OK response
-        /recordingrules/search:
+        /recordingrules/searchRules:
           post:
-            operationId: listRecordingRuleSearchV0alpha1
+            operationId: listRecordingRuleSearchRulesV0alpha1
             requestBody:
               content:
                 application/json:
@@ -808,17 +808,17 @@ spec:
                       kind:
                         type: string
                       labelSelector:
-                        $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchLabelSelector'
+                        $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector'
                       limit:
                         description: limit is the page size. Zero uses the default;
                           larger values are clamped.
                         type: integer
                       sort:
                         items:
-                          $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchSortField'
+                          $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField'
                         type: array
                       where:
-                        $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode'
+                        $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
                         description: |-
                           where is the search predicate tree. Omitting it matches every rule of the
                           kind, subject to labelSelector and per-rule authorisation.
@@ -839,7 +839,7 @@ spec:
                         facets:
                           additionalProperties:
                             items:
-                              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1FacetValue'
+                              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue'
                             type: array
                           description: |-
                             facets holds term counts per requested facet field. Counts are computed
@@ -847,7 +847,7 @@ spec:
                           type: object
                         items:
                           items:
-                            $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultHit'
+                            $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit'
                           type: array
                         kind:
                           description: 'Kind is a string value representing the REST
@@ -856,7 +856,7 @@ spec:
                             be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                           type: string
                         metadata:
-                          $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultsMetadata'
+                          $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata'
                       required:
                       - metadata
                       - items
@@ -865,7 +865,7 @@ spec:
                       type: object
                 description: Default OK response
       schemas:
-        listAlertRuleSearchV0alpha1FacetValue:
+        listAlertRuleSearchRulesV0alpha1FacetValue:
           additionalProperties: false
           description: '#FacetValue is a single facet term and its count.'
           properties:
@@ -877,7 +877,7 @@ spec:
           - value
           - count
           type: object
-        listAlertRuleSearchV0alpha1SearchExistsLeaf:
+        listAlertRuleSearchRulesV0alpha1SearchExistsLeaf:
           additionalProperties: false
           description: |-
             #SearchExistsLeaf is a future field-existence predicate. Modelled for schema
@@ -888,7 +888,7 @@ spec:
           required:
           - field
           type: object
-        listAlertRuleSearchV0alpha1SearchFilterLeaf:
+        listAlertRuleSearchRulesV0alpha1SearchFilterLeaf:
           additionalProperties: false
           description: '#SearchFilterLeaf matches a single field against a set of
             values.'
@@ -909,7 +909,7 @@ spec:
           - operator
           - values
           type: object
-        listAlertRuleSearchV0alpha1SearchLabelSelector:
+        listAlertRuleSearchRulesV0alpha1SearchLabelSelector:
           additionalProperties: false
           description: |-
             #SearchLabelSelector filters on the resource's metadata.labels, mirroring
@@ -919,14 +919,14 @@ spec:
           properties:
             matchExpressions:
               items:
-                $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchLabelSelectorRequirement'
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement'
               type: array
             matchLabels:
               additionalProperties:
                 type: string
               type: object
           type: object
-        listAlertRuleSearchV0alpha1SearchLabelSelectorRequirement:
+        listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement:
           additionalProperties: false
           description: |-
             #SearchLabelSelectorRequirement is one metadata label requirement, mirroring
@@ -950,7 +950,7 @@ spec:
           - key
           - operator
           type: object
-        listAlertRuleSearchV0alpha1SearchRangeLeaf:
+        listAlertRuleSearchRulesV0alpha1SearchRangeLeaf:
           additionalProperties: false
           description: |-
             #SearchRangeLeaf is a future numeric/date range predicate. Modelled for
@@ -969,7 +969,7 @@ spec:
           required:
           - field
           type: object
-        listAlertRuleSearchV0alpha1SearchResultHit:
+        listAlertRuleSearchRulesV0alpha1SearchResultHit:
           additionalProperties: false
           description: |-
             #SearchResultHit is a single match: its identity, an optional relevance score
@@ -984,13 +984,13 @@ spec:
                 would make the schema narrow now and widen at migration.
               type: object
             resource:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchResultResource'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource'
             score:
               type: number
           required:
           - resource
           type: object
-        listAlertRuleSearchV0alpha1SearchResultResource:
+        listAlertRuleSearchRulesV0alpha1SearchResultResource:
           additionalProperties: false
           description: |-
             #SearchResultResource is the full identity of a hit. The namespace is implicit
@@ -1010,7 +1010,7 @@ spec:
           - kind
           - name
           type: object
-        listAlertRuleSearchV0alpha1SearchResultsMetadata:
+        listAlertRuleSearchRulesV0alpha1SearchResultsMetadata:
           additionalProperties: false
           description: |-
             #SearchResultsMetadata carries the paging token and total authorised match
@@ -1027,12 +1027,12 @@ spec:
                 with totalHitsRelation, which says whether the count is exact.
               type: integer
             totalHitsRelation:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1TotalHitsRelation'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation'
           required:
           - totalHits
           - totalHitsRelation
           type: object
-        listAlertRuleSearchV0alpha1SearchSortField:
+        listAlertRuleSearchRulesV0alpha1SearchSortField:
           additionalProperties: false
           description: |-
             #SearchSortField names a field to sort by and a direction, defaulting to
@@ -1049,7 +1049,7 @@ spec:
           required:
           - field
           type: object
-        listAlertRuleSearchV0alpha1SearchTextLeaf:
+        listAlertRuleSearchRulesV0alpha1SearchTextLeaf:
           additionalProperties: false
           description: |-
             #SearchTextLeaf is a free-text predicate against one or more text-capable
@@ -1071,7 +1071,7 @@ spec:
           required:
           - value
           type: object
-        listAlertRuleSearchV0alpha1SearchWhereNode:
+        listAlertRuleSearchRulesV0alpha1SearchWhereNode:
           additionalProperties: false
           description: |-
             #SearchWhereNode is a single node of the where query tree. Exactly one key
@@ -1087,25 +1087,25 @@ spec:
             and:
               description: Combinators.
               items:
-                $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode'
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
               type: array
             exists:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchExistsLeaf'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf'
             filter:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchFilterLeaf'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf'
             not:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
             or:
               items:
-                $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchWhereNode'
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
               type: array
             range:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchRangeLeaf'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf'
             text:
-              $ref: '#/components/schemas/listAlertRuleSearchV0alpha1SearchTextLeaf'
+              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf'
               description: Leaves.
           type: object
-        listAlertRuleSearchV0alpha1TotalHitsRelation:
+        listAlertRuleSearchRulesV0alpha1TotalHitsRelation:
           description: |-
             #TotalHitsRelation says how totalHits relates to the real number of matching
             rules the caller may see: "eq" when it is exact, "lte" when it is an upper
@@ -1114,7 +1114,7 @@ spec:
           - eq
           - lte
           type: string
-        listRecordingRuleSearchV0alpha1FacetValue:
+        listRecordingRuleSearchRulesV0alpha1FacetValue:
           additionalProperties: false
           description: '#FacetValue is a single facet term and its count.'
           properties:
@@ -1126,7 +1126,7 @@ spec:
           - value
           - count
           type: object
-        listRecordingRuleSearchV0alpha1SearchExistsLeaf:
+        listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf:
           additionalProperties: false
           description: |-
             #SearchExistsLeaf is a future field-existence predicate. Modelled for schema
@@ -1137,7 +1137,7 @@ spec:
           required:
           - field
           type: object
-        listRecordingRuleSearchV0alpha1SearchFilterLeaf:
+        listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf:
           additionalProperties: false
           description: '#SearchFilterLeaf matches a single field against a set of
             values.'
@@ -1158,7 +1158,7 @@ spec:
           - operator
           - values
           type: object
-        listRecordingRuleSearchV0alpha1SearchLabelSelector:
+        listRecordingRuleSearchRulesV0alpha1SearchLabelSelector:
           additionalProperties: false
           description: |-
             #SearchLabelSelector filters on the resource's metadata.labels, mirroring
@@ -1168,14 +1168,14 @@ spec:
           properties:
             matchExpressions:
               items:
-                $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement'
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement'
               type: array
             matchLabels:
               additionalProperties:
                 type: string
               type: object
           type: object
-        listRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement:
+        listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement:
           additionalProperties: false
           description: |-
             #SearchLabelSelectorRequirement is one metadata label requirement, mirroring
@@ -1199,7 +1199,7 @@ spec:
           - key
           - operator
           type: object
-        listRecordingRuleSearchV0alpha1SearchRangeLeaf:
+        listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf:
           additionalProperties: false
           description: |-
             #SearchRangeLeaf is a future numeric/date range predicate. Modelled for
@@ -1218,7 +1218,7 @@ spec:
           required:
           - field
           type: object
-        listRecordingRuleSearchV0alpha1SearchResultHit:
+        listRecordingRuleSearchRulesV0alpha1SearchResultHit:
           additionalProperties: false
           description: |-
             #SearchResultHit is a single match: its identity, an optional relevance score
@@ -1233,13 +1233,13 @@ spec:
                 would make the schema narrow now and widen at migration.
               type: object
             resource:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchResultResource'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource'
             score:
               type: number
           required:
           - resource
           type: object
-        listRecordingRuleSearchV0alpha1SearchResultResource:
+        listRecordingRuleSearchRulesV0alpha1SearchResultResource:
           additionalProperties: false
           description: |-
             #SearchResultResource is the full identity of a hit. The namespace is implicit
@@ -1259,7 +1259,7 @@ spec:
           - kind
           - name
           type: object
-        listRecordingRuleSearchV0alpha1SearchResultsMetadata:
+        listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata:
           additionalProperties: false
           description: |-
             #SearchResultsMetadata carries the paging token and total authorised match
@@ -1276,12 +1276,12 @@ spec:
                 with totalHitsRelation, which says whether the count is exact.
               type: integer
             totalHitsRelation:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1TotalHitsRelation'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation'
           required:
           - totalHits
           - totalHitsRelation
           type: object
-        listRecordingRuleSearchV0alpha1SearchSortField:
+        listRecordingRuleSearchRulesV0alpha1SearchSortField:
           additionalProperties: false
           description: |-
             #SearchSortField names a field to sort by and a direction, defaulting to
@@ -1298,7 +1298,7 @@ spec:
           required:
           - field
           type: object
-        listRecordingRuleSearchV0alpha1SearchTextLeaf:
+        listRecordingRuleSearchRulesV0alpha1SearchTextLeaf:
           additionalProperties: false
           description: |-
             #SearchTextLeaf is a free-text predicate against one or more text-capable
@@ -1320,7 +1320,7 @@ spec:
           required:
           - value
           type: object
-        listRecordingRuleSearchV0alpha1SearchWhereNode:
+        listRecordingRuleSearchRulesV0alpha1SearchWhereNode:
           additionalProperties: false
           description: |-
             #SearchWhereNode is a single node of the where query tree. Exactly one key
@@ -1336,25 +1336,25 @@ spec:
             and:
               description: Combinators.
               items:
-                $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode'
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
               type: array
             exists:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchExistsLeaf'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf'
             filter:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchFilterLeaf'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf'
             not:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
             or:
               items:
-                $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchWhereNode'
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
               type: array
             range:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchRangeLeaf'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf'
             text:
-              $ref: '#/components/schemas/listRecordingRuleSearchV0alpha1SearchTextLeaf'
+              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf'
               description: Leaves.
           type: object
-        listRecordingRuleSearchV0alpha1TotalHitsRelation:
+        listRecordingRuleSearchRulesV0alpha1TotalHitsRelation:
           description: |-
             #TotalHitsRelation says how totalHits relates to the real number of matching
             rules the caller may see: "eq" when it is exact, "lte" when it is an upper

@@ -257,19 +257,19 @@
         }
       ]
     },
-    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/search": {
+    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/searchRules": {
       "post": {
-        "operationId": "listAlertRuleSearchV0alpha1",
+        "operationId": "listAlertRuleSearchRulesV0alpha1",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1RequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1RequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody"
               }
             }
           },
@@ -281,17 +281,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response"
                 }
               }
             }
@@ -1308,19 +1308,19 @@
         }
       ]
     },
-    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/search": {
+    "/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/searchRules": {
       "post": {
-        "operationId": "listRecordingRuleSearchV0alpha1",
+        "operationId": "listRecordingRuleSearchRulesV0alpha1",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1RequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1RequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody"
               }
             }
           },
@@ -1332,17 +1332,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1Response"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response"
                 }
               }
             }
@@ -3371,7 +3371,7 @@
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.AlertRuleTimeIntervalRef": {
         "type": "string"
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1FacetValue": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1FacetValue": {
         "description": "#FacetValue is a single facet term and its count.",
         "type": "object",
         "required": [
@@ -3387,7 +3387,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1RequestBody": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody": {
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -3417,7 +3417,7 @@
             "type": "string"
           },
           "labelSelector": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchLabelSelector"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelector"
           },
           "limit": {
             "description": "limit is the page size. Zero uses the default; larger values are clamped.",
@@ -3426,20 +3426,20 @@
           "sort": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchSortField"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchSortField"
             }
           },
           "where": {
             "description": "where is the search predicate tree. Omitting it matches every rule of the\nkind, subject to labelSelector and per-rule authorisation.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchWhereNode"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1Response": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1Response": {
         "description": "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits).",
         "type": "object",
         "required": [
@@ -3459,14 +3459,14 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1FacetValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1FacetValue"
               }
             }
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultHit"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultHit"
             }
           },
           "kind": {
@@ -3474,11 +3474,11 @@
             "type": "string"
           },
           "metadata": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultsMetadata"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultsMetadata"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchExistsLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchExistsLeaf": {
         "description": "#SearchExistsLeaf is a future field-existence predicate. Modelled for schema\nstability; always rejected today.",
         "type": "object",
         "required": [
@@ -3490,7 +3490,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchFilterLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf": {
         "description": "#SearchFilterLeaf matches a single field against a set of values.",
         "type": "object",
         "required": [
@@ -3517,14 +3517,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchLabelSelector": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelector": {
         "description": "#SearchLabelSelector filters on the resource's metadata.labels, mirroring\nmetav1.LabelSelector. It is ANDed with where. Note this selects resource\nmetadata labels, not the rules' own alerting labels: those are filtered\nthrough a where filter leaf on the indexed \"labels\" field.",
         "type": "object",
         "properties": {
           "matchExpressions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchLabelSelectorRequirement"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"
             }
           },
           "matchLabels": {
@@ -3535,7 +3535,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchLabelSelectorRequirement": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
         "description": "#SearchLabelSelectorRequirement is one metadata label requirement, mirroring\nmetav1.LabelSelectorRequirement. Only In and NotIn are accepted; Exists and\nDoesNotExist are modelled for schema stability and rejected.",
         "type": "object",
         "required": [
@@ -3563,7 +3563,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchRangeLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf": {
         "description": "#SearchRangeLeaf is a future numeric/date range predicate. Modelled for\nschema stability; always rejected today.",
         "type": "object",
         "required": [
@@ -3587,7 +3587,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultHit": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultHit": {
         "description": "#SearchResultHit is a single match: its identity, an optional relevance score\n(present only when a text query was evaluated), and the requested fields.",
         "type": "object",
         "required": [
@@ -3600,14 +3600,14 @@
             "additionalProperties": true
           },
           "resource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultResource"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultResource"
           },
           "score": {
             "type": "number"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultResource": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultResource": {
         "description": "#SearchResultResource is the full identity of a hit. The namespace is implicit\nfrom the URL and omitted.",
         "type": "object",
         "required": [
@@ -3631,7 +3631,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchResultsMetadata": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchResultsMetadata": {
         "description": "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
         "type": "object",
         "required": [
@@ -3648,11 +3648,11 @@
             "type": "integer"
           },
           "totalHitsRelation": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1TotalHitsRelation"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1TotalHitsRelation"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchSortField": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchSortField": {
         "description": "#SearchSortField names a field to sort by and a direction, defaulting to\nascending. Only fields declaring the sort capability may be named, and only\nscalar ones: sorting on a list of values has no defined meaning.",
         "type": "object",
         "required": [
@@ -3671,7 +3671,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchTextLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchTextLeaf": {
         "description": "#SearchTextLeaf is a free-text predicate against one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used\n(today: title). A match requires every whitespace-separated term of value to\nappear in the field, in any order. How very short terms, punctuation, and\ncommon words are matched is backend-defined and may change.",
         "type": "object",
         "required": [
@@ -3693,7 +3693,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchWhereNode": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode": {
         "description": "#SearchWhereNode is a single node of the where query tree. Exactly one key\nmust be set, and the set key names the node's type. Combinators (and/or/not)\ncompose other nodes; leaves (text/filter/range/exists) are terminal\npredicates.\n\nEvery node type is modelled so the schema is future-proof, but only a narrow\nsubset is accepted: a single top-level leaf, or one \"and\" over text and\nfilter leaves. Everything else is rejected. or, not, range and exists are\nsketched for future versions and always rejected today.",
         "type": "object",
         "properties": {
@@ -3701,38 +3701,38 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchWhereNode"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
             }
           },
           "exists": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchExistsLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchExistsLeaf"
           },
           "filter": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchFilterLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchFilterLeaf"
           },
           "not": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchWhereNode"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
           },
           "or": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchWhereNode"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchWhereNode"
             }
           },
           "range": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchRangeLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchRangeLeaf"
           },
           "text": {
             "description": "Leaves.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1SearchTextLeaf"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1SearchTextLeaf"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchV0alpha1TotalHitsRelation": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListAlertRuleSearchRulesV0alpha1TotalHitsRelation": {
         "description": "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
         "type": "string",
         "enum": [
@@ -3740,7 +3740,7 @@
           "lte"
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1FacetValue": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1FacetValue": {
         "description": "#FacetValue is a single facet term and its count.",
         "type": "object",
         "required": [
@@ -3756,7 +3756,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1RequestBody": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody": {
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -3786,7 +3786,7 @@
             "type": "string"
           },
           "labelSelector": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchLabelSelector"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelector"
           },
           "limit": {
             "description": "limit is the page size. Zero uses the default; larger values are clamped.",
@@ -3795,20 +3795,20 @@
           "sort": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchSortField"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchSortField"
             }
           },
           "where": {
             "description": "where is the search predicate tree. Omitting it matches every rule of the\nkind, subject to labelSelector and per-rule authorisation.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchWhereNode"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1Response": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response": {
         "type": "object",
         "required": [
           "metadata",
@@ -3827,14 +3827,14 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1FacetValue"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1FacetValue"
               }
             }
           },
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultHit"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit"
             }
           },
           "kind": {
@@ -3842,11 +3842,11 @@
             "type": "string"
           },
           "metadata": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultsMetadata"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchExistsLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchExistsLeaf": {
         "description": "#SearchExistsLeaf is a future field-existence predicate. Modelled for schema\nstability; always rejected today.",
         "type": "object",
         "required": [
@@ -3858,7 +3858,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchFilterLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf": {
         "description": "#SearchFilterLeaf matches a single field against a set of values.",
         "type": "object",
         "required": [
@@ -3885,14 +3885,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchLabelSelector": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelector": {
         "description": "#SearchLabelSelector filters on the resource's metadata.labels, mirroring\nmetav1.LabelSelector. It is ANDed with where. Note this selects resource\nmetadata labels, not the rules' own alerting labels: those are filtered\nthrough a where filter leaf on the indexed \"labels\" field.",
         "type": "object",
         "properties": {
           "matchExpressions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement"
             }
           },
           "matchLabels": {
@@ -3903,7 +3903,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchLabelSelectorRequirement": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement": {
         "description": "#SearchLabelSelectorRequirement is one metadata label requirement, mirroring\nmetav1.LabelSelectorRequirement. Only In and NotIn are accepted; Exists and\nDoesNotExist are modelled for schema stability and rejected.",
         "type": "object",
         "required": [
@@ -3931,7 +3931,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchRangeLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf": {
         "description": "#SearchRangeLeaf is a future numeric/date range predicate. Modelled for\nschema stability; always rejected today.",
         "type": "object",
         "required": [
@@ -3955,7 +3955,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultHit": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultHit": {
         "description": "#SearchResultHit is a single match: its identity, an optional relevance score\n(present only when a text query was evaluated), and the requested fields.",
         "type": "object",
         "required": [
@@ -3968,14 +3968,14 @@
             "additionalProperties": true
           },
           "resource": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultResource"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultResource"
           },
           "score": {
             "type": "number"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultResource": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultResource": {
         "description": "#SearchResultResource is the full identity of a hit. The namespace is implicit\nfrom the URL and omitted.",
         "type": "object",
         "required": [
@@ -3999,7 +3999,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchResultsMetadata": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchResultsMetadata": {
         "description": "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
         "type": "object",
         "required": [
@@ -4016,11 +4016,11 @@
             "type": "integer"
           },
           "totalHitsRelation": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1TotalHitsRelation"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation"
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchSortField": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchSortField": {
         "description": "#SearchSortField names a field to sort by and a direction, defaulting to\nascending. Only fields declaring the sort capability may be named, and only\nscalar ones: sorting on a list of values has no defined meaning.",
         "type": "object",
         "required": [
@@ -4039,7 +4039,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchTextLeaf": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf": {
         "description": "#SearchTextLeaf is a free-text predicate against one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used\n(today: title). A match requires every whitespace-separated term of value to\nappear in the field, in any order. How very short terms, punctuation, and\ncommon words are matched is backend-defined and may change.",
         "type": "object",
         "required": [
@@ -4061,7 +4061,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchWhereNode": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
         "description": "#SearchWhereNode is a single node of the where query tree. Exactly one key\nmust be set, and the set key names the node's type. Combinators (and/or/not)\ncompose other nodes; leaves (text/filter/range/exists) are terminal\npredicates.\n\nEvery node type is modelled so the schema is future-proof, but only a narrow\nsubset is accepted: a single top-level leaf, or one \"and\" over text and\nfilter leaves. Everything else is rejected. or, not, range and exists are\nsketched for future versions and always rejected today.",
         "type": "object",
         "properties": {
@@ -4069,38 +4069,38 @@
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchWhereNode"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
             }
           },
           "exists": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchExistsLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchExistsLeaf"
           },
           "filter": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchFilterLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchFilterLeaf"
           },
           "not": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchWhereNode"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
           },
           "or": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchWhereNode"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchWhereNode"
             }
           },
           "range": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchRangeLeaf"
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchRangeLeaf"
           },
           "text": {
             "description": "Leaves.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1SearchTextLeaf"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1SearchTextLeaf"
               }
             ]
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchV0alpha1TotalHitsRelation": {
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1TotalHitsRelation": {
         "description": "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
         "type": "string",
         "enum": [

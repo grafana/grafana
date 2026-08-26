@@ -74,19 +74,19 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
+// SearchRulesPathSegment distinguishes the alerting-owned compatibility search
+// from the generic per-resource search endpoint.
+const SearchRulesPathSegment = "searchRules"
+
 // buildSearchRoutes wires the per-kind rule search handlers (provided by the
-// registry) to their namespaced POST {resource}/search custom routes. A route is
-// skipped when its handler is unset, so manifest validation without a backing
-// instance does not register a nil handler.
-//
-// The paths must stay {resource}/search: that is where the generic search API
-// mounts, and it is what makes the apiserver read the request as a list on the
-// resource, so the kind's own authorizer covers it.
+// registry) to their namespaced compatibility routes. A route is skipped when
+// its handler is unset, so manifest validation without a backing instance does
+// not register a nil handler.
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
 	handlers := simple.AppVersionRouteHandlers{}
 	for path, handler := range map[string]simple.AppCustomRouteHandler{
-		"/alertrules/search":     cfg.SearchAlertRulesHandler,
-		"/recordingrules/search": cfg.SearchRecordingRulesHandler,
+		"/alertrules/" + SearchRulesPathSegment:     cfg.SearchAlertRulesHandler,
+		"/recordingrules/" + SearchRulesPathSegment: cfg.SearchRecordingRulesHandler,
 	} {
 		if handler == nil {
 			continue

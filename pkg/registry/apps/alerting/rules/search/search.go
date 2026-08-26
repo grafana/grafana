@@ -1,13 +1,12 @@
 // Package search serves the per-kind rule search routes,
-// POST .../namespaces/{ns}/alertrules/search and .../recordingrules/search.
+// POST .../namespaces/{ns}/alertrules/searchRules and
+// .../recordingrules/searchRules.
 //
 // The contract is search.grafana.app/v0alpha1 SearchQuery / SearchResults: the
-// same paths, operation IDs, request bodies and response bodies as the generic
-// per-resource search API. It is served here rather than by that API because
-// rules still come from the legacy ngalert store for dual-writer modes 0-3, and
-// the generic query translator cannot express what that store can and cannot do.
-// Adopting the generic endpoint later should be a wiring change, not a breaking
-// one, so nothing in this package may diverge from that contract.
+// same request and response bodies as the generic per-resource search API. It
+// is served on a distinct path because rules still come from the legacy ngalert
+// store for dual-writer modes 0-3, and the compatibility route must coexist
+// with generic search during migration.
 package search
 
 import (
@@ -96,12 +95,12 @@ func requestNamespace(req *app.CustomRouteRequest) (string, error) {
 	return namespace, nil
 }
 
-// SearchAlertRules serves POST .../alertrules/search.
+// SearchAlertRules serves POST .../alertrules/searchRules.
 func (h *Handler) SearchAlertRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
 	return h.search(ctx, w, req, h.alertRules)
 }
 
-// SearchRecordingRules serves POST .../recordingrules/search.
+// SearchRecordingRules serves POST .../recordingrules/searchRules.
 func (h *Handler) SearchRecordingRules(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
 	return h.search(ctx, w, req, h.recordingRules)
 }

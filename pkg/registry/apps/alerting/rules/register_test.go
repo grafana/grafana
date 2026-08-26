@@ -3,6 +3,11 @@ package rules
 import (
 	"testing"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -10,6 +15,52 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestRuleSearchReadAttributes(t *testing.T) {
+	request := func(resource, name string) authorizer.AttributesRecord {
+		return authorizer.AttributesRecord{
+			Verb:            "create",
+			Resource:        resource,
+			Name:            name,
+			ResourceRequest: true,
+		}
+	}
+
+	t.Run("compatibility search is authorized as a list", func(t *testing.T) {
+		for _, resource := range []string{
+			alertrule.ResourceInfo.GroupResource().Resource,
+			recordingrule.ResourceInfo.GroupResource().Resource,
+		} {
+			got := ruleSearchReadAttributes(request(resource, rulesApp.SearchRulesPathSegment))
+			require.Equal(t, "list", got.GetVerb(), resource)
+			require.Empty(t, got.GetName(), resource)
+		}
+	})
+
+	t.Run("a normal create is unchanged", func(t *testing.T) {
+		got := ruleSearchReadAttributes(request(alertrule.ResourceInfo.GroupResource().Resource, ""))
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("another resource is unchanged", func(t *testing.T) {
+		got := ruleSearchReadAttributes(request("rulesequences", rulesApp.SearchRulesPathSegment))
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("a subresource request is unchanged", func(t *testing.T) {
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
+		attr.Subresource = "status"
+		got := ruleSearchReadAttributes(attr)
+		require.Equal(t, "create", got.GetVerb())
+	})
+
+	t.Run("a non-resource request is unchanged", func(t *testing.T) {
+		attr := request(alertrule.ResourceInfo.GroupResource().Resource, rulesApp.SearchRulesPathSegment)
+		attr.ResourceRequest = false
+		got := ruleSearchReadAttributes(attr)
+		require.Equal(t, "create", got.GetVerb())
+	})
+}
 
 func TestWatchNamespace(t *testing.T) {
 	tests := []struct {

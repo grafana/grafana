@@ -12,10 +12,9 @@ import (
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
-	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
-func TestBuildSearchRoutes_usesAuthorizerRecognizedPaths(t *testing.T) {
+func TestBuildSearchRoutes_usesCompatibilityPaths(t *testing.T) {
 	handler := func(context.Context, sdkapp.CustomRouteResponseWriter, *sdkapp.CustomRouteRequest) error {
 		return nil
 	}
@@ -27,7 +26,7 @@ func TestBuildSearchRoutes_usesAuthorizerRecognizedPaths(t *testing.T) {
 	versionRoutes := routes["v0alpha1"]
 	require.Len(t, versionRoutes, 2)
 	for _, kind := range []resource.Kind{v0alpha1.AlertRuleKind(), v0alpha1.RecordingRuleKind()} {
-		path := fmt.Sprintf("/%s/%s", kind.Plural(), searchv0.SearchPathSegment)
+		path := fmt.Sprintf("/%s/%s", kind.Plural(), SearchRulesPathSegment)
 		_, ok := versionRoutes[simple.AppVersionRoute{
 			Namespaced: true,
 			Path:       path,
