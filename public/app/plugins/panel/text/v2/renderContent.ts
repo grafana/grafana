@@ -13,6 +13,9 @@ export const MAX_RENDERED_ROWS = 1000;
 /** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
 export const MAX_RENDERED_CHARS = 100_000;
 
+/** How far back from the cap a line break is still worth cutting on. */
+const CUT_BACKTRACK_CHARS = 1000;
+
 /** What to render, built from either the panel options or the editor's draft. */
 export interface TextTemplate {
   content: string;
@@ -79,14 +82,15 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
   return cutToMaxChars(rendered);
 }
 
-// Cut on a line break so the tail lands between elements rather than inside a tag.
+// Cut on a line break so the tail lands between elements rather than inside a tag, but
+// only a nearby one - a single-line block's nearest break can be the top of the output.
 function cutToMaxChars(rendered: string): string {
   if (rendered.length <= MAX_RENDERED_CHARS) {
     return rendered;
   }
 
   const boundary = rendered.lastIndexOf('\n', MAX_RENDERED_CHARS);
-  return rendered.slice(0, boundary > 0 ? boundary : MAX_RENDERED_CHARS);
+  return rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS);
 }
 
 // Markdown needs a blank line between blocks, because `breaks` is off.

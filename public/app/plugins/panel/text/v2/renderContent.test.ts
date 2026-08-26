@@ -331,6 +331,17 @@ describe('interpolateTemplate', () => {
       expect(rendered.split('\n').every((line) => line === row)).toBe(true);
     });
 
+    it('cuts at the limit when the nearest line break is far behind it', () => {
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+      });
+
+      // The only line break sits at the top, so cutting on it would drop everything below.
+      const rendered = interpolate('# Heading\n{{#each data}}{{n}}{{/each}}', [wide], RenderMode.Once);
+
+      expect(rendered).toHaveLength(MAX_RENDERED_CHARS);
+    });
+
     it('exposes every frame for Once', () => {
       expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
         'frameA:2 frameB:1 '
