@@ -63,7 +63,7 @@ export function RepositoryField({ isSelectedConnectionReady }: { isSelectedConne
         !isSelectedConnectionReady && isGitHubAppAuth
           ? t(
               'provisioning.wizard.connection-not-ready',
-              'The selected connection is not ready. List will be refreshed once the connection is ready.'
+              'The selected connection is not ready. The list will be refreshed once the connection is ready.'
             )
           : gitFields.urlConfig.description
       }
