@@ -236,7 +236,7 @@ func valueFieldName(labels map[string]string) string {
 }
 
 func convertPromRangeResultToDataFrames(promResp prometheusRangeResponse, refID string, stepSecs float64) data.Frames {
-	var frames data.Frames
+	frames := make(data.Frames, 0, len(promResp.Data.Result))
 
 	for _, series := range promResp.Data.Result {
 		times := make([]time.Time, 0)

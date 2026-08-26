@@ -15,11 +15,17 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 )
 
 func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, params url.Values, timeout time.Duration) ([]byte, int, error) {
 	if region == defaultRegion || region == "" {
 		region = ds.Settings.Region
+	}
+
+	if _, ok := constants.Regions()[region]; !ok {
+		return nil, 0, backend.DownstreamError(fmt.Errorf("invalid AWS region: %s", region))
 	}
 
 	baseURL := ds.Settings.Endpoint
@@ -36,7 +42,7 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		rawURL += "?" + params.Encode()
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil) // #nosec G704 -- region is validated against constants.Regions() above
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to build request: %w", err)
 	}
@@ -46,7 +52,7 @@ func (ds *DataSource) promqlSignedGet(ctx context.Context, region, path string, 
 		return nil, 0, fmt.Errorf("failed to build PromQL HTTP client: %w", err)
 	}
 
-	httpResp, err := client.Do(httpReq)
+	httpResp, err := client.Do(httpReq) // #nosec G704 -- region is validated against constants.Regions() above
 	if err != nil {
 		return nil, 0, backend.DownstreamError(fmt.Errorf("request failed: %w", err))
 	}

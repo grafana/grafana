@@ -163,6 +163,33 @@ func TestPromqlSignedGet(t *testing.T) {
 		assert.JSONEq(t, `{"status":"success","data":["a","b"]}`, string(body))
 	})
 
+	t.Run("rejects a region that isn't a known AWS region", func(t *testing.T) {
+		ds := dsWith("us-east-1", "")
+		body, status, err := ds.promqlSignedGet(context.Background(), "not-a-region", "/api/v1/query", nil, time.Second)
+
+		require.Error(t, err)
+		assert.Equal(t, 0, status)
+		assert.Nil(t, body)
+		assert.Contains(t, err.Error(), "invalid AWS region")
+	})
+
+	t.Run("rejects a region containing URL metacharacters that could redirect the request off-host", func(t *testing.T) {
+		ds := dsWith("us-east-1", "")
+		var got *http.Request
+		NewPromQLHTTPClient = func(_ httpclient.Options) (*http.Client, error) {
+			return &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				got = r
+				return newHTTPResponse(http.StatusOK, `{}`), nil
+			})}, nil
+		}
+
+		_, _, err := ds.promqlSignedGet(context.Background(), "attacker.example.com#", "/api/v1/query", nil, time.Second)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid AWS region")
+		assert.Nil(t, got, "no request should ever be sent for a rejected region")
+	})
+
 	t.Run("wraps transport errors", func(t *testing.T) {
 		NewPromQLHTTPClient = func(_ httpclient.Options) (*http.Client, error) {
 			return &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
