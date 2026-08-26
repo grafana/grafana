@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
@@ -353,13 +353,8 @@ export function QueryCoauthoring({
     dismiss();
   };
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
+  const onKeyDownCapture = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (event.key !== 'Escape') {
         return;
       }
@@ -370,11 +365,9 @@ export function QueryCoauthoring({
       } else {
         dismissPopover();
       }
-    };
-
-    container.addEventListener('keydown', onKeyDown);
-    return () => container.removeEventListener('keydown', onKeyDown);
-  }, [closeFeedback, dismissPopover, feedback]);
+    },
+    [closeFeedback, dismissPopover, feedback]
+  );
 
   return createPortal(
     <div
@@ -382,6 +375,8 @@ export function QueryCoauthoring({
       className={styles.container}
       role="dialog"
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
+      tabIndex={-1}
+      onKeyDownCapture={onKeyDownCapture}
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
       {isAssistantLoading && (

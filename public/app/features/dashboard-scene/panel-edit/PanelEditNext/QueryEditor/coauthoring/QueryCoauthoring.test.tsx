@@ -1861,4 +1861,27 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole('button', { name: 'Continue coauthoring' })).not.toBeInTheDocument();
   });
+
+  it('keeps Escape with the coauthoring dialog when the dialog itself owns focus', async () => {
+    const panelEditEscape = jest.fn();
+    const outsideButton = document.createElement('button');
+    document.body.append(outsideButton);
+    document.addEventListener('keydown', panelEditEscape);
+    const { user, dismissInvocation } = await setup();
+
+    try {
+      outsideButton.focus();
+      const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
+      dialog.focus();
+
+      expect(dialog).toHaveFocus();
+      await user.keyboard('{Escape}');
+
+      expect(dismissInvocation).toHaveBeenCalledTimes(1);
+      expect(panelEditEscape).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', panelEditEscape);
+      outsideButton.remove();
+    }
+  });
 });
