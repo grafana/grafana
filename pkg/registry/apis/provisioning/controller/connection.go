@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -60,6 +62,7 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
+	tracer            tracing.Tracer
 
 	// processed classifies each delivery (encapsulating the NATS/apiserver
 	// backend) and counts the start of each reconcile by what enqueued it.
@@ -71,7 +74,6 @@ type ConnectionController struct {
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
-	tracer         tracing.Tracer
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -88,6 +90,7 @@ func NewConnectionController(
 ) *ConnectionController {
 	cc := &ConnectionController{
 		conns:     conns,
+		tracer:    tracer,
 		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
@@ -103,7 +106,6 @@ func NewConnectionController(
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
 		drainTimeout:      drainTimeout,
-		tracer:            tracer,
 	}
 
 	cc.processFn = cc.process
@@ -152,6 +154,17 @@ func connectionResourceVersion(obj any) string {
 		return conn.ResourceVersion
 	}
 	return ""
+}
+
+// connSpanAttrs returns the resource-identifying attributes stamped on every
+// reconcile child span, so a span is self-describing in isolation (e.g. a
+// health_check or apply_status span says which connection it concerns) rather
+// than only via its parent.
+func connSpanAttrs(conn *provisioning.Connection) trace.SpanStartOption {
+	return trace.WithAttributes(
+		attribute.String("connection.name", conn.GetName()),
+		attribute.String("connection.namespace", conn.GetNamespace()),
+	)
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -245,7 +258,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) error {
+func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) (err error) {
 	logger := cc.logger.With("key", item.key)
 	ctx = logging.Context(ctx, logger)
 
@@ -267,12 +280,28 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Continue the trace of whatever last wrote this connection (the request
-	// that changed its spec, or created it) so this reconcile traces back to
-	// that request instead of a disconnected root. A no-op if the object
-	// carries no trace annotation.
+	// that changed its spec, or created it), so the reconcile below traces
+	// back to that request instead of a disconnected root. A no-op if the
+	// object carries no trace annotation -- in that case (and for every
+	// controller-driven reconcile that isn't itself request-triggered, e.g. a
+	// periodic resync) this still opens a fresh root, same as before.
 	ctx = utils.ExtractTraceContext(ctx, conn.Annotations)
-	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.process_connection")
+
+	// The worker loop carries no active span (unless bridged above), so this
+	// opens a fresh trace per reconcile whose children show where the
+	// reconcile spends its time.
+	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile",
+		trace.WithAttributes(
+			attribute.String("connection.namespace", namespace),
+			attribute.String("connection.name", name),
+		),
+	)
 	defer span.End()
+	defer func() {
+		if err != nil {
+			_ = tracing.Error(span, err)
+		}
+	}()
 
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
@@ -292,7 +321,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
+	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build", connSpanAttrs(conn))
+	c, err := cc.connectionFactory.Build(buildCtx, conn)
+	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
 		// orphaned reference whose secret was deleted). Regenerate it from the private
@@ -326,17 +357,23 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Determine the main triggering condition
+	var reason string
 	switch {
 	case hasSpecChanged:
+		reason = "spec_changed"
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
+		reason = "health_stale"
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
 	case shouldRefreshToken:
+		reason = "token_refresh"
 		logger.Info("token must be refreshed or generated")
 	default:
+		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
 	}
+	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
 	var patchOperations []map[string]interface{}
 
@@ -351,7 +388,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
+		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
+		tokenSpan.End()
 		if err != nil {
 			logger.Error("failed to generate connection token", "error", err)
 			return err
@@ -373,7 +412,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check", connSpanAttrs(conn))
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(healthCtx, conn)
+	healthSpan.End()
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
 		return fmt.Errorf("update health status: %w", err)
@@ -403,7 +444,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
-		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
+		patchCtx, patchSpan := cc.tracer.Start(ctx, "provisioning.controller.apply_status",
+			connSpanAttrs(conn),
+			trace.WithAttributes(attribute.Int("patch.operations", len(patchOperations))),
+		)
+		err := cc.statusPatcher.Patch(patchCtx, conn, patchOperations...)
+		patchSpan.End()
+		if err != nil {
 			return fmt.Errorf("failed to update connection status: %w", err)
 		}
 	}

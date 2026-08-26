@@ -968,9 +968,6 @@
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-contact-points": "search contact points",
-      "clear": "Clear",
       "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
@@ -1624,6 +1621,10 @@
         "autosync-error-title": "Auto-sync Failed",
         "autosync-importing-body": "Enabling Auto-sync. Please wait...",
         "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-title": "Rules Import Failed",
+        "autosync-rules-imported-note": "Your selected alert rules were also imported.",
+        "autosync-rules-note": "Your selected alert rules will also be imported.",
         "autosync-success-body": "Auto-sync enabled. Redirecting...",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
@@ -1698,7 +1699,6 @@
       "review": {
         "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
-        "back-notifications": "Notification resources",
         "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
@@ -1717,7 +1717,6 @@
         "routing": "Notification routing",
         "routing-none": "No policy tree selected",
         "routing-tree": "Policy tree: {{name}}",
-        "rules-autosync-badge": "Syncs automatically",
         "rules-skipped": "Alert rules will not be imported.",
         "rules-title": "Alert Rules",
         "skipped": "Skipped",
@@ -1745,7 +1744,7 @@
       "step1": {
         "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
-        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Skips the Alert Rules step since rules sync automatically too.",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
         "datasource": "Alertmanager data source",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
@@ -3880,6 +3879,8 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
+      "autosync-rules-imported-note": "Your alert rules were also imported.",
       "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
       "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
@@ -4393,7 +4394,7 @@
       "delete-modal-folder-empty_other": "Selected folders are empty",
       "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
       "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
-      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
+      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
       "delete-modal-title": "Delete",
@@ -6295,12 +6296,9 @@
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
         "reorder-description": "Reorder annotations list",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6313,7 +6311,6 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
-      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",
         "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
@@ -6376,12 +6373,9 @@
         "add-filter": "Add filter",
         "reorder-description": "Reorder filters list",
         "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
         "tooltip": "Filters overview"
       },
       "group": {
@@ -6394,10 +6388,8 @@
         "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6436,7 +6428,6 @@
       "section-variables": {
         "title": "Variables"
       },
-      "select": "Select",
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
@@ -6496,13 +6487,10 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
+        "top-placement": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6870,6 +6858,11 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
@@ -7170,6 +7163,11 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-items-list": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7799,10 +7797,31 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7813,6 +7832,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
@@ -8982,6 +9008,7 @@
       "label-stack-trace": "Stack trace",
       "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
+      "no-attributes": "No attributes",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -12639,7 +12666,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -12945,6 +12972,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "Are you sure you want to delete \"{{title}}\"?",
+      "confirm": "Delete",
+      "error": "Failed to delete notebook",
+      "in-progress": "Deleting...",
+      "success": "Notebook deleted",
+      "title": "Delete"
+    },
     "export": {
       "copied": "Notebook copied as Markdown",
       "copy-markdown": "Copy as Markdown",
@@ -13008,7 +13043,8 @@
     "view": {
       "copy-link": "Copy link",
       "mode-edit": "Edit",
-      "mode-view": "View"
+      "mode-view": "View",
+      "more-actions": "More actions"
     }
   },
   "notifications": {
@@ -15199,8 +15235,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -15215,6 +15251,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {

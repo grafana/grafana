@@ -204,7 +204,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -214,7 +214,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -251,7 +251,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, assert.AnError)
 
@@ -275,7 +275,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -285,7 +285,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -297,7 +297,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				s := mocks.NewStatusPatcher(t)
 
 				s.
-					On("Patch", context.Background(), mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil) // Return nil error for the status patch
 
@@ -319,7 +319,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -329,7 +329,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -370,6 +370,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				finalizer:     tc.finalizer,
 				client:        tc.client,
 				statusPatcher: tc.statusPatcher,
+				tracer:        tracing.InitializeTracerForTest(),
 			}
 
 			err := c.handleDelete(context.Background(), tc.repo)
@@ -391,12 +392,12 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
 	factory := repository.NewMockFactory(t)
-	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
 	var calls int32
 	repoClient := &mockRepoInterface{
@@ -416,6 +417,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	c := &RepositoryController{
 		repoFactory: factory,
 		finalizer:   finalizer,
+		tracer:      tracing.InitializeTracerForTest(),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -434,12 +436,12 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
 	factory := repository.NewMockFactory(t)
-	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
 	var calls int32
 	repoClient := &mockRepoInterface{
@@ -456,6 +458,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	c := &RepositoryController{
 		repoFactory: factory,
 		finalizer:   finalizer,
+		tracer:      tracing.InitializeTracerForTest(),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -1323,6 +1326,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 		repoFactory:   mockFactory,
 		statusPatcher: patcher,
 		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process(context.Background(), "default/test-repo")
@@ -1476,6 +1480,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		healthChecker:     healthChecker,
 		resyncInterval:    resyncInterval,
 		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process(context.Background(), namespace+"/"+repoName)
@@ -1580,6 +1585,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		healthChecker:     healthChecker,
 		resyncInterval:    5 * time.Minute,
 		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process(context.Background(), namespace+"/"+repoName)
