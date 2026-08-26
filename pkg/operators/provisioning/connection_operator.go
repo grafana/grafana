@@ -53,7 +53,8 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	// nil keys lister: the operator has no storage gRPC client
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, nil, controllerCfg.ResyncInterval())
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,
