@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -18,28 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// enableRulerSyncAPIFlag flips the global OpenFeature provider so
-// rulerSyncAPIEnabled reports true for the duration of the test. Mirrors the
-// external Alertmanager sync tests' own flag setup; restores the no-op
-// provider on cleanup since this is process-global state.
-func enableRulerSyncAPIFlag(t *testing.T) {
-	t.Helper()
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagAlertingSyncExternalRuler: {
-			DefaultVariant: "on",
-			Variants:       map[string]any{"on": true},
-		},
-	})))
-	t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
-}
 
 // --- fakes ---
 
@@ -476,7 +458,6 @@ func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
 }
 
 func TestSyncOrg_FromConfigAPI(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1", "")
 	rs := &fakeRuleService{}
@@ -496,7 +477,6 @@ func TestSyncOrg_FromConfigAPI(t *testing.T) {
 }
 
 func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "from-config", "")
 	rs := &fakeRuleService{}
@@ -513,8 +493,7 @@ func TestSyncOrg_IniOverridesConfigAPI(t *testing.T) {
 	assert.Equal(t, alertingrulesv0alpha1.ConfigV0alpha1StatusExternalRulerSyncOriginIni, *st.ExternalRulerSync.Origin)
 }
 
-func TestSyncOrg_NotConfiguredSeedsSingletonWhenFlagOn(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
+func TestSyncOrg_NotConfiguredSeedsSingleton(t *testing.T) {
 	cs := newFakeConfigClient() // no spec seeded for org 1
 	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
 	rs := &fakeRuleService{}
@@ -530,23 +509,7 @@ func TestSyncOrg_NotConfiguredSeedsSingletonWhenFlagOn(t *testing.T) {
 	assert.Equal(t, conditionReasonNotConfigured, st.Conditions[0].Reason)
 }
 
-func TestSyncOrg_APIPathUnreachableWithoutFlag(t *testing.T) {
-	// Flag left off (no enableRulerSyncAPIFlag call): the API path must not be
-	// touched at all, even though a client is wired.
-	cs := newFakeConfigClient()
-	cs.setSpec(1, "ds1", "")
-	fetch := &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}
-	rs := &fakeRuleService{}
-	s := newTestSyncerWithConfigClient(t, cs, fetch, rs)
-
-	s.SyncOrg(context.Background(), 1)
-
-	assert.Zero(t, fetch.calls)
-	assert.Zero(t, cs.getCallCount(1), "the Config resource is never even read when the flag is off")
-}
-
 func TestSyncOrg_TargetDatasourceFromConfig(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1", "tds1")
 	rs := &fakeRuleService{}
@@ -561,7 +524,6 @@ func TestSyncOrg_TargetDatasourceFromConfig(t *testing.T) {
 }
 
 func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1", "") // no targetDatasourceUid
 	rs := &fakeRuleService{}
@@ -576,7 +538,6 @@ func TestSyncOrg_TargetDatasourceDefaultsToQuery(t *testing.T) {
 }
 
 func TestSyncOrg_Promote(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpecWithPromote(1, "ds1", "", true)
 	rs := &fakeRuleService{
@@ -609,7 +570,6 @@ func TestSyncOrg_Promote(t *testing.T) {
 }
 
 func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpecWithPromote(1, "ds1", "", true)
 	rs := &fakeRuleService{} // no owned rules: already promoted, or never synced
@@ -633,7 +593,6 @@ func TestSyncOrg_PromoteIdempotentWhenNothingOwned(t *testing.T) {
 func TestSyncOrg_PromoteNoOpWhenNeverSynced(t *testing.T) {
 	// The sync root folder was never created (sync never actually ran for this
 	// org): promote must be a clean no-op, not an error.
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpecWithPromote(1, "ds1", "", true)
 	rs := &fakeRuleService{}
@@ -654,7 +613,6 @@ func TestSyncOrg_IniPathNeverPromotes(t *testing.T) {
 	// returns promote: false for it), even if the Config resource somehow has
 	// promote set — the operator ini override takes precedence for the whole
 	// resolved config, not just the datasource UID.
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpecWithPromote(1, "from-config", "", true)
 	rs := &fakeRuleService{
@@ -671,7 +629,6 @@ func TestSyncOrg_IniPathNeverPromotes(t *testing.T) {
 }
 
 func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1", "")
 	rs := &fakeRuleService{}
@@ -695,7 +652,6 @@ func TestSyncOrg_PersistedHashSkipsReapplyAcrossRestarts(t *testing.T) {
 }
 
 func TestSyncOrg_PersistedHashSurvivesAFailedTick(t *testing.T) {
-	enableRulerSyncAPIFlag(t)
 	cs := newFakeConfigClient()
 	cs.setSpec(1, "ds1", "")
 	rs := &fakeRuleService{}

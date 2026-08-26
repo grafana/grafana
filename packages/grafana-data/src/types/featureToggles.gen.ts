@@ -1387,11 +1387,6 @@ export interface FeatureToggles {
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
   /**
-  * Automatically syncs alert rules from an external Mimir/Cortex ruler datasource into Grafana
-  * @default false
-  */
-  ['alerting.syncExternalRuler']?: boolean;
-  /**
   * Enables Critical User Journey (CUJ) tracking
   * @default false
   */

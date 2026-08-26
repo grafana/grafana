@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,7 +33,6 @@ import (
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -114,20 +112,16 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-// Requires the sync feature flag, rejects writes while the operator ini
-// override is set, verifies the datasource is a Prometheus datasource that
-// isn't vanilla Prometheus, and probes the ruler config API so a datasource
-// that can't be synced is rejected at write time. Mirrors the Alertmanager
-// sync datasource validator. The probe reuses rulesync's own RulerFetcher,
-// routed through the same datasource proxy service (transport, auth and
-// egress validation) as the sync worker itself.
+// Rejects writes while the operator ini override is set, verifies the
+// datasource is a Prometheus datasource that isn't vanilla Prometheus, and
+// probes the ruler config API so a datasource that can't be synced is
+// rejected at write time. Mirrors the Alertmanager sync datasource validator.
+// The probe reuses rulesync's own RulerFetcher, routed through the same
+// datasource proxy service (transport, auth and egress validation) as the
+// sync worker itself.
 func newExternalRulerSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.DataSourceService, proxy *datasourceproxy.DataSourceProxyService) func(ctx context.Context, uid string) error {
 	fetcher := rulesync.NewRulerFetcher(proxy, log.New("ngalert.rulesync.admission"))
 	return func(ctx context.Context, uid string) error {
-		ofClient := openfeature.NewDefaultClient()
-		if !ofClient.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalRuler, false, openfeature.TransactionContext(ctx)) {
-			return fmt.Errorf("external ruler sync is disabled on this instance")
-		}
 		if cfg == nil {
 			return fmt.Errorf("server configuration unavailable; cannot verify operator override")
 		}
