@@ -114,11 +114,8 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	blob := obj.GetBlob()
 	if blob != nil {
 		rsp, err := s.Blob.GetResourceBlob(ctx, key, blob, true)
-		if err != nil {
-			return nil, err
-		}
-		if rsp.Error != nil {
-			return nil, fmt.Errorf("error reading blob: %+v", rsp.Error)
+		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		value = rsp.Value
 	}

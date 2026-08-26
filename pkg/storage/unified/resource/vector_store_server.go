@@ -226,6 +226,8 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid exceeds %d chars", i, maxKeyFieldLen)
 		case utf8.RuneCountInString(in.Subresource) > maxKeyFieldLen:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: subresource exceeds %d chars", i, maxKeyFieldLen)
+		case utf8.RuneCountInString(in.Folder) > maxKeyFieldLen:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: folder exceeds %d chars", i, maxKeyFieldLen)
 		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
 		case in.Content == "":
@@ -274,6 +276,7 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 			UID:         rowUID,
 			Title:       in.Title,
 			Subresource: in.Subresource,
+			Folder:      in.Folder,
 			Content:     in.Content,
 			Metadata:    in.Metadata,
 			Embedding:   out.Embeddings[i].Dense,
@@ -363,11 +366,12 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 				resp.Updated++
 				toEmbed = append(toEmbed, in)
 			default:
-				// Content unchanged: title/metadata still refresh so sync
-				// markers stay current without re-embed cost.
+				// Content unchanged: title/folder/metadata still refresh so
+				// sync markers (and folder moves) land without re-embed cost.
 				metadataOnly = append(metadataOnly, vector.VectorMeta{
 					Subresource: in.Subresource,
 					Title:       in.Title,
+					Folder:      in.Folder,
 					Metadata:    in.Metadata,
 				})
 			}

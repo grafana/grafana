@@ -1638,6 +1638,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1708,7 +1712,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Reguły alertu",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtr",
         "folder": "Katalog docelowy",
@@ -1727,7 +1730,6 @@
         "routing": "Przekierowywanie powiadomień",
         "routing-none": "Nie wybrano drzewa zasad",
         "routing-tree": "Drzewo zasad: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Reguły alertów nie zostaną zaimportowane.",
         "rules-title": "Reguły alertów",
         "skipped": "Pominięto",
@@ -3942,6 +3944,8 @@
       "title-notification-policies": "Zasady powiadamiania"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Nie udało się zaimportować zasobów",
@@ -6982,6 +6986,11 @@
       "title": "Nie dodano jeszcze linków do pulpitu"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9200,15 +9209,16 @@
       "split-widen": "Poszerz okno"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Otwórz menu opcji udostępniania śladu",
+      "aria-label-share-dropdown": "",
       "critical-path": "Ścieżka krytyczna",
       "critical-path-tooltip": "Wybiera zakresy na ścieżce krytycznej – najdłuższej sekwencji zależnych zadań określających minimalny czas trwania śledzenia.",
       "duration": "Czas trwania",
       "errors": "Błędy",
       "errors-tooltip": "Wybiera zakresy, w przypadku których status jest równy błędowi.",
       "export-started": "Rozpoczęto eksportowanie",
+      "feedback-group": "",
       "filters": "Filtry",
-      "give-feedback": "Opinie",
+      "give-feedback-item": "",
       "high-latency": "Wysokie opóźnienie",
       "high-latency-tooltip": "Wybiera 10% najdłuższych zakresów w śledzeniu (p90).",
       "link-copied": "Skopiowano link do schowka",
@@ -9216,13 +9226,12 @@
       "path": "Ścieżka",
       "route": "Trasa",
       "services": "Usługi",
-      "share": "Udostępnij",
       "share-copy-link": "Kopiuj link",
       "share-export-json": "Eksportuj jako JSON",
-      "share-tooltip": "Udostępnij ślad",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Godzina rozpoczęcia",
       "target": "Cel",
-      "title-share-thoughts-about-tracing-grafana": "Podziel się swoimi przemyśleniami na temat śledzenia w usłudze Grafana.",
       "tooltip-url": "{{route}} lub {{url}} lub {{target}} lub {{path}}",
       "trace-id": "Identyfikator śledzenia",
       "url": "URL"
@@ -13149,6 +13158,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13216,7 +13233,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {

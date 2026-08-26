@@ -8,6 +8,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
@@ -113,11 +114,14 @@ func TestJobMetrics_RecordJobDurationOnAllOutcomes(t *testing.T) {
 		durationHist: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{Name: "test_jobs_duration_seconds", Buckets: []float64{5, 10}},
 			[]string{"action", "resources_changed_bucket", "outcome"}),
+		dryRunDurationHist: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{Name: "test_jobs_dryrun_duration_seconds", Buckets: []float64{5, 10}},
+			[]string{"action", "resources_dryrun_bucket", "outcome"}),
 	}
 
-	m.RecordJob("pull", utils.SuccessOutcome, 3, 2.0)
-	m.RecordJob("pull", utils.ErrorOutcome, 0, 7.0)
-	m.RecordJob("pull", "warning", 5, 3.0) // string(provisioning.JobStateWarning)
+	m.RecordJob("pull", utils.SuccessOutcome, 3, 3, 2.0)
+	m.RecordJob("pull", utils.ErrorOutcome, 0, 0, 7.0)
+	m.RecordJob("pull", "warning", 5, 5, 3.0) // string(provisioning.JobStateWarning)
 
 	// All three outcomes recorded a duration series (before, only success did).
 	require.Equal(t, 3, testutil.CollectAndCount(m.durationHist))
@@ -125,4 +129,28 @@ func TestJobMetrics_RecordJobDurationOnAllOutcomes(t *testing.T) {
 	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", utils.GetResourceCountBucket(3), utils.SuccessOutcome))
 	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", utils.GetResourceCountBucket(5), "warning"))
 	require.Equal(t, uint64(1), histSampleCount(t, m.durationHist, "pull", durationBucketUnknown, utils.ErrorOutcome))
+
+	require.Equal(t, 0, testutil.CollectAndCount(m.dryRunDurationHist))
+}
+
+// TestJobMetrics_RecordJob_PullRequestUsesDryRunBucketOnly verifies pull request jobs
+// skip the resources_changed histogram (they never write anything, so "changed"
+// undercounts files that were only viewed) and record solely into resources_dryrun.
+func TestJobMetrics_RecordJob_PullRequestUsesDryRunBucketOnly(t *testing.T) {
+	m := &JobMetrics{
+		processedTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{Name: "test_jobs_processed_total"}, []string{"action", "outcome"}),
+		durationHist: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{Name: "test_jobs_duration_seconds", Buckets: []float64{5, 10}},
+			[]string{"action", "resources_changed_bucket", "outcome"}),
+		dryRunDurationHist: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{Name: "test_jobs_dryrun_duration_seconds", Buckets: []float64{5, 10}},
+			[]string{"action", "resources_dryrun_bucket", "outcome"}),
+	}
+
+	m.RecordJob(string(provisioning.JobActionPullRequest), utils.SuccessOutcome, 3, 7, 2.0)
+
+	require.Equal(t, 0, testutil.CollectAndCount(m.durationHist))
+	require.Equal(t, 1, testutil.CollectAndCount(m.dryRunDurationHist))
+	require.Equal(t, uint64(1), histSampleCount(t, m.dryRunDurationHist, string(provisioning.JobActionPullRequest), utils.GetResourceCountBucket(7), utils.SuccessOutcome))
 }
