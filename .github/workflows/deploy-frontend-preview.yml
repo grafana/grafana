@@ -123,6 +123,9 @@ jobs:
         with:
           ref: ${{ needs.check.outputs.head-sha }}
           persist-credentials: false
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend

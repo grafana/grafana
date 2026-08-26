@@ -1,6 +1,6 @@
 name: Build frontend
 
-description: Restores or builds the Grafana frontend production assets.
+description: Restores or builds the Grafana frontend production assets. Requires Node.js to be set up.
 
 runs:
   using: composite
@@ -23,9 +23,6 @@ runs:
           public/build
           public/build-swagger
           public/app/plugins/*/*/dist
-
-    - name: Set up Node.js
-      uses: ./.github/actions/setup-node
 
     - name: Install yarn dependencies
       if: steps.cache.outputs.cache-hit != 'true'

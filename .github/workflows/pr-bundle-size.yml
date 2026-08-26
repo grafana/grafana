@@ -73,6 +73,9 @@ jobs:
           sparse-checkout-cone-mode: false
           path: .shared-actions
           persist-credentials: false
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
 
       - name: Build frontend
         uses: ./.shared-actions/.github/actions/build-frontend
@@ -84,7 +87,7 @@ jobs:
         run: |
           {
             echo "${OUTPUT_NAME}<<EOF"
-            yarn bundle-size:stats
+            node scripts/cli/reportBundleSizeStats.mts
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 

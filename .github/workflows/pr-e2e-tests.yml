@@ -84,6 +84,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend
