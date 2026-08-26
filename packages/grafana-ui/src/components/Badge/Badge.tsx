@@ -6,7 +6,7 @@ import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { Icon } from '../Icon/Icon';
@@ -20,12 +20,14 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;
-  //When set, truncates `text` with an ellipsis
+  // When set, truncates `text` with an ellipsis
   maxWidth?: number;
 }
 
 const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, maxWidth, className, ...otherProps }) => {
-  const styles = useStyles2(getStyles, color, maxWidth);
+  const theme = useTheme2();
+  const shouldTruncate = Boolean(maxWidth) && theme.flags.visualDesignRefresh;
+  const styles = useStyles2(getStyles, color, shouldTruncate ? maxWidth : undefined);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && (
@@ -33,7 +35,7 @@ const BadgeComponent = React.memo<BadgeProps>(({ icon, color, text, tooltip, max
           <Icon name={icon} size="sm" />
         </span>
       )}
-      {maxWidth ? <span className={styles.truncatedText}>{text}</span> : text}
+      {shouldTruncate ? <span className={styles.truncatedText}>{text}</span> : text}
     </div>
   );
 
