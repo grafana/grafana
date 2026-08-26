@@ -809,7 +809,7 @@ describe('LogsLinkMenuItem', () => {
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
-    expect(screen.getByRole('menuitem')).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeEnabled());
   });
 
   it('keeps the item disabled when the presence check errors', async () => {
