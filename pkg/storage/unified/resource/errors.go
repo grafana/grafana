@@ -305,9 +305,7 @@ func NewValidationError(field, value, msg string) error {
 // code that unified storage actually produces for that status.
 // An unmapped code labels as Unknown — a signal to add a mapping, not a silent
 // mislabel.
-// For now this is just a helper to set the correct codes in metric labels, may
-// be used at a later point for dynamic http code to grpc code changes when servers
-// respond with correct grpc status codes.
+// This is just a helper to set the correct codes in metric labels
 func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 	switch httpCode {
 	case http.StatusOK:
