@@ -216,9 +216,11 @@ export const TimeSeriesPanel = ({
                       dataLinks={dataLinks}
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
-                      compareDiffMs={compareDiffMs}
-                      comparisonFieldPairs={compFieldPairs}
-                      deltaColorMode={options.timeCompare?.colorMode}
+                      timeCompare={{
+                        diffMs: compareDiffMs,
+                        fieldPairs: compFieldPairs,
+                        colorMode: options.timeCompare?.colorMode,
+                      }}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );

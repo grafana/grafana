@@ -59,7 +59,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, -ONE_DAY_MS] }}
       />
     );
 
@@ -76,7 +76,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, -ONE_DAY_MS] }}
       />
     );
 
@@ -94,7 +94,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0]}
+        timeCompare={{ diffMs: [0, 0] }}
       />
     );
 
@@ -111,7 +111,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS] }}
       />
     );
 
@@ -152,9 +152,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS]}
-        comparisonFieldPairs={pairs}
-        deltaColorMode={deltaColorMode}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS], fieldPairs: pairs, colorMode: deltaColorMode }}
       />
     );
   }
@@ -217,8 +215,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS, 0]}
-        comparisonFieldPairs={PAIRS}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS, 0], fieldPairs: PAIRS }}
       />
     );
 

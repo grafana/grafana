@@ -54,10 +54,15 @@ export interface TimeSeriesTooltipProps {
   adHocFilters?: AdHocFilterModel[];
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
-  compareDiffMs?: number[];
-  comparisonFieldPairs?: Map<number, number>;
-  /** How the time-comparison delta is colored. Defaults to `TimeCompareColorMode.Standard`. */
-  deltaColorMode?: TimeCompareColorMode;
+  /** Time comparison context. Absent unless the panel has a comparison configured. */
+  timeCompare?: {
+    /** Per-series offset from the current period, indexed like `series.fields`. */
+    diffMs?: number[];
+    /** Maps a series index to the index of its comparison counterpart. */
+    fieldPairs?: Map<number, number>;
+    /** How the delta is colored. Defaults to `TimeCompareColorMode.Standard`. */
+    colorMode?: TimeCompareColorMode;
+  };
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -77,13 +82,13 @@ export const TimeSeriesTooltip = ({
   hideZeros,
   adHocFilters,
   canExecuteActions,
-  compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
-  comparisonFieldPairs,
-  deltaColorMode,
+  timeCompare,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
+
+  const { diffMs: compareDiffMs, fieldPairs: comparisonFieldPairs, colorMode: deltaColorMode } = timeCompare ?? {};
 
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
