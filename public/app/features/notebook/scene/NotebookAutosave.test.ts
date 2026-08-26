@@ -242,6 +242,22 @@ describe('NotebookAutosave', () => {
     expect(updateNotebook).not.toHaveBeenCalled();
   });
 
+  // Time settings already have their own exclusion: buildSpecToSave substitutes the saved ones back in
+  // while timeSettingsEdited is false. That is why the test above already passed. Nothing else had that
+  // protection. A panel's fieldConfig, for example, changed like any other content and got swept into a
+  // save the moment the scene reactivated, with nothing checking whether editing was ever entered.
+  it('sends nothing when a notebook is reopened after something changed outside edit mode', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    editFirstCell(scene, 'changed without ever entering edit mode');
+    deactivate();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
   it('reports nothing when edit mode is entered and nothing has been changed', async () => {
     const scene = activateEditing();
 
@@ -745,6 +761,21 @@ describe('NotebookAutosave', () => {
       // Tearing down flushes whatever is pending, so this is where a scheduled save would escape.
       deactivate?.();
       deactivate = undefined;
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    // The change subscription above never sees this edit: it is gated on isEditing, and a reader never
+    // gets there. But start() used to reschedule on every reactivation anyway, with nothing checking
+    // where the difference came from. Reopening the notebook is where that difference used to turn into
+    // a real request.
+    it('writes nothing when a reader leaves and reopens the notebook', async () => {
+      const scene = activateAsReader();
+
+      editFirstCell(scene, 'text a reader should not be able to save');
+      deactivate?.();
+      deactivate = scene.activate();
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
       expect(updateNotebook).not.toHaveBeenCalled();
     });

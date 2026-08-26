@@ -48,6 +48,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private savedTimeSettings?: NotebookSpec['timeSettings'];
   /** Whether the time settings now in the scene are the notebook's own, rather than one reader's. */
   private timeSettingsEdited = false;
+  /**
+   * Whether the current difference from `baseline` came from an edit, not from a reader just looking at
+   * the notebook. A legend click changes scene state too. Without this flag, reopening the notebook
+   * would save that change as if it were a real edit.
+   */
+  private editedByWriter = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
@@ -68,10 +74,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
       this.recordWritten(this.buildSpecToSave());
-    } else {
+    } else if (this.editedByWriter) {
       // A scene is cached and reactivated when you come back to a notebook, so this can be the same
-      // controller with edits that never reached the server. Waiting for a change that may never come
-      // would lose them, and scheduling costs nothing when there is nothing to write.
+      // controller holding an edit that never reached the server. Reschedule only if that edit came from
+      // someone allowed to write. A reader clicking a legend leaves the same kind of difference behind,
+      // and reopening the notebook must not save it.
       this.schedule();
     }
 
@@ -79,6 +86,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       if (!this.scene.state.isEditing) {
         return;
       }
+
+      this.editedByWriter = true;
 
       if (changesTimeSettings(payload, this.scene)) {
         this.timeSettingsEdited = true;
@@ -109,6 +118,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // These writers hand over a whole document, time settings included, so what is in the scene now is
     // the notebook's own.
     this.timeSettingsEdited = true;
+    this.editedByWriter = true;
     this.schedule();
     this.flush();
 
@@ -239,6 +249,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.timeSettingsEdited = false;
+    this.editedByWriter = false;
   }
 
   /** What to report when there is nothing waiting to be written. */
