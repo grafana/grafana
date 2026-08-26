@@ -1638,6 +1638,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1708,7 +1712,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Правила оповещения",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Фильтр",
         "folder": "Целевая папка",
@@ -1727,7 +1730,6 @@
         "routing": "Маршрутизация уведомлений",
         "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Правила оповещений импортированы не будут.",
         "rules-title": "Правила оповещения",
         "skipped": "Пропущено",
@@ -3942,6 +3944,8 @@
       "title-notification-policies": "Политики уведомления"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Не удалось импортировать ресурсы",
@@ -6982,6 +6986,11 @@
       "title": "Ссылки на дашборды еще не добавлены"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9200,15 +9209,16 @@
       "split-widen": "Расширить область"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Открыть меню параметров трассировки общего доступа",
+      "aria-label-share-dropdown": "",
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
+      "feedback-group": "",
       "filters": "Фильтры",
-      "give-feedback": "Обратная связь",
+      "give-feedback-item": "",
       "high-latency": "Высокая задержка",
       "high-latency-tooltip": "Выбирает 10% самых длинных диапазонов в трассировке (p90).",
       "link-copied": "Ссылка скопирована в буфер обмена",
@@ -9216,13 +9226,12 @@
       "path": "Путь",
       "route": "Маршрут",
       "services": "Службы",
-      "share": "Поделиться",
       "share-copy-link": "Копировать ссылку",
       "share-export-json": "Экспорт в формате JSON",
-      "share-tooltip": "Поделиться трассировкой",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Время начала",
       "target": "Цель",
-      "title-share-thoughts-about-tracing-grafana": "Поделитесь своим мнением о трассировке в Grafana.",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
       "trace-id": "Идентификатор трассировки",
       "url": "URL-адрес"
@@ -13149,6 +13158,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13216,7 +13233,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {

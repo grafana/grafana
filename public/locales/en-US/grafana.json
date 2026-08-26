@@ -968,9 +968,6 @@
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-contact-points": "search contact points",
-      "clear": "Clear",
       "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
@@ -1745,14 +1742,14 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
-        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
         "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
+        "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
+        "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
-        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
         "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
@@ -4395,9 +4392,9 @@
       "delete-button": "Delete",
       "delete-modal-folder-empty_one": "Selected folder is empty",
       "delete-modal-folder-empty_other": "Selected folders are empty",
-      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
-      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
+      "delete-modal-folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain resources that will be deleted",
+      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
       "delete-modal-title": "Delete",
@@ -4407,8 +4404,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "move-modal-folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4448,8 +4445,8 @@
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
       "folder-empty_other": "Selected folders are empty",
-      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain resources that will be deleted",
       "success-title": "Resources deleted successfully"
     },
     "bulk-move-resources-form": {
@@ -4467,8 +4464,8 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "success-title": "Resources moved successfully",
@@ -4506,7 +4503,7 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
-      "folder-not-empty": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty": "Selected folder contains resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
@@ -6299,12 +6296,9 @@
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
         "reorder-description": "Reorder annotations list",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6317,7 +6311,6 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
-      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",
         "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
@@ -6380,12 +6373,9 @@
         "add-filter": "Add filter",
         "reorder-description": "Reorder filters list",
         "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
         "tooltip": "Filters overview"
       },
       "group": {
@@ -6398,10 +6388,8 @@
         "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6440,7 +6428,6 @@
       "section-variables": {
         "title": "Variables"
       },
-      "select": "Select",
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
@@ -6500,13 +6487,10 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
+        "top-placement": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6874,6 +6858,11 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
@@ -7174,6 +7163,11 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-items-list": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7803,10 +7797,31 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7817,6 +7832,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
@@ -8986,6 +9008,7 @@
       "label-stack-trace": "Stack trace",
       "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
+      "no-attributes": "No attributes",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -9108,6 +9131,10 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
+        "title": "Understand your services faster"
+      },
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
@@ -9115,6 +9142,18 @@
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
+      },
+      "frontend-observability-promo": {
+        "body": "Frontend Observability links trace attributes to sessions, errors, and performance — so you can see what users experienced when a span ran.",
+        "title": "Debug real user sessions"
+      },
+      "knowledge-graph-promo": {
+        "body": "Knowledge Graph correlates services, infrastructure, and insights from your traces — helping you navigate from a span attribute to related entities and assertions.",
+        "title": "See the full picture"
+      },
+      "kubernetes-promo": {
+        "body": "Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.",
+        "title": "Drill into your cluster"
       },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
@@ -12643,7 +12682,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -12949,6 +12988,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "Are you sure you want to delete \"{{title}}\"?",
+      "confirm": "Delete",
+      "error": "Failed to delete notebook",
+      "in-progress": "Deleting...",
+      "success": "Notebook deleted",
+      "title": "Delete"
+    },
     "export": {
       "copied": "Notebook copied as Markdown",
       "copy-markdown": "Copy as Markdown",
@@ -13012,7 +13059,8 @@
     "view": {
       "copy-link": "Copy link",
       "mode-edit": "Edit",
-      "mode-view": "View"
+      "mode-view": "View",
+      "more-actions": "More actions"
     }
   },
   "notifications": {
@@ -15203,8 +15251,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -15219,6 +15267,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {
