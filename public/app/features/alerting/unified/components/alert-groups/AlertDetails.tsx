@@ -24,9 +24,8 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   // For Grafana Managed alerts the Generator URL redirects to the alert rule edit page, so update permission is required
   // For external alert manager the Generator URL redirects to an external service which we don't control
   const isGrafanaSource = isGrafanaRulesSource(alertManagerSourceName);
-  const isTrustedProducer = Boolean(alert.labels.grafana_alert_source);
   const viewRuleAbility = useGlobalRuleAbility(RuleAction.View);
-  const isSeeSourceButtonEnabled = isTrustedProducer || (isGrafanaSource ? isGranted(viewRuleAbility) : true);
+  const isSeeSourceButtonEnabled = isGrafanaSource ? isGranted(viewRuleAbility) : true;
   const canCreateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Create }));
   const canUpdateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Update }));
 
@@ -58,7 +57,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
         )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-            {isGrafanaSource && !isTrustedProducer
+            {isGrafanaSource
               ? t('alerting.alert-details.button-see-rule', 'See alert rule')
               : t('alerting.alert-details.button-see-source', 'See source')}
           </LinkButton>

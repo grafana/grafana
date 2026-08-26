@@ -86,6 +86,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"dashboards":                     "dashboards:uid:",
 		"folders":                        "folders:uid:",
 		"annotations":                    "annotations:type:",
+		"alert.producers":                "alert.producers:uid:",
 		"orgs":                           "orgs:id:",
 		"plugins":                        "plugins:id:",
 		"plugins.plugins":                "plugins.plugins:uid:",

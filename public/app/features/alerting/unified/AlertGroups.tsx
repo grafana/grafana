@@ -1,7 +1,6 @@
 import { Fragment } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -73,21 +72,10 @@ const AlertGroups = () => {
   // Client-side re-grouping by custom groupBy label keys (cannot be done server-side).
   // When multiple receivers are selected, also filter groups to matching receivers here.
   const groupedAlerts = useGroupedAlerts(results, groupBy);
-  const receiverFilteredAlertGroups =
+  const filteredAlertGroups =
     receivers && receivers.length > 1
       ? groupedAlerts.filter((g) => receivers.includes(g.receiver.name))
       : groupedAlerts;
-  const showsProducerAlerts =
-    queryString?.includes('grafana_alert_source') || queryString?.includes('watcher_finding_uid');
-  const filteredAlertGroups =
-    showsProducerAlerts || !config.featureToggles.alertingAlertsProducerAPI
-      ? receiverFilteredAlertGroups
-      : receiverFilteredAlertGroups
-          .map((group) => ({
-            ...group,
-            alerts: group.alerts.filter((alert) => alert.labels.grafana_alert_source === undefined),
-          }))
-          .filter((group) => group.alerts.length > 0);
 
   const grafanaAmDeliveryDisabled =
     selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME &&

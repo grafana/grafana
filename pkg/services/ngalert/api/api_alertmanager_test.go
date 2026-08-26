@@ -760,20 +760,22 @@ func TestValidateProducerAlerts(t *testing.T) {
 			"alertname": "ProducerAlert", "grafana_alert_source": "producer_a",
 		}},
 	}
-	tests := []struct {
+	type testCase struct {
 		name   string
 		alerts apimodels.PostableAlerts
 		valid  bool
-	}{
-		{name: "valid", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{valid}}, valid: true},
-		{name: "empty batch", alerts: apimodels.PostableAlerts{}},
-		{name: "missing endsAt", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Alert: valid.Alert}}}},
-		{name: "another registered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "synthetic_checks"}}}}}, valid: true},
-		{name: "missing alertname", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "producer_a"}}}}}},
-		{name: "missing source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x"}}}}}},
-		{name: "unregistered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "unknown"}}}}}},
-		{name: "invalid label name", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "producer_a", "bad-label": "x"}}}}}},
 	}
+	tests := make([]testCase, 0, 16)
+	tests = append(tests,
+		testCase{name: "valid", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{valid}}, valid: true},
+		testCase{name: "empty batch", alerts: apimodels.PostableAlerts{}},
+		testCase{name: "missing endsAt", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{Alert: valid.Alert}}}},
+		testCase{name: "another registered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "synthetic_checks"}}}}}, valid: true},
+		testCase{name: "missing alertname", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"grafana_alert_source": "producer_a"}}}}}},
+		testCase{name: "missing source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x"}}}}}},
+		testCase{name: "unregistered source", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "unknown"}}}}}},
+		testCase{name: "invalid label name", alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{"alertname": "x", "grafana_alert_source": "producer_a", "bad-label": "x"}}}}}},
+	)
 	for _, reserved := range []string{
 		"grafana_folder",
 		"__alert_rule_uid__",
@@ -784,11 +786,7 @@ func TestValidateProducerAlerts(t *testing.T) {
 		"__grafana_route_settings_hash__",
 		"__grafana_managed_route__",
 	} {
-		tests = append(tests, struct {
-			name   string
-			alerts apimodels.PostableAlerts
-			valid  bool
-		}{
+		tests = append(tests, testCase{
 			name: "reserved label " + reserved,
 			alerts: apimodels.PostableAlerts{PostableAlerts: []amv2.PostableAlert{{EndsAt: endsAt, Alert: amv2.Alert{Labels: amv2.LabelSet{
 				"alertname": "x", "grafana_alert_source": "producer_a", reserved: "boom",
