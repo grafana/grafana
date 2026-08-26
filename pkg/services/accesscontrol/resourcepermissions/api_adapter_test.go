@@ -179,6 +179,7 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 		commands       []accesscontrol.SetResourcePermissionCommand
 		expected       []iamv0.ResourcePermissionspecPermission
 		expectedMethod string
+		userSvc        user.Service
 	}{
 		{
 			name:     "preserves unmentioned permissions on upsert",
@@ -231,6 +232,30 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: "View"}},
 			expected:       []iamv0.ResourcePermissionspecPermission{viewer},
 			expectedMethod: http.MethodPost,
+		},
+		{
+			name:           "migrates legacy user-kind service account on upsert",
+			exists:         true,
+			initial:        []iamv0.ResourcePermissionspecPermission{{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "sa-uid", Verb: "view"}},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{UserID: 42, Permission: "Edit"}},
+			expected:       []iamv0.ResourcePermissionspecPermission{{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa-uid", Verb: "edit"}},
+			expectedMethod: http.MethodPut,
+			userSvc: &usertest.FakeUserService{
+				ExpectedSignedInUser: &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true},
+			},
+		},
+		{
+			name:   "deletes every service account kind representation",
+			exists: true,
+			initial: []iamv0.ResourcePermissionspecPermission{
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindUser, Name: "sa-uid", Verb: "view"},
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindServiceAccount, Name: "sa-uid", Verb: "edit"},
+			},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{UserID: 42, Permission: ""}},
+			expectedMethod: http.MethodDelete,
+			userSvc: &usertest.FakeUserService{
+				ExpectedSignedInUser: &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true},
+			},
 		},
 	}
 
@@ -294,10 +319,13 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 
 			a := &api{
 				restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
-				service: &Service{options: Options{
-					Resource: "dashboards",
-					APIGroup: dashboardv1.APIGroup,
-				}},
+				service: &Service{
+					userService: tt.userSvc,
+					options: Options{
+						Resource: "dashboards",
+						APIGroup: dashboardv1.APIGroup,
+					},
+				},
 			}
 
 			err := a.setResourcePermissionsToK8s(makeReqCtx(), "org-1", "1", tt.commands)
@@ -314,6 +342,91 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetUserPermissionToK8sUsesServiceAccountKind(t *testing.T) {
+	var created iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			w.WriteHeader(http.StatusNotFound)
+			require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+				Status: metav1.StatusFailure,
+				Code:   http.StatusNotFound,
+				Reason: metav1.StatusReasonNotFound,
+			}))
+		case http.MethodPost:
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&created))
+			require.NoError(t, json.NewEncoder(w).Encode(&created))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{
+			userService: &usertest.FakeUserService{
+				ExpectedSignedInUser: &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true},
+			},
+			options: Options{Resource: "dashboards", APIGroup: dashboardv1.APIGroup},
+		},
+	}
+
+	err := a.setUserPermissionToK8s(makeReqCtx(), "org-1", "1", 42, "Edit")
+	require.NoError(t, err)
+	require.Len(t, created.Spec.Permissions, 1)
+	assert.Equal(t, iamv0.ResourcePermissionSpecPermissionKindServiceAccount, created.Spec.Permissions[0].Kind)
+}
+
+func TestSetUserPermissionToK8sMigratesLegacyUserKind(t *testing.T) {
+	existing := iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{Name: "dashboard.grafana.app-dashboards-1", Namespace: "org-1", ResourceVersion: "1"},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{ApiGroup: dashboardv1.APIGroup, Resource: "dashboards", Name: "1"},
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindUser,
+				Name: "sa-uid",
+				Verb: "view",
+			}},
+		},
+	}
+	var updated iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			require.NoError(t, json.NewEncoder(w).Encode(&existing))
+		case http.MethodPut:
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&updated))
+			require.NoError(t, json.NewEncoder(w).Encode(&updated))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{
+			userService: &usertest.FakeUserService{
+				ExpectedSignedInUser: &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true},
+			},
+			options: Options{Resource: "dashboards", APIGroup: dashboardv1.APIGroup},
+		},
+	}
+
+	err := a.setUserPermissionToK8s(makeReqCtx(), "org-1", "1", 42, "Edit")
+	require.NoError(t, err)
+	require.Len(t, updated.Spec.Permissions, 1)
+	assert.Equal(t, iamv0.ResourcePermissionSpecPermissionKindServiceAccount, updated.Spec.Permissions[0].Kind)
+	assert.Equal(t, "edit", updated.Spec.Permissions[0].Verb)
 }
 
 func TestSetResourcePermissionsToK8sRetriesConflicts(t *testing.T) {

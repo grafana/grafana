@@ -432,12 +432,12 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 	}
 	changes := make([]permissionChange, 0, len(permissions))
 	for _, perm := range permissions {
-		name, err := a.getPermissionName(ctx, perm)
+		kind, name, err := a.getPermissionSubject(ctx, c.GetOrgID(), perm)
 		if err != nil {
-			return fmt.Errorf("failed to get permission name: %w", err)
+			return fmt.Errorf("failed to get permission subject: %w", err)
 		}
 		changes = append(changes, permissionChange{
-			kind:       iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm)),
+			kind:       kind,
 			name:       name,
 			permission: perm.Permission,
 		})
@@ -471,29 +471,31 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		k8sPermissions := slices.Clone(existingResourcePerm.Spec.Permissions)
 		changed := false
 		for _, change := range changes {
-			idx := slices.IndexFunc(k8sPermissions, func(existing iamv0.ResourcePermissionspecPermission) bool {
-				return existing.Kind == change.kind && existing.Name == change.name
-			})
-			if change.permission == "" {
-				if idx >= 0 {
-					k8sPermissions = slices.Delete(k8sPermissions, idx, idx+1)
-					changed = true
+			nextPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(k8sPermissions)+1)
+			inserted := false
+			for _, existing := range k8sPermissions {
+				if !permissionSubjectMatches(existing, change.kind, change.name) {
+					nextPermissions = append(nextPermissions, existing)
+					continue
 				}
-				continue
-			}
-
-			updatedPermission := iamv0.ResourcePermissionspecPermission{
-				Kind: change.kind,
-				Name: change.name,
-				Verb: cases.Lower(language.Und).String(change.permission),
-			}
-			if idx >= 0 {
-				if k8sPermissions[idx] != updatedPermission {
-					k8sPermissions[idx] = updatedPermission
-					changed = true
+				if change.permission != "" && !inserted {
+					nextPermissions = append(nextPermissions, iamv0.ResourcePermissionspecPermission{
+						Kind: change.kind,
+						Name: change.name,
+						Verb: cases.Lower(language.Und).String(change.permission),
+					})
+					inserted = true
 				}
-			} else {
-				k8sPermissions = append(k8sPermissions, updatedPermission)
+			}
+			if change.permission != "" && !inserted {
+				nextPermissions = append(nextPermissions, iamv0.ResourcePermissionspecPermission{
+					Kind: change.kind,
+					Name: change.name,
+					Verb: cases.Lower(language.Und).String(change.permission),
+				})
+			}
+			if !slices.Equal(k8sPermissions, nextPermissions) {
+				k8sPermissions = nextPermissions
 				changed = true
 			}
 		}
@@ -544,12 +546,12 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 
 func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
 	ctx := c.Req.Context()
-	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	kind, name, err := a.getPermissionSubject(ctx, c.GetOrgID(), accesscontrol.SetResourcePermissionCommand{UserID: userID})
 	if err != nil {
-		return fmt.Errorf("failed to get user details: %w", err)
+		return fmt.Errorf("failed to get user permission subject: %w", err)
 	}
 
-	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(kind), name, permission)
 }
 
 func (a *api) setTeamPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, teamID int64, permission string) error {
@@ -586,7 +588,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 
 	newPermissions := make([]iamv0.ResourcePermissionspecPermission, 0)
 	for _, perm := range existingResourcePerm.Spec.Permissions {
-		if string(perm.Kind) == kind && perm.Name == name {
+		if permissionSubjectMatches(perm, iamv0.ResourcePermissionSpecPermissionKind(kind), name) {
 			continue
 		}
 		newPermissions = append(newPermissions, perm)
@@ -690,27 +692,42 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 	return nil
 }
 
-func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) (string, error) {
+func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm accesscontrol.SetResourcePermissionCommand) (iamv0.ResourcePermissionSpecPermissionKind, string, error) {
+	kind := iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm))
 	if perm.UserID != 0 {
-		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		userDetails, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			OrgID:  orgID,
+			UserID: perm.UserID,
+		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
+			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
 		}
-		return userDetails.UID, nil
+		if userDetails.IsServiceAccount {
+			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+		}
+		return kind, userDetails.UserUID, nil
 	}
 	if perm.TeamID != 0 {
 		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID: perm.TeamID,
+			OrgID: orgID,
+			ID:    perm.TeamID,
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
+			return "", "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
 		}
-		return teamDetails.UID, nil
+		return kind, teamDetails.UID, nil
 	}
 	if perm.BuiltinRole != "" {
-		return perm.BuiltinRole, nil
+		return kind, perm.BuiltinRole, nil
 	}
-	return "", fmt.Errorf("no valid permission subject found")
+	return "", "", fmt.Errorf("no valid permission subject found")
+}
+
+func permissionSubjectMatches(existing iamv0.ResourcePermissionspecPermission, kind iamv0.ResourcePermissionSpecPermissionKind, name string) bool {
+	if existing.Name != name {
+		return false
+	}
+	return existing.Kind == kind || (kind == iamv0.ResourcePermissionSpecPermissionKindServiceAccount && existing.Kind == iamv0.ResourcePermissionSpecPermissionKindUser)
 }
 
 // Teams-specific redirect functions reading and writing Team.Spec.Members.
