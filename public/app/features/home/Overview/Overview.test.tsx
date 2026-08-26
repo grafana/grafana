@@ -68,20 +68,18 @@ describe('Overview', () => {
     mockCtaClicked.mockClear();
   });
 
-  it("shows 'Get started' while guides load and hides it when they settle empty", async () => {
-    // An explicit stored pick keeps the empty-instance default off; this test drives the menu.
-    window.localStorage.setItem('grafana.home.overview.option', 'all-solutions');
+  it('hides the filter while guides load and omits Get started when they settle empty', async () => {
     mockUseGuides.mockReturnValue(undefined);
     const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
-    await screen.findByText('No solutions were found.');
-    await user.click(screen.getByRole('button', { name: /all solutions/i }));
-    expect(screen.getByRole('menuitem', { name: 'Get started' })).toBeInTheDocument();
+    // Cards settled, guides still loading: the filter stays hidden so its label cannot flip.
+    expect(await screen.findByText('Recommended getting started guides')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('menuitem', { name: 'All solutions' }));
     mockUseGuides.mockReturnValue([]);
     rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
-    await user.click(screen.getByRole('button', { name: /all solutions/i }));
+
+    await user.click(await screen.findByRole('button', { name: /all solutions/i }));
     expect(screen.queryByRole('menuitem', { name: 'Get started' })).not.toBeInTheDocument();
   });
 
@@ -90,14 +88,15 @@ describe('Overview', () => {
     const { rerender, container } = render(<Overview solutions={EMPTY_SOLUTIONS} />);
 
     // Guides still loading + no live solution: the unset default already lands on Get started.
-    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
-    const heading = screen.getByText('Recommended getting started guides').parentElement;
+    const heading = (await screen.findByText('Recommended getting started guides')).parentElement;
     expect(heading).not.toBeNull();
     expect(within(heading!).queryByText('0')).not.toBeInTheDocument();
     expect(container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
 
     mockUseGuides.mockReturnValue([guide]);
     rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
+
+    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: guide.title })).toBeInTheDocument();
   });
 
@@ -148,6 +147,22 @@ describe('Overview', () => {
     expect(screen.getByRole('button', { name: /all solutions/i })).toBeInTheDocument();
   });
 
+  it('hides the filter until solutions settle so the default never flips in view', async () => {
+    mockUseGuides.mockReturnValue([guide]);
+    const probe = deferred<DataSourceInstanceListItem | null>();
+    const metrics = solution('metrics', { title: 'Metrics & infrastructure', datasource: () => probe.promise });
+
+    render(<Overview solutions={[metrics]} />);
+
+    // While classification is pending there is no filter to read a transient All solutions from.
+    expect(screen.queryByRole('button', { name: /all solutions|get started/i })).not.toBeInTheDocument();
+
+    await act(async () => probe.resolve(null));
+
+    // The filter appears only once, already on the settled default.
+    expect(await screen.findByRole('button', { name: /get started/i })).toBeInTheDocument();
+  });
+
   it('selects the overview option from the hash anchor', async () => {
     const scrollIntoView = jest.fn();
     const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -174,7 +189,6 @@ describe('Overview', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoView;
 
     try {
-      mockUseGuides.mockReturnValue(undefined);
       const { user, rerender } = render(<Overview solutions={EMPTY_SOLUTIONS} />, {
         historyOptions: { initialEntries: ['/#needs-attention'] },
       });
@@ -186,8 +200,8 @@ describe('Overview', () => {
       await user.click(screen.getByRole('menuitem', { name: 'All solutions' }));
       await screen.findByText('No solutions were found.');
 
-      // Guides settling rebuilds the options; the already-handled hash must not re-apply.
-      mockUseGuides.mockReturnValue([]);
+      // A guides change rebuilds the options; the already-handled hash must not re-apply.
+      mockUseGuides.mockReturnValue([guide]);
       rerender(<Overview solutions={EMPTY_SOLUTIONS} />);
 
       expect(await screen.findByText('No solutions were found.')).toBeInTheDocument();

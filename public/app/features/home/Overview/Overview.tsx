@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
@@ -113,6 +114,10 @@ export function Overview({ solutions }: OverviewProps) {
   );
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
 
+  // The unset default is computed from settled cards and guides; keep the filter hidden until
+  // then so its label never flips (e.g. All solutions → Get started) in front of the user.
+  const optionsSettled = !cardsLoading && guides !== undefined;
+
   const ref = useRef<HTMLDivElement>(null);
   const location = useLocation();
   // Handle each hash value once: `options` rebuilds as cards and guides settle, and re-running
@@ -181,24 +186,28 @@ export function Overview({ solutions }: OverviewProps) {
           <Trans i18nKey="home.overview.title">Your observability stack overview</Trans>
         </Text>
 
-        <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
-          <Button variant="secondary" size="md">
-            <Stack direction="row" alignItems="center" columnGap={1}>
-              {option.icon && (
-                <Icon
-                  name={option.icon}
-                  color={
-                    theme.flags.visualDesignRefresh
-                      ? theme.colors.accent.main
-                      : theme.visualization.getColorByName('orange')
-                  }
-                />
-              )}
-              {option.label}
-              <Icon name={open ? 'angle-up' : 'angle-down'} />
-            </Stack>
-          </Button>
-        </Dropdown>
+        {optionsSettled ? (
+          <Dropdown overlay={menu} onVisibleChange={setOpen} placement="bottom-end">
+            <Button variant="secondary" size="md">
+              <Stack direction="row" alignItems="center" columnGap={1}>
+                {option.icon && (
+                  <Icon
+                    name={option.icon}
+                    color={
+                      theme.flags.visualDesignRefresh
+                        ? theme.colors.accent.main
+                        : theme.visualization.getColorByName('orange')
+                    }
+                  />
+                )}
+                {option.label}
+                <Icon name={open ? 'angle-up' : 'angle-down'} />
+              </Stack>
+            </Button>
+          </Dropdown>
+        ) : (
+          <Skeleton width={140} height={32} />
+        )}
       </Stack>
 
       {option.content}
