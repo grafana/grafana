@@ -790,7 +790,25 @@ describe('deletedDashboardsCache with the trash flag on', () => {
     expect(mockFetchTrashPage).toHaveBeenCalledTimes(1);
   });
 
-  it('combines a text query and a tag filter into a single and', async () => {
+  it('requires every selected tag, not any of them', async () => {
+    mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
+
+    await deletedDashboardsCache.search({ tags: ['infra', 'prod'] });
+
+    // One leaf per tag. A single In leaf listing both would match either one.
+    expect(mockFetchTrashPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          and: [
+            { filter: { field: 'tags', operator: 'In', values: ['infra'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['prod'] } },
+          ],
+        },
+      })
+    );
+  });
+
+  it('combines a text query and every tag into a single and', async () => {
     mockFetchTrashPage.mockResolvedValue(page([makeItem('dash-1')]));
 
     await deletedDashboardsCache.search({ query: 'cpu', tags: ['infra', 'prod'] });
@@ -800,7 +818,8 @@ describe('deletedDashboardsCache with the trash flag on', () => {
         where: {
           and: [
             { text: { value: 'cpu', fields: ['title'] } },
-            { filter: { field: 'tags', operator: 'In', values: ['infra', 'prod'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['infra'] } },
+            { filter: { field: 'tags', operator: 'In', values: ['prod'] } },
           ],
         },
       })

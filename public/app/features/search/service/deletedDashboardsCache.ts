@@ -104,8 +104,11 @@ function buildTrashQuery(query: DeletedDashboardsQuery, continueToken: string | 
   if (text && text !== '*') {
     leaves.push({ text: { value: text, fields: [TRASH_FIELD_TITLE] } });
   }
-  if (query.tags?.length) {
-    leaves.push({ filter: { field: TRASH_FIELD_TAGS, operator: 'In', values: query.tags } });
+  // One leaf per tag, not one leaf listing them all: In matches any of its values, and tag
+  // filters elsewhere in Grafana require every selected tag. Leaves are ANDed, so a leaf each
+  // is what makes two tags mean both.
+  for (const tag of query.tags ?? []) {
+    leaves.push({ filter: { field: TRASH_FIELD_TAGS, operator: 'In', values: [tag] } });
   }
 
   // The endpoint takes a single leaf or a single `and` of leaves, so only wrap when there are two.
