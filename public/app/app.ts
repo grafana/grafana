@@ -303,11 +303,13 @@ export class GrafanaApp {
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
       setExpressionDataSourceInstance(expressionDatasource);
+      // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the seed for the instance settings cache
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
+      // eslint-disable-next-line @grafana/no-config-datasources -- legacy DataSourceSrv is seeded from boot data
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();

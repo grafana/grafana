@@ -100,6 +100,8 @@ export class AlertStatesDataLayer
               this.hasAlertRules = true;
               const panelId = Number(rule.annotations[Annotation.panelID]);
               const state = promAlertStateToAlertState(rule.state);
+              // rule.uid is only present on the narrower Grafana-rule type, not the generic Prometheus one
+              const ruleUID = prometheusRuleType.grafana.alertingRule(rule) ? rule.uid : undefined;
 
               // there can be multiple alerts per panel, so we make sure we get the most severe state:
               // alerting > pending > ok
@@ -109,15 +111,18 @@ export class AlertStatesDataLayer
                   id: Object.keys(panelIdToAlertState).length,
                   panelId,
                   dashboardUID: uid,
+                  ruleUID,
                 };
               } else if (state === AlertState.Alerting && panelIdToAlertState[panelId].state !== AlertState.Alerting) {
                 panelIdToAlertState[panelId].state = AlertState.Alerting;
+                panelIdToAlertState[panelId].ruleUID = ruleUID;
               } else if (
                 state === AlertState.Pending &&
                 panelIdToAlertState[panelId].state !== AlertState.Alerting &&
                 panelIdToAlertState[panelId].state !== AlertState.Pending
               ) {
                 panelIdToAlertState[panelId].state = AlertState.Pending;
+                panelIdToAlertState[panelId].ruleUID = ruleUID;
               }
             }
           })

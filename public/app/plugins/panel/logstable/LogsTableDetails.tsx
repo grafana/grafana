@@ -194,6 +194,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
             fontSize={store.get(`${SETTING_KEY_ROOT}.fontSize`) ?? 'default'}
             logs={logs}
             logOptionsStorageKey={SETTING_KEY_ROOT}
+            syntaxHighlighting={store.getBool(`${SETTING_KEY_ROOT}.syntaxHighlighting`, true)}
             showControls={false}
             showTime={false}
             sortOrder={LogsSortOrder.Ascending}
@@ -238,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     backgroundColor: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     // position is required for zIndex to take effect and establish a stacking
     // context, otherwise the tabs render behind elements in the table below.
     position: 'relative',

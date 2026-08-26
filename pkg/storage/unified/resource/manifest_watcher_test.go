@@ -61,7 +61,7 @@ func TestManifestWatcher_AuthUsesAuthorizationHeader(t *testing.T) {
 	require.Equal(t, "Bearer exchanged-token", authorization)
 	require.Empty(t, accessToken)
 	require.NotNil(t, exchanger.gotReq)
-	require.Equal(t, []string{appManifestGVR.Group}, exchanger.gotReq.Audiences)
+	require.Equal(t, []string{AppManifestGVR.Group}, exchanger.gotReq.Audiences)
 	require.Equal(t, clientauth.WildcardNamespace, exchanger.gotReq.Namespace)
 }
 
@@ -99,7 +99,7 @@ func testAppManifestObj(name, appName, group, kind string, searchFields ...strin
 func fakeManifestClient(objs ...runtime.Object) *dynamicfake.FakeDynamicClient {
 	scheme := runtime.NewScheme()
 	gvrToListKind := map[schema.GroupVersionResource]string{
-		appManifestGVR: "AppManifestList",
+		AppManifestGVR: "AppManifestList",
 	}
 	return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, gvrToListKind, objs...)
 }

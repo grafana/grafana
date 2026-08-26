@@ -32,6 +32,7 @@ const config: KnipConfig = {
 
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
+    'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
