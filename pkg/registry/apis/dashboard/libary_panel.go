@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -85,9 +86,10 @@ func (s *LibraryPanelStore) translateLegacyError(name string, err error) error {
 		return apierrors.NewForbidden(gr, name, err)
 	case errors.Is(err, model.ErrLibraryElementInvalidUID),
 		errors.Is(err, model.ErrLibraryElementUIDTooLong),
-		errors.Is(err, model.ErrLibraryElementUnSupportedElementKind),
-		errors.Is(err, dashboards.ErrFolderNotFound):
+		errors.Is(err, model.ErrLibraryElementUnSupportedElementKind):
 		return apierrors.NewBadRequest(err.Error())
+	case errors.Is(err, dashboards.ErrFolderNotFound):
+		return folders.FolderResourceInfo.NewNotFound(name)
 	}
 	return err
 }

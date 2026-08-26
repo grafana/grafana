@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
@@ -14,9 +15,21 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
+
+func TestLibraryPanelStoreTranslatesMissingFolderAsNotFound(t *testing.T) {
+	store := &LibraryPanelStore{ResourceInfo: dashboardV0.LibraryPanelResourceInfo}
+
+	err := store.translateLegacyError("panel-a", dashboards.ErrFolderNotFound)
+
+	require.True(t, apierrors.IsNotFound(err))
+	statusError, ok := err.(*apierrors.StatusError)
+	require.True(t, ok)
+	require.Equal(t, "folder.grafana.app", statusError.Status().Details.Group)
+}
 
 type staticLibraryPanelAccess struct {
 	panel *dashboardV0.LibraryPanel
