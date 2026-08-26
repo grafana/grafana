@@ -70,12 +70,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   let bgColor = '';
   let textColor = '';
 
-  if (theme.flags.visualDesignRefresh && color !== 'brand') {
-    const tokens = theme.components.badge[color];
-    bgColor = tokens.background;
-    borderColor = tokens.border;
-    textColor = tokens.text;
-  } else if (theme.isDark) {
+  if (theme.isDark) {
     bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
     borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
     textColor = tinycolor(sourceColor).lighten(15).toString();
@@ -85,10 +80,20 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
     textColor = tinycolor(sourceColor).darken(25).toString();
   }
 
+  if (theme.flags.visualDesignRefresh && color !== 'brand') {
+    const tokens = theme.components.badge[color];
+    bgColor = tokens?.background ?? bgColor;
+    borderColor = tokens?.border ?? borderColor;
+    textColor = tokens?.text ?? textColor;
+  }
+
   if (color === 'brand') {
     bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = theme.flags.visualDesignRefresh ? theme.colors.accent.border : 'transparent';
-    textColor = theme.colors.primary.contrastText;
+    borderColor = theme.flags.visualDesignRefresh ? theme.colors.accent.contrastText : 'transparent';
+    textColor =
+      theme.flags.visualDesignRefresh && theme.isLight
+        ? theme.components.badge.textColor
+        : theme.colors.primary.contrastText;
   }
 
   return {
