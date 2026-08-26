@@ -105,11 +105,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
   }
 
   // Get a time shifted request to compare with the primary request.
+  // This function name has special handling in scenes, which is why we wrap the util
   public getExtraQueries(request: DataQueryRequest): ExtraQueryDescriptor[] {
     return getCompareExtraQueries(request, this.state.compareWith);
   }
 
-  // The query runner should rerun the comparison query if the compareWith value has changed and there are queries that haven't opted out of TWC
+  // The query runner should rerun the comparison query if the compareWith value has changed and there are queries that haven't opted out of time compare
+  // This function name has special handling in scenes, which is why we wrap the util
   public shouldRerun(prev: PanelTimeRangeState, next: PanelTimeRangeState, queries: SceneDataQuery[]): boolean {
     return shouldRerunCompare(prev.compareWith, next.compareWith, queries);
   }

@@ -1,6 +1,5 @@
 import { FeatureState } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Combobox, FeatureBadge, Field, Label, Stack } from '@grafana/ui';
 
 import { getCompareOptions } from './options';
@@ -10,15 +9,7 @@ interface TimeComparisonFieldProps {
   onChange: (compareWith: string) => void;
 }
 
-/**
- * Time comparison control for the panel time settings drawer.
- * Renders nothing unless the `timeComparison` feature toggle is enabled.
- */
 export function TimeComparisonField({ value, onChange }: TimeComparisonFieldProps) {
-  if (!config.featureToggles.timeComparison) {
-    return null;
-  }
-
   return (
     <Field
       noMargin

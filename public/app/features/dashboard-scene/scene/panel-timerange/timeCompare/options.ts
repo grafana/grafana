@@ -1,11 +1,5 @@
 import { t } from '@grafana/i18n';
 
-/**
- * Sentinel compare offset meaning "shift by the panel range's own duration" rather than a fixed
- * interval, so the compare window always mirrors the length of the current one.
- */
-export const PREVIOUS_PERIOD_VALUE = '__previousPeriod';
-
 export const getCompareOptions = () => [
   { label: t('common.disabled', 'Disabled'), value: '' },
   { label: t('dashboard.panel.time-range-settings.compare-day-before', 'Day before'), value: '1d' },

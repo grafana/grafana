@@ -1,4 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -140,7 +141,9 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             />
           </Field>
 
-          <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
+          {config.featureToggles.timeComparison && (
+            <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
+          )}
 
           <Field
             noMargin
