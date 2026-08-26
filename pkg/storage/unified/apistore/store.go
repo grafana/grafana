@@ -731,10 +731,10 @@ func (s *Storage) GuaranteedUpdate(
 
 			updatedObj, _, err = tryUpdate(s.newFunc(), res)
 			if err != nil {
-				if attempt >= MaxUpdateAttempts {
-					return err
+				if shouldRetryUpdate(err, attempt) {
+					continue
 				}
-				continue
+				return err
 			}
 
 			// A write that carries a resourceVersion is a conditional (optimistic
@@ -763,18 +763,18 @@ func (s *Storage) GuaranteedUpdate(
 		res.ResourceVersion = uint64(readResponse.ResourceVersion)
 
 		if err := preconditions.Check(key, existingObj); err != nil {
-			if attempt >= MaxUpdateAttempts {
-				return fmt.Errorf("precondition failed: %w", err)
+			if apierrors.IsConflict(err) && attempt < MaxUpdateAttempts {
+				continue
 			}
-			continue
+			return fmt.Errorf("precondition failed: %w", err)
 		}
 
 		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
-			if attempt >= MaxUpdateAttempts {
-				return err
+			if shouldRetryUpdate(err, attempt) {
+				continue
 			}
-			continue
+			return err
 		}
 
 		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
@@ -819,6 +819,14 @@ func (s *Storage) GuaranteedUpdate(
 	}
 
 	return nil
+}
+
+// shouldRetryUpdate reports whether a failed update attempt is worth retrying.
+// Only optimistic-concurrency conflicts can be resolved by re-reading and
+// reapplying; validation/bad-request/forbidden errors are deterministic and
+// must fail fast instead of exhausting MaxUpdateAttempts.
+func shouldRetryUpdate(err error, attempt int) bool {
+	return apierrors.IsConflict(err) && attempt < MaxUpdateAttempts
 }
 
 // Added in k8s 1.35
