@@ -1663,6 +1663,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.recentlyDeletedViaTrash",
+        "resourceVersion": "1787654416364",
+        "creationTimestamp": "2026-08-25T10:40:16Z"
+      },
+      "spec": {
+        "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -5755,6 +5770,22 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "recentlyDeletedViaTrash",
+        "resourceVersion": "1787642659770",
+        "creationTimestamp": "2026-08-25T07:24:19Z",
+        "deletionTimestamp": "2026-08-25T10:40:16Z"
+      },
+      "spec": {
+        "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
