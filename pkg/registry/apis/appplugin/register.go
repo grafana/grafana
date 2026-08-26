@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,7 +20,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
-
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -41,6 +42,9 @@ var (
 	_ builder.APIGroupBuilder          = (*AppPluginAPIBuilder)(nil)
 	_ builder.APIGroupVersionsProvider = (*AppPluginAPIBuilder)(nil)
 )
+
+// Direct access to read objects in this apiserver
+type getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error)
 
 // PluginClient is a subset of the plugins.Client interface with only the
 // functions supported by the app plugins
@@ -74,7 +78,7 @@ type AppPluginAPIBuilder struct {
 	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
-	clientV3Loader  v3.ClientV3Loader
+	clientV3        v3.ClientV3
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
@@ -85,14 +89,14 @@ type AppPluginAPIBuilder struct {
 	// optional configuration
 	opts AppPluginRunnerOptions
 
-	// Populated in UpdateAPIGroupInfo
-	getter rest.Getter
+	// Get values from storage
+	getter getter
 }
 
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
-	clientV3Loader v3.ClientV3Loader,
+	clientV3 v3.ClientV3,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -112,7 +116,7 @@ func NewAppPluginAPIBuilder(
 		manifest:        manifest,
 		pluginJSON:      plugin.JSONData,
 		client:          client,
-		clientV3Loader:  clientV3Loader,
+		clientV3:        clientV3,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
@@ -121,11 +125,6 @@ func NewAppPluginAPIBuilder(
 		features:        features,
 		tracer:          tracer,
 	}, nil
-}
-
-// clientV3 returns the experimental v3 client for this builder's plugin, if available.
-func (b *AppPluginAPIBuilder) clientV3(ctx context.Context) (v3.ClientV3, bool) {
-	return b.clientV3Loader.ClientV3(ctx, b.pluginJSON.ID)
 }
 
 // Called in ST Grafana to register
@@ -174,8 +173,11 @@ func RegisterAPIService(
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
-			pluginClient, // scoped to a single plugin!
-			clientV3Loader,
+			pluginClient, // only called for the single plugin
+			&clientWrapper{
+				loader: clientV3Loader,
+				id:     plugin.JSONData.ID,
+			},
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
@@ -304,7 +306,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			return err
 		}
 	}
-	b.getter = settingsStorage.(rest.Getter)
+	getters := make(map[schema.GroupVersionResource]rest.Getter)
 
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
@@ -313,6 +315,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
 		storage[settingsRI.StoragePath()] = settingsStorage
+		getters[gv.WithResource(apppluginV0.APP_RESOURCE_NAME)] = settingsStorage.(rest.Getter)
 
 		provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
 			return b.getPluginContext(ctx, gv.Version)
@@ -339,7 +342,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 				}
 
 				for _, kind := range v.Kinds {
-					store, err := newKindStore(gv.WithKind(kind.Kind), kind, &opts, defs)
+					store, err := newKindStore(gv.WithKind(kind.Kind), kind, b.clientV3, &opts, defs)
 					if err != nil {
 						return err
 					}
@@ -352,6 +355,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 							kind.Kind, gv.String(), resource)
 					}
 					storage[resource] = store
+					getters[gv.WithResource(resource)] = store
 
 					if store.hasStatus {
 						storage[resource+"/status"] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store.Store)
@@ -361,6 +365,17 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 		}
 
 		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+	}
+
+	// Direct reads of this plugin's own storage, by group version resource.
+	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
+		store, ok := getters[gvr]
+		if !ok {
+			// A wiring mistake rather than a bad request: every served resource
+			// registers here. Named so the plugin ID and version are visible.
+			return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
+		}
+		return store.Get(ctx, name, &v1.GetOptions{})
 	}
 	return nil
 }

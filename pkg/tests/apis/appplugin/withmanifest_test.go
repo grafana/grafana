@@ -3,10 +3,10 @@ package appplugin
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -272,8 +272,8 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 }
 
 // TestIntegrationPluginManifestKindRoutes covers routes a manifest declares on a
-// kind. They mount as subresources of one object and dispatch to the plugin's v3
-// route service.
+// kind. They mount as subresources of one object, resolve that object from
+// storage, and dispatch to the plugin's v3 route service.
 func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -295,13 +295,45 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
-	// The test plugin has no v3 backend, so the route reports unavailable.
-	// A 404 would mean it never got mounted.
-	result := client.Get().
-		AbsPath("/apis/" + testAppID + "/v1/namespaces/default/things/thing-1/reload").
-		Do(ctx)
+	route := "/apis/" + testAppID + "/v1/namespaces/default/things/thing-route/reload"
 
-	var statusCode int
-	result.StatusCode(&statusCode)
-	require.Equal(t, http.StatusServiceUnavailable, statusCode)
+	// The route resolves its parent before dispatching, so an unknown object is
+	// a 404 and the plugin is never called. A 405 or 404 on the path itself
+	// would mean the route never got mounted.
+	_, err = client.Get().AbsPath(route).DoRaw(ctx)
+	require.True(t, apierrors.IsNotFound(err), "got %v", err)
+
+	resourceClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default",
+		GVR: schema.GroupVersionResource{
+			Group:    testAppID,
+			Version:  "v1",
+			Resource: "things",
+		},
+	})
+	created, err := resourceClient.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": thingAPIVersion,
+		"kind":       "Thing",
+		"metadata": map[string]any{
+			"name":      "thing-route",
+			"namespace": "default",
+		},
+		"spec": map[string]any{"foo": "bar"},
+	}}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = resourceClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+	})
+
+	// With the object in place the parent resolves and the request reaches the
+	// plugin, which has no v3 backend.
+	raw, err = client.Get().AbsPath(route).DoRaw(ctx)
+	require.Error(t, err)
+
+	// clientWrapper returns a ServiceUnavailable, but httpadapter.HandlerFunc
+	// turns any CallRoute failure into a plain-text 500, so the status reason
+	// and the k8s Status body are both lost on the way out.
+	require.True(t, apierrors.IsInternalError(err), "got %v", err)
+	require.Contains(t, string(raw), "does not implement the v3 route service")
 }

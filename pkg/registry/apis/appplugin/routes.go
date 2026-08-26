@@ -1,6 +1,8 @@
 package appplugin
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strings"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -107,12 +110,6 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		client, ok := b.clientV3(ctx)
-		if !ok {
-			errhttp.Write(ctx, apierrors.NewServiceUnavailable(
-				"the plugin backend does not implement the v3 route service"), w)
-			return
-		}
 
 		// Without this the plugin only sees the raw URL, and no group, version,
 		// namespace or parent object.
@@ -124,18 +121,45 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 		}
 		if resource != "" {
 			name := mux.Vars(r)[nameParameter]
-			if name == "" {
-				errhttp.Write(ctx, apierrors.NewBadRequest("missing resource name"), w)
-				return
-			}
-			parent := &pluginv3.RouteResource{}
-			parent.SetResource(resource)
-			parent.SetName(name)
-			info.Parent = parent
-			info.Path = resource + "/" + name + "/" + path
-		}
+			if name != "" {
+				// The getter is wired in UpdateAPIGroupInfo; a route that somehow
+				// serves before then must not panic on the request path.
+				if b.getter == nil {
+					_ = errhttp.Write(ctx, apierrors.NewInternalError(
+						errors.New("plugin storage is not ready")), w)
+					return
+				}
+				// Unified storage will apply the resource level access control
+				obj, err := b.getter(ctx, gv.WithResource(resource), name)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
+				m, err := utils.MetaAccessor(obj)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
+				raw, err := json.Marshal(obj)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 
-		httpadapter.HandlerFunc(client).ServeHTTP(w, r.WithContext(httpadapter.WithRouteInfo(ctx, info)))
+				parent := &pluginv3.RouteResource{}
+				parent.SetResource(resource)
+				parent.SetName(name)
+				parent.SetRv(m.GetResourceVersion())
+				parent.SetRaw(raw)
+				info.Parent = parent
+				info.Path = resource + "/" + name + "/" + path
+			} else {
+				info.Path = resource + "/" + path
+				// ?? info should still have easy access to "resource" part of the path
+			}
+		}
+		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }
 

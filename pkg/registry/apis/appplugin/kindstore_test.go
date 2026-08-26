@@ -259,12 +259,13 @@ func newKindStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (*builder.APIGr
 func TestNewKindStore(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v1alpha1", Kind: "TestKind"}
 	falseValue := false
+	admission := &fakeRouteClient{}
 
 	t.Run("a namespaced kind is folder scoped by default", func(t *testing.T) {
 		opts, registered := newKindStoreOpts(t, gvk)
 		s, err := newKindStore(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
-		}, opts, nil)
+		}, admission, opts, nil)
 		require.NoError(t, err)
 
 		require.True(t, s.NamespaceScoped())
@@ -284,13 +285,16 @@ func TestNewKindStore(t *testing.T) {
 		// No schema means no body validation and no status subresource.
 		require.Nil(t, s.validator)
 		require.False(t, s.hasStatus)
+
+		// The kind keeps the plugin client so admission hooks can reach it.
+		require.Same(t, admission, s.admission)
 	})
 
 	t.Run("folderScoped false opts out of folder support", func(t *testing.T) {
 		opts, registered := newKindStoreOpts(t, gvk)
 		_, err := newKindStore(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, opts, nil)
+		}, admission, opts, nil)
 		require.NoError(t, err)
 
 		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
@@ -302,7 +306,7 @@ func TestNewKindStore(t *testing.T) {
 		opts, registered := newKindStoreOpts(t, gvk)
 		s, err := newKindStore(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: clusterScope,
-		}, opts, nil)
+		}, admission, opts, nil)
 		require.NoError(t, err)
 
 		require.False(t, s.NamespaceScoped())
@@ -321,7 +325,7 @@ func TestNewKindStore(t *testing.T) {
 		kind := manifest.Versions[1].Kinds[0] // v1alpha1 TestKind declares status
 
 		opts, _ := newKindStoreOpts(t, gvk)
-		s, err := newKindStore(gvk, kind, opts, defs)
+		s, err := newKindStore(gvk, kind, admission, opts, defs)
 		require.NoError(t, err)
 
 		require.NotNil(t, s.validator)
@@ -330,7 +334,7 @@ func TestNewKindStore(t *testing.T) {
 		// v0alpha1 has the same kind without a status property.
 		v0 := schema.GroupVersionKind{Group: "example-app", Version: "v0alpha1", Kind: "TestKind"}
 		opts, _ = newKindStoreOpts(t, v0)
-		s, err = newKindStore(v0, manifest.Versions[0].Kinds[0], opts, defs)
+		s, err = newKindStore(v0, manifest.Versions[0].Kinds[0], admission, opts, defs)
 		require.NoError(t, err)
 		require.NotNil(t, s.validator)
 		require.False(t, s.hasStatus)
@@ -339,7 +343,7 @@ func TestNewKindStore(t *testing.T) {
 	t.Run("a schema missing from the definitions is an error", func(t *testing.T) {
 		opts, _ := newKindStoreOpts(t, gvk)
 		kind := testManifest(t).Versions[1].Kinds[0]
-		_, err := newKindStore(gvk, kind, opts, map[string]common.OpenAPIDefinition{})
+		_, err := newKindStore(gvk, kind, admission, opts, map[string]common.OpenAPIDefinition{})
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
@@ -347,7 +351,7 @@ func TestNewKindStore(t *testing.T) {
 	// unreachable resource, so newKindStore rejects it up front.
 	t.Run("a kind without a plural is an error", func(t *testing.T) {
 		opts, _ := newKindStoreOpts(t, gvk)
-		_, err := newKindStore(gvk, app.ManifestVersionKind{Kind: "TestKind"}, opts, nil)
+		_, err := newKindStore(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
 		require.ErrorContains(t, err, "missing a plural name")
 	})
 
@@ -356,7 +360,7 @@ func TestNewKindStore(t *testing.T) {
 		opts.OptsGetter = failingRESTOptionsGetter{}
 		_, err := newKindStore(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, opts, nil)
+		}, admission, opts, nil)
 		require.ErrorContains(t, err, "no storage configured")
 	})
 
@@ -366,7 +370,7 @@ func TestNewKindStore(t *testing.T) {
 		opts, _ := newKindStoreOpts(t, gvk)
 		s, err := newKindStore(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, opts, nil)
+		}, admission, opts, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, gvk, s.New().GetObjectKind().GroupVersionKind())

@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -36,6 +37,9 @@ type kindStore struct {
 
 	gvk           schema.GroupVersionKind
 	clusterScoped bool
+
+	// used for admission hooks
+	admission pluginv3.AdmissionServiceClient
 
 	// hasStatus prevents main-resource writes from changing status.
 	hasStatus bool
@@ -55,6 +59,7 @@ var (
 func newKindStore(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
+	admission pluginv3.AdmissionServiceClient,
 	opts *builder.APIGroupOptions,
 	defs map[string]common.OpenAPIDefinition,
 ) (*kindStore, error) {
@@ -77,6 +82,7 @@ func newKindStore(
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
+		admission:     admission,
 	}
 
 	// A kind may legally omit its schema; serve it without body validation.

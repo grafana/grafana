@@ -2,6 +2,8 @@ package appplugin
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +15,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -192,10 +198,11 @@ func TestWithNameParameterIsIdempotent(t *testing.T) {
 
 func TestRouteHandlerRouteInfo(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example-app", Version: "v1alpha1"}
-	newBuilder := func(client v3.ClientV3, ok bool) *AppPluginAPIBuilder {
+	newBuilder := func(client v3.ClientV3, get getter) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
-			pluginJSON:     plugins.JSONData{ID: "example-app"},
-			clientV3Loader: fakeClientV3Loader{client: client, ok: ok},
+			pluginJSON: plugins.JSONData{ID: "example-app"},
+			clientV3:   client,
+			getter:     get,
 		}
 	}
 
@@ -204,7 +211,8 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 		req = req.WithContext(request.WithNamespace(req.Context(), "org-2"))
 
-		newBuilder(client, true).routeHandler(gv, "", "foobar")(httptest.NewRecorder(), req)
+		// A version route has no parent, so storage is never consulted.
+		newBuilder(client, nil).routeHandler(gv, "", "foobar")(httptest.NewRecorder(), req)
 
 		require.Equal(t, "example-app", client.req.GetGroup())
 		require.Equal(t, "v1alpha1", client.req.GetVersion())
@@ -213,56 +221,139 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		require.Nil(t, client.req.GetParent())
 	})
 
+	// The plugin is handed the stored object so it does not have to read it back
+	// over the API, which is why the route resolves the parent before dispatch.
 	t.Run("kind routes carry the parent object", func(t *testing.T) {
 		client := &fakeRouteClient{}
+		stored := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "example-app/v1alpha1",
+			"kind":       "TestKind",
+			"metadata": map[string]any{
+				"name":            "thing-1",
+				"namespace":       "org-2",
+				"resourceVersion": "42",
+			},
+			"spec": map[string]any{"testField": "value"},
+		}}
+		get := &recordingGetter{obj: stored}
+
 		req := httptest.NewRequest(http.MethodPost, "/reload", nil)
 		req = req.WithContext(request.WithNamespace(req.Context(), "org-2"))
 		req = mux.SetURLVars(req, map[string]string{nameParameter: "thing-1"})
 
-		newBuilder(client, true).routeHandler(gv, "testkinds", "reload")(httptest.NewRecorder(), req)
+		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(httptest.NewRecorder(), req)
 
+		// Looked up under this version's own resource, not a hardcoded one.
+		require.Equal(t, gv.WithResource("testkinds"), get.gotGVR)
+		require.Equal(t, "thing-1", get.gotName)
+
+		parent := client.req.GetParent()
 		require.Equal(t, "testkinds/thing-1/reload", client.req.GetPath())
-		require.Equal(t, "testkinds", client.req.GetParent().GetResource())
-		require.Equal(t, "thing-1", client.req.GetParent().GetName())
+		require.Equal(t, "testkinds", parent.GetResource())
+		require.Equal(t, "thing-1", parent.GetName())
+		require.Equal(t, "42", parent.GetRv())
+
+		var raw map[string]any
+		require.NoError(t, json.Unmarshal(parent.GetRaw(), &raw))
+		require.Equal(t, stored.Object, raw, "the plugin receives the whole stored object")
 	})
 
-	t.Run("a kind route without a name is rejected", func(t *testing.T) {
+	// The route is only ever mounted under /{name}, so this is defensive: it must
+	// still dispatch rather than send a parent with an empty name.
+	t.Run("a kind route without a name dispatches without a parent", func(t *testing.T) {
 		client := &fakeRouteClient{}
+		get := &recordingGetter{}
+
+		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(
+			httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/reload", nil))
+
+		require.Equal(t, "testkinds/reload", client.req.GetPath())
+		require.Nil(t, client.req.GetParent())
+		require.Empty(t, get.gotName, "storage is not read when there is no name")
+	})
+
+	t.Run("a parent that cannot be read stops the request", func(t *testing.T) {
+		client := &fakeRouteClient{}
+		get := &recordingGetter{err: apierrors.NewNotFound(
+			gv.WithResource("testkinds").GroupResource(), "thing-1")}
 		rec := httptest.NewRecorder()
 
-		newBuilder(client, true).routeHandler(gv, "testkinds", "reload")(
-			rec, httptest.NewRequest(http.MethodPost, "/reload", nil))
+		req := mux.SetURLVars(httptest.NewRequest(http.MethodPost, "/reload", nil),
+			map[string]string{nameParameter: "thing-1"})
+		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(rec, req)
 
-		require.Equal(t, http.StatusBadRequest, rec.Code)
+		// The status reason survives, so a missing object is not a plugin error.
+		require.Equal(t, http.StatusNotFound, rec.Code)
+		require.Nil(t, client.req, "the plugin is never called")
+	})
+
+	t.Run("an object without metadata stops the request", func(t *testing.T) {
+		client := &fakeRouteClient{}
+		get := &recordingGetter{obj: &metav1.Status{}}
+		rec := httptest.NewRecorder()
+
+		req := mux.SetURLVars(httptest.NewRequest(http.MethodPost, "/reload", nil),
+			map[string]string{nameParameter: "thing-1"})
+		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(rec, req)
+
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
 		require.Nil(t, client.req)
 	})
 
-	t.Run("a plugin without a v3 backend reports unavailable", func(t *testing.T) {
+	t.Run("an object that cannot be encoded stops the request", func(t *testing.T) {
+		client := &fakeRouteClient{}
+		get := &recordingGetter{obj: &unencodableObject{}}
 		rec := httptest.NewRecorder()
 
-		newBuilder(nil, false).routeHandler(gv, "", "foobar")(
+		req := mux.SetURLVars(httptest.NewRequest(http.MethodPost, "/reload", nil),
+			map[string]string{nameParameter: "thing-1"})
+		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(rec, req)
+
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Nil(t, client.req)
+	})
+
+	// UpdateAPIGroupInfo wires the getter. Serving before that would be a
+	// startup-ordering bug, but it must not take the process down.
+	t.Run("a route serving before storage is wired does not panic", func(t *testing.T) {
+		client := &fakeRouteClient{}
+		rec := httptest.NewRecorder()
+
+		req := mux.SetURLVars(httptest.NewRequest(http.MethodPost, "/reload", nil),
+			map[string]string{nameParameter: "thing-1"})
+		require.NotPanics(t, func() {
+			newBuilder(client, nil).routeHandler(gv, "testkinds", "reload")(rec, req)
+		})
+
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Nil(t, client.req)
+	})
+
+	// A backend that cannot serve the route surfaces through the adapter, which
+	// is also how clientWrapper reports a plugin with no v3 support.
+	t.Run("a failing backend is reported to the caller", func(t *testing.T) {
+		client := &fakeRouteClient{err: errors.New("no v3 backend")}
+		rec := httptest.NewRecorder()
+
+		newBuilder(client, nil).routeHandler(gv, "", "foobar")(
 			rec, httptest.NewRequest(http.MethodGet, "/foobar", nil))
 
-		require.Equal(t, http.StatusServiceUnavailable, rec.Code)
+		require.Equal(t, http.StatusInternalServerError, rec.Code)
+		require.Contains(t, rec.Body.String(), "no v3 backend")
 	})
-}
-
-type fakeClientV3Loader struct {
-	client v3.ClientV3
-	ok     bool
-}
-
-func (f fakeClientV3Loader) ClientV3(context.Context, string) (v3.ClientV3, bool) {
-	return f.client, f.ok
 }
 
 // fakeRouteClient records the request and returns an empty response stream.
 type fakeRouteClient struct {
 	v3.ClientV3
 	req *pluginv3.CallRouteRequest
+	err error
 }
 
 func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	if f.err != nil {
+		return nil, f.err
+	}
 	f.req = req
 	return &fakeRouteStream{}, nil
 }
@@ -272,3 +363,27 @@ type fakeRouteStream struct {
 }
 
 func (*fakeRouteStream) Recv() (*pluginv3.CallRouteResponse, error) { return nil, io.EOF }
+
+// recordingGetter stands in for the per-GVR storage lookup built in
+// UpdateAPIGroupInfo.
+type recordingGetter struct {
+	obj     runtime.Object
+	err     error
+	gotGVR  schema.GroupVersionResource
+	gotName string
+}
+
+func (g *recordingGetter) get(_ context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
+	g.gotGVR = gvr
+	g.gotName = name
+	return g.obj, g.err
+}
+
+// unencodableObject has metadata but cannot be marshalled to JSON.
+type unencodableObject struct {
+	metav1.ObjectMeta
+	Bad chan int `json:"bad"`
+}
+
+func (*unencodableObject) GetObjectKind() schema.ObjectKind { return schema.EmptyObjectKind }
+func (o *unencodableObject) DeepCopyObject() runtime.Object { return o }
