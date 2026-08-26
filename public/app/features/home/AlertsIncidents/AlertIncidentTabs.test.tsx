@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { useState, type Ref } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
@@ -275,21 +275,165 @@ describe('AlertIncidentTabs', () => {
     expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
   });
 
-  it('switches to the Incidents tab and renders incident content', async () => {
+  describe('default tab', () => {
+    it('renders the Incidents tab ahead of the Firing alerts tab', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      await screen.findByText('Database outage');
+      expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+        expect.stringMatching(/incidents/i),
+        expect.stringMatching(/firing alerts/i),
+      ]);
+    });
+
+    it('selects the Incidents tab when incidents are active', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidents([activeIncident]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      // Both counts start unknown, so the choice only lands once the initial loads settle.
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('selects the Incidents tab when both sides are empty', async () => {
+      mockAlerts([]);
+      mockIrmPlugin();
+      mockIncidents([]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      const incidentsTab = await screen.findByRole('tab', { name: /incidents/i });
+      // The counters only lose their undefined placeholder once both queries have settled.
+      await waitFor(() => expect(incidentsTab).toHaveTextContent('0'));
+      expect(incidentsTab).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('selects the Firing alerts tab when there are no incidents but alerts are firing', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      mockIncidents([]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('stays on the Incidents tab when the incidents request fails', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      server.use(
+        http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
+          HttpResponse.json({ message: 'boom' }, { status: 500 })
+        )
+      );
+
+      render(<AlertIncidentTabsWithData />);
+
+      const alertsTab = await screen.findByRole('tab', { name: /firing alerts/i });
+      await waitFor(() => expect(alertsTab).toHaveTextContent('1'));
+      // A failed fetch isn't the same as "no incidents" — keep the error on screen.
+      expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'true');
+      expect(alertsTab).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('stays on the Incidents tab when there are no incidents and the alerts request fails', async () => {
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () =>
+          HttpResponse.json({ message: 'boom' }, { status: 500 })
+        )
+      );
+      mockIrmPlugin();
+      mockIncidents([]);
+
+      render(<AlertIncidentTabsWithData />);
+
+      const incidentsTab = await screen.findByRole('tab', { name: /incidents/i });
+      await waitFor(() => expect(incidentsTab).toHaveTextContent('0'));
+      // An errored alerts fetch isn't proof of firing alerts, so it doesn't win the tab.
+      expect(incidentsTab).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it("keeps the user's tab choice made before the incidents query settles", async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockIrmPlugin();
+      // Only the incidents query is delayed; the plugin bridge still resolves promptly,
+      // so the Incidents tab is clickable while its count is still unknown.
+      server.use(
+        http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', async () => {
+          await delay(100);
+          return HttpResponse.json({
+            incidentPreviews: [activeIncident],
+            cursor: { hasMore: false, nextValue: '' },
+          });
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      await user.click(await screen.findByRole('tab', { name: /incidents/i }));
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+
+      const incidentsTab = screen.getByRole('tab', { name: /incidents/i });
+      await waitFor(() => expect(incidentsTab).toHaveTextContent('1'));
+      // The settled incidents would otherwise claim the tab back.
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    it('does not move the tab when a later team filter change empties the alerts', async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
+      // The user's own teams have a firing alert; the explicitly selected team has none.
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          const filters = new URL(request.url).searchParams.getAll('filter');
+          const isSelectedTeamFilter = filters.some((f) => f.includes('Team C'));
+          return HttpResponse.json(
+            isSelectedTeamFilter ? [] : [makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]
+          );
+        })
+      );
+      mockIrmPlugin();
+      // No incidents, so the first load settles on the Firing alerts tab.
+      mockIncidents([]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+
+      // The auto-selection is a first-load decision only, so the empty result leaves the tab alone.
+      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'true');
+    });
+  });
+
+  it('switches to the Firing alerts tab and renders alert content', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
     mockIrmPlugin();
     mockIncidents([activeIncident]);
 
     const { user } = render(<AlertIncidentTabsWithData />);
 
-    // Alerts tab is active by default.
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    // Incidents tab is active by default while incidents are open.
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
 
-    await user.click(await screen.findByRole('tab', { name: /incidents/i }));
+    await user.click(await screen.findByRole('tab', { name: /firing alerts/i }));
 
-    expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
   });
 
   it('switchRef handle switches tabs imperatively', async () => {
@@ -306,15 +450,8 @@ describe('AlertIncidentTabs', () => {
       />
     );
 
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(handle).not.toBeNull();
-
-    await act(async () => {
-      handle?.switch(INCIDENTS_TAB_ID, false);
-    });
-
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+    expect(handle).not.toBeNull();
 
     await act(async () => {
       handle?.switch(ALERTS_TAB_ID, false);
@@ -322,6 +459,13 @@ describe('AlertIncidentTabs', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
+
+    await act(async () => {
+      handle?.switch(INCIDENTS_TAB_ID, false);
+    });
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
   });
 
   it('switchRef handle scrolls by default and skips scrolling when requested', async () => {
@@ -345,22 +489,22 @@ describe('AlertIncidentTabs', () => {
         />
       );
 
-      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
 
       await act(async () => {
-        handle?.switch(INCIDENTS_TAB_ID);
+        handle?.switch(ALERTS_TAB_ID);
       });
 
-      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
 
       scrollIntoView.mockClear();
 
       await act(async () => {
-        handle?.switch(ALERTS_TAB_ID, false);
+        handle?.switch(INCIDENTS_TAB_ID, false);
       });
 
-      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(scrollIntoView).not.toHaveBeenCalled();
     } finally {
       window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -416,19 +560,21 @@ describe('AlertIncidentTabs', () => {
 
       const { user } = render(<AlertIncidentTabsWithData />);
 
-      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('tab', { name: /incidents/i }));
-
-      // Hidden from the accessibility tree, but kept mounted so its fetched values survive.
+      // Open incidents win the default tab, where the dropdown is hidden from the
+      // accessibility tree but kept mounted so its fetched values survive.
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
 
-      // Switching back shows the dropdown again without refetching the team values.
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
 
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
+
+      // Switching back hides it again, without having refetched the team values.
+      await user.click(screen.getByRole('tab', { name: /incidents/i }));
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
       expect(fetchTagValues).toHaveBeenCalledTimes(1);
     });
 

@@ -1,4 +1,4 @@
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -40,7 +40,8 @@ export function AlertIncidentTabs({
   const canViewIncidents = !!incidentsData.enabled;
   const canViewAlerts = alertsData.enabled;
 
-  // Default to alerts tab if alerts are available, otherwise default to incidents tab
+  // Incidents is the preferred default, but the plugin probe hasn't resolved on first render,
+  // so start on the only tab known to exist and let the effect below settle the choice.
   const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
   const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
@@ -58,10 +59,14 @@ export function AlertIncidentTabs({
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const userPickedTabRef = useRef(false);
+  const autoSelectSettledRef = useRef(false);
+
   useImperativeHandle(
     switchRef,
     () => ({
       switch: (tab: TabId, scroll = true) => {
+        userPickedTabRef.current = true;
         setActiveTab(tab);
         if (scroll) {
           containerRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,6 +75,22 @@ export function AlertIncidentTabs({
     }),
     []
   );
+
+  // Neither count is known at mount, so the default lands once the initial loads settle:
+  // Incidents wins unless it is confirmed empty while alerts are firing. Evaluated once, so
+  // later team-filter refetches don't move the tab under the user.
+  useEffect(() => {
+    if (autoSelectSettledRef.current || userPickedTabRef.current || !canViewIncidents) {
+      return;
+    }
+    if (loading || incidentsLoading) {
+      return;
+    }
+    autoSelectSettledRef.current = true;
+    // An errored fetch isn't the same as an empty one, so neither side falls through on error.
+    const preferAlerts = !incidentsError && incidentsCount === 0 && canViewAlerts && !error && count > 0;
+    setActiveTab(preferAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+  }, [canViewAlerts, canViewIncidents, loading, incidentsLoading, count, incidentsCount, error, incidentsError]);
 
   // Hide the tabs if neither alerts nor incidents are available
   if (!canViewAlerts && !canViewIncidents) {
@@ -84,16 +105,6 @@ export function AlertIncidentTabs({
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
   const tabs = [
-    ...(canViewAlerts
-      ? [
-          {
-            id: ALERTS_TAB_ID,
-            label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
-            // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
-            counter: loading ? undefined : count,
-          },
-        ]
-      : []),
     ...(canViewIncidents
       ? [
           {
@@ -104,6 +115,16 @@ export function AlertIncidentTabs({
             // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
             counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
+          },
+        ]
+      : []),
+    ...(canViewAlerts
+      ? [
+          {
+            id: ALERTS_TAB_ID,
+            label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
+            // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
+            counter: loading ? undefined : count,
           },
         ]
       : []),
@@ -133,6 +154,7 @@ export function AlertIncidentTabs({
               active={activeTab === tab.id}
               counter={tab.counter}
               onChangeTab={() => {
+                userPickedTabRef.current = true;
                 setActiveTab(tab.id);
                 tabChanged({ tab: tab.id });
               }}
