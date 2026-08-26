@@ -5,7 +5,13 @@ import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { AnnoKeyFolder, AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -53,14 +59,19 @@ jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPi
       onChange: (uid?: string, title?: string) => void;
       value?: string;
     }) => (
-      <button
-        type="button"
-        data-testid="folder-picker"
-        data-folder-uid={value}
-        onClick={() => onChange('picked-folder', 'Picked Folder')}
-      >
-        Mocked Folder Picker
-      </button>
+      <>
+        <button
+          type="button"
+          data-testid="folder-picker"
+          data-folder-uid={value}
+          onClick={() => onChange('picked-folder', 'Picked Folder')}
+        >
+          Mocked Folder Picker
+        </button>
+        <button type="button" data-testid="folder-picker-root" onClick={() => onChange(undefined, undefined)}>
+          Mocked Root Pick
+        </button>
+      </>
     ),
   };
 });
@@ -1471,6 +1482,82 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(props.dashboard.setState).toHaveBeenCalledWith({
       meta: { folderUid: undefined, folderTitle: undefined, k8s: { annotations: {} }, slug: 'test-dashboard' },
     });
+  });
+
+  it('strips the old folder prefix when the picker chooses root with a customised filename', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        dashboardRequest = { url: new URL(request.url), body: await request.json() };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    const { user, props } = setupFolderless({
+      defaultValues: {
+        folder: { uid: 'my-team-uid', title: 'My Team' },
+        path: 'My Team/test-dashboard.json',
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    // A customised filename makes the path dirty, so the defaults reset alone can no longer fix it
+    const filenameInput = await screen.findByRole('textbox', { name: /filename/i });
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'custom-name.json');
+
+    await user.click(screen.getByTestId('folder-picker-root'));
+
+    const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
+    await waitFor(() => expect(folderCombobox).toHaveValue(''));
+    expect(filenameInput).toHaveValue('custom-name.json');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    // The save must land at the repository root, not under the folder meta no longer points at
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/custom-name.json'
+    );
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).not.toContain('My Team');
+  });
+
+  it('moves a customised filename into the repository path of a picked folder', async () => {
+    jest.mocked(getProvisionedMeta).mockResolvedValueOnce({
+      folderPath: 'Picked Folder/',
+      k8s: { annotations: { [AnnoKeyManagerIdentity]: 'test-repo', [AnnoKeyManagerKind]: ManagerKind.Repo } },
+    });
+
+    const { user } = setupFolderless();
+
+    const filenameInput = await screen.findByRole('textbox', { name: /filename/i });
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'custom-name.json');
+
+    await user.click(screen.getByTestId('folder-picker'));
+
+    // The dirty filename survives, but its directory follows the pick instead of pinning the old one
+    const folderCombobox = screen.getByRole('combobox', { name: /repository folder/i });
+    await waitFor(() => expect(folderCombobox).toHaveValue('Picked Folder'));
+    expect(filenameInput).toHaveValue('custom-name.json');
+  });
+
+  it('reverts the folder pick and shows an error when the folder lookup fails', async () => {
+    jest.mocked(getProvisionedMeta).mockRejectedValueOnce(new Error('network down'));
+
+    const { user, props } = setupFolderless();
+
+    await user.click(await screen.findByTestId('folder-picker'));
+
+    // The pick never reached the scene meta, so the picker must not keep claiming the new folder
+    expect(await screen.findByText('network down')).toBeInTheDocument();
+    expect(screen.getByTestId('folder-picker')).not.toHaveAttribute('data-folder-uid', 'picked-folder');
+    expect(props.dashboard.setState).not.toHaveBeenCalled();
   });
 
   it('keeps the k8s identity but drops the old folder annotations when a copy changes folder', async () => {

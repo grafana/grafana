@@ -7694,6 +7694,7 @@
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "folder-create-error": "Failed to create folder",
+      "folder-select-error": "Failed to change the target folder",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {

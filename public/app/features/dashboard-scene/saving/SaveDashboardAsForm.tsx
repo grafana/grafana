@@ -126,8 +126,17 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }:
       // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
       const selectionId = ++folderSelectionIdRef.current;
       setValue('folder', { uid, title });
-      // The database escape hatch stays unmanaged whatever folder is picked
-      const provisionedMeta = drawer?.state.saveToDatabase ? {} : await getProvisionedMeta(uid);
+      let provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>;
+      try {
+        // The database escape hatch stays unmanaged whatever folder is picked
+        provisionedMeta = drawer?.state.saveToDatabase ? {} : await getProvisionedMeta(uid);
+      } catch {
+        // Revert to what the scene meta still describes: a racing pick's value may never have reached it
+        if (selectionId === folderSelectionIdRef.current) {
+          setValue('folder', { uid: dashboard.state.meta.folderUid, title: dashboard.state.meta.folderTitle });
+        }
+        return;
+      }
       if (selectionId !== folderSelectionIdRef.current) {
         return;
       }

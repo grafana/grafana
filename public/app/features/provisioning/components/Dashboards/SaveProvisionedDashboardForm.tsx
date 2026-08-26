@@ -295,9 +295,29 @@ export function SaveProvisionedDashboardForm({
       // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
       const selectionId = ++folderSelectionIdRef.current;
       setValue('folder', { uid, title });
-      const meta = await getProvisionedMeta(uid);
+      let meta: Awaited<ReturnType<typeof getProvisionedMeta>>;
+      try {
+        meta = await getProvisionedMeta(uid);
+      } catch (err) {
+        // An outdated pick's failure is moot: the latest pick owns the field and any error surfaced
+        if (selectionId !== folderSelectionIdRef.current) {
+          return;
+        }
+        // Revert to what the scene meta still describes: a racing pick's value may never have reached it
+        setValue('folder', { uid: dashboard.state.meta.folderUid, title: dashboard.state.meta.folderTitle });
+        throw err;
+      }
       if (selectionId !== folderSelectionIdRef.current) {
         return;
+      }
+      // A dirty filename survives the defaults reset with the old folder prefix attached, so the path moves here
+      const directory = uid ? meta.folderPath : '';
+      if (directory !== undefined) {
+        const currentPath = getValues('path');
+        const nextPath = joinPath(directory, splitPath(currentPath).filename);
+        if (nextPath !== currentPath) {
+          setValue('path', nextPath);
+        }
       }
       // Same merge Save As uses: swaps the folder's manager annotations without dropping the
       // dashboard's k8s identity, so an open copy still resolves as an update
@@ -305,14 +325,31 @@ export function SaveProvisionedDashboardForm({
         meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, meta), folderTitle: title },
       });
     },
-    [setValue, dashboard]
+    [setValue, getValues, dashboard]
+  );
+
+  // Picker/root-button entry point: surfaces a failed pick, where handleCreateFolder stays silent
+  const handleFolderChange = useCallback(
+    (uid?: string, title?: string) => {
+      setError(undefined);
+      selectFolder(uid, title).catch((err) => {
+        setError(
+          getProvisionedRequestError(
+            err,
+            t(
+              'dashboard-scene.save-provisioned-dashboard-form.folder-select-error',
+              'Failed to change the target folder'
+            )
+          )
+        );
+      });
+    },
+    [selectFolder]
   );
 
   const handleSaveAtRoot = useCallback(() => {
-    const { filename } = splitPath(getValues('path'));
-    setValue('path', filename);
-    selectFolder();
-  }, [getValues, setValue, selectFolder]);
+    handleFolderChange();
+  }, [handleFolderChange]);
 
   const handleCreateFolder = useCallback(async () => {
     if (isCreatingFolderRef.current) {
@@ -528,7 +565,7 @@ export function SaveProvisionedDashboardForm({
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
                       <ProvisioningAwareFolderPicker
-                        onChange={selectFolder}
+                        onChange={handleFolderChange}
                         // An empty uid must read as "root", or the picker's team-folder preselect overwrites it
                         value={value.uid || undefined}
                         {...field}
