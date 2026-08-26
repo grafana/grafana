@@ -25,12 +25,13 @@ import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 export interface ViewPanelSidePaneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   fanoutMode?: string;
+  fanoutByTime?: string;
 }
 
 export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
   public static Component = ViewPanelSidePaneRenderer;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['fanout'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['fanout', 'fanoutTime'] });
 
   public getId() {
     return 'view-panel-pane';
@@ -41,8 +42,13 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
     DashboardInteractions.viewPanelAction({ action: 'set_fanout_mode', value: value ?? '' });
   }
 
+  public onSetByTimeMode(value: string | undefined) {
+    this.setState({ fanoutByTime: value });
+    DashboardInteractions.viewPanelAction({ action: 'set_fanout_by_time', value: value ?? '' });
+  }
+
   public getUrlState() {
-    return { fanout: this.state.fanoutMode };
+    return { fanout: this.state.fanoutMode, fanoutTime: this.state.fanoutByTime };
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
@@ -50,6 +56,12 @@ export class ViewPanelSidePane extends SceneObjectBase<ViewPanelSidePaneState> {
       this.setState({ fanoutMode: values.fanout });
     } else if (Object.hasOwn(values, 'fanout')) {
       this.setState({ fanoutMode: undefined });
+    }
+
+    if (typeof values.fanoutTime === 'string') {
+      this.setState({ fanoutByTime: values.fanoutTime });
+    } else if (Object.hasOwn(values, 'fanoutTime')) {
+      this.setState({ fanoutByTime: undefined });
     }
   }
 }
@@ -98,7 +110,12 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
             </Button>
           </Box>
           {viewPanelOptions?.quickToggles && <ViewPanelQuickToggles panel={panel} plugin={plugin.value} />}
-          {viewPanelOptions?.fanout?.enabled && <ViewPanelFanoutOptions panel={panel} pane={model} />}
+          {viewPanelOptions?.fanout?.enabled && (
+            <>
+              <ViewPanelFanoutOptions panel={panel} pane={model} />
+              <ViewPanelFanoutByTimeOptions pane={model} />
+            </>
+          )}
         </Box>
       </ScrollContainer>
     </Box>
@@ -170,6 +187,47 @@ function ViewPanelFanoutOptions({ panel, pane }: ViewPaneFanoutOptionsProps) {
             label={label}
             checked={modeValue === getModeForLabel(label)}
             onClick={() => pane.onSetMode(getModeForLabel(label))}
+          />
+        ))}
+      </Box>
+    </OptionsPaneCategory>
+  );
+}
+
+function ViewPanelFanoutByTimeOptions({ pane }: { pane: ViewPanelSidePane }) {
+  const { fanoutByTime } = pane.useState();
+
+  const modeValue = fanoutByTime ?? '$__none__$';
+
+  const byTimeOptions = [
+    { value: '1h', label: t('dashboard.sidebar.view-panel.fanout-by-time-1h', '1 hour') },
+    { value: '1d', label: t('dashboard.sidebar.view-panel.fanout-by-time-1d', '1 day') },
+    { value: '1w', label: t('dashboard.sidebar.view-panel.fanout-by-time-1w', '1 week') },
+    { value: '1M', label: t('dashboard.sidebar.view-panel.fanout-by-time-1M', '1 month') },
+  ];
+
+  return (
+    <OptionsPaneCategory
+      title={t('dashboard.sidebar.view-panel.fanout-by-time-category', 'Fan-out by time window')}
+      id="fanout-by-time"
+      isOpenDefault={true}
+    >
+      <Box direction="column" gap={1} display="flex" paddingLeft={1}>
+        <RadioButtonDot
+          name="fanout-by-time"
+          id="fanout-by-time-$__none__$"
+          label={t('dashboard.sidebar.view-panel.disabled', 'Disabled')}
+          checked={modeValue === '$__none__$'}
+          onClick={() => pane.onSetByTimeMode(undefined)}
+        />
+        {byTimeOptions.map((option) => (
+          <RadioButtonDot
+            key={option.value}
+            name="fanout-by-time"
+            id={option.value}
+            label={option.label}
+            checked={modeValue === option.value}
+            onClick={() => pane.onSetByTimeMode(option.value)}
           />
         ))}
       </Box>

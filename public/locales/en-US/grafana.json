@@ -6495,6 +6495,11 @@
       "view-panel": {
         "disabled": "Disabled",
         "fanout-by-series": "By series",
+        "fanout-by-time-12h": "12 hours",
+        "fanout-by-time-1d": "1 day",
+        "fanout-by-time-1h": "1 hour",
+        "fanout-by-time-1w": "1 week",
+        "fanout-by-time-category": "Fan-out by time window",
         "fanout-category": "Fan-out by series or label",
         "fanout-labels": "Labels",
         "fanout-no-labels": "Data has no labels",
