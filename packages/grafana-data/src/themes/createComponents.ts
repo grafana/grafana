@@ -4,7 +4,7 @@ import * as z from 'zod';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
-import { resolvePaletteRefs } from './palette_new';
+import { palette, resolvePaletteRefs } from './palette_new';
 import { type DeepRequired } from './types';
 
 interface MenuComponentTokens {
@@ -22,6 +22,8 @@ const badgeColorTokens = z.object({
   background: z.string().optional(),
   border: z.string().optional(),
 });
+
+type BadgeColorTokens = z.infer<typeof badgeColorTokens>;
 
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
@@ -172,6 +174,7 @@ export const ThemeComponentsInputSchema = z
       orange: badgeColorTokens.optional(),
       purple: badgeColorTokens.optional(),
       darkgrey: badgeColorTokens.optional(),
+      textColor: z.string().optional(),
     }),
   })
   .partial();
@@ -179,12 +182,23 @@ export const ThemeComponentsInputSchema = z
 /** @beta */
 type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
-// The menu and tag props are overridden to preserve types that zod inference can't reproduce
+// The menu, tag and badge props are overridden to preserve types that zod inference can't reproduce
 /** @beta */
-export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu' | 'tag'>> & {
+export type ThemeComponents = DeepRequired<
+  Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu' | 'tag' | 'badge'>
+> & {
   menu: MenuComponentTokens;
   tag: {
     colors: readonly TagColors[];
+  };
+  badge: {
+    blue?: BadgeColorTokens;
+    red?: BadgeColorTokens;
+    green?: BadgeColorTokens;
+    orange?: BadgeColorTokens;
+    purple?: BadgeColorTokens;
+    darkgrey?: BadgeColorTokens;
+    textColor: string;
   };
 };
 
@@ -303,6 +317,10 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
             ? 'hsl(from #1b416d h calc(s * 0.9) calc(l * 0.9) / 60%)'
             : 'hsl(from #a6e3df h s l / 60%)',
       },
+    },
+    badge: {
+      // apply to brand color in light theme to pass a11y contrast checks
+      textColor: palette.black,
     },
   };
 

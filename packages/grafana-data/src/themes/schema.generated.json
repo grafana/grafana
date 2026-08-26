@@ -1384,6 +1384,9 @@
                 }
               },
               "additionalProperties": false
+            },
+            "textColor": {
+              "type": "string"
             }
           },
           "additionalProperties": false
