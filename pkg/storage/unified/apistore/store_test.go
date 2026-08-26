@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
@@ -203,7 +204,7 @@ func TestIntegrationGuaranteedUpdateCreateOnUpdate(t *testing.T) {
 // TestGuaranteedUpdateFailsFastOnNonRetryableError guards against re-running a deterministic
 // update failure. Admission validation runs inside the tryUpdate closure on every attempt, so a
 // terminal error like a BadRequest (e.g. "Dashboard refresh interval is too low") can never
-// succeed on retry — it must return immediately rather than exhausting MaxUpdateAttempts. Because
+// succeed on retry — it must return immediately rather than exhausting the retry budget. Because
 // each loop iteration issues exactly one Read before calling tryUpdate, counting tryUpdate calls
 // also asserts the object is read only once.
 func TestGuaranteedUpdateFailsFastOnNonRetryableError(t *testing.T) {
@@ -226,39 +227,7 @@ func TestGuaranteedUpdateFailsFastOnNonRetryableError(t *testing.T) {
 	assert.Equal(t, 1, attempts, "non-retryable error must not be retried")
 }
 
-// TestGuaranteedUpdateRetriesOnConflictThenSucceeds asserts that genuine optimistic-concurrency
-// conflicts (which surface from tryUpdate) are still retried by re-reading and reapplying, and the
-// update ultimately succeeds once the conflict clears.
-func TestGuaranteedUpdateRetriesOnConflictThenSucceeds(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	require.NoError(t, err)
-
-	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
-
-	const conflicts = 3
-	attempts := 0
-	tryUpdate := func(input runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-		attempts++
-		if attempts <= conflicts {
-			return nil, nil, apierrors.NewConflict(schema.GroupResource{Resource: "pods"}, "foo", errors.New("optimistic lock"))
-		}
-		pod := input.(*example.Pod)
-		pod.Spec.Hostname = "updated"
-		return pod, nil, nil
-	}
-
-	out := &example.Pod{}
-	err = store.GuaranteedUpdate(ctx, key, out, false, nil, tryUpdate, nil)
-	require.NoError(t, err)
-	assert.Equal(t, conflicts+1, attempts, "should retry each conflict then succeed")
-	assert.Equal(t, "updated", out.Spec.Hostname)
-}
-
-// TestGuaranteedUpdateExhaustsRetriesOnPersistentConflict asserts that a conflict that never
-// clears is retried up to MaxUpdateAttempts and then surfaced as a Conflict error.
-func TestGuaranteedUpdateExhaustsRetriesOnPersistentConflict(t *testing.T) {
+func TestGuaranteedUpdateFailsFastOnTryUpdateConflict(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
 	require.NoError(t, err)
@@ -275,7 +244,82 @@ func TestGuaranteedUpdateExhaustsRetriesOnPersistentConflict(t *testing.T) {
 	err = store.GuaranteedUpdate(ctx, key, &example.Pod{}, false, nil, tryUpdate, nil)
 	require.Error(t, err)
 	assert.True(t, apierrors.IsConflict(err), "expected a Conflict error, got: %v", err)
-	assert.Equal(t, apistore.MaxUpdateAttempts, attempts, "should retry until the attempt budget is exhausted")
+	assert.Equal(t, 1, attempts, "a conflict from tryUpdate is terminal and must not be retried")
+}
+
+func TestGuaranteedUpdateRetriesOnStorageConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := storagetesting.KeyFunc("test-ns", "foo")
+	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+
+	attempts := 0
+	tryUpdate := func(input runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		attempts++
+		if attempts == 1 {
+			competing := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+				pod := in.(*example.Pod)
+				pod.Spec.Subdomain = "raced"
+				return pod, nil, nil
+			}
+			require.NoError(t, store.GuaranteedUpdate(ctx, key, &example.Pod{}, false, nil, competing, nil))
+		}
+		pod := input.(*example.Pod)
+		pod.Spec.Hostname = "updated"
+		return pod, nil, nil
+	}
+
+	out := &example.Pod{}
+	err = store.GuaranteedUpdate(ctx, key, out, false, nil, tryUpdate, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 2, attempts, "should re-read once after losing the compare-and-swap")
+	assert.Equal(t, "updated", out.Spec.Hostname)
+	assert.Equal(t, "raced", out.Spec.Subdomain, "the competing write must be preserved")
+}
+
+func TestGuaranteedUpdateStopsOnCanceledContext(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := storagetesting.KeyFunc("test-ns", "foo")
+	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+
+	attempts := 0
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		attempts++
+		return nil, nil, errors.New("should not be reached")
+	}
+
+	err = store.GuaranteedUpdate(canceled, key, &example.Pod{}, false, nil, tryUpdate, nil)
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Equal(t, 0, attempts, "a canceled context must not issue any attempt")
+}
+
+func TestGuaranteedUpdatePreconditionFailureStaysInvalidObj(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := storagetesting.KeyFunc("test-ns", "foo")
+	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+
+	wrongUID := types.UID("not-the-stored-uid")
+	attempts := 0
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		attempts++
+		return nil, nil, errors.New("should not be reached")
+	}
+
+	err = store.GuaranteedUpdate(ctx, key, &example.Pod{}, false, &storage.Preconditions{UID: &wrongUID}, tryUpdate, nil)
+	require.Error(t, err)
+	assert.True(t, storage.IsInvalidObj(err), "precondition error must stay unwrapped, got: %v", err)
+	assert.Equal(t, 0, attempts, "a failed precondition must not call tryUpdate")
 }
 
 func TestGet(t *testing.T) {

@@ -34,6 +34,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -46,8 +47,14 @@ import (
 )
 
 const (
-	MaxUpdateAttempts = 30
+	MaxUpdateRetries = 5
 )
+
+var updateRetryConfig = backoff.Config{
+	MinBackoff: 10 * time.Millisecond,
+	MaxBackoff: 250 * time.Millisecond,
+	MaxRetries: MaxUpdateRetries,
+}
 
 var (
 	_      storage.Interface = (*Storage)(nil)
@@ -385,7 +392,9 @@ func (s *Storage) Delete(
 		return storage.NewKeyNotFoundError(key, 0)
 	}
 
-	for attempt := 1; attempt <= MaxUpdateAttempts; attempt++ {
+	var lastErr error
+	bo := backoff.New(ctx, updateRetryConfig)
+	for bo.Ongoing() {
 		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 			return err
 		}
@@ -425,10 +434,13 @@ func (s *Storage) Delete(
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		if rsp.Error != nil {
-			if rsp.Error.Code == http.StatusConflict && attempt < MaxUpdateAttempts {
+			err := resource.GetError(rsp.Error)
+			if isRetryableStorageError(err) {
+				lastErr = err
+				bo.Wait()
 				continue
 			}
-			return resource.GetError(rsp.Error)
+			return err
 		}
 
 		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
@@ -438,7 +450,7 @@ func (s *Storage) Delete(
 		return s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion))
 	}
 
-	return nil
+	return retriesExhausted(ctx, bo, lastErr)
 }
 
 // This version is not yet passing the watch tests
@@ -706,7 +718,9 @@ func (s *Storage) GuaranteedUpdate(
 		}
 	}
 
-	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
+	var lastErr error
+	bo := backoff.New(ctx, updateRetryConfig)
+	for bo.Ongoing() {
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err != nil {
@@ -731,9 +745,6 @@ func (s *Storage) GuaranteedUpdate(
 
 			updatedObj, _, err = tryUpdate(s.newFunc(), res)
 			if err != nil {
-				if shouldRetryUpdate(err, attempt) {
-					continue
-				}
 				return err
 			}
 
@@ -763,17 +774,11 @@ func (s *Storage) GuaranteedUpdate(
 		res.ResourceVersion = uint64(readResponse.ResourceVersion)
 
 		if err := preconditions.Check(key, existingObj); err != nil {
-			if apierrors.IsConflict(err) && attempt < MaxUpdateAttempts {
-				continue
-			}
-			return fmt.Errorf("precondition failed: %w", err)
+			return err
 		}
 
 		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
-			if shouldRetryUpdate(err, attempt) {
-				continue
-			}
 			return err
 		}
 
@@ -790,14 +795,16 @@ func (s *Storage) GuaranteedUpdate(
 		if err != nil {
 			err = resource.GetError(resource.AsErrorResult(err))
 		} else if updateResponse.Error != nil {
-			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+			err = resource.GetError(updateResponse.Error)
+			if isRetryableStorageError(err) {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
 				// discard its return and retry instead of surfacing it.
-				_ = v.finish(ctx, resource.GetError(updateResponse.Error), s.opts.SecureValues)
-				continue // try the read again
+				_ = v.finish(ctx, err, s.opts.SecureValues)
+				lastErr = err
+				bo.Wait()
+				continue
 			}
-			err = resource.GetError(updateResponse.Error)
 		}
 
 		// Cleanup secure values
@@ -818,15 +825,18 @@ func (s *Storage) GuaranteedUpdate(
 		return nil
 	}
 
-	return nil
+	return retriesExhausted(ctx, bo, lastErr)
 }
 
-// shouldRetryUpdate reports whether a failed update attempt is worth retrying.
-// Only optimistic-concurrency conflicts can be resolved by re-reading and
-// reapplying; validation/bad-request/forbidden errors are deterministic and
-// must fail fast instead of exhausting MaxUpdateAttempts.
-func shouldRetryUpdate(err error, attempt int) bool {
-	return apierrors.IsConflict(err) && attempt < MaxUpdateAttempts
+func isRetryableStorageError(err error) bool {
+	return apierrors.IsConflict(err)
+}
+
+func retriesExhausted(ctx context.Context, bo *backoff.Backoff, lastErr error) error {
+	if ctx.Err() == nil && lastErr != nil {
+		return lastErr
+	}
+	return bo.ErrCause()
 }
 
 // Added in k8s 1.35
