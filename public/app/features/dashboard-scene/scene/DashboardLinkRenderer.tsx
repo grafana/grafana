@@ -92,7 +92,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   );
 
   return (
-    <EditActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+    <EditActionsPopover content={editActions}>
       <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
         {content}
       </div>

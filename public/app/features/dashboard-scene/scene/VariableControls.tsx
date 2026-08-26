@@ -74,7 +74,6 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
-  const canEditControl = Boolean(isSelectable) && isVariableEditable(variable);
   const isReadOnlyControl = Boolean(isEditingNewLayouts) && !isVariableEditable(variable);
   const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
@@ -131,7 +130,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <EditActionsPopover isEditable={canEditControl} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -162,7 +161,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
     return (
       <>
         {editorModal}
-        <EditActionsPopover isEditable={canEditControl} content={editActions}>
+        <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
           <div
             className={cx(
               styles.verticalContainer,
@@ -190,7 +189,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   return (
     <>
       {editorModal}
-      <EditActionsPopover isEditable={canEditControl} content={editActions}>
+      <EditActionsPopover disabled={!isVariableEditable(variable)} content={editActions}>
         <div
           className={cx(
             styles.container,

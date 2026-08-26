@@ -392,6 +392,69 @@ describe('<PanelEditActionsWrapper />', () => {
     });
   });
 
+  describe('when the dashboard is not in edit mode', () => {
+    test('resting the pointer does not show the edit actions', async () => {
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+
+      render(
+        <ElementSelectionContext.Provider
+          value={{ enabled: false, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
+        >
+          <PanelEditActionsWrapper panel={panel}>
+            <div data-testid="reference-child">panel</div>
+          </PanelEditActionsWrapper>
+        </ElementSelectionContext.Provider>
+      );
+
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when edit mode is toggled off and on again', () => {
+    test('the child is not remounted, so its transient state is preserved', async () => {
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+      const tree = (selectionEnabled: boolean) => (
+        <ElementSelectionContext.Provider
+          value={{ enabled: selectionEnabled, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
+        >
+          <PanelEditActionsWrapper panel={panel}>
+            <input data-testid="reference-child" />
+          </PanelEditActionsWrapper>
+        </ElementSelectionContext.Provider>
+      );
+      const { user, rerender } = render(tree(true));
+
+      await user.type(screen.getByTestId('reference-child'), 'unsaved panel state');
+
+      rerender(tree(false));
+      rerender(tree(true));
+
+      expect(screen.getByTestId('reference-child')).toHaveValue('unsaved panel state');
+    });
+
+    test('resting the pointer shows the edit actions again', async () => {
+      const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+      const tree = (selectionEnabled: boolean) => (
+        <ElementSelectionContext.Provider
+          value={{ enabled: selectionEnabled, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
+        >
+          <PanelEditActionsWrapper panel={panel}>
+            <div data-testid="reference-child">panel</div>
+          </PanelEditActionsWrapper>
+        </ElementSelectionContext.Provider>
+      );
+      const { rerender } = render(tree(true));
+
+      rerender(tree(false));
+      rerender(tree(true));
+      await hoverAndRest(screen.getByTestId('reference-child'));
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    });
+  });
+
   describe('when hover popover is not supported', () => {
     beforeEach(() => {
       mockUseHoverPopoverSupported.mockReturnValue(false);

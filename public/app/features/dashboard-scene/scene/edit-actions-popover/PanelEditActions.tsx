@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
-import { useCallback, useContext, useMemo, type JSX } from 'react';
+import { useCallback, useMemo, type JSX } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { Button, ElementSelectionContext, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
@@ -20,7 +20,7 @@ import {
   SettingsActionButton,
 } from './EditActions';
 import { useEditActionsLayout } from './EditActionsLayoutContext';
-import { HoverPopover, useHoverPopoverSupported } from './EditActionsPopover';
+import { EditActionsPopover, useHoverPopoverSupported } from './EditActionsPopover';
 
 export function PanelEditActions({
   onClickEdit,
@@ -70,20 +70,8 @@ export function PanelEditActions({
 }
 
 export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
-  const isPopoverSupported = useHoverPopoverSupported();
-
-  const elementSelectionContext = useContext(ElementSelectionContext);
-  const isSelectable = Boolean(elementSelectionContext?.enabled);
-
-  if (!isPopoverSupported || !isSelectable) {
-    return children;
-  }
-
-  return <PanelEditActionsPopover panel={panel}>{children}</PanelEditActionsPopover>;
-}
-
-function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; children: JSX.Element }) {
   const theme = useTheme2();
+  const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   const onClickEdit = useCallback(() => {
@@ -130,14 +118,15 @@ function PanelEditActionsPopover({ panel, children }: { panel: VizPanel; childre
   );
 
   return (
-    <HoverPopover
+    <EditActionsPopover
       content={editActions}
+      disabled={!isPopoverSupported}
       placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
       shiftPadding={getSidebarShiftPadding}
     >
       {children}
-    </HoverPopover>
+    </EditActionsPopover>
   );
 }

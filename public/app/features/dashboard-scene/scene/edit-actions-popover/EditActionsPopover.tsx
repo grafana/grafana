@@ -15,16 +15,9 @@ import React, { cloneElement, createContext, useContext, useMemo, useState } fro
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Portal, useStyles2, useTheme2 } from '@grafana/ui';
+import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
 export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
-
-export function EditActionsPopover({ isEditable, ...props }: EditActionsPopoverProps & { isEditable: boolean }) {
-  if (!isEditable) {
-    return props.children;
-  }
-  return <HoverPopover {...props} />;
-}
 
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
@@ -44,15 +37,21 @@ export function useHoverPopoverSupported(defaultValue = true) {
 type EditActionsPopoverProps = {
   content: React.ReactNode;
   children: React.JSX.Element;
+  disabled?: boolean;
   placement?: Placement;
   portalRoot?: () => HTMLElement | undefined;
   zIndex?: number;
   shiftPadding?: () => number | { right: number };
 };
 
-export function HoverPopover({
+/**
+ * The popover is displayed only while element selection is enabled (edit mode).
+ * Pass `disabled` to turn it off without unmounting children.
+ */
+export function EditActionsPopover({
   content,
   children,
+  disabled = false,
   placement = 'top-start',
   portalRoot,
   zIndex,
@@ -61,6 +60,9 @@ export function HoverPopover({
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
   const [isOpen, setIsOpen] = useState(false);
+
+  const isSelectable = Boolean(useContext(ElementSelectionContext)?.enabled);
+  const isEnabled = !disabled && isSelectable;
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
@@ -82,6 +84,7 @@ export function HoverPopover({
   });
 
   const hover = useHover(context, {
+    enabled: isEnabled,
     handleClose: safePolygon(),
     // waits until the user’s cursor is at rest over the reference element before opening
     restMs: WAIT_FOR_MOUSE_REST_DURATION_MS,
@@ -95,7 +98,7 @@ export function HoverPopover({
   return (
     <>
       {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
-      {isOpen && content && (
+      {isEnabled && isOpen && content && (
         <Portal root={portalRoot?.()} zIndex={zIndex ?? theme.zIndex.portal}>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
             <EditActionsPopoverContext.Provider value={popoverContextValue}>

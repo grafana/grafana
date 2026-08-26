@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
-import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
 import { annotationEditActions } from '../settings/annotations/actions';
@@ -44,7 +44,6 @@ export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataL
 
 export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
   const styles = useStyles2(getStyles);
-  const { isSelectable } = useElementSelection(layer.state.key);
   const [isQueryEditorOpen, setIsQueryEditorOpen] = useState(false);
 
   const onClickEditLayer = useCallback(() => {
@@ -91,7 +90,7 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
       {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
         <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
       )}
-      <EditActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+      <EditActionsPopover content={editActions}>
         <div className={styles.container}>
           <DataLayerControl layer={layer} inMenu={inMenu} />
         </div>
