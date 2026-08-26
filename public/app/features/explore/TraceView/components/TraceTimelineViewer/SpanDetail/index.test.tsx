@@ -264,9 +264,7 @@ describe('<SpanDetail>', () => {
       },
     };
 
-    render(
-      <SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutResourceAttributes} />
-    );
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={spanWithoutResourceAttributes} />);
 
     expect(screen.getByText('Resource attributes')).toBeInTheDocument();
     expect(screen.getAllByText('No attributes').length).toBeGreaterThanOrEqual(1);
