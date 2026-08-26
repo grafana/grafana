@@ -31,7 +31,7 @@ export function AuthorizationPendingAlert({ onCancel }: AuthorizationPendingAler
         <Spinner size="sm" inline />
       </Stack>
       <Trans i18nKey="provisioning.oauth-authorization.pending-body">
-        If the provider shows an error page, verify the client ID and attempt to reauthorize.
+        If the provider shows an error page, verify the client ID and attempt to authorize again.
       </Trans>
     </Alert>
   );
