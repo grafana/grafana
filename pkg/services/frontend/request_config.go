@@ -41,6 +41,7 @@ type FSRequestConfig struct {
 func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
 	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		PluginImportTelemetryPackages:        cfg.PluginImportTelemetryPackages,
 		AnonymousEnabled:                     cfg.Anonymous.Enabled,
 		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
