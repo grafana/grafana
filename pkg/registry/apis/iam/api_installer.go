@@ -88,7 +88,7 @@ func (n *NoopApiInstaller[T]) RegisterStorage(apiGroupInfo *server.APIGroupInfo,
 }
 
 func (n *NoopApiInstaller[T]) GetRulesForSubjectGetter() rest.Getter {
-	return nil
+	return &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
 }
 
 func (n *NoopApiInstaller[T]) ValidateOnCreate(ctx context.Context, obj T) error {
