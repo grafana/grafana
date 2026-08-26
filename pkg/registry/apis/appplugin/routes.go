@@ -68,7 +68,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		}
 		*dst = append(*dst, builder.APIRouteHandler{
 			Path:    path,
-			Spec:    withPathParameters(props, params...),
+			Spec:    withPathParameters(props, nil, params...),
 			Schemas: version.Routes.Schemas,
 			Handler: b.routeHandler(gv, "", path),
 		})
@@ -85,12 +85,88 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		if plural == "" {
 			continue
 		}
+
 		// Cluster kinds have no namespace segment to mount under.
 		dst := &routes.Namespace
 		params := []*spec3.Parameter{namespacePathParameter(), namePathParameter()}
 		if kind.Scope == clusterScope {
 			dst = &routes.Root
 			params = []*spec3.Parameter{namePathParameter()}
+		}
+
+		if kind.Scope != clusterScope {
+			if true { // trash
+				*dst = append(*dst, builder.APIRouteHandler{
+					Path: plural + "/trash",
+					Spec: &spec3.PathProps{
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+								Tags:        []string{kind.Kind},
+								OperationId: "trash" + kind.Kind,
+								Parameters: []*spec3.Parameter{
+									namespacePathParameter(),
+								},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										StatusCodeResponses: map[int]*spec3.Response{
+											200: {
+												ResponseProps: spec3.ResponseProps{
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Handler: func(w http.ResponseWriter, r *http.Request) {
+						w.Write([]byte("TODO delegate trash"))
+					},
+				})
+			}
+			if true { // search
+				*dst = append(*dst, builder.APIRouteHandler{
+					Path: plural + "/search",
+					Spec: &spec3.PathProps{
+						Post: &spec3.Operation{
+							OperationProps: spec3.OperationProps{
+								Tags:        []string{kind.Kind},
+								OperationId: "search" + kind.Kind,
+								Parameters: []*spec3.Parameter{
+									namespacePathParameter(),
+								},
+								Responses: &spec3.Responses{
+									ResponsesProps: spec3.ResponsesProps{
+										StatusCodeResponses: map[int]*spec3.Response{
+											200: {
+												ResponseProps: spec3.ResponseProps{
+													Content: map[string]*spec3.MediaType{
+														"application/json": {
+															MediaTypeProps: spec3.MediaTypeProps{
+																Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Handler: func(w http.ResponseWriter, r *http.Request) {
+						w.Write([]byte("TODO delegate search"))
+					},
+				})
+			}
 		}
 
 		for path, props := range kind.Routes {
@@ -102,7 +178,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			}
 			*dst = append(*dst, builder.APIRouteHandler{
 				Path:    plural + "/{" + nameParameter + "}/" + path,
-				Spec:    withPathParameters(props, params...),
+				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
 				Schemas: version.Routes.Schemas,
 				Handler: b.routeHandler(gv, plural, path),
 			})
@@ -215,7 +291,7 @@ func namePathParameter() *spec3.Parameter {
 // withPathParameters documents the path segments a route is mounted under, since
 // a path parameter missing from the spec makes the operation invalid. The
 // operations are copied because they are shared with the loaded manifest.
-func withPathParameters(props spec3.PathProps, params ...*spec3.Parameter) *spec3.PathProps {
+func withPathParameters(props spec3.PathProps, tags []string, params ...*spec3.Parameter) *spec3.PathProps {
 	out := props
 	for _, op := range []**spec3.Operation{
 		&out.Get, &out.Head, &out.Delete, &out.Post,
@@ -224,12 +300,12 @@ func withPathParameters(props spec3.PathProps, params ...*spec3.Parameter) *spec
 		if *op == nil {
 			continue
 		}
-		*op = operationWithPathParameters(**op, params...)
+		*op = operationWithPathParameters(**op, tags, params...)
 	}
 	return &out
 }
 
-func operationWithPathParameters(op spec3.Operation, params ...*spec3.Parameter) *spec3.Operation {
+func operationWithPathParameters(op spec3.Operation, tags []string, params ...*spec3.Parameter) *spec3.Operation {
 	// Each operation gets its own copy so the spec has no aliased parameters.
 	declared := slices.Clone(op.Parameters)
 	for _, param := range params {
@@ -242,5 +318,6 @@ func operationWithPathParameters(op spec3.Operation, params ...*spec3.Parameter)
 		declared = append(declared, &p)
 	}
 	op.Parameters = declared
+	op.Tags = tags
 	return &op
 }
