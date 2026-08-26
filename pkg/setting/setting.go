@@ -255,6 +255,7 @@ type Cfg struct {
 	AllowEmbedding                       bool
 	XSSProtectionHeader                  bool
 	ContentTypeProtectionHeader          bool
+	AssetSriChecksEnabled                bool
 	StrictTransportSecurity              bool
 	StrictTransportSecurityMaxAge        int
 	StrictTransportSecurityPreload       bool
@@ -2061,6 +2062,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	copyCookieSecuritySettingsToGlobals(cfg)
 
 	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	cfg.AssetSriChecksEnabled = security.Key("asset_sri_checks_enabled").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
