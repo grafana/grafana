@@ -78,19 +78,17 @@ function deferred<T>() {
 }
 
 describe('updateDashboardScopeVariable', () => {
-  let modeChangedSpy: jest.SpyInstance;
+  let toggledSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    modeChangedSpy = jest
-      .spyOn(DashboardInteractions, 'globalVariablesModeChanged')
-      .mockImplementation(() => undefined);
+    toggledSpy = jest.spyOn(DashboardInteractions, 'predefinedVariableToggled').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
-    modeChangedSpy.mockRestore();
+    toggledSpy.mockRestore();
   });
 
-  it('writes a name array when checking one global and does not report radio analytics', () => {
+  it('writes a name array when checking one global and reports toggle analytics', () => {
     const dashboard = createDashboard();
 
     updateDashboardScopeVariable(dashboard, 'global', 'env', true, ['region', 'env']);
@@ -98,7 +96,7 @@ describe('updateDashboardScopeVariable', () => {
     expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
       '{"global":["env"],"folder":"none"}'
     );
-    expect(modeChangedSpy).not.toHaveBeenCalled();
+    expect(toggledSpy).toHaveBeenCalledWith({ scope: 'global', name: 'env', checked: true });
     expect(dashboard.refreshPredefinedVariables).toHaveBeenCalled();
   });
 
@@ -132,7 +130,7 @@ describe('updateDashboardScopeVariable', () => {
     updateDashboardScopeVariable(dashboard, 'global', 'env', true, ['region', 'env']);
 
     expect(dashboard.state.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables]).toBe(
-      '{"global":["region","env"],"folder":"none"}'
+      '{"global":["env","region"],"folder":"none"}'
     );
   });
 });
@@ -169,6 +167,15 @@ describe('DashboardPredefinedVariablesOptions', () => {
     expect(screen.getByRole('checkbox', { name: 'cluster' })).toBeInTheDocument();
     expect(screen.getByText('env')).toBeVisible();
     expect(screen.getByText('cluster')).toBeVisible();
+  });
+
+  it('shows empty-state copy when Global and Folder have no variables', async () => {
+    mockFetchPredefinedVariables.mockResolvedValue([]);
+
+    render(<DashboardPredefinedVariablesOptions dashboard={createDashboard()} />);
+
+    expect(await screen.findByText('No global variables in this organization.')).toBeVisible();
+    expect(screen.getByText('No folder variables in this folder.')).toBeVisible();
   });
 
   it('shows a load error instead of the empty copy when the list fetch fails', async () => {

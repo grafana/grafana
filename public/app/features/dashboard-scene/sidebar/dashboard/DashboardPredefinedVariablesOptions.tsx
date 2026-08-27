@@ -18,6 +18,7 @@ import {
   type PredefinedVariableScope,
   type UseCrossDashboardVariables,
 } from '../../utils/crossDashboardVariablesSelection';
+import { DashboardInteractions } from '../../utils/interactions';
 import { fetchPredefinedVariables, getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 /** Narrow host surface so this pane does not import DashboardScene (circular dep). */
@@ -81,6 +82,7 @@ export function updateDashboardScopeVariable(
     ...current,
     [scope]: toggleScopeName(current[scope], name, checked, allNamesInScope),
   });
+  DashboardInteractions.predefinedVariableToggled({ scope, name, checked });
 }
 
 interface Props {
@@ -213,7 +215,8 @@ function ScopeCheckboxSection({
       <OptionsPaneCategory
         id={categoryId}
         title={sectionLabel}
-        itemsCount={variables.length}
+        // itemsCount=0 collapses the category; undefined keeps the empty-state copy visible.
+        itemsCount={variables.length || undefined}
         headerActionPlacement="left"
         compactIcons
         isNested

@@ -3,7 +3,11 @@ import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types'
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { getGlobalVariablesMode, parseUseCrossDashboardVariables } from './crossDashboardVariablesSelection';
+import {
+  getGlobalVariablesMode,
+  parseUseCrossDashboardVariables,
+  type ScopeSelection,
+} from './crossDashboardVariablesSelection';
 
 /** Current selection annotation value on the live dashboard (meta.k8s is source of truth in the editor). */
 export function getPredefinedVariablesAnnotation(dashboard: DashboardScene): string | undefined {
@@ -38,7 +42,21 @@ export function formatPredefinedVariablesAnnotationLabel(annotation: string | un
       return t('dashboard-scene.cross-dashboard-variables.label-global', 'Global');
     case 'folder':
       return t('dashboard-scene.cross-dashboard-variables.label-folder', 'Folder');
-    default:
-      return t('dashboard-scene.cross-dashboard-variables.label-custom', 'Custom');
+    default: {
+      if (selection === undefined) {
+        return t('dashboard-scene.cross-dashboard-variables.label-custom', 'Custom');
+      }
+      return `${describeScopeSelection(selection.global)} / ${describeScopeSelection(selection.folder)}`;
+    }
   }
+}
+
+function describeScopeSelection(scope: ScopeSelection): string {
+  if (scope === 'all') {
+    return t('dashboard-scene.cross-dashboard-variables.label-all', 'All');
+  }
+  if (scope === 'none') {
+    return t('dashboard-scene.cross-dashboard-variables.label-none', 'None');
+  }
+  return [...scope].sort().join(', ');
 }

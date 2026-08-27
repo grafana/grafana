@@ -9,7 +9,6 @@ import {
   mayInjectAnyPredefinedVariables,
   parseUseCrossDashboardVariables,
   resolvePredefinedVariablesForDashboard,
-  selectionFromGlobalVariablesMode,
   serializeUseCrossDashboardVariables,
   toggleScopeName,
   writeUseCrossDashboardVariables,
@@ -104,8 +103,18 @@ describe('serializeUseCrossDashboardVariables', () => {
       '{"global":"all","folder":"none"}'
     );
     expect(serializeUseCrossDashboardVariables({ global: ['env', 'ds'], folder: ['cluster'] })).toBe(
-      '{"global":["env","ds"],"folder":["cluster"]}'
+      '{"global":["ds","env"],"folder":["cluster"]}'
     );
+  });
+
+  it('sorts name arrays so uncheck-then-recheck serializes the same', () => {
+    const original = serializeUseCrossDashboardVariables({ global: ['region', 'env'], folder: 'none' });
+    expect(original).toBe('{"global":["env","region"],"folder":"none"}');
+    expect(serializeUseCrossDashboardVariables({ global: ['env', 'region'], folder: 'none' })).toBe(original);
+
+    const afterUncheck = toggleScopeName(['region', 'env'], 'region', false, ['region', 'env']);
+    const afterRecheck = toggleScopeName(afterUncheck, 'region', true, ['region', 'env']);
+    expect(serializeUseCrossDashboardVariables({ global: afterRecheck, folder: 'none' })).toBe(original);
   });
 });
 
@@ -237,15 +246,6 @@ describe('getGlobalVariablesMode', () => {
   it('returns undefined for name lists or mixed combinations', () => {
     expect(getGlobalVariablesMode({ global: ['env'], folder: 'none' })).toBeUndefined();
     expect(getGlobalVariablesMode({ global: 'all', folder: ['cluster'] })).toBeUndefined();
-  });
-});
-
-describe('selectionFromGlobalVariablesMode', () => {
-  it('maps coarse radio modes to scope selections', () => {
-    expect(selectionFromGlobalVariablesMode('all')).toEqual({ global: 'all', folder: 'all' });
-    expect(selectionFromGlobalVariablesMode('none')).toEqual({ global: 'none', folder: 'none' });
-    expect(selectionFromGlobalVariablesMode('global')).toEqual({ global: 'all', folder: 'none' });
-    expect(selectionFromGlobalVariablesMode('folder')).toEqual({ global: 'none', folder: 'all' });
   });
 });
 

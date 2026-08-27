@@ -21,7 +21,10 @@ describe('formatPredefinedVariablesAnnotationLabel', () => {
     expect(formatPredefinedVariablesAnnotationLabel('{"global":"none","folder":"all"}')).toBe('Folder');
   });
 
-  it('labels name lists as Custom', () => {
-    expect(formatPredefinedVariablesAnnotationLabel('{"global":["env"],"folder":"none"}')).toBe('Custom');
+  it('labels name lists with the picked names', () => {
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":["env"],"folder":"none"}')).toBe('env / None');
+    expect(formatPredefinedVariablesAnnotationLabel('{"global":["region","env"],"folder":["cluster"]}')).toBe(
+      'env, region / cluster'
+    );
   });
 });

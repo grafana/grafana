@@ -14,20 +14,20 @@ export type UseCrossDashboardVariables = {
   folder: ScopeSelection;
 };
 
-/** Coarse injection mode for analytics and the sidebar radio. */
+/** Coarse injection mode for load analytics and save-diff labels. */
 export type GlobalVariablesMode = 'none' | 'all' | 'global' | 'folder';
 
 export type PredefinedVariableScope = 'global' | 'folder';
 
 /**
- * Map a persisted selection to the coarse radio mode.
+ * Map a persisted selection to a coarse mode.
  *
  * - Missing annotation (`undefined`) → `none` (not opted in)
  * - Both scopes `"none"` → `none`
  * - Both scopes `"all"` → `all`
  * - Global `"all"` + folder `"none"` → `global`
  * - Global `"none"` + folder `"all"` → `folder`
- * - Name lists or mixed combinations → `undefined` (no radio selected)
+ * - Name lists or mixed combinations → `undefined`
  */
 export function getGlobalVariablesMode(
   selection: UseCrossDashboardVariables | undefined
@@ -52,19 +52,6 @@ export function getGlobalVariablesMode(
     return 'folder';
   }
   return undefined;
-}
-
-export function selectionFromGlobalVariablesMode(mode: GlobalVariablesMode): UseCrossDashboardVariables {
-  switch (mode) {
-    case 'all':
-      return { global: 'all', folder: 'all' };
-    case 'none':
-      return { global: 'none', folder: 'none' };
-    case 'global':
-      return { global: 'all', folder: 'none' };
-    case 'folder':
-      return { global: 'none', folder: 'all' };
-  }
 }
 
 /** Count injected variables by predefined origin for load analytics. */
@@ -262,7 +249,7 @@ function normalizeScopeSelection(scope: ScopeSelection): ScopeSelection {
   if (scope === 'all' || scope === 'none') {
     return scope;
   }
-  return scope.length === 0 ? 'none' : scope;
+  return scope.length === 0 ? 'none' : [...scope].sort();
 }
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {
