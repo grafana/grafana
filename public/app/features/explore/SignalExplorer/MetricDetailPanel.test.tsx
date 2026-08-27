@@ -63,11 +63,24 @@ describe('<MetricDetailPanel />', () => {
     ['histogram', 'HISTOGRAM'],
     ['native histogram', 'NATIVE HISTOGRAM'],
     ['summary', 'SUMMARY'],
-    ['unknown', 'UNKNOWN'],
+    ['unknown', 'Unknown type'],
   ])('labels a %s with a badge', (type, badge) => {
     render(<MetricDetailPanel refId="A" metric={metric({ type })} onClose={jest.fn()} />);
 
     expect(screen.getByText(badge)).toBeInTheDocument();
+  });
+
+  // The badge for a metric with no metadata names no type, so the reason has to be reachable — the
+  // badge is the panel's first tab stop, ahead of the close button, and focusing it opens the tooltip.
+  it('explains an unknown type to a keyboard reaching the badge', async () => {
+    render(<MetricDetailPanel refId="A" metric={metric({ type: 'unknown' })} onClose={jest.fn()} />);
+
+    await userEvent.tab();
+
+    expect(screen.getByText('Unknown type')).toHaveFocus();
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      'This datasource reported no recognized type for this metric'
+    );
   });
 
   it('closes on request', async () => {
