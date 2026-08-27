@@ -7,7 +7,6 @@ import { NavID, type NavId } from './constants';
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
 export const anonymousOrSignedIn = () => isSignedIn() || config.anonymousEnabled;
-export const isOrgAdmin = () => contextSrv.user.orgRole === 'Admin';
 
 export interface NavEntryBuilder {
   /** Whether this item is visible at all (permission/config/sign-in gates); absent means always visible */

@@ -6,7 +6,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { NavID, NavWeight } from '../constants';
 import { migrateToCloudAccess, serviceAccountsAccess } from '../pageAccess';
-import { buildEntries, hasAny, isOrgAdmin, type NavEntryBuilder } from '../utils';
+import { buildEntries, hasAny, type NavEntryBuilder } from '../utils';
 
 const canManageOrgs = () =>
   contextSrv.hasPermission(AccessControlAction.OrgsRead) && contextSrv.hasPermission(AccessControlAction.OrgsWrite);
@@ -78,7 +78,7 @@ const ADMIN_GENERAL_CHILDREN: NavEntryBuilder[] = [
     }),
   },
   {
-    when: () => (isOrgAdmin() || contextSrv.isGrafanaAdmin) && config.provisioningEnabled,
+    when: () => (contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin) && config.provisioningEnabled,
     build: () => ({
       text: 'Provisioning',
       id: 'provisioning',
@@ -92,7 +92,7 @@ const ADMIN_GENERAL_CHILDREN: NavEntryBuilder[] = [
 const ADMIN_PLUGINS_CHILDREN: NavEntryBuilder[] = [
   {
     when: () =>
-      isOrgAdmin() ||
+      contextSrv.hasRole('Admin') ||
       (config.pluginAdminEnabled && contextSrv.isGrafanaAdmin) ||
       hasAny(AccessControlAction.PluginsWrite, AccessControlAction.PluginsInstall),
     build: () => ({
