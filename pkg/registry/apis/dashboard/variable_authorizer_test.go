@@ -238,15 +238,28 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 		}
 	})
 
-	t.Run("allows service identity when disabled so folder cleanup can remove leftovers", func(t *testing.T) {
+	t.Run("allows service identity read and delete when disabled so folder cleanup can remove leftovers", func(t *testing.T) {
 		setGlobalVariablesToggle(t, false)
 		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
-		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+		for _, verb := range []string{"get", "list", "watch", "delete", "deletecollection"} {
 			t.Run(verb, func(t *testing.T) {
 				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
 				require.NoError(t, err)
 				require.Equal(t, authorizer.DecisionAllow, decision)
 				require.Empty(t, reason)
+			})
+		}
+	})
+
+	t.Run("denies service identity writes when disabled", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		for _, verb := range []string{"create", "update", "patch"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
 			})
 		}
 	})
