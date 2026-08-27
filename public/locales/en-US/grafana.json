@@ -13154,7 +13154,8 @@
   "options-ui": {
     "color": {
       "clear-tooltip": "Clear settings",
-      "swatch-aria-label": "Pick a color, current selection {{color}}"
+      "swatch-aria-label": "Pick a color, current selection {{color}}",
+      "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
       "color-by-label": "Color series by"

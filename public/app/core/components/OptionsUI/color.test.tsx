@@ -47,11 +47,17 @@ describe('ColorValueEditor', () => {
   it('uses the placeholder as a label for the swatch when no color is set', () => {
     render(<ColorValueEditor value={undefined} onChange={jest.fn()} details />);
 
-    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const swatch = screen.getByRole('button', { name: 'Pick a color, Select color' });
     const placeholder = screen.getByText('Select color');
 
     expect(placeholder.tagName).toBe('LABEL');
     expect(placeholder).toHaveAttribute('for', swatch.getAttribute('id'));
+  });
+
+  it('includes the visible placeholder in the swatch name when no color is set', () => {
+    render(<ColorValueEditor value={undefined} onChange={jest.fn()} details settings={{ placeholder: 'Pick one' }} />);
+
+    expect(screen.getByRole('button', { name: 'Pick a color, Pick one' })).toBeInTheDocument();
   });
 
   it('opens the color picker when the color name label is clicked', async () => {

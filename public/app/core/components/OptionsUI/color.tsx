@@ -41,7 +41,7 @@ export const ColorValueEditor = ({
   const generatedId = useId();
   const swatchId = id ?? generatedId;
   const a11yNameId = `${swatchId}-a11y-name`;
-  const hasSelection = Boolean(details && value);
+  const placeholder = settings?.placeholder ?? 'Select color';
 
   return (
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={settings?.enableNamedColors !== false}>
@@ -53,7 +53,7 @@ export const ColorValueEditor = ({
                 ref={ref}
                 id={swatchId}
                 aria-describedby={ariaDescribedBy}
-                aria-labelledby={hasSelection ? a11yNameId : undefined}
+                aria-labelledby={details ? a11yNameId : undefined}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
@@ -67,16 +67,18 @@ export const ColorValueEditor = ({
                   </span>
                 ) : (
                   <span className={styles.placeholderText}>
-                    <label htmlFor={swatchId}>{settings?.placeholder ?? 'Select color'}</label>
+                    <label htmlFor={swatchId}>{placeholder}</label>
                   </span>
                 )}
-                {value && (
-                  <span className="sr-only" id={a11yNameId}>
-                    {t('options-ui.color.swatch-aria-label', 'Pick a color, current selection {{color}}', {
-                      color: value,
-                    })}
-                  </span>
-                )}
+                <span className="sr-only" id={a11yNameId}>
+                  {value
+                    ? t('options-ui.color.swatch-aria-label', 'Pick a color, current selection {{color}}', {
+                        color: value,
+                      })
+                    : t('options-ui.color.swatch-placeholder-aria-label', 'Pick a color, {{placeholder}}', {
+                        placeholder,
+                      })}
+                </span>
                 {settings?.isClearable && value && (
                   <IconButton
                     name="times"
