@@ -34,12 +34,12 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getSourceDataProvider } from '../utils/getSourceDataProvider';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
-  getSourceDataProvider,
   isLibraryPanel,
 } from '../utils/utils';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
@@ -404,9 +404,6 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
-        // Raw untransformed data when it is available, otherwise whatever the panel actually has —
-        // this tab always shows something, unlike the snapshot path, which would rather show nothing
-        // than frames its transformations already ran over.
         const sourceData = getSourceDataProvider(dataProvider)?.state.data;
         objToStringify = getPanelDataFrames(sourceData ?? dataProvider.state.data);
       }
