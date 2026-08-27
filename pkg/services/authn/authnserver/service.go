@@ -82,7 +82,12 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 
 		resp, err := c.Authenticate(ctx, req)
 		if err != nil {
-			s.log.FromContext(ctx).Error("Client authentication error", "client", c.Name(), "error", err)
+			logger := s.log.FromContext(ctx)
+			if errors.Is(ctx.Err(), context.Canceled) {
+				logger.Debug("Client authentication canceled", "client", c.Name(), "error", err)
+			} else {
+				logger.Error("Client authentication error", "client", c.Name(), "error", err)
+			}
 			grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()})
 			return nil, err
 		}

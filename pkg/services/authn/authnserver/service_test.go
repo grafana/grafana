@@ -29,6 +29,21 @@ type mockClient struct {
 	gotAuthCtx context.Context
 }
 
+type recordingLogger struct {
+	debug []string
+	error []string
+}
+
+func (l *recordingLogger) New(...any) *log.ConcreteLogger { return log.NewNopLogger() }
+func (l *recordingLogger) Log(...any) error               { return nil }
+func (l *recordingLogger) Debug(msg string, _ ...any)     { l.debug = append(l.debug, msg) }
+func (l *recordingLogger) Info(string, ...any)            {}
+func (l *recordingLogger) Warn(string, ...any)            {}
+func (l *recordingLogger) Error(msg string, _ ...any)     { l.error = append(l.error, msg) }
+func (l *recordingLogger) FromContext(context.Context) log.Logger {
+	return l
+}
+
 func (m *mockClient) Name() string { return m.name }
 
 func (m *mockClient) Test(ctx context.Context, _ *authnv1.AuthenticateRequest) bool {
@@ -172,6 +187,33 @@ func TestAuthenticate(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, resp)
 		assert.Contains(t, err.Error(), "internal failure")
+	})
+
+	t.Run("client cancellation propagates without fallthrough", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		svc := NewService(tracing.InitializeTracerForTest())
+		logger := &recordingLogger{}
+		svc.log = logger
+		svc.RegisterClient(&mockClient{
+			name:       "canceled-client",
+			testResult: true,
+			authError:  context.Canceled,
+		})
+		svc.RegisterClient(&mockClient{
+			name:       "backup-client",
+			testResult: true,
+			authResponse: &authnv1.AuthenticateResponse{
+				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
+				Token: "should-not-reach",
+			},
+		})
+
+		resp, err := svc.Authenticate(ctx, req)
+		assert.ErrorIs(t, err, context.Canceled)
+		assert.Nil(t, resp)
+		assert.Equal(t, []string{"Client authentication canceled"}, logger.debug)
+		assert.Empty(t, logger.error)
 	})
 
 	t.Run("nil request returns FAILED with errExpectedNamespace", func(t *testing.T) {
