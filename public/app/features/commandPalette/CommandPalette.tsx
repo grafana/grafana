@@ -19,7 +19,11 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
-import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterExtensionActions,
+  useRegisterRecentDashboardsActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { bucketQueryLength } from './bucketQueryLength';
 import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
@@ -50,6 +54,10 @@ function CommandPaletteContents() {
     currentRootActionId: state.currentRootActionId,
   }));
 
+  // Even though extension links are defined in plugins at load time, they can contain a configure() method that can
+  // show or hide the link based on dynamic factors. Loading it here instead of next to useStaticActions will give
+  // links opportunity to run the configure() method each time we show the palette.
+  useRegisterExtensionActions();
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
