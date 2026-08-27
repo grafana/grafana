@@ -6,13 +6,10 @@ import { t } from '@grafana/i18n';
 import { type SystemTransformationPosition } from '@grafana/scenes';
 import { Badge } from '@grafana/ui';
 
-// Wording and markup shared by both transformation editors: the same transformation must not be
-// named one thing in one editor and something else in the other, and the two lists must not drift
-// apart on how they are keyed, grouped for assistive tech, or found by a test.
+// Wording and markup shared by both transformation editors
 
 /**
- * Display name for a transformation the panel's plugin contributes. A custom operator carries no id,
- * so it can only be named generically.
+ * Display name for system transformation.
  */
 function getSystemTransformationName(transformation: DataTransformerConfig | CustomTransformOperator): string {
   if (typeof transformation === 'function') {
@@ -25,13 +22,15 @@ function getSystemTransformationName(transformation: DataTransformerConfig | Cus
   return standardTransformersRegistry.getIfExists(transformation.id)?.name ?? transformation.id;
 }
 
+/**
+ * System transformation tooltip.
+ */
 export function getSystemTransformationTooltip(): string {
   return t('dashboard-scene.system-transformations.tooltip-system', 'Added automatically by the panel. Read-only.');
 }
 
 /**
- * Names a group of these rows for assistive tech. Both editors place the groups above and below the
- * editable rows, and that placement is the only thing telling a sighted user when they run.
+ * System transformation row label
  */
 function getSystemTransformationsGroupLabel(position: SystemTransformationPosition): string {
   return position === 'prepend'
@@ -45,6 +44,9 @@ function getSystemTransformationsGroupLabel(position: SystemTransformationPositi
       );
 }
 
+/**
+ * System transformation badge (classic UI only)
+ */
 export function SystemTransformationBadge() {
   return (
     <Badge
@@ -58,29 +60,16 @@ export function SystemTransformationBadge() {
 interface SystemTransformationListProps {
   transformations: Array<DataTransformerConfig | CustomTransformOperator>;
   position: SystemTransformationPosition;
-  /** Class for the list element. */
   className: string;
-  /** Class for each row. */
   itemClassName: string;
-  /** Class for the transformation's name. */
   nameClassName: string;
-  /** Sits before the name. Decorative: the name and `trailing` carry the meaning between them. */
   leading: ReactNode;
-  /**
-   * Sits after the name, and is the only thing that tells a screen reader these rows are not
-   * editable — so it has to say so in text or in a title. The editors differ on how, because one has
-   * room for a badge beside the name and the other does not.
-   */
+  // Sits after the name, and is the only thing that tells a screen reader these rows are not editable
   trailing: ReactNode;
 }
 
 /**
  * The read-only rows for the transformations a panel's plugin contributes.
- *
- * Both editors render the same list: same grouping label, same keys, same test id. Only the styling
- * and the two affordances around the name differ, so those are passed in and everything else lives
- * here — a change to how a row is keyed or found has one place to happen rather than two that can
- * silently disagree.
  */
 export function SystemTransformationList({
   transformations,
