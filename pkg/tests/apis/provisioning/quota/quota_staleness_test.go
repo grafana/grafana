@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
+// TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails verifies that existing repository updates
+// use cached quota during lookup failures, new repositories remain rejected, and recovery refreshes quota status.
 func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *testing.T) {
 	helper := sharedHelper(t)
 	initialQuota := provisioning.QuotaStatus{
