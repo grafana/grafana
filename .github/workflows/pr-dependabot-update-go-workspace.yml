@@ -14,7 +14,7 @@ on:
 permissions: {}
 jobs:
   update:
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     permissions:
       # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.
       contents: read
@@ -38,8 +38,6 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
-      with:
-        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace

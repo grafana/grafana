@@ -1,26 +1,19 @@
 name: Check Frontend Test Coverage
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths:
-      - '**/*.js'
-      - '**/*.jsx'
-      - '**/*.ts'
-      - '**/*.tsx'
-      - 'package.json'
-      - '.github/CODEOWNERS'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      frontend:
+        description: Whether frontend code changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
   setup:
     name: Setup opted-in teams
+    if: inputs.frontend == 'true' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.

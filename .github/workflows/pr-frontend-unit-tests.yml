@@ -1,46 +1,25 @@
 name: Frontend tests
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
+    inputs:
+      frontend:
+        description: Whether frontend code changed.
+        required: true
+        type: string
+      devenv:
+        description: Whether the dev environment changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-x64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.frontend }}
-      devenv-changed: ${{ steps.detect-changes.outputs.devenv }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-frontend-unit-tests.yml
 
   generate-golden-files:
     permissions:
       contents: read
-    needs:
-      - detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+      id-token: write
+    if: inputs.frontend == 'true'
     runs-on: ubuntu-x64-small
     name: Generate golden files
     steps:
@@ -50,7 +29,7 @@ jobs:
     - name: Setup Go
       uses: ./.github/actions/setup-go
       with:
-        cache-build: 'false'
+        remote-cache: 'true'
     - name: Generate golden files
       run: make generate-golden-files
       working-directory: apps/dashboard
@@ -70,11 +49,10 @@ jobs:
       contents: read
       id-token: write
     needs:
-      - detect-changes
       - generate-golden-files
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `frontend-unit-tests-enterprise` workflow will run instead
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && inputs.frontend == 'true'
     runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
@@ -106,10 +84,9 @@ jobs:
       contents: read
       id-token: write
     needs:
-      - detect-changes
       - generate-golden-files
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && inputs.frontend == 'true'
     runs-on: ubuntu-x64-large
     name: "Unit tests (${{ matrix.shard }} / ${{ matrix.total }})"
     strategy:
@@ -146,9 +123,7 @@ jobs:
         TEST_SHARD_TOTAL: ${{ matrix.total }}
 
   frontend-decoupled-plugin-tests:
-    needs:
-      - detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.frontend == 'true'
     runs-on: ubuntu-x64-large
     name: "Decoupled plugin tests"
     permissions:
@@ -164,9 +139,7 @@ jobs:
     - run: yarn run plugin:test:ci
 
   frontend-rspack-plugin-tests:
-    needs:
-      - detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.frontend == 'true'
     runs-on: ubuntu-x64-large
     name: "Rspack plugin tests"
     permissions:
@@ -182,9 +155,7 @@ jobs:
     - run: yarn run test:rspack
 
   frontend-packages-unit-tests:
-    needs:
-      - detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.frontend == 'true'
     runs-on: ubuntu-x64-large
     name: "Packages unit tests"
     permissions:
@@ -235,7 +206,7 @@ jobs:
   # devenv:
   #   needs:
   #     - detect-changes
-  #   if: needs.detect-changes.outputs.devenv-changed == 'true'
+  #   if: inputs.devenv == 'true'
   #   runs-on: ubuntu-x64-large
   #   name: "Devenv frontend-service build"
   #   permissions:

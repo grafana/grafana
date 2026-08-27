@@ -1,31 +1,7 @@
 name: Integration Tests (pgvector)
 
 on:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - Makefile
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/go.work'
-      - '**/go.work.sum'
-      - pkg/storage/unified/search/vector/**
-      - pkg/storage/unified/search/embed/**
-      - devenv/docker/blocks/pgvector/**
-      - devenv/.env
-      - .github/actions/setup-go/**
-      - .github/workflows/pr-test-integration-pgvector.yml
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
 
 permissions: {}
 
@@ -37,6 +13,7 @@ jobs:
     runs-on: ubuntu-x64-large-io
     permissions:
       contents: read
+      id-token: write
     env:
       PGVECTOR_TEST_DB: host=127.0.0.1 port=5433 dbname=grafana_vectors user=grafana password=password sslmode=disable
     steps:
@@ -48,6 +25,8 @@ jobs:
         run: make devenv sources=pgvector
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - name: Wait for pgvector to be ready
         run: |
           set -euo pipefail

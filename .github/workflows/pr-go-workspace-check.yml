@@ -2,40 +2,21 @@ name: "Go Workspace Check"
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-go-workspace-check.yml
 
   check-workspace:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || inputs.backend == 'true'
     name: Go Workspace Check
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
 
     permissions:
       contents: read
@@ -63,8 +44,6 @@ jobs:
     # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
-      with:
-        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -80,10 +59,9 @@ jobs:
         fi
 
   check-wire:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: github.event_name == 'workflow_dispatch' || inputs.backend == 'true'
     name: Check Wire Changes
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
 
     permissions:
       contents: read
@@ -111,8 +89,6 @@ jobs:
     # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
-      with:
-        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss

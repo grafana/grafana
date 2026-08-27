@@ -1,16 +1,7 @@
 name: Run dashboard schema v2 e2e
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - '**'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
 
 jobs:
   dashboard-schema-v2-e2e:
@@ -20,6 +11,7 @@ jobs:
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -27,6 +19,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          remote-cache: 'true'
       - run: go version
       - name: Setup Node
         uses: ./.github/actions/setup-node

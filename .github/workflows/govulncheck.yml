@@ -1,24 +1,7 @@
 name: govulncheck
 
 on:
-  push:
-    paths:
-      - '**/*.go'
-      - .github/workflows/govulncheck.yml
-      - .citools/src/govulncheck/**
-      - go.*
-    branches:
-      - main
-  pull_request:
-    paths:
-      - '**/*.go'
-      - .github/workflows/govulncheck.yml
-      - .citools/src/govulncheck/**
-      - go.*
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
 
 permissions:
   contents: read
@@ -35,8 +18,6 @@ jobs:
           fetch-depth: 1
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
       - name: Run govulncheck on all modules
         run: |
           set -euo pipefail

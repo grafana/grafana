@@ -1,52 +1,23 @@
 name: Backend Code Checks
 
 on:
-  pull_request:
-    paths-ignore:
-      - '*.md'
-      - 'docs/**'
-      - 'latest.json'
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '*.md'
-      - 'docs/**'
-      - 'latest.json'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
+      dev-dashboards:
+        description: Whether dev dashboard codegen inputs changed.
+        required: true
+        type: string
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-      dev-dashboards-changed: ${{ steps.detect-changes.outputs.dev-dashboards }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/backend-code-checks.yml
-
   validate-configs:
     permissions:
       contents: read
       id-token: write
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true' || needs.detect-changes.outputs.dev-dashboards-changed == 'true'
+    if: inputs.backend == 'true' || inputs.dev-dashboards == 'true'
     name: Validate Backend Configs
     runs-on: ubuntu-x64
     steps:
@@ -55,8 +26,6 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
 
       - name: Verify CUE formatting
         run: |

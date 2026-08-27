@@ -1,0 +1,86 @@
+name: Setup remote Go cache
+description: Configures the S3-backed Go build cache.
+
+inputs:
+  cache-write:
+    description: Whether this job may save the plugin binary cache.
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Select go-cache-plugin release
+      shell: bash
+      run: |
+        set -euo pipefail
+        case "$RUNNER_ARCH" in
+          X64)
+            os=linux-amd64
+            hash=66e0f3e2ea1515d73540a57efcdd1ebcec8bc1f233af452f30ad32fb84feff9f
+            ;;
+          ARM64)
+            os=linux-arm64
+            hash=a6f164d1c38700a1aaafb8537aa405a2edf0c9897e7f62fa4b902445921a23bb
+            ;;
+          *)
+            echo "Unsupported runner architecture: $RUNNER_ARCH" >&2
+            exit 1
+            ;;
+        esac
+        {
+          echo "GOCP_VERSION=v0.1.4-otel-exporter5"
+          echo "GOCP_OS=$os"
+          echo "GOCP_HASH=$hash"
+        } >> "$GITHUB_ENV"
+
+    - name: Restore go-cache-plugin
+      if: inputs.cache-write != 'true'
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/go-cache-plugin
+        key: go-cache-plugin-${{ env.GOCP_VERSION }}-${{ env.GOCP_OS }}
+
+    - name: Restore and save go-cache-plugin
+      if: inputs.cache-write == 'true'
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/go-cache-plugin
+        key: go-cache-plugin-${{ env.GOCP_VERSION }}-${{ env.GOCP_OS }}
+
+    - name: Install go-cache-plugin
+      shell: bash
+      run: |
+        set -euo pipefail
+        bin="$HOME/.cache/go-cache-plugin/go-cache-plugin"
+        if [ ! -f "$bin" ]; then
+          mkdir -p "$(dirname "$bin")"
+          tmp="$(mktemp "$(dirname "$bin")/.download.XXXXXX")"
+          trap 'rm -f "$tmp"' EXIT
+          curl --fail --retry 5 --retry-delay 2 --retry-all-errors -Lo "$tmp" \
+            "https://github.com/grafana/go-cache-plugin/releases/download/$GOCP_VERSION/go-cache-plugin-$GOCP_OS"
+          echo "$GOCP_HASH  $tmp" | sha256sum --check
+          mv "$tmp" "$bin"
+        else
+          echo "$GOCP_HASH  $bin" | sha256sum --check
+        fi
+        sudo install -m 0755 "$bin" /usr/local/bin/go-cache-plugin
+
+    - name: Authenticate to AWS
+      uses: grafana/shared-workflows/actions/aws-auth@954bcbdf6e64fe612210885b47df771d9d20447b # aws-auth/v1.0.2
+      with:
+        aws-region: us-east-2
+        pass-claims: repository_owner,repository_name,job_workflow_ref,ref,event_name
+        set-creds-in-environment: true
+        role-arn: arn:aws:iam::422075448034:role/github-actions/grafana-cicd
+
+    - name: Configure remote Go cache
+      shell: bash
+      run: |
+        {
+          echo "GOCACHE_S3_BUCKET=grafana-cicd-gha-cache-workloads-prod"
+          echo "GOCACHE_S3_REGION=us-east-2"
+          echo "GOCACHE_METRICS=true"
+          echo "GOCACHE_DIR=/tmp/gocache"
+          echo "GOCACHEPROG=go-cache-plugin"
+        } >> "$GITHUB_ENV"

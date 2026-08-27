@@ -1,0 +1,74 @@
+name: Bootstrap Go Cache
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  populate:
+    name: Populate Go cache
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      - name: Get GitHub App token
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-ci-bot
+
+      - name: Setup Enterprise
+        if: steps.get-github-app-token.outcome == 'success'
+        id: setup-enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+
+      - name: Setup Go
+        id: setup-go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-write: 'true'
+          remote-cache: 'true'
+
+      - name: Download modules and compile packages
+        if: steps.setup-go.outputs.cache-hit != 'true'
+        env:
+          ENTERPRISE: ${{ steps.setup-enterprise.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          readarray -t modules <<< "$(go list -m -f '{{.Dir}}')"
+
+          for module in "${modules[@]}"; do
+            (cd "$module" && go mod download all)
+          done
+          go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
+
+          package_file="$(mktemp)"
+          trap 'rm -f "$package_file"' EXIT
+          tagsets=("")
+          if [ "$ENTERPRISE" = "true" ]; then
+            tagsets+=(enterprise)
+          fi
+
+          for cgo in 0 1; do
+            for tags in "${tagsets[@]}"; do
+              if [ "$cgo" = 1 ] && [ "$tags" = enterprise ]; then
+                continue
+              fi
+              : > "$package_file"
+              for module in "${modules[@]}"; do
+                (cd "$module" && CGO_ENABLED="$cgo" go list -tags="$tags" -f '{{.ImportPath}}' ./...) >> "$package_file"
+              done
+              readarray -t packages < "$package_file"
+              CGO_ENABLED="$cgo" go test -run '^$' -vet=off -tags="$tags" "${packages[@]}"
+            done
+          done

@@ -59,4 +59,5 @@ runs:
           sleep "$i"
         done
 
+        echo "GRAFANA_ENTERPRISE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
         QUIET=1 ./build.sh "$grafana_root"

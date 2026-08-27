@@ -1,45 +1,21 @@
 name: Swagger generated code
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
-  pull_request:
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 permissions: {}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/swagger-gen.yml
 
   verify:
     name: Verify committed API specs match
-    runs-on: ubuntu-arm64
-    needs: detect-changes
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed == 'true'
+    runs-on: ubuntu-x64
+    if: github.repository == 'grafana/grafana' && inputs.backend == 'true'
     permissions:
       contents: read # clone the repository
       id-token: write # required for Vault access
@@ -64,8 +40,6 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
 
       - name: Generate Swagger specs
         run: make swagger-clean && make openapi3-gen

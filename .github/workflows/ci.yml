@@ -1,0 +1,228 @@
+name: CI
+
+# Owns the trigger for every workflow it calls, so the Go cache is warm before
+# anything reads it. The called workflows have no trigger of their own.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request' || github.repository == 'grafana/grafana'
+    name: Detect changed files
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      backend: ${{ steps.detect-changes.outputs.backend }}
+      dev-dashboards: ${{ steps.detect-changes.outputs.dev-dashboards }}
+      frontend: ${{ steps.detect-changes.outputs.frontend }}
+      e2e: ${{ steps.detect-changes.outputs.e2e }}
+      docs: ${{ steps.detect-changes.outputs.docs }}
+      devenv: ${{ steps.detect-changes.outputs.devenv }}
+      integration: ${{ steps.detect-changes.outputs.integration }}
+      pgvector: ${{ steps.detect-changes.outputs.pgvector }}
+      k8s-codegen: ${{ steps.detect-changes.outputs.k8s-codegen }}
+      build-go: ${{ steps.detect-changes.outputs.build-go }}
+      go-lint-push: ${{ steps.detect-changes.outputs.go-lint-push }}
+      govulncheck: ${{ steps.detect-changes.outputs.govulncheck }}
+      backend-code-push: ${{ steps.detect-changes.outputs.backend-code-push }}
+      test-push: ${{ steps.push-scope.outputs.tests }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: true # required to get more history in the changed-files action
+          fetch-depth: 0
+          filter: blob:none
+      - name: Detect test push
+        id: push-scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" && ("$REF_NAME" == "main" || "$REF_NAME" == release-*.*.*) ]]; then
+            echo "tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tests=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/ci.yml
+          detect-push: 'true'
+
+  go-cache:
+    needs: detect-changes
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-cache.yml
+
+  go-lint:
+    needs: [detect-changes, go-cache]
+    if: >-
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.backend == 'true') ||
+      (github.ref == 'refs/heads/main' && needs.detect-changes.outputs.go-lint-push == 'true')
+    permissions:
+      contents: read
+    uses: ./.github/workflows/go-lint.yml
+    with:
+      backend: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.backend || needs.detect-changes.outputs.go-lint-push }}
+
+  govulncheck:
+    needs: [detect-changes, go-cache]
+    if: >-
+      needs.detect-changes.outputs.govulncheck == 'true' &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/govulncheck.yml
+
+  feature-toggles:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure' && github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/feature-toggles-ci.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      docs: ${{ needs.detect-changes.outputs.docs }}
+
+  backend-code-checks:
+    needs: [detect-changes, go-cache]
+    if: >-
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.backend == 'true') ||
+      (github.ref == 'refs/heads/main' && needs.detect-changes.outputs.backend-code-push == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/backend-code-checks.yml
+    with:
+      backend: ${{ github.event_name == 'pull_request' && needs.detect-changes.outputs.backend || needs.detect-changes.outputs.backend-code-push }}
+      dev-dashboards: ${{ needs.detect-changes.outputs.dev-dashboards }}
+
+  swagger-gen:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/swagger-gen.yml
+    with:
+      backend: ${{ format('{0}', github.event_name == 'push' || needs.detect-changes.outputs.backend == 'true') }}
+
+  go-workspace-check:
+    needs: [detect-changes, go-cache]
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-go-workspace-check.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+
+  backend-unit-tests:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure' &&
+      (github.event_name != 'push' || needs.detect-changes.outputs.test-push == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/backend-unit-tests.yml
+    with:
+      backend: ${{ format('{0}', needs.detect-changes.outputs.test-push == 'true' || needs.detect-changes.outputs.backend == 'true') }}
+
+  integration-tests:
+    needs: [detect-changes, go-cache]
+    if: >-
+      needs.detect-changes.outputs.test-push == 'true' ||
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.integration == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-test-integration.yml
+
+  integration-tests-pgvector:
+    needs: [detect-changes, go-cache]
+    if: >-
+      needs.detect-changes.outputs.test-push == 'true' ||
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.pgvector == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-test-integration-pgvector.yml
+
+  k8s-codegen-check:
+    needs: [detect-changes, go-cache]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.k8s-codegen == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-k8s-codegen-check.yml
+
+  build-go-matrix:
+    needs: [detect-changes, go-cache]
+    if: >-
+      needs.detect-changes.outputs.test-push == 'true' ||
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.build-go == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/build-go-matrix.yml
+
+  e2e-tests:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure' &&
+      (github.event_name != 'push' || needs.detect-changes.outputs.test-push == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-e2e-tests.yml
+    with:
+      e2e: ${{ format('{0}', needs.detect-changes.outputs.test-push == 'true' || needs.detect-changes.outputs.e2e == 'true') }}
+
+  frontend-unit-tests:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure' &&
+      (github.event_name != 'push' || needs.detect-changes.outputs.test-push == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/pr-frontend-unit-tests.yml
+    with:
+      frontend: ${{ format('{0}', needs.detect-changes.outputs.test-push == 'true' || needs.detect-changes.outputs.frontend == 'true') }}
+      devenv: ${{ format('{0}', needs.detect-changes.outputs.test-push == 'true' || needs.detect-changes.outputs.devenv == 'true') }}
+
+  schema-v2-e2e:
+    needs: [detect-changes, go-cache]
+    if: >-
+      !cancelled() && needs.detect-changes.result == 'success' &&
+      needs.go-cache.result != 'failure' &&
+      (github.event_name != 'push' || github.ref == 'refs/heads/main')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/run-schema-v2-e2e.yml
