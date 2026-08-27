@@ -81,7 +81,7 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
   /**
    * Set _resolvedPlugin on loading and panel changes
    */
-  private _subscribeToPanel = (panel, transformer) => {
+  private _subscribeToPanel = (panel: VizPanel, transformer: SceneDataTransformer) => {
     return panel.subscribeToState(() => {
       const nextPlugin = this._plugin();
 
