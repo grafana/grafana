@@ -292,7 +292,7 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 		}
 
 		if old != usr.Password {
-			return user.ErrPasswordMissmatch.Errorf("old password does not match stored password")
+			return user.ErrPasswordMismatch.Errorf("old password does not match stored password")
 		}
 	}
 
@@ -301,10 +301,13 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 			return err
 		}
 
+		// Hash with usr.Salt so the digest is comparable to the stored password.
 		hashed, err := cmd.Password.Hash(usr.Salt)
 		if err != nil {
 			return err
 		}
+		// Plain == is enough: this is a reuse check on two hashes of caller-chosen
+		// input, not a comparison against a secret.
 		if hashed == usr.Password {
 			return user.ErrNewPasswordSameAsOld.Errorf("new password cannot be the same as the current password")
 		}

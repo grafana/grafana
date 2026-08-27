@@ -22,6 +22,8 @@ var (
 	ErrEmptyUsernameAndEmail = errutil.BadRequest(
 		"user.empty-username-and-email", errutil.WithPublicMessage("Need to specify either username or email"),
 	)
-	ErrPasswordMissmatch    = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
+	ErrPasswordMismatch = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
+	// ErrPasswordMissmatch is the historical misspelling; keep as an alias so existing ErrorIs checks still work.
+	ErrPasswordMissmatch = ErrPasswordMismatch
 	ErrNewPasswordSameAsOld = errutil.BadRequest("user.password-same-as-old", errutil.WithPublicMessage("New password can't be the same as the old one."))
 )
