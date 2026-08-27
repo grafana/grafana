@@ -3,6 +3,7 @@
   "license": "Apache-2.0",
   "name": "@grafana/plugin-compat",
   "version": "0.1.0",
+  "private": true,
   "description": "Compatibility shims that let Grafana plugins adopt new Grafana host APIs across a range of host versions",
   "keywords": [
     "grafana",
@@ -10,21 +11,19 @@
     "plugins"
   ],
   "sideEffects": false,
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-plugin-compat"
   },
-  "main": "./dist/cjs/datasources.cjs",
   "module": "./dist/esm/datasources.mjs",
-  "types": "./dist/types/datasources.d.ts",
   "exports": {
     "./package.json": "./package.json",
     "./datasources": {
       "@grafana-app/source": "./src/datasources.ts",
       "types": "./dist/types/datasources.d.ts",
-      "import": "./dist/esm/datasources.mjs",
-      "require": "./dist/cjs/datasources.cjs"
+      "import": "./dist/esm/datasources.mjs"
     }
   },
   "publishConfig": {
