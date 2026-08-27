@@ -209,13 +209,21 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 	if err != nil {
 		return nil, fmt.Errorf("authz batch check: %w", err)
 	}
-	kept := hits[:0]
+	lex := make([]lexicalHit, 0, len(hits))
 	for _, h := range hits {
-		if allowed[vectorAuthzKey{h.UID, h.Folder}] {
-			kept = append(kept, h)
+		if !allowed[vectorAuthzKey{h.UID, h.Folder}] {
+			continue
 		}
+		lex = append(lex, lexicalHit{
+			uid:              h.UID,
+			title:            h.Title,
+			folder:           h.Folder,
+			chunkSubresource: h.Subresource,
+			chunkContent:     h.Content,
+			chunkMetadata:    h.Metadata,
+		})
 	}
-	return lexicalHitsFromLexical(kept), nil
+	return lex, nil
 }
 
 // hybridSemanticLeg embeds the query and runs the vector search,
@@ -481,21 +489,6 @@ type lexicalHit struct {
 	chunkSubresource string
 	chunkContent     string
 	chunkMetadata    []byte
-}
-
-func lexicalHitsFromLexical(hits []vector.LexicalHit) []lexicalHit {
-	out := make([]lexicalHit, 0, len(hits))
-	for _, h := range hits {
-		out = append(out, lexicalHit{
-			uid:              h.UID,
-			title:            h.Title,
-			folder:           h.Folder,
-			chunkSubresource: h.Subresource,
-			chunkContent:     h.Content,
-			chunkMetadata:    h.Metadata,
-		})
-	}
-	return out
 }
 
 // fuseRRF merges the two authz-filtered rankings into one per-resource
