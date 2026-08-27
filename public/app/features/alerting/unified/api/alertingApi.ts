@@ -4,9 +4,10 @@ import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 
-import { logMeasurement } from '../Analytics';
+const logger = getLogger('features.alerting');
 
 type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
@@ -74,7 +75,7 @@ const backendSrvBaseQuery =
 
       const { data, ...meta } = await lastValueFrom(getBackendSrv().fetch(modifiedRequestOptions));
 
-      logMeasurement(
+      logger.logMeasurement(
         'backendSrvBaseQuery',
         {
           loadTimeMs: performance.now() - requestStartTs,

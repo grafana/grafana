@@ -18,7 +18,9 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/login/social"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -127,9 +129,58 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 	return s.Get(ctx, ssoSetting.Name, &metav1.GetOptions{})
 }
 
-// List implements rest.Lister.
-func (s *MTSettingsStore) List(_ context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, s.notImplemented("list", "")
+// List implements rest.Lister. It assembles one SSOSetting per configured
+// provider from that provider's MT-Settings rows. Providers with no rows are
+// omitted, secrets are redacted, and results follow the canonical provider
+// order.
+func (s *MTSettingsStore) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+	if s.reader == nil {
+		return nil, s.notImplemented("list", "")
+	}
+
+	rows, err := s.reader.List(ctx, ssoSectionsSelector())
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
+	byProvider := make(map[string][]*settingsvc.Setting)
+	for _, row := range rows {
+		provider := strings.TrimPrefix(row.Section, "auth.")
+		byProvider[provider] = append(byProvider[provider], row)
+	}
+
+	list := &iamv0.SSOSettingList{}
+	for _, provider := range ssoProviders() {
+		provRows, ok := byProvider[provider]
+		if !ok {
+			continue
+		}
+		list.Items = append(list.Items, *redactSecrets(rowsToSSOSetting(ctx, provider, provRows)))
+	}
+	return list, nil
+}
+
+// ssoProviders is the set of providers the SSOSetting kind serves: the OAuth
+// providers plus SAML. LDAP is excluded — MT-Settings has no representation for
+// its nested config (mirrors the backfill).
+func ssoProviders() []string {
+	return append(append([]string{}, ssosettings.AllOAuthProviders...), social.SAMLProviderName)
+}
+
+// ssoSectionsSelector matches every SSO provider section in one List call.
+func ssoSectionsSelector() metav1.LabelSelector {
+	providers := ssoProviders()
+	sections := make([]string, 0, len(providers))
+	for _, p := range providers {
+		sections = append(sections, sectionFor(p))
+	}
+	return metav1.LabelSelector{
+		MatchExpressions: []metav1.LabelSelectorRequirement{{
+			Key:      "section",
+			Operator: metav1.LabelSelectorOpIn,
+			Values:   sections,
+		}},
+	}
 }
 
 // Update implements rest.Updater with the desired-state reconcile: upsert every

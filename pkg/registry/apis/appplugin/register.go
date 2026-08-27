@@ -45,7 +45,7 @@ var (
 	_ builder.APIGroupVersionsProvider = (*AppPluginAPIBuilder)(nil)
 )
 
-// Direct access to read objects in this apiserver
+// Direct access to read objects directly from storage.
 type getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error)
 
 // PluginClient is a subset of the plugins.Client interface with only the
@@ -118,7 +118,6 @@ func NewAppPluginAPIBuilder(
 		manifestCopy.Group = plugin.JSONData.ID
 		manifest = &manifestCopy
 	}
-
 	return &AppPluginAPIBuilder{
 		manifest:        manifest,
 		pluginJSON:      plugin.JSONData,
