@@ -196,6 +196,21 @@ describe('NumberInput', () => {
     expect(screen.getByRole('spinbutton', { name: 'Window size' })).toBeInTheDocument();
   });
 
+  it('preserves parent InlineField validation semantics alongside the range hint', () => {
+    render(
+      <InlineField label="Window size" invalid error="Required">
+        <NumberInput value={5} onChange={jest.fn()} min={1} max={10} />
+      </InlineField>
+    );
+
+    const input = screen.getByRole('spinbutton', { name: 'Window size' });
+    const error = screen.getByRole('alert');
+    const range = screen.getByText('Range: 1 to 10');
+
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.getAttribute('aria-describedby')?.split(' ')).toEqual([error.id, range.id]);
+  });
+
   it('keeps a trailing decimal after the debounce so typing can continue', async () => {
     jest.useFakeTimers();
     const onChange = jest.fn();

@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FieldValidationMessage, Input, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Input, useFieldContext, useStyles2 } from '@grafana/ui';
 
 interface Props {
   id?: string;
@@ -66,6 +66,7 @@ export const NumberInput = memo(
     const errorId = useId();
     const styles = useStyles2(getStyles);
     const rangeText = getRangeText(min, max);
+    const fieldContext = useFieldContext();
 
     useEffect(() => {
       setText((current) => {
@@ -180,7 +181,8 @@ export const NumberInput = memo(
       [commitValue, emitInRangeValueDebounced]
     );
 
-    const describedBy = inputCorrected ? errorId : rangeText ? rangeId : undefined;
+    const localDescribedBy = inputCorrected ? errorId : rangeText ? rangeId : undefined;
+    const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
     const errorMessage = rangeText
       ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
       : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
@@ -203,7 +205,7 @@ export const NumberInput = memo(
           disabled={fieldDisabled}
           width={width}
           suffix={suffix}
-          invalid={inputCorrected}
+          invalid={inputCorrected || fieldContext.invalid}
           aria-describedby={describedBy}
         />
         {rangeText && (
