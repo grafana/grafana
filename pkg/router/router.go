@@ -172,6 +172,17 @@ func groupFromPath(path string) string {
 	return rest
 }
 
+// GroupFromPath is the exported form of groupFromPath.
+// Returns "" for anything not under /apis/<group>,
+// including the bare /apis root -- there is no single group to attribute a
+// root-discovery or non-/apis request to.
+func GroupFromPath(path string) string {
+	if path == apisPrefix || path == apisPrefix+"/" || (path != apisPrefix && !strings.HasPrefix(path, apisPrefix+"/")) {
+		return ""
+	}
+	return groupFromPath(path)
+}
+
 // serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
 // group snapshot.
 func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
