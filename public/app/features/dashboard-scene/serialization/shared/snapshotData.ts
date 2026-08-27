@@ -1,7 +1,7 @@
 import { type PanelData } from '@grafana/data';
 import { type SceneDataProvider } from '@grafana/scenes';
 
-import { getSourceDataProvider } from '../../utils/utils';
+import { getSourceDataProvider } from '../../utils/getSourceDataProvider';
 
 /**
  * The data a snapshot captures for a panel: the query result, before anything transformed it. Both
