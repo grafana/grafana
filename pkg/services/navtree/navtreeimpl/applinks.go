@@ -133,10 +133,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 
 	s.nestMaintenanceWindowsUnderSLO(treeRoot)
 
-	if drilldownNode := treeRoot.FindById(navtree.NavIDDrilldown); drilldownNode != nil && len(drilldownNode.Children) == 0 {
-		treeRoot.RemoveSectionByID(navtree.NavIDDrilldown)
-	}
-
 	return nil
 }
 

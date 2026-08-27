@@ -138,6 +138,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+		// Always add the section so that Drilldown app plugins registered under the
+		// "drilldown" section ID (via addAppLinks) can be attached. The section is
+		// pruned after all app links and hooks are processed if it still has no
+		// children (see NavTreeRoot.RemoveEmptyDrilldownSection called in setIndexViewData).
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,

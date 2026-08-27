@@ -695,7 +695,7 @@ func TestAddAppLinksDrilldownPruning(t *testing.T) {
 		return &navtree.NavLink{Text: "Drilldown", Id: navtree.NavIDDrilldown}
 	}
 
-	t.Run("removes the Drilldown section when no Drilldown app plugin is installed", func(t *testing.T) {
+	t.Run("RemoveEmptyDrilldownSection removes the section when no Drilldown app plugin is installed", func(t *testing.T) {
 		service := newService(nil)
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -704,10 +704,11 @@ func TestAddAppLinksDrilldownPruning(t *testing.T) {
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
+		treeRoot.RemoveEmptyDrilldownSection()
 		require.Nil(t, treeRoot.FindById(navtree.NavIDDrilldown))
 	})
 
-	t.Run("keeps the Drilldown section when a Drilldown app plugin is installed", func(t *testing.T) {
+	t.Run("RemoveEmptyDrilldownSection keeps the section when a Drilldown app plugin is installed", func(t *testing.T) {
 		service := newService([]pluginstore.Plugin{metricsDrilldownApp})
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -716,6 +717,7 @@ func TestAddAppLinksDrilldownPruning(t *testing.T) {
 		err := service.addAppLinks(&treeRoot, reqCtx)
 		require.NoError(t, err)
 
+		treeRoot.RemoveEmptyDrilldownSection()
 		drilldownNode := treeRoot.FindById(navtree.NavIDDrilldown)
 		require.NotNil(t, drilldownNode)
 		require.Len(t, drilldownNode.Children, 1)

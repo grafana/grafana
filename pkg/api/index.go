@@ -227,6 +227,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	data.NavTree.RemoveEmptyAdminSections()
 	data.NavTree.RemoveEmptyConnectionsSection()
+	data.NavTree.RemoveEmptyDrilldownSection()
 	data.NavTree.Sort()
 
 	return &data, nil
