@@ -84,30 +84,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-
-      - name: Cache frontend build
-        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
-        id: cache
-        with:
-          key: "e2e-build-frontend-v2-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
-          path: |
-            public/build
-            public/build-swagger
-            public/app/plugins/*/*/dist
-
-      - name: Setup Node.js
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Set up Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/yarn-install
 
-      - name: Build frontend
-        if: steps.cache.outputs.cache-hit != 'true'
-        env:
-          NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
-        run: make build-js
+      - name: Restore or build frontend
+        uses: ./.github/actions/build-frontend
 
       - name: Upload frontend build artifacts
         uses: actions/upload-artifact@v7

@@ -296,7 +296,7 @@ export type SpanDetailProps = {
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -464,7 +464,11 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     spanStartTime: startTime,
   });
-  const promoGetter = useAttributePluginPromoGetter();
+  const promoAttributeKeys = useMemo(
+    () => [...tags.map((tag) => tag.key), ...(process.tags ?? []).map((tag) => tag.key)],
+    [tags, process.tags]
+  );
+  const promoGetter = useAttributePluginPromoGetter(promoAttributeKeys);
 
   const listOfContentCards = [];
 

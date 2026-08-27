@@ -85,12 +85,13 @@ describe('buildStaticNavTree', () => {
     });
 
     it('gates playlists on the playlists RBAC permission when the toggle is on', () => {
-      setup({ permissions: DASHBOARD_READER, featureToggles: { playlistsRBAC: true } });
+      // playlistsRBAC is an OpenFeature flag, not a config toggle
+      setup({ permissions: DASHBOARD_READER, openFeatureFlags: { playlistsRBAC: true } });
       const withoutPermission = buildStaticNavTree();
 
       setup({
         permissions: [AccessControlAction.DashboardsRead, AccessControlAction.PlaylistsRead],
-        featureToggles: { playlistsRBAC: true },
+        openFeatureFlags: { playlistsRBAC: true },
       });
       const withPermission = buildStaticNavTree();
 
