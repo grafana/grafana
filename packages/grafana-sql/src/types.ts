@@ -47,6 +47,7 @@ export interface SQLQuery extends DataQuery {
   alias?: string;
   format?: QueryFormat;
   rawSql?: string;
+  database?: string;
   dataset?: string;
   table?: string;
   sql?: SQLExpression;
@@ -108,8 +109,9 @@ export interface SQLSelectableValue extends SelectableValue {
 
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
-  datasets: () => Promise<string[]>;
-  tables: (dataset?: string) => Promise<string[]>;
+  databases?: () => Promise<string[]>;
+  datasets: (database?: string) => Promise<string[]>;
+  tables: (dataset?: string, database?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
   dispose?: (dsID?: string) => void;
@@ -117,6 +119,7 @@ export interface DB {
   getEditorLanguageDefinition: () => LanguageDefinition;
   toRawSql: (query: SQLQuery) => string;
   functions: () => Func[];
+  labels?: Map<string, string>;
 }
 
 export interface FuncParameter {
