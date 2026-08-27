@@ -65,7 +65,7 @@ To understand how RBAC permissions linked to roles, let's take a look at the fol
 ```text
 type role
   relations
-    define assignee: [user, team#member]
+    define assignee: [user, team#member, role#assignee]
 
 type folder
   relations
@@ -75,7 +75,3 @@ type folder
 ```
 
 According to the schema, user can get `read` access to folder if it has `read` relation granted directly to the folder or its parent folders.
-
-Roles are not nestable: a role cannot be assigned to another role. Role bindings only
-accept user, team and service account subjects, so the extra indirection was unused
-while making `role#assignee` self-referential, which slowed down `ListObjects`.

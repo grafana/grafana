@@ -21,9 +21,8 @@ type anonymous
 
 type role
   relations
-    # Roles are not nestable: a role cannot be assigned to another role. Allowing it
-    # made role#assignee self-referential, which put a cycle in the type graph that
-    # ListObjects reverse expansion had to walk on every request.
+    # Roles are not nestable. Role bindings only accept user, team and service
+    # account subjects, so a role can never be assigned to another role.
     define assignee: [user, service-account, anonymous, team#member]
 
     define get: [user, service-account, team#member, role#assignee]
