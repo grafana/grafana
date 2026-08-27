@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 )
 
 //go:generate mockery --name=Extra --structname=MockExtra --inpackage --filename=extra_mock.go --with-expecter
@@ -32,7 +33,6 @@ type Factory interface {
 type factory struct {
 	extras  map[provisioning.ConnectionType]Extra
 	enabled map[provisioning.ConnectionType]struct{}
-	tracer  trace.Tracer
 }
 
 func ToConnectionTypes(connectionTypes []string) map[provisioning.ConnectionType]struct{} {
@@ -43,11 +43,10 @@ func ToConnectionTypes(connectionTypes []string) map[provisioning.ConnectionType
 	return enabled
 }
 
-func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra, tracer trace.Tracer) (Factory, error) {
+func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra) (Factory, error) {
 	f := &factory{
 		enabled: enabled,
 		extras:  make(map[provisioning.ConnectionType]Extra, len(extras)),
-		tracer:  tracer,
 	}
 
 	for _, e := range extras {
@@ -80,7 +79,9 @@ func (f *factory) Build(ctx context.Context, c *provisioning.Connection) (Connec
 	// connection, and where the connection's token is decrypted via the secrets
 	// service. Tracing it here gives that decrypt call a descriptive parent
 	// regardless of the caller.
-	ctx, span := f.tracer.Start(ctx, "provisioning.connection.build",
+	// The tracer is read from the context (injected at the entrypoints), so the
+	// factory does not need one threaded through its constructor.
+	ctx, span := tracing.Start(ctx, "provisioning.connection.build",
 		trace.WithAttributes(
 			attribute.String("connection.name", c.GetName()),
 			attribute.String("connection.namespace", c.GetNamespace()),

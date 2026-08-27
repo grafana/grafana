@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -22,7 +23,10 @@ type NamespaceLister func(ctx context.Context) ([]string, error)
 
 func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, repositoryLister func(ctx context.Context) ([]provisioning.Repository, error), unified resource.ResourceClient) usagestats.MetricsFunc {
 	return func(ctx context.Context) (m map[string]any, err error) {
-		ctx, span := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
+		// The usage-stats scheduler invokes this with no active span or tracer,
+		// so inject one; the spans below resolve it from the context.
+		ctx = apptracing.WithTracer(ctx, tracer)
+		ctx, span := apptracing.Start(ctx, "Provisioning.Usage.collectProvisioningStats")
 		defer func() {
 			if err != nil {
 				span.SetStatus(codes.Error, fmt.Sprintf("failed to fetch provisioning usage stats: %v", err))
@@ -54,7 +58,7 @@ func MetricCollector(tracer tracing.Tracer, namespaces NamespaceLister, reposito
 		managedCounts := make(map[string]int)
 		repoCounts := make(map[string]int)
 		for _, ns := range nss {
-			nsSpanCtx, nsSpan := tracer.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
+			nsSpanCtx, nsSpan := apptracing.Start(ctx, "Provisioning.Usage.collectProvisioningStats.countManagedObjects")
 
 			var nsCtx context.Context
 			nsCtx, _, err = identity.WithProvisioningIdentity(nsSpanCtx, ns)

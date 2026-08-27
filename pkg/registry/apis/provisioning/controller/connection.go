@@ -19,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
@@ -267,9 +268,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	// The worker loop carries no active span, so this opens a fresh trace per
-	// reconcile whose children show where the reconcile spends its time.
-	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile",
+	// The worker loop carries no active span or tracer, so inject one here; the
+	// reconcile and every span nested under it then resolve it from the context
+	// instead of receiving it as a parameter.
+	ctx = apptracing.WithTracer(ctx, cc.tracer)
+	// This opens a fresh trace per reconcile whose children show where the
+	// reconcile spends its time.
+	ctx, span := apptracing.Start(ctx, "provisioning.controller.reconcile",
 		trace.WithAttributes(
 			attribute.String("connection.namespace", namespace),
 			attribute.String("connection.name", name),
@@ -311,7 +316,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
-	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build", connSpanAttrs(conn))
+	buildCtx, buildSpan := apptracing.Start(ctx, "provisioning.controller.build", connSpanAttrs(conn))
 	c, err := cc.connectionFactory.Build(buildCtx, conn)
 	buildSpan.End()
 	if err != nil {
@@ -378,7 +383,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
+		tokenCtx, tokenSpan := apptracing.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
 		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
 		tokenSpan.End()
 		if err != nil {
@@ -402,7 +407,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Handle health checks using the health checker
-	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check", connSpanAttrs(conn))
+	healthCtx, healthSpan := apptracing.Start(ctx, "provisioning.controller.health_check", connSpanAttrs(conn))
 	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(healthCtx, conn)
 	healthSpan.End()
 	if err != nil {
@@ -434,7 +439,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
-		patchCtx, patchSpan := cc.tracer.Start(ctx, "provisioning.controller.apply_status",
+		patchCtx, patchSpan := apptracing.Start(ctx, "provisioning.controller.apply_status",
 			connSpanAttrs(conn),
 			trace.WithAttributes(attribute.Int("patch.operations", len(patchOperations))),
 		)
