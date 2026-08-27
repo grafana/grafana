@@ -161,7 +161,7 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -199,7 +199,7 @@ jobs:
       run: |
         git add -N .
         uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'yarn generate:openapi', commit the changes and push again."
-        file_diff="$(git diff --name-only ':!conf')"
+        file_diff="$(git diff --name-only ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -237,7 +237,7 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"

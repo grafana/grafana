@@ -96,7 +96,7 @@ function cellContentToMarkdown(content: CellContentKind): string {
     return content.spec.text;
   }
 
-  return fence(content.spec.code, content.spec.language);
+  return toCodeFence(content.spec.code, content.spec.language);
 }
 
 /**
@@ -125,7 +125,7 @@ function panelToMarkdown(panel: PanelKind['spec']): string {
     return lines.join('\n');
   }
 
-  lines.push('', fence(JSON.stringify(queries.map(describeQuery), null, 2), 'json'));
+  lines.push('', toCodeFence(JSON.stringify(queries.map(describeQuery), null, 2), 'json'));
 
   return lines.join('\n');
 }
@@ -152,7 +152,7 @@ function describeQuery(query: PanelQueryKind) {
   };
 }
 
-function fence(body: string, language: string): string {
+function toCodeFence(body: string, language: string): string {
   // A body containing its own ``` run would end the block early, so the fence grows past the
   // longest run inside it — the same rule CommonMark uses. Tracked in a loop rather than spread
   // into Math.max, which a body with tens of thousands of runs would blow the argument limit on.

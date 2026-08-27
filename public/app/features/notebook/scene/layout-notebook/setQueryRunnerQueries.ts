@@ -1,31 +1,31 @@
 import { type DataQuery } from '@grafana/data';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/constants';
 
 /**
  * Writes a new query array onto the runner, keeping the runner-level `datasource` in sync.
  *
- * Each row in PanelQueryEditor resolves and displays its own query's datasource independently (see
- * PanelQueryEditorRow), but that's only the editing UI. What a query actually runs against is decided
- * by the *runner's* own `state.datasource`: a regular datasource plugin ignores each query's own
- * `datasource` field entirely and just runs every query in the request against itself — only the
- * "-- Mixed --" pseudo-datasource plugin looks at each query's own field and dispatches accordingly.
- * So the moment two queries here point at different datasources, the runner-level datasource has to
- * become Mixed or every query silently runs against whichever one the runner was last pointed at,
- * regardless of what the row for a different query shows. Same detection this codebase's other
- * multi-query editors (QueryEditorRows, PanelDataQueriesTab) already do on every query-array change.
+ * Each PanelQueryEditorRow resolves and displays its own query's datasource, but only the runner's
+ * `state.datasource` decides what a query actually runs against: a regular datasource plugin ignores
+ * each query's own `datasource` field and runs every query against itself — only "-- Mixed --" reads
+ * per-query datasources. So once two queries here disagree, the runner must switch to Mixed.
  *
- * Two or more queries all targeting the "-- Dashboard --" pseudo-datasource also force Mixed, even
- * though they'd otherwise look like a single shared uid: that datasource only ever handles one target
- * per request, so a non-Mixed runner sending it two would silently drop all but one. Same special
- * case `getPanelDataSource` (layoutSerializers/utils.ts) already carves out for the same reason.
+ * Two or more queries sharing the "-- Dashboard --" pseudo-datasource also force Mixed, since that
+ * datasource only handles one target per request — the same special case `getPanelDataSource`
+ * (layoutSerializers/utils.ts) carves out.
  */
 export function setQueryRunnerQueries(queryRunner: SceneQueryRunner, queries: DataQuery[]): void {
-  const uniqueDatasourceUids = new Set(queries.map((query) => query.datasource?.uid));
   const dashboardQueryCount = queries.filter((query) => query.datasource?.uid === SHARED_DASHBOARD_QUERY).length;
-  const isMixed = uniqueDatasourceUids.size > 1 || dashboardQueryCount > 1;
-  const datasource = isMixed ? { uid: MIXED_DATASOURCE_NAME, type: 'mixed' } : (queries[0]?.datasource ?? undefined);
+  const first = queries[0]?.datasource;
+  // Comparing uid alone isn't enough: a type-only reference (e.g. `{ type: 'prometheus' }`, as
+  // panelQueryKindToSceneQuery produces) has an undefined uid, so two different type-only queries
+  // would otherwise look identical. getPanelDataSource does the same uid+type comparison.
+  const hasDifferentDatasources = queries.some(
+    (query) => query.datasource?.uid !== first?.uid || query.datasource?.type !== first?.type
+  );
+  const isMixed = hasDifferentDatasources || dashboardQueryCount > 1;
+  const datasource = isMixed ? { uid: MIXED_DATASOURCE_NAME, type: 'mixed' } : (first ?? undefined);
 
   queryRunner.setState({ queries, datasource });
 }

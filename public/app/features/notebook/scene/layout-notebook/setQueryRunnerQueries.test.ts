@@ -7,6 +7,10 @@ function query(refId: string, datasourceUid?: string): DataQuery {
   return { refId, datasource: datasourceUid ? { uid: datasourceUid } : undefined };
 }
 
+function queryWithType(refId: string, type: string): DataQuery {
+  return { refId, datasource: { type } };
+}
+
 describe('setQueryRunnerQueries', () => {
   it('keeps a single, shared datasource when every query agrees', () => {
     const runner = new SceneQueryRunner({ queries: [] });
@@ -55,6 +59,16 @@ describe('setQueryRunnerQueries', () => {
     setQueryRunnerQueries(runner, [query('A', '-- Dashboard --')]);
 
     expect(runner.state.datasource).toEqual({ uid: '-- Dashboard --' });
+  });
+
+  // Both datasources have an undefined uid, so a uid-only comparison would wrongly call these the
+  // same datasource — the type has to be compared too.
+  it('flips to Mixed when type-only datasource references disagree', () => {
+    const runner = new SceneQueryRunner({ queries: [] });
+
+    setQueryRunnerQueries(runner, [queryWithType('A', 'prometheus'), queryWithType('B', 'loki')]);
+
+    expect(runner.state.datasource).toEqual({ uid: '-- Mixed --', type: 'mixed' });
   });
 
   it('writes the queries themselves through unchanged', () => {

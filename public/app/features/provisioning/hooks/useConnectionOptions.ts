@@ -6,17 +6,24 @@ import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type GitHubBasedConnectionType } from '../Wizard/types';
-import { type ExternalRepository } from '../types';
+import { type ExternalRepository, type OAuthConnectionType } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType) {
+export function useConnectionOptions(
+  enabled: boolean,
+  connectionTypes: Array<GitHubBasedConnectionType | OAuthConnectionType>
+) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
+  // Key on contents, not array identity: an unstable array would re-run the memo
+  // every render and cascade into useAsync refetching repos.
+  const typesKey = connectionTypes.join('|');
   const githubConnections = useMemo(
-    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
-    [connections, connectionType]
+    () => connections?.filter((c) => c.spec?.type && connectionTypes.includes(c.spec.type)) ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [connections, typesKey]
   );
 
   // Only fetch repos for ready connections
@@ -84,12 +91,10 @@ export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBa
         const remaining = repos.length - maxToShow;
         const repoText =
           remaining > 0
-            ? t('provisioning.connection-options.repos-truncated', '', {
+            ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{remaining}} more', {
                 shown,
-                count: remaining,
+                remaining,
                 interpolation: { escapeValue: false },
-                defaultValue_one: '{{shown}} +{{count}} more',
-                defaultValue_other: '{{shown}} +{{count}} more',
               })
             : shown;
         descriptionParts.push(repoText);
