@@ -859,7 +859,7 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 			wantErrContains: "failed to get quota status: quota service failed",
 		},
 		{
-			name: "observed repository uses cached quota",
+			name: "repository absent from storage returns lookup error despite observed generation",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
 				Status: provisioning.RepositoryStatus{
@@ -870,19 +870,20 @@ func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.
 			existingRepos: []provisioning.Repository{
 				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
 			},
-			wantErrContains: "Maximum number of 1 repositories reached",
+			wantErrContains: "failed to get quota status: quota service failed",
 		},
 		{
-			name: "observed repository update is allowed",
+			name: "persisted unobserved repository update uses cached quota",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
-				Status: provisioning.RepositoryStatus{
-					ObservedGeneration: 1,
-					Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
-				},
 			},
 			existingRepos: []provisioning.Repository{
-				{ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"}},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"},
+					Status: provisioning.RepositoryStatus{
+						Quota: provisioning.QuotaStatus{MaxRepositories: 1},
+					},
+				},
 				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
 			},
 		},

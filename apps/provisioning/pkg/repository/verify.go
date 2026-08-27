@@ -106,14 +106,19 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
 	if err != nil {
-		// If the quota getter throws an error, and the resource is new, return such error as we don't have quota for it.
-		if cfg.Status.ObservedGeneration == 0 {
-			return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		isExistingRepo := false
+		for i := range all {
+			if all[i].Name == cfg.Name {
+				quotaStatus = all[i].Status.Quota
+				isExistingRepo = true
+				break
+			}
 		}
 
-		// Otherwise, retrieve the status quota
-		quotaStatus = provisioning.QuotaStatus{
-			MaxRepositories: cfg.Status.Quota.MaxRepositories,
+		// A repository is new only when it is absent from storage. ObservedGeneration may remain zero
+		// when the first reconciliation fails after caching quota.
+		if !isExistingRepo {
+			return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
 		}
 	}
 
