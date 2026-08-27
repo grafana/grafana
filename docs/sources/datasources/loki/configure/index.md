@@ -134,9 +134,13 @@ To manage other alerting resources, such as the alerts these rules generate, add
 
 Configure query behavior for the data source.
 
+<!-- vale Grafana.WordList = NO -->
+
 | Setting           | Description                                                                                                                                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Maximum lines** | Sets the maximum number of log lines Loki returns. Increase the limit for a larger result set for ad hoc analysis. Decrease the limit if your browser is slow when displaying log results. The default is `1000`. |
+
+<!-- vale Grafana.WordList = YES -->
 
 #### Derived fields
 

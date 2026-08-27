@@ -84,13 +84,17 @@ For example, to use a raw custom value in an exact-match selector:
 
 For the complete list of format options, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
-## Use free-form filters
+<!-- vale Grafana.WordList = NO -->
 
-Loki supports free-form filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
+## Use ad hoc filters
 
-For example, if you add an free-form filter for `level = error`, Grafana appends the matcher to the stream selector of every Loki query on the dashboard, so a query like `{app="payments"}` runs as `{app="payments", level="error"}`.
+Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
 
-For more information, refer to [Add free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For example, if you add an ad hoc filter for `level = error`, Grafana appends the matcher to the stream selector of every Loki query on the dashboard, so a query like `{app="payments"}` runs as `{app="payments", level="error"}`.
+
+For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+
+<!-- vale Grafana.WordList = YES -->
 
 ## Use $\_\_auto variable for Loki metric queries
 
