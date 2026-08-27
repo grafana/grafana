@@ -183,6 +183,17 @@ func GroupFromPath(path string) string {
 	return groupFromPath(path)
 }
 
+// KnownGroup reports whether group has a live backend in the current
+// snapshot. group is otherwise an arbitrary, client-controlled path segment
+// (see GroupFromPath) -- callers that turn it into metric label values must
+// check this first, or an attacker/typo/scan against /apis/<anything> mints a
+// new label (and, for native histograms, a new series) per unique string.
+func (cr *GrafanaRouter) KnownGroup(group string) bool {
+	handlers := *cr.snapshot.Load()
+	_, ok := handlers[group]
+	return ok
+}
+
 // serveAPIGroupList synthesizes the /apis root (APIGroupList) from the current
 // group snapshot.
 func (cr *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
