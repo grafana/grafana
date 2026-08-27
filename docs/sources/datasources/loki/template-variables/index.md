@@ -90,7 +90,7 @@ Loki supports free-form filters. Use them to specify any number of key/value fil
 
 For example, if you add an free-form filter for `level = error`, Grafana appends the matcher to the stream selector of every Loki query on the dashboard, so a query like `{app="payments"}` runs as `{app="payments", level="error"}`.
 
-For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to [Add free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Use $\_\_auto variable for Loki metric queries
 
