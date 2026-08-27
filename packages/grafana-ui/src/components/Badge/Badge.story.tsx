@@ -1,6 +1,7 @@
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { iconOptions } from '../../utils/storybook/icons';
+import { withVisualDesignRefresh } from '../../utils/storybook/withVisualDesignRefresh';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { Badge } from './Badge';
@@ -22,6 +23,7 @@ const meta: Meta<typeof Badge> = {
     },
     color: { control: 'select' },
     text: { control: 'text' },
+    maxWidth: { control: 'number' },
   },
 };
 
@@ -56,5 +58,18 @@ export const LongTextWrapping: StoryFn<typeof Badge> = () => (
     />
   </div>
 );
+
+// Truncation only takes effect under the visual design refresh theme, so it's forced on here
+// via a decorator to demonstrate it reliably regardless of the toolbar theme selection.
+export const Truncated = Template.bind({});
+
+Truncated.args = {
+  text: 'Badge label that is long enough to be truncated',
+  tooltip: 'Badge label that is long enough to be truncated',
+  color: 'blue',
+  icon: 'clock-nine',
+  maxWidth: 180,
+};
+Truncated.decorators = [withVisualDesignRefresh];
 
 export default meta;

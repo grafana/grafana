@@ -2,6 +2,7 @@ import { Meta, ArgTypes } from '@storybook/addon-docs/blocks';
 import { Badge } from './Badge';
 import { Stack } from '../Layout/Stack/Stack';
 import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
+import { VisualDesignRefreshProvider } from '../../utils/storybook/withVisualDesignRefresh';
 
 <Meta title="MDX|Badge" component={Badge} />
 
@@ -39,6 +40,22 @@ Specify a tooltip to show additional information on hover. Avoid putting lengthy
 
 <ExampleFrame>
   <Badge icon="rocket" color="blue" text="New!" tooltip="Check out this new feature!" />
+</ExampleFrame>
+
+### Max width
+
+Specify `maxWidth` to constrain the badge and truncate long text with an ellipsis instead of wrapping onto multiple lines. Pair it with `tooltip` so the full text is still available on hover. This only takes effect under the visual design refresh theme, which is forced on for this example so it renders consistently regardless of the active theme.
+
+<ExampleFrame>
+  <VisualDesignRefreshProvider>
+    <Badge
+      icon="clock-nine"
+      color="blue"
+      text="Badge label that is long enough to be truncated"
+      tooltip="Badge label that is long enough to be truncated"
+      maxWidth={180}
+    />
+  </VisualDesignRefreshProvider>
 </ExampleFrame>
 
 <ArgTypes of={Badge} />
