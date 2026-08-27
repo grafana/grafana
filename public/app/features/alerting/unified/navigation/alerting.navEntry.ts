@@ -14,6 +14,10 @@ import {
   silencesAccess,
 } from '../utils/pageAccess';
 
+// TODO: migrate these to OpenFeature flags. They are legacy-only toggles, so
+// they live solely in the config.featureToggles map, which the multi-tenant
+// frontend service ships empty — both read false there and the section falls
+// back to its legacy shape. OpenFeature flags resolve over OFREP instead.
 const isAlertingV2 = () => Boolean(config.featureToggles.alertingNavigationV2);
 const isAlertingTriage = () => Boolean(config.featureToggles.alertingTriage);
 
@@ -130,6 +134,9 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
     }),
   },
   {
+    // TODO: migrate these two to OpenFeature flags as well — being legacy-only
+    // they read false in the multi-tenant frontend service, so this item never
+    // appears there.
     when: () =>
       contextSrv.hasRole('Admin') &&
       Boolean(config.featureToggles.alertRuleRestore) &&
