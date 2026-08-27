@@ -3421,6 +3421,10 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -7195,6 +7199,10 @@
           "options": {
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
+          },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
           },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
