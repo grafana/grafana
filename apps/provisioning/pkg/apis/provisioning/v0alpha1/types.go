@@ -701,7 +701,6 @@ func (TokenStatus) OpenAPIModelName() string {
 }
 
 // QuotaStatus represents the quota limits configured for this repository.
-// These values come from static configuration and are read-only.
 type QuotaStatus struct {
 	// MaxRepositories is the maximum number of repositories allowed.
 	// 0 means unlimited.
@@ -710,6 +709,10 @@ type QuotaStatus struct {
 	// MaxResourcesPerRepository is the maximum number of resources allowed per repository.
 	// 0 means unlimited.
 	MaxResourcesPerRepository int64 `json:"maxResourcesPerRepository,omitempty"`
+
+	// StaleSince is when the controller started using cached quota limits after a refresh failed.
+	// It is expressed as Unix milliseconds. 0 means the quota limits are fresh.
+	StaleSince int64 `json:"staleSince,omitempty"`
 }
 
 func (QuotaStatus) OpenAPIModelName() string {

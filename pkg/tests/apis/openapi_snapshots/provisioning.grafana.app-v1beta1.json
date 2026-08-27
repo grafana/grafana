@@ -5350,7 +5350,7 @@
         }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.QuotaStatus": {
-        "description": "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+        "description": "QuotaStatus represents the quota limits configured for this repository.",
         "type": "object",
         "properties": {
           "maxRepositories": {
@@ -5360,6 +5360,11 @@
           },
           "maxResourcesPerRepository": {
             "description": "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "staleSince": {
+            "description": "StaleSince is when the controller started using cached quota limits after a refresh failed. It is expressed as Unix milliseconds. 0 means the quota limits are fresh.",
             "type": "integer",
             "format": "int64"
           }

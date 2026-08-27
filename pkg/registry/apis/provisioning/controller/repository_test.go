@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -947,6 +948,122 @@ func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool)
 	return nil, false
 }
 
+func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+
+	t.Run("new repository returns lookup error", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status:     provisioning.RepositoryStatus{ObservedGeneration: 0},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.ErrorIs(t, err, lookupErr)
+		assert.ErrorContains(t, err, "failed to get quota status")
+		assert.Equal(t, provisioning.QuotaStatus{}, status)
+		assert.Equal(t, uint64(0), histogramCount(t, reg, repositoryQuotaStalenessMetric))
+	})
+
+	t.Run("existing repository starts using cached quota", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories:           5,
+					MaxResourcesPerRepository: 100,
+				},
+			},
+		}
+		before := time.Now().UnixMilli()
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, int64(5), status.MaxRepositories)
+		assert.Equal(t, int64(100), status.MaxResourcesPerRepository)
+		assert.GreaterOrEqual(t, status.StaleSince, before)
+		assert.LessOrEqual(t, status.StaleSince, time.Now().UnixMilli())
+		assert.Equal(t, uint64(1), histogramCount(t, reg, repositoryQuotaStalenessMetric))
+	})
+
+	t.Run("repeated failure preserves stale timestamp and records age", func(t *testing.T) {
+		reg := prometheus.NewPedanticRegistry()
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+		getter.SetError(lookupErr)
+		rc := &RepositoryController{
+			quotaGetter:  getter,
+			quotaMetrics: registerRepositoryQuotaMetrics(reg),
+		}
+		staleSince := time.Now().Add(-5 * time.Minute).UnixMilli()
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories: 5,
+					StaleSince:      staleSince,
+				},
+			},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, staleSince, status.StaleSince)
+		family := gatherMetrics(t, reg)[repositoryQuotaStalenessMetric]
+		histogram := family.GetMetric()[0].GetHistogram()
+		assert.Equal(t, uint64(1), histogram.GetSampleCount())
+		assert.InDelta(t, 300, histogram.GetSampleSum(), 1)
+		firstAge := histogram.GetSampleSum()
+
+		repo.Status.Quota = status
+		status, err = rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, staleSince, status.StaleSince)
+		histogram = gatherMetrics(t, reg)[repositoryQuotaStalenessMetric].GetMetric()[0].GetHistogram()
+		assert.Equal(t, uint64(2), histogram.GetSampleCount())
+		assert.GreaterOrEqual(t, histogram.GetSampleSum()-firstAge, firstAge)
+	})
+
+	t.Run("successful refresh clears stale timestamp", func(t *testing.T) {
+		getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+			MaxRepositories:           8,
+			MaxResourcesPerRepository: 200,
+			StaleSince:                time.Now().Add(-time.Hour).UnixMilli(),
+		})
+		rc := &RepositoryController{quotaGetter: getter}
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Status: provisioning.RepositoryStatus{
+				ObservedGeneration: 1,
+				Quota: provisioning.QuotaStatus{
+					MaxRepositories: 5,
+					StaleSince:      time.Now().Add(-5 * time.Minute).UnixMilli(),
+				},
+			},
+		}
+
+		status, err := rc.resolveQuotaStatus(context.Background(), repo)
+		require.NoError(t, err)
+		assert.Equal(t, int64(8), status.MaxRepositories)
+		assert.Equal(t, int64(200), status.MaxResourcesPerRepository)
+		assert.Zero(t, status.StaleSince)
+	})
+}
+
 // repoIDHandlerStub is a minimal repository.Repository that also implements
 // repository.RepoIDHandler, so tests can drive the RepoID backfill branch in
 // process() without needing a real gitlab/github repository.
@@ -1273,6 +1390,101 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 							"expected NamespaceQuota condition to be present")
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestRepositoryController_process_QuotaFreshnessOnlyPatchDoesNotForceReconciliation(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+	errorGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{})
+	errorGetter.SetError(lookupErr)
+	testCases := []struct {
+		name             string
+		quota            provisioning.QuotaStatus
+		getter           quotas.QuotaGetter
+		expectStaleSince bool
+	}{
+		{
+			name:             "first failed refresh marks cached quota stale",
+			quota:            provisioning.QuotaStatus{MaxRepositories: 5, MaxResourcesPerRepository: 100},
+			getter:           errorGetter,
+			expectStaleSince: true,
+		},
+		{
+			name: "successful refresh clears stale marker",
+			quota: provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+				StaleSince:                time.Now().Add(-5 * time.Minute).UnixMilli(),
+			},
+			getter: quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
+				MaxRepositories:           5,
+				MaxResourcesPerRepository: 100,
+			}),
+			expectStaleSince: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "repo",
+					Namespace:  "default",
+					Generation: 1,
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.LocalRepositoryType,
+					Sync: provisioning.SyncOptions{Enabled: false},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health: provisioning.HealthStatus{
+						Healthy: true,
+						Checked: time.Now().UnixMilli(),
+					},
+					Quota: tc.quota,
+				},
+			}
+
+			indexer := cache.NewIndexer(
+				cache.MetaNamespaceKeyFunc,
+				cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+			)
+			require.NoError(t, indexer.Add(repo))
+			repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+
+			patcher := &capturePatcher{}
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
+			repoFactory := repository.NewMockFactory(t)
+
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   tc.getter,
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: healthChecker,
+				statusPatcher: patcher,
+				repoFactory:   repoFactory,
+				logger:        logging.DefaultLogger.With("logger", loggerName),
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			err := rc.process("default/repo")
+			require.NoError(t, err)
+			repoFactory.AssertNotCalled(t, "Build", mock.Anything, mock.Anything)
+			require.Len(t, patcher.ops, 1)
+			quotaOp, found := patcher.findPatchOp("/status/quota")
+			require.True(t, found)
+			patchedQuota := quotaOp["value"].(provisioning.QuotaStatus)
+			assert.Equal(t, int64(5), patchedQuota.MaxRepositories)
+			assert.Equal(t, int64(100), patchedQuota.MaxResourcesPerRepository)
+			if tc.expectStaleSince {
+				assert.NotZero(t, patchedQuota.StaleSince)
+			} else {
+				assert.Zero(t, patchedQuota.StaleSince)
 			}
 		})
 	}
