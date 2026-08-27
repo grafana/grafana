@@ -6,6 +6,19 @@ export interface PromptDatasource {
   name?: string;
 }
 
+export interface PromptDashboardRef {
+  uid: string;
+  title: string;
+}
+
+/** Serializable context picked on the new-dashboard landing prompt. */
+export interface DashboardLandingPromptSelection {
+  kind: 'datasource' | 'dashboard';
+  uid: string;
+  name: string;
+  datasourceType?: string;
+}
+
 /**
  * Pre-seeded context for entry points that already know what the user is
  * looking at — today that's a datasource's settings page.

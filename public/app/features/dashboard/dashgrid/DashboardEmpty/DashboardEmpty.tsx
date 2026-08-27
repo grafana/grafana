@@ -7,6 +7,8 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
@@ -64,9 +66,9 @@ interface NewLayoutEmptyProps {
 }
 
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, sidebar, body } = dashboard.useState();
+  const { uid, isEditing, sidebar } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
-  const isAutoGrid = body instanceof AutoGridLayoutManager;
+  const generationAvailable = useDashboardGenerationAvailable();
 
   // open the sidebar when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
@@ -81,6 +83,17 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
       sidebar.openPane(new AddNewPane({}));
     }
   }, [isEditingNewDashboard, dashboard, sidebar]);
+
+  if (generationAvailable) {
+    return <AssistantDashboardEmpty dashboard={dashboard} />;
+  }
+
+  return <LayoutPickerEmpty dashboard={dashboard} styles={styles} />;
+};
+
+const LayoutPickerEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
+  const { body } = dashboard.useState();
+  const isAutoGrid = body instanceof AutoGridLayoutManager;
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());

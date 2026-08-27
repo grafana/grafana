@@ -1,8 +1,8 @@
-import { createAssistantContextItem, openAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, type ChatContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
-import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDatasources } from './prompts';
-import { type PromptDatasource } from './types';
+import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDashboardRefs, formatDatasources } from './prompts';
+import { type PromptDashboardRef, type PromptDatasource } from './types';
 
 /**
  * The title of the hidden context item that carries the planning
@@ -20,10 +20,17 @@ interface StartPlanningArgs {
   request: string;
   /** The request as the user typed it — shown as their message in the conversation. */
   displayPrompt: string;
-  /** Datasources already scoped to the seed. */
+  /** Datasources already scoped to the seed or picked on the landing prompt. */
   datasources: PromptDatasource[];
+  /** Dashboards the user attached as context on the landing prompt. */
+  dashboards?: PromptDashboardRef[];
   /** Folder the draft should land in, when the entry point knows one. */
   folderUid?: string;
+  /**
+   * Skip navigating to `/dashboard/new`. Use when the prompt is already on
+   * that page (the empty-dashboard landing), so a push cannot remount it.
+   */
+  skipNavigation?: boolean;
 }
 
 /**
@@ -38,19 +45,26 @@ interface StartPlanningArgs {
  * caller can keep the user's prompt on screen instead of losing it.
  */
 export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
-  // Land in the new-dashboard editor first so the plan (and later the build)
-  // plays out next to the dashboard it will produce.
-  locationService.push(
-    args.folderUid ? `${NEW_DASHBOARD_PATH}?folderUid=${encodeURIComponent(args.folderUid)}` : NEW_DASHBOARD_PATH
-  );
+  if (!args.skipNavigation) {
+    // Land in the new-dashboard editor first so the plan (and later the build)
+    // plays out next to the dashboard it will produce. editSource=assistant
+    // tags the edit session at scene activation so Grafana skips the empty-
+    // dashboard Add pane and treats the canvas as assistant-driven
+    const search = new URLSearchParams();
+    search.set('editSource', 'assistant');
+    if (args.folderUid) {
+      search.set('folderUid', args.folderUid);
+    }
+    locationService.push(`${NEW_DASHBOARD_PATH}?${search.toString()}`);
 
-  // An unsaved dashboard blocks navigation (dashboard-scene's DashboardPrompt
-  // installs a history blocker and shows its own modal instead). That runs
-  // synchronously, so a pathname that hasn't moved means we never left: opening
-  // a dashboarding conversation now would point the assistant at the dashboard
-  // the user is still sitting on, and tell it a blank one is open.
-  if (locationService.getLocation().pathname !== NEW_DASHBOARD_PATH) {
-    return false;
+    // An unsaved dashboard blocks navigation (dashboard-scene's DashboardPrompt
+    // installs a history blocker and shows its own modal instead). That runs
+    // synchronously, so a pathname that hasn't moved means we never left: opening
+    // a dashboarding conversation now would point the assistant at the dashboard
+    // the user is still sitting on, and tell it a blank one is open.
+    if (locationService.getLocation().pathname !== NEW_DASHBOARD_PATH) {
+      return false;
+    }
   }
 
   const planningItem = createAssistantContextItem('structured', {
@@ -65,10 +79,19 @@ export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
     mode: 'dashboarding',
     autoSend: true,
     prompt: args.displayPrompt,
-    context: [planningItem],
+    context: [planningItem, ...buildAttachedResourceContext(args)],
   });
 
   return true;
+}
+
+function buildAttachedResourceContext(args: StartPlanningArgs): ChatContextItem[] {
+  return (args.dashboards ?? []).map((dashboard) =>
+    createAssistantContextItem('dashboard', {
+      dashboardUid: dashboard.uid,
+      dashboardTitle: dashboard.title,
+    })
+  );
 }
 
 /**
@@ -88,10 +111,14 @@ export function buildPlanningInstructions(args: StartPlanningArgs): string {
     : `The available datasources (query them by these exact uids — no others exist):\n${formatDatasources(args.datasources)}`;
 
   const parts: string[] = [
-    'The user clicked "Generate dashboard" and is starting from a brand-new dashboard (the new-dashboard editor is open). Follow your plan-first workflow: ground the plan in verified data with your datasource tools, ask at most one round of clarifying questions, present the plan with propose_dashboard_plan, and only build after the plan is accepted.',
+    'The user is starting from a brand-new dashboard (the new-dashboard editor is open). Follow your plan-first workflow: ground the plan in verified data with your datasource tools, ask at most one round of clarifying questions, present the plan with propose_dashboard_plan, and only build after the plan is accepted.',
     `The user's full request:\n${args.request}`,
     datasourceScopeInstruction,
   ];
+
+  if (args.dashboards && args.dashboards.length > 0) {
+    parts.push(`Dashboards the user attached as context:\n${formatDashboardRefs(args.dashboards)}`);
+  }
 
   parts.push(
     `Planning and build requirements:
