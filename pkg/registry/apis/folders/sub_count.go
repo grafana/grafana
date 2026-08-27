@@ -14,13 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// countedKinds is the explicit "group/resource" list passed to GetStats.
+// CountedKinds is the explicit "group/resource" list passed to GetStats.
 // Without it, the search server enumerates every kind in the namespace first
 // (very expensive on KV-backed storage). Each consumer of this stats response
 // (e.g. the browse-dashboards UI, validateOnDelete) keeps its own allow-list
 // of which of these kinds it actually uses, so adding a kind here does not by
 // itself change behavior anywhere else.
-var countedKinds = []string{
+var CountedKinds = []string{
 	"folder.grafana.app/folders",
 	"dashboard.grafana.app/dashboards",
 	"dashboard.grafana.app/librarypanels",
@@ -74,7 +74,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
-			Kinds:     countedKinds,
+			Kinds:     CountedKinds,
 			Folder:    []string{name},
 		})
 		if err != nil {

@@ -271,7 +271,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestIntegrationFolderServiceViaUnifiedStorage")
 	searchMock := resource.NewMockResourceClient(t)
 	k8sCli := client.NewK8sHandler(request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, userService, searchMock)
-	unifiedStore := ProvideUnifiedStore(k8sCli, userService, tracer, cfg)
+	unifiedStore := ProvideUnifiedStore(k8sCli, searchMock, userService, tracer, cfg)
 
 	ctx := context.Background()
 	usr := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
