@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -204,7 +206,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -214,7 +216,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -251,7 +253,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, assert.AnError)
 
@@ -275,7 +277,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -285,7 +287,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -297,7 +299,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				s := mocks.NewStatusPatcher(t)
 
 				s.
-					On("Patch", context.Background(), mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
+					On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"), mock.AnythingOfType("map[string]interface {}")).
 					Once().
 					Return(nil) // Return nil error for the status patch
 
@@ -319,7 +321,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := repository.NewMockFactory(t)
 
 				f.
-					On("Build", context.Background(), mock.Anything).
+					On("Build", mock.Anything, mock.Anything).
 					Once().
 					Return(nil, nil)
 
@@ -329,7 +331,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				f := NewMockFinalizerProcessor(t)
 
 				f.
-					On("process", context.Background(), nil, []string{
+					On("process", mock.Anything, nil, []string{
 						repository.RemoveOrphanResourcesFinalizer,
 					}).
 					Once().
@@ -370,6 +372,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				finalizer:     tc.finalizer,
 				client:        tc.client,
 				statusPatcher: tc.statusPatcher,
+				tracer:        tracing.InitializeTracerForTest(),
 			}
 
 			err := c.handleDelete(context.Background(), tc.repo)
@@ -391,12 +394,12 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
 	factory := repository.NewMockFactory(t)
-	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
 	var calls int32
 	repoClient := &mockRepoInterface{
@@ -416,6 +419,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	c := &RepositoryController{
 		repoFactory: factory,
 		finalizer:   finalizer,
+		tracer:      tracing.InitializeTracerForTest(),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -434,12 +438,12 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
 	finalizer := NewMockFinalizerProcessor(t)
 	finalizer.
-		On("process", context.Background(), nil, []string{repository.RemoveOrphanResourcesFinalizer}).
+		On("process", mock.Anything, nil, []string{repository.RemoveOrphanResourcesFinalizer}).
 		Once().
 		Return(nil)
 
 	factory := repository.NewMockFactory(t)
-	factory.On("Build", context.Background(), mock.Anything).Once().Return(nil, nil)
+	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
 	var calls int32
 	repoClient := &mockRepoInterface{
@@ -456,6 +460,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	c := &RepositoryController{
 		repoFactory: factory,
 		finalizer:   finalizer,
+		tracer:      tracing.InitializeTracerForTest(),
 		client: &mockProvisioningV0alpha1Interface{
 			repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
 		},
@@ -931,10 +936,12 @@ func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, pa
 	return nil
 }
 
+// findPatchOp returns the last captured op for path, matching JSON Patch's
+// sequential-apply semantics
 func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
-	for _, op := range c.ops {
-		if op["path"] == path {
-			return op, true
+	for i := len(c.ops) - 1; i >= 0; i-- {
+		if c.ops[i]["path"] == path {
+			return c.ops[i], true
 		}
 	}
 	return nil, false
@@ -1323,6 +1330,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 		repoFactory:   mockFactory,
 		statusPatcher: patcher,
 		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process("default/test-repo")
@@ -1476,6 +1484,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		healthChecker:     healthChecker,
 		resyncInterval:    resyncInterval,
 		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process(namespace + "/" + repoName)
@@ -1580,6 +1589,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		healthChecker:     healthChecker,
 		resyncInterval:    5 * time.Minute,
 		logger:            logging.DefaultLogger.With("logger", loggerName),
+		tracer:            tracing.InitializeTracerForTest(),
 	}
 
 	err := rc.process(namespace + "/" + repoName)
@@ -1691,13 +1701,17 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 // hookErr controls what the webhook client returns — when nil the call is
 // considered successful. The default zero-value preserves the historical
 // behaviour of always failing with assert.AnError.
+//
+// testResults overrides what Test returns; when nil, Test reports success.
 type hookRepoStub struct {
 	cfg           *provisioning.Repository
 	testCalls     atomic.Int32
 	onUpdateCalls atomic.Int32
 	onCreateCalls atomic.Int32
+	onDeleteCalls atomic.Int32
 	hookErr       error
 	hookErrSet    bool
+	testResults   *provisioning.TestResults
 }
 
 var _ repository.WebhookRepository = (*hookRepoStub)(nil)
@@ -1706,6 +1720,9 @@ func (s *hookRepoStub) Config() *provisioning.Repository { return s.cfg }
 
 func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	s.testCalls.Add(1)
+	if s.testResults != nil {
+		return s.testResults, nil
+	}
 	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
 }
 
@@ -1730,13 +1747,34 @@ func (s *hookRepoStub) hookResult() error {
 	return assert.AnError
 }
 
-func (s *hookRepoStub) CreateWebhook(context.Context, string, []string, string) (repository.WebhookConfig, error) {
+func (s *hookRepoStub) CreateWebhook(_ context.Context, url string, events []string, secret string) (repository.WebhookConfig, error) {
 	s.onCreateCalls.Add(1)
-	return nil, s.hookResult()
+	if err := s.hookResult(); err != nil {
+		return nil, err
+	}
+	return &stubWebhookConfig{id: "1", url: url, events: events, secret: secret}, nil
 }
 
+// stubWebhookConfig is a minimal repository.WebhookConfig for hookRepoStub's
+// success path — real callers only need a non-nil value to call SetSecret etc. on.
+type stubWebhookConfig struct {
+	id, url, secret string
+	events          []string
+}
+
+func (c *stubWebhookConfig) GetID() string             { return c.id }
+func (c *stubWebhookConfig) GetURL() string            { return c.url }
+func (c *stubWebhookConfig) GetEvents() []string       { return c.events }
+func (c *stubWebhookConfig) GetSecret() string         { return c.secret }
+func (c *stubWebhookConfig) SetURL(url string)         { c.url = url }
+func (c *stubWebhookConfig) SetEvents(events []string) { c.events = events }
+func (c *stubWebhookConfig) SetSecret(secret string)   { c.secret = secret }
+
 func (s *hookRepoStub) GetWebhook(context.Context, repository.WebhookID) (repository.WebhookConfig, error) {
-	return nil, s.hookResult()
+	if err := s.hookResult(); err != nil {
+		return nil, err
+	}
+	return &stubWebhookConfig{id: "1"}, nil
 }
 
 func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) error {
@@ -1745,6 +1783,7 @@ func (s *hookRepoStub) EditWebhook(context.Context, repository.WebhookConfig) er
 }
 
 func (s *hookRepoStub) DeleteWebhook(context.Context, repository.WebhookID) error {
+	s.onDeleteCalls.Add(1)
 	return s.hookResult()
 }
 
@@ -1831,6 +1870,91 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	_, healthPatched := patcher.findPatchOp("/status/health")
 	assert.False(t, healthPatched,
 		"existing HealthFailureHook status must not be overwritten during cooldown")
+}
+
+// TestRepositoryController_process_RotationSuppressedDuringCooldown verifies
+// that an overdue webhook secret rotation does not retry EditWebhook while
+// the hook-failure cooldown is active, even though a skipped health check
+// during cooldown makes the repository read as "healthy" (no fresh test
+// result to say otherwise).
+func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHook,
+				Checked: time.Now().UnixMilli(),
+				Message: []string{"failed to create webhook"},
+			},
+			Webhook: &provisioning.WebhookStatus{
+				ID:          123,
+				LastRotated: time.Now().Add(-31 * 24 * time.Hour).UnixMilli(),
+			},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	patcher := &capturePatcher{}
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		Maybe()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	// hookErrSet+nil hookErr makes GetWebhook/EditWebhook succeed, so that if the
+	// cooldown guard failed to suppress rotation, EditWebhook would actually be
+	// reached and onUpdateCalls would be non-zero.
+	stub := &hookRepoStub{cfg: repo, hookErrSet: true}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:                         repoGetter,
+		quotaGetter:                   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:                  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker:                 healthChecker,
+		statusPatcher:                 patcher,
+		repoFactory:                   repoFactory,
+		jobs:                          mockJobs,
+		logger:                        logging.DefaultLogger.With("logger", loggerName),
+		tracer:                        tracing.InitializeTracerForTest(),
+		webhookSecretRotationInterval: 30 * 24 * time.Hour,
+	}
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
+		"an overdue rotation must not call EditWebhook while the hook failure cooldown is active")
 }
 
 // TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError
@@ -1968,6 +2092,355 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 	return rc, patcher
 }
 
+// TestRepositoryController_process_UnhealthyRepositorySkipsHooks verifies that
+// when the repository's own health check fails (e.g. GitHub returning 403
+// because the token can no longer access the repo), the controller does not
+// even attempt to create/update the webhook. The health check runs before
+// hooks specifically so this doomed create/update call is never made.
+func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg: repo,
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusForbidden,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: "403 Forbidden: authentication failed"},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(), "hooks must not run against an unhealthy repository")
+	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(), "hooks must not run against an unhealthy repository")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the health check failure must be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.False(t, obsPatched,
+		"observedGeneration must not advance while hooks are suppressed for being unreachable — "+
+			"otherwise a later healthy pass has no generation mismatch left to retry the missed hook work")
+}
+
+// TestRepositoryController_process_BranchProtectionFailureStillRunsHooks
+// verifies that a Test() failure unrelated to reachability (e.g. GitHub branch
+// protection blocking direct pushes, reported as a plain 400) does not suppress
+// hooks the way a real connectivity/auth failure (401/403/503) does — the
+// repository and its webhook API are still reachable, so operations like
+// webhook cleanup must still be allowed to run.
+func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true, hookErr: nil, // webhook creation succeeds
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusBadRequest,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: `branch "main" has protection rules that prevent direct pushes`},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
+		"a non-reachability Test() failure must not suppress hooks — the repo and webhook API remain reachable")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the branch protection error")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.True(t, obsPatched, "observedGeneration must advance since hooks were not suppressed")
+}
+
+func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true, hookErr: nil, // webhook creation succeeds
+		// Mirrors gitRepository.Test's CanWrite(false, nil) path exactly:
+		// apps/provisioning/pkg/repository/git/repository.go's "write permission denied" branch.
+		// Auth, repo-exists, and branch-read all succeeded there, so the repo (and its
+		// webhook API) is reachable even though the write workflow itself is blocked.
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusForbidden,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: repository.WritePermissionDeniedDetail},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
+		"a write-permission-denied Test() failure must not suppress hooks — the repo and webhook API remain reachable")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should still report unhealthy so the user sees the write-permission error")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.True(t, obsPatched, "observedGeneration must advance since hooks were not suppressed")
+}
+
+func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true, hookErr: nil,
+		// Mirrors gitRepository.Test's IsAuthorized(false, nil) path exactly:
+		// apps/provisioning/pkg/repository/git/repository.go's "not authorized" branch.
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusUnauthorized,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: "not authorized"},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
+		"an unauthorized repository is not reachable -- hooks must not attempt to hit its webhook API")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the Test() failure must still be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should report unhealthy")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.False(t, obsPatched, "observedGeneration must not advance while hooks are suppressed as unreachable")
+}
+
+// TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks
+// verifies that being over the namespace quota does not suppress webhook
+// hooks: quota and reachability are different concerns, and processHooks must
+// be gated on whether the repository itself is actually reachable, not on the
+// quota-driven health override (which exists only to report status).
+func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+	// A second repo in the same namespace keeps the namespace over quota.
+	otherRepo := repo.DeepCopy()
+	otherRepo.Name = "other-repo"
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	require.NoError(t, indexer.Add(otherRepo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	patcher := &capturePatcher{}
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
+
+	stub := &hookRepoStub{cfg: repo, hookErrSet: true, hookErr: nil} // webhook creation succeeds
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos: repoGetter,
+		// maxRepositories=1 with 2 repos in the namespace -> isOverQuota is true.
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 1}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		statusPatcher: patcher,
+		repoFactory:   repoFactory,
+		jobs:          mockJobs,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
+		"webhook creation must still be attempted for a reachable repo even when over quota")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the quota block must still be reported on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy, "status should report unhealthy due to quota")
+	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
+}
+
+// TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObservedGeneration
+// verifies that when workflows are removed (requiring webhook cleanup) while
+// the repository happens to be unreachable, cleanup is skipped as designed
+// (deleteWebhook could 404/401 against an unreachable repo) but
+// observedGeneration is not advanced either — so once the repository becomes
+// reachable again, the same generation mismatch retries the cleanup instead of
+// leaving the stale webhook (local status and remote) behind forever.
+func TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObservedGeneration(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+			// Workflows removed -> webhook cleanup is now due.
+			Workflows: nil,
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Webhook:            &provisioning.WebhookStatus{ID: 42},
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg: repo,
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusForbidden,
+			Errors:  []provisioning.ErrorDetails{{Detail: "403 Forbidden: authentication failed"}},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
+
+	assert.Equal(t, int32(0), stub.onDeleteCalls.Load(),
+		"webhook cleanup must not run against an unreachable repository")
+
+	_, obsPatched := patcher.findPatchOp("/status/observedGeneration")
+	assert.False(t, obsPatched,
+		"observedGeneration must not advance while cleanup is suppressed for being unreachable — "+
+			"otherwise the stale webhook is never cleaned up once the repository becomes reachable again")
+}
+
 // TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved
 // verifies that updating the spec to remove the workflows that required a
 // webhook bypasses the hook-failure cooldown so the repository can recover
@@ -2034,6 +2507,102 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	assert.EqualValues(t, repo.Generation, obsOp["value"])
 }
 
+// applyCapturedPatches mutates repo.Status in place per the captured JSON
+// Patch ops, mimicking what a real apiserver round-trip would persist so a
+// second rc.process() call observes the first call's writes instead of the
+// same stale object. Fails the test on any path it doesn't know how to
+// apply, so a future patch source can't silently go unverified here.
+func applyCapturedPatches(t *testing.T, repo *provisioning.Repository, ops []map[string]interface{}) {
+	t.Helper()
+	for _, op := range ops {
+		path, _ := op["path"].(string)
+		switch {
+		case path == "/status/health":
+			repo.Status.Health = op["value"].(provisioning.HealthStatus)
+		case path == "/status/fieldErrors":
+			repo.Status.FieldErrors = op["value"].([]provisioning.ErrorDetails)
+		case path == "/status/observedGeneration":
+			repo.Status.ObservedGeneration = op["value"].(int64)
+		case path == "/status/conditions":
+			repo.Status.Conditions = op["value"].([]metav1.Condition)
+		case path == "/status/conditions/-":
+			repo.Status.Conditions = append(repo.Status.Conditions, op["value"].(metav1.Condition))
+		case strings.HasPrefix(path, "/status/conditions/"):
+			idx, err := strconv.Atoi(strings.TrimPrefix(path, "/status/conditions/"))
+			require.NoError(t, err, "unexpected conditions patch path %q", path)
+			repo.Status.Conditions[idx] = op["value"].(metav1.Condition)
+		case path == "/status/sync/state":
+			repo.Status.Sync.State = op["value"].(provisioning.JobState)
+		case path == "/status/sync/started":
+			repo.Status.Sync.Started = op["value"].(int64)
+		case path == "/status/sync/message":
+			repo.Status.Sync.Message = op["value"].([]string)
+		default:
+			t.Fatalf("applyCapturedPatches: unhandled patch path %q -- add a case so this test stays accurate", path)
+		}
+	}
+}
+
+// TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStatus
+// If repo is unreachable, we should write the status once but when it remains unreachable, we should not immediately re-enqueue and let the reconciler re-check based on the resync interval.
+//
+// The first pass legitimately writes status (a repo transitioning to unhealthy
+// SHOULD record that). The real assertion is pass two: with the first pass's
+// writes folded back into repo.Status (simulating what the apiserver would
+// persist), a second reconcile of the exact same failure must produce zero
+// patch ops at all -- not just an unchanged /status/health or /status/fieldErrors,
+// but nothing from conditions or sync status either.
+func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStatus(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 2,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			// Stuck stale: hooks were suppressed on a previous pass because the
+			// repo was unreachable, so observedGeneration never advanced.
+			ObservedGeneration: 1,
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg:        repo,
+		hookErrSet: true,
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusUnauthorized,
+			Errors:  []provisioning.ErrorDetails{{Detail: "not authorized"}},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	// Pass 1: the repo is unreachable for the first time and status is updated.
+	require.NoError(t, rc.process(namespace+"/"+repoName))
+	require.NotEmpty(t, patcher.ops, "the first transition to unhealthy should record status")
+	applyCapturedPatches(t, repo, patcher.ops)
+	patcher.ops = nil
+
+	// Pass 2: same repo, same failure, nothing has changed since pass 1.
+	require.NoError(t, rc.process(namespace+"/"+repoName))
+
+	assert.Equal(t, int32(2), stub.testCalls.Load(),
+		"Test() must still run on pass 2 -- reachability can't be safely inferred from stale status")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
+		"hooks must stay suppressed on both passes since the fresh result is still unreachable")
+	assert.Empty(t, patcher.ops,
+		"a second pass over the same unresolved failure must produce zero patch ops -- any op here would bump "+
+			"resourceVersion and re-trigger the informer's UpdateFunc, recreating the hot loop")
+}
+
 // TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires
 // verifies that ShouldCheckHealth no longer permanently skips health checks
 // for HealthFailureHook once the cooldown window has elapsed. Without the fix,
@@ -2094,6 +2663,102 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 		"repository must recover after the hook-failure cooldown elapses")
 	assert.Empty(t, healthStatus.Error,
 		"recovered health status must clear HealthFailureHook")
+}
+
+// TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches guards: the
+// explicit applyPatches() call near the end of process() must clear
+// patchOperations before issuing the patch, not after it succeeds. Otherwise
+// a failed flush leaves the same ops in place for the deferred applyPatches()
+// call to replay -- statusPatcher already retries internally, so a second
+// attempt only repeats non-idempotent ops like "add /status/conditions/-",
+// duplicating the entry. The mock's Once() expectation fails the test if
+// Patch is called more than once.
+func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0,
+			// A pre-existing, unrelated condition so BuildConditionPatchOpsFromExisting
+			// takes the per-condition "add /status/conditions/-" path for the new Ready
+			// condition, instead of the whole-array replace it uses when Conditions is
+			// still empty -- "add" is exactly the non-idempotent op a replay would duplicate.
+			Conditions: []metav1.Condition{
+				{
+					Type:               "PlaceholderExisting",
+					Status:             metav1.ConditionTrue,
+					Reason:             "Placeholder",
+					ObservedGeneration: 0,
+				},
+			},
+		},
+	}
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	require.NoError(t, indexer.Add(repo))
+	repoLister := listers.NewRepositoryLister(indexer)
+
+	// This repo fixture deterministically produces 4 patch ops (health,
+	// observedGeneration, two condition adds) on the one and only expected
+	// call; fieldErrors is not patched since both sides are already empty.
+	statusPatcher := mocks.NewStatusPatcher(t)
+	statusPatcher.
+		On(
+			"Patch",
+			mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}"),
+			mock.AnythingOfType("map[string]interface {}")).
+		Once().
+		Return(assert.AnError)
+
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		Maybe()
+
+	tester := repository.NewTester()
+	healthChecker := NewRepositoryHealthChecker(statusPatcher, tester, healthMetrics)
+
+	stub := &hookRepoStub{cfg: repo}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	mockJobs := &mockJobsQueueStore{
+		MockQueue: jobs.NewMockQueue(t),
+		MockStore: jobs.NewMockStore(t),
+	}
+
+	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: healthChecker,
+		statusPatcher: statusPatcher,
+		repoFactory:   repoFactory,
+		jobs:          mockJobs,
+		logger:        logging.DefaultLogger.With("logger", loggerName),
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+
+	err := rc.process(namespace + "/" + repoName)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "status patch operations failed")
 }
 
 // TestRepositoryController_DeduplicatesEnqueueWhileProcessing verifies that multiple enqueue
