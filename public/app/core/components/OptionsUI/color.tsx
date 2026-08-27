@@ -59,13 +59,13 @@ export const ColorValueEditor = ({
             {details && (
               <>
                 {value ? (
-                  <label htmlFor={swatchId} className={styles.colorText}>
-                    {value}
-                  </label>
+                  <span className={styles.colorText}>
+                    <label htmlFor={swatchId}>{value}</label>
+                  </span>
                 ) : (
-                  <label htmlFor={swatchId} className={styles.placeholderText}>
-                    {settings?.placeholder ?? 'Select color'}
-                  </label>
+                  <span className={styles.placeholderText}>
+                    <label htmlFor={swatchId}>{settings?.placeholder ?? 'Select color'}</label>
+                  </span>
                 )}
                 {settings?.isClearable && value && (
                   <IconButton

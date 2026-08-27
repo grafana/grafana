@@ -62,4 +62,16 @@ describe('ColorValueEditor', () => {
 
     expect(screen.getAllByRole('tab')).toHaveLength(2);
   });
+
+  it('keeps the color name in a span next to the swatch so plugin-e2e toHaveColor can find it', () => {
+    render(<ColorValueEditor value="#ff5733" onChange={jest.fn()} details />);
+
+    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const colorName = screen.getByText('#ff5733');
+    const span = colorName.closest('span');
+
+    expect(span).not.toBeNull();
+    expect(span).toHaveTextContent('#ff5733');
+    expect(span?.previousElementSibling?.contains(swatch)).toBe(true);
+  });
 });
