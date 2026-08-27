@@ -28,10 +28,10 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
-import { useCanManageGlobalVariables } from './useCanManageGlobalVariables';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
+  canManageGlobalVariables,
   canManageVariableScope,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
@@ -103,7 +103,7 @@ interface VariableEditorLoadedProps {
 function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEditorLoadedProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
-  const allowGlobalScope = useCanManageGlobalVariables();
+  const allowGlobalScope = canManageGlobalVariables();
   const [searchParams] = useSearchParams();
   // '' is the FolderPicker root/global uid. Without root rights, start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
@@ -126,13 +126,6 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const [isRecreating, setIsRecreating] = useState(false);
   const [hasNameError, setHasNameError] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Scoped RBAC for root loads async; default new variables to root once allowed.
-  useEffect(() => {
-    if (isNew && allowGlobalScope && folderUid === undefined && !searchParams.get('folderUid')) {
-      setFolderUid('');
-    }
-  }, [allowGlobalScope, folderUid, isNew, searchParams]);
   // Keep delete out of isSaving so the Save button doesn't flash "Saving..." mid-delete.
   const isSaving = isCreating || isUpdating || isRecreating;
   const isBusy = isSaving || isDeleting;
@@ -166,9 +159,9 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const sourceScopeReady =
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
-  // Root/global requires variables:* on folders:* or folders:uid:general (writer role).
-  // Folder-scoped saves require folder CanEdit. Edit also requires source-scope rights so
-  // rename/move (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
+  // Root/global is Admin-only (seeded writer). Folder-scoped saves require folder CanEdit.
+  // Edit also requires source-scope rights so rename/move (create-then-delete) cannot
+  // leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
   const canManageSourceScope =

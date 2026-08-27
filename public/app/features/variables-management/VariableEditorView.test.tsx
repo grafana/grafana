@@ -25,10 +25,6 @@ jest.mock('./useVariableNameCollisionCheck', () => ({
   useVariableNameCollisionCheck: () => ({ isChecking: false, collisionError: undefined }),
 }));
 
-jest.mock('./useCanManageGlobalVariables', () => ({
-  useCanManageGlobalVariables: () => false,
-}));
-
 const customSpec = {
   kind: 'CustomVariable',
   spec: { name: 'env', query: 'dev,prod' },
@@ -57,6 +53,7 @@ describe('VariableEditorView delete action', () => {
   });
 
   it('enables Delete when the user has variables:delete and can edit the source folder', async () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
@@ -65,6 +62,7 @@ describe('VariableEditorView delete action', () => {
   });
 
   it('disables Delete when the user can write but lacks variables:delete', async () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action !== AccessControlAction.VariablesDelete);
@@ -81,6 +79,7 @@ describe('VariableEditorView folder help', () => {
   });
 
   it('describes root when inspecting a global variable without root rights', async () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     render(<VariableEditorView source={globalVariable} onBack={jest.fn()} />);
@@ -90,6 +89,7 @@ describe('VariableEditorView folder help', () => {
   });
 
   it('does not mention root when inspecting a folder-scoped variable without root rights', async () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);

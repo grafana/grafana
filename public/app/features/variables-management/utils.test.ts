@@ -8,7 +8,6 @@ import {
   buildVariablesTree,
   canManageGlobalVariables,
   canManageVariableScope,
-  scopesCoverRootFolder,
   getNextAvailableVariableName,
   getVariableEditableType,
   getVariableFolderPickerExcludeUIDs,
@@ -77,21 +76,6 @@ describe('getVariableFolderPickerExcludeUIDs', () => {
   });
 });
 
-describe('scopesCoverRootFolder', () => {
-  it('accepts folders:* and folders:uid:general', () => {
-    expect(scopesCoverRootFolder(['folders:*'])).toBe(true);
-    expect(scopesCoverRootFolder(['folders:uid:general'])).toBe(true);
-    expect(scopesCoverRootFolder(['*'])).toBe(true);
-    expect(scopesCoverRootFolder(['folders:uid:*'])).toBe(true);
-  });
-
-  it('rejects folder-only and empty grants', () => {
-    expect(scopesCoverRootFolder(['folders:uid:folder-a'])).toBe(false);
-    expect(scopesCoverRootFolder([])).toBe(false);
-    expect(scopesCoverRootFolder(undefined)).toBe(false);
-  });
-});
-
 describe('canManageGlobalVariables', () => {
   const originalHasRole = contextSrv.hasRole;
 
@@ -99,34 +83,14 @@ describe('canManageGlobalVariables', () => {
     contextSrv.hasRole = originalHasRole;
   });
 
-  it('returns true for org Admins when scoped permissions have not loaded', () => {
+  it('returns true for org Admins', () => {
     contextSrv.hasRole = jest.fn((role: string) => role === 'Admin');
     expect(canManageGlobalVariables()).toBe(true);
   });
 
-  it('returns false for Editors without Admin when scoped permissions have not loaded', () => {
+  it('returns false for Editors', () => {
     contextSrv.hasRole = jest.fn((role: string) => role === 'Editor');
     expect(canManageGlobalVariables()).toBe(false);
-  });
-
-  it('returns true for the writer role (variables:create on folders:*)', () => {
-    contextSrv.hasRole = jest.fn(() => false);
-    expect(canManageGlobalVariables({ 'variables:create': ['folders:*'] })).toBe(true);
-  });
-
-  it('returns true for variables:create on the general folder', () => {
-    contextSrv.hasRole = jest.fn(() => false);
-    expect(canManageGlobalVariables({ 'variables:create': ['folders:uid:general'] })).toBe(true);
-  });
-
-  it('returns false when variables:create is only folder-scoped', () => {
-    contextSrv.hasRole = jest.fn(() => false);
-    expect(canManageGlobalVariables({ 'variables:create': ['folders:uid:folder-a'] })).toBe(false);
-  });
-
-  it('returns false when the user only has variables:read on folders:*', () => {
-    contextSrv.hasRole = jest.fn(() => false);
-    expect(canManageGlobalVariables({ 'variables:read': ['folders:*'] })).toBe(false);
   });
 });
 

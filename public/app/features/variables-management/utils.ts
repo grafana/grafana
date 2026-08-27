@@ -4,47 +4,21 @@ import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2be
 import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { type EditableVariableType } from 'app/features/dashboard-scene/settings/variables/utils';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { AccessControlAction } from 'app/types/accessControl';
 
 /** Folder UIDs that appear in NestedFolderPicker but are not valid variable scopes. */
 export function getVariableFolderPickerExcludeUIDs(): string[] | undefined {
   return config.sharedWithMeFolderUID ? [config.sharedWithMeFolderUID] : undefined;
 }
 
-const ROOT_VARIABLE_SCOPE = `folders:uid:${GENERAL_FOLDER_UID}`;
-/** Wildcards that cover folders:uid:general (mirrors accesscontrol.WildcardsFromPrefix). */
-const ROOT_VARIABLE_SCOPE_WILDCARDS = ['*', 'folders:*', 'folders:uid:*'];
-const ROOT_VARIABLE_MUTATION_ACTIONS = [
-  AccessControlAction.VariablesCreate,
-  AccessControlAction.VariablesWrite,
-  AccessControlAction.VariablesDelete,
-] as const;
-
 /**
- * Whether RBAC scopes authorize mutations on the root/general folder.
- * `fixed:variables:writer` uses folders:*; a custom role may use folders:uid:general.
- * Folder-only grants (folders:uid:<id>) do not qualify.
+ * Root/global variable mutations are Admin-only in the default RBAC model
+ * (`fixed:variables:writer` is seeded on Admin). Boot-data permissions are
+ * unscoped, so `variables:create` is also true for folder editors — it cannot
+ * distinguish folders:* / folders:uid:general from a single-folder grant.
+ * `/api/access-control/user/permissions` would, but that dump is not safe in
+ * multi-tenant (and has no generally-available app-platform replacement yet).
  */
-export function scopesCoverRootFolder(scopes: string[] | undefined): boolean {
-  if (!scopes?.length) {
-    return false;
-  }
-  return scopes.some((scope) => scope === ROOT_VARIABLE_SCOPE || ROOT_VARIABLE_SCOPE_WILDCARDS.includes(scope));
-}
-
-/**
- * Root/global variable mutations follow variables:* on the general folder, not org Admin.
- * Boot-data permissions are unscoped, so pass /api/access-control/user/permissions here.
- * Until those scopes load, org Admin remains the fallback (seeded writer).
- */
-export function canManageGlobalVariables(permissionScopes?: Record<string, string[]>): boolean {
-  if (
-    permissionScopes &&
-    ROOT_VARIABLE_MUTATION_ACTIONS.some((action) => scopesCoverRootFolder(permissionScopes[action]))
-  ) {
-    return true;
-  }
+export function canManageGlobalVariables(): boolean {
   return contextSrv.hasRole('Admin');
 }
 
