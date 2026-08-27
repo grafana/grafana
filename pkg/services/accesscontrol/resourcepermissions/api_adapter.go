@@ -471,31 +471,29 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		k8sPermissions := slices.Clone(existingResourcePerm.Spec.Permissions)
 		changed := false
 		for _, change := range changes {
-			nextPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(k8sPermissions)+1)
-			inserted := false
-			for _, existing := range k8sPermissions {
-				if !permissionSubjectMatches(existing, change.kind, change.name) {
-					nextPermissions = append(nextPermissions, existing)
-					continue
+			idx := slices.IndexFunc(k8sPermissions, func(existing iamv0.ResourcePermissionspecPermission) bool {
+				return existing.Kind == change.kind && existing.Name == change.name
+			})
+			if change.permission == "" {
+				if idx >= 0 {
+					k8sPermissions = slices.Delete(k8sPermissions, idx, idx+1)
+					changed = true
 				}
-				if change.permission != "" && !inserted {
-					nextPermissions = append(nextPermissions, iamv0.ResourcePermissionspecPermission{
-						Kind: change.kind,
-						Name: change.name,
-						Verb: cases.Lower(language.Und).String(change.permission),
-					})
-					inserted = true
+				continue
+			}
+
+			updatedPermission := iamv0.ResourcePermissionspecPermission{
+				Kind: change.kind,
+				Name: change.name,
+				Verb: cases.Lower(language.Und).String(change.permission),
+			}
+			if idx >= 0 {
+				if k8sPermissions[idx] != updatedPermission {
+					k8sPermissions[idx] = updatedPermission
+					changed = true
 				}
-			}
-			if change.permission != "" && !inserted {
-				nextPermissions = append(nextPermissions, iamv0.ResourcePermissionspecPermission{
-					Kind: change.kind,
-					Name: change.name,
-					Verb: cases.Lower(language.Und).String(change.permission),
-				})
-			}
-			if !slices.Equal(k8sPermissions, nextPermissions) {
-				k8sPermissions = nextPermissions
+			} else {
+				k8sPermissions = append(k8sPermissions, updatedPermission)
 				changed = true
 			}
 		}
@@ -588,7 +586,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 
 	newPermissions := make([]iamv0.ResourcePermissionspecPermission, 0)
 	for _, perm := range existingResourcePerm.Spec.Permissions {
-		if permissionSubjectMatches(perm, iamv0.ResourcePermissionSpecPermissionKind(kind), name) {
+		if string(perm.Kind) == kind && perm.Name == name {
 			continue
 		}
 		newPermissions = append(newPermissions, perm)
@@ -721,13 +719,6 @@ func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm access
 		return kind, perm.BuiltinRole, nil
 	}
 	return "", "", fmt.Errorf("no valid permission subject found")
-}
-
-func permissionSubjectMatches(existing iamv0.ResourcePermissionspecPermission, kind iamv0.ResourcePermissionSpecPermissionKind, name string) bool {
-	if existing.Name != name {
-		return false
-	}
-	return existing.Kind == kind || (kind == iamv0.ResourcePermissionSpecPermissionKindServiceAccount && existing.Kind == iamv0.ResourcePermissionSpecPermissionKindUser)
 }
 
 // Teams-specific redirect functions reading and writing Team.Spec.Members.
