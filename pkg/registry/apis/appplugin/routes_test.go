@@ -200,7 +200,7 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 		Post: nil,
 	}
 
-	out := withPathParameters(props, namespacePathParameter(), namePathParameter())
+	out := withPathParameters(props, nil, namespacePathParameter(), namePathParameter())
 
 	require.Len(t, out.Get.Parameters, 2)
 	require.Same(t, declared, out.Get.Parameters[0])

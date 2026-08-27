@@ -21,6 +21,13 @@ type noopRESTOptionsGetter struct{}
 
 var _ generic.RESTOptionsGetter = (*noopRESTOptionsGetter)(nil)
 
+// NewNoopRESTOptionsGetter returns a getter for a server that registers stores
+// it never reads or writes through, such as one built only to render an
+// OpenAPI spec.
+func NewNoopRESTOptionsGetter() generic.RESTOptionsGetter {
+	return &noopRESTOptionsGetter{}
+}
+
 func (n *noopRESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
 	return generic.RESTOptions{
 		StorageConfig: &storagebackend.ConfigForResource{

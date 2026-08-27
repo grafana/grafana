@@ -247,6 +247,22 @@ var adminCommands = []*cli.Command{
 
 var Commands = []*cli.Command{
 	{
+		Name:  "write-openapi",
+		Usage: "write-openapi <pluginID>[/<version>] -o spec.json",
+		Description: "Render the OpenAPI v3 spec served by an app plugin's API server. " +
+			"This is the offline equivalent of downloading /openapi/v3/apis/<pluginID>/<version> " +
+			"from a running Grafana. Without a version, the plugin's preferred version is used, " +
+			"and without --output the spec is written to stdout.",
+		Action: writeOpenAPICommand,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "output",
+				Aliases: []string{"o"},
+				Usage:   "Write the spec to this file instead of stdout",
+			},
+		},
+	},
+	{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",
 		Subcommands: pluginCommands,
