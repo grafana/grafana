@@ -510,6 +510,9 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 	return false
 }
 
+// resolveQuotaStatus retrieves current quota limits, falling back to the cached status for observed
+// repositories when the lookup fails and tracking how long that cache has been stale. New repositories
+// return the lookup error because they do not have a known valid cached quota.
 func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.QuotaStatus, error) {
 	quotaStatus, err := rc.quotaGetter.GetQuotaStatus(ctx, obj.Namespace)
 	if err == nil {
