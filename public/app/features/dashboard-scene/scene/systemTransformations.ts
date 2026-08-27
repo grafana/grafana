@@ -11,8 +11,7 @@ import {
 } from '@grafana/scenes';
 
 /**
- * Stable identity for "nothing to run", so consumers using these arrays as effect deps do not
- * churn on every render.
+ * Stable identity for "nothing to run"
  */
 export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> = {
   prepend: [],
@@ -27,12 +26,7 @@ export function pluginTransformationsEnabled(): boolean {
 const unwrappedByResolved = new WeakMap<ResolvedSceneTransformations, ResolvedSystemTransformations>();
 
 /**
- * The system transformations the panel's pipeline is currently running, in the shape the plugin
- * registered them.
- *
- * Takes no frames: scenes resolves against the ones entering the pipeline, which is both what a
- * caller asking this wants and the key of the memo the pipeline already resolved against — so this
- * shares one supplier call per pass and returns a stable identity across renders.
+ * The system transformations the panel's pipeline is currently running, in the shape the plugin registered them.
  */
 export function getResolvedSystemTransformations(transformer: SceneDataTransformer): ResolvedSystemTransformations {
   const resolved = transformer.getResolvedSystemTransformations();
@@ -54,9 +48,7 @@ export function getResolvedSystemTransformations(transformer: SceneDataTransform
 
 /**
  * Scenes normalizes a custom operator into `{ operator, topic }` so it can tag it with an origin.
- * Readers want it back the way the plugin wrote it: these go straight into `transformDataFrame`,
- * which takes no wrapper, and their display name branches on whether the entry is a function. A
- * config keeps its tags, which no reader looks at and `transformDataFrame` ignores.
+ * Readers want it back the way the plugin wrote it.
  */
 function asRegistered(transformation: SystemTransformation): DataTransformerConfig | CustomTransformOperator {
   return 'operator' in transformation ? transformation.operator : transformation;
