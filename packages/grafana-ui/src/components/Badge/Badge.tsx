@@ -20,7 +20,9 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;
-  // When set, truncates `text` with an ellipsis
+  /** When set, truncates `text` with an ellipsis instead of wrapping.
+   * Only applies when the visual design refresh is enabled.
+   **/
   maxWidth?: number;
 }
 
