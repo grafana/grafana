@@ -1,4 +1,4 @@
-import { act, fireEvent, render, within } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -232,6 +232,9 @@ describe('User interactions', () => {
       direction: 'up' | 'down',
       positions = 1
     ) {
+      await waitFor(() => {
+        expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+      });
       const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
       const handle = dragHandles[itemIndex] as HTMLElement;
       handle.focus();

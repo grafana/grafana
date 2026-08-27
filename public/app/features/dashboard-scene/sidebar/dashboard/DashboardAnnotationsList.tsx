@@ -1,11 +1,15 @@
 import { css } from '@emotion/css';
-import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  DragAndDropProvider,
+  useDragAndDrop,
+} from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { edit } from '../../actions/utils/edit';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -29,6 +33,7 @@ const DROPPABLE_TO_PLACEMENT: Record<string, { isHidden: boolean; placement?: 'i
 };
 
 export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+  const dragAndDrop = useDragAndDrop(true);
   const { annotationLayers } = dataLayerSet.useState();
   const { visible, controlsMenu, hidden } = useMemo(
     () => partitionAnnotationsByDisplay(annotationLayers),
@@ -96,33 +101,38 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
     },
     [dataLayerSet, visible, controlsMenu, hidden]
   );
+  const DragDropContext = dragAndDrop?.DragDropContext;
+
+  const lists = (
+    <>
+      <DraggableList
+        items={visible}
+        droppableId={ID_VISIBLE_LIST}
+        title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
+        renderItemLabel={renderItemLabel}
+        {...annotationActions}
+      />
+      <DraggableList
+        items={controlsMenu}
+        droppableId={ID_CONTROLS_MENU_LIST}
+        title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
+        renderItemLabel={renderItemLabel}
+        {...annotationActions}
+      />
+      <DraggableList
+        items={hidden}
+        droppableId={ID_HIDDEN_LIST}
+        title={t('dashboard.sidebar.annotations.title-hidden', 'Hidden')}
+        renderItemLabel={renderItemLabel}
+        {...annotationActions}
+      />
+    </>
+  );
 
   return (
-    <>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <DraggableList
-          items={visible}
-          droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
-          renderItemLabel={renderItemLabel}
-          {...annotationActions}
-        />
-        <DraggableList
-          items={controlsMenu}
-          droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
-          renderItemLabel={renderItemLabel}
-          {...annotationActions}
-        />
-        <DraggableList
-          items={hidden}
-          droppableId={ID_HIDDEN_LIST}
-          title={t('dashboard.sidebar.annotations.title-hidden', 'Hidden')}
-          renderItemLabel={renderItemLabel}
-          {...annotationActions}
-        />
-      </DragDropContext>
-    </>
+    <DragAndDropProvider value={dragAndDrop}>
+      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
+    </DragAndDropProvider>
   );
 }
 

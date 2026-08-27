@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -169,6 +169,9 @@ describe('<VariableMultiPropStaticOptionsForm />', () => {
       ];
       const { elements, findByText } = renderForm({ properties: ['text', 'value'], options, onChange });
 
+      await waitFor(() => {
+        expect(within(elements.rows()[0]).getByTestId('icon-draggabledots').closest('[role="button"]')).not.toBeNull();
+      });
       const dragIcon = within(elements.rows()[0]).getByTestId('icon-draggabledots');
       const handle = dragIcon.closest('[role="button"]')!;
 

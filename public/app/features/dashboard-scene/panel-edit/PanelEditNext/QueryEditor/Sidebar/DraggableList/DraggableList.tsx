@@ -1,9 +1,15 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import {
+  type DraggableProvided,
+  type DraggableStateSnapshot,
+  type DroppableProvided,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 
@@ -30,6 +36,7 @@ export function DraggableList<T>({
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+  const dragAndDrop = useDragAndDrop();
 
   const { indicator, containerRef, handleBeforeCapture, handleDragStart, handleDragUpdate, handleDragEnd } =
     useDropIndicator({
@@ -39,6 +46,59 @@ export function DraggableList<T>({
       onDragEnd,
     });
 
+  const renderDraggableItem = (
+    item: T,
+    key: string,
+    dragProvided?: DraggableProvided,
+    dragSnapshot?: DraggableStateSnapshot
+  ) => (
+    <div
+      key={key}
+      ref={dragProvided?.innerRef}
+      {...dragProvided?.draggableProps}
+      {...dragProvided?.dragHandleProps}
+      tabIndex={-1}
+      className={styles.draggableItem}
+      data-is-dragging={dragSnapshot?.isDragging || undefined}
+    >
+      {renderItem(item)}
+    </div>
+  );
+
+  const renderItems = (dropProvided?: DroppableProvided) => (
+    <div
+      ref={(element) => {
+        dropProvided?.innerRef(element);
+        containerRef.current = element;
+      }}
+      {...dropProvided?.droppableProps}
+      className={styles.droppable}
+    >
+      {items.map((item, index) => {
+        const key = keyExtractor(item);
+
+        if (!dragAndDrop) {
+          return renderDraggableItem(item, key);
+        }
+
+        const { Draggable } = dragAndDrop;
+        return (
+          <Draggable key={key} draggableId={key} index={index} isDragDisabled={isDragDisabled}>
+            {(dragProvided, dragSnapshot) => renderDraggableItem(item, key, dragProvided, dragSnapshot)}
+          </Draggable>
+        );
+      })}
+      {indicator && <div className={styles.dropIndicator} style={{ top: indicator.top, height: indicator.height }} />}
+      {dropProvided?.placeholder}
+    </div>
+  );
+
+  if (!dragAndDrop) {
+    return renderItems();
+  }
+
+  const { DragDropContext, Droppable } = dragAndDrop;
+
   return (
     <DragDropContext
       onBeforeCapture={handleBeforeCapture}
@@ -47,40 +107,7 @@ export function DraggableList<T>({
       onDragEnd={handleDragEnd}
     >
       <Droppable droppableId={droppableId} direction="vertical">
-        {(dropProvided) => (
-          <div
-            ref={(el) => {
-              dropProvided.innerRef(el);
-              containerRef.current = el;
-            }}
-            {...dropProvided.droppableProps}
-            className={styles.droppable}
-          >
-            {items.map((item, index) => {
-              const key = keyExtractor(item);
-              return (
-                <Draggable key={key} draggableId={key} index={index} isDragDisabled={isDragDisabled}>
-                  {(dragProvided, dragSnapshot) => (
-                    <div
-                      ref={dragProvided.innerRef}
-                      {...dragProvided.draggableProps}
-                      {...dragProvided.dragHandleProps}
-                      tabIndex={-1}
-                      className={styles.draggableItem}
-                      data-is-dragging={dragSnapshot.isDragging || undefined}
-                    >
-                      {renderItem(item)}
-                    </div>
-                  )}
-                </Draggable>
-              );
-            })}
-            {indicator && (
-              <div className={styles.dropIndicator} style={{ top: indicator.top, height: indicator.height }} />
-            )}
-            {dropProvided.placeholder}
-          </div>
-        )}
+        {(dropProvided) => renderItems(dropProvided)}
       </Droppable>
     </DragDropContext>
   );

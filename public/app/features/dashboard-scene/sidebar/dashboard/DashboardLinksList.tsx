@@ -1,9 +1,13 @@
-import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
+import {
+  DragAndDropProvider,
+  useDragAndDrop,
+} from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -29,6 +33,7 @@ const DROPPABLE_TO_PLACEMENT: Record<string, DashboardLinkPlacement | undefined>
 };
 
 export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene }) {
+  const dragAndDrop = useDragAndDrop(true);
   const { links } = dashboard.useState();
   const { visible, controlsMenu } = useMemo(() => partitionLinksByPlacement(links), [links]);
 
@@ -108,9 +113,10 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
     },
     [dashboard, visible, controlsMenu]
   );
+  const DragDropContext = dragAndDrop?.DragDropContext;
 
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
+  const lists = (
+    <>
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
@@ -125,7 +131,13 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         renderItemLabel={renderItemLabel}
         {...linkActions}
       />
-    </DragDropContext>
+    </>
+  );
+
+  return (
+    <DragAndDropProvider value={dragAndDrop}>
+      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
+    </DragAndDropProvider>
   );
 }
 

@@ -1,9 +1,12 @@
-import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
+import {
+  DragAndDropProvider,
+  useDragAndDrop,
+} from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -27,6 +30,7 @@ const DROPPABLE_TO_HIDE: Record<string, VariableHide> = {
 };
 
 export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariableSet }) {
+  const dragAndDrop = useDragAndDrop(true);
   const { variables } = variableSet.useState();
   const filters = useMemo(() => variables.filter(sceneUtils.isAdHocVariable), [variables]);
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
@@ -54,9 +58,10 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       ),
     [variableSet, visible, controlsMenu, hidden]
   );
+  const DragDropContext = dragAndDrop?.DragDropContext;
 
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
+  const lists = (
+    <>
       <DraggableList
         items={visible}
         droppableId={ID_FILTERS_VISIBLE_LIST}
@@ -78,7 +83,13 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
         renderItemLabel={renderItemLabel}
         {...filterActions}
       />
-    </DragDropContext>
+    </>
+  );
+
+  return (
+    <DragAndDropProvider value={dragAndDrop}>
+      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
+    </DragAndDropProvider>
   );
 }
 

@@ -1,4 +1,3 @@
-import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
@@ -6,6 +5,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
+import {
+  DragAndDropProvider,
+  useDragAndDrop,
+} from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -47,6 +50,7 @@ export function DashboardVariablesList({
   hideControlsMenuList = false,
   includeAdHoc = false,
 }: DashboardVariablesListProps) {
+  const dragAndDrop = useDragAndDrop(true);
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
@@ -78,9 +82,10 @@ export function DashboardVariablesList({
       ),
     [sourceVariableSet, visible, controlsMenu, hidden]
   );
+  const DragDropContext = dragAndDrop?.DragDropContext;
 
-  return (
-    <DragDropContext onDragEnd={onDragEnd}>
+  const lists = (
+    <>
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
@@ -104,7 +109,13 @@ export function DashboardVariablesList({
         renderItemLabel={renderItemLabel}
         {...variableActions}
       />
-    </DragDropContext>
+    </>
+  );
+
+  return (
+    <DragAndDropProvider value={dragAndDrop}>
+      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
+    </DragAndDropProvider>
   );
 }
 

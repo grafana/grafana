@@ -202,8 +202,8 @@ describe('MegaMenu', () => {
         const { user } = renderMegaMenu();
 
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
-        expect(screen.getByRole('button', { name: 'Reorder Explore' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Reorder Dashboards' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Reorder Explore' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Reorder Dashboards' })).toBeInTheDocument();
       });
     });
 

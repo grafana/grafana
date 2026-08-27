@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DraggableProvided, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useId } from 'react';
 
@@ -10,6 +10,8 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
+
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -54,6 +56,10 @@ export const MegaMenu = memo(
       onReorderSection,
       isSaving,
     } = useNavCustomization();
+    const dragAndDrop = useDragAndDrop(editMode);
+    const DragDropContext = dragAndDrop?.DragDropContext;
+    const Draggable = dragAndDrop?.Draggable;
+    const Droppable = dragAndDrop?.Droppable;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -159,7 +165,7 @@ export const MegaMenu = memo(
               </Text>
               <div className={styles.pinnedHeadingLine} />
             </div>
-            {editMode ? (
+            {editMode && DragDropContext && Draggable && Droppable ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
                 <Droppable droppableId="megamenu-pinned">
                   {(dropProvided) => (
@@ -196,7 +202,7 @@ export const MegaMenu = memo(
 
     // Top-level nav sections, drag-reorderable while editing.
     const renderSectionList = () =>
-      editMode ? (
+      editMode && DragDropContext && Draggable && Droppable ? (
         <DragDropContext onDragEnd={onSectionDragEnd}>
           <Droppable droppableId="megamenu-sections">
             {(dropProvided) => (

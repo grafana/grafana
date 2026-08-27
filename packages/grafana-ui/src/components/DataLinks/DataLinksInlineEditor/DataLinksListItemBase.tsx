@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
+import { type DraggableProvided } from '@hello-pangea/dnd';
 
 import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,6 +8,8 @@ import { useStyles2 } from '../../../themes/ThemeContext';
 import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
+
+import { useDataLinksDragAndDropContext } from './useDataLinksDragAndDrop';
 
 export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   index: number;
@@ -29,61 +31,69 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
   const styles = useStyles2(getDataLinkListItemStyles);
+  const dragAndDrop = useDataLinksDragAndDropContext();
   const { title = '', oneClick = false } = item;
 
   const url = ('type' in item ? item[item.type]?.url : item.url) ?? '';
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
 
+  const renderItem = (provided?: DraggableProvided) => (
+    <div
+      className={cx(styles.wrapper, styles.dragRow)}
+      ref={provided?.innerRef}
+      {...provided?.draggableProps}
+    >
+      <div className={styles.linkDetails}>
+        <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
+          {hasTitle ? title : t('grafana-ui.data-links-inline-editor.title-not-provided', 'Title not provided')}
+        </div>
+        <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
+          {hasUrl ? url : t('grafana-ui.data-links-inline-editor.url-not-provided', 'Data link url not provided')}
+        </div>
+      </div>
+      <div className={styles.icons}>
+        {oneClick && (
+          <Badge
+            color="blue"
+            text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
+            tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
+          />
+        )}
+        <IconButton
+          name="pen"
+          onClick={onEdit}
+          className={styles.icon}
+          tooltip={t('grafana-ui.data-links-inline-editor.tooltip-edit', 'Edit')}
+        />
+        <IconButton
+          name="trash-alt"
+          onClick={onRemove}
+          className={styles.icon}
+          tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
+        />
+        <div className={styles.dragIcon} {...provided?.dragHandleProps}>
+          <Icon
+            name="draggabledots"
+            size="lg"
+            title={t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
+              title: hasTitle ? title : url,
+            })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!dragAndDrop) {
+    return renderItem();
+  }
+
+  const { Draggable } = dragAndDrop;
+
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
-      {(provided) => (
-        <div
-          className={cx(styles.wrapper, styles.dragRow)}
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          key={index}
-        >
-          <div className={styles.linkDetails}>
-            <div className={cx(styles.url, !hasTitle && styles.notConfigured)}>
-              {hasTitle ? title : t('grafana-ui.data-links-inline-editor.title-not-provided', 'Title not provided')}
-            </div>
-            <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={url}>
-              {hasUrl ? url : t('grafana-ui.data-links-inline-editor.url-not-provided', 'Data link url not provided')}
-            </div>
-          </div>
-          <div className={styles.icons}>
-            {oneClick && (
-              <Badge
-                color="blue"
-                text={t('grafana-ui.data-links-inline-editor.one-click', 'One click')}
-                tooltip={t('grafana-ui.data-links-inline-editor.one-click-enabled', 'One click enabled')}
-              />
-            )}
-            <IconButton
-              name="pen"
-              onClick={onEdit}
-              className={styles.icon}
-              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-edit', 'Edit')}
-            />
-            <IconButton
-              name="trash-alt"
-              onClick={onRemove}
-              className={styles.icon}
-              tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
-            />
-            <div className={styles.dragIcon} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
-                  title: hasTitle ? title : url,
-                })}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {(provided) => renderItem(provided)}
     </Draggable>
   );
 }
