@@ -566,7 +566,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			assert.Equal(t, current.UnhashedToken, skipped.UnhashedToken, "rotation within SkipRotationTime should be skipped, returning the same token")
 		})
 
-		t.Run("re-rotates when previous token is replayed and current is unseen (previously silently returned the stale token, causing forced logouts)", func(t *testing.T) {
+		t.Run("re-rotates when previous token is replayed and current is unseen", func(t *testing.T) {
 			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
 
 			initial, current := rotateOnceForReplay(t)
@@ -625,7 +625,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			assert.NotEqual(t, initial.UnhashedToken, rotated.UnhashedToken, "a new token should be minted (legacy behaviour)")
 		})
 
-		t.Run("regression: replaying original token within SkipRotationTime after a concurrent rotation returns a stale token silently, causing a forced logout", func(t *testing.T) {
+		t.Run("replaying original token within SkipRotationTime after a concurrent rotation returns a stale token", func(t *testing.T) {
 			setupOpenFeatureFlag(t, featuremgmt.FlagAuthTokenRotationGracePeriod, true)
 
 			advanceTime(SkipRotationTime + time.Second)
