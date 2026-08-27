@@ -36,36 +36,60 @@ function serializeMatchers(matchers: MatcherExpr[]): string {
   return matchers.map((m) => `${m.name}${m.operator}${quoteWithEscape(m.value)}`).join(',');
 }
 
+function isNegativeOperator(operator: MatcherOperator): boolean {
+  return operator === '!=' || operator === '!~';
+}
+
+function renameMatchers(matchers: MatcherExpr[], name: string): MatcherExpr[] {
+  return matchers.map((matcher) => ({ ...matcher, name }));
+}
+
 /**
  * Builds one or more metric selectors from the current ad-hoc filter string.
  *
  * Combined filters use a single user-facing key (for example `service`) while
  * alert series may have one of several backing label keys (`service`, `service_name`).
- * We expand those matchers into OR selectors so filtering is consistent.
+ *
+ * Which way we expand a matcher depends on whether it includes or excludes:
+ *
+ * - Include (`=`, `=~`): one selector per backing label, joined with `or`. A series
+ *   matches if any of its backing labels has the value.
+ * - Exclude (`!=`, `!~`): every backing label goes into the same selector. Splitting
+ *   these across `or` branches would undo the exclusion — Prometheus treats a label
+ *   that isn't on the series as empty, so a series with `cluster="foo"` and no
+ *   `cluster_name` would still match the `cluster_name!="foo"` branch and come back
+ *   in the union.
  */
 function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
   const combinedMatchers = Object.entries(COMBINED_FILTER_LABEL_KEYS)
-    .map(([canonicalKey, labelKeys]) => ({
-      canonicalKey,
-      labelKeys,
-      matchers: allMatchers.filter((m) => m.name === canonicalKey),
-    }))
+    .map(([canonicalKey, labelKeys]) => {
+      const matchers = allMatchers.filter((m) => m.name === canonicalKey);
+      return {
+        canonicalKey,
+        labelKeys,
+        matchers,
+        includeMatchers: matchers.filter((m) => !isNegativeOperator(m.operator)),
+        excludeMatchers: matchers.filter((m) => isNegativeOperator(m.operator)),
+      };
+    })
     .filter((entry) => entry.matchers.length > 0);
 
   const combinedCanonicalKeys = new Set(combinedMatchers.map((entry) => entry.canonicalKey));
   const baseMatchers = allMatchers.filter((m) => !combinedCanonicalKeys.has(m.name));
 
-  let branches: MatcherExpr[][] = [baseMatchers];
+  // Exclusions apply to every branch, so they live alongside the non-combined matchers.
+  const expandedExcludeMatchers = combinedMatchers.flatMap((entry) =>
+    entry.labelKeys.flatMap((labelKey) => renameMatchers(entry.excludeMatchers, labelKey))
+  );
+
+  let branches: MatcherExpr[][] = [[...baseMatchers, ...expandedExcludeMatchers]];
   for (const entry of combinedMatchers) {
+    if (entry.includeMatchers.length === 0) {
+      continue;
+    }
     branches = branches.flatMap((branch) =>
-      entry.labelKeys.map((labelKey) => [
-        ...branch,
-        ...entry.matchers.map((matcher) => ({
-          ...matcher,
-          name: labelKey,
-        })),
-      ])
+      entry.labelKeys.map((labelKey) => [...branch, ...renameMatchers(entry.includeMatchers, labelKey)])
     );
   }
 
