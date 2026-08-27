@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -16,7 +16,11 @@ import (
 
 func (b *AppPluginAPIBuilder) getSettings(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error) {
 	ctx = pluginsettings.WithSecureContextShim(ctx)
-	raw, err := b.getter.Get(ctx, apppluginV0.INSTANCE_NAME, &v1.GetOptions{})
+	raw, err := b.getter(ctx, schema.GroupVersionResource{
+		Group:    b.pluginJSON.ID,
+		Version:  apppluginV0.VERSION,
+		Resource: apppluginV0.APP_RESOURCE_NAME,
+	}, apppluginV0.INSTANCE_NAME)
 	if err != nil {
 		return nil, nil, err
 	}
