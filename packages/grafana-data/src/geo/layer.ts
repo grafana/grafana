@@ -60,9 +60,9 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
 
   /**
    * Restrict which location modes this layer's renderer can actually draw.
-   * Defaults to every mode except Wkt -- Wkt geometry can be any type (Point,
-   * LineString, Polygon, ...), and only a layer that opts in here is expected
-   * to render all of them correctly.
+   * Defaults to every mode except Wkt/Wkb/GeoJson -- these formats can encode any
+   * geometry type (Point, LineString, Polygon, ...), and only a layer that opts
+   * in here is expected to render all of them correctly.
    */
   locationModes?: FrameGeometrySourceMode[];
 

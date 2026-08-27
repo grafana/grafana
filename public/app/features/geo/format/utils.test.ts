@@ -10,6 +10,8 @@ import {
   createGeometryCollection,
   createLineBetween,
   getGeoFieldFromGazetteer,
+  getGeoFieldFromGeoJson,
+  getGeoFieldFromWkb,
   getGeoFieldFromWkt,
   pointFieldFromGeohash,
   pointFieldFromLonLat,
@@ -187,6 +189,94 @@ describe('getGeoFieldFromWkt', () => {
   it('preserves the field name and marks the output as a geo field', () => {
     const out = getGeoFieldFromWkt(stringField(['POINT(0 0)'], 'myWkt'));
     expect(out.name).toBe('myWkt');
+    expect(out.type).toBe(FieldType.geo);
+  });
+});
+
+describe('getGeoFieldFromWkb', () => {
+  // Real hex-EWKB generated from PostGIS (SRID 4326) -- what a raw geography/geometry column,
+  // or encode(ST_AsBinary(col), 'hex'), returns.
+  const WKB_LINESTRING_0_0_1_1 =
+    '0102000020E61000000200000000000000000000000000000000000000000000000000F03F000000000000F03F';
+
+  it('parses a hex-EWKB LineString into a LineString whose coordinates round-trip through toLonLat', () => {
+    const out = getGeoFieldFromWkb(stringField([WKB_LINESTRING_0_0_1_1]));
+    expect(out.values).toHaveLength(1);
+    const geom = out.values[0];
+    expect(geom).toBeInstanceOf(LineString);
+    const lonLat = (geom as LineString).getCoordinates().map((c) => toLonLat(c));
+    expect(lonLat[0][0]).toBeCloseTo(0, 6);
+    expect(lonLat[0][1]).toBeCloseTo(0, 6);
+    expect(lonLat[1][0]).toBeCloseTo(1, 6);
+    expect(lonLat[1][1]).toBeCloseTo(1, 6);
+  });
+
+  it('leaves a non-hex row undefined without throwing, and still parses adjacent valid rows', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromWkb(stringField(['this is not hex-encoded binary', WKB_LINESTRING_0_0_1_1]));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeInstanceOf(LineString);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('leaves empty/null rows undefined without warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromWkb(stringField(['', null as unknown as string]));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('preserves the field name and marks the output as a geo field', () => {
+    const out = getGeoFieldFromWkb(stringField([WKB_LINESTRING_0_0_1_1], 'myWkb'));
+    expect(out.name).toBe('myWkb');
+    expect(out.type).toBe(FieldType.geo);
+  });
+});
+
+describe('getGeoFieldFromGeoJson', () => {
+  it('parses a GeoJSON LineString into a LineString whose coordinates round-trip through toLonLat', () => {
+    const out = getGeoFieldFromGeoJson(stringField(['{"type":"LineString","coordinates":[[-122,37],[-121,38]]}']));
+    expect(out.values).toHaveLength(1);
+    const geom = out.values[0];
+    expect(geom).toBeInstanceOf(LineString);
+    const lonLat = (geom as LineString).getCoordinates().map((c) => toLonLat(c));
+    expect(lonLat[0][0]).toBeCloseTo(-122, 6);
+    expect(lonLat[0][1]).toBeCloseTo(37, 6);
+    expect(lonLat[1][0]).toBeCloseTo(-121, 6);
+    expect(lonLat[1][1]).toBeCloseTo(38, 6);
+  });
+
+  it('parses a GeoJSON Polygon into a Polygon', () => {
+    const out = getGeoFieldFromGeoJson(
+      stringField(['{"type":"Polygon","coordinates":[[[0,0],[0,1],[1,1],[1,0],[0,0]]]}'])
+    );
+    expect(out.values[0]).toBeInstanceOf(Polygon);
+  });
+
+  it('leaves a malformed row undefined without throwing, and still parses adjacent valid rows', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromGeoJson(stringField(['not json', '{"type":"Point","coordinates":[0,0]}']));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeInstanceOf(Point);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('leaves empty/null rows undefined without warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromGeoJson(stringField(['', null as unknown as string]));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('preserves the field name and marks the output as a geo field', () => {
+    const out = getGeoFieldFromGeoJson(stringField(['{"type":"Point","coordinates":[0,0]}'], 'myGeoJson'));
+    expect(out.name).toBe('myGeoJson');
     expect(out.type).toBe(FieldType.geo);
   });
 });

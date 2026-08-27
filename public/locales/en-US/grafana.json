@@ -9436,13 +9436,18 @@
       "warning-gazetteer-not-found": "Gazetteer not found",
       "warning-no-geometry": "unable to find geometry",
       "warning-select-geohash": "Select geohash field",
+      "warning-select-geojson": "Select GeoJSON field",
       "warning-select-lat-long": "Select latitude/longitude fields",
       "warning-select-lookup": "Select lookup field",
+      "warning-select-wkb": "Select WKB field",
       "warning-select-wkt": "Select WKT field",
       "warning-unable-to-find": "Unable to find location fields"
     },
     "location-editor": {
       "geohash-field": {
+        "no-fields-message": "No strings fields found"
+      },
+      "geometry-field": {
         "no-fields-message": "No strings fields found"
       },
       "latitude-field": {
@@ -9456,14 +9461,11 @@
       },
       "name-gazetteer": "Gazetteer",
       "name-geohash-field": "Geohash field",
+      "name-geometry-field": "Geometry field",
       "name-latitude-field": "Latitude field",
       "name-location-mode": "Location Mode",
       "name-longitude-field": "Longitude field",
-      "name-lookup-field": "Lookup field",
-      "name-wkt-field": "WKT field",
-      "wkt-field": {
-        "no-fields-message": "No strings fields found"
-      }
+      "name-lookup-field": "Lookup field"
     },
     "location-more-editor": {
       "aria-label-open-documentation": "Open geospatial data documentation",
@@ -9471,12 +9473,16 @@
         "description-auto": "Automatically identify location data based on default field names",
         "description-coords": "Specify latitude and longitude fields",
         "description-geohash": "Specify geohash field",
+        "description-geojson": "Specify a field containing GeoJSON geometry",
         "description-lookup": "Specify Gazetteer and lookup field",
+        "description-wkb": "Specify a WKB (Well-Known Binary) geometry field as a hex string, such as a raw PostGIS geography/geometry column",
         "description-wkt": "Specify a WKT (Well-Known Text) geometry field",
         "label-auto": "Auto",
         "label-coords": "Coords",
         "label-geohash": "Geohash",
+        "label-geojson": "GeoJSON",
         "label-lookup": "Lookup",
+        "label-wkb": "WKB",
         "label-wkt": "WKT"
       }
     }

@@ -55,11 +55,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
               config: { ...layer.defaultOptions }, // clone?
             };
             if (layer.showLocation) {
-              if (layer.locationModes?.length === 1) {
-                // A single supported mode is implied -- always force it so the layer works
-                // immediately, regardless of what the previous layer type had configured.
-                opts.location = { mode: layer.locationModes[0] };
-              } else if (!opts.location?.mode) {
+              if (!opts.location?.mode) {
                 opts.location = { mode: FrameGeometrySourceMode.Auto };
               } else {
                 delete opts.location;
