@@ -172,7 +172,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   public onExitEditMode = () => {
-    this.state.body.commitContentEdits();
+    this.state.body.commitPendingEdits();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
