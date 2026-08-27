@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -18,6 +18,10 @@ export interface QueryOptionsProps {
   index: number;
 }
 
+function haveQueryOptionsChanged(a: AlertQueryOptions, b: AlertQueryOptions) {
+  return a.maxDataPoints !== b.maxDataPoints || a.minInterval !== b.minInterval;
+}
+
 export const QueryOptions = ({
   query,
   queryOptions,
@@ -28,6 +32,35 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
+  const draftOptionsRef = useRef<AlertQueryOptions>(queryOptions);
+
+  const handleOpen = () => {
+    draftOptionsRef.current = queryOptions;
+    setShowOptions(true);
+  };
+
+  const handleClose = () => {
+    // Dismissing the toggletip can unmount these inputs without a blur, so persist the draft here.
+    const draft = draftOptionsRef.current;
+    if (haveQueryOptionsChanged(draft, queryOptions)) {
+      onChangeQueryOptions(draft, index);
+    }
+    setShowOptions(false);
+  };
+
+  const handleMaxDataPointsChange = (options: AlertQueryOptions) => {
+    draftOptionsRef.current = {
+      ...draftOptionsRef.current,
+      maxDataPoints: options.maxDataPoints,
+    };
+  };
+
+  const handleMinIntervalChange = (options: AlertQueryOptions) => {
+    draftOptionsRef.current = {
+      ...draftOptionsRef.current,
+      minInterval: options.minInterval,
+    };
+  };
 
   const separator = <span>, </span>;
 
@@ -44,12 +77,14 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
-            <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
+            <MaxDataPointsOption options={queryOptions} onChange={handleMaxDataPointsChange} />
+            <MinIntervalOption options={queryOptions} onChange={handleMinIntervalChange} />
           </div>
         }
         closeButton={true}
         placement="bottom-start"
+        onOpen={handleOpen}
+        onClose={handleClose}
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
