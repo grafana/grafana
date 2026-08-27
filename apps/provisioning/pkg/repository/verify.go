@@ -106,7 +106,15 @@ func (v *VerifyAgainstExistingRepositoriesValidator) Validate(ctx context.Contex
 	// Get quota status for the namespace
 	quotaStatus, err := v.quotaGetter.GetQuotaStatus(ctx, cfg.Namespace)
 	if err != nil {
-		return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		// If the quota getter throws an error, and the resource is new, return such error as we don't have quota for it.
+		if cfg.Status.ObservedGeneration == 0 {
+			return field.ErrorList{field.InternalError(field.NewPath(""), fmt.Errorf("failed to get quota status: %w", err))}
+		}
+
+		// Otherwise, retrieve the status quota
+		quotaStatus = provisioning.QuotaStatus{
+			MaxRepositories: cfg.Status.Quota.MaxRepositories,
+		}
 	}
 
 	// Check repository limit (0 = unlimited, > 0 = use value).

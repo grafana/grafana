@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -25,30 +26,49 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repoName,
 		SyncTarget: "folder",
+		SkipSync:   true,
 	})
-
-	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-	require.NoError(t, err)
-	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
-	require.Equal(t, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
-	require.Equal(t, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
-	require.Equal(t, repo.Generation, repo.Status.ObservedGeneration)
-	require.Zero(t, repo.Status.Quota.StaleSince)
-
-	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
-	helper.SetQuotaError(lookupErr)
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
+		assert.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
 		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
 		assert.Equal(collect, repo.Generation, repo.Status.ObservedGeneration)
+		assert.Zero(collect, repo.Status.Quota.StaleSince)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+	require.NoError(t, err)
+	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
+	helper.SetQuotaError(lookupErr)
+
+	const updatedTitle = "Updated while quota lookup fails"
+	require.NoError(t, unstructured.SetNestedField(repoObj.Object, updatedTitle, "spec", "title"))
+	updatedObj, err := helper.Repositories.Resource.Update(t.Context(), repoObj, metav1.UpdateOptions{FieldValidation: "Strict"})
+	require.NoError(t, err)
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+		assert.NoError(collect, err)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+		assert.Equal(collect, updatedTitle, repo.Spec.Title)
+		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
+		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
+		assert.Equal(collect, updatedObj.GetGeneration(), repo.Status.ObservedGeneration)
 		assert.NotZero(collect, repo.Status.Quota.StaleSince)
-	}, 2*common.WaitTimeoutDefault, common.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	newRepo := helper.RenderObject(t, common.TestdataPath("local.json.tmpl"), map[string]any{
+		"Name":          "new-repo-during-quota-error",
+		"SyncEnabled":   false,
+		"SyncTarget":    "folder",
+		"Path":          helper.ProvisioningPath,
+		"WorkflowsJSON": `[]`,
+	})
+	_, err = helper.Repositories.Resource.Create(t.Context(), newRepo, metav1.CreateOptions{FieldValidation: "Strict"})
+	require.ErrorContains(t, err, "failed to get quota status")
 
 	refreshedQuota := provisioning.QuotaStatus{
 		MaxRepositories:           8,

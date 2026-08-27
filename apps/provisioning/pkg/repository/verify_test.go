@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -838,6 +839,70 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}
 
 			assert.Empty(t, errList)
+		})
+	}
+}
+
+func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+	tests := []struct {
+		name            string
+		cfg             *provisioning.Repository
+		existingRepos   []provisioning.Repository
+		wantErrContains string
+	}{
+		{
+			name: "new repository returns quota lookup error",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+			},
+			wantErrContains: "failed to get quota status: quota service failed",
+		},
+		{
+			name: "observed repository uses cached quota",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
+			},
+			wantErrContains: "Maximum number of 1 repositories reached",
+		},
+		{
+			name: "observed repository update is allowed",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"}},
+				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &verifyTestStorage{repositories: tt.existingRepos}
+			getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+			getter.SetError(lookupErr)
+			validator := NewVerifyAgainstExistingRepositoriesValidator(NewStorageLister(store), getter)
+
+			errList := validator.Validate(context.Background(), tt.cfg)
+			if tt.wantErrContains == "" {
+				assert.Empty(t, errList)
+				return
+			}
+
+			require.NotEmpty(t, errList)
+			assert.Contains(t, errList.ToAggregate().Error(), tt.wantErrContains)
 		})
 	}
 }
