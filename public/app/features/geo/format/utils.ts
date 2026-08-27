@@ -1,3 +1,4 @@
+import WKT from 'ol/format/WKT';
 import { type Geometry, GeometryCollection, LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 
@@ -54,6 +55,37 @@ export function getGeoFieldFromGazetteer(gaz: Gazetteer, field: Field<string>): 
   }
   return {
     name: 'Geometry',
+    type: FieldType.geo,
+    values: geo,
+    config: hiddenTooltipField,
+  };
+}
+
+// Strips a PostGIS EWKT `SRID=<n>;` prefix, which `ol/format/WKT` does not understand.
+// The SRID number is discarded -- the coordinates are assumed to already be WGS84 (EPSG:4326)
+// lon/lat, matching every other geo field builder in this file.
+const ewktSridPrefix = /^SRID=\d+;\s*/i;
+
+export function getGeoFieldFromWkt(field: Field<string>): Field<Geometry | undefined> {
+  const format = new WKT();
+  const count = field.values.length;
+  const geo = new Array<Geometry | undefined>(count);
+  for (let i = 0; i < count; i++) {
+    const value = field.values[i];
+    if (!value) {
+      continue;
+    }
+    try {
+      geo[i] = format.readGeometry(value.replace(ewktSridPrefix, ''), {
+        featureProjection: 'EPSG:3857',
+        dataProjection: 'EPSG:4326',
+      });
+    } catch (err) {
+      console.warn(`Unable to parse WKT value at row ${i}: ${value}`, err);
+    }
+  }
+  return {
+    name: field.name ?? 'Geometry',
     type: FieldType.geo,
     values: geo,
     config: hiddenTooltipField,

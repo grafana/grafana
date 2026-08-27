@@ -166,6 +166,7 @@ export enum FrameGeometrySourceMode {
   Coords = 'coords',
   Geohash = 'geohash',
   Lookup = 'lookup',
+  Wkt = 'wkt',
 }
 
 export enum HeatmapCalculationMode {

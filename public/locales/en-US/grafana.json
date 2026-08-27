@@ -9438,6 +9438,7 @@
       "warning-select-geohash": "Select geohash field",
       "warning-select-lat-long": "Select latitude/longitude fields",
       "warning-select-lookup": "Select lookup field",
+      "warning-select-wkt": "Select WKT field",
       "warning-unable-to-find": "Unable to find location fields"
     },
     "location-editor": {
@@ -9458,7 +9459,11 @@
       "name-latitude-field": "Latitude field",
       "name-location-mode": "Location Mode",
       "name-longitude-field": "Longitude field",
-      "name-lookup-field": "Lookup field"
+      "name-lookup-field": "Lookup field",
+      "name-wkt-field": "WKT field",
+      "wkt-field": {
+        "no-fields-message": "No strings fields found"
+      }
     },
     "location-more-editor": {
       "aria-label-open-documentation": "Open geospatial data documentation",
@@ -9467,10 +9472,12 @@
         "description-coords": "Specify latitude and longitude fields",
         "description-geohash": "Specify geohash field",
         "description-lookup": "Specify Gazetteer and lookup field",
+        "description-wkt": "Specify a WKT (Well-Known Text) geometry field",
         "label-auto": "Auto",
         "label-coords": "Coords",
         "label-geohash": "Geohash",
-        "label-lookup": "Lookup"
+        "label-lookup": "Lookup",
+        "label-wkt": "WKT"
       }
     }
   },
