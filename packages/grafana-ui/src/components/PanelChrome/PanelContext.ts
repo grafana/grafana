@@ -9,6 +9,7 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
+import { type DataTransformerConfig } from '@grafana/schema';
 
 import { type AdHocFilterItem } from '../Table/types';
 
@@ -63,6 +64,36 @@ export interface PanelContext {
    * Used to apply multiple filters at once
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+
+  /**
+   * The panel's user-configured transformations, in pipeline order. Read live, so this is the
+   * current list on every render.
+   *
+   * Present only where a host persists transformations and the user may edit the dashboard. It is
+   * absent in Explore, alerting rule previews and visualization suggestion cards, which render
+   * through `PanelRenderer` and run no transformations at all — that absence is the signal a panel
+   * must not offer an affordance that writes one.
+   *
+   * Excludes transformations a plugin registered via `PanelPlugin.setSystemTransformations`: those
+   * are read-only and never persisted.
+   *
+   * @alpha
+   */
+  transformations?: DataTransformerConfig[];
+
+  /**
+   * Replaces the panel's user-configured transformations. The dashboard becomes dirty and the user
+   * saves or discards, exactly like `PanelProps.onFieldConfigChange`.
+   *
+   * Paired with {@link PanelContext.transformations}: both are present or neither is. Read that,
+   * derive the next list from it, pass the whole list back.
+   *
+   * Call this only from a user event handler — never from a render or an effect. A write re-runs the
+   * data pipeline, which re-renders the panel; writing on render would loop.
+   *
+   * @alpha
+   */
+  onTransformationsChange?: (transformations: DataTransformerConfig[]) => void;
 
   /**
    * Used by the panel header status popover to open the errors and notices view.
