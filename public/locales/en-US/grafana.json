@@ -3752,6 +3752,7 @@
       "showing-groups-count_other": "Showing {{count}} groups",
       "silence-no-permission": "You do not have permission to create silences",
       "silence-notifications": "Silence notifications",
+      "silence-rule-load-failed": "Could not load this alert rule",
       "state-filter-title": "State",
       "state-firing": "Firing",
       "state-pending": "Pending",

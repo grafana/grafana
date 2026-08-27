@@ -3,11 +3,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, Menu } from '@grafana/ui';
-import { type CombinedRule, type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
 import MoreButton from '../../components/MoreButton';
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
-import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
+import { isGranted, isLoading, isNotSupported } from '../../hooks/abilities/abilityUtils';
+import { useRuleSilenceAbility } from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { rulesNav } from '../../utils/navigation';
 
@@ -57,20 +58,9 @@ interface AlertRuleActionsMenuProps {
 function AlertRuleActionsMenu({ ruleUID, onSilence }: AlertRuleActionsMenuProps) {
   const ruleIdentifier: GrafanaRuleIdentifier = useMemo(() => ({ uid: ruleUID, ruleSourceName: 'grafana' }), [ruleUID]);
 
-  const { result: rule } = useCombinedRule({ ruleIdentifier });
-
   return (
     <Menu>
-      {rule ? (
-        <SilenceMenuItem rule={rule} onSilence={onSilence} />
-      ) : (
-        // Keep the item in place while the rule loads so the menu doesn't jump around.
-        <Menu.Item
-          label={t('alerting.triage.silence-notifications', 'Silence notifications')}
-          icon="bell-slash"
-          disabled
-        />
-      )}
+      <SilenceMenuItem ruleIdentifier={ruleIdentifier} onSilence={onSilence} />
       <Menu.Item
         label={t('alerting.triage.view-alert-rule', 'View alert rule')}
         icon="eye"
@@ -82,24 +72,48 @@ function AlertRuleActionsMenu({ ruleUID, onSilence }: AlertRuleActionsMenuProps)
 }
 
 interface SilenceMenuItemProps {
-  rule: CombinedRule;
+  ruleIdentifier: GrafanaRuleIdentifier;
   onSilence: () => void;
 }
 
-function SilenceMenuItem({ rule, onSilence }: SilenceMenuItemProps) {
-  const [silenceSupported, silenceAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Silence);
+function SilenceMenuItem({ ruleIdentifier, onSilence }: SilenceMenuItemProps) {
+  const { error, result: rule } = useCombinedRule({ ruleIdentifier });
+  const silenceAbility = useRuleSilenceAbility(rule?.rulerRule);
 
-  if (!silenceSupported) {
+  const label = t('alerting.triage.silence-notifications', 'Silence notifications');
+
+  if (error) {
+    return (
+      <Menu.Item
+        label={label}
+        icon="bell-slash"
+        disabled
+        description={t('alerting.triage.silence-rule-load-failed', 'Could not load this alert rule')}
+      />
+    );
+  }
+
+  // Keep the item in place while the rule and its folder permissions are on their way, so the menu
+  // doesn't jump around, and spin so a disabled item doesn't look broken. Matching a rule by UID
+  // needs the ruler half of it, so a rule we have is always one we can ask about silencing.
+  if (!rule || isLoading(silenceAbility)) {
+    return <Menu.Item label={label} icon="spinner" disabled />;
+  }
+
+  // Alert instances only go to an external Alertmanager, so there is nothing for us to silence.
+  if (isNotSupported(silenceAbility)) {
     return null;
   }
 
+  const allowed = isGranted(silenceAbility);
+
   return (
     <Menu.Item
-      label={t('alerting.triage.silence-notifications', 'Silence notifications')}
+      label={label}
       icon="bell-slash"
-      disabled={!silenceAllowed}
+      disabled={!allowed}
       description={
-        silenceAllowed
+        allowed
           ? undefined
           : t('alerting.triage.silence-no-permission', 'You do not have permission to create silences')
       }
