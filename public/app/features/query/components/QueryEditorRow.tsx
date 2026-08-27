@@ -198,9 +198,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         queriedDataSourceIdentifier: identifier,
       });
     } catch {
-      // Record the identity we tried so we don't immediately retry the same one, but
-      // still clear the in-flight flags below so a later identity change can reload.
-      this.setState({ queriedDataSourceIdentifier: identifier });
+      // Both the targeted and default lookups failed. Drop the stale instance so the
+      // previous plugin's editor isn't mounted against the new query; `lastAttemptedIdentifier`
+      // already stops us re-trying the same identity.
+      this.setState({ datasource: null, queriedDataSourceIdentifier: identifier });
     } finally {
       this.dsLoadInFlight = false;
       this.setState({ isDatasourceLoading: false });

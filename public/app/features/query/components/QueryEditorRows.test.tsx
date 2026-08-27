@@ -629,6 +629,16 @@ describe('QueryEditorRows', () => {
         expectNotFound: false,
       },
       {
+        name: 'keeps mixed group settings when an unresolved variable uid misses lookup',
+        queryDatasource: { uid: '${missing}' },
+        hasQuerySettings: false,
+        lookupFailed: true,
+        mixed: true,
+        expectQuerySettings: false,
+        expectGroup: true,
+        expectNotFound: false,
+      },
+      {
         name: 'keeps mixed group settings when the query datasource is Mixed',
         queryDatasource: { uid: MIXED_DATASOURCE_NAME, type: 'mixed' },
         hasQuerySettings: false,

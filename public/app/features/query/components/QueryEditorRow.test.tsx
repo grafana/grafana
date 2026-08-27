@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import {
@@ -641,6 +641,50 @@ describe('QueryEditorRow', () => {
       expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
 
       expect(await screen.findByTestId('fake-query-editor')).toHaveTextContent('${ds}');
+    });
+
+    it('does not keep the previous plugin editor mounted when both instance lookups fail', async () => {
+      const onDataSourceLoaded = jest.fn();
+      jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+        const uid = typeof ref === 'string' ? ref : ref?.uid;
+        return uid === 'gone' ? undefined : mockDS;
+      });
+      jest.mocked(getDataSourceInstance).mockImplementation(async (uid) => {
+        if (uid === 'gone' || uid == null) {
+          throw new Error('unavailable');
+        }
+        return {
+          ...mockDS,
+          components: { QueryEditor: FakeQueryEditor },
+        } as unknown as DataSourceApi;
+      });
+
+      const initialProps = { ...props(data), onDataSourceLoaded };
+      const { rerender } = render(<QueryEditorRow {...initialProps} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <QueryEditorRow
+          {...initialProps}
+          query={{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }}
+          queries={[{ refId: 'B', datasource: { uid: 'gone', type: 'prometheus' } }]}
+        />
+      );
+
+      // Wait until the default-instance fallback has also rejected. The loading
+      // gate hides the editor during the attempt; the bug remounts the previous
+      // plugin after `isDatasourceLoading` clears.
+      await waitFor(() => {
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+      expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
     });
 
     it('retries loading after both instance lookups fail when the query datasource changes', async () => {

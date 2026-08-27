@@ -380,6 +380,10 @@ export function resolveRowDataSourceSettings(
   if (!options?.lookupFailed) {
     return groupSettings;
   }
+  // An interpolated uid that still contains `$` is "can't tell yet", not "definitely missing".
+  if (queryDatasourceUid(queryDatasource)?.includes('$')) {
+    return groupSettings;
+  }
   return notFoundSettings(queryDatasource, groupSettings);
 }
 
