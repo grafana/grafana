@@ -6,7 +6,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var repositoryQuotaStalenessBuckets = []float64{0, 60, 300, 900, 1800, 3600, 10800, 21600, 43200, 86400}
+var repositoryQuotaStalenessBuckets = []float64{
+	0,
+	time.Minute.Seconds(),
+	(5 * time.Minute).Seconds(),
+	(15 * time.Minute).Seconds(),
+	(30 * time.Minute).Seconds(),
+	time.Hour.Seconds(),
+	(3 * time.Hour).Seconds(),
+	(6 * time.Hour).Seconds(),
+	(12 * time.Hour).Seconds(),
+	(24 * time.Hour).Seconds(),
+}
 
 type repositoryQuotaMetrics struct {
 	staleness prometheus.Histogram
