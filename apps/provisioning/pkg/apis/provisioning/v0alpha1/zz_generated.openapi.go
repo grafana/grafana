@@ -2289,7 +2289,7 @@ func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "QuotaStatus represents the quota limits configured for this repository. These values come from static configuration and are read-only.",
+				Description: "QuotaStatus represents the quota limits configured for this repository.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"maxRepositories": {
@@ -2302,6 +2302,13 @@ func schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref common.ReferenceCallb
 					"maxResourcesPerRepository": {
 						SchemaProps: spec.SchemaProps{
 							Description: "MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"staleSince": {
+						SchemaProps: spec.SchemaProps{
+							Description: "StaleSince is when the controller started using cached quota limits after a refresh failed. It is expressed as Unix milliseconds. 0 means the quota limits are fresh.",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},

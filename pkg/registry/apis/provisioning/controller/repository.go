@@ -87,6 +87,7 @@ type RepositoryController struct {
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
 	quotaGetter                   quotas.QuotaGetter
+	quotaMetrics                  *repositoryQuotaMetrics
 	tokenMetrics                  *repositoryTokenMetrics
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
@@ -120,6 +121,7 @@ func NewRepositoryController(
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
+	quotaMetrics := registerRepositoryQuotaMetrics(registry)
 
 	rc := &RepositoryController{
 		client:    provisioningClient,
@@ -153,6 +155,7 @@ func NewRepositoryController(
 		minSyncInterval:               minSyncInterval,
 		drainTimeout:                  drainTimeout,
 		quotaGetter:                   quotaGetter,
+		quotaMetrics:                  quotaMetrics,
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
 		webhookSecretRotationInterval: webhookSecretRotationInterval,
@@ -507,6 +510,28 @@ func isQuotaExceeded(conditions []v1.Condition) bool {
 	return false
 }
 
+func (rc *RepositoryController) resolveQuotaStatus(ctx context.Context, obj *provisioning.Repository) (provisioning.QuotaStatus, error) {
+	quotaStatus, err := rc.quotaGetter.GetQuotaStatus(ctx, obj.Namespace)
+	if err == nil {
+		quotaStatus.StaleSince = 0
+		return quotaStatus, nil
+	}
+
+	if obj.Status.ObservedGeneration == 0 {
+		return provisioning.QuotaStatus{}, fmt.Errorf("failed to get quota status: %w", err)
+	}
+
+	now := time.Now()
+	quotaStatus = obj.Status.Quota
+	if quotaStatus.StaleSince == 0 {
+		quotaStatus.StaleSince = now.UnixMilli()
+		logging.FromContext(ctx).Warn("failed to refresh quota status; using cached limits", "error", err)
+	}
+
+	rc.quotaMetrics.observeStaleness(now.Sub(time.UnixMilli(quotaStatus.StaleSince)))
+	return quotaStatus, nil
+}
+
 func (rc *RepositoryController) determineSyncStrategy(
 	ctx context.Context,
 	obj *provisioning.Repository,
@@ -757,9 +782,9 @@ func (rc *RepositoryController) process(key string) (err error) {
 
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
-	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)
+	newQuota, err := rc.resolveQuotaStatus(ctx, obj)
 	if err != nil {
-		return fmt.Errorf("failed to get quota status: %w", err)
+		return err
 	}
 	quotaCtx, quotaSpan := rc.tracer.Start(ctx, "provisioning.controller.check_quota", repoSpanAttrs(obj))
 	quotaCondition, err := rc.quotaChecker.RepositoryQuotaConditions(quotaCtx, namespace, newQuota)
@@ -806,8 +831,15 @@ func (rc *RepositoryController) process(key string) (err error) {
 		}
 	}()
 
-	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+	hasQuotaLimitsChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
 		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
+	if obj.Status.Quota != newQuota {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/quota",
+			"value": newQuota,
+		})
+	}
 
 	var shouldGenerateToken bool
 	if obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
@@ -841,7 +873,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	case shouldGenerateToken:
 		reason = "token_generation"
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
-	case hasQuotaChanged:
+	case hasQuotaLimitsChanged:
 		reason = "quota_changed"
 		logger.Info("quota changed", "quota", newQuota)
 	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
@@ -856,15 +888,6 @@ func (rc *RepositoryController) process(key string) (err error) {
 		return nil
 	}
 	span.SetAttributes(attribute.String("reconcile.reason", reason))
-
-	// Set quota information from configuration (only if changed)
-	if hasQuotaChanged {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/quota",
-			"value": newQuota,
-		})
-	}
 
 	if shouldGenerateToken {
 		logger.Info("updating token for repository")

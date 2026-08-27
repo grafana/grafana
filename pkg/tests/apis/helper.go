@@ -277,6 +277,10 @@ func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
 	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
 }
 
+func (c *K8sTestHelper) SetQuotaError(err error) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetError(err)
+}
+
 func (c *K8sTestHelper) GetListenerAddress() string {
 	return c.listenerAddress
 }
