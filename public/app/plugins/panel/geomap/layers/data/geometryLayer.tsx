@@ -67,12 +67,16 @@ export const geometryLayer: MapLayerRegistryItem<GeometryLayerConfig> = {
       switch (feature.getGeometry()?.getType()) {
         case 'Polygon':
         case 'MultiPolygon':
-          // Size doubles as line/stroke width for non-point geometry, mirroring routeLayer.
+          // Size doubles as line/stroke width for non-point geometry, since the Geometry layer's
+          // style editor only exposes a single "Size" field (no separate line-width control).
           return polyStyle({ ...values, lineWidth: values.size });
         case 'LineString':
         case 'MultiLineString':
           return routeStyle({ ...values, lineWidth: values.size });
         default:
+          // GeometryCollection falls through here too. Its members all share this single point
+          // marker style, so Polygon/LineString members get a fill only if the chosen marker
+          // symbol happens to set one at the top level (none currently do) -- known limitation.
           return style.maker(values);
       }
     });
