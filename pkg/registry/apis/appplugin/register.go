@@ -155,10 +155,7 @@ func RegisterAPIService(
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
-			&clientWrapper{
-				loader: clientV3Loader,
-				id:     plugin.JSONData.ID,
-			},
+			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
