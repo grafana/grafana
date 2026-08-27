@@ -13,6 +13,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,11 +31,13 @@ func (f *fakeTokenExchanger) Exchange(_ context.Context, r authnlib.TokenExchang
 }
 
 type stubRoundTripper struct {
-	gotToken string
+	gotToken       string
+	gotTraceparent string
 }
 
 func (s *stubRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	s.gotToken = req.Header.Get("X-Access-Token")
+	s.gotTraceparent = req.Header.Get("traceparent")
 	return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody}, nil
 }
 
@@ -126,6 +129,37 @@ func TestNewAnnotationAPIClient_TokenExchange(t *testing.T) {
 			assert.Equal(t, "signed-token", next.gotToken)
 		})
 	}
+}
+
+func TestNewAnnotationAPIClient_PropagatesTraceContext(t *testing.T) {
+	cfg := &setting.Cfg{AnnotationAppPlatform: setting.AnnotationAppPlatformSettings{APIServerURL: "http://annotations.example"}}
+	tracer := tracing.InitializeTracerForTest()
+
+	restCfg := buildRESTConfig(
+		cfg.AnnotationAppPlatform.APIServerURL,
+		&fakeTokenExchanger{},
+		request.GetNamespaceMapper(cfg),
+		cfg.AnnotationAppPlatform.TLSClientConfig,
+	)
+
+	next := &stubRoundTripper{}
+	rt := restCfg.WrapTransport(next)
+
+	ctx, span := tracer.Start(context.Background(), "test")
+	defer span.End()
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, UserUID: "u1", OrgID: 1})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cfg.AnnotationAppPlatform.APIServerURL+"/annotations", http.NoBody)
+	require.NoError(t, err)
+
+	resp, err := rt.RoundTrip(req)
+	require.NoError(t, err)
+	defer func() { require.NoError(t, resp.Body.Close()) }()
+
+	require.NotEmpty(t, next.gotTraceparent, "outbound request must carry traceparent")
+	assert.Contains(t, next.gotTraceparent, span.SpanContext().TraceID().String(),
+		"outbound request must carry the caller's trace ID")
+	assert.Equal(t, "signed-token", next.gotToken, "token exchange must still apply")
 }
 
 func TestAnnotationAPIClient_Requests(t *testing.T) {
@@ -309,9 +343,9 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		assert.Equal(t, http.MethodGet, req.method)
 		assert.Equal(t, base+"/tags", req.path, "tags hangs off the namespace, not the annotations collection")
 		assert.Equal(t, url.Values{
-			"prefix": {"out"},
-			"limit":  {"25"},
-		}, req.query, "the legacy tag term becomes a prefix match")
+			"contains": {"out"},
+			"limit":    {"25"},
+		}, req.query, "the legacy tag term becomes a contains match")
 	})
 
 	t.Run("ListTags omits parameters the query leaves unset", func(t *testing.T) {

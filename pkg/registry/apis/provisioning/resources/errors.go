@@ -391,6 +391,7 @@ var folderValidationMessageIDs = map[string]struct{}{
 	"folder.cannot-be-parent-of-itself": {},
 	"folder.maximum-depth-reached":      {},
 	"folder.cannot-be-moved-to-k6":      {},
+	"folder.cannot-be-created-in-k6":    {},
 	"folder.name-exists":                {},
 	"folder.circular-reference":         {},
 }

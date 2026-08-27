@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
@@ -26,7 +27,7 @@ func (tc *queryCacheConfigsTestCase) Name() string {
 }
 
 func (tc *queryCacheConfigsTestCase) FeatureToggles() []string {
-	return []string{}
+	return []string{featuremgmt.FlagKubernetesQueryCaching}
 }
 
 func (tc *queryCacheConfigsTestCase) RenameTables() []string {

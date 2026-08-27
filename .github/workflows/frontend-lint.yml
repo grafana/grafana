@@ -74,7 +74,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -126,7 +126,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -161,7 +161,7 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'pnpm run generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -199,7 +199,7 @@ jobs:
       run: |
         git add -N .
         uncommited_error_message="ERROR! OpenAPI generation has not been committed. Please run 'pnpm run generate:openapi', commit the changes and push again."
-        file_diff="$(git diff --name-only ':!conf')"
+        file_diff="$(git diff --name-only ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -221,7 +221,7 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise
@@ -237,7 +237,7 @@ jobs:
     - name: Verify generated clients
       run: |
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'pnpm run generate-apis', commit the changes and push again."
-        file_diff="$(git diff ':!conf')"
+        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -348,7 +348,7 @@ jobs:
         persist-credentials: false
     - name: Get GitHub App token
       id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
       with:
         github_app: grafana-ci-bot
     - name: Setup Enterprise

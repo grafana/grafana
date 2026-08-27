@@ -3,15 +3,23 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const REPO_ROOT = path.resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const BUILD_DIR = path.join(REPO_ROOT, 'public', 'build');
 
 /**
- * The two production builds we emit. The names are used as the metric prefix.
+ * The publicPath every manifest value is prefixed with. Bundlers share one URL space, so this stays
+ * the same even when a build writes its output somewhere other than public/build.
  */
-const MANIFESTS = [
-  { name: 'default', fileName: 'assets-manifest.json' },
-  { name: 'react19', fileName: 'assets-manifest-react19.json' },
-];
+const PUBLIC_PATH = 'public/build/';
+
+/**
+ * Where the build wrote its output, relative to the repo root. Pass a different directory to measure
+ * a build that does not write to public/build, e.g. `pnpm run bundle-size:stats public/build-rspack`.
+ */
+const BUILD_DIR = path.resolve(REPO_ROOT, process.argv[2] || 'public/build');
+
+/**
+ * The production builds we emit. The names are used as the metric prefix.
+ */
+const MANIFESTS = [{ name: 'default', fileName: 'assets-manifest.json' }];
 
 interface Entrypoint {
   assets: Record<string, string[]>;
@@ -42,18 +50,22 @@ async function readEntrypoints(manifestPath: string): Promise<Record<string, Ent
 }
 
 /**
- * Asset paths in the manifest include the webpack publicPath (public/build/), which makes them
- * relative to the repo root.
+ * Manifest values are URLs, not disk paths. Strip the publicPath prefix so each asset resolves
+ * inside the build directory, wherever that build happened to write it.
  */
 async function totalSize(assetPaths: Iterable<string>) {
   let size = 0;
 
   for (const assetPath of assetPaths) {
-    const stats = await stat(path.join(REPO_ROOT, assetPath));
+    const stats = await stat(path.join(BUILD_DIR, stripPublicPath(assetPath)));
     size += stats.size;
   }
 
   return size;
+}
+
+function stripPublicPath(assetPath: string) {
+  return assetPath.startsWith(PUBLIC_PATH) ? assetPath.slice(PUBLIC_PATH.length) : assetPath;
 }
 
 function logStat(name: string, value: string | number) {

@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Inherited from folder",
-      "locked-aria-label": "Locked permission indicator",
       "remove-aria-label": "Remove permission for {{identifier}}",
       "tooltip-inherited-permission": "Inherited permission",
       "tooltip-provisioned-permission": "Provisioned permission"
@@ -613,12 +612,6 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
-    "alerts-activity-banner": {
-      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
-      "open-button": "See Alert Activity",
-      "open-button-aria": "Open Alerts Activity",
-      "title": "Alert Activity is now available!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
@@ -793,7 +786,9 @@
         "value-in-transition": "Value in transition"
       },
       "error": {
-        "server-error": "The alert state history query failed — the server returned an error"
+        "server-error": "The alert state history query failed — the server returned an error",
+        "server-error-description": "This can happen when a regex or negation label filter matches too many alert instances and the response exceeds the server's size limit. Try using a shorter time range or a more specific filter (e.g. an exact match instead of a regex).",
+        "title": "Something went wrong loading the alert state history"
       },
       "filter": {
         "clear": "Clear filters",
@@ -894,7 +889,6 @@
       "close": "Close",
       "create": "Create",
       "delete": "Delete",
-      "deleting": "Deleting...",
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
@@ -973,9 +967,6 @@
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-contact-points": "search contact points",
-      "clear": "Clear",
       "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
@@ -1166,7 +1157,8 @@
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
-      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.",
+      "time-interval-name-exists": "Time interval with this name already exists. Use a different name or update existing one."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1621,18 +1613,20 @@
         "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
-      "autosync-review": {
-        "back": "Add method",
-        "badge": "Will sync continuously",
-        "card-title": "Auto-sync",
-        "enable": "Enable auto-sync",
-        "heading": "Review & enable auto-sync",
-        "scope": "Scope",
-        "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
-        "source": "Source",
-        "subtitle": "Confirm the source. Once enabled, Grafana keeps these resources in sync until you turn it off in Alerting settings."
-      },
       "confirm": {
+        "autosync-body": "Are you sure you want to enable Auto-sync? Grafana will continuously sync alert configuration from this data source until you turn it off in Alerting settings.",
+        "autosync-confirm": "Enable auto-sync",
+        "autosync-error-body": "Failed to enable Auto-sync. Please check the error details and try again.",
+        "autosync-error-title": "Auto-sync Failed",
+        "autosync-importing-body": "Enabling Auto-sync. Please wait...",
+        "autosync-importing-title": "Enabling auto-sync...",
+        "autosync-rules-error-body": "Auto-sync was enabled, but importing alert rules failed. Please check the error details and try again.",
+        "autosync-rules-error-title": "Rules Import Failed",
+        "autosync-rules-imported-note": "Your selected alert rules were also imported.",
+        "autosync-rules-note": "Your selected alert rules will also be imported.",
+        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-title": "Auto-sync Enabled",
+        "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
         "error-body": "Failed to import resources. Please check the error details and try again.",
@@ -1679,26 +1673,6 @@
       "info-description": "This wizard helps you import alert rules and notification resources from external sources to Grafana Alerting. For more information, refer to the <2>documentation</2>.",
       "info-title": "Import wizard",
       "loading": "Loading…",
-      "method": {
-        "autosync": "Auto-sync",
-        "autosync-datasource-label": "Data source",
-        "autosync-datasource-placeholder": "Select a data source…",
-        "autosync-desc": "Grafana continuously syncs alert configuration from a Mimir or Cortex Alertmanager data source. The synced resources stay read-only and managed by the source.",
-        "autosync-no-datasources-desc": "Auto-sync needs a Mimir or Cortex Alertmanager data source. Add one, then start this wizard again.",
-        "autosync-no-datasources-title": "No Mimir or Cortex data sources",
-        "autosync-title": "Auto-sync",
-        "heading": "How do you want to add these resources?",
-        "next-steps": "Next you'll set up notification resources and alert rules, then review & import.",
-        "promote": "Promote",
-        "promote-desc": "Promote when you are ready to use these resources. Each contact point, policy, template, and mute timing merges into your live config and becomes a normal, editable Grafana resource.",
-        "promote-title": "Promote",
-        "promote-warning-desc": "The imported resources merge into your live notification config. To reverse it later you would have to delete each resulting resource by hand.",
-        "promote-warning-title": "Promoting can't be undone",
-        "stage": "Stage",
-        "stage-desc": "Stage brings the config in safely without touching your live setup. Resources stay visible but read-only so you can review them first. Promote when you are ready to use them as editable Grafana resources.",
-        "stage-title": "Stage",
-        "subtitle": "Choose how alert configuration from your external Alertmanager is brought into Grafana. You can change this before you finish."
-      },
       "namespace": {
         "description": "Type to search for an existing namespace",
         "label": "Namespace"
@@ -1722,22 +1696,12 @@
       "renamed-receivers_one": "{{count}} contact points will be renamed",
       "renamed-receivers_other": "{{count}} contact points will be renamed",
       "review": {
+        "autosync-badge": "Will sync continuously",
         "back": "Alert rules",
+        "enable-autosync": "Enable auto-sync",
         "filter": "Filter",
         "folder": "Target folder",
         "heading": "Review Import",
-        "merge-inhibition-rules_one": "{{count}} inhibition rule",
-        "merge-inhibition-rules_other": "{{count}} inhibition rules",
-        "merge-receivers_one": "{{count}} contact point",
-        "merge-receivers_other": "{{count}} contact points",
-        "merge-route": "a notification route",
-        "merge-summary": "Will merge into your live config: {{summary}}",
-        "merge-templates_one": "{{count}} template",
-        "merge-templates_other": "{{count}} templates",
-        "merge-time-intervals_one": "{{count}} mute timing",
-        "merge-time-intervals_other": "{{count}} mute timings",
-        "method": "Method",
-        "method-promote": "Promote",
         "namespace": "Namespace",
         "nothing": "Nothing to import",
         "nothing-desc": "Both steps were skipped. Go back and configure at least one import source.",
@@ -1777,12 +1741,17 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
+        "autosync-label": "Auto-sync",
+        "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
+        "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
+        "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
+        "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
         "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
         "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
         "policy-tree-help-title": "About policy tree names",
@@ -1875,14 +1844,10 @@
         "cancel-confirm-title": "Cancel import?",
         "cancel-confirm-yes": "Discard changes",
         "skip": "Skip",
-        "step-method": "Import method",
-        "step-method-desc": "How to bring resources into Grafana",
         "step-notifications": "Notification resources",
         "step-notifications-desc": "Contact points, policies, templates",
         "step-review": "Review & import",
         "step-review-desc": "Preview and confirm import",
-        "step-review-enable": "Review & enable",
-        "step-review-enable-desc": "Confirm and enable auto-sync",
         "step-rules": "Alert rules",
         "step-rules-desc": "Alert and recording rules"
       },
@@ -2262,6 +2227,8 @@
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
     "new-silence-page": {
+      "body-alert-rule-unavailable": "This alert rule may have been deleted, or you may not have permission to view it.",
+      "body-permission-create-silence": "You can still silence individual alert rules from their detail pages.",
       "page-nav": {
         "subTitle": {
           "configure-silences-notifications-particular-alert": "Configure silences to stop notifications from a particular alert rule"
@@ -2269,7 +2236,10 @@
         "text": {
           "silence-alert-rule": "Silence alert rule"
         }
-      }
+      },
+      "text-checking-permissions": "Checking permissions...",
+      "title-alert-rule-unavailable": "Alert rule unavailable",
+      "title-permission-create-silence": "You do not have permission to create this silence"
     },
     "no-alert-managers-available": {
       "body-no-alertmanager-found": "We could not find any external Alertmanagers and you may not have access to the built-in Grafana Alertmanager.",
@@ -2522,13 +2492,11 @@
         "update": "Update policy"
       },
       "delete": {
-        "confirm": "Yes, delete policy",
-        "warning-1": "Deleting this notification policy will permanently remove it.",
-        "warning-2": "Are you sure you want to delete this policy?"
-      },
-      "delete-modal": {
-        "permanently-remove": "This action will permanently remove the <1>{{routeName}}</1> notification policy.",
-        "title-delete-notification-policy": "Delete notification policy"
+        "confirm": "Yes, delete route",
+        "warning-1": "Deleting this route will permanently remove it.",
+        "warning-2": "Are you sure you want to delete this route?",
+        "warning-child-routes_one": "This will also remove {{count}} child route.",
+        "warning-child-routes_other": "This will also remove {{count}} child routes."
       },
       "filter-description": "Filter routes by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
@@ -2575,7 +2543,9 @@
         "reset": "Reset",
         "resetting": "Resetting...",
         "title-delete-notification-policy": "Delete notification policy",
-        "title-reset-notification-policy": "Reset notification policy"
+        "title-reset-notification-policy": "Reset notification policy",
+        "warning-child-routes_one": "This will also remove {{count}} child route.",
+        "warning-child-routes_other": "This will also remove {{count}} child routes."
       },
       "update": {
         "please-wait": "Please wait while we update your notification policies.",
@@ -3278,6 +3248,7 @@
         "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
         "operator-managed-title": "Managed by operator",
         "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
@@ -3285,12 +3256,19 @@
         "picker-empty": "No Mimir or Cortex datasources available",
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
+        "staged-conflict-active-title": "Auto-sync is not running",
+        "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Promote or revert it below to free auto-sync.",
+        "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
         "title": "Auto-sync configuration"
       },
       "import": {
+        "any": "any",
+        "collapse-all": "Collapse all",
         "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
         "empty-cta": "Import Alertmanager configuration",
         "empty-learn-more": "Learn more about importing configurations",
@@ -3298,9 +3276,73 @@
         "error-body": "The request to the Alerting API failed. Check your connection and try again.",
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
+        "expand-all": "Expand all",
+        "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
+        "no-matchers": "(no matchers)",
+        "no-write-permission": "You don't have permission to modify the imported configuration.",
+        "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
+        "parse-error-title": "Couldn't read the staged configuration",
+        "policy-tree-routes_one": "{{count}} route",
+        "policy-tree-routes_other": "{{count}} routes",
+        "promote": {
+          "checking": "Checking promotion impact…",
+          "confirm": "Promote to live config",
+          "dry-run-error": "Couldn't check the promotion impact",
+          "dry-run-unavailable-body": "You can still promote — the merge itself is validated when you confirm.",
+          "dry-run-unavailable-title": "Couldn't preview the promotion impact",
+          "error-title": "Failed to promote configuration",
+          "invalid-title": "This configuration can't be promoted",
+          "merge-contact-points_one": "contact point added",
+          "merge-contact-points_other": "contact points added",
+          "merge-heading": "Will merge into your live config:",
+          "merge-info": "Promoting merges this configuration into your live Grafana Alertmanager. This is a one-time action and can't be undone.",
+          "merge-inhibition-rules_one": "inhibition rule added",
+          "merge-inhibition-rules_other": "inhibition rules added",
+          "merge-route": "route added",
+          "merge-templates_one": "template added",
+          "merge-templates_other": "templates added",
+          "merge-time-intervals_one": "time interval added",
+          "merge-time-intervals_other": "time intervals added",
+          "rename-contact-point": "Contact point",
+          "rename-heading": "Renamed to avoid conflicts",
+          "rename-subtitle": "These names already exist in your live config, so the imported copies are renamed.",
+          "rename-time-interval": "Time interval",
+          "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
+          "success-body": "The imported resources were merged into your live config.",
+          "success-title": "Configuration promoted",
+          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
+          "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
+          "sync-stops-title": "This will stop auto-sync",
+          "title": "Promote this configuration?"
+        },
+        "promote-button": "Promote to live config",
+        "resources": "Resources",
+        "revert": {
+          "body": "This removes the staged copy of the imported configuration from Grafana.",
+          "confirm": "Revert",
+          "error-title": "Failed to revert configuration",
+          "reassure-live": "Your live Alertmanager config is not affected.",
+          "reassure-promoted": "Anything you already promoted stays in place.",
+          "reassure-reimport": "You can import this configuration again at any time.",
+          "success": "Staged configuration reverted",
+          "title": "Revert this staged configuration?"
+        },
+        "revert-button": "Revert",
+        "section": {
+          "contact-points": "Contact points",
+          "inhibition-rules": "Inhibition rules",
+          "notification-policy": "Notification policy",
+          "templates": "Templates",
+          "time-intervals": "Time intervals"
+        },
+        "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
-        "staged-title": "Staged configuration"
+        "staged-title": "Staged configuration",
+        "sync-managed-description": "This configuration is kept up to date by auto-sync, so it can't be reverted — disable auto-sync to remove it. Promoting it merges these resources into your live config and stops the sync.",
+        "synced-badge": "Synced · read-only",
+        "view": "View"
       },
       "tabs": {
         "alert-managers": "Alert managers",
@@ -3591,6 +3633,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "A unique name for the time interval",
+      "error-save-time-interval": "Failed to save time interval",
       "text-loading-time-interval": "Loading time interval",
       "title-no-matching-time-interval-found": "No matching time interval found"
     },
@@ -3604,6 +3647,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
@@ -3680,6 +3724,9 @@
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
       "open-rule-details": "Open rule details",
+      "query-error-forbidden": "This page reads alert state history from a Prometheus data source, and you do not have permission to query it. Ask an administrator to grant you the query permission for that data source.",
+      "query-error-generic": "The query for alert instances failed, so we cannot tell which alerts are firing or pending.",
+      "query-error-title": "Unable to load alert instances",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
@@ -3784,7 +3831,7 @@
     },
     "use-delete-policy-modal": {
       "modal-element": {
-        "title-delete-notification-policy": "Delete notification policy"
+        "title-delete-notification-policy": "Delete route"
       }
     },
     "use-edit-configuration-drawer": {
@@ -3833,7 +3880,13 @@
       "title-notification-policies": "Notification policies"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "Auto-sync was enabled, but importing alert rules failed.",
+      "autosync-rules-imported-note": "Your alert rules were also imported.",
+      "autosync-success-body": "Grafana will keep syncing alert configuration from this data source.",
+      "autosync-success-title": "Auto-sync enabled",
       "error": "Failed to import resources",
+      "staged-success-body": "Your imported config is now staged in the Import tab.",
+      "staged-success-title": "Configuration staged",
       "success": "Successfully imported resources to Grafana Alerting."
     },
     "yaml-content-info": {
@@ -4340,9 +4393,9 @@
       "delete-button": "Delete",
       "delete-modal-folder-empty_one": "Selected folder is empty",
       "delete-modal-folder-empty_other": "Selected folders are empty",
-      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
-      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
+      "delete-modal-folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain resources that will be deleted",
+      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
       "delete-modal-title": "Delete",
@@ -4352,8 +4405,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "move-modal-folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4393,8 +4446,8 @@
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
       "folder-empty_other": "Selected folders are empty",
-      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain resources that will be deleted",
       "success-title": "Resources deleted successfully"
     },
     "bulk-move-resources-form": {
@@ -4412,8 +4465,8 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "success-title": "Resources moved successfully",
@@ -4421,6 +4474,9 @@
     },
     "create-new": {
       "dashboard-group": "Dashboard"
+    },
+    "create-new-button": {
+      "generate-dashboard": "Generate dashboard"
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4448,7 +4504,7 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
-      "folder-not-empty": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty": "Selected folder contains resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
@@ -4832,6 +4888,7 @@
       "not-found": "<0>Not found: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "Open Canvas documentation",
       "ctrl-right-mouse": "CTRL + right mouse",
       "middle-mouse": "Middle mouse",
       "pan-title": "Pan:",
@@ -5392,6 +5449,16 @@
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
       "item-options": {
+        "fit-content": {
+          "override": {
+            "default": "Default",
+            "description": "Override the layout default for this panel. \"Default\" follows the layout setting.",
+            "off": "Off",
+            "on": "On",
+            "title": "Auto fit"
+          },
+          "title": "Auto fit"
+        },
         "repeat": {
           "title": "Repeat options",
           "variable": {
@@ -5400,6 +5467,7 @@
           }
         }
       },
+      "layout-indicator": "Auto layout – panel sizes are managed automatically",
       "name": "Auto",
       "options": {
         "custom-min-height": {
@@ -5408,15 +5476,41 @@
         "custom-min-width": {
           "clear": "Clear"
         },
+        "fit-content": "Auto fit",
         "height-fill": "Fill screen",
+        "match-row-heights": "Match row heights",
         "max-columns": "Max columns",
-        "min-height": "Row height",
-        "min-height-custom": "Custom row height",
+        "max-height": "Max height",
+        "max-height-clear": "Back to unlimited",
+        "max-height-clear-label": "Clear",
+        "max-height-custom": "Custom",
+        "max-height-custom-label": "Custom max height",
+        "max-height-error": "A number between 50 and 10000 is required",
+        "max-height-short": "Short",
+        "max-height-standard": "Standard",
+        "max-height-tall": "Tall",
+        "max-height-unlimited": "Unlimited",
+        "min-height": "Min height",
+        "min-height-custom": "Custom min height",
+        "min-height-custom-clear": "Back to standard min height",
+        "min-height-custom-option": "Custom",
         "min-height-error": "A number between 50 and 2000 is required",
+        "min-height-none": "None",
+        "min-height-short": "Short",
+        "min-height-standard": "Standard",
+        "min-height-tall": "Tall",
         "min-width": "Min column width",
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
-        "min-width-error": "A number between 50 and 2000 is required"
+        "min-width-error": "A number between 50 and 2000 is required",
+        "row-height": "Row height",
+        "row-height-custom": "Custom row height",
+        "row-height-custom-clear": "Back to standard row height"
+      },
+      "resize-intercept": {
+        "edit": "Edit auto layout",
+        "header": "Panel sizes are managed by auto layout",
+        "switch": "Switch to custom layout"
       }
     },
     "canvas-actions": {
@@ -5564,6 +5658,7 @@
           }
         }
       },
+      "layout-indicator": "Custom layout",
       "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
@@ -5632,14 +5727,18 @@
       "add-conditional-rule": "Add {{ruleDescription}} rule",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
       "panel-edit": "Panel changes",
+      "panel-fit-content": "Panel auto fit content",
       "panel-max-repeats-per-row": "Max repeats per row",
       "panel-preset": "Apply panel preset",
       "panel-repeat-direction": "Repeat direction",
@@ -5888,8 +5987,12 @@
         }
       },
       "scroll-content": "Dashboard content",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-to-rows": "Convert to rows",
+      "ungroup-convert-to-tabs": "Convert to tabs",
+      "ungroup-groups-text": "Nested groups will be moved up a level and converted to rows or tabs.",
+      "ungroup-groups-title": "Ungroup nested groups?",
+      "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
+      "ungroup-repeat-loss-title": "Ungroup?"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -5916,6 +6019,9 @@
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
       "pill": "Published Notebook",
+      "tags": "Tags",
+      "tags-custom-value": "Add as a new tag",
+      "tags-placeholder": "Add a tag",
       "time": "Time"
     },
     "on-create-new-row": {
@@ -6013,6 +6119,7 @@
       "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row {{title}}",
+        "copy-link": "Copy link to row",
         "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
@@ -6067,7 +6174,6 @@
       "title": "Title"
     },
     "save-dashboard-diff": {
-      "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
       "title-folder": "folder",
@@ -6101,6 +6207,13 @@
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
+      "missing-spec": "Missing spec. Expected a valid dashboard spec."
     },
     "search-panel": {
       "no-match": "No panels matching"
@@ -6184,12 +6297,9 @@
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
         "reorder-description": "Reorder annotations list",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6202,7 +6312,6 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
-      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",
         "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
@@ -6211,6 +6320,13 @@
         "collapse": "Collapse editor",
         "copy-as-resource": "Copy as resource",
         "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
+        "diff-disabled-tooltip": "Fix syntax errors to view the diff",
+        "diff-migrated": "Note: The diff also includes changes resulting from migration to the new dashboard format.",
+        "diff-no-changes": "No changes to show",
+        "diff-no-changes-body": "The dashboard matches the original. Changes appear here as you make them.",
+        "diff-toggle": "Show diff",
+        "diff-unavailable": "Cannot show changes",
+        "diff-unavailable-body": "The original dashboard is not available for comparison.",
         "expand": "Expand editor",
         "modal-title": "Edit dashboard as code",
         "pane-header": "Edit as code",
@@ -6258,22 +6374,23 @@
         "add-filter": "Add filter",
         "reorder-description": "Reorder filters list",
         "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
         "tooltip": "Filters overview"
+      },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
       },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6290,7 +6407,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
@@ -6312,7 +6429,6 @@
       "section-variables": {
         "title": "Variables"
       },
-      "select": "Select",
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
@@ -6324,7 +6440,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6372,13 +6488,10 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
+        "top-placement": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6746,6 +6859,26 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-picker": {
+    "no-options": "No dashboards found",
+    "placeholder": "Select dashboard",
+    "unknown-dashboard": "Unknown dashboard ({{uid}})"
+  },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": "Generate dashboard"
+    },
+    "modal": {
+      "title": "What do you want to monitor?"
+    },
+    "prompt": {
+      "cancel": "Cancel",
+      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
+      "input-label": "Describe the dashboard you want",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
+      "submit": "Build it"
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "This data source does not support filters.",
@@ -6802,7 +6935,8 @@
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6878,13 +7012,13 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "copied-tooltip-disabled": "Repeated panels can't be copied individually",
+      "copy-clipboard-tooltip": "Copy to clipboard",
+      "delete-tooltip": "Delete",
+      "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
+      "duplicate-tooltip": "Duplicate",
+      "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
+      "settings": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -6903,6 +7037,9 @@
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Selection options"
+    },
+    "dashboard-controls": {
+      "add": "Add"
     },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
@@ -7031,6 +7168,11 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-items-list": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7209,6 +7351,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
@@ -7297,7 +7440,9 @@
     },
     "panel-data-queries-tab-rendered": {
       "add-query": "Add query",
-      "expression": "Expression "
+      "expression": "Expression ",
+      "sql-expressions-frontend-only": "SQL expressions can only evaluate results from backend datasources. This panel only contains frontend datasources.",
+      "sql-expressions-pending": "SQL expressions can only evaluate results from backend datasources."
     },
     "panel-data-transformations-tab": {
       "tab-label": "Transformations"
@@ -7308,6 +7453,9 @@
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": "Edit visualization"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -7566,6 +7714,14 @@
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "This feature will be removed in Grafana 14. <2>Read the deprecation notice</2>.",
+      "title": "Scripted dashboards are deprecated"
+    },
+    "scripted-dashboards-disabled": {
+      "body": "Scripted dashboards are deprecated and will be removed in Grafana 14. <2>Read the deprecation notice</2>. To temporarily restore them, set the <4>disableScriptedDashboards</4> feature toggle to <7>false</7>.",
+      "title": "Scripted dashboards are disabled"
+    },
     "section-placement": {
       "top-row": "Top of row",
       "top-tab": "Top of tab"
@@ -7649,10 +7805,31 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7664,6 +7841,13 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
     },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
+    },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
     },
@@ -7673,8 +7857,9 @@
       "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
-    "variable-controls": {
-      "add-variable": "Add variable"
+    "variable-edit-actions": {
+      "edit-custom-values": "Edit values",
+      "edit-query": "Edit query"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
@@ -7775,7 +7960,6 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
-    "format-label": "Format:",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },
@@ -8007,7 +8191,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -8143,9 +8328,6 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
-  },
-  "diff-viewer": {
-    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -8560,7 +8742,8 @@
         "inspect-value": "Inspect value",
         "show-details": "Show details",
         "view-log-line": "View log line"
-      }
+      },
+      "loki-time-sort-tooltip": "Sorting this column only changes the order of the displayed results. To update the query's time-based sort order, use the Sort control on the right."
     },
     "logs-table-empty-fields": {
       "no-fields": "No fields"
@@ -8595,6 +8778,13 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
+    "metric-detail-panel": {
+      "aria-label": "Metric details",
+      "close": "Close metric details",
+      "from-query": "Query {{refId}}",
+      "unknown-type": "Unknown type",
+      "unknown-type-tooltip": "This datasource reported no recognized type for this metric"
+    },
     "metrics-list": {
       "collapse-metric": "Collapse {{name}}",
       "error": "Failed to load metrics",
@@ -8607,6 +8797,7 @@
       "loading-values": "Loading values…",
       "no-metrics": "No metrics found",
       "search-placeholder": "Search metrics",
+      "show-metric-details": "Show details for {{name}}",
       "show-more": "Show more",
       "show-more-metrics": "Show more metrics",
       "show-more-values": "Show more values",
@@ -8827,6 +9018,7 @@
       "label-stack-trace": "Stack trace",
       "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
+      "no-attributes": "No attributes",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -8845,17 +9037,21 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "Logs for this span",
+        "no-logs-found-tooltip": "No matching logs found for this span",
         "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
         "tooltip": "See logs related to this span using the trace data source configuration."
       },
       "logs-for-this-trace": {
         "button": "Logs for this trace",
+        "logs-found-tooltip": "See related logs",
+        "no-logs-found-tooltip": "No matching logs found for this trace",
         "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
         "tooltip": "See logs related to this trace using the trace data source configuration."
       },
       "open-in-profiles-drilldown": "Open in Profiles Drilldown",
       "profiles-for-this-span": "Profiles for this span",
       "related-logs": "Related logs",
+      "related-logs-no-logs-tooltip": "No related logs found using the trace data source configuration.",
       "related-logs-tooltip": "View related logs using the trace data source configuration.",
       "session-for-this-span": "Session for this span"
     },
@@ -8913,15 +9109,16 @@
       "split-widen": "Widen pane"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Open share trace options menu",
+      "aria-label-share-dropdown": "Open share and feedback menu",
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
       "errors": "Errors",
       "errors-tooltip": "Selects spans where status equals error.",
       "export-started": "Export started",
+      "feedback-group": "Feedback",
       "filters": "Filters",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "Give feedback",
       "high-latency": "High latency",
       "high-latency-tooltip": "Selects the 10% longest spans in the trace (p90).",
       "link-copied": "Link copied to clipboard",
@@ -8929,13 +9126,12 @@
       "path": "Path",
       "route": "Route",
       "services": "Services",
-      "share": "Share",
       "share-copy-link": "Copy link",
       "share-export-json": "Export as JSON",
-      "share-tooltip": "Share trace",
+      "share-group": "Share",
+      "share-tooltip": "Share and feedback",
       "start-time": "Start time",
       "target": "Target",
-      "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana.",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
       "trace-id": "Trace ID",
       "url": "URL"
@@ -8945,6 +9141,10 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
+        "title": "Understand your services faster"
+      },
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
@@ -8952,6 +9152,18 @@
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
+      },
+      "frontend-observability-promo": {
+        "body": "Frontend Observability links trace attributes to sessions, errors, and performance — so you can see what users experienced when a span ran.",
+        "title": "Debug real user sessions"
+      },
+      "knowledge-graph-promo": {
+        "body": "Knowledge Graph correlates services, infrastructure, and insights from your traces — helping you navigate from a span attribute to related entities and assertions.",
+        "title": "See the full picture"
+      },
+      "kubernetes-promo": {
+        "body": "Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.",
+        "title": "Drill into your cluster"
       },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
@@ -8996,6 +9208,7 @@
     "json": {
       "cancel-button": "Cancel",
       "copy-button": "Copy to clipboard",
+      "dashboard-definition": "Dashboard definition",
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-format": "Format",
@@ -9249,6 +9462,7 @@
       "name-lookup-field": "Lookup field"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "Open geospatial data documentation",
       "mode-options": {
         "description-auto": "Automatically identify location data based on default field names",
         "description-coords": "Specify latitude and longitude fields",
@@ -9278,9 +9492,9 @@
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
     "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
-    "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
     "description-show-measure": "Show tools for making measurements on the map",
+    "description-show-optional-attribution": "Show the map source attribution info in the lower right. Attribution required by a layer license is always shown.",
     "description-show-scale": "Indicate map scale",
     "description-show-zoom": "Show zoom control buttons in the upper left corner",
     "description-sync-view-variable": "Store view bounds in a dashboard variable for use in queries",
@@ -9341,9 +9555,9 @@
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
     "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
-    "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
     "name-show-measure": "Show measure tools",
+    "name-show-optional-attribution": "Show optional attribution",
     "name-show-scale": "Show scale",
     "name-show-zoom": "Show zoom control",
     "name-sync-view-variable": "Sync view to dashboard variable",
@@ -9409,21 +9623,6 @@
   "get-enterprise": {
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
-  },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "complete",
-      "learn-how": "Learn how in the docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "To advanced tutorials",
-      "aria-label-to-basic-tutorials": "To basic tutorials",
-      "checking-completed-setup-steps": "Checking completed setup steps",
-      "remove-this-panel": "Remove this panel"
-    },
-    "tutorial-card": {
-      "complete": "complete"
-    }
   },
   "global-variables": {
     "details": {
@@ -10025,6 +10224,14 @@
       "log-base": "Log base"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "Hides annotation indicator lines and shaded regions",
+        "canvas-controls-name": "Hide lines and areas",
+        "clustering-desc": "Combines high density point annotations into region annotations",
+        "clustering-name": "Enable annotation clustering",
+        "multi-lane-name": "Enable multi-row annotations",
+        "multi-row-desc": "Breaks each annotation frame into a separate row in the visualization"
+      },
       "annotations": "Annotations",
       "axis": {
         "category-axis": "Axis",
@@ -10360,9 +10567,13 @@
     "matchers": {
       "groups": {
         "annotation": "Annotations",
+        "annotation-description": "Annotations series for this panel.",
         "exemplar": "Exemplars",
+        "exemplar-description": "Trace exemplars for this panel.",
         "nested": "Nested",
-        "series": "Dataframe"
+        "nested-description": "Fields from nested dataframes.",
+        "series": "Dataframe",
+        "series-description": "Fields from the dataframes in this panel."
       },
       "labels": {
         "base-field-name": "{{name}} (base field name)",
@@ -10443,6 +10654,9 @@
     "password-field": {
       "tooltip-hide": "Hide password",
       "tooltip-show": "Show password"
+    },
+    "query-input": {
+      "loading": "Loading editor"
     },
     "range-slider": {
       "drag-handle-aria-label": "Use arrow keys to change the value"
@@ -10900,6 +11114,12 @@
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -10920,6 +11140,7 @@
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
+    "learn-more": "Learn more",
     "most-used-dashboards-tab": {
       "empty": "Most used dashboards will appear here.",
       "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
@@ -10933,6 +11154,23 @@
       "title": "Latest from the blog"
     },
     "overview": {
+      "available": {
+        "logs": {
+          "action": "Add logs"
+        },
+        "metrics": {
+          "action": "Connect metrics"
+        },
+        "traces": {
+          "action": "Instrument traces"
+        }
+      },
+      "empty": {
+        "all": "No solutions were found.",
+        "attention": "No solutions need attention.",
+        "available": "No available solutions to show yet.",
+        "enabled": "No enabled solutions with recent activity were found."
+      },
       "get-started": {
         "cards": {
           "app-monitoring": {
@@ -10947,7 +11185,7 @@
           },
           "database-monitoring": {
             "cta": "Start setup",
-            "description": "Query performance, connections, and storage for your data stores.",
+            "description": "Gain insights into MySQL and PostgreSQL query performance and resource consumption.",
             "title": "Analyze database performance"
           },
           "demo-data": {
@@ -10962,8 +11200,8 @@
           },
           "infra-monitoring": {
             "cta": "Start setup",
-            "description": "Monitor infra running on Linux, Kubernetes, cloud platforms, and more.",
-            "title": "Monitor infrastructure"
+            "description": "Collect operating system metrics for Linux, Windows, or macOS hosts.",
+            "title": "Monitor your OS"
           },
           "kubernetes": {
             "cta": "Start setup",
@@ -10992,7 +11230,7 @@
           },
           "website-monitoring": {
             "cta": "Start setup",
-            "description": "Test user experience under load and track availability over time.",
+            "description": "Track the availability of your website and its performance from different locations.",
             "title": "Monitor website uptime and performance"
           }
         },
@@ -11000,12 +11238,23 @@
         "show-more": "More getting started guides",
         "title": "Recommended getting started guides"
       },
+      "groups": {
+        "attention": "Needs attention",
+        "available": "Available",
+        "enabled": "Enabled"
+      },
       "options": {
         "all": "All solutions",
         "attention": "Needs attention",
         "available": "Available solutions",
         "enabled": "Enabled solutions",
         "get-started": "Get started"
+      },
+      "status": {
+        "attention": "Needs attention",
+        "available": "Not enabled",
+        "enabled": "Enabled",
+        "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
     },
@@ -11049,14 +11298,6 @@
       },
       "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
-      "health": {
-        "nodes_one": "{{count}} node not ready",
-        "nodes_other": "{{count}} nodes not ready",
-        "pods_one": "{{count}} pod pending or failed",
-        "pods_other": "{{count}} pods pending or failed",
-        "restarts_one": "{{count}} restart in the last hour",
-        "restarts_other": "{{count}} restarts in the last hour"
-      },
       "hide": "Hide",
       "hosted-traces": {
         "action": "Enable Hosted Traces",
@@ -11065,19 +11306,6 @@
         "setup-action": "Set up Hosted Traces",
         "title": "Trace requests across services"
       },
-      "kubernetes": {
-        "action": "Open K8s app",
-        "alerts-firing_one": "{{value}} alert firing",
-        "alerts-firing_other": "{{value}} alerts firing",
-        "cluster-cpu": "Cluster CPU · last 24h",
-        "clusters_one": "{{value}} cluster",
-        "clusters_other": "{{value}} clusters",
-        "datasource": "via {{name}}",
-        "pods_one": "{{value}} pod",
-        "pods_other": "{{value}} pods",
-        "title": "Kubernetes Monitoring",
-        "view": "View"
-      },
       "kubernetes-monitoring": {
         "action": "Enable Kubernetes Monitoring",
         "context": "Cluster health next to your existing telemetry",
@@ -11085,50 +11313,18 @@
         "setup-action": "Set up Kubernetes Monitoring",
         "title": "Monitor your Kubernetes fleet"
       },
-      "logs": {
-        "action": "Open Explore (Logs)",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
-        "stats": "ingested · 7d",
-        "stats-sources_one": "ingested · 7d · ~{{count}} source",
-        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
-        "title": "Hosted Logs",
-        "volume": "Ingest volume · last 24h"
-      },
-      "metrics": {
-        "action": "Open Metrics Drilldown",
-        "action-explore": "Open in Explore",
-        "data-points-per-minute": "{{value}} data points/min",
-        "datasource": "via {{name}}",
-        "disk-eta_one": "~{{count}} h to full",
-        "disk-eta_other": "~{{count}} h to full",
-        "disk-hosts_one": "{{count}} host above 90% disk",
-        "disk-hosts_other": "{{count}} hosts above 90% disk",
-        "disk-worst": "{{host}} at {{percent}}%",
-        "names_one": "{{value}} metric",
-        "names_other": "{{value}} metrics",
-        "series_one": "{{value}} series",
-        "series_other": "{{value}} series",
-        "series-trend": "Active series · last 24h",
-        "stats": "active",
-        "stats-hosts_one": "active · {{count}} host",
-        "stats-hosts_other": "active · {{count}} hosts",
-        "title": "Metrics & infrastructure",
-        "view": "View"
-      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
-        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
         "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
         "title": "No data flowing yet",
-        "title-partial": "Add more telemetry"
+        "title-unknown": "We couldn't confirm your data"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11137,19 +11333,96 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "title": "Recommendations for your stack",
+      "synthetic-monitoring": {
+        "action": "Enable Synthetic Monitoring",
+        "context": "Black-box checks for the services your cluster runs",
+        "description": "Probe your endpoints from global locations with HTTP, DNS, and ping checks, and alert on downtime.",
+        "setup-action": "Create your first check",
+        "title": "Monitor uptime from the outside"
+      },
+      "title": "Recommendations for your stack"
+    },
+    "solutions": {
+      "cta": {
+        "enable": "Enable",
+        "open-app": "Open {{appName}}",
+        "open-explore": "Open in Explore",
+        "set-up": "Set up"
+      },
+      "kubernetes": {
+        "alerts-firing_one": "{{value}} alert firing",
+        "alerts-firing_other": "{{value}} alerts firing",
+        "cluster-cpu": "Cluster CPU · last 24h",
+        "clusters_one": "{{value}} cluster",
+        "clusters_other": "{{value}} clusters",
+        "description": "See cluster health, cost, and right-sizing savings in one view.",
+        "health-nodes_one": "{{count}} node not ready",
+        "health-nodes_other": "{{count}} nodes not ready",
+        "health-pods_one": "{{count}} pod pending or failed",
+        "health-pods_other": "{{count}} pods pending or failed",
+        "health-restarts_one": "{{count}} restart in the last hour",
+        "health-restarts_other": "{{count}} restarts in the last hour",
+        "pods_one": "{{value}} pod",
+        "pods_other": "{{value}} pods",
+        "setup-hint": "~3 min · Helm/Alloy",
+        "title": "Kubernetes Monitoring",
+        "view-alerts": "View alerts in Kubernetes Monitoring"
+      },
+      "logs": {
+        "description": "Aggregate and search logs from your applications and infrastructure.",
+        "setup-hint": "connect a logs source",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "data-points-per-minute": "{{value}} data points/min",
+        "description": "Connect Prometheus-compatible metrics to explore infrastructure health and trends.",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "investigate-disk": "Investigate disk usage in Explore",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "setup-hint": "connect a metrics source",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure"
+      },
+      "synthetics": {
+        "checks_one": "{{value}} check",
+        "checks_other": "{{value}} checks",
+        "create-check": "Create a check",
+        "description": "Monitor uptime and performance of your endpoints from probes around the world.",
+        "failing_one": "{{count}} check failing",
+        "failing_other": "{{count}} checks failing",
+        "failing-worst": "{{check}} at {{percent}}%",
+        "setup-hint": "create a check",
+        "stats": "{{percent}}% success · 24h",
+        "success-trend": "Success rate · last 24h",
+        "title": "Synthetic Monitoring",
+        "view-checks": "View failing checks"
+      },
       "traces": {
-        "action": "Open Traces Drilldown",
-        "action-explore": "Open in Explore",
-        "datasource": "via {{name}}",
+        "description": "See how requests flow across services and where they slow down.",
+        "setup-hint": "requires instrumentation",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
-        "stats": "traced · 24h",
-        "stats-services_one": "traced · 24h · {{count}} service",
-        "stats-services_other": "traced · 24h · {{count}} services",
-        "throughput": "Span throughput · last 24h",
-        "title": "Hosted Traces"
-      }
+        "stats": "traced · {{hours}}h",
+        "stats-services_one": "traced · {{hours}}h · {{count}} service",
+        "stats-services_other": "traced · {{hours}}h · {{count}} services",
+        "throughput": "Span throughput · last {{hours}}h",
+        "title": "Traces"
+      },
+      "via-datasource": "via {{name}}"
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -11641,6 +11914,7 @@
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
       "pin-line": "Pin log",
+      "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
@@ -11724,7 +11998,8 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "highlighting-unavailable": "Highlighting unavailable"
       },
       "labels": {
         "font-large": "Large font",
@@ -11777,7 +12052,8 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "highlighting-unavailable": "Highlighting is disabled because these logs are too large and could impact performance"
       },
       "unwrapped-columns": {
         "disable": "Disable columns",
@@ -12134,6 +12410,10 @@
       "title": "Why host with Grafana?"
     }
   },
+  "monaco-diff-editor": {
+    "view-inline": "Inline",
+    "view-side-by-side": "Side by side"
+  },
   "multicombobox": {
     "all": {
       "title-deselect": "Deselect all",
@@ -12354,7 +12634,7 @@
     },
     "machine-learning": {
       "subtitle": "Explore AI and machine learning features",
-      "title": "AI & machine learning"
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -12375,6 +12655,10 @@
     },
     "new-folder": {
       "title": "New folder"
+    },
+    "notebooks": {
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "title": "Notebooks"
     },
     "oncall": {
       "title": "OnCall"
@@ -12408,7 +12692,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -12418,7 +12702,7 @@
       "title": "Reporting"
     },
     "saved-queries": {
-      "subtitle": "Reusable queries you can use across panels and Explore",
+      "subtitle": "Reusable queries across Grafana",
       "title": "Saved queries"
     },
     "scenes": {
@@ -12559,6 +12843,7 @@
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
@@ -12582,6 +12867,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
@@ -12669,7 +12955,133 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks"
+    "add-block": {
+      "code": "Code",
+      "heading": "Heading",
+      "label": "Add block",
+      "paragraph": "Paragraph",
+      "prompt": "Type to start writing — press / for blocks",
+      "visualization": "Visualization"
+    },
+    "cell": {
+      "code": {
+        "aria-label-editor": "Code",
+        "aria-label-language": "Code language",
+        "custom-language": "Use this language name",
+        "language-plain-text": "Plain text"
+      },
+      "delete": "Delete block",
+      "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
+      "delete-confirm-title": "Delete block?",
+      "delete-confirm-yes": "Delete",
+      "drag-handle": "Drag to reorder",
+      "duplicate": "Duplicate block",
+      "markdown": {
+        "aria-label-editor": "Markdown",
+        "format-bold": "B",
+        "format-italic": "I",
+        "format-strikethrough": "S",
+        "loading-editor": "Loading editor",
+        "tooltip-bold": "Bold",
+        "tooltip-bulleted-list": "Bulleted list",
+        "tooltip-code": "Code",
+        "tooltip-italic": "Italic",
+        "tooltip-link": "Link",
+        "tooltip-numbered-list": "Numbered list",
+        "tooltip-strikethrough": "Strikethrough"
+      },
+      "query": {
+        "add": "Add query",
+        "run": "Run query"
+      }
+    },
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
+  "notebooks": {
+    "delete": {
+      "body": "Are you sure you want to delete \"{{title}}\"?",
+      "confirm": "Delete",
+      "error": "Failed to delete notebook",
+      "in-progress": "Deleting...",
+      "success": "Notebook deleted",
+      "title": "Delete"
+    },
+    "export": {
+      "copied": "Notebook copied as Markdown",
+      "copy-markdown": "Copy as Markdown",
+      "download-markdown": "Download as .md",
+      "error": "Failed to export notebook",
+      "label": "Export",
+      "open-in-cursor": "Open in Cursor",
+      "opening-in-cursor": "Opening in Cursor"
+    },
+    "history": {
+      "add-block": "Add block",
+      "add-query": "Add query",
+      "delete-block": "Delete block",
+      "duplicate-block": "Duplicate block",
+      "duplicate-query": "Duplicate query",
+      "edit-block": "Edit block",
+      "edit-query": "Edit query",
+      "move-block": "Move block",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
+      "remove-query": "Remove query",
+      "select-query": "Select query",
+      "split-block": "Split block",
+      "switch-datasource": "Switch datasource",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}"
+    },
+    "list": {
+      "count_one": "{{count}} notebook",
+      "count_other": "{{count}} notebooks",
+      "count-loading": "Loading {{shown}} of {{total}}...",
+      "count-of-total": "Showing {{shown}} of {{total}}",
+      "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
+      "create-error": "Failed to create notebook",
+      "created-by-me": "Created by me",
+      "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
+      "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
+      "load-error": "Failed to load notebooks",
+      "loading": "Loading notebooks",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "New notebook",
+      "no-results": "No notebooks found",
+      "partial-load-error": "Some notebooks could not be loaded",
+      "search-placeholder": "Search notebooks by title...",
+      "table": {
+        "author": "Author",
+        "copy-link": "Copy link",
+        "created": "Created",
+        "edit": "Edit",
+        "more-actions": "More actions",
+        "tags": "Tags",
+        "title": "Title",
+        "updated": "Updated"
+      },
+      "unknown-author": "Anonymous"
+    },
+    "save-status": {
+      "failed": "Save failed",
+      "pending": "Unsaved changes",
+      "retry": "Retry",
+      "saved": "Saved",
+      "saving": "Saving…"
+    },
+    "view": {
+      "copy-link": "Copy link",
+      "mode-edit": "Edit",
+      "mode-view": "View",
+      "more-actions": "More actions"
+    }
   },
   "notifications": {
     "empty-state": {
@@ -13393,18 +13805,21 @@
   "provisioned-resource-preview-banner": {
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
-      "branch-text": "branch:",
+      "branch-targets": "targets",
       "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
+      "move-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
       "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
-      "view-pull-request-in-repo": "View pull request in {{repoType}}"
+      "view-pull-request-in-repo": "View pull request in {{repoType}}",
+      "view-saved-version": "View saved version"
     },
     "title-created-branch-in-repo": "A new resource has been created in a branch in {{repoType}}.",
     "title-deleted-resource-in-branch": "A resource has been deleted in a branch in {{repoType}}.",
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you",
+    "title-moved-resource-in-branch": "A resource has been moved in a branch in {{repoType}}.",
     "title-updated-resource-in-branch": "A resource has been updated in a branch in {{repoType}}."
   },
   "provisioning": {
@@ -13419,7 +13834,7 @@
         "repository-label": "Repositories",
         "repository-read-write-admin": "Read, and write",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Read and write"
+        "webhooks-read-write-delete": "Read, write, and delete"
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
@@ -13498,10 +13913,11 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
-      "description-connection": "Select the GitHub App connection to use",
+      "description-connection": "Select the connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-missing": "This connection no longer exists. Select a replacement.",
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
@@ -13509,7 +13925,7 @@
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-commit-message-template": "Commit message template",
-      "label-connection": "GitHub App connection",
+      "label-connection": "Connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -13539,38 +13955,55 @@
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
-      "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
-      "disconnected-title": "Connection is disconnected"
+      "connected-title": "Connected",
+      "disconnected-message": "The provider rejected this connection. Check its configuration and access.",
+      "disconnected-title": "Disconnected",
+      "pending-message": "Waiting for authorization and the connection check to finish.",
+      "pending-title": "Connecting"
     },
     "connection-form": {
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "This connection has access to the following repositories",
+      "available-repositories-count_one": "This connection has access to {{count}} repository",
+      "available-repositories-count_other": "This connection has access to {{count}} repositories",
+      "available-repositories-loading": "Loading repositories...",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
       "create-new-connection-button": "Create connection",
       "creating-connection-button": "Creating connection...",
       "description-app-id": "The ID of your GitHub App",
+      "description-client-id": "The identifier of your OAuth app",
+      "description-client-secret": "The secret of your OAuth app",
       "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-oauth": "When enabled, Grafana will not register or receive webhook events for repositories using this connection. Use this when Grafana is not reachable from the public internet.",
+      "description-workspace": "The workspace your OAuth consumer belongs to",
+      "error-client-secret-new-app": "Enter the client secret for the new OAuth app.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
       "error-submit": "Failed to save connection",
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
+      "label-application-id": "Application ID",
+      "label-client-id": "Client ID",
+      "label-client-secret": "Client secret",
       "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
       "label-webhook-disabled": "Disable webhook integration",
+      "label-workspace": "Workspace",
+      "loading-types": "Loading connection types...",
+      "no-types-message": "Enable at least one connection type in the provisioning configuration.",
+      "no-types-title": "No connection types available",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13579,13 +14012,17 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "My GitHub App"
+      "placeholder-title": "My App",
+      "reauthorize-button": "Reauthorize"
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "Failed to complete authorization",
+      "error-state-expired": "This authorization link has expired or was already used. Start the authorization again."
     },
     "connection-options": {
       "loading": "Loading...",
       "no-repos": "No repositories",
-      "repos-truncated_one": "{{shown}} +{{count}} more",
-      "repos-truncated_other": "{{shown}} +{{count}} more"
+      "repos-truncated": "{{shown}} +{{remaining}} more"
     },
     "connections": {
       "add-connection": "Add connection",
@@ -13594,6 +14031,8 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "kind-github-app": "GitHub App",
+      "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
       "no-results": "No results matching your query",
       "search-placeholder": "Search connections",
@@ -13968,6 +14407,36 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "oauth-app": {
+      "callback-url": "Callback URL",
+      "callback-url-description": "Copy and paste this URL when setting up the OAuth app",
+      "copy": "Copy",
+      "create-and-authorize-button": "Create and authorize",
+      "help-instructions-bitbucket": "In Bitbucket, go to your workspace settings and add an OAuth consumer with the callback URL below, then paste its key and secret here. <2>View step-by-step instructions</2>. Add the consumer with these permissions:",
+      "help-instructions-github": "In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste its client ID and a generated client secret here. <2>View step-by-step instructions</2>",
+      "help-instructions-gitlab": "In GitLab, go to your user or group settings and create an application with the callback URL below, then paste its application ID and secret here. <2>View step-by-step instructions</2>. Create the application with this scope:",
+      "help-title": "Need help creating an OAuth app?",
+      "scope-bitbucket-pull-requests": "Pull requests",
+      "scope-bitbucket-read-write": "Read and write",
+      "scope-bitbucket-repositories": "Repositories",
+      "scope-bitbucket-webhooks": "Webhooks",
+      "waiting-authorization-button": "Waiting for authorization..."
+    },
+    "oauth-authorization": {
+      "cancel-button": "Cancel authorization",
+      "pending-body": "If the provider shows an error page, verify the client ID and attempt to authorize again.",
+      "pending-title": "Waiting for authorization in the other tab"
+    },
+    "oauth-callback": {
+      "back-to-connections": "Back to connections",
+      "done-message": "You can close this tab.",
+      "done-title": "Authorization complete",
+      "error-authorize": "Failed to complete authorization",
+      "error-missing-params": "Missing authorization code",
+      "error-title": "Authorization failed",
+      "loading": "Completing authorization...",
+      "page-title": "Completing authorization"
+    },
     "orphaned-drawer-notice": {
       "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
       "title": "Provisioning repository no longer exists"
@@ -14195,6 +14664,9 @@
       },
       "title-error-saving-file": "Error saving file"
     },
+    "save-connection": {
+      "error-popup-blocked": "The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize."
+    },
     "save-resource": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -14215,6 +14687,12 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-author-email-description": "Email used for the commit author.",
+      "commit-author-email-label": "Author email",
+      "commit-author-email-placeholder": "noreply@grafana.com",
+      "commit-author-name-description": "Author all commits as this name instead of the user who made the change.",
+      "commit-author-name-label": "Author name",
+      "commit-author-name-placeholder": "Grafana",
       "commit-signer-email-description": "Must match the signing key identity.",
       "commit-signer-email-label": "Signer email",
       "commit-signer-email-placeholder": "noreply@grafana.com",
@@ -14302,6 +14780,7 @@
     },
     "validation": {
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
+      "invalid-url": "Enter a valid URL including the scheme, e.g. https://ghe.example.com",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
     "warning-title-default": "Warning",
@@ -14332,11 +14811,16 @@
       "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
-      "auth-type-description": "Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
+      "app-mode-label": "App configuration",
+      "auth-type-description": "All methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
+      "auth-type-description-generic": "Both methods provide secure access to your repositories. Choose the one that best fits your workflow and security requirements.",
       "auth-type-github-app-description": "Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.",
       "auth-type-github-app-label": "Connect with GitHub App",
       "auth-type-label": "Authentication method",
+      "auth-type-oauth-app-description": "Use an OAuth application shared through a connection. Recommended for production environments.",
+      "auth-type-oauth-app-label": "Connect with OAuth App",
       "auth-type-pat-description": "Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.",
+      "auth-type-pat-description-generic": "Use a personal access token to authenticate. Suitable for individual use and testing.",
       "auth-type-pat-label": "Connect with Personal Access Token",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
@@ -14344,7 +14828,8 @@
       "button-start": "Begin synchronization",
       "connect-step": "Connect",
       "connect-step-local": "File provisioning",
-      "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
+      "connection-not-ready": "The selected connection is not ready. The list will be refreshed once the connection is ready.",
+      "connection-status": "Connection status:",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
@@ -14353,20 +14838,21 @@
       },
       "git-protocol-alert-body": "The Pure Git repository type communicates with your Git server using the <2>Git v2 Smart HTTP protocol</2>. SSH and the legacy v1 protocol are not supported. Make sure your Git server supports Smart HTTP before proceeding. For more details, see the <5>usage limits documentation</5>.",
       "git-protocol-alert-title": "Only Git v2 Smart HTTP protocol is supported",
-      "github-app-connection-status": "Connection status:",
       "github-app-creation-default-error": "Failed to create connection",
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
       "github-app-error-required": "Connection is required",
       "github-app-help-instructions": "Create a GitHub App, generate a private key, install it, and paste the details below. <2>View step-by-step instructions</2>",
       "github-app-help-title": "Need help creating a GitHub App?",
+      "github-app-kind-app": "GitHub App",
+      "github-app-kind-label": "App type",
+      "github-app-kind-oauth": "OAuth App",
       "github-app-mode-existing": "Choose an existing app",
-      "github-app-mode-label": "GitHub App configuration",
       "github-app-mode-new": "Connect to a new app",
-      "github-app-no-connections": "No GitHub connections found",
-      "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
-      "github-app-select-connection": "Select a GitHub App connection",
       "give-feedback-link": "Give feedback",
+      "oauth-app-connection-label": "Connection",
+      "oauth-app-creation-default-error": "Failed to create connection",
+      "select-connection": "Select a connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
@@ -14693,7 +15179,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Expression",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
@@ -14707,6 +15192,7 @@
     "labels": {
       "alert": "alert",
       "expression": "expression",
+      "expression-title": "{{type}} Expression",
       "query": "query",
       "transformation": "transformation"
     },
@@ -14715,6 +15201,7 @@
       "message": "Add a query, expression, or transformation to get started"
     },
     "sidebar": {
+      "add": "Add",
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
@@ -14740,6 +15227,7 @@
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
+      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
@@ -14848,8 +15336,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -14864,6 +15352,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {
@@ -15372,7 +15864,6 @@
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
       "language-preference-placeholder": "Choose language",
-      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
@@ -15738,6 +16229,7 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "frame-picker": {
@@ -15771,6 +16263,7 @@
     "name-hide-in-table": "Hide in table",
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
+    "name-page-size": "Page size",
     "name-show-table-header": "Show table header",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
@@ -15781,6 +16274,7 @@
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
+    "placeholder-page-size": "auto",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",
@@ -15931,6 +16425,7 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-data": "Data",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -15959,6 +16454,20 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "frame-picker": {
+      "label": "Query"
+    },
+    "options": {
+      "render-mode": "Render mode"
+    },
+    "render": {
+      "handlebars-error": "Handlebars error: {{message}}",
+      "truncated": "Showing the first {{maxRows}} rows."
+    },
+    "render-mode": {
+      "once": "Once",
+      "per-row": "Per row"
     }
   },
   "theme-playground": {
@@ -17317,15 +17826,17 @@
       "select-variable": "Select variable {{name}}"
     }
   },
+  "visual-refresh": {
+    "info": {
+      "apply": "Check it out",
+      "description": "We've had a redesign!",
+      "revert": "Take me back",
+      "title": "New styles"
+    }
+  },
   "visualization": {
     "data-hover-view": {
       "link": "Link"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Need help?",
-      "welcome-to-grafana": "Welcome to Grafana"
     }
   },
   "xychart": {

@@ -122,3 +122,25 @@ func TestResolverOutranks(t *testing.T) {
 	assert.False(t, r.Outranks("foo.grafana.app", "v2", "v99"), "unregistered version never outranks or is outranked")
 	assert.False(t, r.Outranks("unknown.grafana.app", "v1", "v2"), "unregistered group never ranks")
 }
+
+func TestResolverOutranksMajorFirst(t *testing.T) {
+	// Registered set spanning two majors and all stages.
+	order := map[string][]string{"g": {"v2", "v2beta1", "v2alpha1", "v1", "v1beta1", "v1alpha1", "v0alpha1"}}
+	r := NewResolver(order)
+	o := func(a, b string) bool { return r.Outranks("g", a, b) }
+
+	// Higher major always outranks, regardless of stage — a v1 cap must reject the whole v2 line.
+	assert.True(t, o("v2", "v1"))
+	assert.True(t, o("v2beta1", "v1"), "v2beta1 outranks v1 (higher major)")
+	assert.True(t, o("v2alpha1", "v1"), "v2alpha1 outranks v1 (higher major)")
+
+	// Lower major stays below the cap.
+	assert.False(t, o("v0alpha1", "v1"), "v0alpha1 is below a v1 cap")
+	assert.False(t, o("v1beta1", "v1"), "v1beta1 (pre-release of same major) is below v1")
+	assert.False(t, o("v1alpha1", "v1"))
+
+	// Within a major: ga > beta > alpha, then stage number.
+	assert.True(t, o("v1", "v1beta1"))
+	assert.True(t, o("v2beta1", "v2alpha1"))
+	assert.False(t, o("v1", "v1"), "a version does not outrank itself")
+}

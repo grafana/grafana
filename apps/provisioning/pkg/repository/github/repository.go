@@ -68,7 +68,7 @@ func newRepository(
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
-	ghClient, err := factory.New(ctx, owner, repo, token, opts...)
+	ghClient, err := factory.New(owner, repo, token, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create github client: %w", err)
 	}
@@ -171,6 +171,7 @@ func (r *githubRepository) testResultFromGetDefaultBranchError(err error) *provi
 
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
+		code = http.StatusNotFound
 		detail = fmt.Sprintf("repository %q not found, or the configured token does not have access to it", url)
 	case errors.Is(err, repository.ErrUnauthorized):
 		path = field.NewPath("spec", r.config.Spec.Type.String(), "token")

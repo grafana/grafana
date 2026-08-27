@@ -21,6 +21,7 @@ func newTestScheme(t *testing.T) *runtime.Scheme {
 	gv1 := v1beta1.RoutingTreeKind().GroupVersionKind().GroupVersion()
 
 	scheme.AddKnownTypes(gv0,
+		&v0alpha1.ConfigList{},
 		&v0alpha1.ReceiverList{},
 		&v0alpha1.InhibitionRuleList{},
 		&v0alpha1.RoutingTreeList{},
@@ -28,6 +29,7 @@ func newTestScheme(t *testing.T) *runtime.Scheme {
 		&v0alpha1.TimeIntervalList{},
 	)
 	scheme.AddKnownTypes(gv1,
+		&v1beta1.ConfigList{},
 		&v1beta1.ReceiverList{},
 		&v1beta1.InhibitionRuleList{},
 		&v1beta1.RoutingTreeList{},
@@ -99,6 +101,53 @@ func TestRegisterListConversions_ItemTypeMetaIsUpdated(t *testing.T) {
 		outList.Items[0].Name = "mutated"
 		assert.Empty(t, inList.Items[0].Name)
 	})
+}
+
+// Config is the only kind with a status subresource, so it exercises the parts
+// of the layout-identical reinterpretation the other kinds don't reach.
+func TestRegisterListConversions_ConfigListCarriesSpecAndStatus(t *testing.T) {
+	scheme := newTestScheme(t)
+
+	v0alpha1GV := v0alpha1.ConfigKind().GroupVersionKind().GroupVersion()
+	v1beta1GV := v1beta1.ConfigKind().GroupVersionKind().GroupVersion()
+
+	dsUID := "ds-uid"
+	inList := &v1beta1.ConfigList{
+		Items: []v1beta1.Config{{
+			TypeMeta:   metav1.TypeMeta{APIVersion: v1beta1GV.String(), Kind: "Config"},
+			ObjectMeta: metav1.ObjectMeta{Name: v1beta1.ConfigSingletonName},
+			Spec: v1beta1.ConfigSpec{
+				ExternalAlertmanagerSync: &v1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{
+					DatasourceUid: &dsUID,
+				},
+			},
+			Status: v1beta1.ConfigStatus{
+				Conditions: []v1beta1.ConfigCondition{{
+					Type:   "ExternalAlertmanagerSynced",
+					Status: v1beta1.ConfigConditionStatusTrue,
+					Reason: "SyncSucceeded",
+				}},
+			},
+		}},
+	}
+
+	out, err := scheme.ConvertToVersion(inList, v0alpha1GV)
+	require.NoError(t, err)
+
+	outList, ok := out.(*v0alpha1.ConfigList)
+	require.True(t, ok)
+	require.Len(t, outList.Items, 1)
+
+	item := outList.Items[0]
+	assert.Equal(t, v0alpha1GV.String(), item.APIVersion)
+	assert.Equal(t, "Config", item.Kind)
+	assert.Equal(t, v0alpha1.ConfigSingletonName, item.Name)
+	require.NotNil(t, item.Spec.ExternalAlertmanagerSync)
+	require.NotNil(t, item.Spec.ExternalAlertmanagerSync.DatasourceUid)
+	assert.Equal(t, "ds-uid", *item.Spec.ExternalAlertmanagerSync.DatasourceUid)
+	require.Len(t, item.Status.Conditions, 1)
+	assert.Equal(t, "ExternalAlertmanagerSynced", item.Status.Conditions[0].Type)
+	assert.Equal(t, v0alpha1.ConfigConditionStatusTrue, item.Status.Conditions[0].Status)
 }
 
 func TestRegisterListConversions_ListMetaIsPreserved(t *testing.T) {

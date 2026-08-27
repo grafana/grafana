@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { PluginExtensionTypes, type DataSourceInstanceSettings, type IconName } from '@grafana/data';
 import { setPluginLinksHook, config } from '@grafana/runtime';
@@ -18,15 +18,20 @@ jest.mock('../utils', () => ({
 }));
 
 // Mock @grafana/runtime
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    featureToggles: {
-      favoriteDatasources: false,
+jest.mock('@grafana/runtime', () => {
+  const runtime = jest.requireActual('@grafana/runtime');
+  return {
+    ...runtime,
+    config: {
+      ...runtime.config,
+      featureToggles: {
+        ...runtime.config.featureToggles,
+        favoriteDatasources: false,
+      },
     },
-  },
-  useFavoriteDatasources: jest.fn(),
-}));
+    useFavoriteDatasources: jest.fn(),
+  };
+});
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -42,11 +47,14 @@ jest.mock('./picker/DataSourcePicker', () => ({
 }));
 
 // Mock BuildDashboardButton to avoid needing a Redux Provider
-jest.mock('./BuildDashboardButton', () => ({
-  BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
-    <a href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
-  ),
-}));
+jest.mock('./BuildDashboardButton', () => {
+  const { LinkButton } = jest.requireActual('@grafana/ui');
+  return {
+    BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
+      <LinkButton href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</LinkButton>
+    ),
+  };
+});
 
 // Set default plugin links hook
 setPluginLinksHook(() => ({ links: [], isLoading: false }));

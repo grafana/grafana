@@ -105,6 +105,8 @@ export interface GrafanaJavascriptAgentConfig {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  botFilterEnabled: boolean;
+  trackResources?: boolean;
 }
 
 interface UnifiedAlertingStateHistoryConfig {
@@ -299,6 +301,7 @@ export interface GrafanaConfig {
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
+  pluginImportTelemetryPackages: string[];
   rendererAvailable: boolean;
   rendererVersion: string;
   rendererDefaultImageWidth: number;
@@ -306,6 +309,7 @@ export interface GrafanaConfig {
   rendererDefaultImageScale: number;
   dashboardPerformanceMetrics: string[];
   panelSeriesLimit: number;
+  reportRenderQueryGracePeriodMs: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID: string;
   rootFolderUID: string;

@@ -17,6 +17,7 @@ const (
 	defaultLoginMaxInactiveLifetime     = "7d"
 	defaultLoginMaxLifetime             = "30d"
 	defaultTokenRotationIntervalMinutes = 10
+	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
 	defaultUserLastSeenUpdateInterval   = "15m"
 )
 
@@ -34,7 +35,9 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readOAuthAllowInsecureEmailLookup(iniFile, cfg)
 	readOAuthCookieMaxAge(iniFile, cfg)
+	readOAuthRefreshLockSettings(iniFile, cfg)
 	readCookieSecuritySettings(iniFile, cfg)
 	if err := readServerURLSettings(iniFile, cfg); err != nil {
 		return err
@@ -75,6 +78,14 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 
 func readOAuthCookieMaxAge(iniFile *ini.File, cfg *Cfg) {
 	cfg.OAuthCookieMaxAge = iniFile.Section("auth").Key("oauth_state_cookie_max_age").MustInt(600)
+}
+
+func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthAllowInsecureEmailLookup = iniFile.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
+}
+
+func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(defaultOAuthRefreshLockMinWaitMs)
 }
 
 func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {

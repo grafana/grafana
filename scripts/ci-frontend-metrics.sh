@@ -14,6 +14,7 @@ SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' 
 # pnpm prints one entry per outdated dependency; count them. yarn's summary line
 # "N dependencies are out of date" has no pnpm equivalent.
 OUTDATED_DEPENDENCIES="$(pnpm outdated --format list 2>/dev/null | grep -cE '^[^[:space:]]' || true)"
+TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
 CIRCULAR_DEPENDENCIES="$(pnpm run lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
@@ -22,7 +23,7 @@ echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
 echo -e "Barrel imports: $BARREL_IMPORTS"
-echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
+echo -e "Total outdated dependencies: $TOTAL_OUTDATED_DEPENDENCIES"
 echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
@@ -74,7 +75,7 @@ echo "Metrics: {
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
-  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
+  \"grafana.ci-code.dependencies.outdated\": \"${TOTAL_OUTDATED_DEPENDENCIES}\",
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",

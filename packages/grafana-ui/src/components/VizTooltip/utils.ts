@@ -15,7 +15,7 @@ export interface TooltipScrollableOptions {
 }
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -87,6 +87,24 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+/**
+ * Fields holding DataFrames (Tempo's nested spans, sparkline columns, expandable sub-tables) have
+ * no meaningful one-line representation, and `applyFieldOverrides` gives every frame a circular
+ * `__dataContext` back-reference to the field that owns it, so they cannot be serialized either.
+ */
+const isFrameValuedField = (field: Field) => field.type === FieldType.frame || field.type === FieldType.nestedFrames;
+
+// the catch only exists so an unserializable datasource value costs one row, not the whole panel
+const stringifyValue = (value: unknown): string => {
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    // This path shouldn't be hittable
+    console.warn('Cannot render tooltip value', { error, value });
+    return String(value);
+  }
+};
+
 export const getTooltipDisplayValue = (
   value: unknown,
   field: Field
@@ -100,11 +118,11 @@ export const getTooltipDisplayValue = (
       return { text: '', numeric: NaN };
     }
 
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   if (value && typeof value === 'object') {
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   const display = field.display!(value); // super expensive :(
@@ -125,6 +143,7 @@ export const getTooltipDisplayValue = (
  * @param fieldFilter - Optional predicate to exclude specific fields. Defaults to including all fields.
  * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted. Defaults to `false`.
  * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
+ * @param compareFieldIdx - Index of the field paired with the hovered series (its time-comparison counterpart). That row is annotated with a `delta` from the hovered series.
  */
 export const getFieldDisplayItems = (
   fields: Field[],
@@ -133,9 +152,10 @@ export const getFieldDisplayItems = (
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
   sortOrder: SortOrder,
-  fieldFilter = (field: Field) => true,
+  fieldFilter = (field: Field, i: number) => true,
   hideZeros = false,
-  extraFields?: Field[]
+  extraFields?: Field[],
+  compareFieldIdx?: number
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -147,7 +167,8 @@ export const getFieldDisplayItems = (
     if (
       field === xField ||
       field.type === FieldType.time ||
-      !fieldFilter(field) ||
+      isFrameValuedField(field) ||
+      !fieldFilter(field, i) ||
       field.config.custom?.hideFrom?.tooltip
     ) {
       continue;
@@ -186,6 +207,21 @@ export const getFieldDisplayItems = (
 
     const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
 
+    let delta: VizTooltipDelta | undefined;
+
+    // the paired row carries the difference from the hovered series, which is its baseline
+    if (i === compareFieldIdx && seriesIdx != null) {
+      const hoveredIdx = dataIdxs[seriesIdx];
+      const hoveredVal = hoveredIdx == null ? null : fields[seriesIdx].values[hoveredIdx];
+
+      // only show a delta if both values exist
+      if (v != null && hoveredVal != null) {
+        // text comes from the field's display processor, so it keeps the field's unit and decimals
+        const { text, numeric } = getTooltipDisplayValue(v - hoveredVal, field);
+        delta = { text, numeric };
+      }
+    }
+
     rows.push({
       label: field.state?.displayName ?? field.name,
       value: display.text,
@@ -195,11 +231,12 @@ export const getFieldDisplayItems = (
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
+      delta,
     });
   }
 
   extraFields?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
+    if (!field.config.custom?.hideFrom?.tooltip && !isFrameValuedField(field)) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
       const rawValue = field.values[dataIdxs[0]!];
       const display = getTooltipDisplayValue(rawValue, field);

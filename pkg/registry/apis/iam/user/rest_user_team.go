@@ -145,7 +145,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 					Namespace: requester.GetNamespace(),
 				},
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_MEMBERS,
+					Key:      builders.TEAM_SEARCH_MEMBERS,
 					Operator: string(selection.Equals),
 					Values:   []string{name},
 				}},
@@ -159,12 +159,8 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 		}
 
 		result, err := s.client.Search(ctx, searchRequest)
-		if err != nil {
+		if err := resource.ErrorFromResponse(result.GetError(), err); err != nil {
 			responder.Error(apierrors.NewInternalError(err))
-			return
-		}
-		if result != nil && result.Error != nil {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)))
 			return
 		}
 		if result == nil || result.Results == nil || len(result.Results.Rows) == 0 {

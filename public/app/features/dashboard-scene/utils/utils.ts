@@ -38,7 +38,6 @@ import { type DashboardGridItem } from '../scene/layout-default/DashboardGridIte
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
-import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -145,6 +144,14 @@ export function findEditPanel(scene: SceneObject, key: string | undefined): VizP
 export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
   model.forEachChild((child) => {
     if (!child.isActive) {
+      return;
+    }
+
+    // forceRender() publishes an empty state change, which is harmless for layout children but
+    // not for the providers attached to an object. SceneQueryRunner re-issues its queries on any
+    // state change of the closest time range, so force rendering a panel's $timeRange makes the
+    // panel query twice. None of these providers render layout, so skip them.
+    if (child === model.state.$timeRange || child === model.state.$data || child === model.state.$variables) {
       return;
     }
 
@@ -399,19 +406,6 @@ export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivat
  * Useful when rendering a scene object out of context of it's parent
  */
 export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
-  let parent = sceneObject.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      return parent;
-    }
-    parent = parent.parent;
-  }
-
-  throw new Error('Could not find layout manager for scene object');
-}
 
 export function getGridItemKeyForPanelId(panelId: number): string {
   return `grid-item-${panelId}`;

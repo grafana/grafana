@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 import * as React from 'react';
-import { useAsync } from 'react-use';
 
 import {
   type AnnotationQuery,
@@ -12,8 +11,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type VizPanel } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema';
 import {
@@ -65,11 +64,8 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
   }, [annotation.filter]);
 
-  const { value: ds } = useAsync(() => {
-    return getDataSourceSrv().get(annotation.datasource);
-  }, [annotation.datasource]);
-
-  const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
+  const { isLoading: isDsLoading, dataSource: ds } = useDataSourceInstance(annotation.datasource);
+  const { settings: dsi } = useDataSourceInstanceSettings(annotation.datasource);
 
   const AnnotationControlsDisplayOptions = useMemo(
     () => [
@@ -271,7 +267,7 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           >
             <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
           </Field>
-          {!ds?.meta.annotations && (
+          {!isDsLoading && !ds?.meta.annotations && (
             <Alert
               title={t(
                 'dashboard-scene.annotation-settings-edit.title-annotation-support-source',

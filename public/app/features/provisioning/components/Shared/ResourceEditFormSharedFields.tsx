@@ -114,9 +114,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
 
+    // A new branch only exists after the save creates it; until the selected branch
+    // is a known remote ref, list folders from the configured branch instead of
+    // requesting an unborn ref (which 404s).
+    const selectedBranchExists = Boolean(
+      selectedBranch && branchData?.items?.some((branch) => branch.name === selectedBranch)
+    );
+
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
-      ref: selectedBranch || undefined,
+      ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
     const pathText =
@@ -136,7 +143,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
-              disabled={canOnlyPushToConfiguredBranch || lockBranch}
+              // Do not disable for lockBranch: `Field` clones `disabled` onto the input, and
+              // react-hook-form drops disabled fields from the submitted values, which would strip
+              // the enforced template branch from `ref`. The Input below stays read-only instead.
+              disabled={canOnlyPushToConfiguredBranch}
               htmlFor="provisioned-ref"
               noMargin
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}

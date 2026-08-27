@@ -4,9 +4,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -18,28 +18,38 @@ var manifestMergeLogger = log.New("search-manifest-merge")
 // same map-backed provider NewMapProvider produces, so the per-field and
 // cross-version consistency checks apply here too.
 //
-// Panics on an invalid declaration, like NewMapProvider. Runtime callers use
-// newManifestBackedProvider instead.
+// Panics on an invalid declaration, like NewMapProvider, because in a
+// compiled-in manifest that is a bug. Runtime callers use
+// ManifestBackedProvider instead.
 func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
-	p, err := newManifestBackedProvider(manifests)
+	p, err := ManifestBackedProvider(manifests)
 	if err != nil {
 		panic(err.Error())
 	}
 	return p
 }
 
-// newManifestBackedProvider is NewManifestBackedProvider's error-returning
-// core, so a runtime manifest source can reject a bad set instead of crashing.
-func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
+// ManifestBackedProvider is NewManifestBackedProvider's error-returning form,
+// for manifests read at runtime, which can be malformed without this build
+// being at fault.
+func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
+	data := make([]*app.ManifestData, len(manifests))
+	for i, m := range manifests {
+		data[i] = m.ManifestData
+	}
+	return NewSearchFieldsProvider(data)
+}
+
+func NewSearchFieldsProvider(manifests []*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		group := m.ManifestData.Group
-		for _, version := range m.ManifestData.Versions {
+		group := m.Group
+		for _, version := range m.Versions {
 			for _, kind := range version.Kinds {
 				if len(kind.SearchFields) == 0 {
 					continue
@@ -52,7 +62,7 @@ func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, 
 				fields[gvr] = manifestSearchFieldsToDefinitions(kind.SearchFields)
 
 				gr := gvr.GroupResource()
-				if pv := m.ManifestData.PreferredVersion; pv != "" {
+				if pv := m.PreferredVersion; pv != "" {
 					preferred[gr] = pv
 				} else {
 					// No explicit preference: the last version that declares the
@@ -133,7 +143,7 @@ func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]Sear
 
 	// A single manifest-backed provider covers every declared kind; each map
 	// entry queries it for its own (group, resource).
-	manifestProvider, err := newManifestBackedProvider(manifests)
+	manifestProvider, err := ManifestBackedProvider(manifests)
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();

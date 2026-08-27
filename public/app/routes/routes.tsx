@@ -1,19 +1,20 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/environment';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -26,6 +27,11 @@ import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
+const LazyConfigureIRM = lazy(() =>
+  import(/* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM').then(
+    (module) => ({ default: module.ConfigureIRM })
+  )
+);
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -57,11 +63,22 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/notebook/:uid/:slug?',
+      path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
+      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates both notebook
+      // routes. The feature flag is enforced inside the pages instead, since getAppRoutes cannot
+      // use hooks.
+      path: NOTEBOOKS_BASE_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
       ),
     },
     {
@@ -234,7 +251,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         return (
           <NavLandingPage
             navId="alerts-and-incidents"
-            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
+            header={
+              (!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? (
+                <Suspense fallback={null}>
+                  <LazyConfigureIRM />
+                </Suspense>
+              ) : undefined
+            }
           />
         );
       },
@@ -368,6 +391,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.LDAPStatusRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
       ),
@@ -381,6 +405,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -391,36 +416,42 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
       path: '/admin/users/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
     {
       path: '/admin/users/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
       ),
     },
     {
       path: '/admin/orgs',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
     },
     {
       path: '/admin/stats',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionServerStatsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
@@ -499,7 +530,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
-      roles: config.featureToggles.playlistsRBAC
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
         : undefined,
       component: SafeDynamicImport(

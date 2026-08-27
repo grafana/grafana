@@ -75,6 +75,7 @@ patchedDependencies:
   # file-handle limit (EMFILE) on `pnpm start`. Enable dot matching so the ignore works.
   fork-ts-checker-webpack-plugin@9.1.0: patches/fork-ts-checker-webpack-plugin@9.1.0.patch
   history@4.10.1: patches/history@4.10.1.patch
+  react-calendar@6.0.1: patches/react-calendar@6.0.1.patch
   react-grid-layout@1.4.4: patches/react-grid-layout@1.4.4.patch
   react-split-pane@0.1.92: patches/react-split-pane@0.1.92.patch
   slate-dev-environment@0.2.5: patches/slate-dev-environment@0.2.5.patch
@@ -92,6 +93,9 @@ overrides:
   # resolutions forced this via the patch: specifier; pnpm needs an explicit pin
   # or the version drifts and patches/react-grid-layout@1.4.4.patch goes unused.
   react-grid-layout: "1.4.4"
+  # Same reason as react-grid-layout: pin so patches/react-calendar@6.0.1.patch
+  # keeps applying when the ^6.0.0 range moves.
+  react-calendar: "6.0.1"
   redux: "^5.0.0"
   gitconfiglocal: "2.1.0"
   ws: "^8.20.1"
@@ -121,6 +125,13 @@ overrides:
   # so the cascade overrides asserted styles in tests untouched by this migration
   # (LogRow, AutoSaveField). 2.2.2 (yarn-resolved) does not; pin to match.
   nwsapi: "2.2.2"
+  # A single react/react-dom across every workspace. The `>=19` peer ranges in
+  # grafana-i18n/-sql/-flamegraph resolve to 19.2.7 while the root pins 19.2.8, and
+  # grafana-api-clients still dev-depends on 18.3.1. Each distinct react version
+  # forks the peer-keyed @reduxjs/toolkit copies, so RTK Query hooks typed against
+  # one copy are not assignable to the other and `typecheck` fails repo-wide.
+  react: "19.2.8"
+  react-dom: "19.2.8"
   # Single webpack version across all workspaces — a range across 20 package.json
   # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
   webpack: "5.107.2"
@@ -186,7 +197,7 @@ overrides:
   # types-only transitive deps (jspdf via @siedlerchr/types-ol-ext). A global pin
   # is required for jspdf because it is resolved as a peerDependency, which the
   # conditional `jspdf@<x` selectors do not reliably intercept.
-  dompurify: "3.4.12"
+  dompurify: "3.4.13"
   jspdf: "4.2.1"
   nodemailer: "9.0.3"
   linkify-it: "5.0.2"
@@ -211,7 +222,7 @@ overrides:
   # nx 22.7.2 (the `nx graph` CORS fix) exact-pins these three at vulnerable
   # versions where 22.5.4 used floating ranges. All three bumps stay within the
   # same major, and the target versions are already in the tree via other consumers.
-  "axios@<1.18.0": "^1.18.0"
+  "axios@<1.18.1": "^1.18.1"
   "form-data@>=4.0.0 <4.0.6": "^4.0.6"
   "yaml@>=2.0.0 <2.8.3": "^2.8.3"
   # hono/@hono/node-server come from @modelcontextprotocol/sdk via @grafana/llm.

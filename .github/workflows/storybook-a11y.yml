@@ -61,7 +61,7 @@ jobs:
     - name: Install dependencies
       uses: ./.github/actions/pnpm-install
     - name: Install Playwright browsers
-      run: pnpm exec playwright install chromium --with-deps
+      uses: ./.github/actions/setup-playwright
     - name: Start Storybook
       run: STORYBOOK_THEME=${{ matrix.STORYBOOK_THEME }} pnpm run storybook &
     - name: Run tests

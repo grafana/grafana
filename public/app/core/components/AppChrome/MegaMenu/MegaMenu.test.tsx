@@ -577,7 +577,7 @@ describe('MegaMenu', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
 
     // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
     // OpenFeature events into the still-mounted menu).

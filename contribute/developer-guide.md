@@ -207,7 +207,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 
 ### Run frontend tests
 
-We use [Jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
+We use [Jest](https://jestjs.io/) for our frontend tests. Run them using pnpm:
 
 ```
 pnpm run test

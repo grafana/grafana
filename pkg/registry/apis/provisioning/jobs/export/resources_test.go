@@ -107,11 +107,11 @@ func TestExportResources_Dashboards_Success(t *testing.T) {
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "dashboard-1"
-		}), options).Return("dashboard-1.json", nil)
+		}), options).Return("dashboard-1.json", 0, nil)
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "dashboard-2"
-		}), options).Return("dashboard-2.json", nil)
+		}), options).Return("dashboard-2.json", 0, nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -160,11 +160,11 @@ func TestExportResources_Dashboards_WithErrors(t *testing.T) {
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "dashboard-1"
-		}), options).Return("", fmt.Errorf("failed to export dashboard"))
+		}), options).Return("", 0, fmt.Errorf("failed to export dashboard"))
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "dashboard-2"
-		}), options).Return("dashboard-2.json", nil)
+		}), options).Return("dashboard-2.json", 0, nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -194,7 +194,7 @@ func TestExportResources_Dashboards_TooManyErrors(t *testing.T) {
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "dashboard-1"
-		}), options).Return("", fmt.Errorf("failed to export dashboard"))
+		}), options).Return("", 0, fmt.Errorf("failed to export dashboard"))
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -224,7 +224,7 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "existing-dashboard"
-		}), options).Return("", resources.ErrAlreadyInRepository)
+		}), options).Return("", 0, resources.ErrAlreadyInRepository)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -301,7 +301,7 @@ func TestExportResources_Dashboards_V0StoredVersionExportsAsV1(t *testing.T) {
 			// The exported object must carry the v1 apiVersion, not v0alpha1.
 			return obj.GetName() == "existing-dashboard" &&
 				obj.GetAPIVersion() == resources.DashboardResource.GroupVersion().String()
-		}), options).Return("existing-dashboard.json", nil)
+		}), options).Return("existing-dashboard.json", 0, nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -521,7 +521,7 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 						Path: "grafana",
 						Ref:  "feature/branch",
 					}
-					repoResources.On("WriteResourceFileFromObject", mock.Anything, &dashboard, options).Return(fmt.Sprintf("%s.json", tt.dashboardName), nil)
+					repoResources.On("WriteResourceFileFromObject", mock.Anything, &dashboard, options).Return(fmt.Sprintf("%s.json", tt.dashboardName), 0, nil)
 				}
 			}
 
@@ -627,7 +627,7 @@ func TestExportResources_Dashboards_SkipsAppGeneratedResources(t *testing.T) {
 		// matcher and the mock fails on an unexpected call.
 		repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			return obj.GetName() == "regular-dashboard"
-		}), mock.Anything).Return("regular-dashboard.json", nil)
+		}), mock.Anything).Return("regular-dashboard.json", 0, nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)
@@ -664,7 +664,7 @@ func TestExportResources_GenerateNewUIDs(t *testing.T) {
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		name := obj.GetName()
 		return name != "original-name-1" && name != "original-name-2" && name != ""
-	}), resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}).Return("exported.json", nil).Times(2)
+	}), resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}).Return("exported.json", 0, nil).Times(2)
 
 	options := provisioningV0.ExportJobOptions{
 		Path:   "grafana",
@@ -703,7 +703,7 @@ func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
 		Run(func(args mock.Arguments) {
 			obj := args.Get(1).(*unstructured.Unstructured)
 			generatedNames = append(generatedNames, obj.GetName())
-		}).Return("exported.json", nil)
+		}).Return("exported.json", 0, nil)
 
 	options := provisioningV0.ExportJobOptions{
 		Path:   "grafana",
@@ -831,9 +831,9 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 			Path: "grafana",
 			Ref:  "feature/branch",
 		}
-		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2alphaDashboard, options).Return("v2alpha-dashboard.json", nil)
-		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2betaDashboard, options).Return("v2beta-dashboard.json", nil)
-		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v3Dashboard, options).Return("v3-dashboard.json", nil)
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2alphaDashboard, options).Return("v2alpha-dashboard.json", 0, nil)
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v2betaDashboard, options).Return("v2beta-dashboard.json", 0, nil)
+		repoResources.On("WriteResourceFileFromObject", mock.Anything, &v3Dashboard, options).Return("v3-dashboard.json", 0, nil)
 	}
 
 	err := runExportTest(t, mockItems, setupProgress, setupResources)

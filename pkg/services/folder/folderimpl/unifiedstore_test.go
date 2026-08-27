@@ -73,7 +73,10 @@ func TestComputeFullPath(t *testing.T) {
 			wantPathUIDs: "grandparent-uid/parent-uid/Element-uid",
 		},
 		{
-			name: "should handle special characters in titles",
+			// Slashes in a title must be escaped so the title is not mistaken
+			// for a path separator. Consumers (backend SplitFullpath, the
+			// alerting frontend) rely on this to match a rule's folder.
+			name: "should escape slashes in titles",
 			parents: []*folder.Folder{
 				{
 					Title: "Parent/With/Slashes",
@@ -84,7 +87,7 @@ func TestComputeFullPath(t *testing.T) {
 					UID:   "Element-uid",
 				},
 			},
-			wantPath:     "Parent/With/Slashes/Element With Spaces",
+			wantPath:     "Parent\\/With\\/Slashes/Element With Spaces",
 			wantPathUIDs: "parent-uid/Element-uid",
 		},
 	}
@@ -94,6 +97,67 @@ func TestComputeFullPath(t *testing.T) {
 			gotPath, gotPathUIDs := computeFullPath(tc.parents)
 			require.Equal(t, tc.wantPath, gotPath)
 			require.Equal(t, tc.wantPathUIDs, gotPathUIDs)
+		})
+	}
+}
+
+func TestToFolderLegacyCounts(t *testing.T) {
+	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
+		items := make([]interface{}, 0, len(stats))
+		for _, s := range stats {
+			items = append(items, s)
+		}
+		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
+	}
+	stat := func(group, res string, count int64) map[string]interface{} {
+		return map[string]interface{}{"group": group, "resource": res, "count": count}
+	}
+
+	testCases := []struct {
+		name  string
+		input *unstructured.Unstructured
+		want  folder.DescendantCounts
+	}{
+		{
+			name: "resources still living in the single-tenant tables are counted",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "unified storage counts win over the single-tenant tables",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 5),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 5},
+		},
+		{
+			name: "order of the entries does not matter",
+			input: counts(
+				stat("sql-fallback", "alertrules", 3),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "empty folder stays empty",
+			input: counts(
+				stat("dashboard.grafana.app", "dashboards", 0),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"dashboards": 0, "alertrules": 0},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := toFolderLegacyCounts(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, *got)
 		})
 	}
 }
@@ -1058,6 +1122,33 @@ func TestBuildFolderFullPaths(t *testing.T) {
 				ParentUID:    "parent-uid",
 				Fullpath:     "Grandparent/Parent/Child",
 				FullpathUIDs: "grandparent-uid/parent-uid/child-uid",
+			},
+		},
+		{
+			name: "should escape slashes in folder and parent titles",
+			args: args{
+				f: &folder.Folder{
+					Title:     "Child/With/Slashes",
+					UID:       "child-uid",
+					ParentUID: "parent-uid",
+				},
+				relations: map[string]string{
+					"child-uid":  "parent-uid",
+					"parent-uid": "",
+				},
+				folderMap: map[string]*folder.Folder{
+					"parent-uid": {
+						Title: "Parent/With/Slashes",
+						UID:   "parent-uid",
+					},
+				},
+			},
+			want: &folder.Folder{
+				Title:        "Child/With/Slashes",
+				UID:          "child-uid",
+				ParentUID:    "parent-uid",
+				Fullpath:     "Parent\\/With\\/Slashes/Child\\/With\\/Slashes",
+				FullpathUIDs: "parent-uid/child-uid",
 			},
 		},
 		{

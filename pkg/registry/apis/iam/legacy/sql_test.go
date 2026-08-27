@@ -151,6 +151,12 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	updateServiceAccount := func(cmd *UpdateServiceAccountCommand) sqltemplate.SQLTemplate {
+		v := newUpdateServiceAccount(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	updateUser := func(cmd *UpdateUserCommand) sqltemplate.SQLTemplate {
 		v := newUpdateUser(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -764,6 +770,30 @@ func TestIdentityQueries(t *testing.T) {
 						Created:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						Updated:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 						LastSeenAt: time.Date(2013, 2, 1, 10, 30, 0, 0, time.UTC),
+					}),
+				},
+			},
+			sqlUpdateServiceAccountTemplate: {
+				{
+					Name: "update_service_account_basic",
+					Data: updateServiceAccount(&UpdateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Renamed Service Account",
+						Role:       "Editor",
+						IsDisabled: false,
+						OrgID:      1,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 1, 1, 13, 0, 0, 0, time.UTC)),
+					}),
+				},
+				{
+					Name: "update_service_account_disabled",
+					Data: updateServiceAccount(&UpdateServiceAccountCommand{
+						UID:        "abcdef",
+						Name:       "Disabled Service Account",
+						Role:       "None",
+						IsDisabled: true,
+						OrgID:      2,
+						Updated:    legacysql.NewDBTime(time.Date(2023, 2, 1, 10, 30, 0, 0, time.UTC)),
 					}),
 				},
 			},
