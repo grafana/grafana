@@ -7,6 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
 import {
+  Alert,
   Button,
   ClipboardButton,
   Stack,
@@ -80,6 +81,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
 
   const isK8sMode = exportFormat === ExportFormat.V2Resource && hasK8sMeta;
   const displayJson = isK8sMode ? (k8sResource.value ?? '') : classicJson;
+  const isLossyClassicModel = !isK8sMode && isDashboardV2Spec(changedSaveModel);
 
   const saveToFile = useCallback(() => {
     const blob = new Blob([displayJson], {
@@ -147,6 +149,15 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
               </Stack>
             </Box>
           </QueryOperationRow>
+        )}
+
+        {isLossyClassicModel && (
+          <Alert title="" severity="warning">
+            <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
+              This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in
+              the classic format and may be lost.
+            </Trans>
+          </Alert>
         )}
 
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />

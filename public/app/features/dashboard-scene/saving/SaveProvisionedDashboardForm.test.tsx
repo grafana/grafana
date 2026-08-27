@@ -77,6 +77,17 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(json.cursorSync).toBeUndefined();
     });
 
+    it('warns that v2 only features are lost, but only for the classic model', async () => {
+      await renderForm(buildV2Scene(v2SpecWithTwoPanels()));
+
+      expect(screen.queryByText(/cannot be represented in the classic format/)).not.toBeInTheDocument();
+
+      await userEvent.click(await screen.findByText('Advanced options'));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Classic' }));
+
+      expect(await screen.findByText(/cannot be represented in the classic format/)).toBeInTheDocument();
+    });
+
     it('serializes a v2 dashboard that uses rows rather than crashing the form', async () => {
       await renderForm(buildV2Scene(withRowsLayout(v2SpecWithTwoPanels())));
 
@@ -104,6 +115,7 @@ describe('SaveProvisionedDashboardForm', () => {
       await renderForm(dashboard, v1Model);
 
       expect(readEditorJson()).toEqual(v1Model);
+      expect(screen.queryByText(/cannot be represented in the classic format/)).not.toBeInTheDocument();
     });
   });
 });
