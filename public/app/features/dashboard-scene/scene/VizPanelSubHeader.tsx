@@ -25,6 +25,12 @@ interface ApplicabilitySupportHelperState {
 export interface VizPanelSubHeaderState extends SceneObjectState {
   hideNonApplicableDrilldowns?: boolean;
   supportsApplicability?: boolean;
+  /**
+   * Mirrors the panel's loaded {@link PanelPlugin.hideNonApplicableFilters}. The plugin
+   * is loaded asynchronously, so this is tracked as scene state (rather than read directly
+   * from `getPlugin()` at render time) to make the subheader re-render once it resolves.
+   */
+  pluginHidesNonApplicableFilters?: boolean;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -56,11 +62,22 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       this.subscribeToDrilldownVariableChanges();
     }
 
+    const panel = this.parent;
+
+    const panelSub = panel.subscribeToState(() => {
+      this.updatePluginHidesNonApplicableFilters(panel);
+    });
+
     return () => {
+      panelSub.unsubscribe();
       this._groupBySub?.unsubscribe();
       this._adHocSub?.unsubscribe();
     };
   };
+
+  private updatePluginHidesNonApplicableFilters(panel: VizPanel) {
+    this.setState({ pluginHidesNonApplicableFilters: panel.getPlugin()?.hideNonApplicableFilters === true });
+  }
 
   private subscribeToDrilldownVariableChanges() {
     const vars = sceneGraph.getVariables(this);
@@ -171,13 +188,13 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 }
 
 function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
+  const { supportsApplicability, hideNonApplicableDrilldowns, pluginHidesNonApplicableFilters } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
   const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
 
-  if (!queryRunner || hideNonApplicableDrilldowns || !supportsApplicability) {
+  if (!queryRunner || hideNonApplicableDrilldowns || pluginHidesNonApplicableFilters || !supportsApplicability) {
     return null;
   }
 

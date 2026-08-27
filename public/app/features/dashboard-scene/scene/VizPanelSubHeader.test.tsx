@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -127,6 +127,8 @@ interface BuildSceneOptions {
 }
 
 async function buildScene(options?: BuildSceneOptions) {
+  config.featureToggles.perPanelNonApplicableDrilldowns = true;
+
   const subHeader = new VizPanelSubHeader({});
 
   const queryRunner = new SceneQueryRunner({

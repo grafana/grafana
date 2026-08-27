@@ -501,9 +501,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     headerActions: new VizPanelHeaderActions({
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
+    subHeader: new VizPanelSubHeader({}),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),

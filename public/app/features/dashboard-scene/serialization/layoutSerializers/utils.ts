@@ -141,9 +141,7 @@ function addDashboardPanelChrome(vizPanelState: VizPanelState): void {
   vizPanelState.headerActions = new VizPanelHeaderActions({
     hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
   });
-  vizPanelState.subHeader = new VizPanelSubHeader({
-    hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-  });
+  vizPanelState.subHeader = new VizPanelSubHeader({});
   vizPanelState.extendPanelContext = setDashboardPanelContext;
 
   if (!config.publicDashboardAccessToken) {
