@@ -17,7 +17,6 @@ import { pluginTransformationsEnabled } from './systemTransformations';
  * entering the pipeline. Nothing it contributes reaches `state.transformations`.
  */
 export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneObjectState> {
-  // The plugin the pipeline last resolved against
   private _resolvedPlugin: { plugin: PanelPlugin | undefined } | undefined;
 
   public constructor(state: SceneObjectState = {}) {
@@ -78,9 +77,6 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
     return { prepend: prepend.filter(appliesToSeriesTopic), append: append.filter(appliesToSeriesTopic) };
   };
 
-  /**
-   * Set _resolvedPlugin on loading and panel changes
-   */
   private _subscribeToPanel = (panel: VizPanel, transformer: SceneDataTransformer) => {
     return panel.subscribeToState(() => {
       const nextPlugin = this._plugin();
@@ -118,17 +114,15 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
     const { pluginId } = panel.state;
 
     importPanelPlugin(pluginId)
-      // Don't error the panel's data if pluginId is not resolved!
+      // Catch first so that catch doesn't swallow reprocessing errors
       .catch(() => undefined)
       .then(() => {
-        // Don't reprocess if not active
         if (!this.isActive || panel.state.pluginId !== pluginId) {
           return;
         }
 
         const plugin = this._plugin();
 
-        // Don't reprocess if plugin is already resolved
         if (plugin === this._resolvedPlugin?.plugin) {
           return;
         }
