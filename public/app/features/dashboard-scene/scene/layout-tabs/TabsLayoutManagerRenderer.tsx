@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type DropResult, type DragStart } from '@hello-pangea/dnd';
+import { type DragStart, type DroppableProvided, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +13,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DashboardDndProvider, useDashboardDnd } from '../layouts-shared/useDashboardDnd';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -34,6 +35,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
+  const dashboardDnd = useDashboardDnd(isEditing && !soloPanelContext);
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
@@ -96,111 +98,131 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
     children.splice(placeholder.index, 0, placeholderComponent);
   }
 
-  return (
-    <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
-      <TabsBar className={styles.tabsBar}>
-        <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
-          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
-            <div className={styles.tabsScrollArea}>
-              <Droppable droppableId={key!} direction="horizontal">
-                {(dropProvided) => (
-                  <div
-                    className={cx(styles.tabsContainer, {
-                      [styles.tabsContainerFadeLeft]: canScrollLeft && !canScrollRight,
-                      [styles.tabsContainerFadeRight]: !canScrollLeft && canScrollRight,
-                      [styles.tabsContainerFadeBoth]: canScrollLeft && canScrollRight,
-                    })}
-                    ref={(node) => {
-                      dropProvided.innerRef(node);
-                      scrollRef(node);
-                    }}
-                    {...dropProvided.droppableProps}
-                  >
-                    {children}
-
-                    {dropProvided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-              {canScrollLeft && (
-                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperLeft)}>
-                  <IconButton
-                    className={styles.scrollButton}
-                    name="angle-left"
-                    size="md"
-                    variant="secondary"
-                    aria-label={t('dashboard.tabs-layout.scroll-tabs-left', 'Scroll tabs left')}
-                    onClick={() => scrollBy('left')}
-                    onMouseDown={(evt) => evt.preventDefault()}
-                    onPointerDown={(evt) => evt.stopPropagation()}
-                  />
-                </div>
-              )}
-              {canScrollRight && (
-                <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperRight)}>
-                  <IconButton
-                    className={styles.scrollButton}
-                    name="angle-right"
-                    size="md"
-                    variant="secondary"
-                    aria-label={t('dashboard.tabs-layout.scroll-tabs-right', 'Scroll tabs right')}
-                    onClick={() => scrollBy('right')}
-                    onMouseDown={(evt) => evt.preventDefault()}
-                    onPointerDown={(evt) => evt.stopPropagation()}
-                  />
-                </div>
-              )}
-            </div>
-            {isEditing && !isClone && (
-              <div
-                className={cx(
-                  styles.tabControls,
-                  layoutControlsStyles.controls,
-                  'dashboard-canvas-controls',
-                  isMultiSelection && layoutControlsStyles.controlsHidden
-                )}
-              >
-                <Button
-                  icon="plus"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => model.addNewTab()}
-                  onPointerUp={(evt) => evt.stopPropagation()}
-                  onPointerDown={(evt) => evt.stopPropagation()}
-                  data-testid={selectors.components.CanvasGridAddActions.addTab}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
-                </Button>
-                {hasCopiedTab && (
-                  <Button
-                    icon="clipboard-alt"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => model.pasteTab()}
-                    onPointerUp={(evt) => evt.stopPropagation()}
-                    onPointerDown={(evt) => evt.stopPropagation()}
-                    data-testid={selectors.components.CanvasGridAddActions.pasteTab}
-                  >
-                    <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
-                  </Button>
-                )}
-                <Button
-                  icon="layers-slash"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => model.ungroupTabs()}
-                  data-testid={selectors.components.CanvasGridAddActions.ungroup}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
-                </Button>
-              </div>
-            )}
-          </div>
-        </DragDropContext>
-      </TabsBar>
-
-      {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
+  const renderTabsContainer = (dropProvided?: DroppableProvided) => (
+    <div
+      className={cx(styles.tabsContainer, {
+        [styles.tabsContainerFadeLeft]: canScrollLeft && !canScrollRight,
+        [styles.tabsContainerFadeRight]: !canScrollLeft && canScrollRight,
+        [styles.tabsContainerFadeBoth]: canScrollLeft && canScrollRight,
+      })}
+      ref={(node) => {
+        dropProvided?.innerRef(node);
+        scrollRef(node);
+      }}
+      {...dropProvided?.droppableProps}
+    >
+      {children}
+      {dropProvided?.placeholder}
     </div>
+  );
+
+  const Droppable = dashboardDnd?.Droppable;
+  const DragDropContext = dashboardDnd?.DragDropContext;
+  const tabsRow = (
+    <div
+      className={styles.tabsRow}
+      {...(isEditing ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
+    >
+      <div className={styles.tabsScrollArea}>
+        {Droppable ? (
+          <Droppable droppableId={key!} direction="horizontal">
+            {renderTabsContainer}
+          </Droppable>
+        ) : (
+          renderTabsContainer()
+        )}
+        {canScrollLeft && (
+          <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperLeft)}>
+            <IconButton
+              className={styles.scrollButton}
+              name="angle-left"
+              size="md"
+              variant="secondary"
+              aria-label={t('dashboard.tabs-layout.scroll-tabs-left', 'Scroll tabs left')}
+              onClick={() => scrollBy('left')}
+              onMouseDown={(evt) => evt.preventDefault()}
+              onPointerDown={(evt) => evt.stopPropagation()}
+            />
+          </div>
+        )}
+        {canScrollRight && (
+          <div className={cx(styles.scrollButtonWrapper, styles.scrollButtonWrapperRight)}>
+            <IconButton
+              className={styles.scrollButton}
+              name="angle-right"
+              size="md"
+              variant="secondary"
+              aria-label={t('dashboard.tabs-layout.scroll-tabs-right', 'Scroll tabs right')}
+              onClick={() => scrollBy('right')}
+              onMouseDown={(evt) => evt.preventDefault()}
+              onPointerDown={(evt) => evt.stopPropagation()}
+            />
+          </div>
+        )}
+      </div>
+      {isEditing && !isClone && (
+        <div
+          className={cx(
+            styles.tabControls,
+            layoutControlsStyles.controls,
+            'dashboard-canvas-controls',
+            isMultiSelection && layoutControlsStyles.controlsHidden
+          )}
+        >
+          <Button
+            icon="plus"
+            variant="secondary"
+            size="sm"
+            onClick={() => model.addNewTab()}
+            onPointerUp={(evt) => evt.stopPropagation()}
+            onPointerDown={(evt) => evt.stopPropagation()}
+            data-testid={selectors.components.CanvasGridAddActions.addTab}
+          >
+            <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
+          </Button>
+          {hasCopiedTab && (
+            <Button
+              icon="clipboard-alt"
+              variant="secondary"
+              size="sm"
+              onClick={() => model.pasteTab()}
+              onPointerUp={(evt) => evt.stopPropagation()}
+              onPointerDown={(evt) => evt.stopPropagation()}
+              data-testid={selectors.components.CanvasGridAddActions.pasteTab}
+            >
+              <Trans i18nKey="dashboard.canvas-actions.paste-tab">Paste tab</Trans>
+            </Button>
+          )}
+          <Button
+            icon="layers-slash"
+            variant="secondary"
+            size="sm"
+            onClick={() => model.ungroupTabs()}
+            data-testid={selectors.components.CanvasGridAddActions.ungroup}
+          >
+            <Trans i18nKey="dashboard.canvas-actions.ungroup-tabs">Ungroup tabs</Trans>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const tabsBarContent = DragDropContext ? (
+    <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
+      {tabsRow}
+    </DragDropContext>
+  ) : (
+    tabsRow
+  );
+
+  return (
+    <DashboardDndProvider value={dashboardDnd}>
+      <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
+        <TabsBar className={styles.tabsBar}>{tabsBarContent}</TabsBar>
+
+        {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
+      </div>
+    </DashboardDndProvider>
   );
 }
 

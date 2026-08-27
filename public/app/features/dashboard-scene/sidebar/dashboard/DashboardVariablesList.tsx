@@ -9,17 +9,17 @@ import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import {
-  getDefaultTopPlacementLabel,
-  isEditableVariableType,
-  isVariableEditable,
-} from '../../settings/variables/utils';
+  partitionVariablesByDisplay,
+  partitionVariablesByEditability,
+} from '../../settings/variables/partitionVariables';
+import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
+import { getDefaultTopPlacementLabel } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
+import { selectSidebarObject, toDraggableListItemActions } from './helpers';
 import { confirmDeleteVariable, createDragEndHandler } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
@@ -123,33 +123,4 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
       tooltip={t('dashboard.sidebar.variables.add-variable', 'Add variable')}
     />
   );
-}
-
-export function partitionVariablesByEditability(variables: SceneVariable[]) {
-  const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
-    isVariableEditable(v) ? 'editable' : 'nonEditable'
-  );
-  return { editable, nonEditable };
-}
-
-export function partitionVariablesByDisplay(variables: SceneVariable[]) {
-  const {
-    visible = [],
-    controlsMenu = [],
-    hidden = [],
-  } = partitionSceneObjects(variables, (v) => {
-    if (!isEditableVariableType(v.state.type)) {
-      return null;
-    }
-
-    switch (v.state.hide) {
-      case VariableHide.hideVariable:
-        return 'hidden';
-      case VariableHide.inControlsMenu:
-        return 'controlsMenu';
-      default:
-        return 'visible';
-    }
-  });
-  return { visible, controlsMenu, hidden };
 }

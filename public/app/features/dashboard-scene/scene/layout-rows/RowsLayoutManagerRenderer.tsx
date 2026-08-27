@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Droppable, type BeforeCapture, type DropResult } from '@hello-pangea/dnd';
+import { type BeforeCapture, type DroppableProvided, type DropResult } from '@hello-pangea/dnd';
 import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -13,6 +13,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { DashboardDndProvider, useDashboardDnd } from '../layouts-shared/useDashboardDnd';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -29,6 +30,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
   const isMultiSelection = useIsMultiSelection();
+  const dashboardDnd = useDashboardDnd(isEditing && !soloPanelContext);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -67,73 +69,83 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
 
   const isClone = isRepeatCloneOrChildOf(model);
 
-  return (
-    <DragDropContext
-      onBeforeCapture={handleBeforeCapture}
-      onBeforeDragStart={(start) => model.forceSelectRow(start.draggableId)}
-      onDragEnd={handleDragEnd}
+  const renderRows = (dropProvided?: DroppableProvided) => (
+    <div
+      className={styles.wrapper}
+      ref={dropProvided?.innerRef}
+      {...dropProvided?.droppableProps}
+      {...(showAsDropTarget && isEditing ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
     >
-      <Droppable droppableId={key!} direction="vertical">
-        {(dropProvided) => (
-          <div
-            className={styles.wrapper}
-            ref={dropProvided.innerRef}
-            {...dropProvided.droppableProps}
-            {...(showAsDropTarget ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
+      {rows.map((row) => (
+        <RowWrapper row={row} manager={model} key={row.state.key!} />
+      ))}
+      {dropProvided?.placeholder}
+      {isEditing && !isClone && (
+        <div
+          className={cx(
+            layoutControlsStyles.controls,
+            'dashboard-canvas-controls',
+            isMultiSelection && layoutControlsStyles.controlsHidden
+          )}
+        >
+          <Button
+            icon="plus"
+            variant="secondary"
+            size="sm"
+            onClick={() => model.addNewRow()}
+            onPointerUp={(evt) => evt.stopPropagation()}
+            onPointerDown={(evt) => evt.stopPropagation()}
+            data-testid={selectors.components.CanvasGridAddActions.addRow}
           >
-            {rows.map((row) => (
-              <RowWrapper row={row} manager={model} key={row.state.key!} />
-            ))}
-            {dropProvided.placeholder}
-            {isEditing && !isClone && (
-              <div
-                className={cx(
-                  layoutControlsStyles.controls,
-                  'dashboard-canvas-controls',
-                  isMultiSelection && layoutControlsStyles.controlsHidden
-                )}
-              >
-                <Button
-                  icon="plus"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => model.addNewRow()}
-                  onPointerUp={(evt) => evt.stopPropagation()}
-                  onPointerDown={(evt) => evt.stopPropagation()}
-                  data-testid={selectors.components.CanvasGridAddActions.addRow}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
-                </Button>
-                {hasCopiedRow && (
-                  <Button
-                    icon="clipboard-alt"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => model.pasteRow()}
-                    onPointerUp={(evt) => evt.stopPropagation()}
-                    onPointerDown={(evt) => evt.stopPropagation()}
-                    data-testid={selectors.components.CanvasGridAddActions.pasteRow}
-                  >
-                    <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
-                  </Button>
-                )}
-                <Button
-                  icon="layers-slash"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => model.ungroupRows()}
-                  onPointerUp={(evt) => evt.stopPropagation()}
-                  onPointerDown={(evt) => evt.stopPropagation()}
-                  data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
-                >
-                  <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+            <Trans i18nKey="dashboard.canvas-actions.new-row">New row</Trans>
+          </Button>
+          {hasCopiedRow && (
+            <Button
+              icon="clipboard-alt"
+              variant="secondary"
+              size="sm"
+              onClick={() => model.pasteRow()}
+              onPointerUp={(evt) => evt.stopPropagation()}
+              onPointerDown={(evt) => evt.stopPropagation()}
+              data-testid={selectors.components.CanvasGridAddActions.pasteRow}
+            >
+              <Trans i18nKey="dashboard.canvas-actions.paste-row">Paste row</Trans>
+            </Button>
+          )}
+          <Button
+            icon="layers-slash"
+            variant="secondary"
+            size="sm"
+            onClick={() => model.ungroupRows()}
+            onPointerUp={(evt) => evt.stopPropagation()}
+            onPointerDown={(evt) => evt.stopPropagation()}
+            data-testid={selectors.components.CanvasGridAddActions.ungroupRows}
+          >
+            <Trans i18nKey="dashboard.canvas-actions.ungroup-rows">Ungroup rows</Trans>
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  if (!dashboardDnd) {
+    return <DashboardDndProvider value={undefined}>{renderRows()}</DashboardDndProvider>;
+  }
+
+  const { DragDropContext, Droppable } = dashboardDnd;
+
+  return (
+    <DashboardDndProvider value={dashboardDnd}>
+      <DragDropContext
+        onBeforeCapture={handleBeforeCapture}
+        onBeforeDragStart={(start) => model.forceSelectRow(start.draggableId)}
+        onDragEnd={handleDragEnd}
+      >
+        <Droppable droppableId={key!} direction="vertical">
+          {renderRows}
+        </Droppable>
+      </DragDropContext>
+    </DashboardDndProvider>
   );
 }
 

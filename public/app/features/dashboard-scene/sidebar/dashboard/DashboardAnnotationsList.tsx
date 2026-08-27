@@ -5,18 +5,18 @@ import { useCallback, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { edit } from '../../actions/utils/edit';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
+import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { partitionSceneObjects, selectSidebarObject, toDraggableListItemActions } from './helpers';
+import { selectSidebarObject, toDraggableListItemActions } from './helpers';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
 const ID_CONTROLS_MENU_LIST = 'annotations-list-controls-menu';
@@ -186,26 +186,6 @@ export function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardD
       dataTestId={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
     />
   );
-}
-
-export function partitionAnnotationsByDisplay(annotationLayers: SceneDataLayerProvider[]) {
-  const {
-    visible = [],
-    controlsMenu = [],
-    hidden = [],
-  } = partitionSceneObjects(
-    annotationLayers.filter((a) => a instanceof DashboardAnnotationsDataLayer),
-    (a) => {
-      if (a.state.isHidden) {
-        return 'hidden';
-      }
-      if (a.state.placement === 'inControlsMenu') {
-        return 'controlsMenu';
-      }
-      return 'visible';
-    }
-  );
-  return { visible, controlsMenu, hidden };
 }
 
 function getStyles(theme: GrafanaTheme2) {

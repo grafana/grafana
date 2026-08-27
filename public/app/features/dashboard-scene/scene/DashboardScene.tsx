@@ -46,7 +46,6 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
@@ -718,6 +717,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
+      const { DashboardModel } = await import(
+        /* webpackChunkName: "dashboard-legacy-model" */ 'app/features/dashboard/state/DashboardModel'
+      );
       const dashboardDTO: DashboardDTO = {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- v1 restore path requires Dashboard type
         dashboard: new DashboardModel(version.data as Dashboard),

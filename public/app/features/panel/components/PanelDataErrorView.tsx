@@ -20,8 +20,8 @@ import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { isDashboardSceneLike, type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/findVizPanel';
 import { useDispatch } from 'app/types/store';
 
 import { changePanelPlugin } from '../state/actions';
@@ -37,9 +37,11 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const dataSummary = getPanelDataSummary(props.data.series);
   const dispatch = useDispatch();
 
-  const dashboardScene: DashboardScene | undefined = window.__grafanaSceneContext;
+  const dashboardScene: DashboardSceneLike | undefined = isDashboardSceneLike(window.__grafanaSceneContext)
+    ? window.__grafanaSceneContext
+    : undefined;
   let panel;
-  if (dashboardScene instanceof DashboardScene) {
+  if (dashboardScene) {
     panel = findVizPanelByKey(dashboardScene, getVizPanelKeyForPanelId(props.panelId));
   } else {
     panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);

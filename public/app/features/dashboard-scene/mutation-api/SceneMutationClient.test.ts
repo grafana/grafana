@@ -1,7 +1,7 @@
 import * as z from 'zod';
 
 import { SceneMutationClient, type MutationTargetScene } from './SceneMutationClient';
-import type { MutationCommand } from './commands/types';
+import type { LazyMutationCommand, MutationCommand } from './commands/types';
 
 // Synthetic commands rather than real ones: testing the dispatcher through a dashboard or notebook
 // command only covers whichever combination that command happens to be.
@@ -33,6 +33,20 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
 
 describe('SceneMutationClient', () => {
   describe('command lookup', () => {
+    it('loads a lazy command only when it is first executed', async () => {
+      const load = jest.fn(async () => command({ name: 'LAZY_COMMAND' }));
+      const lazyCommand: LazyMutationCommand<MutationTargetScene> = { name: 'LAZY_COMMAND', load };
+      const client = new SceneMutationClient(scene(), [lazyCommand]);
+
+      expect(client.getAvailableCommands()).toEqual(['LAZY_COMMAND']);
+      expect(load).not.toHaveBeenCalled();
+
+      await client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      await client.execute({ type: 'LAZY_COMMAND', payload: {} });
+
+      expect(load).toHaveBeenCalledTimes(1);
+    });
+
     it('names the commands that do exist when asked for one that does not', async () => {
       const client = new SceneMutationClient(scene(), [command({ name: 'FIRST' }), command({ name: 'SECOND' })]);
 

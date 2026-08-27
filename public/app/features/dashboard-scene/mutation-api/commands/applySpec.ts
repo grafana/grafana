@@ -11,7 +11,7 @@
  * url-synced part of that state is re-initialized from the URL after the swap.
  */
 
-import * as z from 'zod';
+import type * as z from 'zod';
 
 import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -23,18 +23,10 @@ import { transformSaveModelSchemaV2ToScene } from '../../serialization/transform
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
+import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-const applySpecPayloadSchema = z.object({
-  spec: z
-    .record(z.string(), z.unknown())
-    .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
-  validate: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
-});
+const applySpecPayloadSchema = payloads.applySpec;
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 
@@ -118,9 +110,7 @@ type DashboardUrlSync = {
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
-  description:
-    'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
-    '(settings, variables, annotations, panels, and nested rows/tabs layout).',
+  description: payloads.applySpec.description ?? '',
 
   payloadSchema: applySpecPayloadSchema,
   // Rebuilds the layout tree, so gate on the same toggle as the layout commands.

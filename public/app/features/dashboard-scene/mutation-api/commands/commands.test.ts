@@ -1,4 +1,6 @@
+import { LAZY_DASHBOARD_COMMANDS } from './lazyRegistry';
 import { DASHBOARD_COMMANDS } from './registry';
+import { DASHBOARD_COMMAND_SCHEMAS } from './schemaRegistry';
 
 describe('Command consistency', () => {
   it('every command has an UPPER_CASE name', () => {
@@ -80,5 +82,25 @@ describe('Command consistency', () => {
       'UPDATE_TAB',
       'UPDATE_VARIABLE',
     ]);
+  });
+
+  it('keeps lazy command loaders and the synchronous schema registry aligned', async () => {
+    const eagerCommands = new Map(DASHBOARD_COMMANDS.map((command) => [command.name, command]));
+
+    expect(LAZY_DASHBOARD_COMMANDS.map((command) => command.name)).toEqual(
+      DASHBOARD_COMMANDS.map((command) => command.name)
+    );
+    expect(DASHBOARD_COMMAND_SCHEMAS.map((command) => command.name)).toEqual(
+      DASHBOARD_COMMANDS.map((command) => command.name)
+    );
+
+    for (const schemaRegistration of DASHBOARD_COMMAND_SCHEMAS) {
+      expect(schemaRegistration.payloadSchema).toBe(eagerCommands.get(schemaRegistration.name)?.payloadSchema);
+    }
+
+    for (const lazyCommand of LAZY_DASHBOARD_COMMANDS) {
+      const loadedCommand = await lazyCommand.load();
+      expect(loadedCommand).toBe(eagerCommands.get(lazyCommand.name));
+    }
   });
 });

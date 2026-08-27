@@ -99,7 +99,7 @@ import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/Dashbo
 import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
-import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
+import { LazyPanelDataErrorView } from './features/panel/components/LazyPanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScreenshotServiceImpl';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
@@ -220,7 +220,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
-      setPanelDataErrorView(PanelDataErrorView);
+      setPanelDataErrorView(LazyPanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
       setPanelScreenshotService(new PanelScreenshotServiceImpl());

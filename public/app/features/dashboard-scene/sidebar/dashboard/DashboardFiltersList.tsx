@@ -7,10 +7,10 @@ import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { partitionVariablesByDisplay } from '../../settings/variables/partitionVariables';
 import { DashboardInteractions } from '../../utils/interactions';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
-import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
 import { selectSidebarObject, toDraggableListItemActions } from './helpers';

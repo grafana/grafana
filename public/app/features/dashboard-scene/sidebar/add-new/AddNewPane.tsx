@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { type DraggableProvided, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,6 +12,7 @@ import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
+import { useDashboardDnd } from '../../scene/layouts-shared/useDashboardDnd';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
 import { DashboardInteractions } from '../../utils/interactions';
 import { DashboardSidebar } from '../DashboardSidebar';
@@ -37,6 +38,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneLike(model);
+  const dashboardDnd = useDashboardDnd(true);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
   const selectedObj = sidebar.getSelectedObject();
 
@@ -50,6 +52,90 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
     DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(selectedObj), 'click');
   };
 
+  const renderNewPanelButton = (dragProvided?: DraggableProvided, dragSnapshot?: DraggableStateSnapshot) => (
+    <div
+      role="button"
+      data-testid={selectors.components.Sidebar.newPanelButton}
+      tabIndex={0}
+      ref={dragProvided?.innerRef}
+      {...dragProvided?.draggableProps}
+      {...dragProvided?.dragHandleProps}
+      className={cx(styles.imageContainer, dragSnapshot?.isDragging && styles.dragging)}
+      onClick={() => sidebar.addNewPanel(selectedObj)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          sidebar.addNewPanel(selectedObj);
+        }
+      }}
+      aria-label={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
+    >
+      <SVG title={t('dashboard.sidebar.add.new-panel.button', 'Add new panel button')} src={addPanelSvg} />
+    </div>
+  );
+
+  const renderPastePanelButton = (dragProvided?: DraggableProvided) => (
+    <div
+      ref={dragProvided?.innerRef}
+      {...dragProvided?.draggableProps}
+      {...dragProvided?.dragHandleProps}
+    >
+      <AddButton
+        className={styles.pasteButton}
+        icon="clipboard-alt"
+        tabIndex={0}
+        onClick={pastePanel}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            pastePanel();
+          }
+        }}
+        aria-label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
+        label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
+        tooltip={t('dashboard.sidebar.add.paste-panel.description', 'Click or drag to paste panel')}
+      />
+    </div>
+  );
+
+  const renderPanelOptions = () => {
+    if (!dashboardDnd) {
+      return (
+        <>
+          {renderNewPanelButton()}
+          {hasCopiedPanel && renderPastePanelButton()}
+        </>
+      );
+    }
+
+    const { DragDropContext, Draggable, Droppable } = dashboardDnd;
+
+    return (
+      <DragDropContext onDragStart={onStartDragging} onDragEnd={() => {}}>
+        <Droppable droppableId="side-drop-id" isDropDisabled>
+          {(dropProvided) => (
+            <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
+              <Draggable draggableId="new-panel-drag" index={0}>
+                {(dragProvided, dragSnapshot) => renderNewPanelButton(dragProvided, dragSnapshot)}
+              </Draggable>
+              {hasCopiedPanel && (
+                <Draggable
+                  draggableId="paste-panel-drag"
+                  index={1}
+                  isDragDisabled={!hasCopiedPanel}
+                  disableInteractiveElementBlocking={true}
+                >
+                  {(dragProvided) => renderPastePanelButton(dragProvided)}
+                </Draggable>
+              )}
+              {dropProvided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       <Sidebar.PaneHeader title={t('dashboard.sidebar.add.pane-header', 'Add')} />
@@ -58,75 +144,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
           title={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
           description={t('dashboard.sidebar.add.new-panel.description', 'Drag or click to add a panel')}
         >
-          <DragDropContext onDragStart={onStartDragging} onDragEnd={() => {}}>
-            <Droppable droppableId="side-drop-id" isDropDisabled>
-              {(dropProvided) => (
-                <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-                  <Draggable draggableId="new-panel-drag" index={0}>
-                    {(dragProvided, dragSnapshot) => {
-                      return (
-                        <div
-                          role="button"
-                          data-testid={selectors.components.Sidebar.newPanelButton}
-                          tabIndex={0}
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          {...dragProvided.dragHandleProps}
-                          className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                          onClick={() => sidebar.addNewPanel(selectedObj)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              sidebar.addNewPanel(selectedObj);
-                            }
-                          }}
-                          aria-label={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
-                        >
-                          <SVG
-                            title={t('dashboard.sidebar.add.new-panel.button', 'Add new panel button')}
-                            src={addPanelSvg}
-                          />
-                        </div>
-                      );
-                    }}
-                  </Draggable>
-                  {hasCopiedPanel && (
-                    <Draggable
-                      draggableId="paste-panel-drag"
-                      index={1}
-                      isDragDisabled={!hasCopiedPanel}
-                      disableInteractiveElementBlocking={true}
-                    >
-                      {(dragProvided, _) => (
-                        <div
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          {...dragProvided.dragHandleProps}
-                        >
-                          <AddButton
-                            className={styles.pasteButton}
-                            icon="clipboard-alt"
-                            tabIndex={0}
-                            onClick={() => pastePanel()}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                pastePanel();
-                              }
-                            }}
-                            aria-label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
-                            label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
-                            tooltip={t('dashboard.sidebar.add.paste-panel.description', 'Click or drag to paste panel')}
-                          ></AddButton>
-                        </div>
-                      )}
-                    </Draggable>
-                  )}
-                  {dropProvided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          {renderPanelOptions()}
         </AddNewSection>
         <AddNewSection title={t('dashboard.sidebar.add.group-layouts', 'Group layouts')}>
           <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
