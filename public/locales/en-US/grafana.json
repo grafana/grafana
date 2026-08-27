@@ -16676,6 +16676,9 @@
     "missing-field": {
       "all": "No graphable fields",
       "time": "Data does not have a time field"
+    },
+    "timeline-panel": {
+      "null-time-value": "{{refId}} returned a time field with null values; filter out rows with empty timestamps"
     }
   },
   "timeseries": {
@@ -16794,6 +16797,10 @@
       "bar-stacked": "Bar chart - stacked",
       "bar-stacked-percent": "Bar chart - stacked by percentage",
       "line": "Line chart"
+    },
+    "time-series-panel": {
+      "no-graphable-fields": "No graphable fields",
+      "null-time-value": "{{refId}} returned a time field with null values; filter out rows with empty timestamps"
     },
     "timezones-editor": {
       "tooltip-add-timezone": "Add timezone",

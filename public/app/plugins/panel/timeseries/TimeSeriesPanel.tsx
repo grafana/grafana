@@ -67,40 +67,44 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
-  const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, theme, timeRange);
-    if (frames != null) {
-      let compareDiffMs: number[] = [0];
-      // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
-      // inside the .map callback once `frames` itself gets reassigned in this scope.
-      const originalFrames = frames;
-
-      frames = originalFrames.map((frame: DataFrame) => {
-        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
-
-        frame.fields.forEach((field) => {
-          if (field.type !== FieldType.time) {
-            compareDiffMs.push(diffMs);
-          }
-        });
-
-        if (diffMs !== 0) {
-          // Check if the compared frame needs time alignment
-          // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
-
-          if (needsAlignment) {
-            return alignTimeRangeCompareData(frame, diffMs, theme);
-          }
-        }
-
-        return frame;
-      });
-
-      return { frames, compareDiffMs };
+  const {
+    frames,
+    compareDiffMs,
+    warning: prepWarning,
+  } = useMemo(() => {
+    const { frames: graphable, warn } = prepareGraphableFields(data.series, theme, timeRange);
+    if (warn || !graphable) {
+      return { frames: graphable, warning: warn };
     }
 
-    return { frames };
+    let compareDiffMs: number[] = [0];
+    // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
+    // inside the .map callback once `frames` itself gets reassigned in this scope.
+    const originalFrames = graphable;
+
+    const frames = originalFrames.map((frame: DataFrame) => {
+      const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
+
+      frame.fields.forEach((field) => {
+        if (field.type !== FieldType.time) {
+          compareDiffMs.push(diffMs);
+        }
+      });
+
+      if (diffMs !== 0) {
+        // Check if the compared frame needs time alignment
+        // Apply alignment when time ranges match (no shift applied yet)
+        const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
+
+        if (needsAlignment) {
+          return alignTimeRangeCompareData(frame, diffMs, theme);
+        }
+      }
+
+      return frame;
+    });
+
+    return { frames, compareDiffMs };
   }, [data.series, timeRange, theme]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -134,14 +138,14 @@ export const TimeSeriesPanel = ({
     [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
-  if (!frames || suggestions) {
+  if (!frames?.length || suggestions) {
     return (
       <PanelDataErrorView
         panelId={id}
-        message={suggestions?.message}
+        message={suggestions?.message ?? prepWarning}
         fieldConfig={fieldConfig}
         data={data}
-        needsTimeField={true}
+        needsTimeField={!prepWarning}
         needsNumberField={true}
         suggestions={suggestions?.suggestions}
       />

@@ -44,5 +44,5 @@ export function prepSeries(frames: DataFrame[], xField?: string): { warning?: st
     }
   }
 
-  return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
+  return prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx);
 }

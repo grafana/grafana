@@ -36,6 +36,7 @@ import {
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
+import { findFrameWithNullTimeValue } from 'app/features/panel/frames/validation';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
 
@@ -474,6 +475,18 @@ export function prepareTimelineFields(
   }
   if (!frames.length) {
     return { warn: t('timeline.missing-field.all', 'No graphable fields') };
+  }
+
+  const invalidFrame = findFrameWithNullTimeValue(frames);
+  if (invalidFrame) {
+    const refId = invalidFrame.refId ? `query ${invalidFrame.refId}` : 'a query';
+    return {
+      warn: t(
+        'timeline.timeline-panel.null-time-value',
+        '{{refId}} returned a time field with null values; filter out rows with empty timestamps',
+        { refId }
+      ),
+    };
   }
 
   return { frames };
