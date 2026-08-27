@@ -407,12 +407,36 @@ describe('Range Utils', () => {
       expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
     });
 
-    it('should handle absolute from, relative math to', () => {
+    it('should handle absolute from, relative math to distant past', () => {
       const text = describeTimeRange({
         from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now-1d',
       });
-      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
+      expect(text).toBe(`2014-11-10 02:03:04 to ${luxon ? '1' : 'a'} day ago`);
+    });
+
+    it('should handle absolute from, relative math to near past', () => {
+      const text = describeTimeRange({
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
+        to: 'now-5s',
+      });
+      expect(text).toBe('2014-11-10 02:03:04 to a few seconds ago');
+    });
+
+    it('should handle absolute from, relative math to distant future', () => {
+      const text = describeTimeRange({
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
+        to: 'now+1d',
+      });
+      expect(text).toBe(`2014-11-10 02:03:04 to in ${luxon ? '1' : 'a'} day`);
+    });
+
+    it('should handle absolute from, relative math to near future', () => {
+      const text = describeTimeRange({
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
+        to: 'now+5s',
+      });
+      expect(text).toBe('2014-11-10 02:03:04 to in a few seconds');
     });
 
     it('should handle relative from, absolute to', () => {
@@ -420,7 +444,7 @@ describe('Range Utils', () => {
       const to = dateTime('2023-01-15T14:45:00Z');
 
       const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 2023-01-15 09:45:00');
+      expect(result).toBe(`${luxon ? '1' : 'an'} hour ago to 2023-01-15 09:45:00`);
     });
 
     it('should handle invalid relative expressions', () => {

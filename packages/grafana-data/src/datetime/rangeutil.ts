@@ -11,7 +11,7 @@ import {
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
-import { isDateTime, type DateTime, dateTime } from './moment_wrapper';
+import { isDateTime, type DateTime, dateTime, dateTimeForTimeZone } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 // `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
@@ -459,12 +459,12 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
-    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + describeTimeAgo(parsed, options) : '';
   }
 
   if (isDateTime(range.to)) {
     const parsed = dateMath.parse(range.from, false, 'utc');
-    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
+    return parsed ? describeTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -474,6 +474,17 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
+
+const describeTimeAgo = (parsed: DateTime, options: { timeZone?: TimeZone }) => {
+  const base = dateTimeForTimeZone(options.timeZone);
+  const diff = parsed.diff(base, 'seconds');
+  if (parsed.isValid() && Math.round(Math.abs(diff)) <= 44) {
+    return diff > 0
+      ? t('grafana-data.datetime.rangeutils.fewSecondsFuture', 'in a few seconds')
+      : t('grafana-data.datetime.rangeutils.fewSecondsPast', 'a few seconds ago');
+  }
+  return dateTimeFormatTimeAgo(parsed, options);
+};
 
 export const isValidTimeSpan = (value: string) => {
   if (value.indexOf('$') === 0 || value.indexOf('+$') === 0) {

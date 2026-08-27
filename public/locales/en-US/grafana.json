@@ -9723,6 +9723,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "in a few seconds",
+        "fewSecondsPast": "a few seconds ago",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Day before yesterday",
           "previousFiscalQuarter": "Previous fiscal quarter",
