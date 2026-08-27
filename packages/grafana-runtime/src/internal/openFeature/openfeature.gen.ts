@@ -127,6 +127,8 @@ export const FlagKeys = {
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
+  /** Routes library panel requests from /api to the /apis endpoint */
+  LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -139,6 +141,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables RBAC for playlists */
+  PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -821,6 +825,17 @@ export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Routes library panel requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `libraryelements.kubernetesLibraryPanels`
+ * - default value: `false`
+ */
+export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("libraryelements.kubernetesLibraryPanels", false, options).value;
+};
+
+/**
  * Enables the logs tableNG panel to replace existing tableRT
  *
  * **Details:**
@@ -884,6 +899,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables RBAC for playlists
+ *
+ * **Details:**
+ * - flag key: `playlistsRBAC`
+ * - default value: `false`
+ */
+export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("playlistsRBAC", false, options).value;
 };
 
 /**

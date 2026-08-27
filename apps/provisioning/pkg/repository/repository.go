@@ -60,6 +60,11 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "permission denied",
 }}
 
+// WritePermissionDeniedDetail is the TestResults.Errors[].Detail reported when a repository
+// is reachable (auth and connectivity succeeded) but the configured credentials lack write
+// access. Unlike a generic 403, this specific case shouldn't be treated as unreachable.
+const WritePermissionDeniedDetail = "write permission denied"
+
 var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
 	Code:    http.StatusTooManyRequests,
