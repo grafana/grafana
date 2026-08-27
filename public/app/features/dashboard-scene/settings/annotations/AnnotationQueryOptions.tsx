@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
+import { useDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Box, Button, ButtonGroup } from '@grafana/ui';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
@@ -43,9 +43,7 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
   const { openDrawer, closeDrawer } = useQueryLibraryContext();
 
   const { query } = layer.useState();
-  const { value: datasource } = useAsync(() => {
-    return getDataSourceSrv().get(query?.datasource);
-  }, [query?.datasource]);
+  const { dataSource: datasource } = useDataSourceInstance(query?.datasource);
 
   const onSelectFromQueryLibrary = useCallback(() => {
     openDrawer({

@@ -118,9 +118,10 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 	return false
 }
 
-// classifyConnectionError determines the appropriate Ready condition reason based on test results.
+// classifyTestResultReason determines the appropriate Ready condition reason based on test results.
+// Shared by Repository and Connection health checks.
 // Returns one of: Available, InvalidSpec, AuthenticationFailed, or ServiceUnavailable.
-func classifyConnectionError(testResults *provisioning.TestResults) string {
+func classifyTestResultReason(testResults *provisioning.TestResults) string {
 	if testResults.Success {
 		return provisioning.ReasonAvailable
 	}
@@ -161,7 +162,7 @@ func (hc *ConnectionHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return ConnectionHealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyConnectionError(testResults)),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }

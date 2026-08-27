@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -94,7 +95,7 @@ describe('DashboardSidebar', () => {
       sidebar.selectObject(panel1, { force: true });
       sidebar.selectObject(panel2, { multi: true });
 
-      layout.groupSelectionInto([panel1, panel2], 'tab');
+      groupSelectionInto({ source: dashboard, items: [panel1, panel2], target: 'tab' });
 
       const selectedObject = sidebar.getSelectedObject();
       expect(selectedObject).toBeInstanceOf(TabItem);
