@@ -31,6 +31,16 @@ const BADGE_COLORS: Record<MetricType, BadgeColor> = {
 export function MetricDetailPanel({ refId, metric, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const fromQuery = t('explore.metric-detail-panel.from-query', 'Query {{refId}}', { refId });
+  const isUnknownType = metric.type === 'unknown';
+  const badgeText = isUnknownType
+    ? t('explore.metric-detail-panel.unknown-type', 'Unknown type')
+    : metric.type.toUpperCase();
+  const badgeTooltip = isUnknownType
+    ? t(
+        'explore.metric-detail-panel.unknown-type-tooltip',
+        'This datasource reported no recognized type for this metric'
+      )
+    : undefined;
 
   return (
     <section
@@ -40,7 +50,12 @@ export function MetricDetailPanel({ refId, metric, onClose }: Props) {
     >
       <div className={styles.card}>
         <div className={styles.header}>
-          <Badge text={metric.type.toUpperCase()} color={BADGE_COLORS[metric.type]} />
+          <Badge
+            text={badgeText}
+            color={BADGE_COLORS[metric.type]}
+            className={isUnknownType ? styles.unknownType : undefined}
+            tooltip={badgeTooltip}
+          />
           {/* refIds are user-editable, so the full value goes in a tooltip and the label truncates
               rather than pushing the close button out of the panel. */}
           <span className={styles.fromQuery} title={fromQuery}>
@@ -104,6 +119,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     flex: '0 0 auto',
     gap: theme.spacing(1),
+  }),
+  unknownType: css({
+    label: 'metric-detail-panel-unknown-type',
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border.medium,
+    textTransform: 'uppercase',
   }),
   fromQuery: css({
     label: 'metric-detail-panel-from-query',
