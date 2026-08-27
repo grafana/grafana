@@ -5,8 +5,8 @@ import { pathToFileURL } from 'node:url';
 import open from 'open';
 import type { Compiler } from 'webpack';
 
-const STATS_PATH = 'public/build/bundle-stats.html';
-const STATS_PATH_FILT = 'public/build/bundle-stats-filtered.html';
+const STATS_FILENAME = 'bundle-stats.html';
+const STATS_FILENAME_FILT = 'bundle-stats-filtered.html';
 const STATS_FILTER_FILENAME = 'statsFilter.ts';
 const STATS_FILTER_PATH = path.join(import.meta.dirname, STATS_FILTER_FILENAME);
 
@@ -31,7 +31,14 @@ export class StatsViewerPlugin {
         return;
       }
 
-      await updateReport();
+      // BundleAnalyzerPlugin writes its report into the compilation output directory, so
+      // read that rather than being told where it is. `outputPath` is only assigned once
+      // every plugin has been applied, which is why it is read here and not in `apply`.
+      const { outputPath } = compiler;
+      const statsPath = path.join(outputPath, STATS_FILENAME);
+      const statsPathFilt = path.join(outputPath, STATS_FILENAME_FILT);
+
+      await updateReport(statsPath, statsPathFilt);
 
       // Editors often emit several watch events per save.
       let filterTimer: NodeJS.Timeout | undefined;
@@ -40,31 +47,31 @@ export class StatsViewerPlugin {
           return;
         }
         clearTimeout(filterTimer);
-        filterTimer = setTimeout(() => void updateReport(), 50);
+        filterTimer = setTimeout(() => void updateReport(statsPath, statsPathFilt), 50);
       });
 
       const server = createServer({
-        root: 'public/build',
+        root: outputPath,
         cache: -1,
       });
       server.listen(8080, '127.0.0.1', () => {
-        const reportUrl = new URL('/bundle-stats-filtered.html', 'http://127.0.0.1:8080');
+        const reportUrl = new URL(`/${STATS_FILENAME_FILT}`, 'http://127.0.0.1:8080');
         void open(reportUrl.toString());
       });
     });
   }
 }
 
-async function updateReport() {
+async function updateReport(statsPath: string, statsPathFilt: string) {
   try {
     if (!FILTER_STATS) {
-      fs.copyFileSync(STATS_PATH, STATS_PATH_FILT);
+      fs.copyFileSync(statsPath, statsPathFilt);
       return;
     }
 
     const { statsFilter } = await importStatsFilter();
     const includeFilenames = filenamesFromRequestUrls(statsFilter.requestUrls);
-    const statsHTML = fs.readFileSync(STATS_PATH, 'utf8');
+    const statsHTML = fs.readFileSync(statsPath, 'utf8');
     const filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (_, head, data, tail) => {
       const nodes: BundleNode[] = JSON.parse(data);
       const { exclude, minDominance } = statsFilter;
@@ -81,7 +88,7 @@ async function updateReport() {
       return head + JSON.stringify(filtered) + tail;
     });
 
-    fs.writeFileSync(STATS_PATH_FILT, filteredStatsHTML);
+    fs.writeFileSync(statsPathFilt, filteredStatsHTML);
   } catch (err) {
     console.error(err);
   }
