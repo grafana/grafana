@@ -116,6 +116,24 @@ describe('AlertRuleRowActions', () => {
     expect(ui.silenceDrawer.query()).not.toBeInTheDocument();
   });
 
+  it('spins rather than dropping the silence action while the rule folder is still loading', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceCreate]);
+    // Whether a rule can be silenced depends on its folder, which is fetched after the rule itself.
+    // Hold the folder open: the action has to stay visible and spinning, because reporting silencing
+    // as unsupported here makes it vanish from an open menu and then flash back.
+    server.use(http.get('/api/folders/:folderUid', () => delay('infinite')));
+
+    const { user } = renderActions();
+
+    await user.click(await ui.moreButton.find());
+
+    const silenceItem = await ui.silenceItem.find();
+    await waitFor(() => {
+      expect(within(ui.silenceItem.get()).getByTestId('icon-spinner')).toBeInTheDocument();
+    });
+    expect(silenceItem).toBeDisabled();
+  });
+
   it('says the rule could not be loaded instead of leaving the action silently unavailable', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceCreate]);
     server.use(
