@@ -19,10 +19,15 @@ const isAlertingTriage = () => Boolean(config.featureToggles.alertingTriage);
 
 // The history page is only available when state-history queries are served by
 // Loki: either as the only backend, or as the primary of the "multiple"
-// backend.
+// backend. Values are trimmed and compared case-insensitively to match Go's
+// isStateHistoryBackend, so `backend = Loki` is recognised too.
+const isStateHistoryBackend = (value: string | undefined, backend: string) => value?.trim().toLowerCase() === backend;
+
 const stateHistoryServedByLoki = () => {
   const stateHistory = config.unifiedAlerting.stateHistory;
-  return stateHistory?.backend === 'loki' || (stateHistory?.backend === 'multiple' && stateHistory?.primary === 'loki');
+  return isStateHistoryBackend(stateHistory?.backend, 'multiple')
+    ? isStateHistoryBackend(stateHistory?.primary, 'loki')
+    : isStateHistoryBackend(stateHistory?.backend, 'loki');
 };
 
 const ALERTING_CHILDREN: NavEntryBuilder[] = [
@@ -35,7 +40,6 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
       id: 'alert-activity',
       url: '/alerting/alerts',
       icon: 'bell',
-      isNew: true,
     }),
   },
   {
@@ -46,7 +50,6 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
       id: 'alert-alerts',
       url: '/alerting/alerts',
       icon: 'bell',
-      isNew: true,
     }),
   },
   {
