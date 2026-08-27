@@ -1,23 +1,14 @@
 import { isEqual } from 'lodash';
 
 import { type LoadingState } from '@grafana/data';
-import { SceneDataTransformer, SceneQueryRunner, type VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+
+import { getQueryRunnerFor } from '../../../../utils/utils';
 
 export interface QueryPreview {
   dispose(): void;
   subscribeToState(listener: (state: LoadingState) => void): VoidFunction;
-}
-
-function getPanelQueryRunner(panel: VizPanel): SceneQueryRunner | undefined {
-  const dataProvider = panel.state.$data;
-  if (dataProvider instanceof SceneQueryRunner) {
-    return dataProvider;
-  }
-  if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data instanceof SceneQueryRunner) {
-    return dataProvider.state.$data;
-  }
-  return undefined;
 }
 
 export function startQueryPreview(
@@ -25,7 +16,7 @@ export function startQueryPreview(
   originalRefId: string,
   proposedQuery: DataQuery
 ): QueryPreview | undefined {
-  const queryRunner = getPanelQueryRunner(panel);
+  const queryRunner = getQueryRunnerFor(panel);
   const baselineQuery = queryRunner?.state.queries.find((query) => query.refId === originalRefId);
   if (!queryRunner || !baselineQuery) {
     return undefined;

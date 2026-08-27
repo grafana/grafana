@@ -1,5 +1,5 @@
 import { getDefaultTimeRange, LoadingState, type PanelData } from '@grafana/data';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 import { startQueryPreview } from './queryPreview';
@@ -34,6 +34,27 @@ describe('startQueryPreview', () => {
     expect(previewRunner?.parent).toBe(panel);
     expect(queryRunner.cancelQuery).toHaveBeenCalledTimes(1);
     expect(previewRunner?.runQueries).toHaveBeenCalledTimes(1);
+  });
+
+  it('finds a query runner through nested data transformers', () => {
+    const queryRunner = new SceneQueryRunner({ queries: [queryA] });
+    const panel = new VizPanel({
+      key: 'panel-1',
+      $data: new SceneDataTransformer({
+        $data: new SceneDataTransformer({ $data: queryRunner, transformations: [] }),
+        transformations: [],
+      }),
+    });
+
+    const preview = startQueryPreview(panel, 'A', proposedQuery);
+    const previewRunner = panel.state.$behaviors?.find(
+      (behavior): behavior is SceneQueryRunner => behavior instanceof SceneQueryRunner
+    );
+
+    expect(preview).toBeDefined();
+    expect(previewRunner?.state.queries).toEqual([proposedQuery]);
+
+    preview?.dispose();
   });
 
   it('projects preview data and detaches the temporary runner on dispose', () => {
