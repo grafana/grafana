@@ -101,11 +101,8 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 		responseKind: searchv0.KindSearchResults,
 		responseGo:   searchResultsGoName,
 		example: &searchv0.SearchQuery{
-			TypeMeta: v1.TypeMeta{
-				APIVersion: "search.grafana.app/v0alpha1",
-				Kind:       "SearchQuery",
-			},
-			Limit: 10,
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+			Limit:    10,
 		},
 	})
 }
@@ -119,11 +116,8 @@ func trashRouteSpec(kindName, version string) *spec3.PathProps {
 		responseKind: searchv0.KindTrashResults,
 		responseGo:   trashResultsGoName,
 		example: &searchv0.TrashQuery{
-			TypeMeta: v1.TypeMeta{
-				APIVersion: "search.grafana.app/v0alpha1",
-				Kind:       "TrashQuery",
-			},
-			Limit: 10,
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
+			Limit:    10,
 		},
 	})
 }

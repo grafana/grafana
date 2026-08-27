@@ -220,6 +220,57 @@ func TestMutatingAdmission(t *testing.T) {
 		require.Equal(t, map[string]any{"title": "after"}, obj.Object["spec"])
 	})
 
+	// On an update the generic handler writes managedFields before mutating
+	// admission runs, so a hook that returns a rebuilt object rather than an
+	// edited one would drop the ownership the request just recorded -- and
+	// nothing downstream puts it back.
+	t.Run("managedFields survive a hook that drops them", func(t *testing.T) {
+		mutated := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{"title": "after"},
+		}}
+		raw, err := json.Marshal(mutated)
+		require.NoError(t, err)
+
+		s := admissionTestStore(&reviewClient{rsp: allowed(raw)},
+			[]app.AdmissionOperation{app.AdmissionOperationAny}, nil)
+
+		obj := testObject()
+		entries := []metav1.ManagedFieldsEntry{{
+			Manager:    "kubectl",
+			Operation:  metav1.ManagedFieldsOperationUpdate,
+			APIVersion: testAdmissionGVK.GroupVersion().String(),
+			FieldsType: "FieldsV1",
+			FieldsV1:   &metav1.FieldsV1{Raw: []byte(`{"f:spec":{}}`)},
+		}}
+		obj.SetManagedFields(entries)
+
+		require.NoError(t, s.mutateAdmission(context.Background(),
+			attributes(obj, testObject(), admission.Update, "")))
+		require.Equal(t, entries, obj.GetManagedFields())
+	})
+
+	// A hook that does return managedFields does not get to invent ownership.
+	t.Run("managedFields cannot be rewritten by a hook", func(t *testing.T) {
+		mutated := &unstructured.Unstructured{Object: map[string]any{
+			"spec": map[string]any{"title": "after"},
+		}}
+		mutated.SetManagedFields([]metav1.ManagedFieldsEntry{{
+			Manager:    "the-plugin",
+			Operation:  metav1.ManagedFieldsOperationApply,
+			APIVersion: testAdmissionGVK.GroupVersion().String(),
+		}})
+		raw, err := json.Marshal(mutated)
+		require.NoError(t, err)
+
+		s := admissionTestStore(&reviewClient{rsp: allowed(raw)},
+			[]app.AdmissionOperation{app.AdmissionOperationAny}, nil)
+
+		obj := testObject()
+		require.NoError(t, s.mutateAdmission(context.Background(),
+			attributes(obj, testObject(), admission.Update, "")))
+		require.Empty(t, obj.GetManagedFields())
+	})
+
 	t.Run("an unparsable response fails the request", func(t *testing.T) {
 		s := admissionTestStore(&reviewClient{rsp: allowed([]byte("not json"))},
 			[]app.AdmissionOperation{app.AdmissionOperationAny}, nil)

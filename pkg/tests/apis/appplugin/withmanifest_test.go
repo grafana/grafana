@@ -231,6 +231,16 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.Equal(t, thingAPIVersion, created.GetAPIVersion())
 	require.Equal(t, "Thing", created.GetKind())
 
+	// The generic create handler cannot diff an unstructured kind against the
+	// kindless empty object the scheme hands it, so it drops managedFields; the
+	// kind store redoes that diff. Without this a later apply has nothing to
+	// merge against and every field looks unowned.
+	fields := created.GetManagedFields()
+	require.Len(t, fields, 1, "the create is tracked as one entry")
+	require.Equal(t, thingAPIVersion, fields[0].APIVersion)
+	require.Equal(t, metav1.ManagedFieldsOperationUpdate, fields[0].Operation)
+	require.Contains(t, string(fields[0].FieldsV1.Raw), "f:spec")
+
 	got, err := client.Resource.Get(context.Background(), "thing-1", metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, thingAPIVersion, got.GetAPIVersion())
@@ -258,6 +268,14 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, thingAPIVersion, applied.GetAPIVersion())
+	require.Equal(t, map[string]any{"foo": "baz"}, applied.Object["spec"])
+
+	// The apply is recorded under its own manager, alongside the create's entry.
+	managers := map[string]metav1.ManagedFieldsOperationType{}
+	for _, f := range applied.GetManagedFields() {
+		managers[f.Manager] = f.Operation
+	}
+	require.Equal(t, metav1.ManagedFieldsOperationApply, managers["pluginmanifest-test"])
 }
 
 // TestIntegrationPluginManifestServiceLoading covers manifests loaded during service startup.
@@ -294,6 +312,12 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	prefix := "/apis/" + testAppID + "/v1/namespaces/{namespace}/things"
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
+
+	// Every namespaced manifest kind gets the generic search endpoints. They
+	// name their own path, so they can never collide with a kind route, which is
+	// always mounted under an object name.
+	require.Contains(t, doc.Paths, prefix+"/search")
+	require.Contains(t, doc.Paths, prefix+"/trash")
 
 	route := "/apis/" + testAppID + "/v1/namespaces/default/things/thing-route/reload"
 

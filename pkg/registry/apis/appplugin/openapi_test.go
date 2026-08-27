@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -213,4 +214,100 @@ func keys[T any](m map[string]T) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// A POST example is only useful if a client can send it back: a value that does
+// not satisfy the declared format is rejected before it reaches the server.
+func TestExampleValueFormats(t *testing.T) {
+	info := &operationInfo{}
+	for _, tc := range []struct {
+		format string
+		want   any
+	}{
+		{"date-time", "2020-01-02T15:04:05Z"},
+		{"date", "2020-01-02"},
+		{"duration", "5m"},
+		{"uuid", "00000000-0000-0000-0000-000000000000"},
+		{"email", "owner@example.com"},
+		{"uri", "https://owner.com"},
+		{"url", "https://owner.com"},
+		{"byte", "ZXhhbXBsZQ=="},
+		// An unknown format falls back to the field name, so the example reads
+		// as a description of the body.
+		{"", "owner"},
+		{"password", "owner"},
+	} {
+		t.Run("format "+tc.format, func(t *testing.T) {
+			s := spec.StringProperty()
+			s.Format = tc.format
+			require.Equal(t, tc.want, info.exampleValue(s, map[string]bool{}, "owner"))
+		})
+	}
+}
+
+func TestExampleValueTypes(t *testing.T) {
+	info := &operationInfo{defs: map[string]common.OpenAPIDefinition{
+		"pkg.Leaf": {Schema: *spec.StringProperty()},
+	}}
+	example := func(s *spec.Schema) any {
+		return info.exampleValue(s, map[string]bool{}, "field")
+	}
+
+	require.Equal(t, 0, example(spec.Int64Property()))
+	require.Equal(t, 0.0, example(spec.Float64Property()))
+	require.Equal(t, false, example(spec.BoolProperty()))
+	require.Nil(t, example(nil))
+	require.Nil(t, example(&spec.Schema{}), "a schema with no type has no example")
+
+	// An explicit example, default or enum beats anything derived from the type.
+	require.Equal(t, "given", example(spec.StringProperty().WithExample("given")))
+	require.Equal(t, "given", example(spec.StringProperty().WithDefault("given")))
+	require.Equal(t, "given", example(spec.StringProperty().WithEnum("given", "other")))
+
+	require.Equal(t, []any{"field"}, example(spec.ArrayProperty(spec.StringProperty())))
+	require.Equal(t, []any{}, example(spec.ArrayProperty(nil)), "an array with no item schema")
+
+	// A map is described by one entry, so the shape of the value is visible.
+	require.Equal(t, map[string]any{"key": "field"}, example(spec.MapProperty(spec.StringProperty())))
+	require.Equal(t, map[string]any{}, example(spec.MapProperty(nil)))
+
+	// Read-only properties are server owned, so a request example must not
+	// suggest sending them.
+	obj := &spec.Schema{SchemaProps: spec.SchemaProps{
+		Type: []string{"object"},
+		Properties: map[string]spec.Schema{
+			"title": *spec.StringProperty(),
+			"uid":   {SchemaProps: spec.SchemaProps{Type: []string{"string"}}, SwaggerSchemaProps: spec.SwaggerSchemaProps{ReadOnly: true}},
+			"leaf":  {SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/pkg.Leaf")}},
+		},
+	}}
+	require.Equal(t, map[string]any{"title": "title", "leaf": "leaf"}, example(obj))
+
+	// A ref with no definition (ObjectMeta, say) stops the walk rather than
+	// producing a wrong shape.
+	require.Equal(t, map[string]any{},
+		example(&spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/pkg.Unknown")}}))
+}
+
+// specProperty resolves the property the POST example is built from, and a kind
+// whose schema names no spec has no example to build.
+func TestSpecProperty(t *testing.T) {
+	manifest := testManifest(t)
+	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+		return spec.MustCreateRef(name)
+	}, manifest)
+	name := kindOpenAPIName(schema.GroupVersionKind{
+		Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind",
+	})
+
+	info := &operationInfo{defs: defs, name: name}
+	require.NotNil(t, info.specProperty())
+
+	require.Nil(t, (&operationInfo{defs: defs, name: "nope"}).specProperty(),
+		"an unknown kind has nothing to describe")
+
+	noSpec := map[string]common.OpenAPIDefinition{
+		name: {Schema: spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}},
+	}
+	require.Nil(t, (&operationInfo{defs: noSpec, name: name}).specProperty())
 }

@@ -119,6 +119,9 @@ second round trip.
   uid, and resourceVersion are restored from the incoming object. By the time admission
   runs, the request path and storage key are already derived from those, so a hook that
   renamed the object would have it written under a key that no longer matched.
+  `managedFields` is restored for the same reason: on an update the generic handler writes
+  it *before* mutating admission, so a hook that rebuilds its object rather than editing
+  it would otherwise drop the ownership the request just recorded.
 
 ## Where the code lives
 

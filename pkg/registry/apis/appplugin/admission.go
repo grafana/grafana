@@ -126,7 +126,11 @@ func (s *kindStore) validateAdmission(ctx context.Context, a admission.Attribute
 func (s *kindStore) admissionReview(ctx context.Context, a admission.Attributes) (*pluginv3.AdmissionReviewResponse, error) {
 	op, ok := admissionOperation(a.GetOperation())
 	if !ok {
-		return nil, nil
+		// Unreachable: newAdmissionOps only records the three operations the v3
+		// request can express. Fail closed rather than admit an operation the
+		// kind asked to have reviewed and never was.
+		return nil, apierrors.NewInternalError(fmt.Errorf(
+			"admission hook for %s cannot review a %q request", s.gvk.Kind, a.GetOperation()))
 	}
 
 	gvk := &pluginv3.GroupVersionKind{}
@@ -194,6 +198,11 @@ func (s *kindStore) applyMutation(obj runtime.Object, raw []byte) error {
 	next.SetNamespace(u.GetNamespace())
 	next.SetUID(u.GetUID())
 	next.SetResourceVersion(u.GetResourceVersion())
+	// On an update the generic handler has already written managedFields, and it
+	// runs before mutating admission -- so a hook that rebuilds the object rather
+	// than editing it would wipe the ownership the request just recorded, and
+	// nothing downstream puts it back.
+	next.SetManagedFields(u.GetManagedFields())
 	u.Object = next.Object
 	return nil
 }

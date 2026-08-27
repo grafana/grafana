@@ -3,7 +3,6 @@ package appplugin
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -83,11 +82,18 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
 	}
 
-	fields, err := resource.ManifestDataProvider(b.manifest)
-	if err != nil {
-		fmt.Printf("error loading search fields\n")
+	// A manifest whose searchFields cannot be read cannot be searched, but the
+	// rest of its API still works, so this drops search rather than the group.
+	var searcher *search.Handler
+	if b.search != nil {
+		fields, err := resource.ManifestDataProvider(b.manifest)
+		if err != nil {
+			logging.DefaultLogger.Error("invalid manifest search fields; search and trash routes are not served",
+				"group", gv.Group, "version", gv.Version, "error", err)
+		} else {
+			searcher = search.NewHandler(b.search, fields, b.tracer)
+		}
 	}
-	searcher := search.NewHandler(b.search, fields, b.tracer)
 
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
@@ -103,21 +109,16 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			params = []*spec3.Parameter{namePathParameter()}
 		}
 
-		if b.search != nil && kind.Scope != clusterScope {
-			// The route names its own path -- <resource>/search, <resource>/trash
-			// -- so the two cannot collide. Registering both under one path fails
-			// the whole apiserver at startup, in the OpenAPI build.
-			if true { // search
-				route := searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind)
-				*dst = append(*dst, builder.APIRouteHandler{
-					Path:    route.Path,
-					Spec:    route.Spec,
-					Schemas: route.Schemas,
-					Handler: route.Handler,
-				})
-			}
-			if true { // trash
-				route := searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind)
+		// Cluster scoped kinds are not indexed, so they have nothing to search.
+		if searcher != nil && kind.Scope != clusterScope {
+			// Each route names its own path -- <resource>/search,
+			// <resource>/trash -- so the two cannot collide. Registering both
+			// under one path fails the whole apiserver at startup, in the
+			// OpenAPI build.
+			for _, route := range []search.Route{
+				searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind),
+				searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind),
+			} {
 				*dst = append(*dst, builder.APIRouteHandler{
 					Path:    route.Path,
 					Spec:    route.Spec,
