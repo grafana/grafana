@@ -111,6 +111,7 @@
     "@npmcli/package-json": "^6.0.0",
     "@playwright/test": "1.56.1",
     "@react-types/shared": "3.31.0",
+    "@rsdoctor/rspack-plugin": "^1.0.0",
     "@rsdoctor/webpack-plugin": "^1.0.0",
     "@rspack/cli": "^2",
     "@rspack/core": "^2.1.7",
