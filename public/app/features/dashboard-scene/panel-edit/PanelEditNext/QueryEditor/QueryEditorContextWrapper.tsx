@@ -302,8 +302,6 @@ export function QueryEditorContextWrapper({
     [queryRunnerState?.queries, queryRunnerState?.data, queryError]
   );
 
-  // No `useMemo`: the provider's memo already makes this identity stable. The `useTransformations`
-  // subscription above is what re-renders after a plugin swap.
   const systemTransformations = dataTransformer
     ? getResolvedSystemTransformations(dataTransformer)
     : NO_SYSTEM_TRANSFORMATIONS;

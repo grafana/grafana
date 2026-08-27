@@ -171,9 +171,8 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       const dataTransformer = parent instanceof SceneDataTransformer ? parent : undefined;
 
       // A transformer that can reprocess without its source re-querying needs its own subscription —
-      // which, with the flag on, is every panel's, since each one's transformer holds a plugin's
-      // supplier. The flag stands in for asking the transformer directly because this check runs
-      // before the source panel is necessarily active enough to have registered one.
+      // which, with the flag on, is every panel.
+      // See https://github.com/grafana/grafana/issues/131531
       if (dataTransformer && (dataTransformer.state.transformations.length > 0 || pluginTransformationsEnabled())) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
@@ -182,10 +181,10 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         const transformerSub = dataTransformer.subscribeToState(onSourceDataChange);
         transformerSubs.push(transformerSub);
       } else {
-        // The transformer, if there is one, only ever passes its source through. Subscribe to the
-        // query runner so we re-run when the source panel's data updates (e.g. after variable
-        // resolution or time range change). Without this, the dashboard-datasource panel can read
-        // stale data when it runs before the source panels complete and never updates.
+        // Source panel has no transformer (or empty transformations). Subscribe to the query runner
+        // so we re-run when the source panel's data updates (e.g. after variable resolution or
+        // time range change). Without this, the dashboard-datasource panel can read stale data
+        // when it runs before the source panels complete and never updates.
         const queryRunnerSub = sourcePanelQueryRunner.subscribeToState(onSourceDataChange);
         transformerSubs.push(queryRunnerSub);
       }

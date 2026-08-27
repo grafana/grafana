@@ -1045,13 +1045,8 @@ describe('DashboardDatasourceBehaviour', () => {
   it('Should re-run query after reprocess when the source panel only has plugin transformations', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
     setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
-
-    // Nothing in this file restores either of those, so a failed assertion below would otherwise
-    // leave the flag on and `console.error` swallowed for every test after it.
     try {
-      // An empty user list, so only the plugin's supplier makes the transformer emit — and a supplier
-      // resolves nothing into `state.transformations`, so gating on its length would subscribe to the
-      // query runner instead and miss a reprocess, which runs no query.
+      // An empty user list, so only the plugin's supplier makes the transformer emit
       const sourceTransformer = new SceneDataTransformer({
         transformations: [],
         $data: new SceneQueryRunner({

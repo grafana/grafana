@@ -1,18 +1,14 @@
-import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
-  type CustomTransformOperator,
   type DataFrame,
   type DataTransformerConfig,
-  type GrafanaTheme2,
   type PanelData,
   type ResolvedSystemTransformations,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
@@ -21,10 +17,9 @@ import {
   type SceneObjectRef,
   type SceneObjectState,
   type SceneQueryRunner,
-  type SystemTransformationPosition,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Icon, Tab, useStyles2 } from '@grafana/ui';
+import { Tab } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -35,15 +30,15 @@ import {
   useTransformedFrames,
 } from '../PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
-import { SystemTransformationBadge, SystemTransformationList } from '../systemTransformationDisplay';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
+import { SystemTransformationRows } from './SystemTransformationRows';
+import { TransformationsActions } from './TransformationsActions';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 
-/** Stable identity, so a panel that has not returned data does not re-run the replay each render. */
 const NO_FRAMES: DataFrame[] = [];
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
@@ -98,10 +93,7 @@ export class PanelDataTransformationsTab
 }
 
 /**
- * The query result with the plugin's *prepended* transformations applied. Editor rows replay the
- * user transformations over this, so it has to include the plugin's stage or each row is configured
- * against a field shape it will never receive. Appended ones run after every user transformation, so
- * they are part of no row's input.
+ * The query result with the plugin's *prepended* transformations applied.
  */
 function useSystemTransformedData(
   sourceData: PanelData | undefined,
@@ -109,7 +101,6 @@ function useSystemTransformedData(
 ): PanelData | undefined {
   const series = useTransformedFrames(systemTransformations, sourceData?.series ?? NO_FRAMES);
 
-  // `data` is an effect dep of every editor row, so a fresh object each render re-runs their replays.
   return useMemo(() => {
     if (!sourceData || systemTransformations.length === 0) {
       return sourceData;
@@ -120,7 +111,6 @@ function useSystemTransformedData(
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
-  const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
@@ -139,13 +129,10 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   }, [transformsWrongType]);
 
   // What the picker judges a transformation's applicability against has to be what the row it adds
-  // will receive: the prepended stage and every user transformation, with the plugin's appended stage
-  // still to come. The panel's own frames have that stage on top, and it can drop the very fields the
-  // judgement turns on.
+  // will receive: the prepended stage and every user transformation
   const drawerSeries = useTransformedFrames(transformations, editorData?.series ?? NO_FRAMES);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -204,9 +191,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       {hasUserTransformations ? (
         <TransformationsEditor data={editorData} transformations={transformations} model={model} />
       ) : (
-        // What the panel's plugin runs is not the user's, so a panel with plugin transformations and
-        // none of the user's own still needs the way in to adding some. Rendered in pipeline position
-        // rather than in place of the whole tab, which is where the user's would go.
+        // Uneditable transforms are functionally empty to the user
         <EmptyTransformationsMessage
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
@@ -217,57 +202,11 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         />
       )}
       <SystemTransformationRows transformations={systemAppend} position="append" />
-      {/* The empty message carries its own ways to add one, so these would only repeat it. */}
       {hasUserTransformations && (
-        <>
-          <ButtonGroup>
-            <Button
-              icon="plus"
-              variant="secondary"
-              onClick={openDrawer}
-              data-testid={selectors.components.Transforms.addTransformationButton}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-                Add another transformation
-              </Trans>
-            </Button>
-            <Button
-              data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-              className={styles.removeAll}
-              icon="times"
-              variant="secondary"
-              onClick={() => setConfirmModalOpen(true)}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-                Delete all transformations
-              </Trans>
-            </Button>
-          </ButtonGroup>
-          <ConfirmModal
-            isOpen={confirmModalOpen}
-            title={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-              'Delete all transformations?'
-            )}
-            body={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-              'By deleting all transformations, you will go back to the main selection screen.'
-            )}
-            confirmText={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all',
-              'Delete all'
-            )}
-            onConfirm={() => {
-              reportInteraction('grafana_panel_transformations_clicked', {
-                context: 'transformations_list',
-                action: 'delete_all',
-              });
-              model.onChangeTransformations([]);
-              setConfirmModalOpen(false);
-            }}
-            onDismiss={() => setConfirmModalOpen(false)}
-          />
-        </>
+        <TransformationsActions
+          onAddTransformation={openDrawer}
+          onDeleteAll={() => model.onChangeTransformations([])}
+        />
       )}
       {transformationsDrawer}
     </>
@@ -339,54 +278,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     </DragDropContext>
   );
 }
-
-interface SystemTransformationRowsProps {
-  transformations: Array<DataTransformerConfig | CustomTransformOperator>;
-  position: SystemTransformationPosition;
-}
-
-function SystemTransformationRows({ transformations, position }: SystemTransformationRowsProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <SystemTransformationList
-      transformations={transformations}
-      position={position}
-      className={styles.systemRows}
-      itemClassName={styles.systemRow}
-      nameClassName={styles.systemRowName}
-      // Decorative — `SystemTransformationBadge` carries the same meaning as text.
-      leading={<Icon name="lock" size="sm" />}
-      trailing={<SystemTransformationBadge />}
-    />
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  removeAll: css({
-    marginLeft: theme.spacing(2),
-  }),
-  systemRows: css({
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-  }),
-  systemRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1, 1, 2),
-    marginBottom: theme.spacing(0.5),
-    background: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    color: theme.colors.text.secondary,
-  }),
-  systemRowName: css({
-    flexGrow: 1,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-});
 
 interface TransformationsTabProps extends PanelDataTabHeaderProps {
   model: PanelDataTransformationsTab;

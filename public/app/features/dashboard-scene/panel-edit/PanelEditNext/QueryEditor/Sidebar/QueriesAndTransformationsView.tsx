@@ -42,8 +42,7 @@ export function QueriesAndTransformationsView({ showButtonLabels = false }: Quer
   // case) would be noise.
   const isPanelEmpty = queries.length === 0 && transformations.length === 0;
   const showQueriesEmptyState = isPanelEmpty && !showExpressionGhost && !showSavedQueryGhost;
-  // Scoped to this section rather than folded into `isPanelEmpty`: these rows are content here, so
-  // "No transformations" would contradict the screen — but they say nothing about queries.
+
   const hasSystemTransformations = systemTransformations.prepend.length > 0 || systemTransformations.append.length > 0;
   const showTransformationsEmptyState = isPanelEmpty && !showTransformationGhost && !hasSystemTransformations;
 

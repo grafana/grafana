@@ -7,7 +7,7 @@
  * which handles fieldConfig cleanup and $data pipeline management.
  */
 
-import { cloneDeep, isArray, mergeWith } from 'lodash';
+import { mergeWith, cloneDeep, isArray } from 'lodash';
 import type * as z from 'zod';
 
 import { type FieldConfigSource } from '@grafana/data';
@@ -20,8 +20,8 @@ import { getElements, panelQueryKindToSceneQuery } from '../../serialization/lay
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { serializeResultLayoutItem } from './panelSerialization';
-import { type PanelQueryKind, payloads, type TransformationKind } from './schemas';
-import { enterEditModeIfNeeded, type MutationCommand, requiresEdit } from './types';
+import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
+import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
 const updatePanelPayloadSchema = payloads.updatePanel;
 
