@@ -36,7 +36,6 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
-    | "authz.userPermissions"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "datasources.azureMonitorBatchAPI"

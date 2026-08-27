@@ -255,11 +255,7 @@ export class GrafanaApp {
       // permissions. Fetch them from the AuthZ user-permissions API and rebuild
       // the nav tree — configureStore built it with an empty permission set, and
       // its sections are permission-gated.
-      if (
-        isFrontendService() &&
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false) &&
-        getFeatureFlagClient().getBooleanValue(FlagKeys.AuthzUserPermissions, false)
-      ) {
+      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false)) {
         // Only replace boot's permissions on a successful response: the legacy
         // boot path populates a real map from /bootdata, and a failed request
         // must not downgrade the session to "no permissions".
