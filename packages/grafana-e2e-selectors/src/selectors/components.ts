@@ -1273,6 +1273,14 @@ export const versionedComponents = {
             '9.1.2': 'root Gazetteer field property editor',
           },
         },
+        wkt: {
+          option: {
+            '13.3.0': 'WKT location option',
+          },
+          wktFieldLabel: {
+            '13.3.0': 'data-testid root WKT field field property editor',
+          },
+        },
       },
     },
     searchInput: {

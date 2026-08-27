@@ -12,7 +12,12 @@ import {
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 
-import { getGeoFieldFromGazetteer, pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
+import {
+  getGeoFieldFromGazetteer,
+  getGeoFieldFromWkt,
+  pointFieldFromGeohash,
+  pointFieldFromLonLat,
+} from '../format/utils';
 import { getGazetteer, type Gazetteer } from '../gazetteer/gazetteer';
 
 type FieldFinder = (frame: DataFrame) => Field | undefined;
@@ -110,6 +115,13 @@ export async function getLocationMatchers(src?: FrameGeometrySource): Promise<Lo
         info.longitude = () => undefined; // In manual mode, don't automatically find field
       }
       break;
+    case FrameGeometrySourceMode.Wkt:
+      if (src?.wkt) {
+        info.wkt = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.wkt }));
+      } else {
+        info.wkt = () => undefined; // In manual mode, don't automatically find field
+      }
+      break;
   }
   return info;
 }
@@ -166,6 +178,9 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
       break;
     case FrameGeometrySourceMode.Lookup:
       fields.lookup = location.lookup(frame);
+      break;
+    case FrameGeometrySourceMode.Wkt:
+      fields.wkt = location.wkt(frame);
       break;
   }
 
@@ -231,6 +246,18 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       }
       return {
         warning: t('geo.get-geometry-field.warning-select-lookup', 'Select lookup field'),
+      };
+
+    case FrameGeometrySourceMode.Wkt:
+      if (fields.wkt) {
+        return {
+          field: getGeoFieldFromWkt(fields.wkt),
+          derived: true,
+          description: `${fields.mode}: ${fields.wkt.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-wkt', 'Select WKT field'),
       };
   }
 

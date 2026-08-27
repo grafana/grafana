@@ -254,6 +254,16 @@ describe('getLocationMatchers manual modes', () => {
     const byType = await getLocationMatchers({ mode: FrameGeometrySourceMode.Lookup });
     expect(byType.lookup(lookupFrame)?.name).toBe('country');
   });
+
+  it('Wkt mode uses the named field, or finds nothing when unset', async () => {
+    const wktFrame = toDataFrame({ fields: [{ name: 'wkt', type: FieldType.string, values: ['POINT(0 0)'] }] });
+
+    const named = await getLocationMatchers({ mode: FrameGeometrySourceMode.Wkt, wkt: 'wkt' });
+    expect(named.wkt(wktFrame)?.name).toBe('wkt');
+
+    const unset = await getLocationMatchers({ mode: FrameGeometrySourceMode.Wkt });
+    expect(unset.wkt(wktFrame)).toBeUndefined();
+  });
 });
 
 describe('getLocationFields explicit modes', () => {
@@ -279,6 +289,21 @@ describe('getLocationFields explicit modes', () => {
     expect(fields.latitude).toBeUndefined();
     expect(fields.geohash).toBeUndefined();
     expect(fields.lookup).toBeUndefined();
+  });
+
+  it('resolves fields for explicit Wkt mode', () => {
+    const frame = toDataFrame({ fields: [{ name: 'wkt', type: FieldType.string, values: ['POINT(0 0)'] }] });
+    const matchers: LocationFieldMatchers = { ...getDefaultLocationMatchers(), mode: FrameGeometrySourceMode.Wkt };
+    const fields = getLocationFields(frame, matchers);
+    expect(fields.mode).toBe(FrameGeometrySourceMode.Wkt);
+    expect(fields.wkt?.name).toBe('wkt');
+  });
+
+  it('does not pick up a wkt-named field as Wkt mode when Auto mode is active', () => {
+    const frame = toDataFrame({ fields: [{ name: 'wkt', type: FieldType.string, values: ['POINT(0 0)'] }] });
+    const fields = getLocationFields(frame, getDefaultLocationMatchers());
+    expect(fields.mode).toBe(FrameGeometrySourceMode.Auto);
+    expect(fields.wkt).toBeUndefined();
   });
 });
 
@@ -336,5 +361,24 @@ describe('getGeometryField warnings', () => {
     const result = getGeometryField(emptyFrame, matchers);
     expect(result.field).toBeUndefined();
     expect(result.warning).toBe('Select lookup field');
+  });
+
+  it('warns when Wkt mode is missing a wkt field', () => {
+    const matchers: LocationFieldMatchers = {
+      ...getDefaultLocationMatchers(),
+      mode: FrameGeometrySourceMode.Wkt,
+      wkt: () => undefined,
+    };
+    const result = getGeometryField(emptyFrame, matchers);
+    expect(result.field).toBeUndefined();
+    expect(result.warning).toBe('Select WKT field');
+  });
+
+  it('resolves a derived geo field for Wkt mode when a wkt field is present', () => {
+    const wktFrame = toDataFrame({ fields: [{ name: 'wkt', type: FieldType.string, values: ['POINT(0 0)'] }] });
+    const matchers: LocationFieldMatchers = { ...getDefaultLocationMatchers(), mode: FrameGeometrySourceMode.Wkt };
+    const result = getGeometryField(wktFrame, matchers);
+    expect(result.field?.type).toBe(FieldType.geo);
+    expect(result.derived).toBe(true);
   });
 });

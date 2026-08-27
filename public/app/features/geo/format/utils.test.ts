@@ -1,5 +1,5 @@
-import { GeometryCollection, LineString, Point } from 'ol/geom';
-import { fromLonLat } from 'ol/proj';
+import { GeometryCollection, LineString, Point, Polygon } from 'ol/geom';
+import { fromLonLat, toLonLat } from 'ol/proj';
 
 import { type Field, FieldType } from '@grafana/data';
 
@@ -10,11 +10,16 @@ import {
   createGeometryCollection,
   createLineBetween,
   getGeoFieldFromGazetteer,
+  getGeoFieldFromWkt,
   pointFieldFromGeohash,
   pointFieldFromLonLat,
 } from './utils';
 
 function geohashField(values: string[], name = 'GH'): Field<string> {
+  return { name, type: FieldType.string, values, config: {} };
+}
+
+function stringField(values: string[], name = 'wkt'): Field<string> {
   return { name, type: FieldType.string, values, config: {} };
 }
 
@@ -135,5 +140,53 @@ describe('createLineBetween', () => {
     const out = createLineBetween(src, dest);
     expect(out.values[0]).toBeUndefined();
     expect(out.values[1]).toBeUndefined();
+  });
+});
+
+describe('getGeoFieldFromWkt', () => {
+  it('parses a LINESTRING into a LineString whose coordinates round-trip through toLonLat', () => {
+    const out = getGeoFieldFromWkt(stringField(['LINESTRING(-122 37, -121 38)']));
+    expect(out.values).toHaveLength(1);
+    const geom = out.values[0];
+    expect(geom).toBeInstanceOf(LineString);
+    const lonLat = (geom as LineString).getCoordinates().map((c) => toLonLat(c));
+    expect(lonLat[0][0]).toBeCloseTo(-122, 6);
+    expect(lonLat[0][1]).toBeCloseTo(37, 6);
+    expect(lonLat[1][0]).toBeCloseTo(-121, 6);
+    expect(lonLat[1][1]).toBeCloseTo(38, 6);
+  });
+
+  it('parses a POLYGON into a Polygon', () => {
+    const out = getGeoFieldFromWkt(stringField(['POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))']));
+    expect(out.values[0]).toBeInstanceOf(Polygon);
+  });
+
+  it('strips an EWKT SRID prefix before parsing', () => {
+    const out = getGeoFieldFromWkt(stringField(['SRID=4326;LINESTRING(-122 37, -121 38)']));
+    expect(out.values[0]).toBeInstanceOf(LineString);
+  });
+
+  it('leaves a malformed row undefined without throwing, and still parses adjacent valid rows', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromWkt(stringField(['NOT WKT(', 'POINT(0 0)']));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeInstanceOf(Point);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('leaves empty/null rows undefined without warning', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = getGeoFieldFromWkt(stringField(['', null as unknown as string]));
+    expect(out.values[0]).toBeUndefined();
+    expect(out.values[1]).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('preserves the field name and marks the output as a geo field', () => {
+    const out = getGeoFieldFromWkt(stringField(['POINT(0 0)'], 'myWkt'));
+    expect(out.name).toBe('myWkt');
+    expect(out.type).toBe(FieldType.geo);
   });
 });

@@ -7,6 +7,7 @@ import { markersLayer } from './markersLayer';
 import { networkLayer } from './networkLayer';
 import { photosLayer } from './photosLayer';
 import { routeLayer } from './routeLayer';
+import { wktLayer } from './wktLayer';
 
 /**
  * Registry for layer handlers
@@ -19,6 +20,7 @@ export const dataLayers = [
   dynamicGeoJSONLayer,
   dayNightLayer,
   routeLayer,
+  wktLayer,
   photosLayer,
   networkLayer,
 ];

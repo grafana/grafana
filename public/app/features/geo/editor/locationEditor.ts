@@ -10,18 +10,24 @@ export function addLocationFields<TOptions>(
   prefix: string,
   builder: PanelOptionsEditorBuilder<TOptions>, // ??? Perhaps pass in the filtered data?
   source?: FrameGeometrySource,
-  data?: DataFrame[]
+  data?: DataFrame[],
+  /** Restrict the selectable modes. When exactly one mode is given, it's implied and no mode picker is shown. */
+  modes?: FrameGeometrySourceMode[]
 ) {
-  builder.addCustomEditor({
-    id: 'modeEditor',
-    path: `${prefix}mode`,
-    name: t('geo.location-editor.name-location-mode', 'Location Mode'),
-    editor: LocationModeEditor,
-    settings: { data, source },
-  });
+  const impliedMode = modes?.length === 1 ? modes[0] : undefined;
+
+  if (!impliedMode) {
+    builder.addCustomEditor({
+      id: 'modeEditor',
+      path: `${prefix}mode`,
+      name: t('geo.location-editor.name-location-mode', 'Location Mode'),
+      editor: LocationModeEditor,
+      settings: { data, source, modes },
+    });
+  }
 
   // TODO apply data filter to field pickers
-  switch (source?.mode) {
+  switch (impliedMode ?? source?.mode) {
     case FrameGeometrySourceMode.Coords:
       builder
         .addFieldNamePicker({
@@ -69,5 +75,17 @@ export function addLocationFields<TOptions>(
           name: t('geo.location-editor.name-gazetteer', 'Gazetteer'),
           editor: GazetteerPathEditor,
         });
+      break;
+
+    case FrameGeometrySourceMode.Wkt:
+      builder.addFieldNamePicker({
+        path: `${prefix}wkt`,
+        name: t('geo.location-editor.name-wkt-field', 'WKT field'),
+        settings: {
+          filter: (f: Field) => f.type === FieldType.string,
+          noFieldsMessage: t('geo.location-editor.wkt-field.no-fields-message', 'No strings fields found'),
+        },
+      });
+      break;
   }
 }

@@ -12,6 +12,8 @@ import { type FrameGeometryField, getGeometryField, getLocationMatchers } from '
 interface ModeEditorSettings {
   data?: DataFrame[];
   source?: FrameGeometrySource;
+  /** Restrict the selectable modes. Defaults to every mode. */
+  modes?: FrameGeometrySourceMode[];
 }
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/geomap/#location';
@@ -24,6 +26,7 @@ export const LocationModeEditor = ({
   id,
 }: StandardEditorProps<string, ModeEditorSettings, unknown, unknown>) => {
   const [info, setInfo] = useState<FrameGeometryField>();
+  const allowedModes = item.settings?.modes;
 
   const MODE_OPTIONS = [
     {
@@ -56,7 +59,16 @@ export const LocationModeEditor = ({
       ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
       description: t('geo.location-more-editor.mode-options.description-lookup', 'Specify Gazetteer and lookup field'),
     },
-  ];
+    {
+      value: FrameGeometrySourceMode.Wkt,
+      label: t('geo.location-more-editor.mode-options.label-wkt', 'WKT'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.wkt.option,
+      description: t(
+        'geo.location-more-editor.mode-options.description-wkt',
+        'Specify a WKT (Well-Known Text) geometry field'
+      ),
+    },
+  ].filter((opt) => !allowedModes || allowedModes.includes(opt.value));
 
   useEffect(() => {
     if (item.settings?.source && item.settings?.data?.length && item.settings.data[0]) {

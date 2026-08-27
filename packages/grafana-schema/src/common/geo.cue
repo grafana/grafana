@@ -18,7 +18,7 @@ MapLayerOptions: {
 	tooltip?: bool
 } @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-FrameGeometrySourceMode: "auto" | "geohash" | "coords" | "lookup" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup")
+FrameGeometrySourceMode: "auto" | "geohash" | "coords" | "lookup" | "wkt" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup|Wkt")
 
 FrameGeometrySource: {
 	mode: FrameGeometrySourceMode
