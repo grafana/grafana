@@ -27,7 +27,8 @@ setReturnToPreviousHook(() => () => {});
 const ui = {
   ruleName: byRole('button', { name: /Open details for Grafana-rule/ }),
   detailsDrawer: byRole('dialog'),
-  moreButton: byRole('button', { name: /More actions for Grafana-rule/ }),
+  detailsButton: byRole('button', { name: /Rule details/ }),
+  silenceButton: byRole('button', { name: /Silence notifications/ }),
 };
 
 const row: AlertRuleRowType = {
@@ -73,11 +74,20 @@ describe('AlertRuleRow', () => {
     expect(ui.detailsDrawer.get()).toBeInTheDocument();
   });
 
-  it('shows the rule actions instead of a details button, and the instance counts alongside them', async () => {
+  it('opens the rule details sidebar from the eye button too', async () => {
+    const { user } = renderRow();
+
+    await user.click(await ui.detailsButton.find());
+
+    expect(await screen.findByRole('tab', { name: /Query and conditions/ })).toBeInTheDocument();
+    expect(ui.detailsDrawer.get()).toBeInTheDocument();
+  });
+
+  it('offers silence and details as their own actions, alongside the instance counts', async () => {
     renderRow();
 
-    expect(await ui.moreButton.find()).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Rule details/ })).not.toBeInTheDocument();
+    expect(await ui.silenceButton.find()).toBeInTheDocument();
+    expect(ui.detailsButton.get()).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('1')).toBeInTheDocument();
   });
