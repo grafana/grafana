@@ -14,6 +14,8 @@ import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/sche
 
 import {
   getGeoFieldFromGazetteer,
+  getGeoFieldFromGeoJson,
+  getGeoFieldFromWkb,
   getGeoFieldFromWkt,
   pointFieldFromGeohash,
   pointFieldFromLonLat,
@@ -56,7 +58,8 @@ export interface LocationFieldMatchers {
   latitude: FieldFinder;
   longitude: FieldFinder;
   h3: FieldFinder;
-  wkt: FieldFinder;
+  // Field name holding the geometry text, shared by the Wkt/Wkb/GeoJson modes
+  geometry: FieldFinder;
   lookup: FieldFinder;
   geo: FieldFinder;
   gazetteer?: Gazetteer;
@@ -68,7 +71,10 @@ const defaultMatchers: LocationFieldMatchers = {
   latitude: matchLowerNames(new Set(['latitude', 'lat'])),
   longitude: matchLowerNames(new Set(['longitude', 'lon', 'lng'])),
   h3: matchLowerNames(new Set(['h3'])),
-  wkt: matchLowerNames(new Set(['wkt'])),
+  // Not part of the Auto-mode detection chain in getLocationFields (Wkt/Wkb/GeoJson are
+  // explicit-mode-only), but still a real name-based default -- getLocationMatchers' switch
+  // overwrites this with a byName/unset matcher once one of those modes is actually selected.
+  geometry: matchLowerNames(new Set(['wkt', 'wkb', 'geojson', 'geometry'])),
   lookup: matchLowerNames(new Set(['lookup'])),
   geo: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.geo),
 };
@@ -116,10 +122,12 @@ export async function getLocationMatchers(src?: FrameGeometrySource): Promise<Lo
       }
       break;
     case FrameGeometrySourceMode.Wkt:
-      if (src?.wkt) {
-        info.wkt = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.wkt }));
+    case FrameGeometrySourceMode.Wkb:
+    case FrameGeometrySourceMode.GeoJson:
+      if (src?.geometry) {
+        info.geometry = getFieldFinder(getFieldMatcher({ id: FieldMatcherID.byName, options: src.geometry }));
       } else {
-        info.wkt = () => undefined; // In manual mode, don't automatically find field
+        info.geometry = () => undefined; // In manual mode, don't automatically find field
       }
       break;
   }
@@ -133,7 +141,7 @@ export interface LocationFields {
   latitude?: Field;
   longitude?: Field;
   h3?: Field;
-  wkt?: Field;
+  geometry?: Field;
   lookup?: Field;
   geo?: Field<Geometry | undefined>;
 }
@@ -180,7 +188,9 @@ export function getLocationFields(frame: DataFrame, location: LocationFieldMatch
       fields.lookup = location.lookup(frame);
       break;
     case FrameGeometrySourceMode.Wkt:
-      fields.wkt = location.wkt(frame);
+    case FrameGeometrySourceMode.Wkb:
+    case FrameGeometrySourceMode.GeoJson:
+      fields.geometry = location.geometry(frame);
       break;
   }
 
@@ -249,15 +259,39 @@ export function getGeometryField(frame: DataFrame, location: LocationFieldMatche
       };
 
     case FrameGeometrySourceMode.Wkt:
-      if (fields.wkt) {
+      if (fields.geometry) {
         return {
-          field: getGeoFieldFromWkt(fields.wkt),
+          field: getGeoFieldFromWkt(fields.geometry),
           derived: true,
-          description: `${fields.mode}: ${fields.wkt.name}`,
+          description: `${fields.mode}: ${fields.geometry.name}`,
         };
       }
       return {
         warning: t('geo.get-geometry-field.warning-select-wkt', 'Select WKT field'),
+      };
+
+    case FrameGeometrySourceMode.Wkb:
+      if (fields.geometry) {
+        return {
+          field: getGeoFieldFromWkb(fields.geometry),
+          derived: true,
+          description: `${fields.mode}: ${fields.geometry.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-wkb', 'Select WKB field'),
+      };
+
+    case FrameGeometrySourceMode.GeoJson:
+      if (fields.geometry) {
+        return {
+          field: getGeoFieldFromGeoJson(fields.geometry),
+          derived: true,
+          description: `${fields.mode}: ${fields.geometry.name}`,
+        };
+      }
+      return {
+        warning: t('geo.get-geometry-field.warning-select-geojson', 'Select GeoJSON field'),
       };
   }
 

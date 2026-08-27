@@ -1,4 +1,4 @@
-import { type BaseLayer } from 'ol/layer';
+import type BaseLayer from 'ol/layer/Base';
 
 import {
   FrameGeometrySourceMode,
@@ -18,11 +18,11 @@ const fakeLayers: Record<string, MapLayerRegistryItem> = {
   markers: { id: 'markers', name: 'Markers', showLocation: true, defaultOptions: {}, create: jest.fn() },
   route: { id: 'route', name: 'Route', showLocation: true, defaultOptions: {}, create: jest.fn() },
   geojson: { id: 'geojson', name: 'GeoJSON', defaultOptions: {}, create: jest.fn() },
-  wkt: {
-    id: 'wkt',
-    name: 'WKT',
+  geometry: {
+    id: 'geometry',
+    name: 'Geometry',
     showLocation: true,
-    locationModes: [FrameGeometrySourceMode.Wkt],
+    locationModes: [FrameGeometrySourceMode.Wkt, FrameGeometrySourceMode.Wkb, FrameGeometrySourceMode.GeoJson],
     defaultOptions: {},
     create: jest.fn(),
   },
@@ -41,6 +41,7 @@ function buildState(options: MapLayerOptions): { state: MapLayerState; onChange:
     handler,
     layer: {} as BaseLayer,
     onChange,
+    getName: () => options.name,
   };
   return { state, onChange };
 }
@@ -48,23 +49,11 @@ function buildState(options: MapLayerOptions): { state: MapLayerState; onChange:
 function changeType(options: MapLayerOptions, newType: string) {
   const { state, onChange } = buildState(options);
   const editor = getLayerEditor({ state, category: ['Layer'], basemaps: false });
-  editor.values({} as never).onChange('type', newType);
+  editor.values!({} as never).onChange('type', newType);
   return onChange.mock.calls[0]?.[0] as MapLayerOptions | undefined;
 }
 
 describe('getLayerEditor type switch', () => {
-  it('forces the single implied location mode when switching to a WKT-only layer, discarding any previous field', () => {
-    const opts = changeType(
-      {
-        type: 'markers',
-        name: 'x',
-        location: { mode: FrameGeometrySourceMode.Coords, latitude: 'lat', longitude: 'lon' },
-      },
-      'wkt'
-    );
-    expect(opts?.location).toEqual({ mode: FrameGeometrySourceMode.Wkt });
-  });
-
   it('defaults to Auto when switching to a location-aware layer with no prior location configured', () => {
     const opts = changeType({ type: 'geojson', name: 'x' }, 'markers');
     expect(opts?.location).toEqual({ mode: FrameGeometrySourceMode.Auto });
@@ -80,5 +69,10 @@ describe('getLayerEditor type switch', () => {
       'route'
     );
     expect(opts?.location).toBeUndefined();
+  });
+
+  it('does not force a mode for a layer that declares multiple location modes (e.g. the real Geometry layer)', () => {
+    const opts = changeType({ type: 'geojson', name: 'x' }, 'geometry');
+    expect(opts?.location).toEqual({ mode: FrameGeometrySourceMode.Auto });
   });
 });

@@ -24,7 +24,7 @@ describe('addLocationFields', () => {
       FrameGeometrySourceMode.Lookup,
     ]);
     expect(items.find((i) => i.path === 'location.mode')).toBeDefined();
-    expect(items.find((i) => i.path === 'location.wkt')).toBeUndefined();
+    expect(items.find((i) => i.path === 'location.geometry')).toBeUndefined();
   });
 
   it('passes the allowed modes through to the mode picker so it can filter its options', () => {
@@ -44,25 +44,29 @@ describe('addLocationFields', () => {
     expect(items.find((i) => i.path === 'location.longitude')).toBeDefined();
   });
 
-  it('implies the mode and skips the mode picker entirely when exactly one mode is allowed', () => {
+  it('still shows the mode picker even when only one mode is allowed', () => {
     const items = buildItems(undefined, [FrameGeometrySourceMode.Wkt]);
-    expect(items.find((i) => i.path === 'location.mode')).toBeUndefined();
-    expect(items.find((i) => i.path === 'location.wkt')).toBeDefined();
-  });
-
-  it('still shows the field picker for the implied mode even if a different mode was previously saved', () => {
-    const items = buildItems({ mode: FrameGeometrySourceMode.Coords, latitude: 'lat', longitude: 'lon' }, [
-      FrameGeometrySourceMode.Wkt,
-    ]);
-    expect(items.find((i) => i.path === 'location.mode')).toBeUndefined();
-    expect(items.find((i) => i.path === 'location.wkt')).toBeDefined();
-    expect(items.find((i) => i.path === 'location.latitude')).toBeUndefined();
+    expect(items.find((i) => i.path === 'location.mode')).toBeDefined();
+    // No source.mode is set, so no field picker case matches yet.
+    expect(items.find((i) => i.path === 'location.geometry')).toBeUndefined();
   });
 
   it('leaves modes unrestricted (undefined) when no modes list is given, preserving every mode', () => {
-    const items = buildItems({ mode: FrameGeometrySourceMode.Wkt, wkt: 'wkt' }, undefined);
+    const items = buildItems({ mode: FrameGeometrySourceMode.Wkt, geometry: 'geom' }, undefined);
     const modeItem = items.find((i) => i.path === 'location.mode')!;
     expect(modeItem.settings).toMatchObject({ modes: undefined });
-    expect(items.find((i) => i.path === 'location.wkt')).toBeDefined();
+    expect(items.find((i) => i.path === 'location.geometry')).toBeDefined();
   });
+
+  it.each([FrameGeometrySourceMode.Wkt, FrameGeometrySourceMode.Wkb, FrameGeometrySourceMode.GeoJson])(
+    'shares the same geometry field picker for %s mode',
+    (mode) => {
+      const items = buildItems({ mode, geometry: 'geom' }, [
+        FrameGeometrySourceMode.Wkt,
+        FrameGeometrySourceMode.Wkb,
+        FrameGeometrySourceMode.GeoJson,
+      ]);
+      expect(items.find((i) => i.path === 'location.geometry')).toBeDefined();
+    }
+  );
 });

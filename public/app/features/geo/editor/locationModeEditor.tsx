@@ -68,6 +68,24 @@ export const LocationModeEditor = ({
         'Specify a WKT (Well-Known Text) geometry field'
       ),
     },
+    {
+      value: FrameGeometrySourceMode.Wkb,
+      label: t('geo.location-more-editor.mode-options.label-wkb', 'WKB'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.wkb.option,
+      description: t(
+        'geo.location-more-editor.mode-options.description-wkb',
+        'Specify a WKB (Well-Known Binary) geometry field as a hex string, such as a raw PostGIS geography/geometry column'
+      ),
+    },
+    {
+      value: FrameGeometrySourceMode.GeoJson,
+      label: t('geo.location-more-editor.mode-options.label-geojson', 'GeoJSON'),
+      ariaLabel: selectors.components.Transforms.SpatialOperations.location.geojson.option,
+      description: t(
+        'geo.location-more-editor.mode-options.description-geojson',
+        'Specify a field containing GeoJSON geometry'
+      ),
+    },
   ].filter((opt) => !allowedModes || allowedModes.includes(opt.value));
 
   useEffect(() => {

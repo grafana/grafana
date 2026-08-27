@@ -18,7 +18,7 @@ MapLayerOptions: {
 	tooltip?: bool
 } @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-FrameGeometrySourceMode: "auto" | "geohash" | "coords" | "lookup" | "wkt" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup|Wkt")
+FrameGeometrySourceMode: "auto" | "geohash" | "coords" | "lookup" | "wkt" | "wkb" | "geojson" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup|Wkt|Wkb|GeoJson")
 
 FrameGeometrySource: {
 	mode: FrameGeometrySourceMode
@@ -26,7 +26,8 @@ FrameGeometrySource: {
 	geohash?:   string
 	latitude?:  string
 	longitude?: string
-	wkt?:       string
+	// Field name holding the geometry text, used by the Wkt, Wkb, and GeoJson modes
+	geometry?: string
 	lookup?:    string
 	// Path to Gazetteer
 	gazetteer?: string
