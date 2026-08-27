@@ -93,12 +93,6 @@ export const NavID = {
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
 
-/** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
-export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
-
-/** Nav id of a plugin page rendered standalone inside a core section */
-export const standalonePluginPageId = (key: string) => `standalone-plugin-page-${key}`;
-
 export interface PluginSectionShell {
   /** The section node created when the first plugin targeting it is merged in */
   shell: NavModelItem;

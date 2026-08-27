@@ -46,7 +46,7 @@ import {
  * decision at boot time (a bootdata boolean alongside the tree) and key off
  * that, rather than re-evaluating the flag here.
  */
-export function isClientNavTreeEnabled(): boolean {
+function isClientNavTreeEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
 }
 
@@ -57,9 +57,7 @@ export function isClientNavTreeEnabled(): boolean {
  * alone renders the static tree only.
  */
 export function arePluginNavItemsEnabled(): boolean {
-  return (
-    isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)
-  );
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
 /**
