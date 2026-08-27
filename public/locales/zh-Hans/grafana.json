@@ -961,9 +961,6 @@
       "used-by-rules_other": "由 {{count}} 个警报规则使用"
     },
     "contact-points-filter": {
-      "aria-label-clear": "清除",
-      "aria-label-search-contact-points": "搜索联络点",
-      "clear": "清除",
       "label-search-by-name-or-type": "按名称或类型搜索",
       "placeholder-search": "搜索"
     },
@@ -1617,6 +1614,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1688,6 @@
       "review": {
         "autosync-badge": "",
         "back": "警报规则",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "筛选条件",
         "folder": "目标文件夹",
@@ -1706,7 +1706,6 @@
         "routing": "通知路由",
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "警报规则将不会被导入。",
         "rules-title": "警报规则",
         "skipped": "已跳过",
@@ -1731,14 +1730,14 @@
         "yaml-description": "从 Prometheus YAML 文件导入规则。"
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanager 数据源",
+        "datasource-autosync-badge": "",
         "heading": "导入通知资源",
         "next-disabled-tooltip": "填写必填字段并等待验证通过，然后再继续。",
         "no-datasources": "未找到 Alertmanager 数据源",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "您没有导入通知资源的权限。您需要 <strong>alerting.notifications:write</strong> 权限。您可以跳过此步骤。",
         "no-permission-title": "权限不足",
         "policy-tree-autosync-disabled": "",
@@ -3227,6 +3226,7 @@
         "disable-confirm-body-generic": "禁用此项将停止持续同步。您以后可以通过再次选择数据源来重新启用。",
         "disable-confirm-title": "要禁用 Mimir Alertmanager 自动同步吗？",
         "disable-success": "Mimir Alertmanager 自动同步已禁用",
+        "not-ready-body": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 密钥设置，无法通过 UI 更改。编辑配置文件并重新启动 Grafana，或移除密钥以从此处管理同步。",
         "operator-managed-title": "由操作员管理",
         "orphan-warning": "已配置的数据源 UID {{uid}} 不可用。禁用同步或恢复数据源以继续。",
@@ -3234,6 +3234,7 @@
         "picker-empty": "没有可用的 Mimir 或 Cortex 数据源",
         "picker-label": "数据源",
         "picker-placeholder": "选择 Mimir 或 Cortex Alertmanager 数据源…",
+        "read-error-message": "",
         "save-disabled-no-selection": "选择 Mimir 或 Cortex Alertmanager 数据源以启用保存。",
         "save-disabled-staged-config": "",
         "save-error": "保存 Mimir Alertmanager 自动同步失败",
@@ -3849,6 +3850,8 @@
       "title-notification-policies": "通知策略"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "导入资源失败",
@@ -4358,7 +4361,7 @@
       "cancel-button": "取消",
       "confirmation-text": "删除",
       "delete-button": "删除",
-      "delete-modal-restore-dashboards-common": "已删除的数据面板将在历史记录中保留最多 12 个月。拥有删除权限的用户可以恢复自己删除的数据面板，管理员可以恢复任何用户删除的数据面板。历史记录最多保留 1000 个数据面板，达到此上限后，较早的数据面板可能会被提前移除。",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "此操作将立即删除所选文件夹。",
       "delete-modal-restore-dashboards-suffix-folder": "文件夹无法恢复。",
       "delete-modal-title": "删除",
@@ -4379,8 +4382,8 @@
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
       "selected-mix-resources-modal-title": "已选择混合资源类型",
       "delete-modal-folder-empty_other": "所选文件夹为空",
-      "delete-modal-folder-not-empty_other": "所选文件夹包含将被删除的其他资源",
-      "move-modal-folder-not-empty_other": "所选文件夹包含将随其移动的其他资源"
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近删除"
@@ -4409,7 +4412,7 @@
       "error-deleting-resources": "删除资源时出错",
       "success-title": "资源已成功删除",
       "folder-empty_other": "所选文件夹为空",
-      "folder-not-empty_other": "所选文件夹包含将被删除的其他资源"
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
@@ -4430,7 +4433,7 @@
       "move-warning-tooltip": "您只能在相应的预置文件夹内移动已预置的资源，而本地资源只能移动到本地文件夹中。",
       "success-title": "资源已成功移动",
       "target-folder": "目标文件夹",
-      "folder-not-empty_other": "所选文件夹包含将随其移动的其他资源"
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "数据面板"
@@ -4464,7 +4467,7 @@
       "button-deleting": "正在删除…",
       "delete-warning": "此操作将删除此文件夹及其所有子内容。",
       "folder-empty": "选中的文件夹为空",
-      "folder-not-empty": "所选文件夹包含将被删除的其他资源",
+      "folder-not-empty": "",
       "missing-info": "缺少必填字段",
       "success-message": "文件夹已成功删除"
     },
@@ -6252,9 +6255,9 @@
         "name-builtin": "{{annoName}}（内置）",
         "name-disabled": "（已禁用）{{annoName}}",
         "reorder-description": "重新排序注释列表",
-        "title-above-dashboard-count_other": "数据面板上方 ({{count}})",
-        "title-controls-menu-count_other": "控件菜单 ({{count}})",
-        "title-hidden-count_other": "隐藏 ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "注释",
@@ -6267,7 +6270,6 @@
         "tooltip": "数据面板选项",
         "variables": "变量"
       },
-      "drag-to-reorder": "拖动以重新排序",
       "edit-schema": {
         "apply-button": "应用更改",
         "apply-button-disabled-tooltip": "先修复验证错误，再应用更改",
@@ -6330,10 +6332,10 @@
         "add-filter": "添加筛选条件",
         "reorder-description": "重新排序筛选条件列表",
         "title": "筛选条件",
-        "tooltip": "筛选条件概览",
-        "title-above-dashboard_other": "数据面板上方 ({{count}})",
-        "title-controls-menu_other": "控件菜单 ({{count}})",
-        "title-hidden_other": "隐藏 ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "筛选条件概览"
       },
       "group": {
         "different-parents": "",
@@ -6345,8 +6347,8 @@
         "add-link": "添加链接",
         "new-link": "新建链接",
         "reorder-description": "重新排序链接列表",
-        "title-above-dashboard_other": "数据面板上方 ({{count}})",
-        "title-controls-menu_other": "控件菜单 ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "内容大纲",
@@ -6385,7 +6387,6 @@
       "section-variables": {
         "title": "变量"
       },
-      "select": "选择",
       "snapshot": {
         "title": "源",
         "tooltip": "打开原始数据面板"
@@ -6445,10 +6446,10 @@
         "reorder-description": "重新排序变量列表",
         "select-type": "选择变量类型",
         "select-type-card-tooltip": "点击以选择类型",
-        "top-placement-default": "数据面板上方",
-        "title-controls-menu_other": "控件菜单 ({{count}})",
-        "title-hidden_other": "隐藏 ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "已禁用",
@@ -6814,6 +6815,11 @@
       "title": "尚未添加数据面板链接"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -6962,8 +6968,12 @@
       "placeholder-your-metric-prefix": "您的指标前缀"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7114,6 +7124,11 @@
     },
     "description-label": {
       "description": "描述"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7393,6 +7408,9 @@
       "confirmText-delete-all": "删除全部",
       "delete-all-transformations": "删除所有转换",
       "title-delete-all-transformations": "删除所有转换？"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切换表格视图",
@@ -7741,10 +7759,31 @@
       "save-dashboard": "保存仪表板",
       "title-unsaved-changes": "未保存的更改"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "设置"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7755,6 +7794,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "数据面板已保存"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "已存在具有此名称的全局变量或文件夹变量，将被此数据面板变量覆盖。"
@@ -8919,6 +8965,7 @@
       "label-stack-trace": "堆栈跟踪",
       "label-summary-attributes": "摘要属性",
       "label-warnings": "警告",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "子级计数：",
@@ -9008,15 +9055,16 @@
       "split-widen": "宽窗格"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "打开共享跟踪选项菜单",
+      "aria-label-share-dropdown": "",
       "critical-path": "关键路径",
       "critical-path-tooltip": "选择关键路径中的跨度——即决定该追踪最短持续时间的、最长的一组相互依赖任务。",
       "duration": "时长",
       "errors": "错误",
       "errors-tooltip": "选择状态等于错误的跨度。",
       "export-started": "导出已开始",
+      "feedback-group": "",
       "filters": "筛选条件",
-      "give-feedback": "反馈",
+      "give-feedback-item": "",
       "high-latency": "高延迟",
       "high-latency-tooltip": "选择该追踪中耗时最长的 10% 跨度 (p90)。",
       "link-copied": "链接已复制到剪贴板",
@@ -9024,13 +9072,12 @@
       "path": "路径",
       "route": "路由",
       "services": "服务",
-      "share": "共享",
       "share-copy-link": "复制链接",
       "share-export-json": "导出为 JSON",
-      "share-tooltip": "共享跟踪",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "开始时间",
       "target": "目标",
-      "title-share-thoughts-about-tracing-grafana": "分享您对 Grafana 跟踪功能的看法。",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "跟踪 ID",
       "url": "URL"
@@ -9040,6 +9087,10 @@
         "body": "此追踪最初被 Adaptive Traces 丢弃，现已恢复。恢复的追踪不包含在 TraceQL 查询中，只能通过追踪 ID 查询。请查看<2>文档</2>，了解更多详情。",
         "title": "由 Adaptive Traces 恢复的追踪"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "复制到剪贴板",
       "attribute-plugin-promo": {
         "learn-more": "了解更多"
@@ -9047,6 +9098,18 @@
       "database-observability-promo": {
         "body": "数据库可观测性显示可视化解释计划、等待事件和查询示例，帮助您诊断追踪跨度之外的问题。",
         "title": "更快找到慢查询"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "无数据",
       "tooltip-copy-icon": "已复制"
@@ -12540,7 +12603,7 @@
       "title": "个人资料"
     },
     "recently-deleted": {
-      "subtitle": "已删除的数据面板最多保留 12 个月，或直到达到 1000 个数据面板的历史记录上限。",
+      "subtitle": "",
       "title": "最近删除"
     },
     "recorded-queries": {
@@ -12827,6 +12890,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12843,6 +12907,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12976,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13735,10 +13808,11 @@
       "button-save": "保存",
       "button-saving": "正在保存...",
       "description-commit-message-template": "当有人保存、移动、重命名或删除资源并将“注释”字段留空时使用的提交消息。占位符，按操作填充：{{actionVar}}（创建/更新/删除/移动/重命名）、{{kindVar}}（数据面板/文件夹）、{{idVar}}（唯一资源 ID）、{{titleVar}}、{{userNameVar}}（显示名称）、{{userLoginVar}}（用户名）、{{userEmailVar}}。留空以使用内置默认消息。",
-      "description-connection": "选择要使用的 GitHub 应用连接",
+      "description-connection": "",
       "description-enabled": "启用自动拉取后，将无法更改目标类型。",
       "description-read-only": "无法通过 Grafana 修改资源。",
       "description-title": "人类可读的配置名称",
+      "error-connection-missing": "",
       "error-connection-required": "连接为必填项",
       "error-fetch-branches": "",
       "error-required": "此字段是必填字段。",
@@ -13746,7 +13820,7 @@
       "error-save-repository": "保存存储库设置失败",
       "label-automatic-pulling": "自动拉取",
       "label-commit-message-template": "提交消息模板",
-      "label-connection": "GitHub 应用连接",
+      "label-connection": "",
       "label-enabled": "已启用",
       "label-interval-seconds": "间隔（秒）",
       "label-repository-type": "存储库类型",
@@ -13776,38 +13850,53 @@
       "text-repository-not-ready": "连接到存储库时出现问题。您仍然可以手动输入分支名称。"
     },
     "connection": {
-      "disconnected-message": "此 GitHub 应用连接已失去访问权限。该应用可能已被卸载，或者存储库访问权限已被撤销。",
-      "disconnected-title": "连接已断开"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "连接已删除",
       "alert-connection-saved": "连接已保存",
       "alert-connection-updated": "连接已更新",
-      "available-repositories": "此连接可以访问以下存储库",
+      "available-repositories-loading": "",
       "back-to-connections": "返回连接",
       "button-save": "保存",
       "button-saving": "正在保存…",
       "create-new-connection-button": "创建连接",
       "creating-connection-button": "正在创建连接...",
       "description-app-id": "您的 GitHub 应用的 ID",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "此连接的可选描述",
       "description-installation-id": "您的 GitHub 应用的安装 ID",
       "description-private-key": "您的 GitHub 应用的 PEM 格式私钥",
       "description-provider": "选择提供程序类型",
       "description-title": "此连接的人类可读名称",
       "description-webhook-disabled": "启用后，GitHub 应用不需要 webhooks:write 权限，Grafana 也不会注册或接收 Webhook 事件。当无法从公共互联网访问 Grafana 时，请使用此项。",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "删除连接失败",
       "error-required": "此字段为必填",
       "error-save-connection": "保存连接失败",
       "error-submit": "保存连接失败",
       "grafana-repositories": "使用此连接的存储库",
       "label-app-id": "GitHub 应用 ID",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "描述",
       "label-installation-id": "GitHub 安装 ID",
       "label-private-key": "私钥 (PEM)",
       "label-provider": "提供程序",
       "label-title": "标题",
       "label-webhook-disabled": "禁用 Webhook 集成",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "未找到连接",
       "not-found-description": "您要找的连接不存在。",
       "page-subtitle": "配置连接以使用外部提供程序进行身份验证",
@@ -13816,12 +13905,18 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "可选描述",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "我的 GitHub 应用"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "正在加载…",
       "no-repos": "没有存储库",
-      "repos-truncated_other": "{{shown}} + 另外 {{count}} 个"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "添加连接",
@@ -13830,6 +13925,8 @@
       "delete-confirm": "您确定要删除此连接吗？此操作无法撤销。",
       "delete-title": "删除连接",
       "error-loading": "加载连接失败",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "未配置关联",
       "no-results": "没有找到与您的查询匹配的结果",
       "search-placeholder": "搜索连接",
@@ -14197,6 +14294,36 @@
         "subtitle": "如果要通过外部存储来同步和管理整个 Grafana 实例，请使用此选项。"
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "无法通过 Git 工作流进行保存、移动和删除操作。如果您是管理员，请使用数据面板顶部的警告按钮来发布或删除此数据面板，或者与您的 Grafana 管理员联系。",
       "title": "预置存储库不再存在"
@@ -14416,6 +14543,9 @@
       },
       "title-error-saving-file": "保存文件时出错"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "取消",
       "button-delete": "删除",
@@ -14529,6 +14659,7 @@
     },
     "validation": {
       "hidden-characters": "此字段包含可能通过复制粘贴引入的隐藏字符。请重新输入或清理该值，然后重试。",
+      "invalid-url": "",
       "url-with-credentials": "存储库 URL 不得包含用户名或密码。从 URL 中移除凭证，并改为使用令牌字段。"
     },
     "warning-title-default": "警告",
@@ -14559,11 +14690,16 @@
       "alert-point-permissions": "不支持细化权限。将应用默认权限：管理员、编辑者和查看者角色将保留其各自的标准访问级别。",
       "alert-point-unsupported": "预置文件夹中不支持警报和库面板。",
       "alert-title": "重要提示：在继续之前查看 Git 同步限制",
-      "auth-type-description": "这两种方法都可以安全访问您的 GitHub 存储库。选择最适合您的工作流和安全要求的方法。",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "使用 GitHub 应用以提升安全性并加强团队协作。推荐用于生产环境。",
       "auth-type-github-app-label": "使用 GitHub 应用连接",
       "auth-type-label": "身份验证方法",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "使用个人访问令牌通过 GitHub 进行身份验证。适用于个人使用和测试。",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "使用个人访问令牌连接",
       "button-cancel": "取消",
       "button-cancelling": "正在取消...",
@@ -14571,7 +14707,8 @@
       "button-start": "开始同步",
       "connect-step": "连接",
       "connect-step-local": "文件预置",
-      "connection-not-ready": "所选的 GitHub 应用连接尚未就绪。连接就绪后，列表将自动刷新。",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "此操作将删除存储库配置，您将丢失所有进度。您确定要丢弃更改吗？",
         "confirm": "是，丢弃",
@@ -14580,20 +14717,21 @@
       },
       "git-protocol-alert-body": "Pure Git 存储库类型使用 <2>Git v2 Smart HTTP 协议</2>与您的 Git 服务器进行通信。不支持 SSH 和旧版 v1 协议。在继续操作之前，请确保您的 Git 服务器支持 Smart HTTP。有关更多详细信息，请参阅<5>使用限制文档</5>。",
       "git-protocol-alert-title": "仅支持 Git v2 Smart HTTP 协议",
-      "github-app-connection-status": "连接状态：",
       "github-app-creation-default-error": "创建连接失败",
       "github-app-creation-failed": "创建 GitHub 应用连接失败",
       "github-app-error-loading": "加载连接失败",
       "github-app-error-required": "连接为必填项",
       "github-app-help-instructions": "创建 GitHub 应用，生成私钥，安装私钥，然后粘贴以下详细信息。<2>查看分步说明</2>",
       "github-app-help-title": "需要帮助创建 GitHub 应用吗？",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "选择现有应用",
-      "github-app-mode-label": "GitHub 应用配置",
       "github-app-mode-new": "连接到新应用",
-      "github-app-no-connections": "未找到 GitHub 关联",
-      "github-app-no-connections-message": "您没有任何现有的 GitHub 应用连接。请选择“连接到新应用”以创建一个连接。",
-      "github-app-select-connection": "选择 GitHub 应用连接",
       "give-feedback-link": "提供反馈",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "配置存储库",
       "step-connect": "连接",
@@ -15069,8 +15207,8 @@
       "restore": "还原"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana 最多可保留 {{limit}} 个最近删除的数据面板。较旧的条目已被永久移除。",
-      "at-limit-title": "已达到已删除数据面板的限制"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近没有删除任何数据面板。",
@@ -15083,6 +15221,10 @@
       "title": "还原数据面板",
       "folder-picker-text_other": "请选择一个文件夹，以还原数据面板。",
       "text_other": "此操作将还原 {{numberOfDashboards}} 个数据面板。"
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {
