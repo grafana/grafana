@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -12,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -789,4 +793,222 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
 	require.NoError(t, err)
 	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
+}
+
+// TestIntegrationGarbageCollectionLock verifies the best-effort singleton
+// lock that ensures only one storage-api replica runs a GC cycle at a time,
+// built on the same lease primitive used for usage-stats flushing and
+// search snapshot build/cleanup locks.
+func TestIntegrationGarbageCollectionLock(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
+
+	countHistoryEntries := func(t *testing.T, ctx context.Context, b *kvStorageBackend) int {
+		count := 0
+		resp := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		resp(func(k string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	setupBackendWithHistory := func(t *testing.T, configs ...func(*KVBackendOptions)) (*kvStorageBackend, context.Context) {
+		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+		storageBackend := setupTestStorageBackend(t, append([]func(*KVBackendOptions){func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+		}}, configs...)...)
+
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend: storageBackend,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
+
+		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
+		require.NoError(t, err)
+		_, err = writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_DELETED,
+			func(o *writeEventOptions) {
+				o.PreviousRV = rv1
+			})
+		require.NoError(t, err)
+		require.Equal(t, 2, countHistoryEntries(t, ctx, storageBackend))
+
+		return storageBackend, ctx
+	}
+
+	withKVLeases := func(opts *KVBackendOptions) {
+		opts.EnableKVLeases = true
+		opts.Holder = "test-holder"
+	}
+
+	t.Run("skips the cycle when another replica holds the lock", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t, withKVLeases)
+
+		// Simulate another replica that is already running a GC cycle.
+		l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = b.leaseManager.Release(ctx, l) })
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		// GC must have been skipped: history entries remain untouched.
+		require.Equal(t, 2, countHistoryEntries(t, ctx, b))
+	})
+
+	t.Run("runs and releases the lock when no other replica holds it", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t, withKVLeases)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		require.Equal(t, 0, countHistoryEntries(t, ctx, b))
+
+		// the lock must be released so a future cycle isn't skipped forever
+		l, err := b.leaseManager.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+		require.NoError(t, err)
+		require.NoError(t, b.leaseManager.Release(ctx, l))
+	})
+
+	t.Run("runs on every replica when leases are disabled", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		b, ctx := setupBackendWithHistory(t)
+		require.Nil(t, b.leaseManager)
+
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+
+		require.Equal(t, 0, countHistoryEntries(t, ctx, b))
+	})
+}
+
+// blockOnFirstDataKeysKV blocks the first Keys call against dataSection made
+// after arm() until release is closed, letting a test pause a GC cycle
+// mid-flight without also blocking on Keys calls made during test setup.
+type blockOnFirstDataKeysKV struct {
+	KV
+	armed   atomic.Bool
+	once    sync.Once
+	release chan struct{}
+	blocked chan struct{}
+}
+
+func (w *blockOnFirstDataKeysKV) arm() {
+	w.armed.Store(true)
+}
+
+func (w *blockOnFirstDataKeysKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if section == dataSection && w.armed.Load() {
+		w.once.Do(func() {
+			close(w.blocked)
+			<-w.release
+		})
+	}
+	return w.KV.Keys(ctx, section, opt)
+}
+
+// TestIntegrationGarbageCollectionLockCancelsOnLeaseLoss verifies that a GC
+// cycle stops once its auto-renewed lease is lost to another replica,
+// instead of continuing to delete under a context nobody still owns the lock for.
+func TestIntegrationGarbageCollectionLockCancelsOnLeaseLoss(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// 10s is the lease package's minimum allowed TTL (lease.Manager.minTTL);
+	// renewInterval = ttl/3, so replica-a's next renewal attempt lands ~3.3s in.
+	origTTL := gcLeaseTTL
+	gcLeaseTTL = 10 * time.Second
+	t.Cleanup(func() { gcLeaseTTL = origTTL })
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
+
+	wrapped := &blockOnFirstDataKeysKV{KV: setupBadgerKV(t), release: make(chan struct{}), blocked: make(chan struct{})}
+	b := setupTestStorageBackend(t, withKV(wrapped), func(opts *KVBackendOptions) {
+		opts.GarbageCollection = GarbageCollectionConfig{
+			Enabled: true, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 24 * time.Hour,
+		}
+		opts.EnableKVLeases = true
+		opts.Holder = "replica-a"
+	})
+
+	rv1, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	_, err = writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_DELETED,
+		func(o *writeEventOptions) { o.PreviousRV = rv1 })
+	require.NoError(t, err)
+
+	countHistory := func() int {
+		count := 0
+		b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})(func(_ string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+	require.Equal(t, 2, countHistory())
+
+	wrapped.arm()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		cutoffTimestamp := time.Now().Add(time.Hour).UnixMicro() // everything eligible for deletion
+		b.runGarbageCollectionWithLock(ctx, cutoffTimestamp)
+	}()
+
+	select {
+	case <-wrapped.blocked:
+	case <-time.After(5 * time.Second):
+		t.Fatal("GC cycle never called Keys(dataSection); block point not reached")
+	}
+
+	// Steal the lease out from under replica-a using a clock-skewed manager,
+	// mirroring how the lease package's own renewal-loss tests force a steal.
+	stealer := lease.NewManager(wrapped, "replica-b", nil,
+		lease.WithGarbageCollectionDisabled,
+		lease.WithInternalNowFunc(func() time.Time { return time.Now().Add(time.Hour) }),
+	)
+	require.Eventually(t, func() bool {
+		l, err := stealer.Acquire(ctx, gcLeaseName, lease.WithTTL(gcLeaseTTL))
+		if err != nil {
+			return false
+		}
+		t.Cleanup(func() { _ = stealer.Release(ctx, l) })
+		return true
+	}, time.Second, 10*time.Millisecond, "replica-b never stole the GC lease")
+
+	// Give replica-a's auto-renew loop time to discover the theft and cancel.
+	time.Sleep(5 * time.Second)
+	close(wrapped.release)
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("runGarbageCollectionWithLock did not return after lease loss")
+	}
+
+	// The cycle must have stopped before deleting anything once its context
+	// was cancelled by the lost lease.
+	require.Equal(t, 2, countHistory())
 }
