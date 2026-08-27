@@ -6311,6 +6311,10 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
+      "diff": {
+        "no-changes": "No changes to show",
+        "pane-header": "Changes"
+      },
       "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",

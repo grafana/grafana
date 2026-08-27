@@ -20,11 +20,40 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
+/**
+ * An action the pane offers alongside the diff, owned entirely by the caller. The pane renders the
+ * label and calls back; it never decides what the action means or whether it is still safe.
+ */
+export interface DashboardDiffViewAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface DashboardDiffViewInput {
+  /** The dashboard spec to diff against, as JSON text. */
+  original: string;
+  /** The dashboard spec to diff, as JSON text. */
+  current: string;
+  /** Pane header. Defaults to "Changes". */
+  title?: string;
+  /** Optional caller-owned action, e.g. reverting the change being shown. */
+  action?: DashboardDiffViewAction;
+}
+
+export interface DashboardEditorAPI {
+  /**
+   * Shows the two given texts in the dashboard sidebar's diff pane. Updates the pane in place when
+   * it is already open. No-op when no dashboard is open.
+   */
+  openDiffView(input: DashboardDiffViewInput): void;
+}
+
 interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;
   dashboardMutationAPI?: DashboardMutationAPI;
+  dashboardEditorAPI?: DashboardEditorAPI;
 }
 
 // We are exposing this through a "type validation", to make sure that all APIs are optional (which helps plugins catering for scenarios when they are not available).
