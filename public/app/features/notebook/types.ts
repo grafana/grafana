@@ -19,6 +19,7 @@ import {
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
   type CodeCellContentKind as GeneratedCodeCellContentKind,
+  type LibraryPanelKind as GeneratedLibraryPanelKind,
   type MarkdownCellContentKind as GeneratedMarkdownCellContentKind,
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
@@ -31,6 +32,13 @@ import {
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
 export const defaultPanelKind = defaultV2PanelKind;
 export type PanelKind = GeneratedPanelKind;
+export type LibraryPanelKind = GeneratedLibraryPanelKind;
+
+/**
+ * The two NotebookElement kinds that carry a panel. vizPanelToSchemaV2 returns exactly this union,
+ * picking the library branch only when the VizPanel carries LibraryPanelBehavior.
+ */
+export type PanelElement = PanelKind | LibraryPanelKind;
 
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
 export type CellContentKind = GeneratedCellContentKind;
