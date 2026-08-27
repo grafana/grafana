@@ -68,7 +68,7 @@ type AppPluginRunnerOptions struct {
 type AppPluginAPIBuilder struct {
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
-	clientV3Loader  v3.ClientV3Loader
+	clientV3        v3.ClientV3
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService // Used with unified storage
@@ -86,7 +86,7 @@ type AppPluginAPIBuilder struct {
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
-	clientV3Loader v3.ClientV3Loader,
+	clientV3 v3.ClientV3,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -97,7 +97,7 @@ func NewAppPluginAPIBuilder(
 	return &AppPluginAPIBuilder{
 		pluginJSON:      plugin.JSONData,
 		client:          client,
-		clientV3Loader:  clientV3Loader,
+		clientV3:        clientV3,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
@@ -155,7 +155,7 @@ func RegisterAPIService(
 	for _, plugin := range pluginDefs {
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
-			clientV3Loader,
+			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
