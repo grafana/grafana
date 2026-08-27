@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Inherited from folder",
-      "locked-aria-label": "Locked permission indicator",
       "remove-aria-label": "Remove permission for {{identifier}}",
       "tooltip-inherited-permission": "Inherited permission",
       "tooltip-provisioned-permission": "Provisioned permission"
