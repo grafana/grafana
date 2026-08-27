@@ -831,7 +831,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 		}
 	}()
 
-	hasQuotaLimitsChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
+	hasQuotaChanged := obj.Status.Quota.MaxRepositories != newQuota.MaxRepositories ||
 		obj.Status.Quota.MaxResourcesPerRepository != newQuota.MaxResourcesPerRepository
 	if obj.Status.Quota != newQuota {
 		patchOperations = append(patchOperations, map[string]interface{}{
@@ -873,7 +873,7 @@ func (rc *RepositoryController) process(key string) (err error) {
 	case shouldGenerateToken:
 		reason = "token_generation"
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
-	case hasQuotaLimitsChanged:
+	case hasQuotaChanged:
 		reason = "quota_changed"
 		logger.Info("quota changed", "quota", newQuota)
 	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
