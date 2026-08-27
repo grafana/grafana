@@ -12,6 +12,7 @@ import {
   setupAlertmanagersStatus,
 } from 'app/features/alerting/unified/mocks/server/configure/admin_config';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import { setupAutoSyncConfigAbsent } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -704,6 +705,26 @@ describe('Step1AlertmanagerResources', () => {
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+      });
+
+      it('disables the auto-sync switch when the Config singleton has not been seeded yet', async () => {
+        grantUserRole('Admin');
+        setupAutoSyncConfigAbsent(server);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // Wait for the (Config-independent) datasource-capability query to settle and recognize
+        // MIMIR_DS as eligible, so a still-loading disable isn't mistaken for the readiness gate.
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
       });
 
       it('enables the auto-sync switch when a Mimir/Cortex datasource is selected', async () => {
