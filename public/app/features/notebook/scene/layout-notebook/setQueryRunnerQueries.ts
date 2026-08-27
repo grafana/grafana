@@ -1,7 +1,7 @@
 import { type DataQuery } from '@grafana/data';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/constants';
 
 /**
  * Writes a new query array onto the runner, keeping the runner-level `datasource` in sync.

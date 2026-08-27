@@ -32,6 +32,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onReplace,
     onReplaceQueries,
     isOpen,
+    onQueryClosed,
   }: {
     dataSource: DataSourceInstanceSettings;
     query: DataQuery;
@@ -44,6 +45,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
     onReplace?: (query: DataQuery) => void;
     onReplaceQueries?: (queries: DataQuery[]) => void;
     isOpen?: boolean;
+    onQueryClosed?: () => void;
   }) => (
     <div data-testid={`row-${query.refId}`}>
       <span data-testid={`resolved-datasource-${query.refId}`}>{dataSource.uid}</span>
@@ -58,7 +60,19 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
           switch datasource {query.refId}
         </button>
       )}
+      {onChangeDataSource && (
+        <button
+          onClick={() =>
+            onChangeDataSource({ uid: 'other-instance-same-type', type: dataSource.type } as DataSourceInstanceSettings)
+          }
+        >
+          switch to same-type datasource {query.refId}
+        </button>
+      )}
       <button onClick={onRunQuery}>run from row {query.refId}</button>
+      {/* Mirrors QueryOperationRow's own onClose — fired only when the user manually collapses an
+          already-open row, never on mount. */}
+      <button onClick={onQueryClosed}>collapse query {query.refId}</button>
       {/* Mirrors the real row's onCopyQuery: hands the same query back to onAddQuery, refId
           untouched — proving the wiring (not this stub) is what assigns a fresh one. */}
       <button onClick={() => onAddQuery(query)}>duplicate query {query.refId}</button>
@@ -110,9 +124,15 @@ function settingsForRef(ref?: DataSourceRef | string) {
   return { ...resolvedSettings, uid: uid ?? resolvedSettings.uid };
 }
 
+let defaultQueryForNewType: Record<string, unknown> | undefined;
+const getDataSourceInstance = jest.fn(async (..._args: unknown[]) => ({
+  getDefaultQuery: () => defaultQueryForNewType,
+}));
+
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => settingsForRef(ref)),
+  getDataSourceInstance: (...args: unknown[]) => getDataSourceInstance(...args),
   useDataSourceInstanceSettings: (ref?: DataSourceRef | string) => ({
     isLoading: false,
     settings: settingsForRef(ref),
@@ -157,6 +177,8 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
 beforeEach(() => {
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
   getVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
+  defaultQueryForNewType = undefined;
+  getDataSourceInstance.mockClear();
 });
 
 describe('PanelQueryEditor', () => {
@@ -234,6 +256,48 @@ describe('PanelQueryEditor', () => {
     );
   });
 
+  it('reinitializes the query from the new datasource’s defaults when the type changes', async () => {
+    defaultQueryForNewType = { legendFormat: 'auto', maxDataPoints: 100 };
+    const { panel, cell } = buildPanel([
+      { expr: 'up', maxDataPoints: 50, datasource: { uid: 'default-uid', type: 'testdata' } },
+    ]);
+    const runner = getQueryRunnerFor(panel)!;
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+
+    await waitFor(() =>
+      expect(runner.state.queries[0]).toEqual(
+        expect.objectContaining({
+          refId: 'A',
+          // Filled in from the new datasource's own defaults, since the row had nothing of its own.
+          legendFormat: 'auto',
+          // The row's own value wins over the default on a colliding key — not a full conversion.
+          maxDataPoints: 50,
+          // The old plugin's own field is left as-is; the new editor simply won't read it.
+          expr: 'up',
+          datasource: { uid: 'other-uid', type: 'other-type' },
+        })
+      )
+    );
+  });
+
+  it('keeps the existing query as-is when switching to a different instance of the same type', async () => {
+    const { panel, cell } = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
+    const runner = getQueryRunnerFor(panel)!;
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'switch to same-type datasource A' }));
+
+    await waitFor(() =>
+      expect(runner.state.queries[0]).toEqual(
+        expect.objectContaining({ expr: 'up', datasource: { uid: 'other-instance-same-type', type: 'testdata' } })
+      )
+    );
+    // No reinitialization needed: the existing query model is still valid for the same plugin type.
+    expect(getDataSourceInstance).not.toHaveBeenCalled();
+  });
+
   // The row's header (including its own datasource picker) is always visible, collapsed or not — so
   // switching datasource there needs the same auto-open as picking one for the first time. Without
   // it, a reader who switches datasource on an already-collapsed row is left looking at a chevron,
@@ -241,6 +305,21 @@ describe('PanelQueryEditor', () => {
   it('opens the row when the datasource is switched on an already-configured row', async () => {
     const { panel, cell } = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
     const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
+
+    await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
+  });
+
+  it('reopens a row that was manually collapsed after it had been opened once, on the next datasource switch', async () => {
+    const { panel, cell } = buildPanel([{ expr: 'up', datasource: { uid: 'default-uid', type: 'testdata' } }]);
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} />);
+
+    await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));
+    expect(await screen.findByTestId('is-open-A')).toHaveTextContent('true');
+
+    await user.click(await screen.findByRole('button', { name: 'collapse query A' }));
     expect(await screen.findByTestId('is-open-A')).toHaveTextContent('false');
 
     await user.click(await screen.findByRole('button', { name: 'switch datasource A' }));

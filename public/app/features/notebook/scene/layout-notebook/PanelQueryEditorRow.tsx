@@ -1,9 +1,20 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
-import { CoreApp, getNextRefId, type DataSourceInstanceSettings, type PanelData, type TimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  getDataSourceRef,
+  getNextRefId,
+  type DataSourceInstanceSettings,
+  type PanelData,
+  type TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { type SceneQueryRunner } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -58,15 +69,26 @@ export function PanelQueryEditorRow({
     );
   };
 
-  const onChangeDataSource = (settings: DataSourceInstanceSettings) => {
-    const updated = { ...query, datasource: { uid: settings.uid, type: settings.type } };
+  const onChangeDataSource = async (settings: DataSourceInstanceSettings) => {
+    setIsOpen(true);
+
+    const dataSourceRef = getDataSourceRef(settings);
+    const previous = query.datasource ? await getDataSourceInstanceSettings(query.datasource) : undefined;
+    const updated =
+      previous?.type === settings.type
+        ? { ...query, datasource: dataSourceRef }
+        : {
+            ...(await getDataSourceInstance(dataSourceRef)).getDefaultQuery?.(CoreApp.Notebook),
+            ...query,
+            datasource: dataSourceRef,
+          };
+
     applyQueries(
       cell,
       queryRunner,
       queries.map((q, i) => (i === index ? updated : q)),
       t('notebooks.history.switch-datasource', 'Switch datasource')
     );
-    setIsOpen(true);
   };
 
   const onReplaceQuery = (replacement: DataQuery) => {
@@ -143,6 +165,9 @@ export function PanelQueryEditorRow({
         isOpen={isOpen}
         onQueryOpenChanged={() => {
           setIsOpen(true);
+        }}
+        onQueryClosed={() => {
+          setIsOpen(false);
         }}
       />
     </div>
