@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import {
@@ -127,7 +127,7 @@ export function PanelQueryEditorRow({
   const isOnlyQuery = queries.length <= 1;
 
   return (
-    <div className={cx(styles.hideDragHandle, isOnlyQuery && styles.hideRemoveButton)}>
+    <div className={isOnlyQuery ? styles.hideRemoveButton : undefined}>
       <QueryEditorRow
         data={data}
         query={query}
@@ -163,6 +163,7 @@ export function PanelQueryEditorRow({
         range={range}
         collapsable
         isOpen={isOpen}
+        draggable={false}
         onQueryOpenChanged={() => {
           setIsOpen(true);
         }}
@@ -176,13 +177,8 @@ export function PanelQueryEditorRow({
 
 function getStyles() {
   return {
-    hideDragHandle: css({
-      '&& div:has(> [data-testid="icon-draggabledots"])': {
-        display: 'none',
-      },
-    }),
     hideRemoveButton: css({
-      '&& div:has(+ div > [data-testid="icon-draggabledots"])': {
+      '&& button:has([data-testid="icon-trash-alt"])': {
         visibility: 'hidden',
       },
     }),
