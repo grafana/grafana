@@ -425,6 +425,10 @@ func newClientMetrics(reg prometheus.Registerer) *clientMetrics {
 			Name:    "resource_server_client_request_duration_seconds",
 			Help:    "Time spent executing requests to the resource server.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"operation", "status_code"}),
 		requestRetries: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "resource_server_client_request_retries_total",

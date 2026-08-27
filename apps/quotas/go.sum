@@ -612,6 +612,8 @@ github.com/grafana/grafana-app-sdk v0.59.0 h1:Fjuvjo1VhsvqrawYKI3ryJCandt1eL7LPw
 github.com/grafana/grafana-app-sdk v0.59.0/go.mod h1:o9Blbhrsbdfmeix1pdLkh7dIjNniQooWuFApHDLhOOA=
 github.com/grafana/grafana-app-sdk/logging v0.59.0 h1:94kc/3jESJuu2uqlqCYIsSl/zIsY3P5xQP/7Q8N0T6k=
 github.com/grafana/grafana-app-sdk/logging v0.59.0/go.mod h1:YL+dFVw92Us2TNoeJbqUOhEEyl1DLdCGaTSwMXMMnJs=
+github.com/grafana/grafana-app-sdk/plugin v0.59.0 h1:TyrEWtRbPa+OkpC3s/3oU8OIEL6waufNtg4hMjpVV6s=
+github.com/grafana/grafana-app-sdk/plugin v0.59.0/go.mod h1:jICP04UCiuFlLcvLNaEVewvSYIonKlDrc4DjuD/78qQ=
 github.com/grafana/grafana-aws-sdk v1.5.1 h1:qvqZwc2tzWCj5UAICmj+dYpa9ZQU9DY+zdWu5xj+vro=
 github.com/grafana/grafana-aws-sdk v1.5.1/go.mod h1:9n7/73i1L6E33ozMk2Nb2s4OoOSWqbmYltIoi/AqgJw=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 h1:moFDZEb2kTIrUo5u3Bekg1weABQQjy1EK1biP4I6L+0=

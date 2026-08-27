@@ -1,6 +1,8 @@
 package search
 
 import (
+	"encoding/json"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -8,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
 func TestSearchRoute(t *testing.T) {
@@ -23,6 +27,13 @@ func TestSearchRoute(t *testing.T) {
 	require.NotNil(t, r.Spec.Post, "search is a POST, so no other method should be described")
 	assert.Nil(t, r.Spec.Get)
 	assert.Equal(t, "listDashboardSearchV0alpha1", r.Spec.Post.OperationId)
+
+	// A documented example is only useful if a client can send it back, so it
+	// goes through the handler that serves the route it is documented on.
+	example := requestExample(t, r)
+	assert.JSONEq(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"`+searchv0.KindSearchQuery+`","limit":10}`, example)
+	w := doRequest(t, h, example)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 }
 
 func TestTrashRoute(t *testing.T) {
@@ -36,6 +47,26 @@ func TestTrashRoute(t *testing.T) {
 	require.NotNil(t, r.Spec.Post, "trash is a POST, so no other method should be described")
 	assert.Nil(t, r.Spec.Get)
 	assert.Equal(t, "listDashboardTrashV0alpha1", r.Spec.Post.OperationId)
+
+	example := requestExample(t, r)
+	assert.JSONEq(t, `{"apiVersion":"`+searchv0.APIVERSION+`","kind":"`+searchv0.KindTrashQuery+`","limit":10}`, example)
+	w := doTrashRequest(t, h, example)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+}
+
+// requestExample is the example body the spec documents for the route, encoded
+// the way a client reading the spec would send it.
+func requestExample(t *testing.T, r Route) string {
+	t.Helper()
+
+	require.NotNil(t, r.Spec.Post.RequestBody)
+	media, ok := r.Spec.Post.RequestBody.Content["application/json"]
+	require.True(t, ok, "the request body describes a JSON payload")
+	require.NotNil(t, media.Example, "the request body carries an example")
+
+	raw, err := json.Marshal(media.Example)
+	require.NoError(t, err)
+	return string(raw)
 }
 
 func TestOperationIDs(t *testing.T) {
