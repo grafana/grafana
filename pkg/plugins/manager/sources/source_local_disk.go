@@ -259,6 +259,7 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 	for _, pluginsPath := range pluginsPaths {
 		if _, err := os.Stat(pluginsPath); errors.Is(err, os.ErrNotExist) {
 			// If the directory does not exist, skip it
+			logger.Info("Skipping plugins directory as it does not exist", "path", pluginsPath)
 			continue
 		}
 		d, err := os.ReadDir(pluginsPath)
@@ -274,6 +275,7 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 			}
 		}
 		slices.Sort(pluginDirs)
+		logger.Info("Scanned plugins directory", "path", pluginsPath, "found", len(pluginDirs))
 
 		for _, dir := range pluginDirs {
 			if cfg.DevMode {
@@ -282,6 +284,13 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 				sources = append(sources, NewLocalSource(class, []string{dir}))
 			}
 		}
+	}
+
+	// A missing or empty plugins directory silently disables every plugin that ships with the
+	// distribution, including the Prometheus and SQL data sources, so report the outcome instead
+	// of returning nothing. Core plugins load from a separate source and are unaffected.
+	if len(pluginsPaths) > 0 && len(sources) == 0 {
+		logger.Warn("No external or bundled plugins found in any configured plugins directory", "paths", pluginsPaths)
 	}
 
 	return sources
