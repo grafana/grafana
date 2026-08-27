@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { type FC, useCallback, useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -44,13 +43,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     setData(panelData?.[queries[0]?.refId]);
   }, [panelData, queries]);
 
-  const {
-    error,
-    loading,
-    value: dataSource,
-  } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+  const { error, isLoading: loading, dataSource } = useDataSourceInstance(dataSourceName);
 
   const handleChangedQuery = useCallback(
     (changedQuery: DataQuery) => {
@@ -73,13 +66,9 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
           datasource: changedQuery.datasource,
           refId: changedQuery.refId,
           editorMode: changedQuery.editorMode,
-          // Instant and range are used by Prometheus queries
           instant: changedQuery.instant,
           range: changedQuery.range,
-          // Query type is used by Loki queries
-          // On first render/when creating a recording rule, the query type is not set
-          // unless the user has changed it betwee range/instant. The cleanest way to handle this
-          // is to default to instant, or whatever the changed type is
+          // Loki queries default to instant until the user explicitly picks range/instant
           queryType: isLoki ? changedQuery.queryType || LokiQueryType.Instant : changedQuery.queryType,
           legendFormat: changedQuery.legendFormat,
         },
@@ -93,9 +82,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
+  if (error || !dataSource || !dataSource?.components?.QueryEditor) {
     const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
     return (
       <div>
