@@ -162,7 +162,7 @@ jobs:
           git diff CHANGELOG.md
 
       - name: "Prettify CHANGELOG.md"
-        run: npx prettier --write CHANGELOG.md
+        run: node .github/actions/changelog/sort.js && npx prettier --write CHANGELOG.md
       # Commit through the GitHub commit API (not `git commit`/`git push`) so GitHub signs
       # the commit, satisfying the repo's required-signatures rule. empty: "true" preserves
       # the previous `git commit --allow-empty` behaviour for runs with no changelog diff.

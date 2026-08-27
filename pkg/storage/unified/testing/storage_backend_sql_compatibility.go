@@ -1808,11 +1808,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Key:   key,
 			Value: []byte(resourceJSON),
 		})
-		if err != nil {
-			return fmt.Errorf("failed to create resource %d: %w", i, err)
-		}
-		if created.Error != nil {
-			return fmt.Errorf("create error for resource %d: %s", i, created.Error.Message)
+		if err := resource.ErrorFromResponse(created.GetError(), err); err != nil {
+			return fmt.Errorf("create error for resource %d: %w", i, err)
 		}
 		resourceVersions[i-1] = created.ResourceVersion
 	}
@@ -1849,11 +1846,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Value:           []byte(updatedJSON),
 			ResourceVersion: resourceVersions[i-1],
 		})
-		if err != nil {
-			return fmt.Errorf("failed to update resource %d: %w", i, err)
-		}
-		if updated.Error != nil {
-			return fmt.Errorf("update error for resource %d: %s", i, updated.Error.Message)
+		if err := resource.ErrorFromResponse(updated.GetError(), err); err != nil {
+			return fmt.Errorf("update error for resource %d: %w", i, err)
 		}
 		resourceVersions[i-1] = updated.ResourceVersion
 	}
@@ -1875,11 +1869,8 @@ func runBackendOperationsWithCounts(ctx context.Context, server resource.Resourc
 			Key:             key,
 			ResourceVersion: resourceVersions[i-1], // Use the resource version from updates
 		})
-		if err != nil {
-			return fmt.Errorf("failed to delete resource %d: %w", i, err)
-		}
-		if deleted.Error != nil {
-			return fmt.Errorf("delete error for resource %d: %s", i, deleted.Error.Message)
+		if err := resource.ErrorFromResponse(deleted.GetError(), err); err != nil {
+			return fmt.Errorf("delete error for resource %d: %w", i, err)
 		}
 	}
 

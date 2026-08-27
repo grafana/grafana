@@ -131,8 +131,7 @@ For more information about dashboard permissions, refer to [Dashboard permission
 ## Restore deleted dashboards
 
 When you delete dashboards, they’re stored in the deletion history for up to 12 months, allowing you to restore them if needed.
-The deletion history can contain a maximum of 1000 dashboards.
-After this limit is reached, the oldest deleted dashboards are permanently removed even if the 12-month expiration period isn't over yet.
+After 12 months, Grafana permanently removes them.
 
 You can access the list of deleted dashboards from the **Dashboards** page by clicking the **Recently deleted** button, or by navigating to **Dashboards > Recently deleted**.
 

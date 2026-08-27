@@ -29,6 +29,12 @@ type TracingConfig struct {
 	ProfilingIntegration bool
 	Insecure             bool
 
+	// FilterOperationalEndpoints, when true, drops server spans for
+	// high-frequency operational endpoints (/metrics, /healthz, /readyz,
+	// /livez, /debug/pprof/*). Disabled by default to preserve existing
+	// behavior; opt in to keep those endpoints out of traces.
+	FilterOperationalEndpoints bool
+
 	// File exporter: captures spans to a local OTLP/JSON file for offline
 	// analysis (e.g. upload to Grafana via Explore) without a tracing backend.
 	FilePath            string
@@ -126,6 +132,8 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	if samplerRemoteURL != "" {
 		tc.SamplerRemoteURL = samplerRemoteURL
 	}
+
+	tc.FilterOperationalEndpoints = section.Key("filter_operational_endpoints").MustBool(false)
 
 	section = cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	tc.enabled = noopExporter
