@@ -15,10 +15,8 @@ minimumReleaseAgeExclude:
   - "@grafana/plugin-e2e"
   - "@grafana/plugin-ui"
   - "@grafana/lezer-logql"
-  # Security backport still inside the release-age window (published 2026-06-26).
-  # Every other patched version pinned in `overrides` below is already older than
-  # the gate, so no further excludes are needed.
-  - js-yaml@3.15.0
+  # Only @grafana-scoped entries are listed: every patched version pinned in
+  # `overrides` below is already older than the gate.
 
 # Link workspace packages by version match, mimicking yarn. The @grafana/*
 # packages reference each other by exact Lerna-managed version (e.g. 13.1.0-pre)
@@ -153,8 +151,9 @@ overrides:
   "debug@^0.7.2": "2.6.9"
   "debug@^0.7.4": "2.6.9"
   "tmp@^0.0.33": "~0.2.1"
-  "js-yaml@4.1.1": "^4.1.0"
-  "js-yaml@=4.1.1": "^4.1.0"
+  # Widens an exact 4.1.1 pin to a range, and clears the !!omap quadratic-CPU
+  # advisory in the same selector (patched in 4.3.1).
+  "js-yaml@>=4.0.0 <4.3.1": "^4.3.1"
 
   # --- Nested overrides (yarn "/" separator becomes ">" in pnpm) ---
   "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
@@ -201,7 +200,7 @@ overrides:
   jspdf: "4.2.1"
   nodemailer: "9.0.3"
   linkify-it: "5.0.2"
-  js-yaml@<3.15.0: "3.15.0"
+  "js-yaml@<3.15.1": "^3.15.1"
   undici@<6.28.0: "6.28.0"
   tar@<=7.5.20: ^7.5.21
   uuid@<11.1.1: ^11.1.1
@@ -214,11 +213,13 @@ overrides:
   "brace-expansion@>=2.0.0 <2.1.4": "^2.1.4"
   "brace-expansion@>=3.0.0 <5.0.9": "^5.0.9"
   "fast-uri@<3.1.5": "^3.1.5"
+  "nanoid@<3.3.18": "^3.3.18"
   # socket.io (via @rsdoctor/webpack-plugin) allows the vulnerable 4.2.6.
   "socket.io-parser@<4.2.7": "^4.2.7"
   # Only the 4.x line is affected; 2.x/3.x consumers must keep their own major.
   "svgo@>=4.0.0 <4.0.2": "^4.0.2"
   "protobufjs@<7.6.5": "^7.6.5"
+  "react-router-dom@>=6.30.2 <6.30.5": "^6.30.5"
   # nx 22.7.2 (the `nx graph` CORS fix) exact-pins these three at vulnerable
   # versions where 22.5.4 used floating ranges. All three bumps stay within the
   # same major, and the target versions are already in the tree via other consumers.
@@ -226,8 +227,7 @@ overrides:
   "form-data@>=4.0.0 <4.0.6": "^4.0.6"
   "yaml@>=2.0.0 <2.8.3": "^2.8.3"
   # hono/@hono/node-server come from @modelcontextprotocol/sdk via @grafana/llm.
-  # The sdk pins `@hono/node-server: ^1.19.9` and that advisory is only patched in
-  # 2.x, so it stays open until the sdk bumps. hono's remaining CORS ReDoS fix
-  # (4.12.34) is still inside minimumReleaseAge, and hono is not @grafana-scoped,
-  # so it cannot be excluded from the gate.
-  "hono@<4.12.27": "^4.12.27"
+  # The node-server path-traversal fix was backported to 1.19.15, so it now fits
+  # inside the `^1.19.9` range the sdk pins.
+  "hono@<4.12.34": "^4.12.34"
+  "@hono/node-server@<1.19.15": "^1.19.15"
