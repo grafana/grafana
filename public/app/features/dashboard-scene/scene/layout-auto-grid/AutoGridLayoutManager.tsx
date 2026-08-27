@@ -31,7 +31,7 @@ import {
   useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -340,16 +340,6 @@ export class AutoGridLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

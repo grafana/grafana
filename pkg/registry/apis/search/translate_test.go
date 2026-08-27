@@ -278,6 +278,15 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 			wantField: "where.filter.operator",
 		},
 		{
+			// A field holding one value cannot hold two, so this can never match. An
+			// empty result would not tell the caller that.
+			name: "All with several values on a field holding a single value",
+			mutate: func(q *searchv0.SearchQuery) {
+				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "All", Values: []string{"a", "b"}}}
+			},
+			wantField: "where.filter.operator",
+		},
+		{
 			name: "filter wildcard value",
 			mutate: func(q *searchv0.SearchQuery) {
 				q.Where = &searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "In", Values: []string{"a*"}}}
@@ -642,6 +651,67 @@ func TestTranslateSearchQuery_ContinueToken(t *testing.T) {
 	req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
 	require.Empty(t, errs)
 	assert.Equal(t, []string{"cursor-value"}, req.SearchAfter)
+}
+
+// All asks the field to hold every value, which the backend expresses as "=".
+func TestTranslateSearchQuery_FilterAll(t *testing.T) {
+	t.Run("several values on a list field", func(t *testing.T) {
+		q := searchQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: "tags", Operator: "All", Values: []string{"prod", "eu-west"}},
+		})
+		req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "tags", req.Options.Fields[0].Key)
+		assert.Equal(t, "=", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "eu-west"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("one value means the same as In", func(t *testing.T) {
+		q := searchQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: "folder", Operator: "All", Values: []string{"platform"}},
+		})
+		req, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+	})
+}
+
+// Tags on trash are what prompted All, so check the shared validators give it
+// there too.
+func TestTranslateTrashQuery_FilterAll(t *testing.T) {
+	t.Run("several tags", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "All", Values: []string{"prod", "team-a"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "=", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"prod", "team-a"}, req.Options.Fields[0].Values)
+	})
+
+	t.Run("several folders is rejected", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldFolder, Operator: "All", Values: []string{"a", "b"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		assert.Nil(t, req)
+		require.NotEmpty(t, errs)
+		assert.Equal(t, "where.filter.operator", errs[0].Field)
+		assert.Contains(t, errs[0].Detail, trashFieldFolder)
+	})
+
+	t.Run("one tag means the same as In", func(t *testing.T) {
+		q := trashQuery(&searchv0.WhereNode{
+			Filter: &searchv0.FilterPredicate{Field: trashFieldTags, Operator: "All", Values: []string{"prod"}},
+		})
+		req, errs := TranslateTrashQuery(q, dashboardsGVR, "default")
+		require.Empty(t, errs)
+		require.Len(t, req.Options.Fields, 1)
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+	})
 }
 
 // Boolean and numeric filters reach the backend as the strings it parses back,

@@ -79,6 +79,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		analyticsSection, _ := iniFile.NewSection("analytics")
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+		_, _ = analyticsSection.NewKey("plugin_import_telemetry_packages", "tenant-router,tenant-history")
 
 		config.ApplyOverrides(iniFile, log.New("test"), false)
 
@@ -203,6 +204,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 	newCfg := func() *setting.Cfg {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com"
+		cfg.PluginImportTelemetryPackages = []string{"react-router-dom", "react-router"}
 		return cfg
 	}
 
@@ -222,6 +224,7 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Nil(t, config.FullFrontendSettings)
 		// The legacy per-request settings are still populated.
 		assert.Equal(t, "https://grafana.example.com", config.AppURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.PluginImportTelemetryPackages)
 	})
 
 	t.Run("builds full frontend settings when flag enabled", func(t *testing.T) {
@@ -242,5 +245,6 @@ func TestNewFSRequestConfig(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com", config.FullFrontendSettings.AppUrl)
 		// The plugins CDN base URL is sourced from the plugins CDN service.
 		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
+		assert.Equal(t, []string{"react-router-dom", "react-router"}, config.FullFrontendSettings.PluginImportTelemetryPackages)
 	})
 }

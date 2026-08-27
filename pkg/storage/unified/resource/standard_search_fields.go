@@ -134,7 +134,7 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 		// A string, unlike deletion_time: resource versions are snowflake ids around
 		// 1.8e18, where a float64 can only represent multiples of 256, so a number
-		// would come back rounded. Restore submits this value, so it has to be exact.
+		// would come back rounded. It has to stay exact to be usable for a restore.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
 			Type:         SearchFieldTypeString,
