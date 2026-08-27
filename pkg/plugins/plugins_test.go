@@ -56,18 +56,15 @@ var _ v3.ClientV3 = (*fakeClientV3)(nil)
 
 type fakeClientV3 struct{}
 
-// AdmissionReview implements [v3.ClientV3].
-func (f *fakeClientV3) AdmissionReview(ctx context.Context, in *pluginv3.AdmissionReviewRequest, opts ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (*fakeClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
 	panic("unimplemented")
 }
 
-// CallRoute implements [v3.ClientV3].
-func (f *fakeClientV3) CallRoute(ctx context.Context, in *pluginv3.CallRouteRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (*fakeClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	panic("unimplemented")
 }
 
-// ConvertObjects implements [v3.ClientV3].
-func (f *fakeClientV3) ConvertObjects(ctx context.Context, in *pluginv3.ConvertObjectsRequest, opts ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
+func (*fakeClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest, ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
 	panic("unimplemented")
 }
 

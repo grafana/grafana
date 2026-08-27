@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
-	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -804,7 +803,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	// record metrics at the end
 	defer func() {
-		code := vectorSearchResponseCode(resp, retErr)
+		code := codes.OK
+		if retErr != nil {
+			code = status.Code(retErr)
+		} else if resp != nil && resp.Error != nil {
+			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
 				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -906,31 +910,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
-}
-
-// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
-// on the search-duration metric. ErrorResult carries HTTP-style codes; an
-// unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
-	switch {
-	case retErr != nil:
-		return status.Code(retErr)
-	case resp == nil || resp.Error == nil:
-		return codes.OK
-	}
-	switch resp.Error.Code {
-	case http.StatusBadRequest:
-		return codes.InvalidArgument
-	case http.StatusNotFound:
-		return codes.NotFound
-	case http.StatusForbidden:
-		return codes.PermissionDenied
-	case http.StatusUnauthorized:
-		return codes.Unauthenticated
-	default:
-		return codes.Unknown
-	}
 }
 
 // validateVectorSearchRequest returns a non-nil response with a

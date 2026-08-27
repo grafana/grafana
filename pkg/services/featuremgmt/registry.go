@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -974,7 +974,7 @@ var (
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -2536,6 +2536,15 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "dashboard.recentlyDeletedViaTrash",
+			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:            "deletedFolderResourceCleanup",
 			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
 			Stage:           FeatureStageExperimental,
@@ -3285,15 +3294,6 @@ var (
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
-		},
-		{
-			Name:         "tracesDrilldown.useValueTypeFiltering",
-			Description:  "Enables value type filtering in Traces Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Generate:     Generate{React: true},
-			Expression:   "false",
-			HideFromDocs: true,
 		},
 		{
 			Name:         "grafana.dashboardsAutoHeightPanels",
