@@ -961,9 +961,6 @@
       "used-by-rules_other": "{{count}}件のアラートルールで使用"
     },
     "contact-points-filter": {
-      "aria-label-clear": "クリア",
-      "aria-label-search-contact-points": "連絡先を検索",
-      "clear": "消去",
       "label-search-by-name-or-type": "名前または種類で検索",
       "placeholder-search": "検索"
     },
@@ -1617,6 +1614,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1688,6 @@
       "review": {
         "autosync-badge": "",
         "back": "アラートルール",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "フィルター",
         "folder": "ターゲットフォルダ",
@@ -1706,7 +1706,6 @@
         "routing": "通知ルーティング",
         "routing-none": "ポリシーツリーが選択されていません",
         "routing-tree": "ポリシーツリー：{{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "アラートルールはインポートされません。",
         "rules-title": "アラートルール",
         "skipped": "スキップ済み",
@@ -1731,14 +1730,14 @@
         "yaml-description": "Prometheus YAMLファイルからルールをインポートします。"
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanagerデータソース",
+        "datasource-autosync-badge": "",
         "heading": "通知リソースをインポート",
         "next-disabled-tooltip": "必須フィールドに入力し、検証に合格するまで待ってから続行してください。",
         "no-datasources": "Alertmanagerのデータソースが見つかりません",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "通知リソースをインポートする権限がありません。<strong>alerting.notifications:write</strong>権限が必要です。この手順はスキップできます。",
         "no-permission-title": "権限が不十分です",
         "policy-tree-autosync-disabled": "",
@@ -3227,6 +3226,7 @@
         "disable-confirm-body-generic": "無効にすると、継続的な同期が停止します。後でデータソースを再度選択すると、再び有効にできます。",
         "disable-confirm-title": "Mimir Alertmanagerの自動同期を無効にしますか？",
         "disable-success": "Mimir Alertmanagerの自動同期を無効にしました",
+        "not-ready-body": "",
         "operator-managed-info": "この値はgrafana.iniの<1>[unified_alerting] external_alertmanager_uid</1>キーで設定されており、UIから変更することはできません。設定ファイルを編集してGrafanaを再起動するか、キーを削除すると、ここから同期を管理できるようになります。",
         "operator-managed-title": "オペレーターによって管理されています",
         "orphan-warning": "設定されたデータソースUID、{{uid}}は利用できません。続行するには、同期を無効にするか、データソースを復元してください。",
@@ -3234,6 +3234,7 @@
         "picker-empty": "利用可能なMimirまたはCortexのデータソースがありません",
         "picker-label": "データソース",
         "picker-placeholder": "MimirまたはCortex Alertmanagerのデータソースを選択…",
+        "read-error-message": "",
         "save-disabled-no-selection": "保存を有効にするには、MimirまたはCortex Alertmanagerのデータソースを選択してください。",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanagerの自動同期の保存に失敗しました",
@@ -3849,6 +3850,8 @@
       "title-notification-policies": "通知ポリシー"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "リソースのインポートに失敗しました",
@@ -4358,7 +4361,7 @@
       "cancel-button": "キャンセル",
       "confirmation-text": "削除",
       "delete-button": "削除",
-      "delete-modal-restore-dashboards-common": "削除されたダッシュボードは最大12か月間履歴に保存されます。削除権限を持つユーザーは、削除したダッシュボードを復元できます。また、管理者は、どのユーザーが削除したダッシュボードでも復元できます。履歴に保存されるのは、最大1,000件のダッシュボードです。制限に達した場合、古いダッシュボードは所定の期間より早めに削除される可能性があります。",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "この操作により、選択したフォルダがすぐに削除されます。",
       "delete-modal-restore-dashboards-suffix-folder": "フォルダは復元できません。",
       "delete-modal-title": "削除",
@@ -4379,8 +4382,8 @@
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
       "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました",
       "delete-modal-folder-empty_other": "選択したフォルダは空です",
-      "delete-modal-folder-not-empty_other": "選択したフォルダには、削除される他のリソースが含まれています",
-      "move-modal-folder-not-empty_other": "選択したフォルダには、一緒に移動される他のリソースが含まれています"
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近削除された"
@@ -4409,7 +4412,7 @@
       "error-deleting-resources": "リソースの削除中にエラーが発生しました",
       "success-title": "リソースを削除しました",
       "folder-empty_other": "選択したフォルダは空です",
-      "folder-not-empty_other": "選択したフォルダには、削除される他のリソースが含まれています"
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "キャンセル",
@@ -4430,7 +4433,7 @@
       "move-warning-tooltip": "プロビジョニングされたリソースは、プロビジョニングされたフォルダ内にのみ移動でき、ローカルリソースはローカルフォルダにのみ移動できます。",
       "success-title": "リソースを移動しました",
       "target-folder": "移動先フォルダ",
-      "folder-not-empty_other": "選択したフォルダには、一緒に移動される他のリソースが含まれています"
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "ダッシュボード"
@@ -4464,7 +4467,7 @@
       "button-deleting": "削除中…",
       "delete-warning": "これにより、このフォルダとその配下のすべてのフォルダが削除されます。",
       "folder-empty": "選択したフォルダは空です",
-      "folder-not-empty": "選択したフォルダには、削除される他のリソースが含まれています",
+      "folder-not-empty": "",
       "missing-info": "必須フィールドが不足しています",
       "success-message": "フォルダが正常に削除されました"
     },
@@ -6252,9 +6255,9 @@
         "name-builtin": "{{annoName}}（組み込み）",
         "name-disabled": "（無効）{{annoName}}",
         "reorder-description": "注釈リストの順序を変更",
-        "title-above-dashboard-count_other": "ダッシュボード上部（{{count}}）",
-        "title-controls-menu-count_other": "コントロールメニュー（{{count}}）",
-        "title-hidden-count_other": "非表示（{{count}}）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "注釈",
@@ -6267,7 +6270,6 @@
         "tooltip": "ダッシュボードオプション",
         "variables": "変数"
       },
-      "drag-to-reorder": "ドラッグして順序を変更",
       "edit-schema": {
         "apply-button": "変更を適用",
         "apply-button-disabled-tooltip": "変更を適用する前に、検証エラーを修正してください",
@@ -6330,10 +6332,10 @@
         "add-filter": "フィルターを追加",
         "reorder-description": "フィルターリストの順序を変更",
         "title": "フィルター",
-        "tooltip": "フィルターの概要",
-        "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
-        "title-controls-menu_other": "コントロールメニュー（{{count}}）",
-        "title-hidden_other": "非表示（{{count}}）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "フィルターの概要"
       },
       "group": {
         "different-parents": "",
@@ -6345,8 +6347,8 @@
         "add-link": "リンクを追加",
         "new-link": "新しいリンク",
         "reorder-description": "リンクリストの順序を変更",
-        "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
-        "title-controls-menu_other": "コントロールメニュー（{{count}}）"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "コンテンツの概要",
@@ -6385,7 +6387,6 @@
       "section-variables": {
         "title": "変数"
       },
-      "select": "選択",
       "snapshot": {
         "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
@@ -6445,10 +6446,10 @@
         "reorder-description": "変数リストの順序を変更",
         "select-type": "変数の種類を選択",
         "select-type-card-tooltip": "クリックして種類を選択",
-        "top-placement-default": "ダッシュボード上部",
-        "title-controls-menu_other": "コントロールメニュー（{{count}}）",
-        "title-hidden_other": "非表示（{{count}}）",
-        "title-top-placement_other": "{{placement}}（{{count}}）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "無効",
@@ -6814,6 +6815,11 @@
       "title": "ダッシュボードリンクがまだ追加されていません"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -6962,8 +6968,12 @@
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7114,6 +7124,11 @@
     },
     "description-label": {
       "description": "説明"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7393,6 +7408,9 @@
       "confirmText-delete-all": "すべて削除",
       "delete-all-transformations": "すべての変換を削除",
       "title-delete-all-transformations": "すべての変換を削除しますか？"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "テーブル表示を切り替え",
@@ -7741,10 +7759,31 @@
       "save-dashboard": "ダッシュボードを保存",
       "title-unsaved-changes": "未保存の変更"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7755,6 +7794,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "この名前のグローバル変数またはフォルダ変数が存在するため、このダッシュボード変数で上書きされます。"
@@ -8919,6 +8965,7 @@
       "label-stack-trace": "スタックトレース",
       "label-summary-attributes": "概要属性",
       "label-warnings": "警告",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "子カウント：",
@@ -9008,15 +9055,16 @@
       "split-widen": "ペインを広げる"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "共有トレースオプションメニューを開きます",
+      "aria-label-share-dropdown": "",
       "critical-path": "クリティカルパス",
       "critical-path-tooltip": "クリティカルパスのスパンを選択します。これは、トレースの最短期間を決定する依存タスクの最長シーケンスです。",
       "duration": "期間",
       "errors": "エラー",
       "errors-tooltip": "ステータスがエラーになっているスパンを選択します。",
       "export-started": "エクスポートが開始されました",
+      "feedback-group": "",
       "filters": "フィルター",
-      "give-feedback": "フィードバック",
+      "give-feedback-item": "",
       "high-latency": "高レイテンシー",
       "high-latency-tooltip": "トレース内で最長のスパンの10%を選択します（p90）。",
       "link-copied": "リンクをクリップボードにコピーしました",
@@ -9024,13 +9072,12 @@
       "path": "パス",
       "route": "経路",
       "services": "サービス",
-      "share": "共有",
       "share-copy-link": "リンクをコピー",
       "share-export-json": "JSONとしてエクスポート",
-      "share-tooltip": "トレースを共有",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "開始時間",
       "target": "ターゲット",
-      "title-share-thoughts-about-tracing-grafana": "Grafanaのトレース機能についてのご意見をお聞かせください。",
       "tooltip-url": "{{route}}または{{url}}または{{target}}または{{path}}",
       "trace-id": "トレースID",
       "url": "URL"
@@ -9040,6 +9087,10 @@
         "body": "このトレースはもともとAdaptive Tracesによって破棄されましたが、復元されました。復元されたトレースはTraceQLクエリには含まれず、トレースIDでのみ検索できます。詳細については、<2>ドキュメント</2>をご覧ください。",
         "title": "適応型トレースによって復元されたトレース"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "クリップボードにコピー",
       "attribute-plugin-promo": {
         "learn-more": "詳しく見る"
@@ -9047,6 +9098,18 @@
       "database-observability-promo": {
         "body": "Database Observabilityでは、ビジュアルな実行プラン、待機イベント、クエリサンプルを確認でき、トレーススパンだけでは分からない問題の診断に役立ちます。",
         "title": "遅いクエリをより迅速に見つける"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "データなし",
       "tooltip-copy-icon": "コピー済み"
@@ -12540,7 +12603,7 @@
       "title": "プロフィール"
     },
     "recently-deleted": {
-      "subtitle": "削除されたダッシュボードは、最大12か月間、またはダッシュボードの履歴制限（1,000件）に達するまで保持されます。",
+      "subtitle": "",
       "title": "最近削除された"
     },
     "recorded-queries": {
@@ -12827,6 +12890,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12843,6 +12907,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12976,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13735,10 +13808,11 @@
       "button-save": "保存",
       "button-saving": "保存中…",
       "description-commit-message-template": "誰かがリソースを保存、移動、名前変更、または削除し、コメントフィールドを空白のままにした場合に使用されるコミットメッセージ。プレースホルダー、操作ごとに入力： {{actionVar}}（作成/更新/削除/移動/名前変更）、{{kindVar}}（ダッシュボード/フォルダ）、{{idVar}}（一意のリソースID）、{{titleVar}}、{{userNameVar}}（表示名）、{{userLoginVar}}（ユーザー名）、{{userEmailVar}}。内蔵のデフォルトメッセージを使用するには、空白のままにしてください。",
-      "description-connection": "使用するGitHubアプリ接続を選択します",
+      "description-connection": "",
       "description-enabled": "自動取得を有効にすると、以下の対象タイプは変更できなくなります。",
       "description-read-only": "Grafanaではリソースを変更できません。",
       "description-title": "わかりやすい設定名",
+      "error-connection-missing": "",
       "error-connection-required": "接続が必要です",
       "error-fetch-branches": "",
       "error-required": "このフィールドは必須です。",
@@ -13746,7 +13820,7 @@
       "error-save-repository": "リポジトリ設定の保存に失敗しました",
       "label-automatic-pulling": "自動取得",
       "label-commit-message-template": "コミットメッセージテンプレート",
-      "label-connection": "GitHubアプリ接続",
+      "label-connection": "",
       "label-enabled": "有効化",
       "label-interval-seconds": "間隔（秒）",
       "label-repository-type": "リポジトリタイプ",
@@ -13776,38 +13850,53 @@
       "text-repository-not-ready": "リポジトリへの接続中に問題が発生しました。引き続き、ブランチ名を手動で入力できます。"
     },
     "connection": {
-      "disconnected-message": "このGitHubアプリ接続はアクセスできなくなりました。アプリがアンインストールされたか、リポジトリへのアクセスが取り消された可能性があります。",
-      "disconnected-title": "接続が切断されました"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "接続が削除されました",
       "alert-connection-saved": "接続が保存されました",
       "alert-connection-updated": "接続が更新されました",
-      "available-repositories": "この接続には、次のリポジトリへのアクセス権限があります",
+      "available-repositories-loading": "",
       "back-to-connections": "接続に戻る",
       "button-save": "保存",
       "button-saving": "保存中…",
       "create-new-connection-button": "接続を作成",
       "creating-connection-button": "接続を作成中...",
       "description-app-id": "GitHubアプリのID",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "この接続のオプションの説明",
       "description-installation-id": "GitHubアプリのインストールID",
       "description-private-key": "PEM形式のGitHubアプリの秘密鍵",
       "description-provider": "プロバイダータイプを選択",
       "description-title": "この接続のわかりやすい名前",
       "description-webhook-disabled": "有効にすると、GitHubアプリはwebhooks:write権限を必要とせず、GrafanaはWebhookイベントを登録または受信しません。パブリックインターネットからGrafanaに接続できない場合に使用してください。",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "接続の削除に失敗しました",
       "error-required": "このフィールドは必須です",
       "error-save-connection": "接続の保存に失敗しました",
       "error-submit": "接続の保存に失敗しました",
       "grafana-repositories": "この接続を使用するリポジトリ",
       "label-app-id": "GitHubアプリID",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "説明",
       "label-installation-id": "GitHubインストールID",
       "label-private-key": "秘密鍵（PEM）",
       "label-provider": "プロバイダー",
       "label-title": "タイトル",
       "label-webhook-disabled": "Webhook統合を無効化",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "接続が見つかりません",
       "not-found-description": "お探しの接続は存在しません。",
       "page-subtitle": "外部プロバイダーで認証するための接続設定を行う",
@@ -13816,12 +13905,18 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "オプションの説明",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "ご利用のGitHubアプリ"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "読み込み中...",
       "no-repos": "リポジトリがありません",
-      "repos-truncated_other": "{{shown}}件表示中、ほか{{count}}件"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "接続を追加",
@@ -13830,6 +13925,8 @@
       "delete-confirm": "本当にこの接続を削除してもよろしいですか？この操作は元に戻せません。",
       "delete-title": "接続を削除する",
       "error-loading": "接続の読み込みに失敗しました",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "接続が設定されていません",
       "no-results": "クエリに一致する結果がありません",
       "search-placeholder": "接続を検索",
@@ -14197,6 +14294,36 @@
         "subtitle": "外部ストレージを通じてGrafanaインスタンス全体を同期・管理したい場合は、このオプションを使用してください。"
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "Gitワークフローを介した保存、移動、削除は利用できません。管理者の場合は、ダッシュボード上部の警告を使用してこのダッシュボードを解除または削除するか、Grafana管理者にお問い合わせください。",
       "title": "プロビジョニングリポジトリは存在しません"
@@ -14416,6 +14543,9 @@
       },
       "title-error-saving-file": "ファイル保存時のエラー"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "キャンセル",
       "button-delete": "削除",
@@ -14529,6 +14659,7 @@
     },
     "validation": {
       "hidden-characters": "このフィールドには、コピー＆ペーストによって挿入された可能性のある非表示の文字が含まれています。値を再入力するか、削除してから再試行してください。",
+      "invalid-url": "",
       "url-with-credentials": "リポジトリURLにユーザー名またはパスワードを含めることはできません。URLから認証情報を削除し、代わりにトークンフィールドを使用してください。"
     },
     "warning-title-default": "警告",
@@ -14559,11 +14690,16 @@
       "alert-point-permissions": "きめ細かい権限設定はサポートされていません。デフォルトの権限設定が適用されます。管理者、編集者、および閲覧者のロールは、標準のアクセスレベルで保持されます。",
       "alert-point-unsupported": "プロビジョニングされたフォルダでは、アラートとライブラリパネルはサポートされていません。",
       "alert-title": "重要：続行する前にGit Syncの制限事項を確認してください",
-      "auth-type-description": "どちらの方法でも、GitHubリポジトリへの安全なアクセスが可能です。ワークフローとセキュリティ要件に最適な方法を選択してください。",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "GitHubアプリを使用して、セキュリティとチームコラボレーションを強化します。本番環境での使用を推奨します。",
       "auth-type-github-app-label": "GitHubアプリで接続",
       "auth-type-label": "認証方法",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "パーソナルアクセストークンを使用してGitHubで認証します。個人での使用やテストに適しています。",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "パーソナルアクセストークンで接続",
       "button-cancel": "キャンセル",
       "button-cancelling": "キャンセル中…",
@@ -14571,7 +14707,8 @@
       "button-start": "同期を開始",
       "connect-step": "接続",
       "connect-step-local": "ファイルのプロビジョニング",
-      "connection-not-ready": "選択したGitHubアプリ接続の準備ができていません。接続の準備が整い次第、リストが更新されます。",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "この操作によりリポジトリの設定が削除され、すべての変更内容が失われます。本当に破棄してもよろしいですか？",
         "confirm": "はい、破棄します",
@@ -14580,20 +14717,21 @@
       },
       "git-protocol-alert-body": "Pure Gitリポジトリタイプは、<2>Git v2 Smart HTTPプロトコル</2>を使用してGitサーバーと通信します。SSHおよび従来のv1プロトコルはサポートされていません。続行する前に、お使いのGitサーバーがSmart HTTPをサポートしていることを確認してください。詳細については、<5>使用制限に関するドキュメント</5>をご覧ください。",
       "git-protocol-alert-title": "Git v2 Smart HTTPプロトコルのみがサポートされています",
-      "github-app-connection-status": "接続状態：",
       "github-app-creation-default-error": "接続の作成に失敗しました",
       "github-app-creation-failed": "GitHubアプリ接続の作成に失敗しました",
       "github-app-error-loading": "接続の読み込みに失敗しました",
       "github-app-error-required": "接続が必要です",
       "github-app-help-instructions": "GitHubアプリを作成し、秘密鍵を生成してインストールし、以下の詳細を貼り付けます。<2>詳細な手順を表示</2>",
       "github-app-help-title": "GitHubアプリの作成に関してサポートが必要ですか？",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "既存のアプリを選択",
-      "github-app-mode-label": "GitHubアプリの設定",
       "github-app-mode-new": "新しいアプリに接続",
-      "github-app-no-connections": "GitHub接続が見つかりません",
-      "github-app-no-connections-message": "既存のGitHubアプリ接続がありません。「新しいアプリに接続」を選択して作成してください。",
-      "github-app-select-connection": "GitHubアプリ接続を選択します",
       "give-feedback-link": "フィードバックを送信",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "同期する内容を選択",
       "step-configure-repo": "リポジトリを設定",
       "step-connect": "接続",
@@ -15069,8 +15207,8 @@
       "restore": "復元"
     },
     "limit-banner": {
-      "at-limit-body": "Grafanaでは、最近削除したダッシュボードを最大{{limit}}件まで保持します。古いエントリは完全に削除されます。",
-      "at-limit-title": "削除したダッシュボードの上限に達しました"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "最近ダッシュボードを削除していません。",
@@ -15083,6 +15221,10 @@
       "title": "ダッシュボードを復元",
       "folder-picker-text_other": "ダッシュボードを復元するフォルダを選択してください。",
       "text_other": "この操作により、{{numberOfDashboards}}のダッシュボードが復元されます。"
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {

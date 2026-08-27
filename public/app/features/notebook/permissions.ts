@@ -16,3 +16,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 export function canEditNotebooks(): boolean {
   return contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 }
+
+/**
+ * Delete is a separate action from write: a user who may edit a notebook is not automatically allowed
+ * to remove it. Org-level for the same reason canEditNotebooks is — the list carries no per-resource
+ * access info, so there is nothing to check a single notebook against.
+ */
+export function canDeleteNotebooks(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.DashboardsDelete);
+}
