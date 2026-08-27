@@ -878,6 +878,41 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	assert.Equal(t, snowflakeRV(150), vec.latestRV)
 }
 
+// Byte-triggered flushes (batch bytes cross maxStartupBatchBytes) must
+// preserve the count-flush invariants: every event processed, cursor
+// advanced once — even in DESC order, where a per-flush advance would
+// drop later, lower-RV batches.
+func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
+	prevCount := startupBatchSize
+	startupBatchSize = 1000 // high enough that only the byte cap can fire
+	prevBytes := maxStartupBatchBytes
+	maxStartupBatchBytes = 1 // any non-empty value trips it → flush per event
+	t.Cleanup(func() {
+		startupBatchSize = prevCount
+		maxStartupBatchBytes = prevBytes
+	})
+
+	st := &fakeStorage{}
+	// Strictly descending RV order, mirroring the real SQL backend.
+	for i := 5; i >= 0; i-- {
+		rv := snowflakeRV(int64(100 + i*10))
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	s, _ := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+
+	require.Len(t, vec.upserts, 6, "every event processed across byte-triggered flushes")
+	assert.Equal(t, snowflakeRV(150), vec.latestRV, "cursor advances to highest RV")
+	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
+	assert.Equal(t, 0, s.pendingLen(), "queue empty after startup")
+}
+
 // TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
 // pins the recovery behavior when SetLatestRV fails after embeds
 // succeed. Without re-enqueueing the embedded events the cursor stays
