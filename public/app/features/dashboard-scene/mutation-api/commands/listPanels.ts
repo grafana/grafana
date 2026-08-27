@@ -17,7 +17,8 @@ import { type DataFrame, type DataQueryError, LoadingState } from '@grafana/data
 import { sceneGraph, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getSourceDataProvider, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getSourceDataProvider } from '../../utils/getSourceDataProvider';
+import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import type {
   FrameSchema,
   FieldSchema,

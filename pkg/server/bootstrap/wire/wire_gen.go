@@ -987,7 +987,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, decryptService, tracingService, featureToggles, cfg)
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, resourceClient, decryptService, tracingService, featureToggles, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1754,7 +1754,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, decryptService, tracingService, featureToggles, cfg)
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, resourceClient, decryptService, tracingService, featureToggles, cfg)
 	if err != nil {
 		return nil, err
 	}

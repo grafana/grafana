@@ -30,8 +30,6 @@ describe('getSnapshotSourceData', () => {
     const transformer = new SceneDataTransformer({ transformations: [] });
     transformer.setState({ data: panelData('transformed') });
 
-    // A snapshot is written alongside the panel's transformations, so transformed frames here would
-    // run them a second time on open. No frames is recoverable; silently wrong frames is not.
     expect(getSnapshotSourceData(transformer)).toBeUndefined();
   });
 });

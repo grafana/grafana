@@ -11,15 +11,12 @@ import { cloneDeep, isArray, mergeWith } from 'lodash';
 import type * as z from 'zod';
 
 import { type FieldConfigSource } from '@grafana/data';
-import { SceneDataTransformer } from '@grafana/scenes';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
-import { transformDataTopic } from '../../serialization/transformToV2TypesUtils';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { serializeResultLayoutItem } from './panelSerialization';
@@ -42,6 +39,34 @@ function mergeReplacingArrays(
   });
 }
 
+interface DataTransformerLike {
+  state: { transformations?: unknown[]; $data?: unknown };
+  setState: (state: { transformations?: unknown[] }) => void;
+  reprocessTransformations: () => void;
+}
+
+interface RawLinksHolder {
+  state: { rawLinks: unknown };
+  setState: (state: Record<string, unknown>) => void;
+}
+
+function hasRawLinks(item: unknown): item is RawLinksHolder {
+  if (!item || typeof item !== 'object' || !('state' in item) || !('setState' in item)) {
+    return false;
+  }
+  const { state } = item;
+  return typeof state === 'object' && state !== null && 'rawLinks' in state && typeof item.setState === 'function';
+}
+
+function isDataTransformer(data: unknown): data is DataTransformerLike {
+  if (!data || typeof data !== 'object' || !('state' in data)) {
+    return false;
+  }
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const state = (data as DataTransformerLike).state;
+  return typeof state === 'object' && Array.isArray(state?.transformations);
+}
+
 export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
   name: 'UPDATE_PANEL',
   description: payloads.updatePanel.description ?? '',
@@ -56,7 +81,6 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
     try {
       const { element, panel } = payload;
-      const warnings: string[] = [];
       const elementName = element.name;
       const spec = panel?.spec;
 
@@ -89,14 +113,14 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
         }
 
         if (spec.links !== undefined) {
-          // Same lookup the serializer reads links back through, so writer and reader agree on which
-          // object holds them. A duck-type on `rawLinks` would miss the holder `getDefaultVizPanel`
-          // builds, which omits the key until something writes it.
-          const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
-          if (panelLinks) {
-            panelLinks.setState({ rawLinks: spec.links });
-          } else {
-            warnings.push('links ignored: this panel has no links holder in its titleItems.');
+          const titleItems = vizPanel.state.titleItems;
+          if (Array.isArray(titleItems)) {
+            for (const item of titleItems) {
+              if (hasRawLinks(item)) {
+                item.setState({ rawLinks: spec.links });
+                break;
+              }
+            }
           }
         }
 
@@ -140,15 +164,13 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
             queryRunner.runQueries();
           }
 
-          if (dataSpec.transformations !== undefined && dataPipeline instanceof SceneDataTransformer) {
-            // Spread rather than enumerate, matching the mapper in `layoutSerializers/utils.ts`: a field
-            // added to `transformationKindSchema.spec` then reaches the scene from both paths instead of
-            // being silently dropped here. `topic` is restated because the schema types it as a string
-            // union and the scene wants the `DataTopic` enum.
+          if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
             const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
               id: t.group,
-              ...t.spec,
-              topic: transformDataTopic(t.spec.topic),
+              disabled: t.spec.disabled,
+              filter: t.spec.filter,
+              topic: t.spec.topic,
+              options: t.spec.options,
             }));
             dataPipeline.setState({ transformations });
             dataPipeline.reprocessTransformations();
@@ -216,7 +238,6 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
             newValue: updatedElement,
           },
         ],
-        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {
