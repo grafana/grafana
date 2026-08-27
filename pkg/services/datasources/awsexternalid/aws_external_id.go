@@ -1,3 +1,27 @@
+// Package awsexternalid manages server-minted per-datasource external IDs for Grafana
+// Assume Role (GAR) datasources (native authType or SigV4 sigV4AuthType).
+//
+// Minting produces IDs of the form {stackExternalId}-{uid}-{16 hex} when
+// awsAssumeRolePerDatasourceExternalId is enabled, auth is grafana_assume_role, stack ID and UID
+// are configured, and the datasource is not explicitly in stack mode
+// (usePerDatasourceExternalId / sigV4UsePerDatasourceExternalId false). On create, per-DS mode is
+// the default when the flag is omitted. On update, mint only when switching into GAR or
+// explicitly opting into per-DS mode; legacy GAR datasources without an ID stay on the stack ID
+// until they opt in.
+//
+// Every save strips grafanaExternalId and sigV4GrafanaExternalId from the payload first; clients,
+// the API, and provisioning cannot set them. What follows is restore from the stored row, mint,
+// or leave empty (aws-sdk falls back to the stack ID at query time).
+//
+// The stored per-datasource ID is dropped from jsonData when the feature toggle is on and auth
+// is no longer Grafana Assume Role (e.g. switching to access keys). Explicitly opting into stack
+// mode (usePerDatasourceExternalId false) also clears the stored per-datasource ID so customers
+// can retire the old IAM trust binding; opting back into per-datasource mode mints a fresh ID.
+// Omitting the mode flag on update preserves the stored ID and mode (Terraform-friendly).
+//
+// When awsAssumeRolePerDatasourceExternalId is disabled, no new IDs are minted and leaving GAR
+// does not clear a stored per-datasource ID. The toggle is a rollout kill-switch, not a signal
+// to discard existing bindings — customers may already have a per-DS ID in their IAM trust policy.
 package awsexternalid
 
 import (
@@ -32,18 +56,24 @@ const (
 // BeforeSave mints or preserves the per-datasource grafanaExternalId of a Grafana Assume Role
 // datasource. Pass existing=nil on create; pass the stored JsonData on update.
 //
-// External IDs are server-owned: whatever a client, the API or provisioning sends is dropped
-// up front, and only the stored value or a freshly minted one can take its place. Whether a
-// datasource uses its own ID or the shared stack one is driven by usePerDatasourceExternalId,
-// which aws-sdk only honours when explicitly true; an update that omits it keeps the stored
-// value so partial (Terraform) updates do not change behaviour.
+// Grafana Assume Role external IDs are server-owned: whatever a client, the API, or
+// provisioning sends in grafanaExternalId / sigV4GrafanaExternalId is dropped up front, and only
+// the stored value or a freshly minted one can take its place. (Other auth types, such as
+// cross-account assume role, still use customer-entered externalId.) Whether a GAR datasource
+// uses its own ID or the shared stack one is driven by usePerDatasourceExternalId, which
+// aws-sdk only honours when explicitly true; an update that omits it keeps the stored value so
+// partial (Terraform) updates do not change behaviour.
 func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jsonData *simplejson.Json) {
+	if jsonData == nil {
+		return
+	}
+	clearPayloadExternalIDs(jsonData)
+
 	perDatasourceEnabled := awsAssumeRolePerDatasourceExternalIDEnabled(ctx)
 	stackExternalID := ""
 	if cfg != nil {
 		stackExternalID = cfg.AWSExternalId
 	}
-	clearPayloadExternalIDs(jsonData)
 	if existing == nil {
 		mintOnCreate(uid, stackExternalID, jsonData, perDatasourceEnabled)
 		return
@@ -55,9 +85,6 @@ func BeforeSave(ctx context.Context, uid string, cfg *setting.Cfg, existing, jso
 // What replaces them is up to the caller: the stored ID, a freshly minted one, or nothing at
 // all, which leaves the datasource on the stack ID.
 func clearPayloadExternalIDs(jsonData *simplejson.Json) {
-	if jsonData == nil {
-		return
-	}
 	jsonData.Del(grafanaExternalIDJSONKey)
 	jsonData.Del(sigV4GrafanaExternalIDJSONKey)
 }
@@ -139,17 +166,18 @@ func usePerDatasourceExternalID(jsonData *simplejson.Json) (set bool, enabled bo
 	return true, v.MustBool()
 }
 
-// requestsStackMode reports whether the payload explicitly opted out of per-datasource IDs,
-// asking to fall back to the shared stack external ID.
-func requestsStackMode(jsonData *simplejson.Json) bool {
-	set, on := usePerDatasourceExternalID(jsonData)
-	return set && !on
+// payloadSetsStackMode reports whether jsonData explicitly sets the mode flag to false on keys,
+// opting out of per-datasource IDs in favour of the shared stack external ID.
+func payloadSetsStackMode(jsonData *simplejson.Json, keys externalIDKeys) bool {
+	v, exists := jsonData.CheckGet(keys.mode)
+	return exists && !v.MustBool()
 }
 
-// requestsPerDatasourceMode reports whether the payload explicitly opted in.
-func requestsPerDatasourceMode(jsonData *simplejson.Json) bool {
-	set, on := usePerDatasourceExternalID(jsonData)
-	return set && on
+// payloadSetsPerDatasourceMode reports whether jsonData explicitly sets the mode flag to true
+// on keys, opting into per-datasource IDs.
+func payloadSetsPerDatasourceMode(jsonData *simplejson.Json, keys externalIDKeys) bool {
+	v, exists := jsonData.CheckGet(keys.mode)
+	return exists && v.MustBool()
 }
 
 func mintGrafanaExternalID(uid, stackExternalID string, jsonData *simplejson.Json) {
@@ -168,10 +196,10 @@ func awsAssumeRolePerDatasourceExternalIDEnabled(ctx context.Context) bool {
 // already dropped any ID the payload carried, so a datasource that does not qualify simply
 // ends up without one and falls back to the stack ID.
 func mintOnCreate(uid, stackExternalID string, jsonData *simplejson.Json, perDatasourceEnabled bool) {
-	if jsonData == nil || !perDatasourceEnabled {
+	if !perDatasourceEnabled {
 		return
 	}
-	if !isGrafanaAssumeRole(jsonData) || requestsStackMode(jsonData) {
+	if !isGrafanaAssumeRole(jsonData) || payloadSetsStackMode(jsonData, externalIDKeysFor(jsonData)) {
 		return
 	}
 	if stackExternalID == "" || uid == "" {
@@ -184,7 +212,21 @@ func mintOnCreate(uid, stackExternalID string, jsonData *simplejson.Json, perDat
 // already stripped whatever the payload carried, so the outcome is one of three: restore the
 // stored ID, mint a fresh one, or leave the datasource on the stack ID.
 func resolveOnUpdate(uid, stackExternalID string, existing, updated *simplejson.Json, perDatasourceEnabled bool) {
-	if updated == nil {
+	// updated replaces the stored jsonData wholesale, so a payload without Grafana Assume Role
+	// auth — switched away, or simply omitting the auth type — saves a datasource that has no
+	// business holding an external ID. Its ID is already gone from the payload, so returning
+	// here is what drops it. Dropping is gated on the feature because it cannot be undone: a
+	// later mint issues a new ID, which no longer matches the customer's IAM trust policy.
+	if perDatasourceEnabled && !isGrafanaAssumeRole(updated) {
+		return
+	}
+
+	// Explicit stack mode clears any stored per-datasource ID. The mode flag is read from the
+	// update payload but keyed by the stored datasource's namespace — partial updates often
+	// omit auth type, so the payload alone cannot select the right key pair. Omitting the mode
+	// flag is not stack mode; an explicit false retires the old binding so customers can drop
+	// it from IAM and get a fresh ID if they opt back in.
+	if payloadSetsStackMode(updated, externalIDKeysFor(existing)) {
 		return
 	}
 
@@ -196,15 +238,6 @@ func resolveOnUpdate(uid, stackExternalID string, existing, updated *simplejson.
 	storedID := ""
 	if existing != nil {
 		storedID = existing.Get(stored.id).MustString()
-	}
-
-	// updated replaces the stored jsonData wholesale, so a payload without Grafana Assume Role
-	// auth — switched away, or simply omitting the auth type — saves a datasource that has no
-	// business holding an external ID. Its ID is already gone from the payload, so returning
-	// here is what drops it. Dropping is gated on the feature because it cannot be undone: a
-	// later mint issues a new ID, which no longer matches the customer's IAM trust policy.
-	if perDatasourceEnabled && !isGrafanaAssumeRole(updated) {
-		return
 	}
 
 	if canRestoreStoredID(storedID, stackExternalID, uid) {
@@ -247,7 +280,7 @@ func shouldMint(uid, stackExternalID string, existing, updated *simplejson.Json,
 	if !perDatasourceEnabled || !isGrafanaAssumeRole(updated) {
 		return false
 	}
-	if requestsStackMode(updated) {
+	if payloadSetsStackMode(updated, externalIDKeysFor(updated)) {
 		return false
 	}
 	if stackExternalID == "" || uid == "" {
@@ -256,5 +289,5 @@ func shouldMint(uid, stackExternalID string, existing, updated *simplejson.Json,
 	// Switching into Grafana Assume Role mints by default. A datasource already on Grafana
 	// Assume Role has to ask, so legacy ones stay on the stack ID until they opt in.
 	switchingIn := !isGrafanaAssumeRole(existing)
-	return switchingIn || requestsPerDatasourceMode(updated)
+	return switchingIn || payloadSetsPerDatasourceMode(updated, externalIDKeysFor(updated))
 }

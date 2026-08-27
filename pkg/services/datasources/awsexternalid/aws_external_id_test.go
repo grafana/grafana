@@ -190,44 +190,48 @@ func TestBeforeSave_update(t *testing.T) {
 		return simplejson.NewFromAny(m)
 	}
 
-	t.Run("preserves a valid stored ID on stack toggle and Terraform omit", func(t *testing.T) {
-		for _, tc := range []struct {
-			name        string
-			updated     map[string]any
-			wantModeSet bool
-			wantModeOn  bool
-		}{
-			{
-				name: "stack mode",
-				updated: map[string]any{
-					"authType":                        grafanaAssumeRoleAuthType,
-					usePerDatasourceExternalIDJSONKey: false,
-					grafanaExternalIDJSONKey:          "",
-				},
-				wantModeSet: true,
-				wantModeOn:  false,
-			},
-			{
-				name:        "omit bool and ID",
-				updated:     map[string]any{"authType": grafanaAssumeRoleAuthType},
-				wantModeSet: true,
-				wantModeOn:  true,
-			},
-		} {
-			t.Run(tc.name, func(t *testing.T) {
-				existing := simplejson.NewFromAny(map[string]any{
-					"authType":                        grafanaAssumeRoleAuthType,
-					usePerDatasourceExternalIDJSONKey: true,
-					grafanaExternalIDJSONKey:          wantID,
-				})
-				updated := simplejson.NewFromAny(tc.updated)
-				beforeSaveUpdate(t, uid, stack, existing, updated, true)
-				assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
-				modeSet, modeOn := usePerDatasourceExternalID(updated)
-				assert.Equal(t, tc.wantModeSet, modeSet)
-				assert.Equal(t, tc.wantModeOn, modeOn)
+	t.Run("stack mode clears stored ID; omit preserves it", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+			grafanaExternalIDJSONKey:          wantID,
+		})
+
+		t.Run("explicit stack mode", func(t *testing.T) {
+			updated := simplejson.NewFromAny(map[string]any{
+				"authType":                        grafanaAssumeRoleAuthType,
+				usePerDatasourceExternalIDJSONKey: false,
 			})
-		}
+			beforeSaveUpdate(t, uid, stack, existing, updated, true)
+			assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+			modeSet, modeOn := usePerDatasourceExternalID(updated)
+			assert.True(t, modeSet)
+			assert.False(t, modeOn)
+		})
+
+		t.Run("omit bool and ID", func(t *testing.T) {
+			updated := simplejson.NewFromAny(map[string]any{"authType": grafanaAssumeRoleAuthType})
+			beforeSaveUpdate(t, uid, stack, existing, updated, true)
+			assert.Equal(t, wantID, updated.Get(grafanaExternalIDJSONKey).MustString())
+			modeSet, modeOn := usePerDatasourceExternalID(updated)
+			assert.True(t, modeSet)
+			assert.True(t, modeOn)
+		})
+	})
+
+	t.Run("opting back into per-DS after stack mode mints a fresh ID", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: false,
+		})
+		updated := simplejson.NewFromAny(map[string]any{
+			"authType":                        grafanaAssumeRoleAuthType,
+			usePerDatasourceExternalIDJSONKey: true,
+		})
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
+		got := updated.Get(grafanaExternalIDJSONKey).MustString()
+		assert.True(t, isValidGrafanaExternalID(got, stack, uid))
+		assert.NotEqual(t, wantID, got)
 	})
 
 	t.Run("keeps stored ID when stack ID is empty", func(t *testing.T) {
@@ -550,7 +554,22 @@ func TestBeforeSave_updateSigV4(t *testing.T) {
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
 
-	t.Run("FT off omit-auth keeps explicit SigV4 mode on update", func(t *testing.T) {
+	t.Run("explicit stack mode clears stored sigV4 ID", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: true,
+			sigV4GrafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: false,
+		})
+		beforeSaveUpdate(t, uid, stack, existing, updated, true)
+		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.False(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+	})
+
+	t.Run("FT off explicit stack mode still clears stored sigV4 ID", func(t *testing.T) {
 		existing := simplejson.NewFromAny(map[string]any{
 			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
 			sigV4UsePerDatasourceExternalIDJSONKey: true,
@@ -560,7 +579,7 @@ func TestBeforeSave_updateSigV4(t *testing.T) {
 			sigV4UsePerDatasourceExternalIDJSONKey: false,
 		})
 		beforeSaveUpdate(t, uid, stack, existing, updated, false)
-		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.Empty(t, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
 		assert.False(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
 		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
 	})
