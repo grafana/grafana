@@ -415,6 +415,24 @@ func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
 		require.Equal(t, "from-legacy", got.Login)
 	})
 
+	t.Run("k8s not-found preserves skip-team lookup when falling back for a service account", func(t *testing.T) {
+		legacy := &usertest.FakeUserService{
+			GetSignedInUserFn: func(_ context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+				require.True(t, query.SkipTeamLookup)
+				return &user.SignedInUser{UserID: 5, UserUID: "sa-uid", IsServiceAccount: true}, nil
+			},
+		}
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			legacy,
+		)
+
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5, SkipTeamLookup: true})
+		require.NoError(t, err)
+		require.Equal(t, "sa-uid", got.UserUID)
+		require.True(t, got.IsServiceAccount)
+	})
+
 	t.Run("k8s forbidden is surfaced, no fallback to legacy", func(t *testing.T) {
 		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}, "u", errors.New("nope"))
 		s := newWrapperServiceForTest(
@@ -459,6 +477,25 @@ func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 		require.Nil(t, got)
 	})
+}
+
+func TestLegacyService_GetSignedInUserSkipsTeamLookup(t *testing.T) {
+	teamSvc := teamtest.NewFakeService()
+	teamSvc.ExpectedError = errors.New("team lookup should not be called")
+	s := LegacyService{
+		store:       &FakeUserStore{ExpectedSignedInUser: &user.SignedInUser{UserID: 5, UserUID: "sa-uid", OrgID: 1, IsServiceAccount: true}},
+		teamService: teamSvc,
+		tracer:      tracing.InitializeTracerForTest(),
+	}
+
+	got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		OrgID:          1,
+		UserID:         5,
+		SkipTeamLookup: true,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "sa-uid", got.UserUID)
+	require.True(t, got.IsServiceAccount)
 }
 
 // ctxCapturingUserService records the context passed to GetProfile so tests can

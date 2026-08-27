@@ -345,7 +345,10 @@ func TestSetUserPermissionToK8sUsesServiceAccountKind(t *testing.T) {
 		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
 		service: &Service{
 			userService: &usertest.FakeUserService{
-				ExpectedListUsersByIdOrUid: []*user.User{{ID: 42, UID: "sa-uid", IsServiceAccount: true}},
+				GetSignedInUserFn: func(_ context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					require.Equal(t, &user.GetSignedInUserQuery{OrgID: 1, UserID: 42, SkipTeamLookup: true}, query)
+					return &user.SignedInUser{UserID: 42, UserUID: "sa-uid", IsServiceAccount: true}, nil
+				},
 			},
 			options: Options{Resource: "dashboards", APIGroup: dashboardv1.APIGroup},
 		},
@@ -353,7 +356,6 @@ func TestSetUserPermissionToK8sUsesServiceAccountKind(t *testing.T) {
 
 	err := a.setUserPermissionToK8s(makeReqCtx(), "org-1", "1", 42, "Edit")
 	require.NoError(t, err)
-	require.Equal(t, []usertest.ListUsersByIdOrUidCall{{Ids: []int64{42}}}, a.service.userService.(*usertest.FakeUserService).ListUsersByIdOrUidCalls)
 	require.Len(t, created.Spec.Permissions, 1)
 	assert.Equal(t, iamv0.ResourcePermissionSpecPermissionKindServiceAccount, created.Spec.Permissions[0].Kind)
 }

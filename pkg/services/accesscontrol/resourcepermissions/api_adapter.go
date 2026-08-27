@@ -693,18 +693,18 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm accesscontrol.SetResourcePermissionCommand) (iamv0.ResourcePermissionSpecPermissionKind, string, error) {
 	kind := iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm))
 	if perm.UserID != 0 {
-		users, err := a.service.userService.ListByIdOrUID(ctx, nil, []int64{perm.UserID})
+		userDetails, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			OrgID:          orgID,
+			UserID:         perm.UserID,
+			SkipTeamLookup: true,
+		})
 		if err != nil {
 			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
 		}
-		if len(users) != 1 {
-			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, user.ErrUserNotFound)
-		}
-		userDetails := users[0]
 		if userDetails.IsServiceAccount {
 			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
 		}
-		return kind, userDetails.UID, nil
+		return kind, userDetails.UserUID, nil
 	}
 	if perm.TeamID != 0 {
 		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
