@@ -68,6 +68,7 @@ import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLi
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { getSnapshotSourceData } from './shared/snapshotData';
 import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
@@ -453,10 +454,7 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    let snapshotData = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    const snapshotData = getPanelDataFrames(getSnapshotSourceData(dataProvider));
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',

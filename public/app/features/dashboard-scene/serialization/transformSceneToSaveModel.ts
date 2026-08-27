@@ -57,6 +57,7 @@ import {
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
+import { getSnapshotSourceData } from './shared/snapshotData';
 
 export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = false): Dashboard {
   const state = scene.state;
@@ -342,11 +343,7 @@ function vizPanelDataToPanel(
   if (dataProvider && isSnapshot) {
     panel.datasource = GRAFANA_DATASOURCE_REF;
 
-    let data = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      // For transformations the non-transformed data is snapshoted
-      data = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    const data = getPanelDataFrames(getSnapshotSourceData(dataProvider));
 
     panel.targets = [
       {

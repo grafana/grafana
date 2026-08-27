@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
-  SceneDataTransformer,
   sceneGraph,
   type SceneGridItemStateLike,
   SceneGridLayout,
@@ -40,6 +39,7 @@ import {
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
+  getSourceDataProvider,
   isLibraryPanel,
 } from '../utils/utils';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
@@ -404,12 +404,11 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
-        // Get raw untransformed data
-        if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data?.state.data) {
-          objToStringify = getPanelDataFrames(dataProvider.state.$data!.state.data);
-        } else {
-          objToStringify = getPanelDataFrames(dataProvider.state.data);
-        }
+        // Raw untransformed data when it is available, otherwise whatever the panel actually has —
+        // this tab always shows something, unlike the snapshot path, which would rather show nothing
+        // than frames its transformations already ran over.
+        const sourceData = getSourceDataProvider(dataProvider)?.state.data;
+        objToStringify = getPanelDataFrames(sourceData ?? dataProvider.state.data);
       }
       break;
     }
