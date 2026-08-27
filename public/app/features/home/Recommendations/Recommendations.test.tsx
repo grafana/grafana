@@ -1,6 +1,7 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
@@ -17,6 +18,7 @@ import { Recommendations } from './Recommendations';
 import { resetInstalledPlugins } from './pluginRecommendations';
 
 const mockGet = jest.fn();
+const originalNamespace = config.namespace;
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ get: mockGet }),
@@ -106,6 +108,7 @@ beforeEach(() => {
   resetInstalledPlugins();
   window.localStorage.clear();
   mockGet.mockReset().mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(KUBERNETES_APP_ID)]);
+  config.namespace = 'stacks-123';
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation((action, metadata) => {
     return Boolean(metadata.accessControl?.[action]);
@@ -117,6 +120,7 @@ beforeEach(() => {
 
 afterEach(() => {
   document.removeEventListener('click', interceptLinkClicks);
+  config.namespace = originalNamespace;
   jest.restoreAllMocks();
 });
 
@@ -133,6 +137,16 @@ describe('Recommendations', () => {
 
   it('renders nothing and starts no recommendation work without management permissions', () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(signals).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing and starts no recommendation work on self-managed instances', () => {
+    config.namespace = 'default';
     const signals = jest.fn(async () => DEFAULT_STATE);
     const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
 

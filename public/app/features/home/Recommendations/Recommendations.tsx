@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -25,6 +26,11 @@ interface RecommendationsProps {
 }
 
 export function Recommendations({ solutions }: RecommendationsProps) {
+  // Cloud-only for now: the cards promote Grafana Cloud apps, which self-managed
+  // instances (OSS or Enterprise) cannot enable.
+  if (isOnPrem()) {
+    return null;
+  }
   // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
   // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
