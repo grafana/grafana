@@ -163,6 +163,40 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
   let dashboardUid: string;
   let apiContext: APIRequestContext;
 
+  // Helper function to clean up resources with error handling
+  async function cleanupResources() {
+    const cleanupErrors: Error[] = [];
+
+    if (dashboardUid) {
+      try {
+        await apiContext.delete(`/api/dashboards/uid/${dashboardUid}`);
+        dashboardUid = '';
+      } catch (error) {
+        cleanupErrors.push(new Error(`Failed to delete dashboard: ${error}`));
+      }
+    }
+    if (successDsUid) {
+      try {
+        await apiContext.delete(`/api/datasources/uid/${successDsUid}`);
+        successDsUid = '';
+      } catch (error) {
+        cleanupErrors.push(new Error(`Failed to delete success datasource: ${error}`));
+      }
+    }
+    if (failureDsUid) {
+      try {
+        await apiContext.delete(`/api/datasources/uid/${failureDsUid}`);
+        failureDsUid = '';
+      } catch (error) {
+        cleanupErrors.push(new Error(`Failed to delete failure datasource: ${error}`));
+      }
+    }
+
+    if (cleanupErrors.length > 0) {
+      console.error('Diagnostics test cleanup encountered errors:', cleanupErrors);
+    }
+  }
+
   // createDataSource and the `request` fixture are both test-scoped, and Playwright only allows
   // worker-scoped fixtures in beforeAll/afterAll -- so setup/teardown go through a manually created
   // APIRequestContext (via the worker-scoped `playwright` fixture) instead.
@@ -177,6 +211,9 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
 
     // Unique per run: repeated/sharded runs (e.g. `yarn e2e:playwright:10x`) can execute this file
     // more than once concurrently, and a fixed name would race across those runs.
+    // Note: These datasources are visible to other parallel tests until afterAll cleanup completes.
+    // Tests filtering by datasource type should use explicit name filters (e.g., regex) to avoid
+    // accidentally selecting these temporary datasources.
     const runId = randomUUID();
 
     const successDsResponse = await apiContext.post('/api/datasources', {
@@ -211,16 +248,16 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
   });
 
   test.afterAll(async () => {
-    if (dashboardUid) {
-      await apiContext.delete(`/api/dashboards/uid/${dashboardUid}`);
+    // Clean up datasources and dashboard with error handling
+    await cleanupResources();
+
+    // Clean up server resources
+    try {
+      await apiContext.dispose();
+    } catch (error) {
+      console.error('Failed to dispose API context:', error);
     }
-    if (successDsUid) {
-      await apiContext.delete(`/api/datasources/uid/${successDsUid}`);
-    }
-    if (failureDsUid) {
-      await apiContext.delete(`/api/datasources/uid/${failureDsUid}`);
-    }
-    await apiContext.dispose();
+
     successUpstream?.server.close();
     failureUpstream?.server.close();
   });
