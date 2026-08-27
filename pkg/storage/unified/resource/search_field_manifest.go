@@ -4,9 +4,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -33,15 +33,23 @@ func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
 // for manifests read at runtime, which can be malformed without this build
 // being at fault.
 func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
+	data := make([]*app.ManifestData, len(manifests))
+	for i, m := range manifests {
+		data[i] = m.ManifestData
+	}
+	return NewSearchFieldsProvider(data)
+}
+
+func NewSearchFieldsProvider(manifests []*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		group := m.ManifestData.Group
-		for _, version := range m.ManifestData.Versions {
+		group := m.Group
+		for _, version := range m.Versions {
 			for _, kind := range version.Kinds {
 				if len(kind.SearchFields) == 0 {
 					continue
@@ -54,7 +62,7 @@ func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, err
 				fields[gvr] = manifestSearchFieldsToDefinitions(kind.SearchFields)
 
 				gr := gvr.GroupResource()
-				if pv := m.ManifestData.PreferredVersion; pv != "" {
+				if pv := m.PreferredVersion; pv != "" {
 					preferred[gr] = pv
 				} else {
 					// No explicit preference: the last version that declares the
