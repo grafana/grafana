@@ -56,8 +56,12 @@ async function navigateToConnectionStep(
     url?: string;
   }
 ) {
-  if (type === 'github' || type === 'githubEnterprise') {
-    // Select PAT option (GitHub App is the default)
+  if (type !== 'local' && type !== 'git') {
+    // App-based radios appear only after frontend settings load; wait so the PAT click isn't racing them
+    const appRadioName =
+      type === 'github' || type === 'githubEnterprise' ? /Connect with GitHub App/i : /Connect with OAuth App/i;
+    await screen.findByRole('radio', { name: appRadioName });
+    // Select PAT option (app-based auth is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
   }
 
@@ -240,7 +244,7 @@ describe('ProvisioningWizard', () => {
       // Wait for async operations (useConnectionOptions fetches) to settle
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -248,6 +252,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Fill required fields on authType step
@@ -421,6 +426,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
@@ -444,6 +450,21 @@ describe('ProvisioningWizard', () => {
       await user.keyboard('{Enter}');
 
       expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeEnabled();
+    });
+
+    it('blocks submit with a connection error when the connection list fails to load', async () => {
+      server.use(http.get(`${BASE}/connections`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      const mockSubmitData = setupMockSubmitData();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Defaults: GitHub App auth with "Choose an existing app" mode.
+      expect(await screen.findByText('Failed to load connections')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+
+      expect(await screen.findByText('Connection is required')).toBeInTheDocument();
+      expect(mockSubmitData).not.toHaveBeenCalled();
     });
   });
 
@@ -711,7 +732,7 @@ describe('ProvisioningWizard', () => {
       // GitHub Enterprise shares GitHub's auth flow: both PAT and GitHub App options
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -719,6 +740,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
 
       // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields: GHE uses the GitHub PAT placeholder and a GHE-specific URL placeholder
@@ -753,8 +775,21 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
     });
 
+    it('should render choose auth type step initially for GitLab', async () => {
+      setup(<ProvisioningWizard type="gitlab" />);
+
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with OAuth App/i })).toBeChecked();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /Connect with GitHub App/i })).not.toBeInTheDocument();
+    });
+
     it('should render GitLab-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
@@ -771,6 +806,10 @@ describe('ProvisioningWizard', () => {
 
     it('should render Bitbucket-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('API Token *')).toBeInTheDocument();
@@ -821,6 +860,8 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
       await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(

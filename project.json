@@ -21,7 +21,7 @@
           "target": "build"
         }
       ],
-      "outputs": ["{workspaceRoot}/public/build"],
+      "outputs": ["{workspaceRoot}/public/build", "{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
     "dev": {
@@ -34,6 +34,14 @@
       ],
       "outputs": ["{workspaceRoot}/public/build"],
       "cache": true
+    },
+    "build:swagger": {
+      "dependsOn": ["themes-generate"],
+      "outputs": ["{workspaceRoot}/public/build-swagger"],
+      "cache": true
+    },
+    "start:swagger": {
+      "dependsOn": ["themes-generate"]
     },
     "themes-generate": {
       "inputs": [

@@ -972,13 +972,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v13)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
 	v14 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v14)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,13 +1739,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v13)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
 	v14 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v14)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
