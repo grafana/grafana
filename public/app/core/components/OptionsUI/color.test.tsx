@@ -36,12 +36,12 @@ describe('ColorValueEditor', () => {
   it('uses the color name as a label for the swatch, not a second button', () => {
     render(<ColorValueEditor value="#ff0000" onChange={jest.fn()} details />);
 
-    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const swatch = screen.getByRole('button', { name: 'Pick a color, current selection #ff0000' });
     const colorName = screen.getByText('#ff0000');
 
     expect(colorName.tagName).toBe('LABEL');
     expect(colorName).toHaveAttribute('for', swatch.getAttribute('id'));
-    expect(screen.getAllByRole('button', { name: 'Pick a color' })).toHaveLength(1);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
   });
 
   it('uses the placeholder as a label for the swatch when no color is set', () => {
@@ -66,12 +66,12 @@ describe('ColorValueEditor', () => {
   it('keeps the color name in a span next to the swatch so plugin-e2e toHaveColor can find it', () => {
     render(<ColorValueEditor value="#ff5733" onChange={jest.fn()} details />);
 
-    const swatch = screen.getByRole('button', { name: 'Pick a color' });
+    const swatch = screen.getByRole('button', { name: 'Pick a color, current selection #ff5733' });
     const colorName = screen.getByText('#ff5733');
     const span = colorName.closest('span');
 
     expect(span).not.toBeNull();
-    expect(span).toHaveTextContent('#ff5733');
+    expect(span).toHaveTextContent(/^#ff5733$/);
     expect(span?.previousElementSibling?.contains(swatch)).toBe(true);
   });
 
@@ -81,5 +81,15 @@ describe('ColorValueEditor', () => {
     const colorName = screen.getByText('red');
     expect(colorName.tagName).toBe('LABEL');
     expect(colorName).toHaveStyle({ cursor: 'pointer', flexGrow: 1 });
+  });
+
+  it('names the swatch with the current selection so keyboard users hear the color', () => {
+    render(<ColorValueEditor value="green" onChange={jest.fn()} details />);
+
+    const swatch = screen.getByRole('button', { name: 'Pick a color, current selection green' });
+
+    expect(swatch).toHaveAttribute('aria-labelledby');
+    expect(swatch).not.toHaveAttribute('aria-label');
+    expect(document.getElementById(swatch.getAttribute('aria-labelledby')!)).toHaveClass('sr-only');
   });
 });

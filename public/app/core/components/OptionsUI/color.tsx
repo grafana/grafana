@@ -40,6 +40,8 @@ export const ColorValueEditor = ({
   const styles = useStyles2(getStyles);
   const generatedId = useId();
   const swatchId = id ?? generatedId;
+  const a11yNameId = `${swatchId}-a11y-name`;
+  const hasSelection = Boolean(details && value);
 
   return (
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={settings?.enableNamedColors !== false}>
@@ -51,6 +53,7 @@ export const ColorValueEditor = ({
                 ref={ref}
                 id={swatchId}
                 aria-describedby={ariaDescribedBy}
+                aria-labelledby={hasSelection ? a11yNameId : undefined}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}
                 color={value ? theme.visualization.getColorByName(value) : theme.components.input.borderColor}
@@ -65,6 +68,13 @@ export const ColorValueEditor = ({
                 ) : (
                   <span className={styles.placeholderText}>
                     <label htmlFor={swatchId}>{settings?.placeholder ?? 'Select color'}</label>
+                  </span>
+                )}
+                {value && (
+                  <span className="sr-only" id={a11yNameId}>
+                    {t('options-ui.color.swatch-aria-label', 'Pick a color, current selection {{color}}', {
+                      color: value,
+                    })}
                   </span>
                 )}
                 {settings?.isClearable && value && (
