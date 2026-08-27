@@ -72,6 +72,18 @@ func legacyActionToK8s(dsType, action string) (string, bool) {
 	return convertedAction, convertedAction != action
 }
 
+// IsUnmappedLegacyDatasourceAction reports whether action belongs to the legacy
+// datasource action family but has no Kubernetes action mapping.
+func IsUnmappedLegacyDatasourceAction(action string) bool {
+	resource, verb, ok := strings.Cut(action, ":")
+	if !ok || verb == "" || (resource != "datasources" && !strings.HasPrefix(resource, "datasources.")) {
+		return false
+	}
+
+	converted, _ := legacyActionToK8s("*", action)
+	return converted == action
+}
+
 // LegacyDatasourceAction replaces a legacy ds action string with its k8s form
 func LegacyDatasourceAction(dsType string, action *string) {
 	if converted, ok := legacyActionToK8s(dsType, *action); ok {
