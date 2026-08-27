@@ -1440,7 +1440,7 @@ function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableTyp
   }
 }
 
-export function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
+function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
   const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
 
   const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];

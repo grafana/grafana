@@ -4,11 +4,20 @@ import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { type Dashboard } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
-import { type DashboardMeta } from 'app/types/dashboard';
+import {
+  defaultGridLayoutItemKind,
+  defaultPanelKind,
+  defaultSpec as defaultDashboardV2Spec,
+  type RowsLayoutKind,
+  type Spec as DashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { type DashboardScene } from '../scene/DashboardScene';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -48,8 +57,8 @@ afterEach(() => {
 
 describe('SaveProvisionedDashboardForm', () => {
   describe('Classic model', () => {
-    it('converts a v2 save model to v1 so the JSON can go back into file provisioning', async () => {
-      await renderForm({ changedSaveModel: handyTestingSchema });
+    it('serializes a v2 dashboard to v1 so the JSON can go back into file provisioning', async () => {
+      await renderForm(buildV2Scene(v2SpecWithTwoPanels()));
 
       await userEvent.click(await screen.findByText('Advanced options'));
       await userEvent.click(await screen.findByRole('radio', { name: 'Classic' }));
@@ -59,8 +68,8 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(json.schemaVersion).toBeDefined();
       expect(Array.isArray(json.panels)).toBe(true);
       expect(json.panels.length).toBeGreaterThan(0);
+      expect(json.panels.map((panel: { title: string }) => panel.title)).toEqual(['First', 'Second']);
       expect(json.uid).toBe('my-uid');
-      expect(Array.isArray(json.templating.list)).toBe(true);
 
       expect(json.elements).toBeUndefined();
       expect(json.layout).toBeUndefined();
@@ -68,29 +77,31 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(json.cursorSync).toBeUndefined();
     });
 
-    it('converts to v1 when the dashboard has no k8s metadata and the model picker is hidden', async () => {
-      await renderForm({ changedSaveModel: handyTestingSchema, meta: { provisioned: true } });
+    it('serializes a v2 dashboard that uses rows rather than crashing the form', async () => {
+      await renderForm(buildV2Scene(withRowsLayout(v2SpecWithTwoPanels())));
 
-      expect(screen.queryByRole('radio', { name: 'Classic' })).not.toBeInTheDocument();
+      await userEvent.click(await screen.findByText('Advanced options'));
+      await userEvent.click(await screen.findByRole('radio', { name: 'Classic' }));
 
       const json = readEditorJson();
 
       expect(json.schemaVersion).toBeDefined();
-      expect(Array.isArray(json.panels)).toBe(true);
-      expect(json.uid).toBe('my-uid');
+      expect(json.panels.some((panel: { type: string }) => panel.type === 'row')).toBe(true);
       expect(json.elements).toBeUndefined();
+      expect(json.layout).toBeUndefined();
     });
 
     it('leaves a v1 save model untouched', async () => {
-      const v1Model: Dashboard = {
+      const v1Model: DashboardDataDTO = {
         title: 'a v1 dashboard',
         uid: 'my-uid',
         schemaVersion: 41,
         panels: [{ id: 1, type: 'timeseries', title: 'panel' }],
         editable: true,
       };
+      const dashboard = transformSaveModelToScene({ dashboard: v1Model, meta: { provisioned: true } });
 
-      await renderForm({ changedSaveModel: v1Model, meta: { provisioned: true } });
+      await renderForm(dashboard, v1Model);
 
       expect(readEditorJson()).toEqual(v1Model);
     });
@@ -102,29 +113,70 @@ function readEditorJson() {
   return JSON.parse(editor.value);
 }
 
-async function renderForm({
-  changedSaveModel,
-  meta,
-}: {
-  changedSaveModel: Dashboard | DashboardV2Spec;
-  meta?: DashboardMeta;
-}) {
-  const dashboard = transformSaveModelToScene({
-    dashboard: {
-      title: 'hello',
-      uid: 'my-uid',
-      schemaVersion: 41,
-      panels: [],
-      version: 10,
+function v2SpecWithTwoPanels(): DashboardV2Spec {
+  const titles = ['First', 'Second'];
+
+  return {
+    ...defaultDashboardV2Spec(),
+    title: 'a provisioned dashboard',
+    elements: Object.fromEntries(
+      titles.map((title, index) => [
+        `panel-${index + 1}`,
+        { ...defaultPanelKind(), spec: { ...defaultPanelKind().spec, id: index + 1, title } },
+      ])
+    ),
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: titles.map((_, index) => ({
+          ...defaultGridLayoutItemKind(),
+          spec: {
+            ...defaultGridLayoutItemKind().spec,
+            element: { kind: 'ElementReference', name: `panel-${index + 1}` },
+            x: 0,
+            y: index * 8,
+            width: 12,
+            height: 8,
+          },
+        })),
+      },
     },
-    meta: meta ?? {
-      provisioned: true,
-      provisionedExternalId: 'dashboard.json',
-      k8s: { name: 'my-uid', generation: 10, resourceVersion: '1', creationTimestamp: '2026-01-01T00:00:00Z' },
+  };
+}
+
+/** Nests the grid layout inside a single row, so the scene uses RowsLayoutManager. */
+function withRowsLayout(spec: DashboardV2Spec): DashboardV2Spec {
+  const layout: RowsLayoutKind = {
+    kind: 'RowsLayout',
+    spec: {
+      rows: [{ kind: 'RowsLayoutRow', spec: { title: 'A row', layout: spec.layout } }],
     },
+  };
+
+  return { ...spec, layout };
+}
+
+function buildV2Scene(spec: DashboardV2Spec): DashboardScene {
+  return transformSaveModelSchemaV2ToScene({
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    kind: 'DashboardWithAccessInfo',
+    spec,
+    metadata: {
+      name: 'my-uid',
+      generation: 10,
+      resourceVersion: '1',
+      creationTimestamp: '2026-01-01T00:00:00Z',
+    },
+    access: {},
+  });
+}
+
+async function renderForm(dashboard: DashboardScene, changedSaveModel?: Dashboard | DashboardV2Spec) {
+  dashboard.setState({
+    $data: undefined,
+    meta: { ...dashboard.state.meta, provisioned: true, provisionedExternalId: 'dashboard.json' },
   });
 
-  dashboard.setState({ $data: undefined });
   cleanUp();
   cleanUp = dashboard.activate();
   dashboard.onEnterEditMode();
@@ -133,8 +185,8 @@ async function renderForm({
   const drawer = dashboard.state.overlay as SaveDashboardDrawer;
 
   const changeInfo: DashboardChangeInfo = {
-    changedSaveModel,
-    initialSaveModel: changedSaveModel,
+    changedSaveModel: changedSaveModel ?? transformSceneToSaveModelSchemaV2(dashboard),
+    initialSaveModel: transformSceneToSaveModel(dashboard),
     diffs: {},
     diffCount: 0,
     hasChanges: true,
