@@ -52,16 +52,16 @@ test.describe(
       const previewOptions = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
       );
-      
+
       // Wait for preview options to populate after selecting datasource type
       await expect(previewOptions.first()).toBeVisible({ timeout: 15000 });
-      
+
       // Verify the expected provisioned datasources are present
       // Note: Other tests may create temporary datasources (e.g., e2e-diagnostics-prometheus-*)
       // so we explicitly check for our expected ones rather than relying on position
       const gdevPrometheus = previewOptions.filter({ hasText: 'gdev-prometheus' });
       const gdevSlowPrometheus = previewOptions.filter({ hasText: 'gdev-slow-prometheus' });
-      
+
       await expect(gdevPrometheus.first()).toBeVisible();
       await expect(gdevSlowPrometheus.first()).toBeVisible();
 
