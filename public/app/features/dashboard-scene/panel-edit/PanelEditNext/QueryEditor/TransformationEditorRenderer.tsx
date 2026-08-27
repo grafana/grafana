@@ -65,9 +65,18 @@ export function TransformationEditorPanel({
   // Each depends on the selected transformation, because `ErrorBoundary` clears its error only when a
   // dependency changes. With none, a display that threw once would keep showing the alert for the
   // rest of its life — including for a transformation it could describe perfectly well.
+  //
+  // On the config as well as the id, because the id is `id + index` and neither half moves when it
+  // needs to: editing the failing transformation is how an option-induced throw gets fixed, and a
+  // successor of the same type slides into the index of a deleted one, which would leave the alert
+  // standing over a transformation that never threw. The config is the object Scene state holds, so
+  // it changes in both of those and stays put across a data refresh.
   return (
     <>
-      <ErrorBoundaryAlert boundaryName="transformation-filter" dependencies={[transformation.transformId]}>
+      <ErrorBoundaryAlert
+        boundaryName="transformation-filter"
+        dependencies={[transformation.transformId, transformation.transformConfig]}
+      >
         <TransformationFilterEditor
           transformation={transformation}
           transformations={transformations}
@@ -82,12 +91,18 @@ export function TransformationEditorPanel({
         transformation={transformation}
       />
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-help" dependencies={[transformation.transformId]}>
+        <ErrorBoundaryAlert
+          boundaryName="transformation-help"
+          dependencies={[transformation.transformId, transformation.transformConfig]}
+        >
           <TransformationHelpDisplay />
         </ErrorBoundaryAlert>
       )}
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-debug" dependencies={[transformation.transformId]}>
+        <ErrorBoundaryAlert
+          boundaryName="transformation-debug"
+          dependencies={[transformation.transformId, transformation.transformConfig]}
+        >
           <TransformationDebugDisplay />
         </ErrorBoundaryAlert>
       )}
