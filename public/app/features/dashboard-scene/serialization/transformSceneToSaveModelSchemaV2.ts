@@ -575,6 +575,7 @@ function getVizPanelTransformations(vizPanel: VizPanel, bakeRepeatValues = false
 
       if ('id' in transformation) {
         const transformationSpec: TransformationSpec = {
+          ...(transformation.refId !== undefined && { refId: transformation.refId }),
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
