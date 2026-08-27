@@ -5,8 +5,6 @@ import { type FetchError, isFetchError } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 
-const logger = getLogger('features.alerting');
-
 function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
@@ -151,6 +149,8 @@ export function withAppEvents<T>(
 
 export const UNKNOW_ERROR = 'Unknown Error';
 export function messageFromError(e: Error | FetchError | SerializedError): string {
+  const logger = getLogger('features.alerting');
+
   if (isFetchError(e)) {
     if (e.data?.message) {
       let msg = e.data?.message;

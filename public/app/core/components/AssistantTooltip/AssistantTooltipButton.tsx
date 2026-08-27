@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
 import { ASSISTANT_PLUGIN_ID, useAssistant } from '@grafana/assistant';
-import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store, usePluginContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import {
   getComponentMetaFromComponentId,
@@ -40,6 +41,7 @@ export function AssistantTooltipButton({
   const { isAvailable, openAssistant } = useAssistant();
   const { isOpen, dockedComponentId } = useExtensionSidebarContext();
   const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
+  const pluginContext = usePluginContext();
   const styles = useStyles2(getStyles);
 
   if (!isAvailable || !openAssistant) {
@@ -65,6 +67,10 @@ export function AssistantTooltipButton({
     if (items.length === 0) {
       return;
     }
+
+    reportInteraction('grafana_tooltip_add_to_assistant_clicked', {
+      visualizationType: pluginContext?.meta?.id ?? 'unknown',
+    });
 
     openAssistant({
       origin: 'grafana/panel-tooltip',
