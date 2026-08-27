@@ -18,16 +18,19 @@ import grafanaIconSvg from 'img/grafana_icon.svg';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { hasAnyPermission } from '../hooks/abilities/abilityUtils';
-import { PERMISSIONS_CONTACT_POINTS } from '../hooks/abilities/alertmanager/useContactPointAbility';
-import { PERMISSIONS_NOTIFICATION_POLICIES } from '../hooks/abilities/alertmanager/useNotificationPolicyAbility';
-import { PERMISSIONS_TEMPLATES } from '../hooks/abilities/alertmanager/useNotificationTemplateAbility';
-import { PERMISSIONS_TIME_INTERVALS } from '../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { getExternalGlobalRuleAbility, getGlobalRuleAbility } from '../hooks/abilities/rules/ruleAbilities';
 import { ExternalRuleAction, RuleAction } from '../hooks/abilities/types';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
-import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
+import { instancesPermissions, silencesPermissions } from './access-control';
+import {
+  PERMISSIONS_CONTACT_POINTS,
+  PERMISSIONS_NOTIFICATION_POLICIES,
+  PERMISSIONS_TEMPLATES,
+  PERMISSIONS_TIME_INTERVALS,
+  notificationsPermissions,
+} from './alertmanagerPermissions';
 import { getAllDataSources } from './config';
 import { GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';

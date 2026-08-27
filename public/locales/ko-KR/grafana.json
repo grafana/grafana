@@ -961,9 +961,6 @@
       "used-by-rules_other": "{{count}}개의 경고 규칙에서 사용됨"
     },
     "contact-points-filter": {
-      "aria-label-clear": "지우기",
-      "aria-label-search-contact-points": "연락처 검색",
-      "clear": "초기화",
       "label-search-by-name-or-type": "이름 또는 유형으로 검색",
       "placeholder-search": "검색"
     },
@@ -1617,6 +1614,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1688,6 @@
       "review": {
         "autosync-badge": "",
         "back": "경고 규칙",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "필터",
         "folder": "대상 폴더",
@@ -1706,7 +1706,6 @@
         "routing": "알림 라우팅",
         "routing-none": "선택된 정책 트리 없음",
         "routing-tree": "정책 트리: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "경고 규칙은 가져오지 않습니다.",
         "rules-title": "경고 규칙",
         "skipped": "건너뜀",
@@ -1731,14 +1730,14 @@
         "yaml-description": "Prometheus YAML 파일에서 규칙을 가져옵니다."
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanager 데이터 소스",
+        "datasource-autosync-badge": "",
         "heading": "알림 리소스 가져오기",
         "next-disabled-tooltip": "필수 필드를 입력하고 검증이 완료될 때까지 기다린 후 계속하세요.",
         "no-datasources": "Alertmanager 데이터 소스를 찾을 수 없습니다.",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "알림 리소스를 가져올 수 있는 권한이 없습니다. <strong>alerting.notifications:write</strong> 권한이 필요합니다. 이 단계를 건너뛸 수 있습니다.",
         "no-permission-title": "권한 부족",
         "policy-tree-autosync-disabled": "",
@@ -3227,6 +3226,7 @@
         "disable-confirm-body-generic": "비활성화하면 연속 동기화가 중지됩니다. 나중에 데이터 소스를 다시 선택하여 재활성화할 수 있습니다.",
         "disable-confirm-title": "비활성화하면 지속적인 동기화가 중지됩니다?",
         "disable-success": "Mimir Alertmanager 자동 동기화 비활성화됨",
+        "not-ready-body": "",
         "operator-managed-info": "이 값은 grafana.ini의 <1>[unified_alerting] external_alertmanager_uid</1> 키에 의해 설정되며 UI에서는 변경할 수 없습니다. 구성 파일을 편집하고 Grafana를 다시 시작하거나, 여기에서 동기화를 관리하려면 해당 키를 제거하세요.",
         "operator-managed-title": "운영자가 관리함",
         "orphan-warning": "구성된 데이터 소스 UID({{uid}})를 사용할 수 없습니다. 계속하려면 동기화를 비활성화하거나 데이터 소스를 복구하세요.",
@@ -3234,6 +3234,7 @@
         "picker-empty": "사용 가능한 Mimir 또는 Cortex 데이터 소스가 없습니다",
         "picker-label": "데이터 소스",
         "picker-placeholder": "Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요…",
+        "read-error-message": "",
         "save-disabled-no-selection": "저장을 활성화하려면 Mimir 또는 Cortex Alertmanager 데이터 소스를 선택하세요.",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanager 자동 동기화 저장 실패",
@@ -3849,6 +3850,8 @@
       "title-notification-policies": "알림 정책"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "리소스 가져오기 실패",
@@ -4358,7 +4361,7 @@
       "cancel-button": "취소",
       "confirmation-text": "삭제",
       "delete-button": "삭제",
-      "delete-modal-restore-dashboards-common": "삭제된 대시보드는 최대 12개월 동안 기록에 보관됩니다. 삭제 권한이 있는 사용자는 본인이 삭제한 대시보드를, 관리자는 모든 사용자가 삭제한 대시보드를 복원할 수 있습니다. 대시보드 기록은 1,000개로 제한됩니다 — 한도에 도달하면 이전 항목은 조기에 삭제될 수 있습니다.",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "이 작업은 선택한 폴더를 즉시 삭제합니다.",
       "delete-modal-restore-dashboards-suffix-folder": "폴더는 복구될 수 없습니다.",
       "delete-modal-title": "삭제",
@@ -4379,8 +4382,8 @@
       "selected-mix-resources-modal-text": "프로비저닝된 리소스와 프로비저닝되지 않은 리소스를 모두 선택하셨습니다. 이 두 가지는 함께 처리할 수 없습니다. 프로비저닝된 리소스만 또는 프로비저닝되지 않은 리소스만 선택한 후 다시 시도해 주세요.",
       "selected-mix-resources-modal-title": "혼합 리소스 유형 선택됨",
       "delete-modal-folder-empty_other": "선택한 폴더가 비어 있습니다",
-      "delete-modal-folder-not-empty_other": "선택한 폴더에 삭제될 다른 리소스가 포함되어 있습니다",
-      "move-modal-folder-not-empty_other": "선택한 폴더에 함께 이동될 다른 리소스가 포함되어 있습니다"
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "최근에 삭제됨"
@@ -4409,7 +4412,7 @@
       "error-deleting-resources": "리소스 삭제 도중 오류 발생",
       "success-title": "리소스가 성공적으로 삭제되었습니다",
       "folder-empty_other": "선택한 폴더가 비어 있습니다",
-      "folder-not-empty_other": "선택한 폴더에 삭제될 다른 리소스가 포함되어 있습니다"
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "취소",
@@ -4430,7 +4433,7 @@
       "move-warning-tooltip": "프로비저닝된 리소스는 프로비저닝된 폴더 내에서만 이동 가능하며, 로컬 리소스는 로컬 폴더로만 이동할 수 있습니다.",
       "success-title": "리소스가 성공적으로 이동되었습니다",
       "target-folder": "대상 폴더",
-      "folder-not-empty_other": "선택한 폴더에 함께 이동될 다른 리소스가 포함되어 있습니다"
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "대시보드"
@@ -4464,7 +4467,7 @@
       "button-deleting": "삭제 중…",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. ",
       "folder-empty": "선택한 폴더가 비어 있습니다",
-      "folder-not-empty": "선택한 폴더에 삭제될 다른 리소스가 포함되어 있습니다.",
+      "folder-not-empty": "",
       "missing-info": "필수 입력 항목 누락",
       "success-message": "폴더가 삭제되었습니다"
     },
@@ -6252,9 +6255,9 @@
         "name-builtin": "{{annoName}}(내장)",
         "name-disabled": "(비활성화됨){{annoName}}",
         "reorder-description": "주석 목록 순서 변경",
-        "title-above-dashboard-count_other": "대시보드 위({{count}})",
-        "title-controls-menu-count_other": "컨트롤 메뉴({{count}})",
-        "title-hidden-count_other": "숨김({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "주석",
@@ -6267,7 +6270,6 @@
         "tooltip": "대시보드 옵션",
         "variables": "변수"
       },
-      "drag-to-reorder": "드래그하여 순서 변경",
       "edit-schema": {
         "apply-button": "변경 사항 적용",
         "apply-button-disabled-tooltip": "변경 사항을 적용하기 전에 유효성 검사 오류를 수정하세요",
@@ -6330,10 +6332,10 @@
         "add-filter": "필터 추가",
         "reorder-description": "필터 목록 순서 변경",
         "title": "필터",
-        "tooltip": "필터 개요",
-        "title-above-dashboard_other": "대시보드 위({{count}})",
-        "title-controls-menu_other": "컨트롤 메뉴({{count}})",
-        "title-hidden_other": "숨김({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "필터 개요"
       },
       "group": {
         "different-parents": "",
@@ -6345,8 +6347,8 @@
         "add-link": "링크 추가",
         "new-link": "새 링크",
         "reorder-description": "링크 목록 순서 변경",
-        "title-above-dashboard_other": "대시보드 위({{count}})",
-        "title-controls-menu_other": "컨트롤 메뉴({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "콘텐츠 개요",
@@ -6385,7 +6387,6 @@
       "section-variables": {
         "title": "변수"
       },
-      "select": "선택",
       "snapshot": {
         "title": "소스",
         "tooltip": "원래 대시보드 열기"
@@ -6445,10 +6446,10 @@
         "reorder-description": "변수 목록 순서 변경",
         "select-type": "변수 유형 선택",
         "select-type-card-tooltip": "클릭하여 유형 선택",
-        "top-placement-default": "대시보드 위",
-        "title-controls-menu_other": "컨트롤 메뉴({{count}})",
-        "title-hidden_other": "숨김({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "비활성화됨",
@@ -6814,6 +6815,11 @@
       "title": "아직 추가된 대시보드 링크 없음"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -6962,8 +6968,12 @@
       "placeholder-your-metric-prefix": "메트릭 접두사"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7114,6 +7124,11 @@
     },
     "description-label": {
       "description": "설명"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7393,6 +7408,9 @@
       "confirmText-delete-all": "전체 삭제",
       "delete-all-transformations": "모든 변환 삭제",
       "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "표 보기 토글",
@@ -7741,10 +7759,31 @@
       "save-dashboard": "대시보드 저장",
       "title-unsaved-changes": "저장되지 않은 변경 사항"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "설정"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7755,6 +7794,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "이 이름의 전역 또는 폴더 변수가 이미 있으며 이 대시보드 변수로 덮어쓰게 됩니다."
@@ -8919,6 +8965,7 @@
       "label-stack-trace": "스택 트레이스",
       "label-summary-attributes": "요약 속성",
       "label-warnings": "경고",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "하위 개수:",
@@ -9008,15 +9055,16 @@
       "split-widen": "창 확대"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "공유 추적 옵션 메뉴 열기",
+      "aria-label-share-dropdown": "",
       "critical-path": "임계 경로",
       "critical-path-tooltip": "임계 경로(최소 추적 기간을 결정하는 가장 긴 종속 작업 시퀀스) 내 구간을 선택합니다.",
       "duration": "지속 시간",
       "errors": "오류",
       "errors-tooltip": "상태가 오류인 구간을 선택합니다.",
       "export-started": "내보내기가 시작되었습니다",
+      "feedback-group": "",
       "filters": "필터",
-      "give-feedback": "피드백",
+      "give-feedback-item": "",
       "high-latency": "고지연(High latency)",
       "high-latency-tooltip": "경로에서 가장 긴 구간 10%를 선택합니다(p90).",
       "link-copied": "클립보드에 링크 복사되었습니다",
@@ -9024,13 +9072,12 @@
       "path": "경로",
       "route": "라우트",
       "services": "서비스",
-      "share": "공유",
       "share-copy-link": "링크 복사",
       "share-export-json": "JSON으로 내보내기",
-      "share-tooltip": "트레이스 공유",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "시작 시간",
       "target": "대상",
-      "title-share-thoughts-about-tracing-grafana": "Grafana에서 트레이싱에 대한 의견을 공유하세요.",
       "tooltip-url": "{{route}} 또는 {{url}} 또는 {{target}} 또는 {{path}}",
       "trace-id": "트레이스 ID",
       "url": "URL"
@@ -9040,6 +9087,10 @@
         "body": "이 트레이스는 원래 적응형 트레이스에 의해 삭제되었으나 복원되었습니다. 복원된 트레이스는 TraceQL 쿼리에 포함되지 않으며 트레이스 ID로만 쿼리할 수 있습니다. 자세한 내용은 <2>문서</2>를 참고하세요.",
         "title": "적응형 트레이스로 복원된 트레이스"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "클립보드로 복사",
       "attribute-plugin-promo": {
         "learn-more": "자세히 알아보기"
@@ -9047,6 +9098,18 @@
       "database-observability-promo": {
         "body": "Database Observability는 시각적 실행 계획, 대기 이벤트 및 쿼리 샘플을 제공하여 트레이스 스팬만으로는 파악하기 어려운 문제를 진단하는 데 도움을 줍니다.",
         "title": "느린 쿼리를 더 빠르게 찾기"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "데이터 없음",
       "tooltip-copy-icon": "복사됨"
@@ -12540,7 +12603,7 @@
       "title": "프로필"
     },
     "recently-deleted": {
-      "subtitle": "삭제된 대시보드는 최대 12개월 동안 또는 1,000개의 대시보드 기록 한도에 도달할 때까지 보관됩니다.",
+      "subtitle": "",
       "title": "최근에 삭제됨"
     },
     "recorded-queries": {
@@ -12827,6 +12890,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12843,6 +12907,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12976,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13735,10 +13808,11 @@
       "button-save": "저장",
       "button-saving": "저장 중...",
       "description-commit-message-template": "리소스를 저장, 이동, 이름 변경 또는 삭제할 때 댓글 필드를 비워 둔 경우 사용되는 커밋 메시지입니다. 작업별로 입력되는 자리 표시자: {{actionVar}}(생성/업데이트/삭제/이동/이름 변경), {{kindVar}}(대시보드/폴더),{{idVar}}(고유 리소스 ID){{titleVar}},{{userNameVar}}(표시 이름),{{userLoginVar}}(사용자 이름), {{userEmailVar}}. 기본 제공 메시지를 사용하려면 비워 두세요.",
-      "description-connection": "사용할 GitHub 앱 연결을 선택하세요",
+      "description-connection": "",
       "description-enabled": "자동 풀링이 활성화되면 아래 대상 유형을 변경할 수 없습니다.",
       "description-read-only": "Grafana를 통해 리소스를 수정할 수 없습니다.",
       "description-title": "사람이 읽을 수 있는 구성 이름",
+      "error-connection-missing": "",
       "error-connection-required": "연결이 필요합니다",
       "error-fetch-branches": "브랜치 가져오기에 실패했습니다.",
       "error-required": "이 필드는 필수 입력 항목입니다.",
@@ -13746,7 +13820,7 @@
       "error-save-repository": "리포지토리 설정 저장 실패",
       "label-automatic-pulling": "자동 풀링",
       "label-commit-message-template": "커밋 메시지 템플릿",
-      "label-connection": "GitHub 앱 연결",
+      "label-connection": "",
       "label-enabled": "활성화됨",
       "label-interval-seconds": "간격(초)",
       "label-repository-type": "리포지토리 유형",
@@ -13776,38 +13850,53 @@
       "text-repository-not-ready": "리포지토리에 연결하는 동안 문제가 발생했습니다. 여전히 브랜치 이름을 수동으로 입력하실 수 있습니다."
     },
     "connection": {
-      "disconnected-message": "이 GitHub 앱 연결에 대한 액세스 권한이 상실되었습니다. 앱이 제거되었거나 리포지토리 액세스 권한이 취소되었을 수 있습니다.",
-      "disconnected-title": "연결이 끊어졌습니다"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "연결이 삭제되었습니다",
       "alert-connection-saved": "연결이 저장되었습니다",
       "alert-connection-updated": "연결이 업데이트되었습니다",
-      "available-repositories": "이 연결은 다음 리포지토리에 대한 액세스 권한을 보유합니다.",
+      "available-repositories-loading": "",
       "back-to-connections": "연결 페이지로 돌아가기",
       "button-save": "저장",
       "button-saving": "저장 중...",
       "create-new-connection-button": "연결 생성",
       "creating-connection-button": "연결 생성 중...",
       "description-app-id": "GitHub 앱의 ID",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "연결에 대한 설명(선택 사항)",
       "description-installation-id": "GitHub 앱의 설치 ID",
       "description-private-key": "PEM 형식의 GitHub 앱 개인 키",
       "description-provider": "제공자 유형 선택",
       "description-title": "사람이 쉽게 식별할 수 있는 연결 이름입니다.",
       "description-webhook-disabled": "활성화하면 GitHub App에 webhooks:write 권한이 필요하지 않으며, Grafana는 웹후크 이벤트를 등록하거나 수신하지 않습니다. 공용 인터넷에서 Grafana에 연결할 수 없는 경우 이 옵션을 사용하세요.",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "연결 삭제 실패",
       "error-required": "필수 입력 사항입니다",
       "error-save-connection": "연결 저장 실패",
       "error-submit": "연결 저장 실패",
       "grafana-repositories": "이 연결을 사용하는 리포지토리",
       "label-app-id": "GitHub 앱 ID",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "설명",
       "label-installation-id": "GitHub 설치 ID",
       "label-private-key": "개인 키(PEM)",
       "label-provider": "제공자",
       "label-title": "제목",
       "label-webhook-disabled": "웹훅 통합 비활성화",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "연결을 찾을 수 없습니다",
       "not-found-description": "찾고 있는 연결이 존재하지 않습니다.",
       "page-subtitle": "외부 공급자를 인증할 수 있도록 연결 구성",
@@ -13816,12 +13905,18 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "설명(선택 사항)",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "내 GitHub 앱"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "로딩 중...",
       "no-repos": "리포지토리 없음",
-      "repos-truncated_other": "{{shown}} +{{count}} 추가"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "연결 추가",
@@ -13830,6 +13925,8 @@
       "delete-confirm": "이 연결을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
       "delete-title": "연결 삭제",
       "error-loading": "연결을 로드하지 못했습니다",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "구성된 연결 없음",
       "no-results": "쿼리와 일치하는 결과가 없습니다",
       "search-placeholder": "연결 검색",
@@ -14197,6 +14294,36 @@
         "subtitle": "외부 스토리지를 통해 전체 Grafana 인스턴스를 동기화하고 관리하려면 이 옵션을 사용하세요."
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "Git 워크플로를 통한 저장, 이동, 삭제를 사용할 수 없습니다. 관리자인 경우 대시보드 상단의 경고를 사용해 이 대시보드를 해제하거나 삭제하거나, Grafana 관리자에게 문의하세요.",
       "title": "프로비저닝 리포지토리가 더 이상 존재하지 않습니다."
@@ -14416,6 +14543,9 @@
       },
       "title-error-saving-file": "파일 저장 중 오류 발생"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "취소",
       "button-delete": "삭제",
@@ -14529,6 +14659,7 @@
     },
     "validation": {
       "hidden-characters": "이 필드에는 복사하여 붙여 넣는 과정에서 발생했을 수 있는 숨겨진 문자가 포함되어 있습니다. 값을 다시 입력하거나 정리한 후 다시 시도해 주세요.",
+      "invalid-url": "",
       "url-with-credentials": "리포지토리 URL에는 사용자 아이디 또는 비밀번호가 포함되어서는 안 됩니다. URL에서 자격 증명을 제거하고 대신 토큰 필드를 사용하세요."
     },
     "warning-title-default": "경고",
@@ -14559,11 +14690,16 @@
       "alert-point-permissions": "세분화된 권한 설정은 지원되지 않습니다. 기본 권한 적용: 관리자, 편집자 및 뷰어 역할은 기본 접근 수준으로 유지됩니다.",
       "alert-point-unsupported": "프로비저닝된 폴더에서는 알림 및 라이브러리 패널이 지원되지 않습니다.",
       "alert-title": "중요: 계속하기 전에 Git 동기화 제한 사항을 검토하세요.",
-      "auth-type-description": "두 가지 방법 모두 GitHub 리포지토리에 대한 보안 접근을 제공합니다. 워크플로 및 보안 요구 사항에 가장 적합한 항목을 선택하세요.",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "보안 및 팀 협업을 강화하려면 GitHub 앱을 사용하세요. 프로덕션 환경에 권장됩니다.",
       "auth-type-github-app-label": "GitHub 앱과 연결",
       "auth-type-label": "인증 방법",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "개인 액세스 토큰을 사용하여 GitHub로 인증하세요. 개별 사용 및 테스트에 적합합니다.",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "개인 접근 토큰으로 연결",
       "button-cancel": "취소",
       "button-cancelling": "취소 중...",
@@ -14571,7 +14707,8 @@
       "button-start": "동기화 시작",
       "connect-step": "연결",
       "connect-step-local": "파일 프로비저닝",
-      "connection-not-ready": "선택한 GitHub 앱 연결이 준비되지 않았습니다. 연결이 준비되면 목록이 새로 고쳐집니다.",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "이렇게 하면 리포지토리 구성이 삭제되고 지금까지의 작업 내용이 모두 사라집니다. 정말 변경 사항을 취소하시겠어요?",
         "confirm": "네, 취소해 주세요",
@@ -14580,20 +14717,21 @@
       },
       "git-protocol-alert-body": "Pure Git 리포지토리 유형은 <2>Git v2 Smart HTTP 프로토콜</2>을 사용하여 Git 서버와 통신합니다. SSH 및 기존 v1 프로토콜은 지원되지 않습니다. 계속 진행하기 전에 Git 서버가 Smart HTTP를 지원하는지 확인하세요. 자세한 내용은 <5>사용 제한 문서</5>를 참조하세요.",
       "git-protocol-alert-title": "Git v2 Smart HTTP 프로토콜만 지원됩니다.",
-      "github-app-connection-status": "연결 상태:",
       "github-app-creation-default-error": "연결을 생성하지 못했습니다",
       "github-app-creation-failed": "GitHub 앱 연결을 생성하지 못했습니다",
       "github-app-error-loading": "연결을 로드하지 못했습니다",
       "github-app-error-required": "연결은 필수 항목입니다",
       "github-app-help-instructions": "GitHub App을 생성하고 개인 키를 생성한 뒤 설치한 다음, 아래에 세부 정보를 붙여넣으세요. <2>단계별 지침 보기</2>",
       "github-app-help-title": "GitHub 앱을 만드는 데 도움이 필요하세요?",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "기존 앱 선택",
-      "github-app-mode-label": "GitHub 앱 구성",
       "github-app-mode-new": "새 앱에 연결",
-      "github-app-no-connections": "GitHub 연결을 찾을 수 없습니다",
-      "github-app-no-connections-message": "기존 GitHub 앱 연결이 없습니다. '새 앱에 연결'을 선택하여 앱을 생성하세요.",
-      "github-app-select-connection": "GitHub 앱 연결을 선택하세요.",
       "give-feedback-link": "피드백 제출하기",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "동기화할 항목 선택",
       "step-configure-repo": "리포지토리 구성",
       "step-connect": "연결",
@@ -15069,8 +15207,8 @@
       "restore": "복구"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana는 최근에 삭제된 대시보드를 최대 {{limit}}개까지 보관합니다. 이전 항목은 영구적으로 삭제됩니다.",
-      "at-limit-title": "삭제된 대시보드 한도에 도달"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "최근에 삭제한 대시보드가 없습니다.",
@@ -15083,6 +15221,10 @@
       "title": "대시보드 복구",
       "folder-picker-text_other": "대시보드를 복구할 폴더를 선택하세요.",
       "text_other": "이 작업을 수행하면 {{numberOfDashboards}}개의 대시보드가 복구됩니다."
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {

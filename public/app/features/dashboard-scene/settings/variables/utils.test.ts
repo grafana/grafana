@@ -349,6 +349,26 @@ describe('getVariableScene', () => {
     expect(sceneVariable.state.name).toBe(initialState.name);
     expect(sceneVariable.state.hide).toBe(VariableHide.hideVariable);
   });
+
+  describe('adhoc enableGroupBy default', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('enables group by on new adhoc variables when dashboardUnifiedDrilldownControls is on', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+
+      const variable = await getVariableScene('adhoc', { name: 'filter0' });
+
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
+    });
+
+    it('does not enable group by on new adhoc variables when dashboardUnifiedDrilldownControls is off', async () => {
+      const variable = await getVariableScene('adhoc', { name: 'filter0' });
+
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBeUndefined();
+    });
+  });
 });
 
 describe('hasVariableOptions', () => {
