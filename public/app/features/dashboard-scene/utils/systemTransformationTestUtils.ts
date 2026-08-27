@@ -2,10 +2,7 @@ import { type DataFrame, FieldType, type PanelPlugin, type QueryResultMeta, toDa
 import { getPanelPlugin } from '@grafana/data/test';
 
 /**
- * The plugins each consumer's mocked importer resolves. Named with a `mock` prefix because a
- * `jest.mock` factory may only reference out-of-scope variables whose names start with `mock`, and
- * the factory is what has to read this map — `jest.mock` calls are hoisted per file, so they cannot
- * be shared, only the map they read from.
+ * The plugins that each consumer's mocked importer resolves.
  */
 export const mockSystemTransformationPlugins = new Map<string, PanelPlugin>();
 
