@@ -104,6 +104,11 @@ export default (env: Env = {}): Configuration => ({
     publicPath: 'public/build/rspack/',
     // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
     trustedTypes: { policyName: 'grafana#rspack' },
+    // Enable es module output
+    module: true,
+    chunkFormat: 'module',
+    chunkLoading: 'import',
+    workerChunkLoading: 'import',
   },
   resolve: {
     conditionNames: ['@grafana-app/source', '...'],
