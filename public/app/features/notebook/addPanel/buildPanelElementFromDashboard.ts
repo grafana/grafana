@@ -38,16 +38,29 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
   }
 
   // Interpolated against the source panel, not the clone: the clone is detached from the dashboard,
-  // so it has no variables to resolve through.
+  // so it has no variables to resolve through. Time macros are stashed for the same reason the
+  // queries stash them - a title naming the window has to follow the notebook's, not the dashboard's.
   if (captured.state.title) {
-    captured.setState({ title: sceneGraph.interpolate(vizPanel, captured.state.title) });
+    captured.setState({
+      // `text` is the format VizPanelRenderer titles with, so a variable whose label differs from its
+      // value reads as the label the panel showed rather than the value behind it.
+      title: preserveTimeMacros(captured.state.title, (title) =>
+        sceneGraph.interpolate(vizPanel, title, undefined, 'text')
+      ),
+    });
   }
 
   // The description reads as prose rather than driving a query, so a stray `$service` here is a
   // cosmetic wrong rather than wrong data - but it would still show the reader a variable name that
   // means nothing in a notebook.
   if (captured.state.description) {
-    captured.setState({ description: sceneGraph.interpolate(vizPanel, captured.state.description) });
+    captured.setState({
+      // No format, unlike the title: VizPanel.getDescription interpolates without one before
+      // rendering the markdown, and this should land what the panel would have shown.
+      description: preserveTimeMacros(captured.state.description, (description) =>
+        sceneGraph.interpolate(vizPanel, description)
+      ),
+    });
   }
 
   inlineLibraryPanel(vizPanel, captured);

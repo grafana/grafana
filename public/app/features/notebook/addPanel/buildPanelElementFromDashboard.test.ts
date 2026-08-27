@@ -1,5 +1,14 @@
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { type SceneObject, SceneQueryRunner, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
+import {
+  CustomVariable,
+  type SceneObject,
+  SceneQueryRunner,
+  SceneTimeRange,
+  type SceneVariable,
+  SceneVariableSet,
+  TestVariable,
+  VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 
@@ -19,7 +28,12 @@ function buildPanel(
   queries: DataQuery[],
   title = 'CPU',
   description?: string,
-  extra: { datasource?: DataQuery['datasource']; behaviors?: SceneObject[] } = {}
+  extra: {
+    datasource?: DataQuery['datasource'];
+    behaviors?: SceneObject[];
+    variables?: SceneVariable[];
+    timeRange?: SceneTimeRange;
+  } = {}
 ) {
   return new VizPanel({
     key: 'panel-1',
@@ -27,8 +41,11 @@ function buildPanel(
     description,
     pluginId: 'timeseries',
     $behaviors: extra.behaviors,
+    $timeRange: extra.timeRange,
     $variables: new SceneVariableSet({
-      variables: [new TestVariable({ name: 'service', value: 'checkout', text: 'checkout', query: 'A' })],
+      variables: extra.variables ?? [
+        new TestVariable({ name: 'service', value: 'checkout', text: 'checkout', query: 'A' }),
+      ],
     }),
     $data: new SceneQueryRunner({ datasource: extra.datasource ?? { uid: 'prom' }, queries }),
   });
@@ -93,6 +110,25 @@ describe('buildPanelElementFromDashboard', () => {
     expect(element.kind === 'Panel' && element.spec.title).toBe('Errors for checkout');
   });
 
+  // The title is what VizPanelRenderer shows, and it renders with the `text` format - so a variable
+  // whose label differs from its value would otherwise be captured as something the reader never saw.
+  it('captures the label a variable displayed in the title, not the value behind it', async () => {
+    const element = await buildPanelElementFromDashboard(
+      buildPanel([{ refId: 'A' }], 'Errors for $service', undefined, {
+        variables: [
+          new CustomVariable({
+            name: 'service',
+            query: 'Checkout Service : checkout-svc',
+            value: 'checkout-svc',
+            text: 'Checkout Service',
+          }),
+        ],
+      })
+    );
+
+    expect(element.kind === 'Panel' && element.spec.title).toBe('Errors for Checkout Service');
+  });
+
   // Prose rather than a query, so this is cosmetic rather than wrong data - but a notebook has no
   // variables, so the reader would be shown a name that means nothing there.
   it('interpolates the description, so the cell does not explain itself with a variable name', async () => {
@@ -101,6 +137,23 @@ describe('buildPanelElementFromDashboard', () => {
     );
 
     expect(element.kind === 'Panel' && element.spec.description).toBe('Errors seen by checkout');
+  });
+
+  // Panel text names a window as much as a query does, and the notebook has its own picker. Frozen
+  // here, a title would go on naming the dashboard's range however the reader moves the notebook's.
+  it('leaves the time macros in the title and description for the notebook to resolve', async () => {
+    const element = await buildPanelElementFromDashboard(
+      buildPanel([{ refId: 'A' }], 'Errors for $service since $__from', 'Up to $__to, binned by $__interval', {
+        timeRange: new SceneTimeRange({ from: '2026-01-01T00:00:00.000Z', to: '2026-01-02T00:00:00.000Z' }),
+      })
+    );
+
+    if (element.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    // The variable beside them still resolves: it is the macros alone that are held back.
+    expect(element.spec.title).toBe('Errors for checkout since $__from');
+    expect(element.spec.description).toBe('Up to $__to, binned by $__interval');
   });
 
   // Interpolating means rewriting queries, and the user is still looking at the dashboard it came from.
