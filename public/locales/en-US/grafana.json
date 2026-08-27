@@ -16450,6 +16450,7 @@
       "tooltip-bold": "Bold",
       "tooltip-bullet-list": "Bullet list",
       "tooltip-checklist": "Checklist",
+      "tooltip-diagram": "Mermaid diagram",
       "tooltip-heading": "Heading",
       "tooltip-insert-variable": "Insert variable",
       "tooltip-italic": "Italic",
@@ -16462,6 +16463,10 @@
     },
     "frame-picker": {
       "label": "Query"
+    },
+    "mermaid": {
+      "invalid-syntax": "invalid diagram syntax",
+      "render-error": "Diagram error: {{message}}"
     },
     "options": {
       "render-mode": "Render mode"

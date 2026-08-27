@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
@@ -47,6 +47,19 @@ jest.mock('@grafana/ui/unstable', () => ({
       readOnly
     />
   ),
+}));
+
+const mermaidRender = jest
+  .fn()
+  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
+
+jest.mock('mermaid', () => ({
+  __esModule: true,
+  default: {
+    initialize: jest.fn(),
+    parse: jest.fn().mockResolvedValue(true),
+    render: (...args: unknown[]) => mermaidRender(...args),
+  },
 }));
 
 const replaceVariablesMock = jest.fn();
@@ -565,5 +578,16 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  it('renders a markdown mermaid fence as a diagram', async () => {
+    const props = createProps((target) => target, {
+      options: { content: '```mermaid\ngraph TD\n  A --> B\n```', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    const view = screen.getByTestId('TextNGPanel-converted-content');
+    await waitFor(() => expect(view.querySelector('.textng-mermaid svg')).not.toBeNull());
   });
 });

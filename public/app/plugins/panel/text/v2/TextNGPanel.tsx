@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -26,6 +25,7 @@ import {
 } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
+import { TextNGHtmlView } from './TextNGHtmlView';
 import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { catchTemplateError, renderContent, type RenderedContent } from './renderContent';
@@ -197,11 +197,10 @@ function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps)
   }
 
   const rendered = (
-    <DangerouslySetHtmlContent
-      allowRerender
+    <TextNGHtmlView
       html={content}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
-      data-testid="TextNGPanel-converted-content"
+      testId="TextNGPanel-converted-content"
     />
   );
 
