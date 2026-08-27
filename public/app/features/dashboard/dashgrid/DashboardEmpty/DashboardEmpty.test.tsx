@@ -51,7 +51,7 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
 }));
 
 jest.mock('app/features/dashboard-prompt/useDashboardGenerationAvailable', () => ({
-  useDashboardGenerationAvailable: jest.fn(() => false),
+  useDashboardGenerationAvailable: jest.fn(() => ({ isAvailable: false, isLoading: false })),
 }));
 
 jest.mock('app/features/dashboard-prompt/DashboardLandingPrompt', () => ({
@@ -182,7 +182,7 @@ describe('new layouts empty state', () => {
 
   afterEach(() => {
     config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
-    mockUseDashboardGenerationAvailable.mockReturnValue(false);
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
   function setupScene() {
@@ -195,21 +195,34 @@ describe('new layouts empty state', () => {
     return dashboard;
   }
 
-  it('keeps the layout picker when assistant dashboard planning is off', () => {
-    setupScene();
+  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', () => {
+    const dashboard = setupScene();
 
     expect(screen.getByText('Select layout')).toBeInTheDocument();
     expect(screen.queryByText('Or start blank')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add');
   });
 
-  it('shows the assistant landing when planning is available', () => {
-    mockUseDashboardGenerationAvailable.mockReturnValue(true);
+  it('shows a loading indicator and leaves the add pane closed while planning is resolving', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: true });
 
-    setupScene();
+    const dashboard = setupScene();
+
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('dashboard-landing-prompt')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('shows the assistant landing without opening the add pane when planning is available', () => {
+    mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: true, isLoading: false });
+
+    const dashboard = setupScene();
 
     expect(screen.getByTestId('dashboard-landing-prompt')).toBeInTheDocument();
     expect(screen.getByText('Or start blank')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
     expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
   });
 });

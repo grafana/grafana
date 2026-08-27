@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
+import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip, Spinner } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
@@ -68,13 +68,15 @@ interface NewLayoutEmptyProps {
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const { uid, isEditing, sidebar } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
-  const generationAvailable = useDashboardGenerationAvailable();
+  const { isAvailable: generationAvailable, isLoading: generationLoading } = useDashboardGenerationAvailable();
 
-  // open the sidebar when the dashboard is new and in editing mode
-  // will only happen when the default empty state is shown (not overridden by extension point)
-  // skipped when the assistant started the edit session — it drives the build itself,
-  // so the pane would only take space away from the assistant sidebar
+  // Open the add pane only for the classic layout-picker empty state. Wait until
+  // generation availability resolves, and skip when the assistant landing is shown
+  // (or when the assistant started the edit session).
   useEffect(() => {
+    if (generationLoading || generationAvailable) {
+      return;
+    }
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
@@ -82,7 +84,15 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     ) {
       sidebar.openPane(new AddNewPane({}));
     }
-  }, [isEditingNewDashboard, dashboard, sidebar]);
+  }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable]);
+
+  if (generationLoading) {
+    return (
+      <Box display="flex" justifyContent="center" padding={4}>
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
 
   if (generationAvailable) {
     return <AssistantDashboardEmpty dashboard={dashboard} />;
