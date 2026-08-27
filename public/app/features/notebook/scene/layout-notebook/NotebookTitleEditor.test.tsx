@@ -135,6 +135,19 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: TITLE })).toBeInTheDocument();
   });
 
+  // The keystroke path refuses to report an empty title; Escape has to follow the same rule, or
+  // cancelling an edit that started untitled hands the notebook its emptiness back.
+  it('keeps the typed title on Escape when the edit started from an empty one', async () => {
+    const { user, onChange } = setup('');
+
+    await user.click(getTrigger());
+    await user.type(getInput(), 'Q3 latency regression');
+    await user.keyboard('{Escape}');
+
+    expect(onChange).not.toHaveBeenCalledWith('');
+    expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
+  });
+
   // Edit mode can be left without the field ever closing, so trimming on close alone saves the padding.
   it('trims the title it reports before the field is closed', async () => {
     const { user, onChange } = setup();

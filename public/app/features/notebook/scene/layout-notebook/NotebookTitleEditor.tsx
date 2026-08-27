@@ -73,7 +73,9 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
     } else if (event.key === 'Escape') {
       event.stopPropagation();
       setDraft(titleBeforeEdit.current);
-      if (titleBeforeEdit.current !== title) {
+      // An empty title is no more reportable here than it is on a keystroke, so an edit that started
+      // untitled keeps what was typed instead of being handed its emptiness back.
+      if (titleBeforeEdit.current && titleBeforeEdit.current !== title) {
         onChange(titleBeforeEdit.current);
       }
       setShowEmptyError(false);
