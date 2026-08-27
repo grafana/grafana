@@ -961,9 +961,6 @@
       "used-by-rules_other": "被 {{count}} 條警示規則使用"
     },
     "contact-points-filter": {
-      "aria-label-clear": "清除",
-      "aria-label-search-contact-points": "搜尋聯絡點",
-      "clear": "清除",
       "label-search-by-name-or-type": "按名稱或類型搜尋",
       "placeholder-search": "搜尋"
     },
@@ -1617,6 +1614,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1687,7 +1688,6 @@
       "review": {
         "autosync-badge": "",
         "back": "警示規則",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "篩選",
         "folder": "目標資料夾",
@@ -1706,7 +1706,6 @@
         "routing": "通知路由",
         "routing-none": "未選取政策樹",
         "routing-tree": "政策樹：{{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "警示規則不會匯入。",
         "rules-title": "警示規則",
         "skipped": "已跳過",
@@ -1731,14 +1730,14 @@
         "yaml-description": "從 Prometheus YAML 檔案匯入規則。"
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanager 資料來源",
+        "datasource-autosync-badge": "",
         "heading": "匯入通知資源",
         "next-disabled-tooltip": "填寫必要欄位，並等待通過驗證，然後再繼續。",
         "no-datasources": "找不到 Alertmanager 資料來源",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "您沒有匯入通知資源的權限。您需要 <strong>alerting.notifications:write</strong> 權限。可以跳過此步驟。",
         "no-permission-title": "權限不足",
         "policy-tree-autosync-disabled": "",
@@ -3227,6 +3226,7 @@
         "disable-confirm-body-generic": "停用將停止持續同步。您可以稍後再次選取資料來源，以重新啟用。",
         "disable-confirm-title": "停用 Mimir Alertmanager 自動同步嗎？",
         "disable-success": "Mimir Alertmanager 自動同步已停用",
+        "not-ready-body": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 索引鍵設定，無法從使用者介面變更。編輯設定檔案並重新啟動 Grafana，或移除金鑰以在此處管理同步。",
         "operator-managed-title": "由運算子管理",
         "orphan-warning": "無可用的已設定資料來源 UID {{uid}}。停用同步或還原資料來源以繼續。",
@@ -3234,6 +3234,7 @@
         "picker-empty": "沒有可用的 Mimir 或 Cortex 資料來源",
         "picker-label": "資料來源",
         "picker-placeholder": "選擇 Mimir 或 Cortex Alertmanager 資料來源…",
+        "read-error-message": "",
         "save-disabled-no-selection": "選擇 Mimir 或 Cortex Alertmanager 資料來源以啟用儲存。",
         "save-disabled-staged-config": "",
         "save-error": "無法儲存 Mimir Alertmanager 自動同步",
@@ -3849,6 +3850,8 @@
       "title-notification-policies": "通知政策"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "無法匯入資源",
@@ -4358,7 +4361,7 @@
       "cancel-button": "取消",
       "confirmation-text": "刪除",
       "delete-button": "刪除",
-      "delete-modal-restore-dashboards-common": "已刪除的儀表板將在歷史記錄中保留最多 12 個月。具有刪除權限的使用者可以還原他們刪除的儀表板，而管理員可以還原任何使用者刪除的儀表板。歷史記錄限制為 1000 個儀表板，若達到上限，則可能會更早移除較舊的儀表板。",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "此動作將立即刪除所選資料夾。",
       "delete-modal-restore-dashboards-suffix-folder": "資料夾無法還原。",
       "delete-modal-title": "刪除",
@@ -4379,8 +4382,8 @@
       "selected-mix-resources-modal-text": "您已選取已佈建和非佈建資源。這些資源無法一起處理。請僅選取已佈建的資源或僅選取非佈建資源，然後再試一次。",
       "selected-mix-resources-modal-title": "已選取混合資源類型",
       "delete-modal-folder-empty_other": "選取的資料夾為空",
-      "delete-modal-folder-not-empty_other": "所選資料夾包含將被刪除的其他資源",
-      "move-modal-folder-not-empty_other": "所選資料夾包含將與其一起移動的其他資源"
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近刪除"
@@ -4409,7 +4412,7 @@
       "error-deleting-resources": "刪除資源時發生錯誤",
       "success-title": "已成功刪除資源",
       "folder-empty_other": "選取的資料夾為空",
-      "folder-not-empty_other": "所選資料夾包含將被刪除的其他資源"
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
@@ -4430,7 +4433,7 @@
       "move-warning-tooltip": "您只能將已佈建的資源移動到其佈建的資料夾中，並將本機資源移動到本機資料夾中。",
       "success-title": "已成功移動資源",
       "target-folder": "目標資料夾",
-      "folder-not-empty_other": "所選資料夾包含將與其一起移動的其他資源"
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "儀表板"
@@ -4464,7 +4467,7 @@
       "button-deleting": "正在刪除…",
       "delete-warning": "這將刪除此資料夾及其所有子資料夾。",
       "folder-empty": "所選資料夾為空",
-      "folder-not-empty": "所選資料夾包含將被刪除的其他資源",
+      "folder-not-empty": "",
       "missing-info": "缺少必要欄位",
       "success-message": "已成功刪除資料夾"
     },
@@ -6252,9 +6255,9 @@
         "name-builtin": "{{annoName}}（內建）",
         "name-disabled": "（已停用）{{annoName}}",
         "reorder-description": "重新排序註解清單",
-        "title-above-dashboard-count_other": "儀表板上方（{{count}} 個）",
-        "title-controls-menu-count_other": "控制選單（{{count}} 個）",
-        "title-hidden-count_other": "隱藏（{{count}} 個）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "註解",
@@ -6267,7 +6270,6 @@
         "tooltip": "儀表板選項",
         "variables": "變數"
       },
-      "drag-to-reorder": "拖曳以重新排序",
       "edit-schema": {
         "apply-button": "套用變更",
         "apply-button-disabled-tooltip": "在套用變更之前，請先修正驗證錯誤",
@@ -6330,10 +6332,10 @@
         "add-filter": "新增篩選條件",
         "reorder-description": "重新排序篩選條件清單",
         "title": "篩選條件",
-        "tooltip": "篩選條件概覽",
-        "title-above-dashboard_other": "儀表板上方（{{count}} 個）",
-        "title-controls-menu_other": "控制選單（{{count}} 個）",
-        "title-hidden_other": "隱藏（{{count}} 個）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "篩選條件概覽"
       },
       "group": {
         "different-parents": "",
@@ -6345,8 +6347,8 @@
         "add-link": "新增連結",
         "new-link": "新連結",
         "reorder-description": "重新排序連結清單",
-        "title-above-dashboard_other": "儀表板上方 ({{count}})",
-        "title-controls-menu_other": "控制選單 ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "內容大綱",
@@ -6385,7 +6387,6 @@
       "section-variables": {
         "title": "變數"
       },
-      "select": "選取",
       "snapshot": {
         "title": "來源",
         "tooltip": "開啟原始儀表板"
@@ -6445,10 +6446,10 @@
         "reorder-description": "重新排序變數清單",
         "select-type": "選擇變數類型",
         "select-type-card-tooltip": "按一下以選取類型",
-        "top-placement-default": "儀表板上方",
-        "title-controls-menu_other": "控制選單 ({{count}})",
-        "title-hidden_other": "隱藏（{{count}} 個）",
-        "title-top-placement_other": "{{placement}}（{{count}} 個）"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "已停用",
@@ -6814,6 +6815,11 @@
       "title": "尚未新增儀表板連結"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -6962,8 +6968,12 @@
       "placeholder-your-metric-prefix": "您的指標前綴"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7114,6 +7124,11 @@
     },
     "description-label": {
       "description": "說明"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7393,6 +7408,9 @@
       "confirmText-delete-all": "全部刪除",
       "delete-all-transformations": "刪除所有轉換",
       "title-delete-all-transformations": "是否要刪除所有轉換？"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "切換表格檢視",
@@ -7741,10 +7759,31 @@
       "save-dashboard": "儲存儀表板",
       "title-unsaved-changes": "未儲存變更"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7755,6 +7794,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "儀表板已儲存"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "已經有使用此名稱的全域或資料夾變數，並將被此儀表板變數覆寫。"
@@ -8919,6 +8965,7 @@
       "label-stack-trace": "堆疊追蹤",
       "label-summary-attributes": "摘要屬性",
       "label-warnings": "警告",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "子項目數量：",
@@ -9008,15 +9055,16 @@
       "split-widen": "擴大窗格"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "開啟分享追蹤選項選單",
+      "aria-label-share-dropdown": "",
       "critical-path": "關鍵路徑",
       "critical-path-tooltip": "選取關鍵路徑中的跨度，即決定追蹤最短持續時間的最長相依任務序列。",
       "duration": "持續時間",
       "errors": "錯誤",
       "errors-tooltip": "選取狀態等於錯誤的跨度。",
       "export-started": "匯出已開始",
+      "feedback-group": "",
       "filters": "篩選條件",
-      "give-feedback": "意見回饋",
+      "give-feedback-item": "",
       "high-latency": "高延遲",
       "high-latency-tooltip": "選取追蹤中 10% 最長的跨度 (p90)。",
       "link-copied": "連結已復製到剪貼簿",
@@ -9024,13 +9072,12 @@
       "path": "路徑",
       "route": "路徑",
       "services": "服務",
-      "share": "分享",
       "share-copy-link": "複製連結",
       "share-export-json": "匯出為 JSON",
-      "share-tooltip": "分享追蹤",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "開始時間",
       "target": "目標",
-      "title-share-thoughts-about-tracing-grafana": "分享對於在 Grafana 中進行追蹤的想法。",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
       "trace-id": "追蹤 ID",
       "url": "網址"
@@ -9040,6 +9087,10 @@
         "body": "此追蹤最初由 Adaptive Traces 刪除，並已復原。已還原的追蹤不包含在 TraceQL 查詢中，只能透過追蹤 ID 進行查詢。請查看<2>文件</2>，了解更多詳細資訊。",
         "title": "由 Adaptive Traces 還原的追蹤"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "複製至剪貼簿",
       "attribute-plugin-promo": {
         "learn-more": "了解詳情"
@@ -9047,6 +9098,18 @@
       "database-observability-promo": {
         "body": "資料庫可觀測性可顯示視覺化解釋計劃、等待事件和查詢範例，協助您診斷超出追蹤範圍的問題。",
         "title": "更快找到慢速查詢"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "沒有資料",
       "tooltip-copy-icon": "已複製"
@@ -12540,7 +12603,7 @@
       "title": "個人資料"
     },
     "recently-deleted": {
-      "subtitle": "已刪除的儀表板最多可保留 12 個月，或直到達到 1000 個儀表板的歷史記錄限制。",
+      "subtitle": "",
       "title": "最近刪除"
     },
     "recorded-queries": {
@@ -12827,6 +12890,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12843,6 +12907,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -12904,7 +12976,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13735,10 +13808,11 @@
       "button-save": "儲存",
       "button-saving": "正在儲存…",
       "description-commit-message-template": "當有人儲存、移動、重新命名或刪除資源，並將「留言」欄位留空時，所使用的提交訊息。每個操作填寫的預留位置：{{actionVar}}（建立／更新／刪除／移動／重新命名）、{{kindVar}}（儀表板/資料夾）、{{idVar}}（唯一資源 ID）、{{titleVar}}、{{userNameVar}}（顯示名稱）、{{userLoginVar}}（使用者名稱）、{{userEmailVar}}。留空以使用內建的預設訊息。",
-      "description-connection": "選取要使用的 GitHub 應用程式連線",
+      "description-connection": "",
       "description-enabled": "一旦啟用自動拉取，下方的目標類型便無法變更。",
       "description-read-only": "無法透過 Grafana 修改資源。",
       "description-title": "設定的人類可讀名稱",
+      "error-connection-missing": "",
       "error-connection-required": "連線為必填",
       "error-fetch-branches": "",
       "error-required": "此為必填欄位。",
@@ -13746,7 +13820,7 @@
       "error-save-repository": "無法儲存儲存庫設定",
       "label-automatic-pulling": "自動拉取",
       "label-commit-message-template": "提交訊息範本",
-      "label-connection": "GitHub 應用程式連線",
+      "label-connection": "",
       "label-enabled": "已啟用",
       "label-interval-seconds": "間隔（秒）",
       "label-repository-type": "儲存庫類型",
@@ -13776,38 +13850,53 @@
       "text-repository-not-ready": "連接到儲存庫時發生問題。您仍然可以手動輸入分支名稱。"
     },
     "connection": {
-      "disconnected-message": "此 GitHub 應用連線已失去存取權限。該應用可能已被解除安裝，或儲存庫存取權限已被撤銷。",
-      "disconnected-title": "連線已中斷"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "連線已刪除",
       "alert-connection-saved": "連線已儲存",
       "alert-connection-updated": "連線已更新",
-      "available-repositories": "此連線具有以下儲存庫的存取權限",
+      "available-repositories-loading": "",
       "back-to-connections": "返回連線",
       "button-save": "儲存",
       "button-saving": "正在儲存…",
       "create-new-connection-button": "建立連線",
       "creating-connection-button": "正在建立連線…",
       "description-app-id": "您的 GitHub 應用程式 ID",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "此連線的選擇性說明",
       "description-installation-id": "您的 GitHub 應用程式安裝 ID",
       "description-private-key": "您的 GitHub 應用程式的私人金鑰（PEM 格式）",
       "description-provider": "選取提供者類型",
       "description-title": "此連線的人類可讀名稱",
       "description-webhook-disabled": "啟用後，GitHub 應用程式不需要 webhooks:write 權限，Grafana 也不會註冊或接收 Webhook 事件。當無法從公用網際網路存取 Grafana 時，請使用此功能。",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "無法刪除連線",
       "error-required": "此為必填欄位",
       "error-save-connection": "無法儲存連接",
       "error-submit": "無法儲存連接",
       "grafana-repositories": "使用此連線的儲存庫",
       "label-app-id": "GitHub 應用程式 ID",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "描述",
       "label-installation-id": "GitHub 安裝 ID",
       "label-private-key": "私人金鑰 (PEM)",
       "label-provider": "提供者",
       "label-title": "標題",
       "label-webhook-disabled": "停用 Webhook 整合",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "找不到連線",
       "not-found-description": "您正在尋找的連線不存在。",
       "page-subtitle": "設定連線，以便與外部提供者進行驗證",
@@ -13816,12 +13905,18 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "選擇性說明",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "我的 GitHub 應用程式"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "正在載入…",
       "no-repos": "沒有儲存庫",
-      "repos-truncated_other": "{{shown}}其他 {{count}} 個"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "新增連線",
@@ -13830,6 +13925,8 @@
       "delete-confirm": "確定要刪除此連線嗎？此動作無法還原。",
       "delete-title": "刪除連線",
       "error-loading": "無法載入連線",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "未設定任何連線",
       "no-results": "沒有符合您查詢的結果",
       "search-placeholder": "搜尋連線",
@@ -14197,6 +14294,36 @@
         "subtitle": "若想透過外部儲存空間同步及管理整個 Grafana 執行個體，請使用此選項。"
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "無法透過 Git 工作流程進行儲存、移動和刪除。如果您是管理員，請使用儀表板頂部的警告訊息來發佈或刪除此儀表板，或者聯絡您的 Grafana 管理員。",
       "title": "佈建儲存庫不再存在"
@@ -14416,6 +14543,9 @@
       },
       "title-error-saving-file": "儲存檔案時發生錯誤"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "取消",
       "button-delete": "刪除",
@@ -14529,6 +14659,7 @@
     },
     "validation": {
       "hidden-characters": "此欄位包含可能是透過複製貼上而引入的隱藏字元。請重新輸入或清除該值，然後再試一次。",
+      "invalid-url": "",
       "url-with-credentials": "儲存庫網址不得包含使用者名稱或密碼。從網址中移除憑證，並改用權杖欄位。"
     },
     "warning-title-default": "警告",
@@ -14559,11 +14690,16 @@
       "alert-point-permissions": "不支援微調權限。套用預設權限：管理員、編輯者和檢視者角色將保留其標準存取權限等級。",
       "alert-point-unsupported": "佈建的資料夾不支援警示和資料庫面板。",
       "alert-title": "重要提示：在繼續之前，請先檢閱 Git 同步限制",
-      "auth-type-description": "這兩種方法都能安全存取您的 GitHub 儲存庫。請選擇最符合您的工作流程和安全要求的選項。",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "使用 GitHub 應用程式以增強安全性和團隊協作。建議用於生產環境。",
       "auth-type-github-app-label": "連接 GitHub 應用程式",
       "auth-type-label": "驗證方法",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "使用個人存取權杖驗證 GitHub。適合個人使用和測試。",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "連接個人存取權杖",
       "button-cancel": "取消",
       "button-cancelling": "正在取消…",
@@ -14571,7 +14707,8 @@
       "button-start": "開始同步處理",
       "connect-step": "連接",
       "connect-step-local": "檔案佈建",
-      "connection-not-ready": "所選的 GitHub 應用連線尚未就緒。連線就緒後，系統將重新整理清單。",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "這將刪除儲存庫設定，您將失去所有進度。確定要捨棄變更嗎？",
         "confirm": "是的，捨棄",
@@ -14580,20 +14717,21 @@
       },
       "git-protocol-alert-body": "Pure Git 儲存庫類型使用<2>Git v2 Smart HTTP 通訊協定</2>與您的 Git 伺服器通訊。不支援 SSH 和舊版 v1 通訊協定。在繼續操作之前，請確認您的 Git 伺服器支援 Smart HTTP。如需更多詳細資訊，請參閱<5>使用限制文件</5>。",
       "git-protocol-alert-title": "僅支援 Git v2 Smart HTTP 通訊協定",
-      "github-app-connection-status": "連線狀態：",
       "github-app-creation-default-error": "無法建立連線",
       "github-app-creation-failed": "無法建立 GitHub 應用程式連線",
       "github-app-error-loading": "無法載入連線",
       "github-app-error-required": "連線為必填",
       "github-app-help-instructions": "建立 GitHub 應用程式、產生私密金鑰、安裝並貼上以下詳細資訊。<2>檢視逐步說明</2>",
       "github-app-help-title": "需要建立 GitHub 應用程式的說明嗎？",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "選擇現有的應用程式",
-      "github-app-mode-label": "GitHub 應用程式設定",
       "github-app-mode-new": "連線到新的應用程式",
-      "github-app-no-connections": "找不到 GitHub 連線",
-      "github-app-no-connections-message": "您沒有任何現有的 GitHub 應用程式連線。請選擇「連線到新的應用程式」加以建立。",
-      "github-app-select-connection": "選取 GitHub 應用程式連線",
       "give-feedback-link": "提供意見回饋",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "選擇要同步的內容",
       "step-configure-repo": "設定資源庫",
       "step-connect": "連接",
@@ -15069,8 +15207,8 @@
       "restore": "還原"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana 最多保留 {{limit}} 個最近刪除的儀表板。較舊的條目會被永久移除。",
-      "at-limit-title": "已達到刪除的儀表板限制"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "您最近沒有刪除任何儀表板。",
@@ -15083,6 +15221,10 @@
       "title": "還原儀表板",
       "folder-picker-text_other": "請選擇一個資料夾，您的儀表板將在其中還原。",
       "text_other": "此動作將還原 {{numberOfDashboards}} 個儀表板。"
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {

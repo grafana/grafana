@@ -968,9 +968,6 @@
       "used-by-rules_other": "Används av {{count}} larmregler"
     },
     "contact-points-filter": {
-      "aria-label-clear": "radera",
-      "aria-label-search-contact-points": "sök kontaktpunkter",
-      "clear": "Rensa",
       "label-search-by-name-or-type": "Sök efter namn eller typ",
       "placeholder-search": "Sök"
     },
@@ -1624,6 +1621,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1694,7 +1695,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Varningsregler",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtrera",
         "folder": "Målmapp",
@@ -1713,7 +1713,6 @@
         "routing": "Dirigering av aviseringar",
         "routing-none": "Inget policyträd har valts",
         "routing-tree": "Policyträd: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Larmregler kommer inte att importeras.",
         "rules-title": "Larmregler",
         "skipped": "Hoppades över",
@@ -1739,14 +1738,14 @@
         "yaml-description": "Importera regler från en Prometheus YAML-fil."
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanager-datakälla",
+        "datasource-autosync-badge": "",
         "heading": "Importera aviseringsresurser",
         "next-disabled-tooltip": "Fyll i de obligatoriska fälten och vänta tills valideringen har slutförts innan du fortsätter.",
         "no-datasources": "Inga Alertmanager-datakällor hittades",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "Du saknar behörighet att importera aviseringresurser. Du behöver behörigheten <strong>alerting.notifications:write</strong>. Du kan hoppa över detta steg.",
         "no-permission-title": "Otillräckliga behörigheter",
         "policy-tree-autosync-disabled": "",
@@ -3250,6 +3249,7 @@
         "disable-confirm-body-generic": "Inaktivering kommer att stoppa kontinuerlig synkronisering. Du kan aktivera den igen senare genom att välja en datakälla på nytt.",
         "disable-confirm-title": "Inaktivera automatisk synkronisering av Mimir Alertmanager?",
         "disable-success": "Automatisk synkronisering av Mimir Alertmanager har inaktiverats",
+        "not-ready-body": "",
         "operator-managed-info": "Detta värde ställs in av nyckeln <1>[unified_alerting] external_alertmanager_uid</1> i grafana.ini och kan inte ändras från användargränssnittet. Redigera konfigurationsfilen och starta om Grafana, eller ta bort nyckeln om du vill hantera synkronisering härifrån.",
         "operator-managed-title": "Hanteras av operatör",
         "orphan-warning": "Den konfigurerade datakällans UID {{uid}} är inte tillgänglig. Inaktivera synkroniseringen eller återställ datakällan för att fortsätta.",
@@ -3257,6 +3257,7 @@
         "picker-empty": "Inga Mimir- eller Cortex-datakällor tillgängliga",
         "picker-label": "Datakälla",
         "picker-placeholder": "Välj en Mimir- eller Cortex Alertmanager-datakälla …",
+        "read-error-message": "",
         "save-disabled-no-selection": "Välj en Mimir- eller Cortex Alertmanager-datakälla för att aktivera sparande.",
         "save-disabled-staged-config": "",
         "save-error": "Det gick inte att spara automatisk synkronisering av Mimir Alertmanager",
@@ -3880,6 +3881,8 @@
       "title-notification-policies": "Aviseringspolicyer"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Det gick inte att importera resurser",
@@ -4389,7 +4392,7 @@
       "cancel-button": "Avbryt",
       "confirmation-text": "Ta bort",
       "delete-button": "Ta bort",
-      "delete-modal-restore-dashboards-common": "Raderade instrumentpaneler kommer att sparas i historiken i upp till 12 månader. Användare med behörighet att radera kan återställa de instrumentpaneler de själva har raderat och administratörer kan återställa instrumentpaneler som tagits bort av alla användare. Historiken är begränsad till 1 000 instrumentpaneler – äldre kan tas bort tidigare om denna gräns nås. ",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "Denna åtgärd raderar de valda mapparna omedelbart.",
       "delete-modal-restore-dashboards-suffix-folder": "Mappar kan inte återställas.",
       "delete-modal-title": "Ta bort",
@@ -4411,10 +4414,10 @@
       "selected-mix-resources-modal-title": "Blandade resurstyper valda",
       "delete-modal-folder-empty_one": "Den valda mappen är tom",
       "delete-modal-folder-empty_other": "De valda mapparna är tomma",
-      "delete-modal-folder-not-empty_one": "Den valda mappen innehåller andra resurser som kommer att tas bort",
-      "delete-modal-folder-not-empty_other": "De valda mapparna innehåller andra resurser som kommer att tas bort",
-      "move-modal-folder-not-empty_one": "Den valda mappen innehåller andra resurser som kommer att flyttas med den",
-      "move-modal-folder-not-empty_other": "De valda mapparna innehåller andra resurser som kommer att flyttas med dem"
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nyligen raderat"
@@ -4445,8 +4448,8 @@
       "success-title": "Resurserna har tagits bort",
       "folder-empty_one": "Den valda mappen är tom",
       "folder-empty_other": "De valda mapparna är tomma",
-      "folder-not-empty_one": "Den valda mappen innehåller andra resurser som kommer att tas bort",
-      "folder-not-empty_other": "De valda mapparna innehåller andra resurser som kommer att tas bort"
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Avbryt",
@@ -4467,8 +4470,8 @@
       "move-warning-tooltip": "Du kan bara flytta tilldelade resurser inom deras tilldelade mapp och lokala resurser till lokala mappar.",
       "success-title": "Resurserna har flyttats",
       "target-folder": "Målkatalog",
-      "folder-not-empty_one": "Den valda mappen innehåller andra resurser som kommer att flyttas med den",
-      "folder-not-empty_other": "De valda mapparna innehåller andra resurser som kommer att flyttas med dem"
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "Instrumentpanel"
@@ -4502,7 +4505,7 @@
       "button-deleting": "Tar bort …",
       "delete-warning": "Detta kommer att ta bort den här mappen och alla dess underordnade.",
       "folder-empty": "Den valda mappen är tom",
-      "folder-not-empty": "Den valda mappen innehåller andra resurser som kommer att tas bort",
+      "folder-not-empty": "",
       "missing-info": "Obligatoriska fält saknas",
       "success-message": "Mappen har raderats"
     },
@@ -6295,12 +6298,9 @@
         "name-builtin": "{{annoName}} (inbyggd)",
         "name-disabled": "(Inaktiverad) {{annoName}}",
         "reorder-description": "Ordna om listan över kommentarer",
-        "title-above-dashboard-count_one": "Ovanför instrumentpanel ({{count}})",
-        "title-above-dashboard-count_other": "Ovanför instrumentpanel ({{count}})",
-        "title-controls-menu-count_one": "Kontrollmeny ({{count}})",
-        "title-controls-menu-count_other": "Kontrollmeny ({{count}})",
-        "title-hidden-count_one": "Dold ({{count}})",
-        "title-hidden-count_other": "Dold ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "Kommentarer",
@@ -6313,7 +6313,6 @@
         "tooltip": "Alternativ för instrumentpanel",
         "variables": "Variabler"
       },
-      "drag-to-reorder": "Ändra ordning genom att dra",
       "edit-schema": {
         "apply-button": "Tillämpa ändringar",
         "apply-button-disabled-tooltip": "Åtgärda valideringsfel innan du tillämpar ändringar",
@@ -6376,13 +6375,10 @@
         "add-filter": "Lägg till filter",
         "reorder-description": "Ordna om listan över filter",
         "title": "Filter",
-        "tooltip": "Översikt över filter",
-        "title-above-dashboard_one": "Ovanför instrumentpanel ({{count}})",
-        "title-above-dashboard_other": "Ovanför instrumentpanel ({{count}})",
-        "title-controls-menu_one": "Kontrollmeny ({{count}})",
-        "title-controls-menu_other": "Kontrollmeny ({{count}})",
-        "title-hidden_one": "Dold ({{count}})",
-        "title-hidden_other": "Dold ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "Översikt över filter"
       },
       "group": {
         "different-parents": "",
@@ -6394,10 +6390,8 @@
         "add-link": "Lägg till länk",
         "new-link": "Ny länk",
         "reorder-description": "Ordna om listan över länkar",
-        "title-above-dashboard_one": "Ovanför instrumentpanel ({{count}})",
-        "title-above-dashboard_other": "Ovanför instrumentpanel ({{count}})",
-        "title-controls-menu_one": "Kontrollmeny ({{count}})",
-        "title-controls-menu_other": "Kontrollmeny ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "Innehållskontur",
@@ -6436,7 +6430,6 @@
       "section-variables": {
         "title": "Variabler"
       },
-      "select": "Välj",
       "snapshot": {
         "title": "Källa",
         "tooltip": "Öppna ursprunglig instrumentpanel"
@@ -6496,13 +6489,10 @@
         "reorder-description": "Ordna om listan över variabler",
         "select-type": "Välj typ av variabel",
         "select-type-card-tooltip": "Klicka för att välja typ",
-        "top-placement-default": "Ovanför instrumentpanel",
-        "title-controls-menu_one": "Kontrollmeny ({{count}})",
-        "title-controls-menu_other": "Kontrollmeny ({{count}})",
-        "title-hidden_one": "Dold ({{count}})",
-        "title-hidden_other": "Dold ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "Inaktiverad",
@@ -6870,6 +6860,11 @@
       "title": "Det finns inga instrumentpanellänkar tillagda ännu"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7018,8 +7013,12 @@
       "placeholder-your-metric-prefix": "Ditt metrikprefix"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7170,6 +7169,11 @@
     },
     "description-label": {
       "description": "Beskrivning"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7450,6 +7454,9 @@
       "confirmText-delete-all": "Radera alla",
       "delete-all-transformations": "Radera alla transformeringar",
       "title-delete-all-transformations": "Radera alla transformeringar?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Växla tabellvy",
@@ -7799,10 +7806,31 @@
       "save-dashboard": "Spara instrumentpanel",
       "title-unsaved-changes": "Ändringar som inte sparats"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Inställningar"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7813,6 +7841,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Kontrollpanelen sparades"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "En global variabel eller mappvariabel med detta namn finns och kommer att skrivas över av denna instrumentpanelsvariabel."
@@ -8982,6 +9017,7 @@
       "label-stack-trace": "Stackspårning",
       "label-summary-attributes": "Sammanfattningsattribut",
       "label-warnings": "Varningar",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "Antal barn:",
@@ -9072,15 +9108,16 @@
       "split-widen": "Bredda rutan"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Öppna menyn för delning av spårningsalternativ",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritisk väg",
       "critical-path-tooltip": "Väljer tidsspann i den kritiska vägen – den längsta sekvensen av beroende uppgifter som bestämmer spårningens minsta varaktighet.",
       "duration": "Varaktighet",
       "errors": "Fel",
       "errors-tooltip": "Väljer spännvidd där status är lika med fel.",
       "export-started": "Exporten startad",
+      "feedback-group": "",
       "filters": "Filter",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "",
       "high-latency": "Hög latens",
       "high-latency-tooltip": "Väljer de 10 % längsta tidsspannen i spårningen (p90).",
       "link-copied": "Länk kopierad till urklipp",
@@ -9088,13 +9125,12 @@
       "path": "Sökväg",
       "route": "Rutt",
       "services": "Tjänster",
-      "share": "Dela",
       "share-copy-link": "Kopiera länk",
       "share-export-json": "Exportera som JSON",
-      "share-tooltip": "Dela spårning",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Starttid",
       "target": "Mål",
-      "title-share-thoughts-about-tracing-grafana": "Dela dina tankar om att spåra i Grafana.",
       "tooltip-url": "{{route}} eller {{url}} eller {{target}} eller {{path}}",
       "trace-id": "Spårnings-ID",
       "url": "URL"
@@ -9104,6 +9140,10 @@
         "body": "Den här spårningen togs ursprungligen bort av Adaptive Traces och har återställts. En återställd spårning ingår inte i TraceQL-frågor och kan endast efterfrågas med spårnings-id. Läs <2>dokumentationen</2> för mer information.",
         "title": "Spårning återställd av Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "Kopiera till urklippet",
       "attribute-plugin-promo": {
         "learn-more": "Läs mer"
@@ -9111,6 +9151,18 @@
       "database-observability-promo": {
         "body": "Observerbarhet för databaser visar visuella förklaringsplaner, väntningshändelser och frågeexempel – vilket hjälper dig att diagnostisera problem bortom spårningens intervall.",
         "title": "Hitta långsamma frågor snabbare"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "Inga data",
       "tooltip-copy-icon": "Kopierad"
@@ -12639,7 +12691,7 @@
       "title": "Profiler"
     },
     "recently-deleted": {
-      "subtitle": "Raderade instrumentpaneler sparas i upp till 12 månader eller tills historikgränsen på 1 000 instrumentpaneler har uppnåtts.",
+      "subtitle": "",
       "title": "Nyligen raderat"
     },
     "recorded-queries": {
@@ -12929,6 +12981,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12945,6 +12998,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13008,7 +13069,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13841,10 +13903,11 @@
       "button-save": "Spara",
       "button-saving": "Sparar ...",
       "description-commit-message-template": "Det inlämningsmeddelande som används när någon sparar, flyttar, byter namn på eller tar bort en resurs och lämnar kommentarsfältet tomt. Platshållare, ifyllda per åtgärd: {{actionVar}} (skapa/uppdatera/ta bort/flytta/byta namn), {{kindVar}} (instrumentpanel/mapp), {{idVar}} (unikt resurs-ID), {{titleVar}}, {{userNameVar}} (visningsnamn), {{userLoginVar}} (användarnamn), {{userEmailVar}}. Lämna tomt om du vill använda de inbyggda standardmeddelandena.",
-      "description-connection": "Välj den GitHub-appanslutning som ska användas",
+      "description-connection": "",
       "description-enabled": "När automatisk hämtning är aktiverad kan måltypen inte ändras.",
       "description-read-only": "Resurser kan inte ändras via Grafana.",
       "description-title": "Ett användarvänligt namn för konfigurationen",
+      "error-connection-missing": "",
       "error-connection-required": "Anslutning krävs",
       "error-fetch-branches": "",
       "error-required": "Detta fält är obligatoriskt.",
@@ -13852,7 +13915,7 @@
       "error-save-repository": "Det gick inte att spara lagringsplatsinställningar",
       "label-automatic-pulling": "Automatisk hämtning",
       "label-commit-message-template": "Mall för inlämningsmeddelande",
-      "label-connection": "GitHub-appanslutning",
+      "label-connection": "",
       "label-enabled": "Aktiverad",
       "label-interval-seconds": "Intervall (sekunder)",
       "label-repository-type": "Typ av lagringsplats",
@@ -13882,38 +13945,53 @@
       "text-repository-not-ready": "Det uppstod ett problem med att ansluta till lagringsplatsen. Du kan fortfarande ange grenens namn manuellt."
     },
     "connection": {
-      "disconnected-message": "Denna GitHub-appanslutning har förlorat åtkomsten. Appen kan ha avinstallerats eller så har åtkomsten till lagringsplatsen återkallats.",
-      "disconnected-title": "Anslutningen har kopplats från"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "Anslutningen har tagits bort",
       "alert-connection-saved": "Anslutningen har sparats",
       "alert-connection-updated": "Anslutningen har uppdaterats",
-      "available-repositories": "Denna anslutning har åtkomst till följande lagringsplatser",
+      "available-repositories-loading": "",
       "back-to-connections": "Tillbaka till anslutningar",
       "button-save": "Spara",
       "button-saving": "Sparar …",
       "create-new-connection-button": "Skapa anslutning",
       "creating-connection-button": "Skapar anslutning …",
       "description-app-id": "ID för din GitHub-app",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "Valfri beskrivning för denna anslutning",
       "description-installation-id": "Installations-ID för din GitHub-app",
       "description-private-key": "Den privata nyckeln för din GitHub-app i PEM-format",
       "description-provider": "Välj typ av leverantör",
       "description-title": "Ett användarvänligt namn för denna anslutning",
       "description-webhook-disabled": "Vid aktivering kräver GitHub-appen inte behörigheten webhooks:write och Grafana kommer inte att registrera eller ta emot webhook-händelser. Använd det när Grafana inte kan nås från det offentliga internet.",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "Det gick inte att radera anslutningen",
       "error-required": "Det här fältet är obligatoriskt",
       "error-save-connection": "Det gick inte att spara anslutningen",
       "error-submit": "Det gick inte att spara anslutningen",
       "grafana-repositories": "Lagringsplatser som använder denna anslutning",
       "label-app-id": "GitHub-app-ID",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "Beskrivning",
       "label-installation-id": "GitHub installations-ID",
       "label-private-key": "Privat nyckel (PEM)",
       "label-provider": "Leverantör",
       "label-title": "Titel",
       "label-webhook-disabled": "Inaktivera webhook-integrering",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "Anslutningen hittades inte",
       "not-found-description": "Anslutningen du letar efter finns inte.",
       "page-subtitle": "Konfigurera en anslutning för att autentisera med externa leverantörer",
@@ -13922,13 +14000,19 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Valfri beskrivning",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "Min GitHub-app"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_one": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "Laddar …",
       "no-repos": "Inga lagringsplatser",
-      "repos-truncated_one": "{{shown}} +{{count}} till",
-      "repos-truncated_other": "{{shown}} +{{count}} till"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "Lägg till anslutning",
@@ -13937,6 +14021,8 @@
       "delete-confirm": "Är du säker på att du vill radera denna anslutning? Den här åtgärden kan inte ångras.",
       "delete-title": "Radera anslutning",
       "error-loading": "Det gick inte att ladda anslutningar",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "Inga anslutningar konfigurerade",
       "no-results": "Inga resultat som matchar din fråga",
       "search-placeholder": "Sök anslutningar",
@@ -14311,6 +14397,36 @@
         "subtitle": "Använd det här alternativet om du vill synkronisera och hantera hela din Grafana-instans via extern lagring."
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "Det går inte att spara, flytta eller radera via Git-arbetsflödet. Använd varningen högst upp på instrumentpanelen för att frigöra eller radera denna kontrollpanel om du är administratör, eller kontakta din Grafana-administratör.",
       "title": "Den tilldelade lagringsplatsen finns inte längre"
@@ -14538,6 +14654,9 @@
       },
       "title-error-saving-file": "Fel när fil skulle sparas"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "Avbryt",
       "button-delete": "Ta bort",
@@ -14651,6 +14770,7 @@
     },
     "validation": {
       "hidden-characters": "Detta fält innehåller dolda tecken som kan ha införts genom att kopiera och klistra in. Skriv in värdet på nytt eller rensa det och försök igen.",
+      "invalid-url": "",
       "url-with-credentials": "Webbadressen för lagringsplatsen får inte innehålla ett användarnamn eller lösenord. Ta bort inloggningsuppgifterna från URL:en och använd tokenfältet i stället."
     },
     "warning-title-default": "Varning",
@@ -14681,11 +14801,16 @@
       "alert-point-permissions": "Detaljerade behörigheter stöds inte. Standardbehörigheter gäller: administratörs-, redigerings- och visningsroller bevaras med deras standardåtkomstnivåer.",
       "alert-point-unsupported": "Larm och bibliotekspaneler stöds inte i tilldelade mappar.",
       "alert-title": "Viktigt: granska Git Sync-begränsningar innan du fortsätter",
-      "auth-type-description": "Båda metoderna ger säker åtkomst till dina GitHub-lagringsplatser. Välj den metod som bäst passar ditt arbetsflöde och dina säkerhetskrav.",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "Använd en GitHub-app för förbättrad säkerhet och teamsamarbete. Rekommenderas för produktionsmiljöer.",
       "auth-type-github-app-label": "Koppla samman med GitHub-appen",
       "auth-type-label": "Autentiseringsmetod",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "Använd en personlig åtkomsttoken för att autentisera med GitHub. Lämplig för individuell användning och testning.",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "Anslut med personlig åtkomsttoken",
       "button-cancel": "Avbryt",
       "button-cancelling": "Avbryter …",
@@ -14693,7 +14818,8 @@
       "button-start": "Påbörja synkronisering",
       "connect-step": "Anslut",
       "connect-step-local": "Filprovisionering",
-      "connection-not-ready": "Den valda GitHub-appanslutningen är inte redo. Listan kommer att uppdateras när anslutningen är redo.",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "Detta kommer att radera lagringsplatskonfigurationen och du kommer att förlora alla ändringar. Är du säker på att du vill kassera dina ändringar?",
         "confirm": "Ja, kassera",
@@ -14702,20 +14828,21 @@
       },
       "git-protocol-alert-body": "Repository-typen Pure Git kommunicerar med din Git-server via <2>Git v2 Smart HTTP-protokollet</2>. SSH och det äldre v1-protokollet stöds inte. Se till att din Git-server stöder Smart HTTP innan du fortsätter. Mer information ges i <5>dokumentationen om användningsgränser</5>.",
       "git-protocol-alert-title": "Endast Git v2 Smart HTTP-protokollet stöds",
-      "github-app-connection-status": "Anslutningsstatus:",
       "github-app-creation-default-error": "Det gick inte att skapa anslutningen",
       "github-app-creation-failed": "Det gick inte att skapa anslutningen till GitHub-appen",
       "github-app-error-loading": "Det gick inte att ladda anslutningar",
       "github-app-error-required": "Anslutning krävs",
       "github-app-help-instructions": "Skapa en GitHub-app, generera en privat nyckel, installera den och klistra in detaljerna nedan. <2>Visa steg för steg-anvisningar</2>",
       "github-app-help-title": "Behöver du hjälp med att skapa en GitHub-app?",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "Välj en befintlig app",
-      "github-app-mode-label": "Konfiguration av GitHub-appen",
       "github-app-mode-new": "Anslut till en ny app",
-      "github-app-no-connections": "Inga GitHub-anslutningar hittades",
-      "github-app-no-connections-message": "Du har ingen befintlig GitHub-appanslutning. Välj ”Anslut till en ny app” för att skapa en.",
-      "github-app-select-connection": "Välj en GitHub-appanslutning",
       "give-feedback-link": "Ge feedback",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "Välj vad du vill synkronisera",
       "step-configure-repo": "Konfigurera lagringsplats",
       "step-connect": "Anslut",
@@ -15199,8 +15326,8 @@
       "restore": "Återställ"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana sparar upp till {{limit}} nyligen borttagna instrumentpaneler. Äldre poster tas bort permanent.",
-      "at-limit-title": "Gränsen för raderade instrumentpaneler har uppnåtts"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Du har inte raderat några instrumentpaneler nyligen.",
@@ -15215,6 +15342,10 @@
       "folder-picker-text_other": "Välj en mapp där dina instrumentpaneler kommer att återställas.",
       "text_one": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel.",
       "text_other": "Denna åtgärd återställer {{numberOfDashboards}} instrumentpanel."
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {
