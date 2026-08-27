@@ -43,7 +43,6 @@ func TestBuildManifestVersion(t *testing.T) {
 		root + "namespaces/{namespace}/testkinds",
 		// The routes the manifest declares, plus the generic ones.
 		root + "namespaces/{namespace}/testkinds/search",
-		root + "namespaces/{namespace}/testkinds/trash",
 		root + "namespaces/{namespace}/testkinds/{name}",
 		root + "namespaces/{namespace}/testkinds/{name}/reload",
 	}, paths, "paths should not include the watch or all-namespace routes the server hides")

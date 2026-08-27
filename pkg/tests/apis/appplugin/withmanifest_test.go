@@ -313,11 +313,11 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
-	// Every namespaced manifest kind gets the generic search endpoints. They
-	// name their own path, so they can never collide with a kind route, which is
-	// always mounted under an object name.
+	// Every namespaced manifest kind gets the generic search endpoint. It names
+	// its own path, so it can never collide with a kind route, which is always
+	// mounted under an object name.
 	require.Contains(t, doc.Paths, prefix+"/search")
-	require.Contains(t, doc.Paths, prefix+"/trash")
+	require.NotContains(t, doc.Paths, prefix+"/trash", "trash is not wired up to search yet")
 
 	route := "/apis/" + testAppID + "/v1/namespaces/default/things/thing-route/reload"
 

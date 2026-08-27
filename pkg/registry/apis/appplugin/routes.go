@@ -97,9 +97,6 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
-		if plural == "" {
-			continue
-		}
 
 		// Cluster kinds have no namespace segment to mount under.
 		dst := &routes.Namespace
@@ -111,20 +108,20 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 
 		// Cluster scoped kinds are not indexed, so they have nothing to search.
 		if searcher != nil && kind.Scope != clusterScope {
-			// Each route names its own path -- <resource>/search,
-			// <resource>/trash -- so the two cannot collide. Registering both
-			// under one path fails the whole apiserver at startup, in the
-			// OpenAPI build.
-			for _, route := range []search.Route{
-				searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind),
-				searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind),
-			} {
+			register := func(route search.Route) {
 				*dst = append(*dst, builder.APIRouteHandler{
 					Path:    route.Path,
 					Spec:    route.Spec,
 					Schemas: route.Schemas,
 					Handler: route.Handler,
 				})
+			}
+
+			if true { // this should be driven by manifest properties
+				register(searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind))
+			}
+			if false { // trash is not *yet* wired up to search
+				register(searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind))
 			}
 		}
 

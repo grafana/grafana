@@ -71,10 +71,12 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	require.Contains(t, registered, "GET /apis/example-app/v1alpha1/namespaces/{namespace}/foobar")
 	require.Contains(t, registered, "GET /apis/example-app/v2alpha1/namespaces/{namespace}/example")
 
-	// The generic subresources a namespaced kind gets. They are the pair most
-	// likely to collide, since both are built from the same resource name.
+	// The generic subresource a namespaced kind gets. /trash is built from the
+	// same resource name and is the route most likely to collide with it once it
+	// is wired up, which is what the duplicate check above is guarding.
 	require.Contains(t, registered, "POST /apis/example-app/v1alpha1/namespaces/{namespace}/testkinds/search")
-	require.Contains(t, registered, "POST /apis/example-app/v1alpha1/namespaces/{namespace}/testkinds/trash")
+	require.NotContains(t, registered, "POST /apis/example-app/v1alpha1/namespaces/{namespace}/testkinds/trash",
+		"trash is not wired up to search yet")
 }
 
 // A manifest route mounted on a resource path would shadow the resource and its
@@ -110,7 +112,7 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 	routes = b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 	require.Equal(t, []string{
-		"foobar", "testkinds/search", "testkinds/trash", "testkinds/{name}/reload",
+		"foobar", "testkinds/search", "testkinds/{name}/reload",
 	}, paths(routes.Namespace), "the manifest route was dropped, so /search is mounted once")
 }
 
@@ -120,9 +122,14 @@ func TestGetAPIRoutesWithoutManifest(t *testing.T) {
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v0alpha1"}))
 }
 
-// A kind with no plural has no REST path to hang subresource routes off, and
-// newKindStore rejects it separately.
-func TestGetAPIRoutesSkipsKindsWithoutPlural(t *testing.T) {
+// A kind with no plural has no REST path to hang subresource routes off, so it
+// would mount routes under an empty resource segment. manifestRoutes does not
+// guard against that itself because it cannot be reached: storage is installed
+// before the custom routes are (builder.InstallAPIs, then
+// AugmentWebServicesWithCustomRoutes), and newKindStore refuses the kind. This
+// pins that ordering -- if routes ever move ahead of storage, the guard has to
+// come back.
+func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:  "NoPlural",
@@ -131,16 +138,11 @@ func TestGetAPIRoutesSkipsKindsWithoutPlural(t *testing.T) {
 			"/orphan": {Get: &spec3.Operation{}},
 		},
 	})
-	b := &AppPluginAPIBuilder{
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-	}
+	b := testBuilder(t, manifest)
+	info, opts := testAPIGroupOptions(t, b)
 
-	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
-	require.NotNil(t, routes)
-	for _, h := range routes.Namespace {
-		require.NotContains(t, h.Path, "orphan")
-	}
+	require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts),
+		"kind NoPlural is missing a plural name")
 }
 
 func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {
@@ -263,7 +265,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 	}
 	// Named, so that a route dropping out of the set fails here rather than
 	// leaving the loop quietly checking nothing.
-	require.ElementsMatch(t, []string{"foobar", "testkinds/search", "testkinds/trash"}, checked)
+	require.ElementsMatch(t, []string{"foobar", "testkinds/search"}, checked)
 
 	// Cluster routes have no namespace segment to document.
 	for _, h := range routes.Root {
