@@ -515,18 +515,21 @@ $(MSI_FILE): $(TARGZ_FILE)
 	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
 	bash scripts/build-msi.sh
 
+# The toggle name has a dot, so it needs `env`, not a bare VAR=value prefix.
+RSPACK_ON := $(filter 1 true,$(RSPACK))
+
 .PHONY: run
-run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
-	$(air) -c .air.toml
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(air) -c .air.toml
 
 .PHONY: run-go
-run-go: ## Build and run web server immediately.
-	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+run-go: ## Build and run web server immediately. Set RSPACK=1 to serve the rspack build.
+	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
-	yarn start
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild. Set RSPACK=1 to build with rspack.
+	yarn start$(if $(RSPACK_ON),:rspack)
 
 .PHONY: frontend-service-check
 frontend-service-check:
