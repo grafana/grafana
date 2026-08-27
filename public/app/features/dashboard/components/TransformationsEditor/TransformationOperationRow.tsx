@@ -62,6 +62,8 @@ export const TransformationOperationRow = ({
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
 
   const dynamicRefId = getTransformationDynamicRefId(uiConfig.id, input);
+  // prevOutput is this transformation's unfiltered input, so its refIds are the reserved ones.
+  const reservedRefIds = prevOutput.map((frame) => frame.refId).filter((refId): refId is string => !!refId);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -167,6 +169,7 @@ export const TransformationOperationRow = ({
         disabled={disabled}
         onChange={onChange}
         dynamicRefId={uiConfig.usesDynamicRefId ? dynamicRefId : undefined}
+        reservedRefIds={reservedRefIds}
       />
     );
   };
