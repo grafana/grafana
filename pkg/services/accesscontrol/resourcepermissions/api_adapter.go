@@ -554,7 +554,7 @@ func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace strin
 
 func (a *api) setTeamPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, teamID int64, permission string) error {
 	ctx := c.Req.Context()
-	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{ID: teamID})
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: c.GetOrgID(), ID: teamID})
 	if err != nil {
 		return fmt.Errorf("failed to get team details: %w", err)
 	}
@@ -693,17 +693,18 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm accesscontrol.SetResourcePermissionCommand) (iamv0.ResourcePermissionSpecPermissionKind, string, error) {
 	kind := iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm))
 	if perm.UserID != 0 {
-		userDetails, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
-			OrgID:  orgID,
-			UserID: perm.UserID,
-		})
+		users, err := a.service.userService.ListByIdOrUID(ctx, nil, []int64{perm.UserID})
 		if err != nil {
 			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
 		}
+		if len(users) != 1 {
+			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, user.ErrUserNotFound)
+		}
+		userDetails := users[0]
 		if userDetails.IsServiceAccount {
 			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
 		}
-		return kind, userDetails.UserUID, nil
+		return kind, userDetails.UID, nil
 	}
 	if perm.TeamID != 0 {
 		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
