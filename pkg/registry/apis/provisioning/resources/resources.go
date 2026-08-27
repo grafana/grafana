@@ -469,11 +469,12 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
+		// folderName is empty in both returns below: the old resource's
+		// identity is unknown, so there is no folder to signal cleanup for.
 		newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 		if err != nil {
 			return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
 		}
-		// folderName intentionally empty: old resource's identity is unknown.
 		return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 	}
 
