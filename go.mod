@@ -62,7 +62,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // @grafana/identity-access-team
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
 	github.com/gchaincl/sqlhooks v1.3.0 // @grafana/grafana-search-and-storage
-	github.com/getkin/kin-openapi v0.144.0 // @grafana/grafana-app-platform-squad
+	github.com/getkin/kin-openapi v0.147.0 // @grafana/grafana-app-platform-squad
 	github.com/go-jose/go-jose/v4 v4.1.4 // @grafana/identity-access-team
 	github.com/go-kit/log v0.2.1 //  @grafana/grafana-backend-group
 	github.com/go-ldap/ldap/v3 v3.4.4 // @grafana/identity-access-team
@@ -577,7 +577,6 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
@@ -605,7 +604,6 @@ require (
 	github.com/opentracing-contrib/go-stdlib v1.1.0 // indirect
 	github.com/ovh/go-ovh v1.9.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
-	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pires/go-proxyproto v0.8.1 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -625,6 +623,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.3 // indirect
@@ -654,7 +653,6 @@ require (
 	github.com/urfave/cli v1.22.17 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
-	github.com/woodsbury/decimal128 v1.4.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
@@ -721,16 +719,11 @@ replace (
 	// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana
 
-	// Pin kin-openapi to avoid maps.Copy incompatibility with openapi3.StringMap (used by cog)
-	github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.133.0
-
 	// lock for mysql tsdb compat
 	github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86
-	github.com/oasdiff/yaml => github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037
-	github.com/oasdiff/yaml3 => github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90
 
 	// Use our fork of the upstream Alertmanager.
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
