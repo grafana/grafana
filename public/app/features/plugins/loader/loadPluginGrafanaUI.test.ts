@@ -1,5 +1,21 @@
-jest.mock('@grafana/ui', () => ({ Button: 'plugin-button' }), { virtual: true });
-jest.mock('@grafana/ui/slate', () => ({ QueryField: 'plugin-query-field' }), { virtual: true });
+jest.mock(
+  '@grafana/ui',
+  () => {
+    const ui = { Button: 'plugin-button' };
+    Object.defineProperty(ui, '__esModule', { value: true });
+    return ui;
+  },
+  { virtual: true }
+);
+jest.mock(
+  '@grafana/ui/slate',
+  () => {
+    const slate = { QueryField: 'plugin-query-field' };
+    Object.defineProperty(slate, '__esModule', { value: true });
+    return slate;
+  },
+  { virtual: true }
+);
 
 import { AppPlugin, DataSourceApi, DataSourcePlugin, PanelPlugin } from '@grafana/data';
 

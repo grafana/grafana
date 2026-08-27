@@ -121,7 +121,6 @@ export const sharedDependenciesMap = {
   rxjs: () => import('rxjs'),
   'rxjs/operators': () => import('rxjs/operators'),
   slate: () => import(/* webpackChunkName: "grafana-ui-slate" */ 'slate'),
-  'slate-plain-serializer': () =>
-    import(/* webpackChunkName: "grafana-ui-slate" */ 'slate-plain-serializer'),
+  'slate-plain-serializer': () => import(/* webpackChunkName: "grafana-ui-slate" */ 'slate-plain-serializer'),
   'slate-react': () => import(/* webpackChunkName: "grafana-ui-slate" */ 'slate-react'),
 };
