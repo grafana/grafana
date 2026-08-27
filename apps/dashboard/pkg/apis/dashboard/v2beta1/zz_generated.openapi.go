@@ -7495,6 +7495,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationSpec(ref common.R
 				Description: "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",
