@@ -6,9 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -186,9 +189,15 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 	return ok && enabled
 }
 
+type pendingInclude struct {
+	link   *navtree.NavLink
+	isPage bool
+}
+
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
+	assistantOSSMode, assistantOSSModeSet := s.assistantOSSMode(plugin, c)
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -200,12 +209,22 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		Url:        s.cfg.AppSubURL + "/a/" + plugin.ID,
 	}
 
+	// When enabled, nav items are nested according to their URL path hierarchy
+	// (e.g. /a/app/settings/usage nests under /a/app/settings) instead of being
+	// flat-appended under the app. Attachment happens in a second pass so it does
+	// not depend on the order includes appear in plugin.json.
+	ctx := c.Req.Context()
+	nestByPath := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPluginPathNesting, false, openfeature.TransactionContext(ctx))
+
+	var pending []pendingInclude
+	var pageLinks []*navtree.NavLink
+
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
 			continue
 		}
 
-		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode) {
+		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode, assistantOSSModeSet) {
 			continue
 		}
 
@@ -259,9 +278,16 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					}
 				}
 
-				// Register the page under the app
+				// Register the page under the app (attached in the second pass below).
+				// Standalone pages are relocated out of the app, so they don't participate.
 			} else if include.AddToNav {
-				appLink.Children = append(appLink.Children, link)
+				pending = append(pending, pendingInclude{link: link, isPage: true})
+				// A page whose URL is the app root itself (e.g. a DefaultNav page) is not a
+				// distinct nesting parent: nesting under it duplicates nesting under the app
+				// section, and it is pruned from the top level below.
+				if cleanNavURL(link.Url) != cleanNavURL(appLink.Url) {
+					pageLinks = append(pageLinks, link)
+				}
 			}
 		}
 
@@ -273,10 +299,12 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					Text:     include.Name,
 					PluginID: plugin.ID,
 				}
-				appLink.Children = append(appLink.Children, link)
+				pending = append(pending, pendingInclude{link: link, isPage: false})
 			}
 		}
 	}
+
+	attachPendingIncludes(appLink, pending, pageLinks, nestByPath)
 
 	// Apps without any nav children are not part of navtree
 	if len(appLink.Children) == 0 {
@@ -317,23 +345,35 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 }
 
 func (s *ServiceImpl) isAssistantTrialMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) bool {
+	value, ok := s.assistantPluginJSONDataBool(plugin, c, "trialMode")
+	return ok && value
+}
+
+func (s *ServiceImpl) assistantOSSMode(plugin pluginstore.Plugin, c *contextmodel.ReqContext) (ossMode bool, set bool) {
 	if plugin.ID != assistantAppID {
-		return false
+		return false, false
+	}
+	return s.assistantPluginJSONDataBool(plugin, c, "ossMode")
+}
+
+func (s *ServiceImpl) assistantPluginJSONDataBool(plugin pluginstore.Plugin, c *contextmodel.ReqContext, key string) (bool, bool) {
+	if plugin.ID != assistantAppID {
+		return false, false
 	}
 
 	ps, err := s.pluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: plugin.ID,
 		OrgID:    c.GetOrgID(),
 	})
-	if err != nil {
-		return false
+	if err != nil || ps.JSONData == nil {
+		return false, false
 	}
 
-	trialMode, ok := ps.JSONData["trialMode"].(bool)
-	return ok && trialMode
+	value, ok := ps.JSONData[key].(bool)
+	return value, ok
 }
 
-func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode bool) bool {
+func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin, include *plugins.Includes, trialMode, ossMode, ossModeSet bool) bool {
 	if plugin.ID != assistantAppID {
 		return true
 	}
@@ -341,12 +381,66 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 		_, allowed := assistantTrialNavigationPaths[include.Path]
 		return allowed
 	}
+	if ossModeSet {
+		if ossMode {
+			_, allowed := assistantOSSNavigationPaths[include.Path]
+			return allowed
+		}
+		return true
+	}
+	// ossMode was not persisted or plugin settings could not be read. Keep the
+	// previous Cloud/Enterprise default so unprovisioned stacks still show
+	// Cloud-only pages.
 	if s.cfg.IsEnterprise || s.cfg.StackID != "" {
 		return true
 	}
-
 	_, allowed := assistantOSSNavigationPaths[include.Path]
 	return allowed
+}
+
+// attachPendingIncludes puts pages under their nearest path ancestor when nesting
+// is enabled and keeps dashboards under the app section.
+func attachPendingIncludes(appLink *navtree.NavLink, pending []pendingInclude, pageLinks []*navtree.NavLink, nestByPath bool) {
+	for _, p := range pending {
+		parent := appLink
+		if nestByPath && p.isPage {
+			if anc := nearestAncestorByPath(p.link, pageLinks); anc != nil {
+				parent = anc
+			}
+		}
+		parent.Children = append(parent.Children, p.link)
+	}
+}
+
+// nearestAncestorByPath returns the page link whose URL is the deepest segment
+// prefix of link's URL, or nil if none — in which case the caller attaches link to
+// the app section. Matching is on full path segments (so /settings does not capture
+// /settings-advanced); query strings, fragments and trailing slashes are ignored.
+func nearestAncestorByPath(link *navtree.NavLink, candidates []*navtree.NavLink) *navtree.NavLink {
+	child := cleanNavURL(link.Url)
+	var best *navtree.NavLink
+	for _, c := range candidates {
+		if c == link {
+			continue
+		}
+		parent := cleanNavURL(c.Url)
+		if parent == child || !strings.HasPrefix(child, parent+"/") {
+			continue
+		}
+		if best == nil || len(parent) > len(cleanNavURL(best.Url)) {
+			best = c
+		}
+	}
+	return best
+}
+
+// cleanNavURL strips any query/fragment and trailing slash so URLs can be compared
+// on path-segment boundaries.
+func cleanNavURL(u string) string {
+	if i := strings.IndexAny(u, "?#"); i >= 0 {
+		u = u[:i]
+	}
+	return strings.TrimRight(u, "/")
 }
 
 func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, appLink *navtree.NavLink) {
@@ -502,7 +596,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-asserts-app":              {SectionID: navtree.NavIDObservability, SortWeight: 2, Icon: "asserts"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDObservability, SortWeight: 3, Text: "Frontend"},
 		appObservabilityAppID:              {SectionID: navtree.NavIDObservability, SortWeight: 4, Text: "Application"},
-		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database", IsNew: true},
+		"grafana-dbo11y-app":               {SectionID: navtree.NavIDObservability, SortWeight: 5, Text: "Database"},
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 6, Text: "Kubernetes"},
 		"grafana-csp-app":                  {SectionID: navtree.NavIDObservability, SortWeight: 7, Icon: "cloud-provider"},
 		"grafana-metricsdrilldown-app":     {SectionID: navtree.NavIDDrilldown, SortWeight: 1, Text: "Metrics"},
@@ -519,7 +613,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Label management"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
-		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},

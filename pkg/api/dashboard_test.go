@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -41,8 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -59,17 +59,18 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, IsSignedIn: true, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
-	prefService := preftest.NewPreferenceServiceFake()
+	prefClient := prefapi.NewMockK8sClient(t)
+	prefClient.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
 	dashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
 		pluginStore:             &pluginstore.FakePluginStore{},
 		SQLStore:                dbtest.NewFakeDB(),
-		preferenceService:       prefService,
+		preferenceK8sHandler:    prefapi.NewK8sHandler(prefClient, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{}),
 		dashboardVersionService: dashboardVersionService,
 		log:                     log.New("test-logger"),
 		tracer:                  tracing.InitializeTracerForTest(),
@@ -149,28 +150,20 @@ func TestGetHomeDashboard(t *testing.T) {
 		"canAdmin":  false,
 	}
 
+	t.Run("empty default_home_dashboard_path returns not found", func(t *testing.T) {
+		hs.Cfg.DefaultHomeDashboardPath = ""
+
+		res := hs.GetHomeDashboard(req)
+		nr, ok := res.(*response.NormalResponse)
+		require.True(t, ok, "should return *NormalResponse")
+		require.Equal(t, http.StatusNotFound, nr.Status())
+	})
+
 	tests := []struct {
 		name             string
 		defaultSetting   string
 		expectedResponse func(t *testing.T) []byte
 	}{
-		{
-			name:           "using default config",
-			defaultSetting: "",
-			expectedResponse: func(t *testing.T) []byte {
-				t.Helper()
-				b, err := os.ReadFile("../../public/dashboards/home.json")
-				require.NoError(t, err)
-				j, err := simplejson.NewJson(b)
-				require.NoError(t, err)
-				wrapper := dtos.DashboardFullWithMeta{}
-				wrapper.Meta.FolderTitle = "General"
-				wrapper.Dashboard = j
-				out, err := json.Marshal(wrapper)
-				require.NoError(t, err)
-				return out
-			},
-		},
 		{
 			name:           "custom path with classic dashboard",
 			defaultSetting: "../../public/dashboards/default.json",
@@ -239,7 +232,6 @@ func TestGetHomeDashboard(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
-			prefService.ExpectedPreference = &pref.Preference{}
 
 			expectedBytes := tc.expectedResponse(t)
 

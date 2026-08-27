@@ -664,15 +664,13 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		return nil, err
 	}
 
+	// A resource can be reported twice, by unified storage and by the "sql-fallback"
+	// group. Resources not yet in unified storage still get an entry there with a count
+	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
-		// if stats come from unified storage, we will use them
-		if v.Group != "sql-fallback" {
-			out[v.Resource] = v.Count
-			continue
-		}
-		// if stats are from single tenant DB and they are not in unified storage, we will use them
-		if _, ok := out[v.Resource]; !ok {
+		current, seen := out[v.Resource]
+		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count
 		}
 	}
@@ -683,17 +681,22 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 	fullpath := make([]string, len(parents))
 	fullpathUIDs := make([]string, len(parents))
 	for i, p := range parents {
-		fullpath[i] = p.Title
+		fullpath[i] = escapeSlashes(p.Title)
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func escapeSlashes(title string) string {
+	title = strings.ReplaceAll(title, "\\", "\\\\")
+	return strings.ReplaceAll(title, "/", "\\/")
 }
 
 func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderMap map[string]*folder.Folder) error {
 	titles := make([]string, 0)
 	uids := make([]string, 0)
 
-	titles = append(titles, f.Title)
+	titles = append(titles, escapeSlashes(f.Title))
 	uids = append(uids, f.UID)
 
 	seen := make(map[string]bool)
@@ -716,7 +719,7 @@ func buildFolderFullPaths(f *folder.Folder, relations map[string]string, folderM
 		if !exists {
 			break
 		}
-		titles = append(titles, parentFolder.Title)
+		titles = append(titles, escapeSlashes(parentFolder.Title))
 		uids = append(uids, parentFolder.UID)
 		currentUID = parentFolder.UID
 	}

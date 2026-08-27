@@ -270,6 +270,8 @@ func (session *Session) InsertMulti(rowsSlicePtr any) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 	if sliceValue.Kind() != reflect.Slice {
 		return 0, ErrParamsType
@@ -564,6 +566,8 @@ func (session *Session) InsertOne(bean any) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
+
+	defer session.resetStatement()
 
 	return session.innerInsert(bean)
 }

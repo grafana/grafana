@@ -165,6 +165,36 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
+func TestMapperRegistry_Variables(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "variables", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+	assert.Equal(t, "variables:uid:", mapping.Prefix())
+	assert.True(t, mapping.HasFolderSupport())
+
+	action, ok := mapping.Action("create")
+	require.True(t, ok)
+	assert.Equal(t, "variables:create", action)
+	action, ok = mapping.Action("get")
+	require.True(t, ok)
+	assert.Equal(t, "variables:read", action)
+	action, ok = mapping.Action("update")
+	require.True(t, ok)
+	assert.Equal(t, "variables:write", action)
+	action, ok = mapping.Action("delete")
+	require.True(t, ok)
+	assert.Equal(t, "variables:delete", action)
+
+	readActionSets := []string{"folders:view", "folders:edit", "folders:admin"}
+	writeActionSets := []string{"folders:edit", "folders:admin"}
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, readActionSets, mapping.ActionSets(utils.VerbList))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbUpdate))
+	assert.ElementsMatch(t, writeActionSets, mapping.ActionSets(utils.VerbDelete))
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{
@@ -259,6 +289,50 @@ func TestMapper_ServiceAccountTranslation_ActionSets(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_Notebooks verifies notebooks have their own notebooks:* actions and a
+// notebooks:uid: scope, and — being folder-scoped like dashboards — map their verbs onto the
+// folder action sets so folder grants cover them.
+func TestMapperRegistry_Notebooks(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "notebooks", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+
+	// Dedicated notebook actions per verb.
+	for verb, want := range map[string]string{
+		utils.VerbGet:              "notebooks:read",
+		utils.VerbList:             "notebooks:read",
+		utils.VerbWatch:            "notebooks:read",
+		utils.VerbCreate:           "notebooks:create",
+		utils.VerbUpdate:           "notebooks:write",
+		utils.VerbPatch:            "notebooks:write",
+		utils.VerbDelete:           "notebooks:delete",
+		utils.VerbDeleteCollection: "notebooks:delete",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q should map to an action", verb)
+		assert.Equal(t, want, action, "verb %q", verb)
+	}
+
+	// Verbs map onto the folder action sets (read via all three, write/delete/create via edit+admin)
+	// so folder view/edit/admin grants cover notebooks.
+	assert.ElementsMatch(t, []string{"folders:view", "folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbGet))
+	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbCreate))
+	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbDelete))
+	assert.True(t, mapping.HasFolderSupport())
+
+	// set_permissions must resolve (to folders:admin) — the trash folder-admin check authorizes
+	// via this verb, so an unsupported verb here would break trash listing for folder admins.
+	setPerms, ok := mapping.Action(utils.VerbSetPermissions)
+	require.True(t, ok)
+	assert.Equal(t, "notebooks.permissions:write", setPerms)
+	assert.ElementsMatch(t, []string{"folders:admin"}, mapping.ActionSets(utils.VerbSetPermissions))
+
+	// Object scope stays in the notebook's own namespace.
+	assert.Equal(t, "notebooks:uid:", mapping.Prefix())
+	assert.Equal(t, "notebooks:uid:nb1", mapping.Scope("nb1"))
+}
+
 // TestMapperRegistry_AlertRules verifies the rules.alerting.grafana.app rule
 // resources map to the alert.rules:* actions, support folder inheritance, use a
 // rules-specific direct-scope prefix (so the per-object check never spuriously
@@ -324,6 +398,23 @@ func TestMapperRegistry_AlertRules(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_AssistantAlertRules verifies the assistant's external collection authorizes like the native rule kinds.
+func TestMapperRegistry_AssistantAlertRules(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("assistant.alertrules.ext.grafana.app", "alertrules", "")
+	require.True(t, ok, "assistant alertrules collection should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	assert.True(t, mapping.HasFolderSupport(), "alert rules are folder-scoped")
+	assert.Equal(t, "alert.rules:uid:", mapping.Prefix())
+
+	action, ok := mapping.Action(utils.VerbGet)
+	require.True(t, ok)
+	assert.Equal(t, "alert.rules:read", action)
+	assert.ElementsMatch(t, []string{"folders:view", "folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbGet))
+}
+
 // TestMapper_AnnotationSubresource_ActionSets verifies that managed roles (dashboards:view etc.)
 // flow through to annotation verbs via the subresource action set mapping.
 func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
@@ -375,4 +466,155 @@ func TestMapperRegistry_Settings(t *testing.T) {
 	assert.Equal(t, "settings:uid:auth.saml", mapping.Scope("auth.saml"))
 	assert.Equal(t, "settings:uid:", mapping.Prefix())
 	assert.False(t, mapping.HasFolderSupport())
+}
+
+func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	t.Run("action-shaped subresource gets the dynamic delegation translation", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "users.roles:add")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "users.roles:add", action)
+		assert.Equal(t, "permissions:type:delegate", m.Scope("delegate"))
+		assert.True(t, m.SkipWildcard())
+		assert.Empty(t, m.ActionSets(utils.VerbPatch))
+	})
+
+	t.Run("group-qualified action subresource is accepted", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "dashboard.grafana.app/dashboards:get")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "dashboard.grafana.app/dashboards:get", action)
+	})
+
+	t.Run("plain subresource names are not captured", func(t *testing.T) {
+		// A real subresource (e.g. status or search) is not action-shaped and
+		// must fall through to normal handling instead of being treated as a
+		// delegated action.
+		_, ok := reg.Get("iam.grafana.app", "permissions", "status")
+		assert.False(t, ok)
+	})
+}
+
+// TestGetAPIResourceName covers resolving a legacy scope resource back to an API resource name:
+//   - an exact key match wins over the shared-scope fallback (e.g. dashboards vs dashboards/annotations);
+//   - unknown group / unknown scope resource return false;
+//   - when several API resources share one scope resource, the fallback returns the sorted-first
+//     key deterministically (the regression this PR fixes). Each case is asserted repeatedly so a
+//     regression to Go's per-range map iteration order would eventually flip the result and fail.
+func TestGetAPIResourceName(t *testing.T) {
+	// Synthetic group whose keys (in non-sorted literal order) all share one scope resource,
+	// so the only stable answer is the sorted-first key "aaa".
+	syntheticSharedScope := mapper{
+		"example.grafana.app": {
+			"zzz": newResourceTranslation("shared", "uid", false, nil),
+			"aaa": newResourceTranslation("shared", "uid", false, nil),
+			"mmm": newResourceTranslation("shared", "uid", false, nil),
+		},
+	}
+
+	tests := []struct {
+		name     string
+		reg      MapperRegistry
+		group    string
+		resource string
+		wantName string
+		wantOK   bool
+	}{
+		{
+			name:     "exact key match wins over shared-scope fallback",
+			reg:      NewMapperRegistry(),
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			wantName: "dashboards",
+			wantOK:   true,
+		},
+		{
+			name:     "unknown group returns false",
+			reg:      NewMapperRegistry(),
+			group:    "does.not.exist.grafana.app",
+			resource: "dashboards",
+			wantOK:   false,
+		},
+		{
+			name:     "unknown scope resource returns false",
+			reg:      NewMapperRegistry(),
+			group:    "dashboard.grafana.app",
+			resource: "no-such-resource",
+			wantOK:   false,
+		},
+		{
+			// Real config: alertrules/recordingrules/rulesequences all map to "alert.rules".
+			name:     "real shared scope resource resolves to sorted-first key",
+			reg:      NewMapperRegistry(),
+			group:    "rules.alerting.grafana.app",
+			resource: "alert.rules",
+			wantName: "alertrules",
+			wantOK:   true,
+		},
+		{
+			name:     "synthetic shared scope resource resolves to sorted-first key",
+			reg:      syntheticSharedScope,
+			group:    "example.grafana.app",
+			resource: "shared",
+			wantName: "aaa",
+			wantOK:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Repeat to defeat Go's per-range map iteration randomization: a
+			// non-deterministic implementation would eventually return a different key.
+			for i := 0; i < 100; i++ {
+				name, ok := tt.reg.GetAPIResourceName(tt.group, tt.resource)
+				assert.Equal(t, tt.wantOK, ok)
+				assert.Equal(t, tt.wantName, name)
+			}
+		})
+	}
+}
+
+func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+	assert.Nil(t, reg.ResourceMappings("unknown.grafana.app"))
+}
+
+func TestMapperRegistry_ResourceMappings_DashboardGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mappings := reg.ResourceMappings("dashboard.grafana.app")
+	require.NotEmpty(t, mappings)
+
+	byAPIResource := make(map[string]Mapping, len(mappings))
+	for _, rm := range mappings {
+		require.NotEmpty(t, rm.APIResource)
+		require.NotNil(t, rm.Mapping)
+		byAPIResource[rm.APIResource] = rm.Mapping
+	}
+
+	assert.Contains(t, byAPIResource, "dashboards")
+	assert.Contains(t, byAPIResource, "librarypanels")
+	assert.Contains(t, byAPIResource, "dashboards/annotations")
+	assert.Contains(t, byAPIResource, "notebooks")
+	assert.Contains(t, byAPIResource, "variables")
+
+	dashboards, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
+	require.True(t, ok)
+	assert.Equal(t, dashboards.Prefix(), byAPIResource["dashboards"].Prefix())
+	assert.Equal(t, "dashboards:uid:", byAPIResource["dashboards"].Prefix())
+
+	libraryPanels, ok := reg.Get("dashboard.grafana.app", "librarypanels", "")
+	require.True(t, ok)
+	assert.Equal(t, libraryPanels.Prefix(), byAPIResource["librarypanels"].Prefix())
+
+	annotations, ok := reg.Get("dashboard.grafana.app", "dashboards", "annotations")
+	require.True(t, ok)
+	assert.Equal(t, annotations.Prefix(), byAPIResource["dashboards/annotations"].Prefix())
+	action, ok := byAPIResource["dashboards/annotations"].Action(utils.VerbGet)
+	assert.True(t, ok)
+	assert.Equal(t, "annotations:read", action)
 }

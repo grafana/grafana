@@ -1,4 +1,5 @@
 //@ts-check
+// eslint-disable-next-line lodash/import-scope -- lodash is a cjs module here
 import lodash from 'lodash';
 const { camelCase } = lodash;
 

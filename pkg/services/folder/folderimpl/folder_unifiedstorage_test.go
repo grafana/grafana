@@ -255,7 +255,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	folderApiServerMock := httptest.NewServer(mux)
 	defer folderApiServerMock.Close()
 
-	db, cfg := sqlstore.InitTestDB(t)
+	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg.AppURL = folderApiServerMock.URL
 
 	restCfgProvider := rcp{
@@ -973,7 +973,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
-	db, cfg := sqlstore.InitTestDB(t)
+	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	alertingStore := ngstore.DBstore{
 		SQLStore:      db,

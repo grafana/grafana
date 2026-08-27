@@ -17,13 +17,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
-	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
@@ -85,8 +85,15 @@ var PathRewriters = []filters.PathRewriter{
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
+	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// Runs inside DefaultBuildHandlerChain so RequestInfo and the resource-named
+		// request span are available: marks watch spans so long-running watch
+		// connections can be told apart from GET/LIST and filtered out downstream,
+		// and records how long the watch takes to establish.
+		handler = filters.WithWatchInstrumentation(handler, watchMetrics.observeEstablishment)
 
 		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
 		// and injects it into the k8s audit event context (used for audit log suppression).
@@ -101,9 +108,16 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
+		// Must wrap DefaultBuildHandlerChain: it reports a client disconnect as a 504
+		// timeout, and this rewrites that to 499. See filters.WithCanceledRequestStatus.
+		handler = filters.WithCanceledRequestStatus(handler)
+
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
-		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Skip the top-level "KubernetesAPI" span for watch requests: their span
+		// would stay open for the whole long-running connection. See
+		// filters.WithWatchInstrumentation for the upstream request span.
+		handler = withoutWatchServerSpan(handler, c.TracerProvider)
 		handler = filters.WithExtractJaegerTrace(handler)
 		// Configure filters.WithPanicRecovery to not crash on panic
 		utilruntime.ReallyCrash = false
@@ -257,9 +271,7 @@ func SetupConfig(
 			return fmt.Errorf("builder did not return any API group versions: %T", b)
 		}
 		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
-		for j, gv := range pvs {
-			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
-		}
+		SetGroupVersionPriorities(serverConfig.AggregatedDiscoveryGroupManager, discoveryGroupPriorityBase+i, pvs)
 	}
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
@@ -267,6 +279,29 @@ func SetupConfig(
 	}
 
 	return nil
+}
+
+// discoveryGroupPriorityBase is the group-priority-minimum base; the builder index is added for stable relative order.
+const discoveryGroupPriorityBase = 15000
+
+// SetGroupVersionPriorities orders a group's versions in aggregated discovery under one group priority; safe at runtime (the manager serializes calls).
+func SetGroupVersionPriorities(mgr discoveryendpoint.ResourceManager, groupPriority int, pvs []schema.GroupVersion) {
+	for j, gv := range pvs {
+		mgr.SetGroupVersionPriority(metav1.GroupVersion(gv), groupPriority, len(pvs)-j)
+	}
+}
+
+// BuilderGroupPriorities returns each builder group's discovery priority-minimum, matching startup, so a runtime re-prioritize preserves group order.
+func BuilderGroupPriorities(builders []APIGroupBuilder) map[string]int {
+	priorities := make(map[string]int, len(builders))
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			continue
+		}
+		priorities[gvs[0].Group] = discoveryGroupPriorityBase + i
+	}
+	return priorities
 }
 
 // servedVersionsForResource returns the versions the scheme registers for this resource's

@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -145,6 +146,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
 		})
+	}
+
+	if notebooksSection := s.buildNotebooksNavLink(c); notebooksSection != nil {
+		treeRoot.AddSection(notebooksSection)
 	}
 
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
@@ -301,6 +306,38 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 }
 
+// buildNotebooksNavLink returns the top-level Notebooks section, or nil when the feature is off
+// or the user cannot read dashboards. Notebooks reuse dashboard RBAC actions, so an unscoped
+// dashboards:read is what grants access to the list page; the apiserver then filters the list
+// down to the notebooks the user may actually see.
+func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
+	if !c.IsSignedIn {
+		return nil
+	}
+
+	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+		return nil
+	}
+
+	if !openfeature.NewDefaultClient().Boolean(
+		c.Req.Context(),
+		featuremgmt.FlagDashboardNotebooks,
+		false,
+		openfeature.TransactionContext(c.Req.Context()),
+	) {
+		return nil
+	}
+
+	return &navtree.NavLink{
+		Text:       "Notebooks",
+		Id:         navtree.NavIDNotebooks,
+		SubTitle:   "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+		Icon:       "book",
+		SortWeight: navtree.WeightNotebooks,
+		Url:        s.cfg.AppSubURL + "/notebooks",
+	}
+}
+
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
@@ -310,8 +347,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	// with the playlist page and API which both serve anonymous Viewers.
 	if c.IsSignedIn || c.IsAnonymous {
 		showPlaylist := c.HasRole(org.RoleViewer)
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(c.Req.Context())) {
 			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
 		}
 		if showPlaylist {
@@ -340,8 +376,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) &&
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
 			hasAccess(ac.EvalAny(
 				ac.EvalPermission(dashboards.ActionDashboardsCreate),
 				ac.EvalPermission(dashboards.ActionDashboardsWrite),
@@ -351,7 +386,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",
-				Icon:     "brackets-curly",
+				Icon:     "gf-variable",
 			})
 		}
 
@@ -405,14 +440,13 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 					Id:       "alert-activity",
 					Url:      s.cfg.AppSubURL + "/alerting/alerts",
 					Icon:     "bell",
-					IsNew:    true,
 				})
 			}
 		} else {
 			// Legacy: Show Alert activity as standalone
 			if alertRulesAccess {
 				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell",
 				})
 			}
 		}
@@ -508,8 +542,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
+	if s.cfg.UnifiedAlerting.StateHistory.QueriesServedByLoki() {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text: "History",

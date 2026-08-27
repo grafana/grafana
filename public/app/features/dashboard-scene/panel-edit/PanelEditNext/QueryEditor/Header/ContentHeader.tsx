@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { upperFirst } from 'lodash';
 import { type RefObject, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
@@ -19,7 +18,7 @@ import {
 } from '../QueryEditorContext';
 import { usePanelScopedVars } from '../hooks/usePanelScopedVars';
 import { type AlertRule, type Transformation } from '../types';
-import { getEditorBorderColor } from '../utils';
+import { getEditorBorderColor, getExpressionSectionLabel } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
@@ -95,7 +94,6 @@ interface ContentHeaderProps {
   onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
-  isMultiSelection?: boolean;
   currentDatasource?: DataSourceInstanceSettings;
   scopedVars?: ScopedVars;
   /**
@@ -112,7 +110,7 @@ interface ContentHeaderProps {
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   /**
    * Optional type config for query editor types (icons, colors, labels).
    * If not provided, will be computed from the current theme.
@@ -141,7 +139,6 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
-  isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
   typeConfig: typeConfigProp,
@@ -198,7 +195,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedAlert.rule.name}
             </Text>
           </>
@@ -219,7 +216,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
+              {getExpressionSectionLabel(selectedQuery)}
             </Text>
             <NavToolbarSeparator />
           </>
@@ -231,7 +228,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
           </>
@@ -244,7 +241,6 @@ export function ContentHeader({
               query={selectedQuery}
               queries={queries}
               onQueryUpdate={onUpdateQuery}
-              readOnly={isMultiSelection}
             />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
@@ -272,9 +268,6 @@ export function ContentHeaderSceneWrapper({
     selectedAlert,
     selectedQuery,
     selectedTransformation,
-    selectedQueryRefIds,
-    selectedTransformationIds,
-    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -300,7 +293,6 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
       currentDatasource={selectedQueryDsData?.dsSettings}
@@ -318,7 +310,6 @@ const getStyles = (
   return {
     container: css({
       position: 'relative',
-      backgroundColor: theme.colors.background.secondary,
       padding: theme.spacing(0.5),
       paddingLeft: `calc(${theme.spacing(0.5)} + 4px)`,
       borderTopLeftRadius: theme.shape.radius.default,
@@ -328,6 +319,7 @@ const getStyles = (
       justifyContent: 'space-between',
       gap: theme.spacing(1),
       minHeight: theme.spacing(5),
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
       // psuedo-element to show the border color on the left of the header
       '&::before': {
@@ -361,7 +353,6 @@ const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
     // Target the Input component inside the picker
     input: {
       border: 'none',
-      backgroundColor: theme.colors.background.secondary,
     },
     // Remove borders from all nested divs
     '& > div, & div': {

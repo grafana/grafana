@@ -10,7 +10,8 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getDashboardSceneFor, getLayoutManagerFor, getQueryRunnerFor } from '../../utils/utils';
+import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
@@ -18,7 +19,10 @@ import { type EditableDashboardElement, type EditableDashboardElementInfo } from
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 
-function useSidebarOptions(this: SceneGridRowEditableElement, row: SceneGridRow): OptionsPaneCategoryDescriptor[] {
+function useDashboardSidebarOptions(
+  this: SceneGridRowEditableElement,
+  row: SceneGridRow
+): OptionsPaneCategoryDescriptor[] {
   const rowOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.default-layout.row-options.title', 'Row options'),
@@ -69,7 +73,9 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
     return this._row.state.children;
   }
 
-  public useSidebarOptions = useSidebarOptions.bind(this, this._row);
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
+    return useDashboardSidebarOptions.call(this, this._row);
+  }
 
   public onDelete() {
     const layoutManager = getLayoutManagerFor(this._row);

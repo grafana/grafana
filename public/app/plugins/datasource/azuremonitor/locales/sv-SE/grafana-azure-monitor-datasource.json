@@ -79,9 +79,9 @@
       "label-enable-basic-logs": "Aktivera basloggar"
     },
     "batch-api-toggle": {
-      "aria-label-enable-batch-api": "",
-      "description-batch-api": "",
-      "label-enable-batch-api": ""
+      "aria-label-enable-batch-api": "Batch-API",
+      "description-batch-api": "Frågar flera resurser i en enda begäran, vilket förbättrar prestandan för stora instrumentpaneler. Kräver rollen <2>Monitoring Reader</2> vid prenumerationsomfånget för <6>metrics.monitor.azure.com</6>. Ytterligare <9>kostnader kan tillkomma</9> utöver den kostnadsfria nivån.",
+      "label-enable-batch-api": "Aktivera Batch-API"
     },
     "config-editor": {
       "description-additional-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för att få mer kontroll över din datakälla. Detta inkluderar Secure Socks Proxy, tidsgräns för begäran och vidarebefordrade cookies.",
@@ -105,7 +105,11 @@
       "load-subscriptions": "Ladda prenumerationer"
     },
     "dimension-fields": {
-      "aria-label-remove": "Ta bort",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Mått",
       "placeholder-field": "Fält",
       "placeholder-operation": "Drift",
@@ -199,11 +203,11 @@
       "label-metric-namespace": "Mätvärdesnamnrymd"
     },
     "metrics-query-editor": {
-      "selection-notice-batch": "",
-      "selection-notice-standard": ""
+      "selection-notice-batch": "Du kan välja objekt av samma resurstyp över flera prenumerationer och regioner. Resurser i olika prenumerationer eller regioner frågas i separata begäranden och kan misslyckas oberoende av varandra. För att välja resurser av en annan resurstyp behöver du först avmarkera ditt nuvarande val.",
+      "selection-notice-standard": "Du kan välja objekt av samma resurstyp och plats. För att välja resurser av en annan resurstyp eller plats behöver du först avmarkera ditt nuvarande val."
     },
     "monitor-config": {
-      "title-features": ""
+      "title-features": "Funktioner"
     },
     "nested-row": {
       "text-loading": "Laddar …"
@@ -218,8 +222,8 @@
       "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
     },
     "pagination": {
-      "results-truncated-message": "",
-      "results-truncated-title": ""
+      "results-truncated-message": "Slutade ladda efter {{maxPages}} sidor. Vissa resultat kan ha utelämnats.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ett fel uppstod vid begäran av metadata från Azure Monitor"

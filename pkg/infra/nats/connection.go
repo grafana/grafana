@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -36,9 +37,6 @@ type connection struct {
 	role        connRole
 	config      *Config
 	credentials func() string
-
-	// onAsyncError, when set, is invoked from the NATS async error handler after logging.
-	onAsyncError func(error)
 
 	// disconnectedAt holds the unix-nano timestamp of the last disconnect so the
 	// reconnect handler can record how long the connection was down. Accessed only
@@ -164,10 +162,14 @@ func (c *connection) connect(ctx context.Context) (*natsclient.Conn, error) {
 			c.metrics.connectionErrors.Inc()
 			return nil, fmt.Errorf("connect nats %s: %w", c.role, res.err)
 		}
-		// connectionStatus is driven solely by the connect/reconnect/disconnect
-		// handlers: with RetryOnFailedConnect the conn returned here may still be
-		// dialing in the background, so setting it to 1 now would report a healthy
-		// connection that is not yet established.
+		if !res.conn.IsConnected() {
+			c.metrics.connectionErrors.Inc()
+			c.log.Warn("nats initial connect did not complete; retrying in the background",
+				"role", c.role,
+				"urls", redactURLs(urls),
+				"status", res.conn.Status(),
+				"err", res.conn.LastError())
+		}
 		return res.conn, nil
 	}
 }
@@ -189,7 +191,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 		natsclient.ReconnectBufSize(-1),
 		natsclient.ConnectHandler(func(nc *natsclient.Conn) {
 			c.metrics.connectionStatus.Set(1)
-			c.log.Info("nats connected", "role", roleStr, "url", nc.ConnectedUrl())
+			c.log.Info("nats connected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 		}),
 		natsclient.DisconnectErrHandler(func(_ *natsclient.Conn, err error) {
 			c.metrics.connectionStatus.Set(0)
@@ -205,7 +207,7 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			if down := c.disconnectedAt.Swap(0); down != 0 {
 				c.metrics.disconnectedSeconds.Observe(time.Since(time.Unix(0, down)).Seconds())
 			}
-			c.log.Info("nats reconnected", "role", roleStr, "url", nc.ConnectedUrl())
+			c.log.Info("nats reconnected", "role", roleStr, "url", redactURL(nc.ConnectedUrl()))
 			c.fireReconnect()
 		}),
 		natsclient.ClosedHandler(func(nc *natsclient.Conn) {
@@ -213,14 +215,8 @@ func (c *connection) connectOptions() ([]natsclient.Option, error) {
 			c.log.Info("nats connection closed", "role", roleStr, "last_err", nc.LastError())
 		}),
 		natsclient.ErrorHandler(func(_ *natsclient.Conn, sub *natsclient.Subscription, err error) {
-			subject := ""
-			if sub != nil {
-				subject = sub.Subject
-			}
-			c.log.Warn("nats async error", "role", roleStr, "subject", subject, "err", err)
-			if c.onAsyncError != nil {
-				c.onAsyncError(err)
-			}
+			c.log.Warn("nats async error", "role", roleStr, "subject", asyncErrorSubject(sub, err), "reason", asyncErrorReason(err), "err", err)
+			c.metrics.recordAsyncError(sub, err)
 		}),
 	}
 
@@ -317,4 +313,27 @@ func (c *connection) close() {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
+}
+
+func redactURL(raw string) string {
+	if raw == "" {
+		return ""
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "<invalid url>"
+	}
+	if u.User == nil {
+		return raw
+	}
+	u.User = nil
+	return u.String()
+}
+
+func redactURLs(urls []string) string {
+	redacted := make([]string, 0, len(urls))
+	for _, raw := range urls {
+		redacted = append(redacted, redactURL(raw))
+	}
+	return strings.Join(redacted, ",")
 }

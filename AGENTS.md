@@ -18,10 +18,13 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 ## Principles
 
 - Follow existing patterns in the surrounding code
-- Write tests for new functionality
+- Write tests for new functionality — for frontend code, use the `frontend-testing-strategy`
+  skill for this repo's testing conventions (and `panel-testing-strategy` on top of it for
+  visualization/panel code)
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
+- Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
 
 ## Comments
 

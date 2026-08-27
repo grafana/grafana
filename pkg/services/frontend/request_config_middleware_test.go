@@ -46,30 +46,6 @@ func setupTestContext(r *http.Request, namespace string) *http.Request {
 
 var openfeatureTestMutex sync.Mutex
 
-func enableSourceFilterToggle(t *testing.T) {
-	t.Helper()
-	openfeatureTestMutex.Lock()
-
-	sourceFilterFlag := memprovider.InMemoryFlag{
-		Key:            featuremgmt.FlagFrontendServiceSettingsSourceFilter,
-		DefaultVariant: "on",
-		Variants:       map[string]any{"on": true, "off": false},
-	}
-
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagFrontendServiceSettingsSourceFilter: sourceFilterFlag,
-	})
-	require.NoError(t, err)
-
-	err = openfeature.SetProviderAndWait(provider)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
-}
-
 func enableReducedBootDataToggle(t *testing.T) {
 	t.Helper()
 	openfeatureTestMutex.Lock()
@@ -304,9 +280,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.False(t, mockSettingsService.called)
 	})
 
-	t.Run("should include source filter in selector when source filter toggle is enabled", func(t *testing.T) {
-		enableSourceFilterToggle(t)
-
+	t.Run("should include source filter in selector", func(t *testing.T) {
 		mockSettingsService := &mockSettingsService{
 			settings: []*settingservice.Setting{},
 		}
@@ -335,45 +309,11 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.True(t, mockSettingsService.called)
 
-		// Verify the selector uses source=us filter (replacing the NotIn defaults filter)
 		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
 		sourceFilter := mockSettingsService.capturedSelector.MatchExpressions[1]
 		assert.Equal(t, "source", sourceFilter.Key)
 		assert.Equal(t, metav1.LabelSelectorOpIn, sourceFilter.Operator)
 		assert.Equal(t, []string{"us"}, sourceFilter.Values)
-	})
-
-	t.Run("should not include source filter in selector when source filter toggle is disabled", func(t *testing.T) {
-		mockSettingsService := &mockSettingsService{
-			settings: []*settingservice.Setting{},
-		}
-
-		license := &licensing.OSSLicensingService{}
-		cfg := &setting.Cfg{
-			Raw:      ini.Empty(),
-			HTTPPort: "1234",
-			AppURL:   "https://grafana.example.com",
-		}
-
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
-
-		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-		})
-
-		handler := middleware(testHandler)
-
-		req := httptest.NewRequest("GET", "/", nil)
-		req = setupTestContext(req, "stacks-123")
-		recorder := httptest.NewRecorder()
-
-		handler.ServeHTTP(recorder, req)
-
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		assert.True(t, mockSettingsService.called)
-
-		// Verify the selector does NOT include a source=us filter (only 2 expressions)
-		require.Len(t, mockSettingsService.capturedSelector.MatchExpressions, 2)
 	})
 
 	t.Run("populates full frontend settings and namespace when reduced boot data flag is enabled", func(t *testing.T) {

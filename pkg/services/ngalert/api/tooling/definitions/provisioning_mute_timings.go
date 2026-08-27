@@ -68,6 +68,7 @@ import (
 //       201: MuteTimeInterval
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route PUT /v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //
@@ -134,14 +135,6 @@ type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 	Version                 string     `json:"version,omitempty"`
 	Provenance              Provenance `json:"provenance,omitempty"`
-}
-
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.Name
 }
 
 type MuteTimeIntervalExport struct {

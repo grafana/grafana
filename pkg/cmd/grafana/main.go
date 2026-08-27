@@ -9,8 +9,11 @@ import (
 
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
+	"github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/operators"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/server/bootstrap"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 
 	// Registers the OSS dependency-injection entrypoints (server.InitializeAPIServerFactory etc.)
@@ -20,8 +23,8 @@ import (
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
 var version = "9.2.0"
-var commit = gcli.DefaultCommitValue
-var enterpriseCommit = gcli.DefaultCommitValue
+var commit = bootstrap.DefaultCommitValue
+var enterpriseCommit = bootstrap.DefaultCommitValue
 var buildBranch = "main"
 var buildstamp string
 
@@ -37,6 +40,23 @@ func main() {
 }
 
 func MainApp() *cli.App {
+	buildInfo := standalone.BuildInfo{
+		Version:          version,
+		Commit:           commit,
+		EnterpriseCommit: enterpriseCommit,
+		BuildBranch:      buildBranch,
+		BuildStamp:       buildstamp,
+	}
+
+	// deps supplies the edition-specific injectors and metadata to the server
+	// commands. server.Initialize / server.InitializeModuleServer are dispatched
+	// to the OSS or enterprise Wire graph by build tag.
+	deps := commands.ServerDeps{
+		Initialize:       server.Initialize,
+		ModuleInitialize: server.InitializeModuleServer,
+		IsEnterprise:     extensions.IsEnterprise,
+	}
+
 	app := &cli.App{
 		Name:  "grafana",
 		Usage: "Grafana server and command line interface",
@@ -49,26 +69,33 @@ func MainApp() *cli.App {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			commands.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
+			commands.ServerCommand(buildInfo, deps),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
 	}
 
 	// Set the global build info
-	buildInfo := standalone.BuildInfo{
-		Version:          version,
-		Commit:           commit,
-		EnterpriseCommit: enterpriseCommit,
-		BuildBranch:      buildBranch,
-		BuildStamp:       buildstamp,
-	}
-	commands.SetBuildInfo(buildInfo)
+	bootstrap.SetBuildInfo(buildInfo, "", extensions.IsEnterprise)
 
 	// Add the enterprise command line to build an api server
 	f, err := server.InitializeAPIServerFactory()
 	if err == nil {
 		cmd := f.GetCLICommand(buildInfo)
+		if cmd != nil {
+			app.Commands = append(app.Commands, cmd)
+		}
+	}
+
+	// Add the enterprise command line to run the standalone cloud-apps router
+	rf, err := server.InitializeRouterFactory()
+	if err == nil {
+		cmd := rf.GetCLICommand(router.BuildInfo{
+			Version:     version,
+			Commit:      commit,
+			BuildBranch: buildBranch,
+			BuildStamp:  buildstamp,
+		})
 		if cmd != nil {
 			app.Commands = append(app.Commands, cmd)
 		}

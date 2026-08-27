@@ -21,7 +21,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 
-	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -49,15 +49,15 @@ import (
 type fakeConfigClient struct {
 	mu       sync.Mutex
 	nsMapper request.NamespaceMapper
-	objects  map[string]*alertingnotifv0alpha1.Config // namespace -> object
-	getErr   map[string]error                         // namespace -> error returned by Get
-	getCalls map[string]int                           // namespace -> Get call count
+	objects  map[string]*alertingnotifv1beta1.Config // namespace -> object
+	getErr   map[string]error                        // namespace -> error returned by Get
+	getCalls map[string]int                          // namespace -> Get call count
 }
 
 func newFakeConfigClient() *fakeConfigClient {
 	return &fakeConfigClient{
 		nsMapper: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
-		objects:  map[string]*alertingnotifv0alpha1.Config{},
+		objects:  map[string]*alertingnotifv1beta1.Config{},
 		getErr:   map[string]error{},
 		getCalls: map[string]int{},
 	}
@@ -67,13 +67,13 @@ func newFakeConfigClient() *fakeConfigClient {
 // datasource UID. An empty uid seeds a config with no externalSync set, which
 // the worker resolves to "" and skips.
 func (f *fakeConfigClient) setUID(orgID int64, uid string) {
-	obj := &alertingnotifv0alpha1.Config{}
+	obj := &alertingnotifv1beta1.Config{}
 	obj.SetNamespace(f.nsMapper(orgID))
-	obj.SetName(alertingnotifv0alpha1.ConfigSingletonName)
+	obj.SetName(alertingnotifv1beta1.ConfigSingletonName)
 	obj.SetResourceVersion("1")
 	if uid != "" {
 		u := uid
-		obj.Spec.ExternalAlertmanagerSync = &alertingnotifv0alpha1.ConfigV0alpha1SpecExternalAlertmanagerSync{DatasourceUid: &u}
+		obj.Spec.ExternalAlertmanagerSync = &alertingnotifv1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{DatasourceUid: &u}
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -109,7 +109,7 @@ func (f *fakeConfigClient) DiscoveryClient() (resource.DiscoveryClient, error) {
 
 // resource.Client — only Get/Create/Update (and their *Into variants) are meaningful.
 
-func (f *fakeConfigClient) lookup(ns string) (*alertingnotifv0alpha1.Config, error) {
+func (f *fakeConfigClient) lookup(ns string) (*alertingnotifv1beta1.Config, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.getCalls[ns]++
@@ -118,7 +118,7 @@ func (f *fakeConfigClient) lookup(ns string) (*alertingnotifv0alpha1.Config, err
 	}
 	obj, ok := f.objects[ns]
 	if !ok {
-		return nil, k8serrors.NewNotFound(alertingnotifv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), alertingnotifv0alpha1.ConfigSingletonName)
+		return nil, k8serrors.NewNotFound(alertingnotifv1beta1.ConfigKind().GroupVersionResource().GroupResource(), alertingnotifv1beta1.ConfigSingletonName)
 	}
 	return obj, nil
 }
@@ -126,7 +126,7 @@ func (f *fakeConfigClient) lookup(ns string) (*alertingnotifv0alpha1.Config, err
 // apply stores obj, merging an incoming status onto any existing object so a
 // status write doesn't clobber the seeded spec UID.
 func (f *fakeConfigClient) apply(obj resource.Object) resource.Object {
-	ac, ok := obj.(*alertingnotifv0alpha1.Config)
+	ac, ok := obj.(*alertingnotifv1beta1.Config)
 	if !ok {
 		return obj
 	}
@@ -152,7 +152,7 @@ func (f *fakeConfigClient) GetInto(_ context.Context, id resource.Identifier, in
 	if err != nil {
 		return err
 	}
-	if t, ok := into.(*alertingnotifv0alpha1.Config); ok {
+	if t, ok := into.(*alertingnotifv1beta1.Config); ok {
 		*t = *obj
 	}
 	return nil
@@ -365,16 +365,16 @@ func TestSyncExternalAMs_SeedsSingletonWhenUnconfigured(t *testing.T) {
 	// but nothing is configured for this org) and no spec.
 	obj, err := adminCfg.lookup("org-1")
 	require.NoError(t, err, "singleton should have been seeded by the sync tick")
-	assert.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, obj.GetName())
+	assert.Equal(t, alertingnotifv1beta1.ConfigSingletonName, obj.GetName())
 	assert.Nil(t, obj.Spec.ExternalAlertmanagerSync, "seeded doc carries no spec config")
-	var synced *alertingnotifv0alpha1.ConfigCondition
+	var synced *alertingnotifv1beta1.ConfigCondition
 	for i := range obj.Status.Conditions {
 		if obj.Status.Conditions[i].Type == conditionTypeExternalAlertmanagerSynced {
 			synced = &obj.Status.Conditions[i]
 		}
 	}
 	require.NotNil(t, synced, "expected an ExternalAlertmanagerSynced condition on the seeded doc")
-	assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+	assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusUnknown, synced.Status)
 	assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
 
 	// No sync happened (nothing to sync) — the seed is the only side effect.
@@ -937,13 +937,13 @@ func TestSyncExternalAMs_StopsAfterMergeCommitted(t *testing.T) {
 	// Terminal status recorded: ExternalAlertmanagerSynced=True / MergeCommitted.
 	obj, err := adminCfg.lookup("org-1")
 	require.NoError(t, err)
-	var synced *alertingnotifv0alpha1.ConfigCondition
+	var synced *alertingnotifv1beta1.ConfigCondition
 	for i := range obj.Status.Conditions {
 		if obj.Status.Conditions[i].Type == conditionTypeExternalAlertmanagerSynced {
 			synced = &obj.Status.Conditions[i]
 		}
 	}
 	require.NotNil(t, synced, "expected an ExternalAlertmanagerSynced condition")
-	assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusTrue, synced.Status)
+	assert.Equal(t, alertingnotifv1beta1.ConfigConditionStatusTrue, synced.Status)
 	assert.Equal(t, conditionReasonMergeCommitted, synced.Reason)
 }

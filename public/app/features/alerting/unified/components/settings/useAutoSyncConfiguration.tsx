@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 
-import { type DataSourceSettings } from '@grafana/data';
+import { type DataSourceSettings, OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -22,11 +24,11 @@ export type AutoSyncState =
 
 export interface UseAutoSyncConfigurationResult {
   state: AutoSyncState;
-  mimirCortexDatasources: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
+  autoSyncEligibleAlertmanagers: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
   selectedUid: string;
   setSelectedUid: (uid: string) => void;
   /** Persists the given UID (or the current selection). Resolves to true on success. */
-  save: (uidOverride?: string) => Promise<boolean>;
+  save: (uidOverride?: string, opts?: { silent?: boolean }) => Promise<boolean>;
   /** Clears the synced UID. Resolves to true on success. */
   disableSync: () => Promise<boolean>;
   isPending: boolean;
@@ -52,24 +54,30 @@ export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSy
 }
 
 export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
+  // admin_config requires Org Admin; skip for everyone else so unconditional callers (e.g. the
+  // Import wizard) don't fire a guaranteed 403. Must match Step1's `isAutoSyncSegmentEnabled` gate.
+  const canAccess =
+    Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
+
   const { currentData: configuration, isLoading: isLoadingConfig } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery(undefined, { skip: !canAccess });
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
       refetchOnMountOrArgChange: true,
+      skip: !canAccess,
     });
   const [updateConfiguration, updateConfigurationState] =
     alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
 
   const [operatorManagedUid, setOperatorManagedUid] = useState<string | null>(null);
 
-  const mimirCortexDatasources = useMemo(
+  const autoSyncEligibleAlertmanagers = useMemo(
     () => (allDatasources ?? []).filter(isAlertmanagerDataSource).filter(isMimirOrCortex),
     [allDatasources]
   );
 
   const configuredUid = configuration?.external_alertmanager_uid ?? '';
-  const hasMatchingDatasource = mimirCortexDatasources.some((ds) => ds.uid === configuredUid);
+  const hasMatchingDatasource = autoSyncEligibleAlertmanagers.some((ds) => ds.uid === configuredUid);
 
   // Track user-edited selection separately from the saved value so a background refetch
   // doesn't overwrite an in-flight choice. Null means "follow the saved value".
@@ -86,25 +94,27 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     if (configuredUid) {
       return { kind: 'orphan-uid', uid: configuredUid };
     }
-    if (mimirCortexDatasources.length === 0) {
+    if (autoSyncEligibleAlertmanagers.length === 0) {
       return { kind: 'no-datasources' };
     }
     return { kind: 'unconfigured' };
-  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, mimirCortexDatasources.length]);
+  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, autoSyncEligibleAlertmanagers.length]);
 
   const notify = useAppNotification();
 
-  const persist = async (uid: string): Promise<boolean> => {
+  const persist = async (uid: string, opts?: { silent?: boolean }): Promise<boolean> => {
     try {
       await updateConfiguration({
         external_alertmanager_uid: uid,
         notificationOptions: { showErrorAlert: false },
       }).unwrap();
-      notify.success(
-        uid
-          ? t('alerting.settings.auto-sync.save-success', 'Mimir Alertmanager auto-sync enabled')
-          : t('alerting.settings.auto-sync.disable-success', 'Mimir Alertmanager auto-sync disabled')
-      );
+      if (!opts?.silent) {
+        notify.success(
+          uid
+            ? t('alerting.settings.auto-sync.save-success', 'Mimir Alertmanager auto-sync enabled')
+            : t('alerting.settings.auto-sync.disable-success', 'Mimir Alertmanager auto-sync disabled')
+        );
+      }
       setSelectedOverride(null);
       return true;
     } catch (err) {
@@ -124,10 +134,10 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   return {
     state,
-    mimirCortexDatasources,
+    autoSyncEligibleAlertmanagers,
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
-    save: (uidOverride?: string) => persist(uidOverride ?? selectedUid),
+    save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),
     // Backend convention: empty string clears the configured UID.
     disableSync: () => persist(''),
     isPending: updateConfigurationState.isLoading,
