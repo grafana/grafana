@@ -1,4 +1,4 @@
-import { type LineStyle } from '@grafana/schema';
+import { type LineStyle, type TimeCompareColorMode } from '@grafana/schema';
 
 /** @alpha */
 export enum VizTooltipColorIndicator {
@@ -38,6 +38,8 @@ export enum VizTooltipColorPlacement {
 export interface VizTooltipDelta {
   text: string; //Formatted, carrying the field's unit and decimal formatting (e.g. `'5 B'`, `'1.5 s'`).
   numeric: number; //Raw numeric delta
+  /** How the delta is colored. Defaults to `TimeCompareColorMode.Standard`. */
+  colorMode?: TimeCompareColorMode;
 }
 
 /** @alpha */

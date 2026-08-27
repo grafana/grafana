@@ -275,7 +275,20 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   });
 
   test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
+    // section is collapsed when the panel has no links, so we need to open it first
+    const expandDataLinksGroup = async () => {
+      const toggle = dashboardPage.getByGrafanaSelector(
+        selectors.components.OptionsGroup.toggle('Data links and actions')
+      );
+      await expect(toggle).toBeVisible();
+      if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+        await toggle.click();
+      }
+    };
+
     const addDataLink = async (title: string, url: string) => {
+      await expandDataLinksGroup();
+
       await dashboardPage
         .getByGrafanaSelector(
           selectors.components.PanelEditor.OptionsPane.fieldLabel('Data links and actions Data links')

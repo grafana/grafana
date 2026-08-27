@@ -9,11 +9,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -34,12 +35,12 @@ var (
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences(t *testing.T) {
-	prefService := preftest.NewPreferenceServiceFake()
-	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Get(mock.Anything, prefutils.NamespaceOwner()).Return(&preferences.PreferencesSpec{Theme: new("dark")}, nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.preferenceService = prefService
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
@@ -70,17 +71,16 @@ func TestAPIEndpoint_GetCurrentOrgPreferences(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
-	prefService := preftest.NewPreferenceServiceFake()
-	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
-
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Update(mock.Anything, prefutils.NamespaceOwner(), mock.Anything).Return(nil)
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.preferenceService = prefService
-		hs.DashboardService = dashSvc
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashSvc, preferences.PreferencesSpec{})
 	})
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
@@ -116,14 +116,12 @@ func TestAPIEndpoint_PutCurrentOrgPreferences(t *testing.T) {
 func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.preferenceService = preftest.NewPreferenceServiceFake()
-		hs.DashboardService = dashSvc
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	input := strings.NewReader(testPatchUserPreferencesCmd)
@@ -169,9 +167,12 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 
+	client := prefapi.NewMockK8sClient(t)
+	client.EXPECT().Patch(mock.Anything, prefutils.NamespaceOwner(), mock.Anything).Return(nil)
+
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
-		hs.preferenceService = preftest.NewPreferenceServiceFake()
+		hs.preferenceK8sHandler = prefapi.NewK8sHandler(client, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{})
 	})
 
 	input := strings.NewReader(testPatchOrgPreferencesCmd)
