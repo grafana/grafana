@@ -2,11 +2,10 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { dateTime } from '@grafana/data';
+import { dateTime, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
-import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
+import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';

@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { type Alert, type CombinedRule } from 'app/types/unified-alerting';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { ConfirmNavigationModal } from './ConfirmationNavigationModal';
 import { AlertingRuleExtensionPointMenu } from './AlertingRuleExtensionPointMenu';
@@ -15,14 +16,47 @@ interface Props {
 }
 
 export type PluginExtensionAlertInstanceContext = {
-  rule?: CombinedRule;
-  instance: Alert;
+  rule?: {
+    name: string;
+    query: string;
+    labels: Record<string, string>;
+    annotations: Record<string, string>;
+    uid?: string;
+  };
+  instance: {
+    activeAt: string;
+    annotations: Record<string, string>;
+    labels: Record<string, string>;
+    state: string;
+    value: string;
+  };
 };
 
 export function AlertInstanceExtensionPoint({ rule, instance }: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
 
-  const context = useMemo<PluginExtensionAlertInstanceContext>(() => ({ rule, instance }), [rule, instance]);
+  const context = useMemo<PluginExtensionAlertInstanceContext>(() => {
+    const flatRuleData = rule
+      ? {
+          name: rule.name,
+          query: rule.query,
+          labels: rule.labels ?? {},
+          annotations: rule.annotations ?? {},
+          uid: rule.promRule?.uid,
+        }
+      : undefined;
+
+    return {
+      rule: flatRuleData,
+      instance: {
+        activeAt: instance.activeAt,
+        annotations: instance.annotations,
+        labels: instance.labels,
+        state: instance.state,
+        value: instance.value,
+      },
+    };
+  }, [rule, instance]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.AlertInstanceAction,

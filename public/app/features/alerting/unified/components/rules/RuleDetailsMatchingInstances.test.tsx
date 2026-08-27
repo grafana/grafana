@@ -60,6 +60,7 @@ describe('RuleDetailsMatchingInstances', () => {
       isLoading: false,
     });
   });
+
   it('should render plugin actions for alert instances when extensions are available', () => {
     const rule = mockCombinedRule();
 
