@@ -543,9 +543,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		return err
 	}
 
-	teamLBACRuleGetter, ok := storage[iamv0.TeamLBACRuleInfo.StoragePath()].(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule storage does not implement rest.Getter")
+	teamLBACRuleGetter := b.teamLBACApiInstaller.GetRulesForSubjectGetter()
+	if teamLBACRuleGetter == nil {
+		return fmt.Errorf("TeamLBACRule for-subject subresource requires rule getter storage")
 	}
 
 	// TeamLBAC can be enabled in ST without serving the Team Kubernetes API.
@@ -566,8 +566,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	}
 	// Kubernetes requires a separate storage-map entry for each named
 	// subresource. Its value is a Connect handler, not another persistence
-	// store: the handler delegates rule reads to teamLBACRuleGetter, the
-	// mode-aware CRUD storage already registered at "teamlbacrules" above.
+	// store: the handler delegates rule reads to the mode-aware getter retained
+	// by the installer. The base "teamlbacrules" entry is wrapped separately to
+	// enforce datasource CRUD permissions; using it here would incorrectly make
+	// a service authorized for for-subject also require datasource:get.
 	// Team's addmember/removemember subresources use the same pattern. This
 	// entry therefore adds only GET
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
