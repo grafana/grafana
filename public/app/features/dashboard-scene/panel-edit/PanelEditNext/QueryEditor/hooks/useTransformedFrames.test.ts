@@ -413,28 +413,23 @@ describe('useFrameReplay', () => {
 
 describe('precedingTransformations', () => {
   const all = [makeTransformation('joinByField'), makeTransformation('organize'), makeTransformation('reduce')];
-  const system: TransformationConfigs = [jest.fn()];
 
-  it('returns only the plugin transformations for the first one, which nothing else precedes', () => {
-    expect(precedingTransformations(all[0], all, system)).toEqual(system);
+  it('returns nothing for the first transformation, which nothing precedes', () => {
+    expect(precedingTransformations(all[0], all)).toEqual([]);
   });
 
-  it('puts the plugin transformations ahead of the preceding user ones', () => {
-    expect(precedingTransformations(all[2], all, system)).toEqual([
-      ...system,
-      all[0].transformConfig,
-      all[1].transformConfig,
-    ]);
+  it('returns the transformations ahead of the selected one, in pipeline order', () => {
+    expect(precedingTransformations(all[2], all)).toEqual([all[0].transformConfig, all[1].transformConfig]);
   });
 
   it('treats a transformation missing from the list as first rather than slicing by -1', () => {
     // `slice(0, -1)` would return every entry but the last, so the caller would replay
     // transformations that do not precede anything.
-    expect(precedingTransformations(makeTransformation('absent'), all, system)).toEqual(system);
+    expect(precedingTransformations(makeTransformation('absent'), all)).toEqual([]);
   });
 
   it('keeps one identity for "nothing precedes this", so a caller memo does not churn', () => {
-    expect(precedingTransformations(all[0], all, NO_CONFIGS)).toBe(NO_CONFIGS);
+    expect(precedingTransformations(all[0], all)).toBe(NO_CONFIGS);
   });
 
   it('leaves out annotation-topic transformations, which run over a different set of frames', () => {
@@ -447,8 +442,6 @@ describe('precedingTransformations', () => {
     const series = makeTransformation('organize');
     const selected = makeTransformation('reduce');
 
-    expect(precedingTransformations(selected, [annotations, series, selected], NO_CONFIGS)).toEqual([
-      series.transformConfig,
-    ]);
+    expect(precedingTransformations(selected, [annotations, series, selected])).toEqual([series.transformConfig]);
   });
 });

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type CustomTransformOperator, type DataTransformerConfig, type PanelData } from '@grafana/data';
+import { type DataTransformerConfig, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
 
@@ -20,7 +20,6 @@ import { type Transformation } from './types';
 interface TransformationEditorPanelProps {
   transformation: Transformation | null;
   transformations: Transformation[];
-  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
   data?: PanelData;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   showSupplementalDisplays?: boolean;
@@ -29,7 +28,6 @@ interface TransformationEditorPanelProps {
 export function TransformationEditorPanel({
   transformation,
   transformations,
-  systemTransformations,
   data,
   updateTransformation,
   showSupplementalDisplays = false,
@@ -39,7 +37,6 @@ export function TransformationEditorPanel({
   const inputData = useTransformationInputData({
     selectedTransformation: transformation,
     allTransformations: transformations,
-    systemTransformations,
     rawData,
   });
 
@@ -68,13 +65,21 @@ export function TransformationEditorPanel({
   // Each depends on the selected transformation, because `ErrorBoundary` clears its error only when a
   // dependency changes. With none, a display that threw once would keep showing the alert for the
   // rest of its life — including for a transformation it could describe perfectly well.
+  //
+  // On the config as well as the id, because the id is `id + index` and neither half moves when it
+  // needs to: editing the failing transformation is how an option-induced throw gets fixed, and a
+  // successor of the same type slides into the index of a deleted one, which would leave the alert
+  // standing over a transformation that never threw. The config is the object Scene state holds, so
+  // it changes in both of those and stays put across a data refresh.
   return (
     <>
-      <ErrorBoundaryAlert boundaryName="transformation-filter" dependencies={[transformation.transformId]}>
+      <ErrorBoundaryAlert
+        boundaryName="transformation-filter"
+        dependencies={[transformation.transformId, transformation.transformConfig]}
+      >
         <TransformationFilterEditor
           transformation={transformation}
           transformations={transformations}
-          systemTransformations={systemTransformations}
           queryData={data}
           onUpdate={updateTransformation}
         />
@@ -86,12 +91,18 @@ export function TransformationEditorPanel({
         transformation={transformation}
       />
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-help" dependencies={[transformation.transformId]}>
+        <ErrorBoundaryAlert
+          boundaryName="transformation-help"
+          dependencies={[transformation.transformId, transformation.transformConfig]}
+        >
           <TransformationHelpDisplay />
         </ErrorBoundaryAlert>
       )}
       {showSupplementalDisplays && (
-        <ErrorBoundaryAlert boundaryName="transformation-debug" dependencies={[transformation.transformId]}>
+        <ErrorBoundaryAlert
+          boundaryName="transformation-debug"
+          dependencies={[transformation.transformId, transformation.transformConfig]}
+        >
           <TransformationDebugDisplay />
         </ErrorBoundaryAlert>
       )}
@@ -102,14 +113,13 @@ export function TransformationEditorPanel({
 export function TransformationEditorRenderer() {
   const { data } = useQueryRunnerContext();
   const { selectedTransformation } = useQueryEditorUIContext();
-  const { transformations, systemTransformations } = usePanelContext();
+  const { transformations } = usePanelContext();
   const { updateTransformation } = useActionsContext();
 
   return (
     <TransformationEditorPanel
       transformation={selectedTransformation}
       transformations={transformations}
-      systemTransformations={systemTransformations.prepend}
       data={data}
       updateTransformation={updateTransformation}
       showSupplementalDisplays

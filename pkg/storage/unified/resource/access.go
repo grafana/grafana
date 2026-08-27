@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -19,13 +19,6 @@ import (
 
 type groupResource map[string]map[string]interface{}
 
-const (
-	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authz_limited_client"
-)
-
-var metOnce sync.Once
-
 type accessMetrics struct {
 	checkDuration      *prometheus.HistogramVec
 	compileDuration    *prometheus.HistogramVec
@@ -34,47 +27,40 @@ type accessMetrics struct {
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
-	m := &accessMetrics{
-		checkDuration: prometheus.NewHistogramVec(
+	return &accessMetrics{
+		checkDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "check_duration_seconds",
-				Help:      "duration of the access check calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_check_duration_seconds",
+				Help: "duration of the access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb", "allowed"}),
-		compileDuration: prometheus.NewHistogramVec(
+		compileDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "compile_duration_seconds",
-				Help:      "duration of the access compile calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_compile_duration_seconds",
+				Help: "duration of the access compile calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb"}),
-		batchCheckDuration: prometheus.NewHistogramVec(
+		batchCheckDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "batch_check_duration_seconds",
-				Help:      "duration of the batch access check calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_batch_check_duration_seconds",
+				Help: "duration of the batch access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"check_count"}),
-		errorsTotal: prometheus.NewCounterVec(
+		errorsTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "errors_total",
-				Help:      "Number of errors",
+				Name: "grafana_grpc_authz_limited_client_errors_total",
+				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
 	}
-
-	if reg != nil {
-		metOnce.Do(func() {
-			reg.MustRegister(m.checkDuration)
-			reg.MustRegister(m.compileDuration)
-			reg.MustRegister(m.batchCheckDuration)
-			reg.MustRegister(m.errorsTotal)
-		})
-	}
-
-	return m
 }
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
@@ -99,6 +85,8 @@ type authzLimitedClient struct {
 }
 
 type AuthzOptions struct {
+	// Registry is where the client's metrics are registered. A nil Registry
+	// leaves them unregistered, which is what tests want.
 	Registry         prometheus.Registerer
 	ExemptionEnabled bool
 	ExemptResources  []string
@@ -107,9 +95,6 @@ type AuthzOptions struct {
 // NewAuthzLimitedClient creates a new authzLimitedClient.
 func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims.AccessClient {
 	logger := log.New("limited-authz-client")
-	if opts.Registry == nil {
-		opts.Registry = prometheus.DefaultRegisterer
-	}
 	exemptions, err := parseAuthzExemptions(opts.ExemptResources)
 	if err != nil {
 		// Callers validate with ValidateAuthzOptions first. Drop the whole list

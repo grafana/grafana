@@ -24,9 +24,7 @@ var (
 	// searchResultsMatchHistogram tracks the percentage match between legacy and unified search results
 	searchResultsMatchHistogram = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace:                      "grafana",
-			Subsystem:                      "unified_storage",
-			Name:                           "search_results_match_percentage",
+			Name:                           "grafana_unified_storage_search_results_match_percentage",
 			Help:                           "Native histogram of percentage match between legacy and unified search results",
 			NativeHistogramBucketFactor:    1.1,
 			NativeHistogramMaxBucketNumber: 100,

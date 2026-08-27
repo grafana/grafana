@@ -15,19 +15,19 @@ interface AutoSyncConfigurationProps {
 
 export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
-  const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
+  const { state, autoSyncEligibleAlertmanagers, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
     useAutoSyncConfiguration();
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const options = useMemo<Array<SelectableValue<string>>>(
     () =>
-      mimirCortexDatasources.map((ds) => ({
+      autoSyncEligibleAlertmanagers.map((ds) => ({
         value: ds.uid,
         label: ds.name,
         imgUrl: ds.typeLogoUrl,
       })),
-    [mimirCortexDatasources]
+    [autoSyncEligibleAlertmanagers]
   );
 
   const operatorManaged = isOperatorManaged(state);

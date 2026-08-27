@@ -309,7 +309,6 @@ export function MinIntervalOption({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     label: 'AlertingQueryWrapper',
-    marginBottom: theme.spacing(1),
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
 
