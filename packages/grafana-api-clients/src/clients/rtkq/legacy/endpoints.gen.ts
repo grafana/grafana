@@ -1560,14 +1560,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/user/revoke-auth-token`, method: 'POST', body: queryArg.revokeAuthTokenCmd }),
         invalidatesTags: ['signed_in_user'],
       }),
-      unstarDashboardByUid: build.mutation<UnstarDashboardByUidApiResponse, UnstarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'DELETE' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
-      starDashboardByUid: build.mutation<StarDashboardByUidApiResponse, StarDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/user/stars/dashboard/uid/${queryArg.dashboardUid}`, method: 'POST' }),
-        invalidatesTags: ['signed_in_user'],
-      }),
       getSignedInUserTeamList: build.query<GetSignedInUserTeamListApiResponse, GetSignedInUserTeamListApiArg>({
         query: () => ({ url: `/user/teams` }),
         providesTags: ['signed_in_user'],
@@ -2972,16 +2964,6 @@ export type RevokeUserAuthTokenApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
 export type RevokeUserAuthTokenApiArg = {
   revokeAuthTokenCmd: RevokeAuthTokenCmd;
-};
-export type UnstarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UnstarDashboardByUidApiArg = {
-  dashboardUid: string;
-};
-export type StarDashboardByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type StarDashboardByUidApiArg = {
-  dashboardUid: string;
 };
 export type GetSignedInUserTeamListApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetSignedInUserTeamListApiArg = void;
@@ -5679,8 +5661,6 @@ export const {
   useGetUserQuotasQuery,
   useLazyGetUserQuotasQuery,
   useRevokeUserAuthTokenMutation,
-  useUnstarDashboardByUidMutation,
-  useStarDashboardByUidMutation,
   useGetSignedInUserTeamListQuery,
   useLazyGetSignedInUserTeamListQuery,
   useUserSetUsingOrgMutation,

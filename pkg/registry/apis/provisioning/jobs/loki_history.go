@@ -9,9 +9,11 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 const (
@@ -51,6 +53,13 @@ func NewLokiJobHistory(cfg loki.Config) *LokiJobHistory {
 
 // WriteJob implements History.WriteJob by storing the job in Loki
 func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) error {
+	ctx, span := tracing.Start(ctx, LokiJobSpanName,
+		attribute.String("job.name", job.GetName()),
+		attribute.String("job.namespace", job.GetNamespace()),
+		attribute.String("history.backend", "loki"),
+	)
+	defer span.End()
+
 	logger := logging.FromContext(ctx)
 
 	// Clean up the job copy (remove claim label, similar to in-memory implementation)
@@ -70,6 +79,7 @@ func (h *LokiJobHistory) WriteJob(ctx context.Context, job *provisioning.Job) er
 	logger.Debug("Saving job history to Loki")
 
 	if err := h.client.Push(writeCtx, []loki.Stream{stream}); err != nil {
+		span.RecordError(err)
 		logger.Error("Failed to save job history to Loki", "error", err)
 		return fmt.Errorf("failed to save job history: %w", err)
 	}

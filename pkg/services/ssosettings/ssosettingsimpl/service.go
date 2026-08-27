@@ -20,7 +20,6 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -35,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ ssosettings.Service = (*Service)(nil)
@@ -62,7 +62,7 @@ type Service struct {
 	mtReadAuthoritative bool
 }
 
-func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sqlStore db.DB, ac ac.AccessControl,
+func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sql legacysql.LegacyDatabaseProvider, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	usageStats usagestats.Service, registerer prometheus.Registerer,
@@ -119,7 +119,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 		configurableProviders[social.SAMLProviderName] = true
 	}
 
-	store := database.ProvideStore(sqlStore)
+	store := database.ProvideStore(sql)
 
 	svc := &Service{
 		logger:                logger,
@@ -151,7 +151,7 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 // database with the tenant configuration as fallback.
 //
 //nolint:staticcheck // SA1019: legacy tenant databases still use the deprecated secrets service
-func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore db.DB, secretsSvc secrets.Service) *Service {
+func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) *Service {
 	configurableProviders := make(map[string]bool, len(ssosettings.AllOAuthProviders))
 	for _, provider := range ssosettings.AllOAuthProviders {
 		configurableProviders[provider] = true
@@ -159,7 +159,7 @@ func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore 
 
 	return &Service{
 		logger:                log.New("ssosettings.service"),
-		store:                 database.ProvideStore(sqlStore),
+		store:                 database.ProvideStore(sql),
 		secrets:               secretsSvc,
 		fbStrategies:          []ssosettings.FallbackStrategy{strategies.NewOAuthStrategy(cfgProvider)},
 		providersList:         slices.Clone(ssosettings.AllOAuthProviders),
@@ -281,6 +281,24 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	s.setCachedSSOSettings(result)
 
 	return result, nil
+}
+
+// ListStored returns the stored overrides with secrets decrypted, without
+// merging system defaults (List does merge them).
+func (s *Service) ListStored(ctx context.Context) ([]*models.SSOSettings, error) {
+	stored, err := s.store.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, setting := range stored {
+		setting.Settings, err = s.decryptSecrets(ctx, setting.Settings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return stored, nil
 }
 
 func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error) {

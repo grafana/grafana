@@ -1,23 +1,67 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { lazy, Suspense } from 'react';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
-// Mirrors the text panel: renderTextPanelMarkdown sanitizes its output (XSS-safe) and the
-// result is rendered via DangerouslySetHtmlContent with the shared `markdown-html` class.
-// The global `.markdown-html` styles cover lists/tables/links but not headings, blockquotes
-// or code — which notebook cells rely on — so we add those here to read like a document.
-export function MarkdownCell({ content }: { content: CellContentKind }) {
+import { useFocusExtension } from './focusExtension';
+
+const MarkdownCellEditor = lazy(() =>
+  import(/* webpackChunkName: "notebook-markdown-editor" */ './MarkdownCellEditor').then((m) => ({
+    default: m.MarkdownCellEditor,
+  }))
+);
+
+export interface MarkdownCellProps {
+  content: CellContentKind;
+  isEditing: boolean;
+  autoFocus?: boolean;
+  focusRequestId?: number;
+  caretOffset?: number;
+  onChange: (content: CellContentKind) => void;
+  placeholder?: string;
+  onSubmit?: (remainder: string, marker?: string) => void;
+}
+
+export function MarkdownCell({
+  content,
+  isEditing,
+  autoFocus,
+  focusRequestId,
+  caretOffset,
+  onChange,
+  placeholder,
+  onSubmit,
+}: MarkdownCellProps) {
   const styles = useStyles2(getStyles);
+  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId, caretOnFocus: caretOffset });
 
   if (content.kind !== 'Markdown') {
     return null;
   }
 
-  const html = renderTextPanelMarkdown(content.spec.text);
-  return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+  if (!isEditing) {
+    const html = renderTextPanelMarkdown(content.spec.text);
+    if (!html) {
+      return null;
+    }
+    return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+  }
+
+  return (
+    <Suspense fallback={<LoadingPlaceholder text={t('notebook.cell.markdown.loading-editor', 'Loading editor')} />}>
+      <MarkdownCellEditor
+        content={content}
+        onChange={onChange}
+        placeholder={placeholder}
+        onSubmit={onSubmit}
+        focusExtension={focusExtension}
+      />
+    </Suspense>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -31,7 +75,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       marginTop: 0,
     },
     h1: { fontSize: theme.typography.h1.fontSize, lineHeight: theme.typography.h1.lineHeight },
-    // Section headers get an underline rule, matching the notebook document look.
     h2: {
       fontSize: theme.typography.h2.fontSize,
       lineHeight: theme.typography.h2.lineHeight,
