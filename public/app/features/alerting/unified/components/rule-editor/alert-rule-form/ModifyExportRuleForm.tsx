@@ -13,6 +13,7 @@ import {
 } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
+import { shouldUseNewRuleExportFormats } from '../../../featureToggles';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { useReturnTo } from '../../../hooks/useReturnTo';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../../rule-editor/formDefaults';
@@ -22,7 +23,7 @@ import { formValuesToRulerGrafanaRuleDTO, getDefaultQueries } from '../../../uti
 import { rulerRuleType } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { type ExportFormats, allGrafanaExportProviders } from '../../export/providers';
+import { type ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
@@ -221,7 +222,11 @@ const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaR
   const initialTab = exportingNewRule ? 'hcl' : 'yaml';
   const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
 
-  const formatProviders = Object.values(allGrafanaExportProviders);
+  // JSON/YAML export for new (unsaved) rules is gated behind a feature flag; existing rules always support all formats
+  const formatProviders =
+    exportingNewRule && !shouldUseNewRuleExportFormats()
+      ? [HclExportProvider]
+      : Object.values(allGrafanaExportProviders);
 
   return (
     <GrafanaExportDrawer
