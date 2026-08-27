@@ -1,19 +1,19 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/environment';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
@@ -27,6 +27,11 @@ import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
+const LazyConfigureIRM = lazy(() =>
+  import(/* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM').then(
+    (module) => ({ default: module.ConfigureIRM })
+  )
+);
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -246,7 +251,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         return (
           <NavLandingPage
             navId="alerts-and-incidents"
-            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
+            header={
+              (!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? (
+                <Suspense fallback={null}>
+                  <LazyConfigureIRM />
+                </Suspense>
+              ) : undefined
+            }
           />
         );
       },
@@ -519,7 +530,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
-      roles: config.featureToggles.playlistsRBAC
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
         : undefined,
       component: SafeDynamicImport(

@@ -92,7 +92,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
           borderInlineEnd: 'none',
         },
 
-        '&[aria-selected="true"][role="columnheader"]': {
+        [`${SELECTED_CELL_SELECTOR}[role="columnheader"]`]: {
           outline: 'none',
         },
       },
@@ -100,16 +100,22 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       // add a box shadow on hover and selection for all body cells
       '& > :not(.rdg-summary-row, .rdg-header-row) > .rdg-cell': {
         [getActiveCellSelector()]: { boxShadow: theme.shadows.z2 },
-        // selected cells should appear below hovered cells.
-        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 7 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 6 },
+        // A selected cell sits below a hovered one, so that hovering a neighbor of the selected
+        // cell lifts its overflow clear rather than tucking it behind. The two selectors carry the
+        // same specificity, so the hover rule has to come last for a cell that is both to land on
+        // the hover value.
+        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 7 },
+        ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 6 } }),
+        // react-data-grid rings the selected cell in the selection color. Once focus is gone that
+        // ring marks a cell the user can no longer see they are on, so leave the cell bare.
+        [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
       },
 
       '.rdg-cell.rdg-cell-frozen': {
         backgroundColor: 'var(--rdg-row-background-color)',
         zIndex: theme.zIndex.tooltip - 4,
+        [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
         ...(!IS_SAFARI_26 && { '&:hover': { zIndex: theme.zIndex.tooltip - 2 } }),
-        '&[aria-selected=true]': { zIndex: theme.zIndex.tooltip - 3 },
       },
 
       // have to override styles for row selection to workaround safari styles workaround
@@ -163,7 +169,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       },
     }),
     cellNested: css({
-      '&[aria-selected=true]': { outline: 'none' },
+      [SELECTED_CELL_SELECTOR]: { outline: 'none' },
       '&:hover': { backgroundColor: 'transparent' },
     }),
     noDataNested: css({
@@ -316,14 +322,24 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
   }),
 }));
 
+/**
+ * A cell react-data-grid considers selected, whether or not the grid still has focus. Use this for
+ * resets and stacking that have to hold for as long as the selection does — see ACTIVE_CELL_SELECTORS
+ * for the visual treatment that follows focus instead.
+ */
+const SELECTED_CELL_SELECTOR = '&[aria-selected=true]';
+
 const ACTIVE_CELL_SELECTORS = {
   hover: {
     nested: '.rdg-cell:hover &',
     normal: '&:hover',
   },
+  // react-data-grid keeps a cell selected after the grid loses focus, and offers no API to clear it
+  // (`selectCell` rejects any out-of-bounds position), so gate on `:focus-within` to release the
+  // expanded state when the user clicks away from the table.
   selected: {
-    nested: '[aria-selected=true] &',
-    normal: '&[aria-selected=true]',
+    nested: '[aria-selected=true]:focus-within &',
+    normal: `${SELECTED_CELL_SELECTOR}:focus-within`,
   },
 } as const;
 

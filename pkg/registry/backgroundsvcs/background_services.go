@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -90,6 +91,7 @@ func ProvideBackgroundServiceRegistry(
 	sqlStore *sqlstore.SQLStore,
 	folderReconciler *folderreconcile.Reconciler,
 	folderUIDRepair *libraryelements.FolderUIDRepairService,
+	ssoSettingsBackfill *iamsso.SSOSettingsBackfill,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -146,6 +148,7 @@ func ProvideBackgroundServiceRegistry(
 		sqlStore,
 		folderReconciler,
 		folderUIDRepair,
+		ssoSettingsBackfill,
 	)
 }
 

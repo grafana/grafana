@@ -1,5 +1,62 @@
 import { convertMomentToLuxonWithOrdinal } from './format';
+import { DateTime } from './luxon';
 import moment from './moment';
+
+describe('fractional millisecond timestamps', () => {
+  it.each([
+    [1787318699146.3264, 1787318699146],
+    [1787318699146.8, 1787318699146],
+    [-1.8, -1],
+  ])('truncates numeric input %s toward zero (like moment)', (input, expected) => {
+    expect(moment(input).valueOf()).toBe(expected);
+  });
+
+  it.each([
+    { input: '1.8', format: 'x', expected: 1 },
+    { input: '-1.8', format: 'x', expected: -1 },
+    { input: '0.0018', format: 'X', expected: 1 },
+    { input: '-0.0018', format: 'X', expected: -1 },
+  ])('truncates $input parsed with the $format token toward zero', ({ input, format, expected }) => {
+    expect(moment(input, format).valueOf()).toBe(expected);
+  });
+
+  it('truncates direct Luxon DateTime input', () => {
+    expect(moment(DateTime.fromMillis(1.8)).valueOf()).toBe(1);
+  });
+
+  it('truncates Moment-like input', () => {
+    const input = moment(0);
+    input.valueOf = () => 1.8;
+
+    expect(moment(input).valueOf()).toBe(1);
+  });
+
+  it('truncates array and object input', () => {
+    expect(moment.utc([1970, 0, 1, 0, 0, 0, 1.8]).valueOf()).toBe(1);
+    expect(moment.utc({ year: 1970, month: 0, day: 1, millisecond: 1.8 }).valueOf()).toBe(1);
+  });
+
+  it('truncates results of millisecond arithmetic', () => {
+    const added = moment(0).add(1.8, 'milliseconds');
+    expect(added.valueOf()).toBe(1);
+    expect(added.toISOString()).toBe('1970-01-01T00:00:00.001Z');
+    expect(moment(0).subtract(1.8, 'milliseconds').valueOf()).toBe(-1);
+  });
+
+  it('truncates millisecond setter values', () => {
+    expect(moment.utc(0).millisecond(1.8).valueOf()).toBe(1);
+    expect(moment.utc(0).set('milliseconds', 1.8).valueOf()).toBe(1);
+  });
+
+  it('truncates comparison and diff operands symmetrically', () => {
+    const value = moment(1000.5);
+
+    expect(value.isSame(1000.5)).toBe(true);
+    expect(value.isBefore(1000.5)).toBe(false);
+    expect(value.isAfter(1000.5)).toBe(false);
+    expect(value.diff(1000.5, 'milliseconds', true)).toBe(0);
+  });
+});
 
 // used by enterprise code (public/app/extensions), which in-repo usage scans don't cover, so this
 // guards the API against being trimmed again. expected values verified against moment 2.30.1.
@@ -89,6 +146,25 @@ describe('format', () => {
     );
   });
 
+  it.each([
+    { format: "MMM'YY", expected: "May'24" },
+    { format: "[Today's date:] MMM D", expected: "Today's date: May 8" },
+    { format: "MMM''YY", expected: "May''24" },
+  ])('treats single quotes as literal characters in $format', ({ format, expected }) => {
+    expect(moment.utc('2024-05-08T10:30:45Z').format(format)).toBe(expected);
+  });
+
+  it('formats 1-24 hours and fractional seconds like moment', () => {
+    const value = moment.utc('2024-05-08T00:30:45.123Z');
+
+    expect(value.format('k kk S SS SSS SSSS SSSSSSSSS')).toBe('24 24 1 12 123 1230 123000000');
+    expect(value.clone().hour(5).format('k kk')).toBe('5 05');
+  });
+
+  it('formats GG as the two-digit ISO week-year', () => {
+    expect(moment.utc('2021-01-01T00:00:00Z').format('GG')).toBe('20');
+  });
+
   it('omits z for the local system zone like moment', () => {
     expect(moment(1587126975779).format('z')).toBe('');
     expect(moment(1587126975779).format('[z] z')).toBe('z ');
@@ -108,6 +184,22 @@ describe('format', () => {
 });
 
 describe('formatted string parsing', () => {
+  it('treats single quotes as literal characters in the format', () => {
+    expect(moment.utc("May'24", "MMM'YY").toISOString()).toBe('2024-05-01T00:00:00.000Z');
+  });
+
+  it('parses 1-24 hours and fractional seconds like moment', () => {
+    expect(moment.utc('2024-05-08 24:00:00.0', 'YYYY-MM-DD kk:mm:ss.S').toISOString()).toBe('2024-05-09T00:00:00.000Z');
+    expect(moment.utc('2024-05-08 5:30:45.12', 'YYYY-MM-DD k:mm:ss.SS').toISOString()).toBe('2024-05-08T05:30:45.120Z');
+    expect(moment.utc('2024-05-08 5:30:45.123456789', 'YYYY-MM-DD k:mm:ss.SSSSSSSSS').toISOString()).toBe(
+      '2024-05-08T05:30:45.123Z'
+    );
+  });
+
+  it('parses GG as the two-digit ISO week-year', () => {
+    expect(moment.utc('20-53-5', 'GG-WW-E').toISOString()).toBe('2021-01-01T00:00:00.000Z');
+  });
+
   it('accepts abbreviated month names for the long month token like moment', () => {
     const parsed = moment.utc('Aug 20, 2020 10:30:20 am', 'MMMM D, YYYY, h:mm:ss a');
 

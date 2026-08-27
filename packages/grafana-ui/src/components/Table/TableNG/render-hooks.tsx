@@ -72,6 +72,7 @@ import {
   canFieldBeColorized,
   displayJsonValue,
   getAlignment,
+  getApplyToRowBgFn,
   type getCellColorInlineStylesFactory,
   getCellOptions,
   getDisplayName,
@@ -80,6 +81,7 @@ import {
   isSortableField,
   parseStyleJson,
   predicateByName,
+  rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
 } from './utils';
@@ -146,7 +148,6 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
-  applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
@@ -176,6 +177,48 @@ export type FromFieldsFn = (
 ) => FromFieldsResult;
 
 /**
+ * Returns a copy of `fields` with the table's cell-type-specific display processors attached — the
+ * Pill mappings override and the JSON pretty-printer. These are derived on fresh field objects
+ * rather than mutated onto the caller's fields: the column builder used to attach them by mutating
+ * the shared field objects mid-render, which leaked into other consumers of the data frame and made
+ * any display-dependent measurement order-sensitive (widths could shift once the builder had run,
+ * e.g. on sort). Fields that need neither processor are returned by reference, unchanged.
+ */
+export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): Field[] {
+  return fields.map((field) => {
+    const cellType = getCellOptions(field).type;
+    let prepared = field;
+
+    // Pill cells with value mappings: use the single fixed-color calculator so mappings win over the
+    // default thresholds mode (a hack), then recompute the display for that adjusted config.
+    if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
+      prepared = {
+        ...field,
+        config: {
+          ...field.config,
+          color: {
+            ...field.config.color,
+            mode: FieldColorModeId.Fixed,
+            fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
+          },
+        },
+      };
+      prepared.display = getDisplayProcessor({ field: prepared, theme });
+    }
+
+    // JSONView cells, and `other` fields left on the default cell type, render their value as
+    // pretty-printed JSON. Copy first (if the Pill branch above didn't already) so the original
+    // field object is never mutated.
+    if (rendersAsJson(field, cellType)) {
+      prepared = prepared === field ? { ...field } : prepared;
+      prepared.display = displayJsonValue(prepared);
+    }
+
+    return prepared;
+  });
+}
+
+/**
  * Builds column definitions and cell root renderers from a set of fields.
  * Internal: callers should use `useColumnBuilderFromFields`, which memoizes the
  * per-call closure and resolves `resolvedFilterResult` (flat → top-level filterResult,
@@ -192,7 +235,6 @@ function buildColumnsFromFields(
 ): FromFieldsResult {
   const {
     theme,
-    applyToRowBgFn,
     getCellColorInlineStyles,
     getTextColorForBackground,
     rowHeight,
@@ -211,6 +253,16 @@ function buildColumnsFromFields(
     showTypeIcons,
     timeRange,
   } = config;
+
+  // Resolve the apply-to-row background function against this frame's own fields.
+  // Nested tables are independent frames: their apply-to-row coloring must read from
+  // the nested field's own values at the nested row's local `__index`, not from the
+  // parent frame. Deriving it here (rather than passing a single top-level closure via
+  // config) keeps `applyToRowBgFn(row.__index)` correct for both flat and nested rows.
+  const applyToRowBgFn = getApplyToRowBgFn(frame.fields, getCellColorInlineStyles) ?? undefined;
+
+  // Attach cell-type display processors up front, on copies, instead of mutating fields in the loop.
+  const preparedFields = prepareFieldsForDisplay(fields, theme);
 
   const result: FromFieldsResult = {
     columns: [],
@@ -255,32 +307,10 @@ function buildColumnsFromFields(
     background: undefined,
   };
 
-  for (let i = 0; i < fields.length; i++) {
-    let field = fields[i];
+  for (let i = 0; i < preparedFields.length; i++) {
+    const field = preparedFields[i];
     const cellOptions = getCellOptions(field);
     const cellType = cellOptions.type;
-
-    // make sure we use mappings exclusively if they exist, ignore default thresholds mode
-    // we hack this by using the single color mode calculator
-    if (cellType === TableCellDisplayMode.Pill && (field.config.mappings?.length ?? 0 > 0)) {
-      field = {
-        ...field,
-        config: {
-          ...field.config,
-          color: {
-            ...field.config.color,
-            mode: FieldColorModeId.Fixed,
-            fixedColor: field.config.color?.fixedColor ?? FALLBACK_COLOR,
-          },
-        },
-      };
-      field.display = getDisplayProcessor({ field, theme });
-    }
-
-    // attach JSONCell custom display function to JSONView cell type
-    if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
-      field.display = displayJsonValue(field);
-    }
 
     // For some cells, "aligning" the cell will mean aligning the inline contents of the cell with
     // the text-align css property, and for others, we'll use justify-content to align the cell
@@ -430,7 +460,10 @@ function buildColumnsFromFields(
 
     const tooltipFieldName = field.config.custom?.tooltip?.field;
     if (tooltipFieldName) {
-      const tooltipField = frame.fields.find(predicateByName(tooltipFieldName));
+      // The tooltip field is usually hidden, so it's not part of `preparedFields`. Run it through the
+      // same preparation so the tooltip formats its value exactly like a rendered cell would.
+      const rawTooltipField = frame.fields.find(predicateByName(tooltipFieldName));
+      const tooltipField = rawTooltipField ? prepareFieldsForDisplay([rawTooltipField], theme)[0] : undefined;
       if (tooltipField) {
         const tooltipDisplayName = getDisplayName(tooltipField);
         const tooltipCellOptions = getCellOptions(tooltipField);
