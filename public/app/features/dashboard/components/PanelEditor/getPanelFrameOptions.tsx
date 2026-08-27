@@ -3,8 +3,7 @@ import { t } from '@grafana/i18n';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
-import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
+import { LazyGenAIPanelDescriptionButton, LazyGenAIPanelTitleButton } from '../GenAI/LazyGenAIButtons';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -56,7 +55,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: (
-          <GenAIPanelTitleButton
+          <LazyGenAIPanelTitleButton
             onGenerate={setPanelTitle}
             panel={panel.getSaveModel()}
             dashboard={dashboard.getSaveModelClone()}
@@ -80,7 +79,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />,
+        addon: <LazyGenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />,
       })
     )
     .addItem(

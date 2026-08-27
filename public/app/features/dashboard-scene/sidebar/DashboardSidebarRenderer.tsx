@@ -24,7 +24,6 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -52,6 +51,10 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const onOpenAddPane = useCallback(async () => {
+    const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
+    sidebar.openPane(new AddNewPane({}));
+  }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
@@ -85,11 +88,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => sidebar.openPane(new AddNewPane({}))}
+              onClick={onOpenAddPane}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane instanceof AddNewPane}
+              active={openPane?.getId() === 'add'}
             />
             <Sidebar.Button
               icon="cog"
