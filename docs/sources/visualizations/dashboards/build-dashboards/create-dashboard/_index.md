@@ -191,9 +191,9 @@ On mobile devices, the sidebar is docked by default in edit mode.
 
 The following table describes how the sidebar behaves when docked or undocked in _edit mode_:
 
-| Docked  | Undocked |
-| ------- | -------- |
-| After the sidebar is open, it remains open regardless of where you click. | The sidebar closes if you don't select a dashboard element. |
+| Docked                                                                      | Undocked                                                                                   |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| After the sidebar is open, it remains open regardless of where you click.   | The sidebar closes if you don't select a dashboard element.                                |
 | The sidebar displays dashboard options when you click the dashboard canvas. | The sidebar only displays dashboard options when you click the **Dashboard options** icon. |
 
 When you dock or undock the sidebar, your choice is persisted for all dashboards you use in that Grafana instance, across sessions, by way of your browser's local storage.
