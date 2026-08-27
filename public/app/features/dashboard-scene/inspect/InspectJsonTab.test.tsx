@@ -164,8 +164,6 @@ describe('InspectJsonTab', () => {
   it('falls back to the transformed frames when the source has produced none', async () => {
     const { tab, panel } = await buildTestScene();
 
-    // Unlike the snapshot path, which would rather write no frames than frames its transformations
-    // already ran over, this tab always shows something.
     const transformer = panel.state.$data as SceneDataTransformer;
     transformer.state.$data!.setState({ data: undefined });
     transformer.setState({

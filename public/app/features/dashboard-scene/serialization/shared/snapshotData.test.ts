@@ -30,8 +30,6 @@ describe('getSnapshotSourceData', () => {
     const transformer = new SceneDataTransformer({ transformations: [] });
     transformer.setState({ data: panelData('transformed') });
 
-    // A snapshot is written alongside transformations, so falling back to the
-    // transformer output would run them a second time on open.
     expect(getSnapshotSourceData(transformer)).toBeUndefined();
   });
 });
