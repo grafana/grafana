@@ -1,18 +1,14 @@
-import { css } from '@emotion/css';
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
-  type CustomTransformOperator,
   type DataFrame,
   type DataTransformerConfig,
-  type GrafanaTheme2,
   type PanelData,
   type ResolvedSystemTransformations,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
   type SceneComponentProps,
@@ -21,10 +17,9 @@ import {
   type SceneObjectRef,
   type SceneObjectState,
   type SceneQueryRunner,
-  type SystemTransformationPosition,
   type VizPanel,
 } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, Icon, Tab, useStyles2 } from '@grafana/ui';
+import { Tab } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
@@ -35,11 +30,12 @@ import {
   useTransformedFrames,
 } from '../PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
-import { SystemTransformationBadge, SystemTransformationList } from '../systemTransformationDisplay';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
+import { SystemTransformationRows } from './SystemTransformationRows';
+import { TransformationsActions } from './TransformationsActions';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 
@@ -115,7 +111,6 @@ function useSystemTransformedData(
 }
 
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
-  const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
   const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
 
@@ -138,7 +133,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   const drawerSeries = useTransformedFrames(transformations, editorData?.series ?? NO_FRAMES);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState<boolean>(false);
 
   const openDrawer = () => setDrawerOpen(true);
   const closeDrawer = () => setDrawerOpen(false);
@@ -209,55 +203,10 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       )}
       <SystemTransformationRows transformations={systemAppend} position="append" />
       {hasUserTransformations && (
-        <>
-          <ButtonGroup>
-            <Button
-              icon="plus"
-              variant="secondary"
-              onClick={openDrawer}
-              data-testid={selectors.components.Transforms.addTransformationButton}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.add-another-transformation">
-                Add another transformation
-              </Trans>
-            </Button>
-            <Button
-              data-testid={selectors.components.Transforms.removeAllTransformationsButton}
-              className={styles.removeAll}
-              icon="times"
-              variant="secondary"
-              onClick={() => setConfirmModalOpen(true)}
-            >
-              <Trans i18nKey="dashboard-scene.panel-data-transformations-tab-rendered.delete-all-transformations">
-                Delete all transformations
-              </Trans>
-            </Button>
-          </ButtonGroup>
-          <ConfirmModal
-            isOpen={confirmModalOpen}
-            title={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.title-delete-all-transformations',
-              'Delete all transformations?'
-            )}
-            body={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.body-delete-all-transformations',
-              'By deleting all transformations, you will go back to the main selection screen.'
-            )}
-            confirmText={t(
-              'dashboard-scene.panel-data-transformations-tab-rendered.confirmText-delete-all',
-              'Delete all'
-            )}
-            onConfirm={() => {
-              reportInteraction('grafana_panel_transformations_clicked', {
-                context: 'transformations_list',
-                action: 'delete_all',
-              });
-              model.onChangeTransformations([]);
-              setConfirmModalOpen(false);
-            }}
-            onDismiss={() => setConfirmModalOpen(false)}
-          />
-        </>
+        <TransformationsActions
+          onAddTransformation={openDrawer}
+          onDeleteAll={() => model.onChangeTransformations([])}
+        />
       )}
       {transformationsDrawer}
     </>
@@ -329,53 +278,6 @@ function TransformationsEditor({ transformations, model, data }: TransformationE
     </DragDropContext>
   );
 }
-
-interface SystemTransformationRowsProps {
-  transformations: Array<DataTransformerConfig | CustomTransformOperator>;
-  position: SystemTransformationPosition;
-}
-
-function SystemTransformationRows({ transformations, position }: SystemTransformationRowsProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <SystemTransformationList
-      transformations={transformations}
-      position={position}
-      className={styles.systemRows}
-      itemClassName={styles.systemRow}
-      nameClassName={styles.systemRowName}
-      leading={<Icon name="lock" size="sm" />}
-      trailing={<SystemTransformationBadge />}
-    />
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  removeAll: css({
-    marginLeft: theme.spacing(2),
-  }),
-  systemRows: css({
-    listStyle: 'none',
-    margin: 0,
-    padding: 0,
-  }),
-  systemRow: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 1, 1, 2),
-    marginBottom: theme.spacing(0.5),
-    background: theme.colors.background.secondary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-    color: theme.colors.text.secondary,
-  }),
-  systemRowName: css({
-    flexGrow: 1,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
-});
 
 interface TransformationsTabProps extends PanelDataTabHeaderProps {
   model: PanelDataTransformationsTab;
