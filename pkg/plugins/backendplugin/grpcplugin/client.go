@@ -33,7 +33,9 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-// pluginSet is the list of services Grafana can dispense from backend plugins.
+// pluginSet is the set of services Grafana can dispense from a backend plugin:
+// the plugin-sdk (v2) services plus the app-sdk (v3) ones. Any given plugin
+// implements only a subset.
 var pluginSet = func() map[int]goplugin.PluginSet {
 	services := goplugin.PluginSet{
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},

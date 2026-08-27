@@ -110,7 +110,8 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 func loadClientV3(rpcClient plugin.ClientProtocol) v3.ClientV3 {
 	client, err := appgrpcplugin.NewClientV3(rpcClient)
 	if err != nil {
-		// NOTE: this case is VERY common while we are experimenting with v3
+		// Plugins that predate v3 do not dispense these services, which is the
+		// common case for now, so a failure here is not worth surfacing.
 		return nil
 	}
 	return client

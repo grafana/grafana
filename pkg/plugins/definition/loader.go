@@ -146,14 +146,13 @@ func loadManifest(rootfs fs.FS) (*app.ManifestData, error) {
 	return manifest, nil
 }
 
-// ParseManifest decodes an app-sdk AppManifest custom resource, the document a
-// plugin ships as app-sdk-manifest.json.
+// ParseManifest decodes the app-sdk AppManifest a plugin ships as
+// app-sdk-manifest.json.
 //
-// The AppManifest CR schema differs between versions (e.g. v1alpha1 kinds carry
-// "schema" while v1alpha2 carries "schemas", and json decoding would silently
-// drop the mismatched field), so this dispatches on the declared apiVersion and
-// rejects anything it cannot faithfully decode -- including a manifest that
-// declares no apiVersion at all.
+// The schema differs between versions (v1alpha1 kinds carry "schema", v1alpha2
+// carries "schemas") and json decoding would silently drop the mismatched
+// field, so dispatch on the declared apiVersion and reject anything we cannot
+// faithfully decode -- including a manifest that declares no apiVersion.
 func ParseManifest(raw []byte) (*app.ManifestData, error) {
 	var meta struct {
 		APIVersion string `json:"apiVersion"`
