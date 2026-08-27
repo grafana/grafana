@@ -18,6 +18,8 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { type ObjectMeta } from 'app/features/apiserver/types';
+import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -36,14 +38,31 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const hasK8sMeta = Boolean(dashboard.state.meta.k8s);
+  const k8sMeta = dashboard.state.meta.k8s;
+  const hasK8sMeta = Boolean(k8sMeta);
   const [exportFormat, setExportFormat] = useState<ExportFormat>(
     hasK8sMeta ? ExportFormat.V2Resource : ExportFormat.Classic
   );
   const uid = dashboard.state.uid;
 
   const { changedSaveModel } = changeInfo;
-  const classicJson = useMemo(() => JSON.stringify(changedSaveModel, null, 2), [changedSaveModel]);
+  const classicJson = useMemo(() => {
+    if (!isDashboardV2Spec(changedSaveModel)) {
+      return JSON.stringify(changedSaveModel, null, 2);
+    }
+
+    // The scene serializes to v2 whenever the dashboard uses the new layouts, but this JSON is
+    // pasted back into file-based provisioning, which only accepts v1. Converting here rather than
+    // reading the v1 API is what keeps the unsaved local edits in the output.
+    const metadata: ObjectMeta = {
+      ...k8sMeta,
+      name: k8sMeta?.name ?? uid ?? '',
+      resourceVersion: k8sMeta?.resourceVersion ?? '',
+      creationTimestamp: k8sMeta?.creationTimestamp ?? '',
+    };
+
+    return JSON.stringify(transformDashboardV2SpecToV1(changedSaveModel, metadata), null, 2);
+  }, [changedSaveModel, k8sMeta, uid]);
 
   const k8sResource = useAsync(async () => {
     if (exportFormat !== ExportFormat.V2Resource || !uid) {
