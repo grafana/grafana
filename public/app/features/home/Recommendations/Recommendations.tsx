@@ -26,8 +26,6 @@ interface RecommendationsProps {
 }
 
 export function Recommendations({ solutions }: RecommendationsProps) {
-  // Cloud-only for now: the cards promote Grafana Cloud apps, which self-managed
-  // instances (OSS or Enterprise) cannot enable.
   if (isOnPrem()) {
     return null;
   }
