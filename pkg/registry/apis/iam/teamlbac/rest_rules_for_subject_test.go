@@ -170,11 +170,18 @@ func TestRulesForSubjectRESTValidatesSubject(t *testing.T) {
 func TestRulesForSubjectRESTConnectReturnsRules(t *testing.T) {
 	ruleGetter := getterFunc(func(ctx context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 		require.Equal(t, "org-1", k8srequest.NamespaceValue(ctx))
+		requester, err := identity.GetRequester(ctx)
+		require.NoError(t, err)
+		require.True(t, requester.IsIdentityType(claims.TypeAccessPolicy))
 		return &iamv0.TeamLBACRule{Spec: iamv0.TeamLBACRuleSpec{
 			TeamFilters: map[string][]string{"team-a": {`foo="bar"`}},
 		}}, nil
 	})
-	teamGetter := getterFunc(func(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
+	teamGetter := getterFunc(func(ctx context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+		require.Equal(t, "org-1", k8srequest.NamespaceValue(ctx))
+		requester, err := identity.GetRequester(ctx)
+		require.NoError(t, err)
+		require.True(t, requester.IsIdentityType(claims.TypeAccessPolicy))
 		return teamWithMembers("team-a", "user-a"), nil
 	})
 	unusedLister := listerFunc(func(context.Context, *metainternalversion.ListOptions) (runtime.Object, error) {

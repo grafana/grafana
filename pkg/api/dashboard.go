@@ -17,15 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	claims "github.com/grafana/authlib/types"
 	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -35,10 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -683,21 +678,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	defer span.End()
 	c.Req = c.Req.WithContext(ctx)
 
-	var userID int64
-	if id, err := identity.UserIdentifier(c.GetID()); err == nil {
-		userID = id
-	}
-
 	homePage := hs.Cfg.HomePage
 
-	var preference *pref.Preference
-	var err error
-	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		preference, err = hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
-	} else {
-		prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.GetOrgID(), UserID: userID, Teams: c.GetTeams()}
-		preference, err = hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
-	}
+	preference, err := hs.preferenceK8sHandler.GetPreferencesWithDefaults(c)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
