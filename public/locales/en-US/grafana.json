@@ -12976,6 +12976,10 @@
       "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
+      "frame": {
+        "aria-label-collapsed": "Collapsed block: {{name}}",
+        "aria-label-panel": "Visualization block: {{name}}"
+      },
       "markdown": {
         "aria-label-editor": "Markdown",
         "format-bold": "B",

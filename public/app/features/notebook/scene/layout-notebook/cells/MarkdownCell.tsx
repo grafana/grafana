@@ -21,6 +21,8 @@ export interface MarkdownCellProps {
   autoFocus?: boolean;
   focusRequestId?: number;
   caretOffset?: number;
+  /** Which edge of the cell to reveal on that same grant — see useFocusExtension's own doc comment. */
+  scrollAlign?: ScrollLogicalPosition;
   onChange: (content: CellContentKind) => void;
   placeholder?: string;
   onSubmit?: (remainder: string, marker?: string) => void;
@@ -34,13 +36,20 @@ export function MarkdownCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onChange,
   placeholder,
   onSubmit,
   onNavigate,
 }: MarkdownCellProps) {
   const styles = useStyles2(getStyles);
-  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId, caretOnFocus: caretOffset });
+  const focusExtension = useFocusExtension({
+    autoFocus,
+    isEditing,
+    focusRequestId,
+    caretOnFocus: caretOffset,
+    scrollAlign,
+  });
 
   if (content.kind !== 'Markdown') {
     return null;

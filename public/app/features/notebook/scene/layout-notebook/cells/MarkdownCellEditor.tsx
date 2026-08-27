@@ -10,7 +10,7 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
-import { navigationKeymap } from './focusExtension';
+import { navigationKeymap, scrollMarginExtension } from './focusExtension';
 import {
   enclosingListKind,
   markdownLivePreview,
@@ -44,6 +44,7 @@ export function MarkdownCellEditor({
 }: MarkdownCellEditorProps) {
   const theme = useTheme2();
   const livePreview = useMemo(() => markdownLivePreview(theme), [theme]);
+  const scrollMargin = useMemo(() => scrollMarginExtension(theme), [theme]);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -151,7 +152,14 @@ export function MarkdownCellEditor({
         lineWrapping
         basicSetup={EDIT_SETUP}
         theme={livePreview.theme}
-        extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...navigateExt, ...(focusExtension ?? [])]}
+        extensions={[
+          livePreview.extensions,
+          scrollMargin,
+          ...placeholderExt,
+          ...enterExt,
+          ...navigateExt,
+          ...(focusExtension ?? []),
+        ]}
         aria-label={t('notebook.cell.markdown.aria-label-editor', 'Markdown')}
         onChange={(value) => {
           setText(value);

@@ -1,6 +1,8 @@
 import { EditorSelection, Prec, type Extension } from '@codemirror/state';
-import { keymap, ViewPlugin, type EditorView } from '@codemirror/view';
+import { EditorView, keymap, ViewPlugin } from '@codemirror/view';
 import { useMemo, useRef } from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 
 /**
  * Where a focus grant should leave the caret: a specific document position, `'preserve'` to leave the
@@ -8,6 +10,16 @@ import { useMemo, useRef } from 'react';
  * nothing to reposition for), or omitted entirely for the common case, the end of the document.
  */
 type CaretOnFocus = number | 'preserve';
+
+export function resolveScrollAlign(
+  element: Element,
+  fallback: ScrollLogicalPosition | undefined
+): ScrollLogicalPosition {
+  if (!fallback) {
+    return 'nearest';
+  }
+  return element.getBoundingClientRect().height > window.innerHeight ? fallback : 'nearest';
+}
 
 /**
  * An extension that puts the caret in the editor. Deferred a frame because a plugin is constructed
@@ -17,15 +29,17 @@ type CaretOnFocus = number | 'preserve';
  * A fresh call is how a caller asks for the caret again — CodeMirror rebuilds its plugins whenever the
  * `extensions` array identity changes.
  */
-function buildFocusExtension(caretOnFocus: CaretOnFocus | undefined) {
+function buildFocusExtension(caretOnFocus: CaretOnFocus | undefined, scrollAlign: ScrollLogicalPosition | undefined) {
   return [
     ViewPlugin.define((view) => {
       requestAnimationFrame(() => {
-        view.focus();
-        if (caretOnFocus === 'preserve') {
-          return;
-        }
-        view.dispatch({ selection: EditorSelection.cursor(caretOnFocus ?? view.state.doc.length) });
+        view.contentDOM.focus({ preventScroll: true });
+        const pos =
+          caretOnFocus === 'preserve' ? view.state.selection.main.head : (caretOnFocus ?? view.state.doc.length);
+        view.dispatch({
+          selection: caretOnFocus === 'preserve' ? undefined : EditorSelection.cursor(pos),
+        });
+        view.dom.scrollIntoView({ block: resolveScrollAlign(view.dom, scrollAlign), inline: 'nearest' });
       });
       return {};
     }),
@@ -53,17 +67,24 @@ function buildFocusExtension(caretOnFocus: CaretOnFocus | undefined) {
  * so the caller passes the exact offset to land on instead (see NotebookLayoutManager's own onAdvance).
  * CodeCell's language picker passes `'preserve'`, the one case where nothing about the content changed
  * at all.
+ *
+ * `scrollAlign` is a fallback for a cell taller than the viewport, not the literal alignment used
+ * Arrow-key navigation is the one caller that passes
+ * 'start'/'end' here at all; everything else always gets plain 'nearest'.
  */
 export function useFocusExtension({
   autoFocus,
   isEditing,
   focusRequestId,
   caretOnFocus,
+  scrollAlign,
 }: {
   autoFocus?: boolean;
   isEditing: boolean;
   focusRequestId?: number;
   caretOnFocus?: CaretOnFocus;
+  /** Which edge of the cell to reveal on this grant, for a cell taller than the viewport — 'nearest' when omitted. */
+  scrollAlign?: ScrollLogicalPosition;
 }): Extension[] | undefined {
   const pendingAutoFocus = useRef(autoFocus && isEditing);
   const previousFocusRequestId = useRef(focusRequestId);
@@ -76,13 +97,13 @@ export function useFocusExtension({
     if (pendingAutoFocus.current) {
       pendingAutoFocus.current = false;
       previousFocusRequestId.current = focusRequestId;
-      return buildFocusExtension(caretOnFocus);
+      return buildFocusExtension(caretOnFocus, scrollAlign);
     }
 
     const isFreshRequest = focusRequestId !== undefined && focusRequestId !== previousFocusRequestId.current;
     previousFocusRequestId.current = focusRequestId;
-    return isFreshRequest ? buildFocusExtension(caretOnFocus) : undefined;
-  }, [isEditing, focusRequestId, caretOnFocus]);
+    return isFreshRequest ? buildFocusExtension(caretOnFocus, scrollAlign) : undefined;
+  }, [isEditing, focusRequestId, caretOnFocus, scrollAlign]);
 }
 
 /**
@@ -120,4 +141,13 @@ export function navigationKeymap(onNavigate: (direction: 'up' | 'down') => void)
       ])
     ),
   ];
+}
+
+export function scrollMarginExtension(theme: GrafanaTheme2): Extension {
+  return EditorView.theme({
+    '&': {
+      scrollMarginTop: theme.spacing(14),
+      scrollMarginBottom: theme.spacing(4),
+    },
+  });
 }

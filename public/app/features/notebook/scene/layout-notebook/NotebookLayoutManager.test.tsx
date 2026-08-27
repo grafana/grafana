@@ -15,19 +15,6 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-//
-// A Code cell's baseline is 1 now, not 0: the layout manager hands every cell an `onNavigate` in edit
-// mode (arrow-key navigation between cells — see NotebookLayoutManagerRenderer's own `onNavigate`),
-// which is an unconditional extension the moment isEditing is true, same as a markdown cell's own
-// Enter/Shift-Enter keymap below. A focus request adds one more on top of that baseline.
-//
-// A markdown cell's baseline is higher and fixed for the same reason: every markdown cell rendered
-// through this tree gets the live-preview extension, the placeholder (SpecialMarkdownCell passes one
-// to every markdown cell unconditionally — see NotebookCellRenderer), the Enter/Shift-Enter keymap
-// (unconditional — Shift-Enter's list-continuation binding no longer depends on onSubmit), and now the
-// same arrow-key navigation keymap Code cells get, for a baseline of 4. A focus request adds exactly
-// one more on top of that.
-//
 // Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
@@ -66,7 +53,7 @@ jest.mock('@grafana/ui/unstable', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 5 : 2;
+      const focusThreshold = ariaLabel === 'Markdown' ? 6 : 3;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {

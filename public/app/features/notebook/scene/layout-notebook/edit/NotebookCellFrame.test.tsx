@@ -136,6 +136,16 @@ describe('NotebookCellFrame', () => {
       expect(screen.getByText('hidden-panel').closest('[tabindex]')).toBeNull();
     });
 
+    it('keeps the drag handle outside the content wrapper the focus ring targets', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true });
+
+      const handle = screen.getByRole('button', { name: 'Drag to reorder' });
+      const content = screen.getByText('hidden-panel').closest('.notebook-cell-content');
+
+      expect(content).not.toBeNull();
+      expect(content?.contains(handle)).toBe(false);
+    });
+
     it('reports ArrowUp/ArrowDown once the frame itself has focus', () => {
       const onNavigate = jest.fn();
       renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
@@ -159,6 +169,35 @@ describe('NotebookCellFrame', () => {
       expect(onNavigate).not.toHaveBeenCalled();
     });
 
+    it.each([{ ctrlKey: true }, { altKey: true }, { shiftKey: true }])(
+      'ignores an arrow key held with a modifier (%o)',
+      (modifier) => {
+        const onNavigate = jest.fn();
+        renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
+        const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+
+        fireEvent.keyDown(frame, { key: 'ArrowDown', ...modifier });
+
+        expect(onNavigate).not.toHaveBeenCalled();
+      }
+    );
+
+    it('still treats Cmd+Arrow as cell navigation', () => {
+      const onNavigate = jest.fn();
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
+      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+
+      fireEvent.keyDown(frame, { key: 'ArrowDown', metaKey: true });
+
+      expect(onNavigate).toHaveBeenCalledWith('down');
+    });
+
+    it('labels the frame with the cell element name for an assistive-technology user', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true });
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: hidden-panel' })).toBeInTheDocument();
+    });
+
     it('takes DOM focus once a fresh grant targets it', () => {
       const cell = buildCollapsedCell();
       const { rerender } = render(frameTree({ cell, isEditing: true, focusRequestId: 1 }));
@@ -174,6 +213,26 @@ describe('NotebookCellFrame', () => {
       renderFrame({ cell: buildCollapsedCell(), isEditing: true, autoFocus: true });
 
       expect(screen.getByText('hidden-panel').closest('[tabindex]')).toHaveFocus();
+    });
+
+    it('scrolls the frame into view once a fresh grant targets it', () => {
+      const cell = buildCollapsedCell();
+      const { rerender } = render(frameTree({ cell, isEditing: true, focusRequestId: 1 }));
+      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+      const scrollIntoView = jest.spyOn(frame, 'scrollIntoView');
+
+      rerender(frameTree({ cell, isEditing: true, focusRequestId: 2 }));
+
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
+
+    it('scrolls the frame into view once at mount when it was already the target', () => {
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, autoFocus: true });
+
+      expect(scrollIntoView).toHaveBeenCalled();
+      scrollIntoView.mockRestore();
     });
   });
 });

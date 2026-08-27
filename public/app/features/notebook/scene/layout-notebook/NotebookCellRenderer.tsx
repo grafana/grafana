@@ -30,6 +30,7 @@ interface NarrativeCellFocusProps {
   autoFocus?: boolean;
   focusRequestId?: number;
   caretOffset?: number;
+  scrollAlign?: ScrollLogicalPosition;
   onAdvance?: (remainder: string, marker?: string) => void;
   onFocusRequest?: () => void;
   onNavigate?: (direction: 'up' | 'down') => void;
@@ -44,6 +45,7 @@ export function NotebookCellRenderer({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
   onNavigate,
@@ -70,6 +72,7 @@ export function NotebookCellRenderer({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         onAdvance={onAdvance}
         onFocusRequest={onFocusRequest}
         onNavigate={onNavigate}
@@ -133,6 +136,7 @@ function NarrativeCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
   onNavigate,
@@ -149,6 +153,7 @@ function NarrativeCell({
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
           caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
           onAdvance={onAdvance}
           onFocusRequest={onFocusRequest}
           onNavigate={onNavigate}
@@ -172,6 +177,7 @@ function NarrativeCell({
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
           caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
           cell={cell}
           onChange={(updated) => cell.onContentChange(updated)}
           onNavigate={onNavigate}
@@ -202,6 +208,7 @@ function SpecialMarkdownCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
   onNavigate,
@@ -278,6 +285,7 @@ function SpecialMarkdownCell({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         placeholder={t('notebook.add-block.prompt', 'Type to start writing — press / for blocks')}
         onChange={handleChange}
         onSubmit={onAdvance}

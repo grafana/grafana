@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
@@ -14,7 +14,7 @@ import {
   normalizeLanguage,
   toCodeMirrorLanguage,
 } from './codeLanguages';
-import { navigationKeymap, useFocusExtension } from './focusExtension';
+import { navigationKeymap, scrollMarginExtension, useFocusExtension } from './focusExtension';
 
 // Reading a notebook should look like reading a document, so everything that makes CodeMirror feel
 // like an IDE is off. The gutter goes in both modes: the design has no line numbers.
@@ -49,27 +49,37 @@ interface Props {
   /**
    * A nonce for an external focus grant — e.g. arrow-key navigation from a sibling cell (see
    * NotebookLayoutManagerRenderer's own `focusRequest` state). Merged below into the same local nonce
-   * the language picker already uses, so useFocusExtension only ever watches one at a time.
+   * the language picker already uses, so useFocusExtension only ever watches one at a time
    */
   focusRequestId?: number;
-  /** Where the caret should land on that grant — see MarkdownCell's own `caretOffset` doc comment. */
+  /** Where the caret should land on that grant. */
   caretOffset?: number;
+  /** Which edge of the cell to reveal on that same grant. */
+  scrollAlign?: ScrollLogicalPosition;
   onChange: (content: CellContentKind) => void;
   /** ArrowUp/ArrowDown once the caret has nowhere further to go inside this cell. See navigationKeymap. */
   onNavigate?: (direction: 'up' | 'down') => void;
 }
 
-export function CodeCell({ content, isEditing, autoFocus, focusRequestId, caretOffset, onChange, onNavigate }: Props) {
+export function CodeCell({
+  content,
+  isEditing,
+  autoFocus,
+  focusRequestId,
+  caretOffset,
+  scrollAlign,
+  onChange,
+  onNavigate,
+}: Props) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const scrollMargin = useMemo(() => scrollMarginExtension(theme), [theme]);
 
-  // Two independent things want the caret here: the language picker's own re-request (which only
-  // restores focus — the code itself is untouched by picking a language, so the caret should stay
-  // exactly where the reader left it) and an external focus grant from the layout manager (which
-  // wants a specific offset instead, e.g. the start/end of this cell after an arrow-key jump from a
-  // sibling). Merged into one local nonce/caret pair so useFocusExtension only ever watches one at a
-  // time — `caret: undefined` reads the same as the "end of document" default a fresh external grant
-  // with no `caretOffset` wants.
-  const [localRequest, setLocalRequest] = useState<{ id: number; caret?: number | 'preserve' }>();
+  const [localRequest, setLocalRequest] = useState<{
+    id: number;
+    caret?: number | 'preserve';
+    scrollAlign?: ScrollLogicalPosition;
+  }>();
   const requestFocus = useCallback(
     () => setLocalRequest((prev) => ({ id: (prev?.id ?? 0) + 1, caret: 'preserve' })),
     []
@@ -78,10 +88,15 @@ export function CodeCell({ content, isEditing, autoFocus, focusRequestId, caretO
   // Bridges a fresh external `focusRequestId` into that same local nonce — the same "compare against
   // what was last seen" pattern MarkdownCell's own `lastEmittedText` uses during render, rather than
   // an effect (and the extra render an effect would cost).
+  const pendingExternalRequest = useRef(focusRequestId !== undefined);
   const previousExternalId = useRef(focusRequestId);
-  if (focusRequestId !== undefined && focusRequestId !== previousExternalId.current) {
+  if (
+    pendingExternalRequest.current ||
+    (focusRequestId !== undefined && focusRequestId !== previousExternalId.current)
+  ) {
+    pendingExternalRequest.current = false;
     previousExternalId.current = focusRequestId;
-    setLocalRequest((prev) => ({ id: (prev?.id ?? 0) + 1, caret: caretOffset }));
+    setLocalRequest((prev) => ({ id: (prev?.id ?? 0) + 1, caret: caretOffset, scrollAlign }));
   }
 
   const focusExtension = useFocusExtension({
@@ -89,6 +104,7 @@ export function CodeCell({ content, isEditing, autoFocus, focusRequestId, caretO
     isEditing,
     focusRequestId: localRequest?.id,
     caretOnFocus: localRequest?.caret,
+    scrollAlign: localRequest?.scrollAlign,
   });
 
   // Same ref-backed pattern MarkdownCell's own onSubmitRef uses: onNavigate's identity changes every
@@ -158,7 +174,7 @@ export function CodeCell({ content, isEditing, autoFocus, focusRequestId, caretO
           readOnly={!isEditing}
           lineWrapping
           basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
-          extensions={[...navigateExt, ...(focusExtension ?? [])]}
+          extensions={[scrollMargin, ...navigateExt, ...(focusExtension ?? [])]}
           aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}
           // The editor is a lazily loaded chunk; without this the cell is a blank gap mid-document
           // until it arrives.

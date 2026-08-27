@@ -768,19 +768,25 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
-  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number; caretOffset?: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{
+    key: string;
+    id: number;
+    caretOffset?: number;
+    scrollAlign?: ScrollLogicalPosition;
+  } | null>(null);
   const nextFocusId = useRef(0);
-  // `caretOffset` only matters for a split (see onAdvance below): the new cell's content there isn't
-  // just short starter text but carries the reader's own text along with it, so the default "end of
-  // document" would land the caret after that carried-over text instead of at the actual split point.
-  const requestFocus = useCallback((key: string | null | undefined, caretOffset?: number) => {
-    if (!key) {
-      setFocusRequest(null);
-      return;
-    }
-    nextFocusId.current += 1;
-    setFocusRequest({ key, id: nextFocusId.current, caretOffset });
-  }, []);
+
+  const requestFocus = useCallback(
+    (key: string | null | undefined, caretOffset?: number, scrollAlign?: ScrollLogicalPosition) => {
+      if (!key) {
+        setFocusRequest(null);
+        return;
+      }
+      nextFocusId.current += 1;
+      setFocusRequest({ key, id: nextFocusId.current, caretOffset, scrollAlign });
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isEditing) {
@@ -813,10 +819,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       if (!target) {
         return;
       }
-      // Omitted (rather than 0) already means "end of document" (see requestFocus's own doc
-      // comment) — exactly what arriving from below via ArrowUp wants. Arriving from above via
-      // ArrowDown wants the start instead.
-      requestFocus(target.state.key, direction === 'down' ? 0 : undefined);
+      requestFocus(target.state.key, direction === 'down' ? 0 : undefined, direction === 'down' ? 'end' : 'start');
     },
     [cells, requestFocus]
   );
@@ -884,6 +887,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     focusRequestId={focusRequest && cell.state.key === focusRequest.key ? focusRequest.id : undefined}
                     caretOffset={
                       focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
+                    }
+                    scrollAlign={
+                      focusRequest && cell.state.key === focusRequest.key ? focusRequest.scrollAlign : undefined
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
