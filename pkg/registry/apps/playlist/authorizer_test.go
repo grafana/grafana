@@ -5,6 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	oftesting "github.com/open-feature/go-sdk/openfeature/testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -13,7 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+var provider = oftesting.NewTestProvider()
+
+func TestMain(m *testing.M) {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
+		panic(err)
+	}
+	m.Run()
+}
 
 // mockAttributes implements authorizer.Attributes for testing
 type mockAttributes struct {
@@ -25,15 +38,11 @@ type mockAttributes struct {
 func (m *mockAttributes) IsResourceRequest() bool { return m.isResourceRequest }
 func (m *mockAttributes) GetVerb() string         { return m.verb }
 
-func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller {
-	var features featuremgmt.FeatureToggles
-	if on {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPlaylistsRBAC)
-	} else {
-		features = featuremgmt.WithFeatures()
-	}
+func installerWithToggle(t *testing.T, on bool, ac accesscontrol.AccessControl) *AppInstaller {
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagPlaylistsRBAC: setting.NewInMemoryFlag(featuremgmt.FlagPlaylistsRBAC, on),
+	})
 	return &AppInstaller{
-		features:      features,
 		accessControl: ac,
 		logger:        log.NewNopLogger(),
 	}
@@ -205,7 +214,7 @@ func TestGetAuthorizer(t *testing.T) {
 				},
 			}
 
-			installer := installerWithToggle(true, mockAC)
+			installer := installerWithToggle(t, true, mockAC)
 
 			attrs := &mockAttributes{
 				isResourceRequest: tt.isResourceReq,
@@ -243,8 +252,6 @@ func TestGetAuthorizer(t *testing.T) {
 
 func TestGetAuthorizerToggleOff(t *testing.T) {
 	mockAC := &mockAccessControl{}
-	installer := installerWithToggle(false, mockAC)
-	auth := installer.GetAuthorizer()
 
 	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID:   1,
@@ -258,6 +265,7 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 	})
 
 	t.Run("non-resource request defers regardless of role", func(t *testing.T) {
+		auth := installerWithToggle(t, false, mockAC).GetAuthorizer()
 		attrs := &mockAttributes{isResourceRequest: false, verb: "get"}
 		decision, _, err := auth.Authorize(noneCtx, attrs)
 		require.NoError(t, err)
@@ -265,6 +273,7 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 	})
 
 	t.Run("None role with read verb allows (hotfix)", func(t *testing.T) {
+		auth := installerWithToggle(t, false, mockAC).GetAuthorizer()
 		for _, verb := range []string{"get", "list", "watch"} {
 			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
 			decision, _, err := auth.Authorize(noneCtx, attrs)
@@ -274,6 +283,7 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 	})
 
 	t.Run("None role with write verb defers to roleAuthorizer", func(t *testing.T) {
+		auth := installerWithToggle(t, false, mockAC).GetAuthorizer()
 		for _, verb := range []string{"create", "update", "delete"} {
 			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
 			decision, _, err := auth.Authorize(noneCtx, attrs)
@@ -283,6 +293,7 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 	})
 
 	t.Run("non-None role defers to roleAuthorizer", func(t *testing.T) {
+		auth := installerWithToggle(t, false, mockAC).GetAuthorizer()
 		for _, verb := range []string{"get", "list", "create"} {
 			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
 			decision, _, err := auth.Authorize(viewerCtx, attrs)

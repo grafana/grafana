@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -974,7 +974,7 @@ var (
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -3294,15 +3294,6 @@ var (
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
-		},
-		{
-			Name:         "tracesDrilldown.useValueTypeFiltering",
-			Description:  "Enables value type filtering in Traces Drilldown",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Generate:     Generate{React: true},
-			Expression:   "false",
-			HideFromDocs: true,
 		},
 		{
 			Name:         "grafana.dashboardsAutoHeightPanels",
