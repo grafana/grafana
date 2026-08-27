@@ -74,4 +74,12 @@ describe('ColorValueEditor', () => {
     expect(span).toHaveTextContent('#ff5733');
     expect(span?.previousElementSibling?.contains(swatch)).toBe(true);
   });
+
+  it('fills the remaining field with the color name label so empty space stays clickable', () => {
+    render(<ColorValueEditor value="red" onChange={jest.fn()} details />);
+
+    const colorName = screen.getByText('red');
+    expect(colorName.tagName).toBe('LABEL');
+    expect(colorName).toHaveStyle({ cursor: 'pointer', flexGrow: 1 });
+  });
 });

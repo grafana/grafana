@@ -83,6 +83,18 @@ export const ColorValueEditor = ({
   );
 };
 
+const nameArea = {
+  flexGrow: 2,
+  alignSelf: 'stretch',
+  display: 'flex',
+  '& label': {
+    flexGrow: 1,
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+  },
+} as const;
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     spot: css({
@@ -104,11 +116,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     colorPicker: css({
       padding: `0 ${theme.spacing(1)}`,
     }),
-    colorText: css({
-      flexGrow: 2,
-    }),
+    colorText: css(nameArea),
     placeholderText: css({
-      flexGrow: 2,
+      ...nameArea,
       color: theme.colors.text.secondary,
     }),
   };
