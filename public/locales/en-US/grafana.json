@@ -13276,7 +13276,7 @@
       }
     },
     "header-menu": {
-      "choose-notebook": "Choose notebook...",
+      "add-to-notebook": "Add to notebook",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",

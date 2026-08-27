@@ -1149,13 +1149,13 @@ describe('panelMenuBehavior', () => {
     it('is hidden when notebooks are disabled', async () => {
       const items = await itemsWith({ notebooks: false, permission: true });
 
-      expect(items.find((item) => item.text === 'Choose notebook...')).toBeUndefined();
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
     });
 
     it('is hidden without permission to write or create', async () => {
       const items = await itemsWith({ notebooks: true, permission: false });
 
-      expect(items.find((item) => item.text === 'Choose notebook...')).toBeUndefined();
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
     });
 
     // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
@@ -1163,7 +1163,7 @@ describe('panelMenuBehavior', () => {
     it('is offered while reading the dashboard, not only while editing it', async () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
-      expect(items.find((item) => item.text === 'Choose notebook...')).toEqual(
+      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
         expect.objectContaining({ iconClassName: 'search' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
@@ -1181,7 +1181,7 @@ describe('panelMenuBehavior', () => {
       await new Promise((r) => setTimeout(r, 1));
 
       const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
-      expect(texts.slice(-4)).toEqual(['---', 'Choose notebook...', '---', 'Remove']);
+      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
 });

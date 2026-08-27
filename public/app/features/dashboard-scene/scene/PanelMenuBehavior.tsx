@@ -397,7 +397,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
 
       items.push({
-        text: t('panel.header-menu.choose-notebook', 'Choose notebook...'),
+        text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
         iconClassName: 'search',
         onClick: () => {
           dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
