@@ -44,9 +44,9 @@ func testStorage(t *testing.T, client resource.ResourceClient) *Storage {
 	}
 }
 
-func testContext() context.Context {
+func testContext(t *testing.T) context.Context {
 	requester := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true}
-	return identity.WithRequester(context.Background(), requester)
+	return identity.WithRequester(t.Context(), requester)
 }
 
 func testObject(t *testing.T) []byte {
@@ -97,7 +97,7 @@ func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 		client := &notFoundReadClient{readErr: notFound}
 		s := testStorage(t, client)
 
-		err := s.GuaranteedUpdate(testContext(), "example/test", &unstructured.Unstructured{}, true, nil, tryUpdate, nil)
+		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, true, nil, tryUpdate, nil)
 		require.NoError(t, err)
 		require.Equal(t, 1, client.created)
 	})
@@ -106,7 +106,7 @@ func TestGuaranteedUpdateNotFoundAsGRPCError(t *testing.T) {
 		client := &notFoundReadClient{readErr: notFound}
 		s := testStorage(t, client)
 
-		err := s.GuaranteedUpdate(testContext(), "example/test", &unstructured.Unstructured{}, false, nil, tryUpdate, nil)
+		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, nil, tryUpdate, nil)
 		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got: %v", err)
 		require.Equal(t, 0, client.created)
 	})
@@ -163,7 +163,7 @@ func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
 				return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
 			}
 
-			err := s.GuaranteedUpdate(testContext(), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+			err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
 			require.NoError(t, err)
 			require.Equal(t, 2, client.updates, "the conflict must be retried")
 		})
@@ -172,7 +172,7 @@ func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
 			client := &conflictClient{value: testObject(t), conflict: conflict}
 			s := testStorage(t, client)
 
-			err := s.Delete(testContext(), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+			err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
 			require.NoError(t, err)
 			require.Equal(t, 2, client.deletes, "the conflict must be retried")
 		})

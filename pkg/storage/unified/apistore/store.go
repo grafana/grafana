@@ -517,7 +517,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return err
+		return resource.GetError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -711,8 +711,9 @@ func (s *Storage) GuaranteedUpdate(
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
 		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
-			if resource.AsErrorResult(err).Code != http.StatusNotFound {
-				return err
+			resErr := resource.AsErrorResult(err)
+			if resErr.Code != http.StatusNotFound {
+				return resource.GetError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
