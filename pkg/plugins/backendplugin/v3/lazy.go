@@ -23,7 +23,7 @@ func (c *lazyClient) resolve(ctx context.Context) (ClientV3, error) {
 	client, ok := c.loader.ClientV3(ctx, c.id)
 	if !ok {
 		return nil, errors.NewServiceUnavailable(
-			"the plugin backend does not implement the")
+			"the plugin backend does not implement ClientV3")
 	}
 	return client, nil
 }
