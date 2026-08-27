@@ -46,8 +46,9 @@ test.describe(
       const datasourceSelect = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
       );
-      await datasourceSelect.locator('input').fill('Prometheus');
-      await datasourceSelect.locator('input').press('Enter');
+      await datasourceSelect.click();
+      await page.keyboard.type('Prometheus');
+      await page.getByRole('option', { name: 'Prometheus' }).click();
 
       const previewOptions = dashboardPage.getByGrafanaSelector(
         selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
