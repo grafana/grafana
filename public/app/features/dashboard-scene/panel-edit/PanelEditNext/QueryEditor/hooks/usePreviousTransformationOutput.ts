@@ -4,11 +4,17 @@ import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
+import {
+  NO_CONFIGS,
+  precedingTransformations,
+  type TransformationConfigs,
+  useTransformedFrames,
+} from './useTransformedFrames';
 
 interface UsePreviousTransformationOutputOptions {
   selectedTransformation: Transformation | null;
   transformations: Transformation[];
+  systemTransformations: TransformationConfigs;
   queryData: DataFrame[];
   queryTargets?: Array<{ refId: string }>;
 }
@@ -33,7 +39,9 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
 
 /**
  * Calculates the output of the previous transformation in the pipeline, for the filter display to
- * show which data frames are available for filtering.
+ * show which data frames are available for filtering. Counts the plugin's own transformations as
+ * preceding the user's first one, same as {@link precedingTransformations} — the filter matcher
+ * needs to see the frames they renamed, split or joined, not the raw query result.
  *
  * @returns Output of everything preceding the selected transformation, or the query result if
  * nothing does. Includes empty frames for refIds that were requested but didn't return results.
@@ -41,6 +49,7 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
 export function usePreviousTransformationOutput({
   selectedTransformation,
   transformations,
+  systemTransformations,
   queryData,
   queryTargets,
 }: UsePreviousTransformationOutputOptions): DataFrame[] {
@@ -54,9 +63,9 @@ export function usePreviousTransformationOutput({
   const precedingConfigs = useMemo(
     () =>
       selectedTransformation && isInPipeline
-        ? precedingTransformations(selectedTransformation, transformations)
+        ? precedingTransformations(selectedTransformation, transformations, systemTransformations)
         : NO_CONFIGS,
-    [isInPipeline, selectedTransformation, transformations]
+    [isInPipeline, selectedTransformation, transformations, systemTransformations]
   );
 
   const precedingOutput = useTransformedFrames(precedingConfigs, queryData);
