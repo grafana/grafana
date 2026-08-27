@@ -6,7 +6,7 @@ import {
   getFieldColorModeForField,
   type LinkModel,
 } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, type TimeCompareColorMode, TooltipDisplayMode } from '@grafana/schema';
 
 /** @alpha */
 export interface TooltipScrollableOptions {
@@ -144,6 +144,7 @@ export const getTooltipDisplayValue = (
  * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted. Defaults to `false`.
  * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
  * @param compareFieldIdx - Index of the field paired with the hovered series (its time-comparison counterpart). That row is annotated with a `delta` from the hovered series.
+ * @param deltaColorMode - How that `delta` should be colored. Defaults to `TimeCompareColorMode.Standard`.
  */
 export const getFieldDisplayItems = (
   fields: Field[],
@@ -155,7 +156,8 @@ export const getFieldDisplayItems = (
   fieldFilter = (field: Field, i: number) => true,
   hideZeros = false,
   extraFields?: Field[],
-  compareFieldIdx?: number
+  compareFieldIdx?: number,
+  deltaColorMode?: TimeCompareColorMode
 ): VizTooltipItem[] => {
   let rows: VizTooltipItem[] = [];
 
@@ -218,7 +220,7 @@ export const getFieldDisplayItems = (
       if (v != null && hoveredVal != null) {
         // text comes from the field's display processor, so it keeps the field's unit and decimals
         const { text, numeric } = getTooltipDisplayValue(v - hoveredVal, field);
-        delta = { text, numeric };
+        delta = { text, numeric, colorMode: deltaColorMode };
       }
     }
 
