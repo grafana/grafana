@@ -365,6 +365,11 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
+	if s.features.IsEnabledGlobally(featuremgmt.FlagApiserverPreserveTraceContext) {
+		// Keep the incoming client trace on /apis requests instead of letting the
+		// upstream public-endpoint tracing filter start a detached new root.
+		serverConfig.TracerProvider = newReparentingTracerProvider(serverConfig.TracerProvider)
+	}
 
 	// setup loopback transport for the aggregator server
 	transport := &grafanaapiserveroptions.RoundTripperFunc{Ready: make(chan struct{})}

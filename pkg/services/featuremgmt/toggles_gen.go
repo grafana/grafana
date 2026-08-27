@@ -79,6 +79,10 @@ const (
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
+	// FlagApiserverPreserveTraceContext
+	// Continue the incoming client trace on /apis requests instead of starting a new root span for non-privileged callers
+	FlagApiserverPreserveTraceContext = "apiserverPreserveTraceContext"
+
 	// FlagProvisioningFolderMetadata
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
