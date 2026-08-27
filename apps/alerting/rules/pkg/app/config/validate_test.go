@@ -21,6 +21,21 @@ func configWithUID(name, uid string) *v0alpha1.Config {
 	return c
 }
 
+func configWithPromote(promote bool) *v0alpha1.Config {
+	c := &v0alpha1.Config{ObjectMeta: metav1.ObjectMeta{Name: v0alpha1.ConfigSingletonName}}
+	c.Spec.ExternalRulerSync = &v0alpha1.ConfigV0alpha1SpecExternalRulerSync{Promote: &promote}
+	return c
+}
+
+func configWithPromotionCommittedStatus() *v0alpha1.Config {
+	c := configWithPromote(true)
+	c.Status.Conditions = []v0alpha1.ConfigCondition{{
+		Type:   conditionTypeExternalRulerSynced,
+		Reason: promotionCommittedReason,
+	}}
+	return c
+}
+
 func TestValidateConfigWrite(t *testing.T) {
 	ctx := context.Background()
 
@@ -83,6 +98,44 @@ func TestValidateConfigWrite(t *testing.T) {
 		fn := ValidateConfigWrite(RuntimeConfig{})
 		err := fn(ctx, validation.Request[*v0alpha1.Config]{
 			Object: configWithUID(v0alpha1.ConfigSingletonName, "ds-uid"),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects reverting promote once promotion has committed", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "externalRulerSync.promote")
+		assert.Contains(t, err.Error(), "one-way")
+	})
+
+	t.Run("allows re-affirming promote:true once promotion has committed", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(true),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("allows setting promote:false when promotion never committed", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromote(true), // requested, not yet committed
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("allows requesting promote:true for the first time", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(true),
+			OldObject: configWithUID(v0alpha1.ConfigSingletonName, "ds-uid"),
 		})
 		require.NoError(t, err)
 	})
