@@ -25,13 +25,19 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:       repoName,
 		SyncTarget: "folder",
-		SkipSync:   true,
 	})
+
+	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
+	require.NoError(t, err)
+	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
+	require.Equal(t, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
+	require.Equal(t, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
+	require.Equal(t, repo.Generation, repo.Status.ObservedGeneration)
+	require.Zero(t, repo.Status.Quota.StaleSince)
 
 	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
 	helper.SetQuotaError(lookupErr)
 
-	var staleSince int64
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
@@ -41,9 +47,7 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		assert.Equal(collect, initialQuota.MaxRepositories, repo.Status.Quota.MaxRepositories)
 		assert.Equal(collect, initialQuota.MaxResourcesPerRepository, repo.Status.Quota.MaxResourcesPerRepository)
 		assert.Equal(collect, repo.Generation, repo.Status.ObservedGeneration)
-		if assert.NotZero(collect, repo.Status.Quota.StaleSince) {
-			staleSince = repo.Status.Quota.StaleSince
-		}
+		assert.NotZero(collect, repo.Status.Quota.StaleSince)
 	}, 2*common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	refreshedQuota := provisioning.QuotaStatus{
@@ -74,6 +78,4 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 			assert.False(collect, found, "staleSince should be removed after quota refresh recovers")
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-
-	assert.NotZero(t, staleSince)
 }
