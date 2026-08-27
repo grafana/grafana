@@ -101,6 +101,67 @@ func TestComputeFullPath(t *testing.T) {
 	}
 }
 
+func TestToFolderLegacyCounts(t *testing.T) {
+	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
+		items := make([]interface{}, 0, len(stats))
+		for _, s := range stats {
+			items = append(items, s)
+		}
+		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
+	}
+	stat := func(group, res string, count int64) map[string]interface{} {
+		return map[string]interface{}{"group": group, "resource": res, "count": count}
+	}
+
+	testCases := []struct {
+		name  string
+		input *unstructured.Unstructured
+		want  folder.DescendantCounts
+	}{
+		{
+			name: "resources still living in the single-tenant tables are counted",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "unified storage counts win over the single-tenant tables",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 5),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 5},
+		},
+		{
+			name: "order of the entries does not matter",
+			input: counts(
+				stat("sql-fallback", "alertrules", 3),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "empty folder stays empty",
+			input: counts(
+				stat("dashboard.grafana.app", "dashboards", 0),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"dashboards": 0, "alertrules": 0},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := toFolderLegacyCounts(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, *got)
+		})
+	}
+}
+
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
