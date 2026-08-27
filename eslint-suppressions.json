@@ -1860,11 +1860,6 @@
       "count": 3
     }
   },
-  "public/app/features/datasources/components/EditDataSourceActions.test.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 1
-    }
-  },
   "public/app/features/datasources/hooks.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1

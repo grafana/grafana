@@ -972,13 +972,13 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v13)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
 	v14 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v14)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
@@ -987,7 +987,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, decryptService, tracingService, featureToggles, cfg)
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, resourceClient, decryptService, tracingService, featureToggles, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1739,13 +1739,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
 	v13 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, v13)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v13)
 	if err != nil {
 		return nil, err
 	}
 	githubFactory := github2.ProvideFactory()
 	v14 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, v14)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v14)
 	if err != nil {
 		return nil, err
 	}
@@ -1754,7 +1754,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, decryptService, tracingService, featureToggles, cfg)
+	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, accessControl, resourceClient, decryptService, tracingService, featureToggles, cfg)
 	if err != nil {
 		return nil, err
 	}

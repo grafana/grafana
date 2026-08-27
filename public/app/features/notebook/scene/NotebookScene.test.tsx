@@ -21,7 +21,11 @@ import {
   ScopesVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
@@ -184,6 +188,34 @@ describe('NotebookScene', () => {
       scene.editHistory.undo();
 
       expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('commits an active query edit before leaving edit mode, so a later edit is a separate undo step', () => {
+      const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries;
+      const midway = [{ ...before[0], expr: 'up' } as DataQuery];
+      const after = [{ ...before[0], expr: 'up | limit 10' } as DataQuery];
+      const cell = new NotebookCellItem({ elementName: 'query1', source: 'user', body: panel });
+      const scene = new NotebookScene({
+        title: 'My notebook',
+        body: new NotebookLayoutManager({ cells: [cell] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, midway);
+
+      scene.onExitEditMode();
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, after);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(midway);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(before);
     });
 
     it('clears history when the notebook body is replaced', () => {
