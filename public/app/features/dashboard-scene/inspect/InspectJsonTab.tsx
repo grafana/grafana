@@ -34,12 +34,12 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getSourceDataProvider } from '../utils/getSourceDataProvider';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
-  getSourceDataProvider,
   isLibraryPanel,
 } from '../utils/utils';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
