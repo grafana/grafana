@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -2874,14 +2874,6 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preferences.rerouteLegacyAPIs",
-			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",

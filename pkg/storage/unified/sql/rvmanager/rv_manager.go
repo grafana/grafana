@@ -27,36 +27,31 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvm
 
 var (
 	rvmWriteDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_write_duration_seconds",
+		Name:                        "grafana_rvmanager_write_duration_seconds",
 		Help:                        "Duration of ResourceVersionManager write operations",
-		Namespace:                   "grafana",
 		NativeHistogramBucketFactor: 1.1,
 	}, []string{"group", "resource", "status"})
 
 	rvmExecBatchDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_exec_batch_duration_seconds",
+		Name:                        "grafana_rvmanager_exec_batch_duration_seconds",
 		Help:                        "Duration of ResourceVersionManager batch operations",
-		Namespace:                   "grafana",
 		NativeHistogramBucketFactor: 1.1,
 	}, []string{"group", "resource", "status"})
 
 	rvmExecBatchPhaseDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_exec_batch_phase_duration_seconds",
+		Name:                        "grafana_rvmanager_exec_batch_phase_duration_seconds",
 		Help:                        "Duration of batch operation phases",
-		Namespace:                   "grafana",
 		NativeHistogramBucketFactor: 1.1,
 	}, []string{"group", "resource", "phase"})
 
 	rvmInflightWrites = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "rvmanager_inflight_writes",
-		Help:      "Number of concurrent write operations",
-		Namespace: "grafana",
+		Name: "grafana_rvmanager_inflight_writes",
+		Help: "Number of concurrent write operations",
 	}, []string{"group", "resource"})
 
 	rvmBatchSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name:                        "rvmanager_batch_size",
+		Name:                        "grafana_rvmanager_batch_size",
 		Help:                        "Number of write operations per batch",
-		Namespace:                   "grafana",
 		NativeHistogramBucketFactor: 1.1,
 	}, []string{"group", "resource"})
 )

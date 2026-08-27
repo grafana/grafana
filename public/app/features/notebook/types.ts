@@ -14,6 +14,8 @@ import {
   defaultMarkdownCellContentKind as generatedDefaultMarkdownCellContentKind,
   defaultSpec as generatedDefaultSpec,
   defaultV2PanelKind,
+  defaultV2PanelSpec,
+  defaultVizConfigKind,
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
   type CodeCellContentKind as GeneratedCodeCellContentKind,
@@ -22,6 +24,7 @@ import {
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
+  type PanelQueryKind as GeneratedPanelQueryKind,
   type Spec as GeneratedSpec,
   type V2PanelKind as GeneratedPanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
@@ -45,9 +48,28 @@ export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
+export type PanelQueryKind = GeneratedPanelQueryKind;
 export type Spec = GeneratedSpec;
 
 export const defaultCodeCellContentKind = generatedDefaultCodeCellContentKind;
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultMarkdownCellContentKind = generatedDefaultMarkdownCellContentKind;
 export const defaultSpec = generatedDefaultSpec;
+
+/**
+ * What the "Visualization" block type inserts: a real Panel element (not a bespoke cell kind), so a
+ * notebook-authored visualization ends up on the same model as a panel added from a Dashboard or
+ * Explore — see NotebookLayoutManager's buildCellFor. Starts with no datasource/query chosen
+ * (buildVizPanelState seeds a single empty query) and defaults to a timeseries visualization,
+ * matching the line-graph default the old Explore-style query cell used. Picking a different viz
+ * type is future work.
+ */
+export function defaultVisualizationPanelKind(): PanelKind {
+  return {
+    kind: 'Panel',
+    spec: {
+      ...defaultV2PanelSpec(),
+      vizConfig: { ...defaultVizConfigKind(), group: 'timeseries' },
+    },
+  };
+}
