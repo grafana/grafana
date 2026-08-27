@@ -4795,7 +4795,7 @@ export type Extension = {
   Id?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: number[];
 };
-export type AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124 = {
+export type AttributeTypeAndValue = {
   Type?: AnObjectIdentifierRepresentsAnAsn1ObjectIdentifier;
   Value?: any;
 };
@@ -4805,13 +4805,13 @@ export type Name = {
   /** ExtraNames contains attributes to be copied, raw, into any marshaled
     distinguished names. Values override any attributes with the same OID.
     The ExtraNames field is not populated when parsing, see Names. */
-  ExtraNames?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
+  ExtraNames?: AttributeTypeAndValue[];
   Locality?: string[];
   /** Names contains all parsed attributes. When parsing distinguished names,
     this can be used to extract non-standard attributes that are not parsed
     by this package. When marshaling to RDNSequences, the Names field is
     ignored, see ExtraNames. */
-  Names?: AttributeTypeAndValueMirrorsTheAsn1StructureOfTheSameNameInRfc5280Section4124[];
+  Names?: AttributeTypeAndValue[];
   Organization?: string[];
   OrganizationalUnit?: string[];
   PostalCode?: string[];
@@ -4946,7 +4946,6 @@ export type ACertificateRepresentsAnX509Certificate = {
   PublicKeyAlgorithm?: PublicKeyAlgorithm;
   Raw?: number[];
   RawIssuer?: number[];
-  RawSignatureAlgorithm?: number[];
   RawSubject?: number[];
   RawSubjectPublicKeyInfo?: number[];
   RawTBSCertificate?: number[];
