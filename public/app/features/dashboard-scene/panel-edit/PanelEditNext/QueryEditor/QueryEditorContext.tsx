@@ -51,10 +51,7 @@ export interface AlertingState {
 export interface PanelState {
   panel: VizPanel;
   transformations: Transformation[];
-  /**
-   * Not editable, and deliberately absent from `transformations` — anything reconstructing what a
-   * user transformation receives has to replay `prepend` first.
-   */
+  // Deliberately absent from `transformations`
   systemTransformations: ResolvedSystemTransformations;
 }
 
