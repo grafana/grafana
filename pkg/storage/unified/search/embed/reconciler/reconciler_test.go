@@ -940,6 +940,33 @@ func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing
 	assert.Equal(t, 3, s.pendingLen(), "all processed events re-enqueued for the next cycle to retry the advance")
 }
 
+// TestReconciler_StartupReconcile_FreesEmbeddedValues verifies an
+// embedded event releases its value, so the successes slice doesn't grow
+// unbounded over the backlog. Observed via the checkpoint-write-failure
+// path, which re-enqueues every embedded event.
+func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
+	st := &fakeStorage{}
+	for i := 0; i < 3; i++ {
+		rv := snowflakeRV(int64(100 + i*10))
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.setLatestRVErr = errBoom // fail the checkpoint so successes are re-enqueued
+	s, _ := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+
+	pending := s.drainPending()
+	require.Len(t, pending, 3, "all embedded events re-enqueued after the checkpoint write failed")
+	for _, ev := range pending {
+		assert.Nil(t, ev.value, "embedded value released before re-enqueue")
+	}
+}
+
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
 // that a watch event queued while bootstrap is iterating is left in the
 // global queue and is NOT processed mid-batch. If it were, its higher

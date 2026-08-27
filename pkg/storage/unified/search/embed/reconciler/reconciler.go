@@ -668,6 +668,11 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 			continue
 		}
+		// successes accumulates across the whole startup backlog; drop the
+		// embedded value so retention doesn't grow unbounded. Nothing reads
+		// it afterwards — re-enqueue on checkpoint failure is a no-op for an
+		// already-embedded resource.
+		ev.value = nil
 		successes = append(successes, ev)
 		if ev.rv > maxRv {
 			maxRv = ev.rv
