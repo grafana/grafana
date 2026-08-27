@@ -43,7 +43,6 @@ import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 
-/** Stable identity, so a panel that has not returned data does not re-run the replay each render. */
 const NO_FRAMES: DataFrame[] = [];
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
@@ -98,10 +97,7 @@ export class PanelDataTransformationsTab
 }
 
 /**
- * The query result with the plugin's *prepended* transformations applied. Editor rows replay the
- * user transformations over this, so it has to include the plugin's stage or each row is configured
- * against a field shape it will never receive. Appended ones run after every user transformation, so
- * they are part of no row's input.
+ * The query result with the plugin's *prepended* transformations applied.
  */
 function useSystemTransformedData(
   sourceData: PanelData | undefined,
@@ -109,7 +105,6 @@ function useSystemTransformedData(
 ): PanelData | undefined {
   const series = useTransformedFrames(systemTransformations, sourceData?.series ?? NO_FRAMES);
 
-  // `data` is an effect dep of every editor row, so a fresh object each render re-runs their replays.
   return useMemo(() => {
     if (!sourceData || systemTransformations.length === 0) {
       return sourceData;
@@ -139,9 +134,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
   }, [transformsWrongType]);
 
   // What the picker judges a transformation's applicability against has to be what the row it adds
-  // will receive: the prepended stage and every user transformation, with the plugin's appended stage
-  // still to come. The panel's own frames have that stage on top, and it can drop the very fields the
-  // judgement turns on.
+  // will receive: the prepended stage and every user transformation
   const drawerSeries = useTransformedFrames(transformations, editorData?.series ?? NO_FRAMES);
 
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -204,9 +197,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
       {hasUserTransformations ? (
         <TransformationsEditor data={editorData} transformations={transformations} model={model} />
       ) : (
-        // What the panel's plugin runs is not the user's, so a panel with plugin transformations and
-        // none of the user's own still needs the way in to adding some. Rendered in pipeline position
-        // rather than in place of the whole tab, which is where the user's would go.
+        // Uneditable transforms are functionally empty to the user
         <EmptyTransformationsMessage
           onShowPicker={openDrawer}
           onGoToQueries={onGoToQueries}
@@ -217,7 +208,6 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         />
       )}
       <SystemTransformationRows transformations={systemAppend} position="append" />
-      {/* The empty message carries its own ways to add one, so these would only repeat it. */}
       {hasUserTransformations && (
         <>
           <ButtonGroup>
@@ -355,7 +345,6 @@ function SystemTransformationRows({ transformations, position }: SystemTransform
       className={styles.systemRows}
       itemClassName={styles.systemRow}
       nameClassName={styles.systemRowName}
-      // Decorative — `SystemTransformationBadge` carries the same meaning as text.
       leading={<Icon name="lock" size="sm" />}
       trailing={<SystemTransformationBadge />}
     />
