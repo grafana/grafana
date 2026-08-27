@@ -20,6 +20,7 @@ func TestConversionsCommands(t *testing.T) {
 	cases := []struct {
 		name           string
 		input          runtime.Object
+		previous       runtime.Object
 		expectedCreate *model.CreateLibraryElementCommand
 		expectedPatch  *model.PatchLibraryElementCommand
 	}{
@@ -67,20 +68,24 @@ func TestConversionsCommands(t *testing.T) {
 					},
 				},
 			},
+			previous: &v0alpha1.LibraryPanel{},
+			// in the legacy model blob "title" is the panel display title (spec.panelTitle),
+			// while the library panel name (spec.title) maps to the command Name / SQL column
 			expectedCreate: &model.CreateLibraryElementCommand{
 				FolderUID: new("aaa"),
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,
-				Model:     json.RawMessage(`{"type":"timeseries","pluginVersion":"1.2.3","title":"title","panelTitle":"panel title","description":"descr","options":{"hello":"options"},"fieldConfig":{"hello":"fieldConfig"},"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"transparent":true,"links":[{"link1":"hello"}]}`),
+				Model:     json.RawMessage(`{"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"description":"descr","fieldConfig":{"hello":"fieldConfig"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"links":[{"link1":"hello"}],"options":{"hello":"options"},"pluginVersion":"1.2.3","title":"panel title","transparent":true,"type":"timeseries"}`),
 			},
 			expectedPatch: &model.PatchLibraryElementCommand{
 				FolderUID: new("aaa"),
+				FolderID:  -1, // nolint:staticcheck
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,
 				Version:   3,
-				Model:     json.RawMessage(`{"type":"timeseries","pluginVersion":"1.2.3","title":"title","panelTitle":"panel title","description":"descr","options":{"hello":"options"},"fieldConfig":{"hello":"fieldConfig"},"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"transparent":true,"links":[{"link1":"hello"}]}`),
+				Model:     json.RawMessage(`{"datasource":{"type":"ttt","uid":"uid","apiVersion":"v0alpha1"},"description":"descr","fieldConfig":{"hello":"fieldConfig"},"gridPos":{"w":1,"h":2,"x":3,"y":4},"links":[{"link1":"hello"}],"options":{"hello":"options"},"pluginVersion":"1.2.3","title":"panel title","transparent":true,"type":"timeseries"}`),
 			},
 		},
 	}
@@ -93,11 +98,114 @@ func TestConversionsCommands(t *testing.T) {
 				require.FailNowf(t, "Create mismatch (-want +got):%s", diff)
 			}
 
-			patch, err := ToPatchLibraryElementCommand(tt.input)
+			patch, err := ToPatchLibraryElementCommand(tt.input, tt.previous)
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedPatch, patch); diff != "" {
 				require.FailNowf(t, "Path mismatch (-want +got):%s", diff)
 			}
 		})
+	}
+}
+
+func TestPatchCommandOmitsUnchangedFolder(t *testing.T) {
+	previous := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyFolder: "aaa",
+	}}}
+	updated := previous.DeepCopy()
+	updated.Generation = 2
+
+	patch, err := ToPatchLibraryElementCommand(updated, previous)
+	require.NoError(t, err)
+	require.Nil(t, patch.FolderUID)
+}
+
+func TestLegacyModelToLibraryPanel(t *testing.T) {
+	legacyModel := json.RawMessage(`{
+		"type": "timeseries",
+		"title": "panel title",
+		"description": "descr",
+		"options": {"hello": "options"},
+		"fieldConfig": {"hello": "fieldConfig"},
+		"gridPos": {"w": 1, "h": 2, "x": 3, "y": 4},
+		"links": [{"title": "link"}],
+		"transparent": true,
+		"transformations": [{"id": "reduce", "options": {}}],
+		"maxDataPoints": 100,
+		"libraryPanel": {"uid": "uid", "name": "my library panel"},
+		"id": 4
+	}`)
+
+	spec, status, err := LegacyModelToLibraryPanel("my library panel", legacyModel)
+	require.NoError(t, err)
+
+	// the library panel name lands in spec.title, the display title in spec.panelTitle
+	require.Equal(t, "my library panel", spec.Title)
+	require.Equal(t, "panel title", spec.PanelTitle)
+	require.Equal(t, "timeseries", spec.Type)
+	require.Equal(t, "descr", spec.Description)
+	require.Equal(t, v0alpha1.GridPos{W: 1, H: 2, X: 3, Y: 4}, spec.GridPos)
+
+	// properties without a typed spec field are preserved in status.missing,
+	// while spec-mapped keys are stripped from it
+	require.Contains(t, status.Missing.Object, "transformations")
+	require.Contains(t, status.Missing.Object, "maxDataPoints")
+	require.NotContains(t, status.Missing.Object, "type")
+	require.NotContains(t, status.Missing.Object, "title")
+	require.NotContains(t, status.Missing.Object, "links")
+	require.NotContains(t, status.Missing.Object, "transparent")
+	require.NotContains(t, status.Missing.Object, "libraryPanel")
+	require.NotContains(t, status.Missing.Object, "id")
+}
+
+func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
+	legacyModel := json.RawMessage(`{
+		"type": "timeseries",
+		"title": "panel title",
+		"description": "description",
+		"links": [{"title": "link"}],
+		"transparent": true
+	}`)
+
+	spec, status, err := LegacyModelToLibraryPanel("my library panel", legacyModel)
+	require.NoError(t, err)
+	spec.Links = nil
+	spec.Transparent = false
+	spec.Description = ""
+
+	rebuilt, err := LibraryPanelToLegacyModel(&v0alpha1.LibraryPanel{Spec: spec, Status: status})
+	require.NoError(t, err)
+
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(rebuilt, &got))
+	require.NotContains(t, got, "links")
+	require.NotContains(t, got, "transparent")
+	require.NotContains(t, got, "gridPos")
+	require.Equal(t, "", got["description"])
+}
+
+func TestLibraryPanelModelRoundTrip(t *testing.T) {
+	legacyModel := json.RawMessage(`{
+		"type": "timeseries",
+		"title": "panel title",
+		"description": "descr",
+		"options": {"hello": "options"},
+		"fieldConfig": {"hello": "fieldConfig"},
+		"gridPos": {"w": 1, "h": 2, "x": 3, "y": 4},
+		"transparent": true,
+		"transformations": [{"id": "reduce", "options": {}}],
+		"maxDataPoints": 100
+	}`)
+
+	spec, status, err := LegacyModelToLibraryPanel("my library panel", legacyModel)
+	require.NoError(t, err)
+
+	rebuilt, err := LibraryPanelToLegacyModel(&v0alpha1.LibraryPanel{Spec: spec, Status: status})
+	require.NoError(t, err)
+
+	var want, got map[string]any
+	require.NoError(t, json.Unmarshal(legacyModel, &want))
+	require.NoError(t, json.Unmarshal(rebuilt, &got))
+	if diff := cmp.Diff(want, got); diff != "" {
+		require.FailNowf(t, "model round trip mismatch (-want +got):%s", diff)
 	}
 }

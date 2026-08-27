@@ -664,15 +664,13 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 		return nil, err
 	}
 
+	// A resource can be reported twice, by unified storage and by the "sql-fallback"
+	// group. Resources not yet in unified storage still get an entry there with a count
+	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
-		// if stats come from unified storage, we will use them
-		if v.Group != "sql-fallback" {
-			out[v.Resource] = v.Count
-			continue
-		}
-		// if stats are from single tenant DB and they are not in unified storage, we will use them
-		if _, ok := out[v.Resource]; !ok {
+		current, seen := out[v.Resource]
+		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count
 		}
 	}

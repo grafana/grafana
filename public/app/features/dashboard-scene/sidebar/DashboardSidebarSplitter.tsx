@@ -24,6 +24,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -66,6 +67,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -166,11 +168,17 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   }
 
   return (
-    <div className={styles.container}>
-      <ElementSelectionContext.Provider value={selectionContext}>
-        <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-        {renderBody()}
-      </ElementSelectionContext.Provider>
+    <div ref={containerRef} className={styles.container}>
+      <EditActionsLayoutProvider
+        containerRef={containerRef}
+        isDocked={sidebarContext.isDocked}
+        isHidden={sidebarContext.isHidden}
+      >
+        <ElementSelectionContext.Provider value={selectionContext}>
+          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+          {renderBody()}
+        </ElementSelectionContext.Provider>
+      </EditActionsLayoutProvider>
     </div>
   );
 }
@@ -248,6 +256,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
+      zIndex: 1, // creates stacking context below header (1000)
     }),
     bodyWrapper: css({
       label: 'body-wrapper',
