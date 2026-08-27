@@ -8,14 +8,6 @@ import { type UserPermission } from 'app/types/accessControl';
  * Loads the current user's effective permissions from the multi-tenant AuthZ
  * user-permissions API as an action-keyed lookup map. Isolated here so the
  * underlying API can be swapped without touching callers.
- *
- * Goes through the RTK Query client so the result is cached and shared with any
- * later useGetCurrentUserPermissionsQuery consumers.
- *
- * Resolves to null when the request fails, rather than to an empty map: callers
- * must be able to keep whatever permissions boot already gave them instead of
- * replacing them with "no permissions". A successful response carrying no
- * permissions still resolves to an empty map, because that is the real answer.
  */
 export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
@@ -28,9 +20,10 @@ export async function loadUserPermissions(): Promise<UserPermission | null> {
       return acc;
     }, {});
   } catch (error) {
-    // unwrap() rejects with a serialised RTK Query error rather than an Error,
-    // so pull the message out instead of testing for an Error instance.
     logError(new Error(extractErrorMessage(error, 'Failed to load user permissions')));
+    // Null rather than an empty map, so callers keep whatever permissions boot
+    // already gave them instead of downgrading to "no permissions". A
+    // successful response carrying none still returns an empty map.
     return null;
   }
 }
