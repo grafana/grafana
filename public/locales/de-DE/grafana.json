@@ -968,9 +968,6 @@
       "used-by-rules_other": "Von {{count}} Warnregeln verwendet"
     },
     "contact-points-filter": {
-      "aria-label-clear": "löschen",
-      "aria-label-search-contact-points": "Kontaktpunkte suchen",
-      "clear": "Löschen",
       "label-search-by-name-or-type": "Suche nach Name oder Typ",
       "placeholder-search": "Suche"
     },
@@ -1624,6 +1621,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1694,7 +1695,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Warnregeln",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filter",
         "folder": "Zielordner",
@@ -1713,7 +1713,6 @@
         "routing": "Benachrichtigungs-Routing",
         "routing-none": "Keine Richtlinienstruktur ausgewählt",
         "routing-tree": "Richtlinienstruktur: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Warnregeln werden nicht importiert.",
         "rules-title": "Warnregeln",
         "skipped": "Übersprungen",
@@ -1739,14 +1738,14 @@
         "yaml-description": "Regeln aus einer Prometheus-YAML-Datei importieren."
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Alertmanager-Datenquelle",
+        "datasource-autosync-badge": "",
         "heading": "Benachrichtigungsressourcen importieren",
         "next-disabled-tooltip": "Füllen Sie die Pflichtfelder aus und warten Sie, bis die Validierung erfolgreich ist, bevor Sie fortfahren.",
         "no-datasources": "Keine Alertmanager-Datenquellen gefunden",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Benachrichtigungsressourcen. Sie benötigen die Berechtigung <strong>alerting.notifications:write</strong>. Sie können diesen Schritt überspringen.",
         "no-permission-title": "Unzureichende Berechtigungen",
         "policy-tree-autosync-disabled": "",
@@ -3250,6 +3249,7 @@
         "disable-confirm-body-generic": "Durch die Deaktivierung wird die kontinuierliche Synchronisierung beendet. Sie können sie später durch erneute Auswahl einer Datenquelle wieder aktivieren.",
         "disable-confirm-title": "Automatische Synchronisierung von Mimir Alertmanager deaktivieren?",
         "disable-success": "Automatische Synchronisierung von Mimir Alertmanager deaktiviert",
+        "not-ready-body": "",
         "operator-managed-info": "Dieser Wert wird durch den Schlüssel <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini festgelegt und kann über die Benutzeroberfläche nicht geändert werden. Bearbeiten Sie die Konfigurationsdatei und starten Sie Grafana neu oder entfernen Sie den Schlüssel, um die Synchronisierung von hier zu verwalten.",
         "operator-managed-title": "Verwaltet von Operator",
         "orphan-warning": "Die konfigurierte Datenquellen-UID {{uid}} ist nicht verfügbar. Deaktivieren Sie die Synchronisierung oder stellen Sie die Datenquelle wieder her, um fortzufahren.",
@@ -3257,6 +3257,7 @@
         "picker-empty": "Keine Datenquellen von Mimir oder Cortex verfügbar",
         "picker-label": "Datenquelle",
         "picker-placeholder": "Wählen Sie eine Datenquelle von Mimir oder Cortex Alertmanager aus …",
+        "read-error-message": "",
         "save-disabled-no-selection": "Wählen Sie eine Datenquelle von Mimir oder Cortex Alertmanager, um das Speichern zu aktivieren.",
         "save-disabled-staged-config": "",
         "save-error": "Speichern der automatischen Synchronisierung von Mimir Alertmanager fehlgeschlagen",
@@ -3880,6 +3881,8 @@
       "title-notification-policies": "Benachrichtigungsrichtlinien"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Import der Ressourcen fehlgeschlagen",
@@ -4389,7 +4392,7 @@
       "cancel-button": "Abbrechen",
       "confirmation-text": "Löschen",
       "delete-button": "Löschen",
-      "delete-modal-restore-dashboards-common": "Gelöschte Dashboards werden bis zu 12 Monate im Verlauf gespeichert. Nutzer mit Löschberechtigungen können die von ihnen selbst gelöschten Dashboards wiederherstellen und Administratoren können von jedem beliebigen Nutzer gelöschte Dashboards wiederherstellen. Der Verlauf ist auf 1000 Dashboards beschränkt – ältere können früher entfernt werden, wenn die Grenze erreicht wird.",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "Durch diese Aktion werden die ausgewählten Ordner sofort gelöscht.",
       "delete-modal-restore-dashboards-suffix-folder": "Ordner können nicht wiederhergestellt werden.",
       "delete-modal-title": "Löschen",
@@ -4411,10 +4414,10 @@
       "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt",
       "delete-modal-folder-empty_one": "Der ausgewählte Ordner ist leer",
       "delete-modal-folder-empty_other": "Die ausgewählten Ordner sind leer",
-      "delete-modal-folder-not-empty_one": "Der ausgewählte Ordner enthält andere Ressourcen, die gelöscht werden",
-      "delete-modal-folder-not-empty_other": "Die ausgewählten Ordner enthalten andere Ressourcen, die gelöscht werden",
-      "move-modal-folder-not-empty_one": "Der ausgewählte Ordner enthält andere Ressourcen, die mit ihm verschoben werden",
-      "move-modal-folder-not-empty_other": "Die ausgewählten Ordner enthalten andere Ressourcen, die mit ihnen verschoben werden"
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Kürzlich gelöscht"
@@ -4445,8 +4448,8 @@
       "success-title": "Ressourcen erfolgreich gelöscht",
       "folder-empty_one": "Der ausgewählte Ordner ist leer",
       "folder-empty_other": "Die ausgewählten Ordner sind leer",
-      "folder-not-empty_one": "Der ausgewählte Ordner enthält andere Ressourcen, die gelöscht werden",
-      "folder-not-empty_other": "Die ausgewählten Ordner enthalten andere Ressourcen, die gelöscht werden"
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Abbrechen",
@@ -4467,8 +4470,8 @@
       "move-warning-tooltip": "Sie können bereitgestellte Ressourcen nur innerhalb ihres bereitgestellten Ordners und lokale Ressourcen nur in lokale Ordner verschieben.",
       "success-title": "Ressourcen erfolgreich verschoben",
       "target-folder": "Zielordner",
-      "folder-not-empty_one": "Der ausgewählte Ordner enthält andere Ressourcen, die mit ihm verschoben werden",
-      "folder-not-empty_other": "Die ausgewählten Ordner enthalten andere Ressourcen, die mit ihnen verschoben werden"
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4502,7 +4505,7 @@
       "button-deleting": "Wird gelöscht …",
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht.",
       "folder-empty": "Der ausgewählte Ordner ist leer",
-      "folder-not-empty": "Der ausgewählte Ordner enthält andere Ressourcen, die gelöscht werden",
+      "folder-not-empty": "",
       "missing-info": "Fehlende Pflichtfelder",
       "success-message": "Ordner erfolgreich gelöscht"
     },
@@ -6295,12 +6298,9 @@
         "name-builtin": "{{annoName}} (Integriert)",
         "name-disabled": "(Deaktiviert) {{annoName}}",
         "reorder-description": "Anmerkungsliste neu anordnen",
-        "title-above-dashboard-count_one": "Über dem Dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Über dem Dashboard ({{count}})",
-        "title-controls-menu-count_one": "Steuerungsmenü ({{count}})",
-        "title-controls-menu-count_other": "Steuerungsmenüs ({{count}})",
-        "title-hidden-count_one": "Ausgeblendet ({{count}})",
-        "title-hidden-count_other": "Ausgeblendet ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "Anmerkungen",
@@ -6313,7 +6313,6 @@
         "tooltip": "Dashboard-Optionen",
         "variables": "Variablen"
       },
-      "drag-to-reorder": "Zur Neuanordnung ziehen",
       "edit-schema": {
         "apply-button": "Änderungen anwenden",
         "apply-button-disabled-tooltip": "Beheben Sie Validierungsfehler vor dem Übernehmen von Änderungen",
@@ -6376,13 +6375,10 @@
         "add-filter": "Filter hinzufügen",
         "reorder-description": "Filterliste neu anordnen",
         "title": "Filter",
-        "tooltip": "Filterübersicht",
-        "title-above-dashboard_one": "Über dem Dashboard ({{count}})",
-        "title-above-dashboard_other": "Über dem Dashboard ({{count}})",
-        "title-controls-menu_one": "Steuerungsmenü ({{count}})",
-        "title-controls-menu_other": "Steuerungsmenüs ({{count}})",
-        "title-hidden_one": "Ausgeblendet ({{count}})",
-        "title-hidden_other": "Ausgeblendet ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "Filterübersicht"
       },
       "group": {
         "different-parents": "",
@@ -6394,10 +6390,8 @@
         "add-link": "Link hinzufügen",
         "new-link": "Neuer Link",
         "reorder-description": "Liste der Links neu anordnen",
-        "title-above-dashboard_one": "Über dem Dashboard ({{count}})",
-        "title-above-dashboard_other": "Über dem Dashboard ({{count}})",
-        "title-controls-menu_one": "Steuerungsmenü ({{count}})",
-        "title-controls-menu_other": "Steuerungsmenüs ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "Inhaltsübersicht",
@@ -6436,7 +6430,6 @@
       "section-variables": {
         "title": "Variablen"
       },
-      "select": "Auswählen",
       "snapshot": {
         "title": "Quelle",
         "tooltip": "Original-Dashboard öffnen"
@@ -6496,13 +6489,10 @@
         "reorder-description": "Variablenliste neu anordnen",
         "select-type": "Variablentyp auswählen",
         "select-type-card-tooltip": "Klicken Sie zur Auswahl des Typs",
-        "top-placement-default": "Über dem Dashboard",
-        "title-controls-menu_one": "Steuerungsmenüs ({{count}})",
-        "title-controls-menu_other": "Steuerungsmenüs ({{count}})",
-        "title-hidden_one": "Ausgeblendet ({{count}})",
-        "title-hidden_other": "Ausgeblendet ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "Deaktiviert",
@@ -6870,6 +6860,11 @@
       "title": "Es wurden noch keine Dashboard-Links hinzugefügt"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7018,8 +7013,12 @@
       "placeholder-your-metric-prefix": "Ihr Metrik-Präfix"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7170,6 +7169,11 @@
     },
     "description-label": {
       "description": "Beschreibung"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7450,6 +7454,9 @@
       "confirmText-delete-all": "Alles löschen",
       "delete-all-transformations": "Alle Transformationen löschen",
       "title-delete-all-transformations": "Alle Transformationen löschen?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Tabellenansicht umschalten",
@@ -7799,10 +7806,31 @@
       "save-dashboard": "Dashboard speichern",
       "title-unsaved-changes": "Nicht gespeicherte Änderungen"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Einstellungen"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7813,6 +7841,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard gespeichert"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "Eine globale Variable oder Ordnervariable mit diesem Namen existiert bereits und wird von dieser Dashboard-Variable überschrieben."
@@ -8982,6 +9017,7 @@
       "label-stack-trace": "Stacktrace",
       "label-summary-attributes": "Übersichtsattribute",
       "label-warnings": "Warnungen",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "Untergeordnete Zählung:",
@@ -9072,15 +9108,16 @@
       "split-widen": "Bereich verbreitern"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Menü „Trace-Optionen teilen“ öffnen",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
       "errors": "Fehler",
       "errors-tooltip": "Wählt Spannen aus, in denen der Status „Fehler“ ist.",
       "export-started": "Export gestartet",
+      "feedback-group": "",
       "filters": "Filter",
-      "give-feedback": "Feedback",
+      "give-feedback-item": "",
       "high-latency": "Hohe Latenz",
       "high-latency-tooltip": "Wählt die 10 % längsten Spannen im Trace aus (p90).",
       "link-copied": "Link in die Zwischenablage kopiert",
@@ -9088,13 +9125,12 @@
       "path": "Pfad",
       "route": "Route",
       "services": "Dienstleistungen",
-      "share": "Teilen",
       "share-copy-link": "Link kopieren",
       "share-export-json": "Als JSON exportieren",
-      "share-tooltip": "Trace teilen",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Startzeitpunkt",
       "target": "Ziel",
-      "title-share-thoughts-about-tracing-grafana": "Sagen Sie Ihre Meinung zum Tracing in Grafana.",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
       "trace-id": "Trace-ID",
       "url": "URL"
@@ -9104,6 +9140,10 @@
         "body": "Dieser Trace wurde ursprünglich von Adaptive Traces gelöscht und wurde wiederhergestellt. Ein wiederhergestellter Trace ist nicht in TraceQL-Abfragen enthalten und kann nur über die Trace-ID abgefragt werden. Weitere Details finden Sie in der <2>Dokumentation</2>.",
         "title": "Trace wiederhergestellt durch Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "In die Zwischenablage kopieren",
       "attribute-plugin-promo": {
         "learn-more": "Mehr erfahren"
@@ -9111,6 +9151,18 @@
       "database-observability-promo": {
         "body": "Database Observability zeigt visuelle erklärende Pläne, Warteereignisse und Abfragebeispiele und hilft Ihnen so, über Trace-Spannen hinaus Probleme zu diagnostizieren.",
         "title": "Langsame Abfragen schneller finden"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "Keine Daten",
       "tooltip-copy-icon": "Kopiert"
@@ -12639,7 +12691,7 @@
       "title": "Profile"
     },
     "recently-deleted": {
-      "subtitle": "Gelöschte Dashboards werden bis zu 12 Monate oder bis zum Erreichen der Verlaufsgrenze von 1000 Dashboards gespeichert.",
+      "subtitle": "",
       "title": "Kürzlich gelöscht"
     },
     "recorded-queries": {
@@ -12929,6 +12981,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -12945,6 +12998,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13008,7 +13069,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -13841,10 +13903,11 @@
       "button-save": "Speichern",
       "button-saving": "Wird gespeichert …",
       "description-commit-message-template": "Die Commit-Nachricht, die dann genutzt wird, wenn jemand eine Ressource speichert, verschiebt, umbenennt oder löscht und das Kommentarfeld leer lässt. Platzhalter, die pro Vorgang ausgefüllt werden: {{actionVar}} (erstellen/aktualisieren/löschen/verschieben/umbenennen), {{kindVar}} (Dashboard/Ordner), {{idVar}} (eindeutige Ressourcen-ID), {{titleVar}}, {{userNameVar}} (Anzeigename), {{userLoginVar}} (Benutzername), {{userEmailVar}}. Zur Verwendung der integrierten Standardnachrichten leer lassen.",
-      "description-connection": "Wählen Sie die zu verwendende GitHub-App-Verbindung aus.",
+      "description-connection": "",
       "description-enabled": "Sobald das automatische Abrufen aktiviert ist, kann der folgende Zieltyp nicht mehr geändert werden.",
       "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
       "description-title": "Ein menschenlesbarer Name für die Konfiguration",
+      "error-connection-missing": "",
       "error-connection-required": "Verbindung erforderlich",
       "error-fetch-branches": "",
       "error-required": "Dieses Feld ist erforderlich.",
@@ -13852,7 +13915,7 @@
       "error-save-repository": "Speichern der Repository-Einstellungen fehlgeschlagen",
       "label-automatic-pulling": "Automatisches Pulling",
       "label-commit-message-template": "Commit-Nachrichtenvorlage",
-      "label-connection": "GitHub-App-Verbindung",
+      "label-connection": "",
       "label-enabled": "Aktiviert",
       "label-interval-seconds": "Intervall (Sekunden)",
       "label-repository-type": "Repository-Typ",
@@ -13882,38 +13945,53 @@
       "text-repository-not-ready": "Bei der Verbindung mit dem Repository ist ein Fehler aufgetreten. Sie können den Branch-Namen weiterhin manuell eingeben."
     },
     "connection": {
-      "disconnected-message": "Diese GitHub-App-Verbindung hat den Zugriff verloren. Möglicherweise wurde die App deinstalliert oder der Zugriff auf das Repository wurde entzogen.",
-      "disconnected-title": "Verbindung getrennt"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "Verbindung gelöscht",
       "alert-connection-saved": "Verbindung gespeichert",
       "alert-connection-updated": "Verbindung aktualisiert",
-      "available-repositories": "Diese Verbindung hat Zugriff auf die folgenden Repositorys",
+      "available-repositories-loading": "",
       "back-to-connections": "Zurück zu den Verbindungen",
       "button-save": "Speichern",
       "button-saving": "Wird gespeichert …",
       "create-new-connection-button": "Verbindung erstellen",
       "creating-connection-button": "Verbindung wird erstellt ...",
       "description-app-id": "Die ID Ihrer App von GitHub",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "Optionale Beschreibung für diese Verbindung",
       "description-installation-id": "Die Installations-ID Ihrer App von GitHub",
       "description-private-key": "Der private Schlüssel für Ihre GitHub-App im PEM-Format",
       "description-provider": "Anbietertyp auswählen",
       "description-title": "Ein menschenlesbarer Name für diese Verbindung",
       "description-webhook-disabled": "Wenn dies aktiviert ist, erfordert die GitHub-App keine webhooks:write-Berechtigung und Grafana registriert oder empfängt keine Webhook-Ereignisse. Nutzen Sie dies, wenn Grafana nicht über das öffentliche Internet erreicht werden kann.",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "Verbindung konnte nicht gelöscht werden",
       "error-required": "Dieses Feld ist notwendig",
       "error-save-connection": "Speichern der Verbindung fehlgeschlagen",
       "error-submit": "Speichern der Verbindung fehlgeschlagen",
       "grafana-repositories": "Repositorys, die diese Verbindung nutzen",
       "label-app-id": "ID der GitHub-App",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "Beschreibung",
       "label-installation-id": "ID zur Installation von GitHub",
       "label-private-key": "Privater Schlüssel (PEM)",
       "label-provider": "Anbieter",
       "label-title": "Titel",
       "label-webhook-disabled": "Webhook-Integration deaktivieren",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "Verbindung nicht gefunden",
       "not-found-description": "Die von Ihnen gesuchte Verbindung existiert nicht.",
       "page-subtitle": "Konfigurieren Sie eine Verbindung für die Authentifizierung bei externen Anbietern",
@@ -13922,13 +14000,19 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optionale Beschreibung",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "Meine GitHub-App"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_one": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "Wird geladen …",
       "no-repos": "Keine Repositorys",
-      "repos-truncated_one": "{{shown}} +{{count}} mehr",
-      "repos-truncated_other": "{{shown}} +{{count}} mehr"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "Verbindung hinzufügen",
@@ -13937,6 +14021,8 @@
       "delete-confirm": "Möchten Sie diese Verbindung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "delete-title": "Verbindung löschen",
       "error-loading": "Verbindungen konnten nicht geladen werden",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "Keine Verbindungen konfiguriert",
       "no-results": "Keine passenden Ergebnisse zu Ihrer Abfrage",
       "search-placeholder": "Verbindungen suchen",
@@ -14311,6 +14397,36 @@
         "subtitle": "Nutzen Sie diese Option, wenn Sie Ihre gesamte Grafana-Instanz über einen externen Speicher synchronisieren und verwalten möchten."
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "Das Speichern, Verschieben und Löschen über den Git-Workflow ist nicht möglich. Nutzen Sie die Warnung oben im Dashboard, um dieses Dashboard freizugeben oder zu löschen, wenn Sie Administrator sind, oder wenden Sie sich an Ihren Grafana-Administrator.",
       "title": "Das Bereitstellungs-Repository existiert nicht mehr"
@@ -14538,6 +14654,9 @@
       },
       "title-error-saving-file": "Fehler beim Speichern der Datei"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
@@ -14651,6 +14770,7 @@
     },
     "validation": {
       "hidden-characters": "Dieses Feld enthält versteckte Zeichen, die möglicherweise durch Kopieren und Einfügen eingefügt wurden. Bitte geben Sie den Wert erneut ein oder bereinigen Sie ihn und versuchen Sie es erneut.",
+      "invalid-url": "",
       "url-with-credentials": "Die Repository-URL darf weder Benutzername noch Passwort enthalten. Entfernen Sie Anmeldedaten aus der URL und nutzen Sie stattdessen das Token-Feld."
     },
     "warning-title-default": "Warnung",
@@ -14681,11 +14801,16 @@
       "alert-point-permissions": "Feinkörnige Berechtigungen werden nicht unterstützt. Standardberechtigungen gelten: Administrator-, Editor- und Betrachter-Rollen werden mit ihren Standardzugriffsebenen beibehalten.",
       "alert-point-unsupported": "Warnungen und Bibliotheks-Panels werden in bereitgestellten Ordnern nicht unterstützt.",
       "alert-title": "Wichtig: Überprüfen Sie die Einschränkungen für Git Sync, bevor Sie fortfahren",
-      "auth-type-description": "Beide Methoden bieten einen sicheren Zugriff auf Ihre GitHub-Repositorys. Wählen Sie diejenige, die am besten zu Ihrem Workflow und Ihren Sicherheitsanforderungen passt.",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "Nutzen Sie für verbesserte Sicherheit und Teamzusammenarbeit eine GitHub-App. Empfohlen für Produktionsumgebungen.",
       "auth-type-github-app-label": "Mit GitHub-App verbinden",
       "auth-type-label": "Authentifizierungsverfahren",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "Nutzen Sie einen persönlichen Zugriffstoken für die Authentifizierung mit GitHub. Geeignet für die individuelle Nutzung und Prüfung.",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "Mit persönlichem Zugriffstoken verbinden",
       "button-cancel": "Abbrechen",
       "button-cancelling": "Abbrechen …",
@@ -14693,7 +14818,8 @@
       "button-start": "Synchronisierung starten",
       "connect-step": "Verbinden",
       "connect-step-local": "Dateibereitstellung",
-      "connection-not-ready": "Die ausgewählte GitHub-App-Verbindung ist nicht bereit. Die Liste wird aktualisiert, sobald die Verbindung bereit ist.",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "Dadurch wird die Repository-Konfiguration gelöscht und Sie verlieren alle Fortschritte. Sind Sie sicher, dass Sie Ihre Änderungen verwerfen möchten?",
         "confirm": "Ja, verwerfen",
@@ -14702,20 +14828,21 @@
       },
       "git-protocol-alert-body": "Der Repository-Typ „Pure Git“ kommuniziert mit Ihrem Git-Server über das <2>Git-v2-Smart-HTTP-Protokoll</2>. SSH und das ältere v1-Protokoll werden nicht unterstützt. Vergewissern Sie sich, dass Ihr Git-Server Smart HTTP unterstützt, bevor Sie fortfahren. Weitere Details finden Sie in der <5>Dokumentation zu Nutzungsbeschränkungen</5>.",
       "git-protocol-alert-title": "Es wird nur das Git-v2-Smart-HTTP-Protokoll unterstützt",
-      "github-app-connection-status": "Verbindungsstatus:",
       "github-app-creation-default-error": "Verbindung konnte nicht erstellt werden",
       "github-app-creation-failed": "Die Verbindung zur GitHub-App konnte nicht erstellt werden",
       "github-app-error-loading": "Verbindungen konnten nicht geladen werden",
       "github-app-error-required": "Verbindung erforderlich",
       "github-app-help-instructions": "Erstellen Sie eine GitHub-App, generieren Sie einen privaten Schlüssel, installieren Sie ihn und fügen Sie weiter unten die Details ein. <2>Schritt-für-Schritt-Anweisungen anzeigen</2>",
       "github-app-help-title": "Benötigen Sie Hilfe bei der Erstellung einer GitHub-App?",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "Wählen Sie eine vorhandene App aus",
-      "github-app-mode-label": "GitHub-App-Konfiguration",
       "github-app-mode-new": "Mit einer neuen App verbinden",
-      "github-app-no-connections": "Keine GitHub-Verbindungen gefunden",
-      "github-app-no-connections-message": "Sie haben keine vorhandenen GitHub-App-Verbindungen. Bitte wählen Sie „Mit einer neuen App verbinden“, um eine zu erstellen.",
-      "github-app-select-connection": "Wählen Sie eine GitHub-App-Verbindung aus",
       "give-feedback-link": "Feedback geben",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-configure-repo": "Repository konfigurieren",
       "step-connect": "Verbinden",
@@ -15199,8 +15326,8 @@
       "restore": "Wiederherstellen"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana speichert bis zu {{limit}} kürzlich gelöschte Dashboards. Ältere Einträge werden dauerhaft entfernt.",
-      "at-limit-title": "Limit für gelöschte Dashboards erreicht"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "Sie haben in letzter Zeit keine Dashboards gelöscht.",
@@ -15215,6 +15342,10 @@
       "folder-picker-text_other": "Bitte wählen Sie einen Ordner aus, in dem Ihre Dashboards wiederhergestellt werden sollen.",
       "text_one": "Mit dieser Aktion wird {{numberOfDashboards}} Dashboard wiederhergestellt.",
       "text_other": "Mit dieser Aktion werden {{numberOfDashboards}} Dashboards wiederhergestellt."
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {

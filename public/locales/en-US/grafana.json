@@ -968,9 +968,6 @@
       "used-by-rules_other": "Used by {{count}} alert rules"
     },
     "contact-points-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-contact-points": "search contact points",
-      "clear": "Clear",
       "label-search-by-name-or-type": "Search by name or type",
       "placeholder-search": "Search"
     },
@@ -1745,14 +1742,14 @@
         "yaml-description": "Import rules from a Prometheus YAML file."
       },
       "step1": {
-        "autosync-datasource-filtered": "Auto-sync can only mirror from Mimir or Cortex Alertmanager data sources.",
         "autosync-label": "Auto-sync",
         "autosync-tooltip": "Continuously sync alert configuration from this data source instead of importing once. Alert rules are not synced automatically — import them separately in the next step if needed.",
+        "autosync-tooltip-unsupported": "Auto-sync isn't available for this Alertmanager type. Select a Mimir or Cortex data source to enable it.",
         "datasource": "Alertmanager data source",
+        "datasource-autosync-badge": "Auto-sync",
         "heading": "Import Notification Resources",
         "next-disabled-tooltip": "Complete the required fields and wait for validation to pass before continuing.",
         "no-datasources": "No Alertmanager data sources found",
-        "no-mimir-cortex-datasources": "No Mimir or Cortex data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
         "policy-tree-autosync-disabled": "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name.",
@@ -3252,6 +3249,7 @@
         "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
         "operator-managed-title": "Managed by operator",
         "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
@@ -3259,6 +3257,7 @@
         "picker-empty": "No Mimir or Cortex datasources available",
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
         "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
@@ -4395,9 +4394,9 @@
       "delete-button": "Delete",
       "delete-modal-folder-empty_one": "Selected folder is empty",
       "delete-modal-folder-empty_other": "Selected folders are empty",
-      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
-      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
+      "delete-modal-folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain resources that will be deleted",
+      "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
       "delete-modal-title": "Delete",
@@ -4407,8 +4406,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "move-modal-folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4448,8 +4447,8 @@
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
       "folder-empty_other": "Selected folders are empty",
-      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
-      "folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "folder-not-empty_one": "Selected folder contains resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain resources that will be deleted",
       "success-title": "Resources deleted successfully"
     },
     "bulk-move-resources-form": {
@@ -4467,8 +4466,8 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
-      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
+      "folder-not-empty_one": "Selected folder contains resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "success-title": "Resources moved successfully",
@@ -4506,7 +4505,7 @@
       "button-deleting": "Deleting...",
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
-      "folder-not-empty": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty": "Selected folder contains resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
@@ -6299,12 +6298,9 @@
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
         "reorder-description": "Reorder annotations list",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6317,7 +6313,6 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
-      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",
         "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
@@ -6380,12 +6375,9 @@
         "add-filter": "Add filter",
         "reorder-description": "Reorder filters list",
         "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
         "tooltip": "Filters overview"
       },
       "group": {
@@ -6398,10 +6390,8 @@
         "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6440,7 +6430,6 @@
       "section-variables": {
         "title": "Variables"
       },
-      "select": "Select",
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
@@ -6500,13 +6489,10 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
+        "top-placement": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -7027,8 +7013,12 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "Repeated panels can't be copied individually",
+      "copy-clipboard-tooltip": "Copy to clipboard",
       "delete-tooltip": "Delete",
+      "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
+      "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
       "settings": "Settings"
     },
     "conversion-warning-banner": {
@@ -7179,6 +7169,11 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-items-list": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7459,6 +7454,9 @@
       "confirmText-delete-all": "Delete all",
       "delete-all-transformations": "Delete all transformations",
       "title-delete-all-transformations": "Delete all transformations?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": "Edit visualization"
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Toggle table view",
@@ -7808,10 +7806,31 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7822,6 +7841,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
@@ -8991,6 +9017,7 @@
       "label-stack-trace": "Stack trace",
       "label-summary-attributes": "Summary attributes",
       "label-warnings": "Warnings",
+      "no-attributes": "No attributes",
       "overview-items": {
         "label": {
           "child-count": "Child Count:",
@@ -9113,6 +9140,10 @@
         "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
+      "application-observability-promo": {
+        "body": "Application Observability connects traces, metrics, and logs for each service — so you can spot regressions and drill into root cause.",
+        "title": "Understand your services faster"
+      },
       "aria-label-copy": "Copy to clipboard",
       "attribute-plugin-promo": {
         "learn-more": "Learn more"
@@ -9120,6 +9151,18 @@
       "database-observability-promo": {
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
+      },
+      "frontend-observability-promo": {
+        "body": "Frontend Observability links trace attributes to sessions, errors, and performance — so you can see what users experienced when a span ran.",
+        "title": "Debug real user sessions"
+      },
+      "knowledge-graph-promo": {
+        "body": "Knowledge Graph correlates services, infrastructure, and insights from your traces — helping you navigate from a span attribute to related entities and assertions.",
+        "title": "See the full picture"
+      },
+      "kubernetes-promo": {
+        "body": "Kubernetes Monitoring turns trace attributes into navigation to clusters, namespaces, workloads, and pods — with metrics and health context in one place.",
+        "title": "Drill into your cluster"
       },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
@@ -12648,7 +12691,7 @@
       "title": "Profiles"
     },
     "recently-deleted": {
-      "subtitle": "Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.",
+      "subtitle": "Deleted dashboards are kept for up to 12 months.",
       "title": "Recently deleted"
     },
     "recorded-queries": {
@@ -12938,6 +12981,7 @@
         "format-bold": "B",
         "format-italic": "I",
         "format-strikethrough": "S",
+        "loading-editor": "Loading editor",
         "tooltip-bold": "Bold",
         "tooltip-bulleted-list": "Bulleted list",
         "tooltip-code": "Code",
@@ -13859,10 +13903,11 @@
       "button-save": "Save",
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
-      "description-connection": "Select the GitHub App connection to use",
+      "description-connection": "Select the connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
+      "error-connection-missing": "This connection no longer exists. Select a replacement.",
       "error-connection-required": "Connection is required",
       "error-fetch-branches": "Failed to fetch branches",
       "error-required": "This field is required.",
@@ -13870,7 +13915,7 @@
       "error-save-repository": "Failed to save repository settings",
       "label-automatic-pulling": "Automatic pulling",
       "label-commit-message-template": "Commit message template",
-      "label-connection": "GitHub App connection",
+      "label-connection": "Connection",
       "label-enabled": "Enabled",
       "label-interval-seconds": "Interval (seconds)",
       "label-repository-type": "Repository type",
@@ -13900,38 +13945,55 @@
       "text-repository-not-ready": "There was an issue connecting to the repository. You can still manually enter the branch name."
     },
     "connection": {
-      "disconnected-message": "This GitHub App connection has lost access. The app may have been uninstalled or the repository access was revoked.",
-      "disconnected-title": "Connection is disconnected"
+      "connected-title": "Connected",
+      "disconnected-message": "The provider rejected this connection. Check its configuration and access.",
+      "disconnected-title": "Disconnected",
+      "pending-message": "Waiting for authorization and the connection check to finish.",
+      "pending-title": "Connecting"
     },
     "connection-form": {
       "alert-connection-deleted": "Connection deleted",
       "alert-connection-saved": "Connection saved",
       "alert-connection-updated": "Connection updated",
-      "available-repositories": "This connection has access to the following repositories",
+      "available-repositories-count_one": "This connection has access to {{count}} repository",
+      "available-repositories-count_other": "This connection has access to {{count}} repositories",
+      "available-repositories-loading": "Loading repositories...",
       "back-to-connections": "Back to connections",
       "button-save": "Save",
       "button-saving": "Saving...",
       "create-new-connection-button": "Create connection",
       "creating-connection-button": "Creating connection...",
       "description-app-id": "The ID of your GitHub App",
+      "description-client-id": "The identifier of your OAuth app",
+      "description-client-secret": "The secret of your OAuth app",
       "description-description": "Optional description for this connection",
       "description-installation-id": "The installation ID of your GitHub App",
       "description-private-key": "The private key for your GitHub App in PEM format",
       "description-provider": "Select the provider type",
       "description-title": "A human-readable name for this connection",
       "description-webhook-disabled": "When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+      "description-webhook-disabled-oauth": "When enabled, Grafana will not register or receive webhook events for repositories using this connection. Use this when Grafana is not reachable from the public internet.",
+      "description-workspace": "The workspace your OAuth consumer belongs to",
+      "error-client-secret-new-app": "Enter the client secret for the new OAuth app.",
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
       "error-submit": "Failed to save connection",
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
+      "label-application-id": "Application ID",
+      "label-client-id": "Client ID",
+      "label-client-secret": "Client secret",
       "label-description": "Description",
       "label-installation-id": "GitHub Installation ID",
       "label-private-key": "Private Key (PEM)",
       "label-provider": "Provider",
       "label-title": "Title",
       "label-webhook-disabled": "Disable webhook integration",
+      "label-workspace": "Workspace",
+      "loading-types": "Loading connection types...",
+      "no-types-message": "Enable at least one connection type in the provisioning configuration.",
+      "no-types-title": "No connection types available",
       "not-found": "Connection not found",
       "not-found-description": "The connection you are looking for does not exist.",
       "page-subtitle": "Configure a connection to authenticate with external providers",
@@ -13940,13 +14002,17 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "My GitHub App"
+      "placeholder-title": "My App",
+      "reauthorize-button": "Reauthorize"
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "Failed to complete authorization",
+      "error-state-expired": "This authorization link has expired or was already used. Start the authorization again."
     },
     "connection-options": {
       "loading": "Loading...",
       "no-repos": "No repositories",
-      "repos-truncated_one": "{{shown}} +{{count}} more",
-      "repos-truncated_other": "{{shown}} +{{count}} more"
+      "repos-truncated": "{{shown}} +{{remaining}} more"
     },
     "connections": {
       "add-connection": "Add connection",
@@ -13955,6 +14021,8 @@
       "delete-confirm": "Are you sure you want to delete this connection? This action cannot be undone.",
       "delete-title": "Delete connection",
       "error-loading": "Failed to load connections",
+      "kind-github-app": "GitHub App",
+      "kind-oauth-app": "OAuth App",
       "no-connections": "No connections configured",
       "no-results": "No results matching your query",
       "search-placeholder": "Search connections",
@@ -14329,6 +14397,36 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "oauth-app": {
+      "callback-url": "Callback URL",
+      "callback-url-description": "Copy and paste this URL when setting up the OAuth app",
+      "copy": "Copy",
+      "create-and-authorize-button": "Create and authorize",
+      "help-instructions-bitbucket": "In Bitbucket, go to your workspace settings and add an OAuth consumer with the callback URL below, then paste its key and secret here. <2>View step-by-step instructions</2>. Add the consumer with these permissions:",
+      "help-instructions-github": "In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste its client ID and a generated client secret here. <2>View step-by-step instructions</2>",
+      "help-instructions-gitlab": "In GitLab, go to your user or group settings and create an application with the callback URL below, then paste its application ID and secret here. <2>View step-by-step instructions</2>. Create the application with this scope:",
+      "help-title": "Need help creating an OAuth app?",
+      "scope-bitbucket-pull-requests": "Pull requests",
+      "scope-bitbucket-read-write": "Read and write",
+      "scope-bitbucket-repositories": "Repositories",
+      "scope-bitbucket-webhooks": "Webhooks",
+      "waiting-authorization-button": "Waiting for authorization..."
+    },
+    "oauth-authorization": {
+      "cancel-button": "Cancel authorization",
+      "pending-body": "If the provider shows an error page, verify the client ID and attempt to authorize again.",
+      "pending-title": "Waiting for authorization in the other tab"
+    },
+    "oauth-callback": {
+      "back-to-connections": "Back to connections",
+      "done-message": "You can close this tab.",
+      "done-title": "Authorization complete",
+      "error-authorize": "Failed to complete authorization",
+      "error-missing-params": "Missing authorization code",
+      "error-title": "Authorization failed",
+      "loading": "Completing authorization...",
+      "page-title": "Completing authorization"
+    },
     "orphaned-drawer-notice": {
       "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
       "title": "Provisioning repository no longer exists"
@@ -14556,6 +14654,9 @@
       },
       "title-error-saving-file": "Error saving file"
     },
+    "save-connection": {
+      "error-popup-blocked": "The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize."
+    },
     "save-resource": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -14669,6 +14770,7 @@
     },
     "validation": {
       "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again.",
+      "invalid-url": "Enter a valid URL including the scheme, e.g. https://ghe.example.com",
       "url-with-credentials": "Repository URL must not include a username or password. Remove credentials from the URL and use the token field instead."
     },
     "warning-title-default": "Warning",
@@ -14699,11 +14801,16 @@
       "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
-      "auth-type-description": "Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
+      "app-mode-label": "App configuration",
+      "auth-type-description": "All methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.",
+      "auth-type-description-generic": "Both methods provide secure access to your repositories. Choose the one that best fits your workflow and security requirements.",
       "auth-type-github-app-description": "Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.",
       "auth-type-github-app-label": "Connect with GitHub App",
       "auth-type-label": "Authentication method",
+      "auth-type-oauth-app-description": "Use an OAuth application shared through a connection. Recommended for production environments.",
+      "auth-type-oauth-app-label": "Connect with OAuth App",
       "auth-type-pat-description": "Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.",
+      "auth-type-pat-description-generic": "Use a personal access token to authenticate. Suitable for individual use and testing.",
       "auth-type-pat-label": "Connect with Personal Access Token",
       "button-cancel": "Cancel",
       "button-cancelling": "Cancelling...",
@@ -14711,7 +14818,8 @@
       "button-start": "Begin synchronization",
       "connect-step": "Connect",
       "connect-step-local": "File provisioning",
-      "connection-not-ready": "The selected GitHub App connection is not ready. List will be refreshed once the connection is ready.",
+      "connection-not-ready": "The selected connection is not ready. The list will be refreshed once the connection is ready.",
+      "connection-status": "Connection status:",
       "discard-modal": {
         "body": "This will delete the repository configuration and you will lose all progress. Are you sure you want to discard your changes?",
         "confirm": "Yes, discard",
@@ -14720,20 +14828,21 @@
       },
       "git-protocol-alert-body": "The Pure Git repository type communicates with your Git server using the <2>Git v2 Smart HTTP protocol</2>. SSH and the legacy v1 protocol are not supported. Make sure your Git server supports Smart HTTP before proceeding. For more details, see the <5>usage limits documentation</5>.",
       "git-protocol-alert-title": "Only Git v2 Smart HTTP protocol is supported",
-      "github-app-connection-status": "Connection status:",
       "github-app-creation-default-error": "Failed to create connection",
       "github-app-creation-failed": "Failed to create GitHub App connection",
       "github-app-error-loading": "Failed to load connections",
       "github-app-error-required": "Connection is required",
       "github-app-help-instructions": "Create a GitHub App, generate a private key, install it, and paste the details below. <2>View step-by-step instructions</2>",
       "github-app-help-title": "Need help creating a GitHub App?",
+      "github-app-kind-app": "GitHub App",
+      "github-app-kind-label": "App type",
+      "github-app-kind-oauth": "OAuth App",
       "github-app-mode-existing": "Choose an existing app",
-      "github-app-mode-label": "GitHub App configuration",
       "github-app-mode-new": "Connect to a new app",
-      "github-app-no-connections": "No GitHub connections found",
-      "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
-      "github-app-select-connection": "Select a GitHub App connection",
       "give-feedback-link": "Give feedback",
+      "oauth-app-connection-label": "Connection",
+      "oauth-app-creation-default-error": "Failed to create connection",
+      "select-connection": "Select a connection",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
@@ -15217,8 +15326,8 @@
       "restore": "Restore"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana retains up to {{limit}} recently deleted dashboards. Older entries are permanently removed.",
-      "at-limit-title": "Deleted dashboards limit reached"
+      "at-limit-body": "This list is limited to {{limit}} dashboards. If more have been deleted, use the search box to find a specific one.",
+      "at-limit-title": "Showing at most {{limit}} deleted dashboards"
     },
     "page": {
       "no-deleted-dashboards": "You haven't deleted any dashboards recently.",
@@ -15233,6 +15342,10 @@
       "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
+    },
+    "unavailable": {
+      "body": "The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an administrator to check the search index configuration.",
+      "title": "Recently deleted is unavailable"
     }
   },
   "recentlyDeleted": {

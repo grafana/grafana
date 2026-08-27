@@ -322,6 +322,23 @@ func TestMTSettingsStore(t *testing.T) {
 			},
 		},
 		{
+			name: "Create drops a secret sent as the redacted placeholder",
+			rows: nil,
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Create(nsCtx(), ssoObj("generic_oauth", map[string]any{"client_id": "abc", "client_secret": setting.RedactedPassword}), nil, &metav1.CreateOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
+				require.NoError(t, err)
+				require.NotNil(t, sso)
+				// The placeholder must never be persisted as the secret; with no
+				// stored value to restore, the key is dropped entirely.
+				_, wrote := f.upserts["client_secret"]
+				assert.False(t, wrote, "placeholder secret must not be written")
+				assert.Equal(t, "abc", f.upserts["client_id"])
+			},
+		},
+		{
 			name: "List is not implemented",
 			rows: nil,
 			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
@@ -405,5 +422,60 @@ func TestIsSecretFieldMatchesLegacy(t *testing.T) {
 	}
 	for _, k := range keys {
 		assert.Equalf(t, ssosettingsimpl.IsSecretField(k), isSecretField(k), "classification drift for %q", k)
+	}
+}
+
+// TestResolveSecrets covers the placeholder handling that keeps a read-then-write
+// round-trip from persisting the redacted sentinel as the secret.
+func TestResolveSecrets(t *testing.T) {
+	const placeholder = setting.RedactedPassword
+	tests := []struct {
+		name    string
+		desired map[string]any
+		stored  map[string]any
+		want    map[string]any
+	}{
+		{
+			name:    "restores the stored secret when the placeholder is sent back",
+			desired: map[string]any{"client_secret": placeholder, "client_id": "abc"},
+			stored:  map[string]any{"client_secret": "storedsecret"},
+			want:    map[string]any{"client_secret": "storedsecret", "client_id": "abc"},
+		},
+		{
+			name:    "drops the placeholder when there is no stored value",
+			desired: map[string]any{"client_secret": placeholder},
+			stored:  nil,
+			want:    map[string]any{},
+		},
+		{
+			name:    "drops the placeholder when the stored value is empty",
+			desired: map[string]any{"client_secret": placeholder},
+			stored:  map[string]any{"client_secret": ""},
+			want:    map[string]any{},
+		},
+		{
+			name:    "drops the placeholder when the stored value is also the placeholder",
+			desired: map[string]any{"client_secret": placeholder},
+			stored:  map[string]any{"client_secret": placeholder},
+			want:    map[string]any{},
+		},
+		{
+			name:    "keeps a real secret value untouched",
+			desired: map[string]any{"client_secret": "newsecret"},
+			stored:  map[string]any{"client_secret": "storedsecret"},
+			want:    map[string]any{"client_secret": "newsecret"},
+		},
+		{
+			name:    "ignores the placeholder on a non-secret key",
+			desired: map[string]any{"client_id": placeholder},
+			stored:  nil,
+			want:    map[string]any{"client_id": placeholder},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resolveSecrets(tc.desired, tc.stored)
+			assert.Equal(t, tc.want, tc.desired)
+		})
 	}
 }
