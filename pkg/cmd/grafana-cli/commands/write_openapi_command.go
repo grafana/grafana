@@ -3,13 +3,16 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/urfave/cli/v2"
 	"k8s.io/klog/v2"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -26,78 +29,168 @@ import (
 // serves, without starting Grafana. It is the offline equivalent of
 // GET /openapi/v3/apis/{pluginID}/{version} on a running server.
 func writeOpenAPICommand(c *cli.Context) error {
-	cmd := &utils.ContextCommandLine{Context: c}
-
 	target, output, err := writeOpenAPIArgs(c)
 	if err != nil {
 		return cli.Exit(err.Error(), 1)
-	}
-	pluginID, version, _ := strings.Cut(target, "/")
-
-	args := strings.Split(c.String("configOverrides"), " ")
-	if output == "" {
-		// Loading the config logs to the console, which is stdout, and that is
-		// where the spec goes when no output file was given. The file log mode
-		// is on by default, so the same messages are still recorded.
-		args = append(args, "cfg:log.mode=file")
-	}
-
-	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   cmd.ConfigFile(),
-		HomePath: cmd.HomePath(),
-		Args:     args,
-	})
-	if err != nil {
-		return err
-	}
-
-	features, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return err
-	}
-
-	plugin, err := findAppPlugin(c, cfg, features, pluginID)
-	if err != nil {
-		return err
 	}
 
 	// The apiserver machinery reports on the server it is building ("Authorization
 	// is disabled", "Adding GroupVersion ..."), which says nothing about the spec.
 	klog.SetLogger(logr.Discard())
 
-	oas, err := pluginopenapi.Build(plugin, version, pluginopenapi.Options{
-		BuildVersion: cfg.BuildVersion,
-		// nolint:staticcheck // not yet migrated to OpenFeature
-		RegisterProxy: features.IsEnabledGlobally(featuremgmt.FlagApppluginsHandleProxyRequests),
-	})
+	plugin, version, opts, err := writeOpenAPIInput(c, target, output)
 	if err != nil {
 		return err
 	}
 
-	// Indented, because unlike the HTTP response this output is read and diffed
-	// by people.
-	out, err := json.MarshalIndent(oas, "", "  ")
+	if version != "" {
+		oas, err := pluginopenapi.Build(plugin, version, opts)
+		if err != nil {
+			return err
+		}
+		if output == "" {
+			return writeSpecTo(os.Stdout, oas)
+		}
+		return writeSpecFile(output, oas)
+	}
+
+	versions, err := pluginopenapi.Versions(plugin, opts)
 	if err != nil {
 		return err
 	}
-	out = append(out, '\n')
-
 	if output == "" {
-		_, err = os.Stdout.Write(out)
+		return cli.Exit(fmt.Sprintf(
+			"%s serves %s: pass -o <directory> to write them all, or name one version",
+			plugin.JSONData.ID, strings.Join(versions, ", ")), 1)
+	}
+	if err := ensureOutputDir(output); err != nil {
 		return err
 	}
-	if err := os.WriteFile(output, out, 0600); err != nil {
-		return err
+	for _, v := range versions {
+		oas, err := pluginopenapi.Build(plugin, v, opts)
+		if err != nil {
+			return err
+		}
+		if err := writeSpecFile(filepath.Join(output, v+".json"), oas); err != nil {
+			return err
+		}
 	}
-	// Title is the group version the spec was rendered for.
-	logger.Infof("Wrote %s for %s\n", output, oas.Info.Title)
 	return nil
 }
 
-// writeOpenAPIArgs reads the plugin target and the output path off the command
-// line. The output is also read out of the positional arguments because flag
-// parsing stops at the first one, and `write-openapi <plugin> -o spec.json` is
-// the natural way to type this.
+// ensureOutputDir prepares the directory the per-version specs are written to.
+// A path that names a file is refused rather than turned into a directory: it
+// is a caller who meant to write one version and did not say which.
+func ensureOutputDir(path string) error {
+	if info, err := os.Stat(path); err == nil && !info.IsDir() {
+		return cli.Exit(fmt.Sprintf("%s is a file; pass a directory to write every version", path), 1)
+	}
+	if strings.HasSuffix(path, ".json") {
+		return cli.Exit(fmt.Sprintf("%s names a file; pass a directory to write every version, or name one version", path), 1)
+	}
+	return os.MkdirAll(path, 0750)
+}
+
+// writeOpenAPIInput resolves the target into the plugin to render, the single
+// version to render (empty for all of them), and the options that make the
+// output match a server's.
+//
+// A manifest file is read on its own, with no Grafana config involved, so this
+// works in a plugin's build with no Grafana installed. A plugin id is looked up
+// the way the server looks it up, which needs the config that says where plugins
+// live.
+func writeOpenAPIInput(c *cli.Context, target, output string) (definition.PluginDefinition, string, pluginopenapi.Options, error) {
+	var empty definition.PluginDefinition
+
+	info, statErr := os.Stat(target)
+	switch {
+	case statErr == nil && !info.IsDir():
+		plugin, err := pluginopenapi.LoadManifest(c.Context, target)
+		return plugin, "", pluginopenapi.Options{BuildVersion: setting.BuildVersion}, err
+
+	// A target typed as a path is answered as a path. Falling through to the
+	// plugin lookup would report a missing plugin named after part of the path.
+	case !looksLikePath(target):
+	case statErr != nil:
+		return empty, "", pluginopenapi.Options{}, statErr
+	default:
+		return empty, "", pluginopenapi.Options{}, cli.Exit(fmt.Sprintf(
+			"%s is a directory; pass the manifest file inside it", target), 1)
+	}
+
+	pluginID, version, _ := strings.Cut(target, "/")
+
+	args := strings.Split(c.String("configOverrides"), " ")
+	if output == "" {
+		// Loading the config logs to the console, which is stdout, and that is
+		// where the spec goes when no output path was given. The file log mode
+		// is on by default, so the same messages are still recorded.
+		args = append(args, "cfg:log.mode=file")
+	}
+	cmd := &utils.ContextCommandLine{Context: c}
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   cmd.ConfigFile(),
+		HomePath: cmd.HomePath(),
+		Args:     args,
+	})
+	if err != nil {
+		return definition.PluginDefinition{}, "", pluginopenapi.Options{}, err
+	}
+
+	features, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return definition.PluginDefinition{}, "", pluginopenapi.Options{}, err
+	}
+
+	plugin, err := findAppPlugin(c, cfg, features, pluginID)
+	return plugin, version, pluginopenapi.Options{
+		BuildVersion: cfg.BuildVersion,
+		// nolint:staticcheck // not yet migrated to OpenFeature
+		RegisterProxy: features.IsEnabledGlobally(featuremgmt.FlagApppluginsHandleProxyRequests),
+	}, err
+}
+
+// looksLikePath reports whether the target was typed as a file path rather than
+// as a plugin id. A plugin id carries a slash too -- pluginID/version -- so the
+// slash alone says nothing; a leading dot or separator, or a .json name, does.
+func looksLikePath(target string) bool {
+	return strings.HasSuffix(target, ".json") ||
+		strings.HasPrefix(target, ".") ||
+		strings.HasPrefix(target, "~") ||
+		strings.HasPrefix(target, string(os.PathSeparator))
+}
+
+func writeSpecFile(path string, oas *spec3.OpenAPI) error {
+	f, err := os.Create(path) // #nosec G304 -- a path the operator typed
+	if err != nil {
+		return err
+	}
+	if err := writeSpecTo(f, oas); err != nil {
+		_ = f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	// Title is the group version the spec was rendered for.
+	logger.Infof("Wrote %s for %s\n", path, oas.Info.Title)
+	return nil
+}
+
+// writeSpecTo encodes the spec the way a file that people read and diff wants
+// it: indented, and without escaping the angle brackets that fill Kubernetes
+// descriptions.
+func writeSpecTo(w io.Writer, oas *spec3.OpenAPI) error {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+	return enc.Encode(oas)
+}
+
+// writeOpenAPIArgs reads the target and the output path off the command line.
+// The output is also read out of the positional arguments because flag parsing
+// stops at the first one, and `write-openapi <target> -o spec.json` is the
+// natural way to type this.
 func writeOpenAPIArgs(c *cli.Context) (target string, output string, err error) {
 	output = c.String("output")
 	args := c.Args().Slice()
@@ -121,7 +214,7 @@ func writeOpenAPIArgs(c *cli.Context) (target string, output string, err error) 
 		}
 	}
 	if target == "" {
-		return "", "", fmt.Errorf("expected <pluginID>[/<version>] as the first argument")
+		return "", "", fmt.Errorf("expected a manifest file or <pluginID>[/<version>] as the first argument")
 	}
 	return target, output, nil
 }

@@ -86,7 +86,15 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 		}
 		return out
 	}
-	require.Equal(t, []string{"foobar", "testkinds/{name}/reload"}, paths(routes.Namespace))
+	require.Equal(t, []string{
+		"foobar",
+		// The generic subresources every namespaced kind gets. The manifest's
+		// own /testkinds/search was dropped, so the list holds one of them and
+		// not two.
+		"testkinds/trash",
+		"testkinds/search",
+		"testkinds/{name}/reload",
+	}, paths(routes.Namespace))
 	require.Equal(t, []string{"foobar"}, paths(routes.Root))
 }
 
@@ -208,8 +216,9 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 	require.Nil(t, out.Post)
 }
 
-// Namespaced version routes mount under {namespace}, so the segment must be
-// documented on each of their operations.
+// Namespaced routes mount under {namespace}, so the segment must be documented
+// on each of their operations -- the version routes a manifest declares and the
+// generic subresources a kind gets alike.
 func TestVersionRouteNamespaceParameter(t *testing.T) {
 	b := &AppPluginAPIBuilder{
 		manifest:   testManifest(t),
@@ -218,20 +227,32 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
 
+	checked := []string{}
 	for _, h := range routes.Namespace {
 		if strings.Contains(h.Path, "{"+nameParameter+"}") {
 			continue // kind routes are covered by TestGetAPIRoutesKindRoutes
 		}
-		require.Equal(t, "foobar", h.Path)
-		require.Len(t, h.Spec.Get.Parameters, 1)
-		require.Equal(t, namespaceParameter, h.Spec.Get.Parameters[0].Name)
-		require.Equal(t, "path", h.Spec.Get.Parameters[0].In)
-		require.True(t, h.Spec.Get.Parameters[0].Required)
+		// Which verb a route serves is up to the route, so check whichever
+		// operations it defines rather than assuming a GET.
+		ops := builder.GetPathOperations(h.Spec)
+		require.NotEmpty(t, ops, h.Path)
+		for method, op := range ops {
+			require.Len(t, op.Parameters, 1, "%s %s", method, h.Path)
+			require.Equal(t, namespaceParameter, op.Parameters[0].Name)
+			require.Equal(t, "path", op.Parameters[0].In)
+			require.True(t, op.Parameters[0].Required)
+		}
+		checked = append(checked, h.Path)
 	}
+	// Named, so that a route dropping out of the set fails here rather than
+	// leaving the loop quietly checking nothing.
+	require.ElementsMatch(t, []string{"foobar", "testkinds/trash", "testkinds/search"}, checked)
 
 	// Cluster routes have no namespace segment to document.
 	for _, h := range routes.Root {
-		require.Empty(t, h.Spec.Get.Parameters)
+		for _, op := range builder.GetPathOperations(h.Spec) {
+			require.Empty(t, op.Parameters)
+		}
 	}
 }
 

@@ -48,14 +48,24 @@ type Options struct {
 	RegisterProxy bool
 }
 
-// Build returns the OpenAPI v3 spec for one app plugin group version.
-func Build(plugin definition.PluginDefinition, version string, opts Options) (*spec3.OpenAPI, error) {
-	group := plugin.JSONData.ID
-	if group == "" {
+// Versions returns the versions the plugin serves, preferred version first.
+// Every version is renderable, including the settings version a manifest never
+// mentions.
+func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error) {
+	b, err := newBuilder(plugin, opts)
+	if err != nil {
+		return nil, err
+	}
+	return servedVersions(b.GetGroupVersions()), nil
+}
+
+// newBuilder wires the API builder with everything a request would need left
+// out: nothing here is called, it only describes.
+func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
+	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
-
-	b, err := appplugin.NewAppPluginAPIBuilder(
+	return appplugin.NewAppPluginAPIBuilder(
 		plugin,
 		nil, // health+resource subresources are described by the spec, never called
 		offlineClientV3{},
@@ -68,6 +78,13 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),
 	)
+}
+
+// Build returns the OpenAPI v3 spec for one app plugin group version.
+func Build(plugin definition.PluginDefinition, version string, opts Options) (*spec3.OpenAPI, error) {
+	group := plugin.JSONData.ID
+
+	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return nil, err
 	}

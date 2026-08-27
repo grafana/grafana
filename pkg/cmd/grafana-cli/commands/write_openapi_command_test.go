@@ -31,6 +31,12 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 			output: "spec.json",
 		},
 		{
+			name:   "a manifest path is a target like any other",
+			args:   []string{"./dist/app-sdk-manifest.json", "-o", "specs"},
+			target: "./dist/app-sdk-manifest.json",
+			output: "specs",
+		},
+		{
 			name:   "long flag with an equals sign",
 			args:   []string{"test-app", "--output=spec.json"},
 			target: "test-app",
@@ -44,7 +50,7 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 		{
 			name:    "no target",
 			args:    []string{"-o", "spec.json"},
-			wantErr: "expected <pluginID>[/<version>]",
+			wantErr: "expected a manifest file or <pluginID>[/<version>]",
 		},
 		{
 			name:    "output without a value",
@@ -101,4 +107,25 @@ func writeOpenAPIContext(t *testing.T, args []string) *cli.Context {
 	require.NoError(t, app.Run(append([]string{"grafana-cli", cmd.Name}, args...)))
 	require.NotNil(t, ctx)
 	return ctx
+}
+
+// The target is a plugin id or a path, and the two overlap: pluginID/version
+// carries a slash, so a slash cannot be what tells them apart.
+func TestLooksLikePath(t *testing.T) {
+	for _, target := range []string{
+		"./dist/app-sdk-manifest.json",
+		"dist/app-sdk-manifest.json",
+		"/abs/path/manifest.json",
+		"../plugin/dist",
+		"~/plugins/app/dist/app-sdk-manifest.json",
+	} {
+		require.True(t, looksLikePath(target), target)
+	}
+
+	for _, target := range []string{
+		"grafana-app-sdk-test-app",
+		"grafana-app-sdk-test-app/v1alpha1",
+	} {
+		require.False(t, looksLikePath(target), target)
+	}
 }

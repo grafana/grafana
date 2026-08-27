@@ -4,16 +4,38 @@ For plugin authors who want the spec their manifest produces, and for anyone cha
 that spec is built. The short version:
 
 ```sh
-grafana cli write-openapi grafana-app-sdk-test-app/v1alpha1 -o spec.json
+grafana cli write-openapi ./dist/app-sdk-manifest.json -o ./specs
 ```
 
-writes the same document a running Grafana serves at
-`/openapi/v3/apis/grafana-app-sdk-test-app/v1alpha1`, without starting the server, opening
-a database, or launching the plugin backend.
+writes one `<version>.json` per served version into `./specs`, each identical to what a
+running Grafana serves at `/openapi/v3/apis/<pluginID>/<version>` — without starting the
+server, opening a database, or launching the plugin backend.
 
-Omit the version to get the manifest's preferred version, and omit `-o` to write to stdout.
+## What you can point it at
+
+**A manifest file.** No Grafana config is read and no plugin needs to be installed, so this
+works inside a plugin's own build. When a `plugin.json` sits in the same directory — what a
+built plugin looks like — it is loaded too, and the spec matches the server exactly. Without
+it, the manifest's `appName` stands in for the plugin id (the group the APIs are served
+under) and the plugin version is absent from `info.x-grafana-plugin`. Everything else is the
+same document.
+
+**An installed plugin's id**, optionally with a version:
+
+```sh
+grafana cli --config conf/custom.ini --homepath "$PWD" \
+  write-openapi grafana-app-sdk-test-app/v1alpha1 -o spec.json
+```
+
 The plugin is found the way the server finds it — the plugin paths in the config file, plus
-the CLI's `--pluginsDir` — so point `--config` at the same config the server uses.
+the CLI's `--pluginsDir` — so point `--config` at the config the server uses.
+
+## Where it writes
+
+Naming a single version writes a single spec, to `-o <file>` or to stdout. Otherwise every
+served version is written into the `-o <directory>`, which is created if it doesn't exist.
+That set always includes the `v0alpha1` settings API, which every app plugin serves whether
+or not its manifest mentions the version.
 
 ## How the spec is built
 
@@ -51,3 +73,6 @@ diff <(python3 -m json.tool --indent 2 cli.json) server.json
 
 The CLI output is indented because it is read and diffed by people; the HTTP response is
 not, so both sides need normalizing before the diff means anything.
+
+Rendering from the manifest instead (`write-openapi ./dist/app-sdk-manifest.json -o ./specs`)
+produces the same bytes, as long as the `plugin.json` is beside it.

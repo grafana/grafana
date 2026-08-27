@@ -180,12 +180,14 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 
 	// The spec property is a $ref, and Foo/Bar/Baz are refs nested inside it:
 	// every level must be resolved so the example is a usable request body.
+	// Each placeholder is named after the field it stands in for, so the example
+	// reads as a description of the body rather than as a wall of "example".
 	require.Equal(t, map[string]any{
-		"testField": "example",
+		"testField": "testField",
 		"foo": map[string]any{
-			"foo": "example",
+			"foo": "foo",
 			"bar": map[string]any{
-				"value": "example",
+				"value": "value",
 				"baz":   map[string]any{"value": 0},
 			},
 		},

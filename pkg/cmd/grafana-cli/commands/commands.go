@@ -248,17 +248,21 @@ var adminCommands = []*cli.Command{
 var Commands = []*cli.Command{
 	{
 		Name:  "write-openapi",
-		Usage: "write-openapi <pluginID>[/<version>] -o spec.json",
-		Description: "Render the OpenAPI v3 spec served by an app plugin's API server. " +
-			"This is the offline equivalent of downloading /openapi/v3/apis/<pluginID>/<version> " +
-			"from a running Grafana. Without a version, the plugin's preferred version is used, " +
-			"and without --output the spec is written to stdout.",
+		Usage: "write-openapi <manifest.json|pluginID[/version]> -o <path>",
+		Description: "Render the OpenAPI v3 spec served by an app plugin's API server. This is the " +
+			"offline equivalent of downloading /openapi/v3/apis/<pluginID>/<version> from a running " +
+			"Grafana.\n\n" +
+			"   The target is either a path to an app-sdk manifest file, which needs no Grafana " +
+			"config and reads a plugin.json beside it when there is one, or the id of an installed " +
+			"plugin, optionally with the version to render.\n\n" +
+			"   Naming one version writes one spec, to --output or to stdout. Otherwise every served " +
+			"version is written to the --output directory as <version>.json.",
 		Action: writeOpenAPICommand,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "output",
 				Aliases: []string{"o"},
-				Usage:   "Write the spec to this file instead of stdout",
+				Usage:   "File to write one version to, or directory to write every version to",
 			},
 		},
 	},
