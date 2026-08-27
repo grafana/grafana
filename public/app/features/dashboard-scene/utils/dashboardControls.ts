@@ -67,7 +67,15 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
   // Ask the settings cache first so plugin-load errors (e.g. "module not found") are
   // not mistaken for a missing datasource. Match getDataSourceInstance's empty-uid
   // normalization so { uid: '', type } is a type-only lookup, not a miss on uid ''.
-  if (!(await getDataSourceInstanceSettings(settingsLookupRef(ref)))) {
+  //
+  // A type-only ref means "any instance of this plugin". Both async APIs fall back to the
+  // default datasource when no instance matches; legacy get() rejected, and skipping is what
+  // we want — otherwise the default DS's controls get emitted under the wrong type.
+  const settings = await getDataSourceInstanceSettings(settingsLookupRef(ref));
+  if (!settings) {
+    return;
+  }
+  if (!ref.uid && ref.type && settings.type !== ref.type) {
     return;
   }
 

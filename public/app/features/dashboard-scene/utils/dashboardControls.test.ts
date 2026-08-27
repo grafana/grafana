@@ -216,7 +216,7 @@ describe('dashboardControls', () => {
         if (ref && typeof ref === 'object' && ref.uid === '') {
           return undefined;
         }
-        return { uid: 'prom-uid' } as DataSourceInstanceSettings;
+        return { uid: 'prom-uid', type: 'prometheus' } as DataSourceInstanceSettings;
       });
       getDataSourceInstanceMock.mockResolvedValue(mockDs);
 
@@ -229,6 +229,39 @@ describe('dashboardControls', () => {
           expect(getDataSourceInstanceMock).toHaveBeenCalledWith(emptyUidRef);
           expect(events).toHaveLength(1);
           expect(events[0].type).toBe('variables');
+          done();
+        },
+      });
+    });
+
+    it('should skip a type-only ref that falls back to a different datasource type', (done) => {
+      // getDsRefsFromScene emits { type: pluginId } (no uid) for every DataSourceVariable.
+      // When that plugin has no installed instance, getDataSourceInstanceSettings falls
+      // back to the default datasource — the same contract as legacy getInstanceSettings,
+      // but not as legacy get(), which rejected. Skip so the default DS's controls are
+      // not emitted under the variable's pluginId.
+      const typeOnlyRef: DataSourceRef = { type: 'someuninstalledplugin' };
+
+      getDataSourceInstanceSettingsMock.mockResolvedValue({
+        uid: 'default-uid',
+        type: 'prometheus',
+      } as DataSourceInstanceSettings);
+
+      const defaultDs = createMockDatasource({
+        uid: 'default-uid',
+        type: 'prometheus',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+      getDataSourceInstanceMock.mockResolvedValue(defaultDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([typeOnlyRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(events).toEqual([]);
+          expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
           done();
         },
       });
