@@ -40,7 +40,7 @@ func TestLegacyCountedResourcesHaveNoMigration(t *testing.T) {
 	migrated := map[string]bool{}
 	for _, def := range registry.All() {
 		for _, res := range def.Resources {
-			migrated[res.GroupResource.String()] = true
+			migrated[res.String()] = true
 		}
 	}
 
