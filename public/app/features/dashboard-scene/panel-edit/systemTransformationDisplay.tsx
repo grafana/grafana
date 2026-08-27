@@ -14,7 +14,7 @@ import { Badge } from '@grafana/ui';
  * Display name for a transformation the panel's plugin contributes. A custom operator carries no id,
  * so it can only be named generically.
  */
-export function getSystemTransformationName(transformation: DataTransformerConfig | CustomTransformOperator): string {
+function getSystemTransformationName(transformation: DataTransformerConfig | CustomTransformOperator): string {
   if (typeof transformation === 'function') {
     return t(
       'dashboard-scene.system-transformations.custom-transformation-name',
@@ -33,7 +33,7 @@ export function getSystemTransformationTooltip(): string {
  * Names a group of these rows for assistive tech. Both editors place the groups above and below the
  * editable rows, and that placement is the only thing telling a sighted user when they run.
  */
-export function getSystemTransformationsGroupLabel(position: SystemTransformationPosition): string {
+function getSystemTransformationsGroupLabel(position: SystemTransformationPosition): string {
   return position === 'prepend'
     ? t(
         'dashboard-scene.system-transformations.group-label-prepend',
