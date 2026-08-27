@@ -357,3 +357,32 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `require-panel-plugin-transformations-behaviour`
+
+Require every `new SceneDataTransformer` under `public/app/features/dashboard-scene` to carry `PanelPluginTransformationsBehaviour` in `$behaviors`. `createPanelDataTransformer` does that for you.
+
+That behaviour is what runs the transformations a panel's plugin registers, and a construction site that forgets it fails silently: the panel renders untransformed data with no error and nothing in state to notice.
+
+Only the omission is reported, so a call site with a reason to build the transformer itself still can — it just has to pass the behaviour. A `$behaviors` array assembled elsewhere (spread in from another object, say) can't be checked syntactically and is reported.
+
+The rule is scoped to `dashboard-scene` (excluding tests) because that is where a `SceneDataTransformer` becomes a panel's `$data`. Scenes built elsewhere — the alerting insights scenes, plugin-authored SceneApps — are not dashboard panels and have no use for the behaviour.
+
+#### Examples
+
+```ts
+// Bad ❌ — missing PanelPluginTransformationsBehaviour
+import { SceneDataTransformer } from '@grafana/scenes';
+const $data = new SceneDataTransformer({ $data: queryRunner, transformations });
+
+// Good ✅
+import { createPanelDataTransformer } from 'app/features/dashboard-scene/utils/createPanelDataTransformer';
+const $data = createPanelDataTransformer({ $data: queryRunner, transformations });
+
+// Also good ✅ — the behaviour passed by hand
+const $data = new SceneDataTransformer({
+  $data: queryRunner,
+  transformations,
+  $behaviors: [new PanelPluginTransformationsBehaviour()],
+});
+```

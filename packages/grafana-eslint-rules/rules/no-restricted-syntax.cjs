@@ -1,5 +1,12 @@
 const createNoRestrictedSyntax = require('eslint-no-restricted/syntax');
 
+// A `SceneDataTransformer` is only safe as a panel's `$data` if `PanelPluginTransformationsBehaviour`
+// is in its `$behaviors`. Matching the identifier anywhere under the property covers both the
+// behaviour constructed inline and one passed by reference; a `$behaviors` array assembled elsewhere
+// cannot be checked syntactically and is reported.
+const withoutPanelTransformationsBehaviour =
+  ':not(:has(Property[key.name="$behaviors"] Identifier[name="PanelPluginTransformationsBehaviour"]))';
+
 // This is a bit different - instead of defining a custom rule manually, we use
 // eslint-no-restricted to turn no-restricted-syntax config into actual eslint rules.
 // This gives them individual rule names for suppression and reporting.
@@ -88,5 +95,14 @@ module.exports = createNoRestrictedSyntax(
     ].join(', '),
     message:
       'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
+  },
+  {
+    name: 'require-panel-plugin-transformations-behaviour',
+    selector: [
+      `NewExpression[callee.name="SceneDataTransformer"]${withoutPanelTransformationsBehaviour}`,
+      `NewExpression[callee.property.name="SceneDataTransformer"]${withoutPanelTransformationsBehaviour}`,
+    ].join(', '),
+    message:
+      "A dashboard panel's SceneDataTransformer has to carry PanelPluginTransformationsBehaviour in $behaviors, otherwise the transformations the panel's plugin registers never run and the panel renders untransformed data with no error to notice. Build it with createPanelDataTransformer from app/features/dashboard-scene/utils/createPanelDataTransformer, or pass the behaviour in $behaviors yourself.",
   }
 );
