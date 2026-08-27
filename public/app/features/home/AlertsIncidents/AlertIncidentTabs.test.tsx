@@ -317,6 +317,18 @@ describe('AlertIncidentTabs', () => {
       expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'false');
     });
 
+    it('selects the Firing alerts tab when the incidents plugin is not installed', async () => {
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+      mockNoIrmPlugin();
+
+      render(<AlertIncidentTabsWithData />);
+
+      // Incidents is the default, so with no Incidents tab to select the alerts tab has to win.
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.queryByRole('tab', { name: /incidents/i })).not.toBeInTheDocument();
+    });
+
     it('selects the Firing alerts tab when there are no incidents but alerts are firing', async () => {
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
       mockIrmPlugin();
