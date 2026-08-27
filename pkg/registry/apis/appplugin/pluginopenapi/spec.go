@@ -72,6 +72,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		nil, // plugin context is only needed to call the backend
 		nil, // no decrypter: reading secrets is a request time concern
 		appplugin.NewPluginAccessChecker(nil),
+		offlineSearchClient{},
 		appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
 		},

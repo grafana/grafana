@@ -29,7 +29,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// stubIndexClient is a search index that is never queried: the routes under
+// test are mounted when a plugin has an index client, and their shape does not
+// depend on what it answers. Embedding the interface leaves every method nil,
+// so a call would panic rather than pass silently.
+type stubIndexClient struct {
+	resourcepb.ResourceIndexClient
+}
 
 // Registers the manifest custom routes the same way server startup does.
 // A duplicate method+path registration fails the whole apiserver at startup:
@@ -39,6 +48,7 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	b := &AppPluginAPIBuilder{
 		manifest:   testManifest(t),
 		pluginJSON: plugins.JSONData{ID: "example-app"},
+		search:     stubIndexClient{},
 	}
 
 	container := restful.NewContainer()
@@ -60,6 +70,11 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	require.Contains(t, registered, "GET /apis/example-app/v1alpha1/foobar")
 	require.Contains(t, registered, "GET /apis/example-app/v1alpha1/namespaces/{namespace}/foobar")
 	require.Contains(t, registered, "GET /apis/example-app/v2alpha1/namespaces/{namespace}/example")
+
+	// The generic subresources a namespaced kind gets. They are the pair most
+	// likely to collide, since both are built from the same resource name.
+	require.Contains(t, registered, "POST /apis/example-app/v1alpha1/namespaces/{namespace}/testkinds/search")
+	require.Contains(t, registered, "POST /apis/example-app/v1alpha1/namespaces/{namespace}/testkinds/trash")
 }
 
 // A manifest route mounted on a resource path would shadow the resource and its
@@ -86,16 +101,17 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 		}
 		return out
 	}
-	require.Equal(t, []string{
-		"foobar",
-		// The generic subresources every namespaced kind gets. The manifest's
-		// own /testkinds/search was dropped, so the list holds one of them and
-		// not two.
-		"testkinds/trash",
-		"testkinds/search",
-		"testkinds/{name}/reload",
-	}, paths(routes.Namespace))
+	require.Equal(t, []string{"foobar", "testkinds/{name}/reload"}, paths(routes.Namespace))
 	require.Equal(t, []string{"foobar"}, paths(routes.Root))
+
+	// With an index client the kind serves /search itself, which is what the
+	// manifest's own /testkinds/search would have collided with.
+	b.search = stubIndexClient{}
+	routes = b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
+	require.NotNil(t, routes)
+	require.Equal(t, []string{
+		"foobar", "testkinds/search", "testkinds/trash", "testkinds/{name}/reload",
+	}, paths(routes.Namespace), "the manifest route was dropped, so /search is mounted once")
 }
 
 // A plugin without a manifest has no custom routes at all.
@@ -223,6 +239,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 	b := &AppPluginAPIBuilder{
 		manifest:   testManifest(t),
 		pluginJSON: plugins.JSONData{ID: "example-app"},
+		search:     stubIndexClient{},
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -246,7 +263,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 	}
 	// Named, so that a route dropping out of the set fails here rather than
 	// leaving the loop quietly checking nothing.
-	require.ElementsMatch(t, []string{"foobar", "testkinds/trash", "testkinds/search"}, checked)
+	require.ElementsMatch(t, []string{"foobar", "testkinds/search", "testkinds/trash"}, checked)
 
 	// Cluster routes have no namespace segment to document.
 	for _, h := range routes.Root {

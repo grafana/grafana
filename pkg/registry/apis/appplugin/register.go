@@ -36,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -84,6 +86,7 @@ type AppPluginAPIBuilder struct {
 	decrypter       decrypt.DecryptService // Used with unified storage
 	accessChecker   PluginAccessChecker
 	features        featuremgmt.FeatureToggles
+	search          resourcepb.ResourceIndexClient
 	tracer          tracing.Tracer
 
 	// optional configuration
@@ -103,6 +106,7 @@ func NewAppPluginAPIBuilder(
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
+	search resourcepb.ResourceIndexClient,
 	opts AppPluginRunnerOptions, // can change without updating wire :)
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
@@ -124,6 +128,7 @@ func NewAppPluginAPIBuilder(
 		schemas:         plugin.Schemas,
 		decrypter:       decrypter,
 		accessChecker:   accessChecker,
+		search:          search,
 		opts:            opts,
 		features:        features,
 		tracer:          tracer,
@@ -139,6 +144,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
+	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
@@ -184,6 +190,7 @@ func RegisterAPIService(
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
+			unified, // search support
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
 				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),

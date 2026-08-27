@@ -3,6 +3,7 @@ package appplugin
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -20,7 +21,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -80,6 +83,12 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
 	}
 
+	fields, err := resource.ManifestDataProvider(b.manifest)
+	if err != nil {
+		fmt.Printf("error loading search fields\n")
+	}
+	searcher := search.NewHandler(b.search, fields, b.tracer)
+
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
 		if plural == "" {
@@ -94,77 +103,26 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			params = []*spec3.Parameter{namePathParameter()}
 		}
 
-		if kind.Scope != clusterScope {
-			if true { // trash
+		if b.search != nil && kind.Scope != clusterScope {
+			// The route names its own path -- <resource>/search, <resource>/trash
+			// -- so the two cannot collide. Registering both under one path fails
+			// the whole apiserver at startup, in the OpenAPI build.
+			if true { // search
+				route := searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind)
 				*dst = append(*dst, builder.APIRouteHandler{
-					Path: plural + "/trash",
-					Spec: &spec3.PathProps{
-						Post: &spec3.Operation{
-							OperationProps: spec3.OperationProps{
-								Tags:        []string{kind.Kind},
-								OperationId: "trash" + kind.Kind,
-								Parameters: []*spec3.Parameter{
-									namespacePathParameter(),
-								},
-								Responses: &spec3.Responses{
-									ResponsesProps: spec3.ResponsesProps{
-										StatusCodeResponses: map[int]*spec3.Response{
-											200: {
-												ResponseProps: spec3.ResponseProps{
-													Content: map[string]*spec3.MediaType{
-														"application/json": {
-															MediaTypeProps: spec3.MediaTypeProps{
-																Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					Handler: func(w http.ResponseWriter, r *http.Request) {
-						w.Write([]byte("TODO delegate trash"))
-					},
+					Path:    route.Path,
+					Spec:    route.Spec,
+					Schemas: route.Schemas,
+					Handler: route.Handler,
 				})
 			}
-			if true { // search
+			if true { // trash
+				route := searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind)
 				*dst = append(*dst, builder.APIRouteHandler{
-					Path: plural + "/search",
-					Spec: &spec3.PathProps{
-						Post: &spec3.Operation{
-							OperationProps: spec3.OperationProps{
-								Tags:        []string{kind.Kind},
-								OperationId: "search" + kind.Kind,
-								Parameters: []*spec3.Parameter{
-									namespacePathParameter(),
-								},
-								Responses: &spec3.Responses{
-									ResponsesProps: spec3.ResponsesProps{
-										StatusCodeResponses: map[int]*spec3.Response{
-											200: {
-												ResponseProps: spec3.ResponseProps{
-													Content: map[string]*spec3.MediaType{
-														"application/json": {
-															MediaTypeProps: spec3.MediaTypeProps{
-																Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
-															},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					Handler: func(w http.ResponseWriter, r *http.Request) {
-						w.Write([]byte("TODO delegate search"))
-					},
+					Path:    route.Path,
+					Spec:    route.Spec,
+					Schemas: route.Schemas,
+					Handler: route.Handler,
 				})
 			}
 		}
