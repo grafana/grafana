@@ -181,11 +181,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
 	if !coll.IsExternal {
 		lexResp, err := s.Search(ctx, hybridLexicalRequest(req, depth))
-		if err != nil {
+		if err := searchCallError(lexResp, err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
-		}
-		if lexResp.Error != nil {
-			return nil, fmt.Errorf("lexical leg: %w", grpcErrorFromErrorResult(lexResp.Error))
 		}
 		return lexicalHitsFromResponse(lexResp), nil
 	}
@@ -286,10 +283,7 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 		Limit:  int64(len(uids)),
 		Fields: []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID},
 	})
-	if err == nil && resp != nil && resp.Error != nil {
-		err = grpcErrorFromErrorResult(resp.Error)
-	}
-	if err != nil || resp == nil {
+	if err := searchCallError(resp, err); err != nil {
 		s.log.Warn("hybrid search: managed-by resolution failed", "err", err)
 		return
 	}
@@ -343,10 +337,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Limit:  int64(len(uids)),
 		Fields: []string{SEARCH_FIELD_TITLE},
 	})
-	if err == nil && resp != nil && resp.Error != nil {
-		err = grpcErrorFromErrorResult(resp.Error)
-	}
-	if err != nil || resp == nil {
+	if err := searchCallError(resp, err); err != nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
@@ -388,6 +379,10 @@ func (s *searchServer) grpcStatusError(ctx context.Context, op string, err error
 // grpcErrorFromErrorResult preserves embedded codes that carry retry
 // semantics; anything else is a server fault for a server-built request.
 func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
+	if e == nil {
+		return nil
+	}
+
 	switch e.Code {
 	case http.StatusTooManyRequests:
 		return status.Error(codes.ResourceExhausted, e.Message)
@@ -396,6 +391,20 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	default:
 		return fmt.Errorf("%s (code %d)", e.Message, e.Code)
 	}
+}
+
+// searchCallError maps an ErrorResult — embedded in the response or attached
+// to a grpc error's details — to a single error, so either form yields
+// the same code. The result replaces the grpc error rather than joining
+// it, which would let the grpc status win status.Code.
+func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
+	if err == nil {
+		return grpcErrorFromErrorResult(resp.GetError())
+	}
+	if res := errorResultFromGRPCDetails(err); res != nil {
+		return grpcErrorFromErrorResult(res)
+	}
+	return err
 }
 
 // rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).

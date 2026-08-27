@@ -22,8 +22,12 @@ export interface RawListProps {
 
 export type RawListValue = { key: string; value: string };
 const rawListExtraSpaceAtEndOfLine = '20px';
-export const rawListItemColumnWidth = '80px';
+const rawListItemColumnWidth = '80px';
+const RAW_LIST_ITEM_SINGLE_VALUE_COLUMN_WIDTH = '128px';
 export const rawListPaddingToHoldSpaceForCopyIcon = '25px';
+
+export const getRawListItemColumnWidth = (totalNumberOfValues: number): string =>
+  totalNumberOfValues === 1 ? RAW_LIST_ITEM_SINGLE_VALUE_COLUMN_WIDTH : rawListItemColumnWidth;
 
 const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpandedView: boolean) => ({
   rowWrapper: css({
@@ -46,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2, totalNumberOfValues: number, isExpanded
   }),
   rowLabelWrapWrap: css({
     position: 'relative',
-    width: `calc(100% - (${totalNumberOfValues} * ${rawListItemColumnWidth}) - ${rawListPaddingToHoldSpaceForCopyIcon})`,
+    width: `calc(100% - (${totalNumberOfValues} * ${getRawListItemColumnWidth(totalNumberOfValues)}) - ${rawListPaddingToHoldSpaceForCopyIcon})`,
   }),
   rowLabelWrap: css({
     whiteSpace: 'nowrap',
