@@ -3301,14 +3301,13 @@
         "type": "object"
       },
       "AttributeTypeAndValue": {
-        "description": "When parsed as part of a pkix.Name structure in a crypto/x509 type,\nthe Value will be\n\n- a string if the ASN.1 type is PrintableString, IA5String,\nNumericString, BMPString, T61String, or UTF8String;\n- an int64 if the ASN.1 type is INTEGER;\n- an asn1.BitString if the ASN.1 type is BIT STRING;\n- a []byte if the ASN.1 type is OCTET STRING;\n- an asn1.ObjectIdentifier if the ASN.1 type is OBJECT IDENTIFIER;\n- a time.Time if the ASN.1 type is UTCTIME or GENERALIZEDTIME;\n- a bool if the ASN.1 type is BOOLEAN;\n- nil if the ASN.1 type is NULL;\n- an asn1.RawValue otherwise.",
+        "description": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "properties": {
           "Type": {
             "$ref": "#/components/schemas/ObjectIdentifier"
           },
           "Value": {}
         },
-        "title": "AttributeTypeAndValue mirrors the ASN.1 structure of the same name in\nRFC 5280, Section 4.1.2.4.",
         "type": "object"
       },
       "Authorization": {
@@ -3766,13 +3765,6 @@
             "type": "array"
           },
           "RawIssuer": {
-            "items": {
-              "format": "uint8",
-              "type": "integer"
-            },
-            "type": "array"
-          },
-          "RawSignatureAlgorithm": {
             "items": {
               "format": "uint8",
               "type": "integer"
@@ -5135,11 +5127,6 @@
       },
       "DsPermissionType": {
         "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
-        "enum": [
-          "0",
-          "1",
-          "2"
-        ],
         "format": "int64",
         "type": "integer"
       },

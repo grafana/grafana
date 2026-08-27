@@ -685,7 +685,6 @@ import (
 	_ "k8s.io/apimachinery/pkg/types"
 	_ "k8s.io/apimachinery/pkg/util/errors"
 	_ "k8s.io/apimachinery/pkg/util/httpstream"
-	_ "k8s.io/apimachinery/pkg/util/managedfields"
 	_ "k8s.io/apimachinery/pkg/util/net"
 	_ "k8s.io/apimachinery/pkg/util/proxy"
 	_ "k8s.io/apimachinery/pkg/util/runtime"
@@ -749,7 +748,6 @@ import (
 	_ "k8s.io/apiserver/pkg/util/x509metrics"
 	_ "k8s.io/apiserver/pkg/warning"
 	_ "k8s.io/apiserver/plugin/pkg/audit/buffered"
-	_ "k8s.io/client-go/applyconfigurations/meta/v1"
 	_ "k8s.io/client-go/discovery"
 	_ "k8s.io/client-go/discovery/cached/memory"
 	_ "k8s.io/client-go/discovery/fake"
@@ -800,6 +798,5 @@ import (
 	_ "k8s.io/kube-openapi/pkg/spec3"
 	_ "k8s.io/kube-openapi/pkg/validation/spec"
 	_ "k8s.io/utils/net"
-	_ "sigs.k8s.io/structured-merge-diff/v6/typed"
 	_ "xorm.io/builder"
 )
