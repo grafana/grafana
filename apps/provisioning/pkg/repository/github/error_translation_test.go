@@ -105,12 +105,11 @@ func TestTranslateGitHubError(t *testing.T) {
 			expectedErr: repo.ErrServerUnavailable,
 		},
 		{
-			name: "500 returns server unavailable with message preserved",
+			name: "500 returns GitHub API error with message",
 			inputErr: &github.ErrorResponse{
 				Response: &http.Response{StatusCode: http.StatusInternalServerError},
 				Message:  "Internal server error",
 			},
-			expectedErr:         repo.ErrServerUnavailable,
 			expectedMsgContains: "GitHub API error (HTTP 500: Internal server error)",
 		},
 		{

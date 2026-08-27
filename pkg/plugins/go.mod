@@ -11,6 +11,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana-app-sdk v0.59.0
+	github.com/grafana/grafana-app-sdk/plugin v0.59.0
 	github.com/grafana/grafana-plugin-sdk-go v0.296.4
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3

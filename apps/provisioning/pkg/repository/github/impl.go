@@ -43,8 +43,8 @@ func translateGitHubError(err error) error {
 	statusCode := ghErr.Response.StatusCode
 
 	// Map to common repository errors
-	switch {
-	case statusCode == http.StatusUnauthorized:
+	switch statusCode {
+	case http.StatusUnauthorized:
 		// 401 - Authentication failed
 		// Special case: "expired" is cryptic, so add helpful context
 		if strings.Contains(strings.ToLower(ghMessage), "expired") {
@@ -52,7 +52,7 @@ func translateGitHubError(err error) error {
 		}
 		return repo.ErrUnauthorized
 
-	case statusCode == http.StatusForbidden:
+	case http.StatusForbidden:
 		// 403 - Permission denied
 		// Special case: rate limit gets additional context
 		if strings.Contains(strings.ToLower(ghMessage), "rate limit") {
@@ -60,19 +60,13 @@ func translateGitHubError(err error) error {
 		}
 		return repo.ErrPermissionDenied
 
-	case statusCode == http.StatusNotFound:
+	case http.StatusNotFound:
 		// 404 - Resource not found
 		return repo.ErrFileNotFound
 
-	case statusCode == http.StatusServiceUnavailable, statusCode == http.StatusBadGateway, statusCode == http.StatusGatewayTimeout:
+	case http.StatusServiceUnavailable, http.StatusBadGateway, http.StatusGatewayTimeout:
 		// 503, 502, 504 - Service unavailable
 		return repo.ErrServerUnavailable
-
-	case statusCode >= 500 && statusCode < 600:
-		if details := formatGitHubErrorDetails(ghErr.Errors); details != "" {
-			return fmt.Errorf("GitHub API error (HTTP %d: %s: %s): %w", statusCode, ghMessage, details, repo.ErrServerUnavailable)
-		}
-		return fmt.Errorf("GitHub API error (HTTP %d: %s): %w", statusCode, ghMessage, repo.ErrServerUnavailable)
 
 	default:
 		// Other errors - return with GitHub message context
