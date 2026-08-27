@@ -10,6 +10,8 @@ import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
+import { GLOBAL_HOME_DASHBOARD_UID } from '../Select/DashboardPicker';
+
 import { SharedPreferences } from './SharedPreferences';
 import { homeDashboardChanged } from './analytics/main';
 
@@ -288,6 +290,57 @@ describe('SharedPreferences', () => {
         preferenceType: 'user',
         action: 'cleared',
       });
+    });
+  });
+
+  it('lists Grafana home first and saves the sentinel when selected', async () => {
+    const capture = captureRequests();
+    const { user } = await setup();
+
+    const combobox = await screen.findByRole('combobox', { name: /home dashboard/i });
+    await user.click(combobox);
+    const options = await screen.findAllByRole('option');
+    expect(options[0]).toHaveTextContent('Grafana home');
+    await user.click(options[0]);
+
+    await user.click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    const newPreferences = await getPrefsUpdateRequest(requests);
+    expect(newPreferences).toMatchObject({
+      spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID },
+    });
+  });
+
+  it('fires home_dashboard_changed with action set_global_home when Grafana home is saved', async () => {
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /home dashboard/i }), 'Grafana home');
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set_global_home',
+      });
+    });
+  });
+
+  it('renders Grafana home when the stored preference is the sentinel', async () => {
+    server.use(
+      preferencesHandlers.listPreferencesHandler(
+        HttpResponse.json({
+          metadata: {},
+          items: [{ metadata: { name: 'user' }, spec: { homeDashboardUID: GLOBAL_HOME_DASHBOARD_UID } }],
+        })
+      )
+    );
+
+    await setup();
+
+    const dashboardSelect = getSelectParent(screen.getByLabelText('Home Dashboard'));
+    await waitFor(() => {
+      expect(dashboardSelect).toHaveTextContent('Grafana home');
     });
   });
 });
