@@ -123,13 +123,6 @@ overrides:
   # so the cascade overrides asserted styles in tests untouched by this migration
   # (LogRow, AutoSaveField). 2.2.2 (yarn-resolved) does not; pin to match.
   nwsapi: "2.2.2"
-  # A single react/react-dom across every workspace. The `>=19` peer ranges in
-  # grafana-i18n/-sql/-flamegraph resolve to 19.2.7 while the root pins 19.2.8, and
-  # grafana-api-clients still dev-depends on 18.3.1. Each distinct react version
-  # forks the peer-keyed @reduxjs/toolkit copies, so RTK Query hooks typed against
-  # one copy are not assignable to the other and `typecheck` fails repo-wide.
-  react: "19.2.8"
-  react-dom: "19.2.8"
   # Single webpack version across all workspaces — a range across 20 package.json
   # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
   webpack: "5.107.2"
