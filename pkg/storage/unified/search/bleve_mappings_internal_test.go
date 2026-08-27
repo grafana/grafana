@@ -339,7 +339,7 @@ func TestSortableFieldsForMapping(t *testing.T) {
 	// The per-kind field shadowing "created" is only reachable under the prefix.
 	assert.True(t, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_CREATED])
 }
-func TestStoredFacetFieldsForMapping(t *testing.T) {
+func TestStoredFacetField(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
 		gvr: {
@@ -349,16 +349,17 @@ func TestStoredFacetFieldsForMapping(t *testing.T) {
 		},
 	}, nil)
 
-	fields := storedFacetFieldsForMapping(provider, gvr.Group, gvr.Resource)
-	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS])
-	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, fields[resource.SEARCH_FIELD_MANAGED_BY])
-	assert.Equal(t, "fields.summary_keyword", fields["summary"])
-	assert.Equal(t, "fields.summary_keyword", fields["fields.summary"])
-	assert.Equal(t, "fields.category", fields["category"])
-	assert.Equal(t, "fields.category", fields["fields.category"])
-	assert.Equal(t, "fields.facetOnly", fields["facetOnly"])
-	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
-	assert.NotContains(t, fields, "labels.region")
+	sf := newKindSearchFields(provider, gvr.Group, gvr.Resource, nil)
+	assert.Equal(t, resource.SEARCH_FIELD_TAGS, sf.storedFacetField(resource.SEARCH_FIELD_TAGS))
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, sf.storedFacetField(resource.SEARCH_FIELD_MANAGED_BY))
+	assert.Equal(t, "fields.summary_keyword", sf.storedFacetField("summary"))
+	assert.Equal(t, "fields.summary_keyword", sf.storedFacetField("fields.summary"))
+	assert.Equal(t, "fields.category", sf.storedFacetField("category"))
+	assert.Equal(t, "fields.category", sf.storedFacetField("fields.category"))
+	assert.Equal(t, "fields.facetOnly", sf.storedFacetField("facetOnly"))
+	// folder is filterable but not facetable, so it has no stored facet field.
+	assert.Empty(t, sf.storedFacetField(resource.SEARCH_FIELD_FOLDER))
+	assert.Empty(t, sf.storedFacetField("labels.region"))
 }
 
 func TestPostRankFacetTermsMatchKeywordVariant(t *testing.T) {
@@ -393,7 +394,7 @@ func TestPostRankFacetTermsMatchKeywordVariant(t *testing.T) {
 
 	agg := newFacetAggregator(map[string]*resourcepb.ResourceSearchRequest_Facet{
 		"summary": {Field: "summary", Limit: 10},
-	}, storedFacetFieldsForMapping(provider, gvr.Group, gvr.Resource))
+	}, newKindSearchFields(provider, gvr.Group, gvr.Resource, nil).storedFacetField)
 	agg.add(result.Hits[0])
 
 	nativeTerms := result.Facets["summary"].Terms.Terms()
@@ -1089,27 +1090,25 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested boost. The
-	// requested type is dropped: the backend derives it from the mapping.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.
 	assert.Equal(t, append(append([]string{}, titleVariants...), resource.SEARCH_FIELD_PREFIX+"panel_title"),
 		names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{
 			{Name: resource.SEARCH_FIELD_TITLE},
-			{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT},
+			{Name: "panel_title"},
 		})))
 
 	// When the caller already names the physical title variants (legacy dashboard
 	// search), the logical title is not re-expanded, so nothing is duplicated.
 	legacy := []*resourcepb.ResourceSearchRequest_QueryField{
-		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Type: resourcepb.QueryFieldType_KEYWORD, Boost: 10},
-		{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.QueryFieldType_TEXT, Boost: 2},
-		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Type: resourcepb.QueryFieldType_TEXT, Boost: 1},
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10},
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},
 	}
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields(legacy)))
 }
@@ -1386,4 +1385,44 @@ func TestPopulateFieldVariants(t *testing.T) {
 		populateFieldVariants(doc, variants)
 		assert.Equal(t, map[string]any{"category": 42}, doc.Fields)
 	})
+}
+
+// Every name-keyed lookup is built from declaredFields, so none of them can let a
+// per-kind field claim a standard field's bare name — the hole #130952 closed in
+// the keyword lookup alone.
+func TestDeclaredFields_StandardNameIsNeverClaimedByAKind(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	// tags is a standard facet field, and description a standard field with no
+	// keyword form. Both are also declared per-kind here, with every capability
+	// the lookups key on.
+	caps := []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityFacet}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{Name: resource.SEARCH_FIELD_TAGS, Type: resource.SearchFieldTypeString, Capabilities: caps},
+			{Name: resource.SEARCH_FIELD_DESCRIPTION, Type: resource.SearchFieldTypeString, Capabilities: caps},
+			{Name: resource.SEARCH_FIELD_MANAGED_BY, Type: resource.SearchFieldTypeString, Capabilities: caps},
+			{Name: resource.SEARCH_FIELD_DELETED_BY, Type: resource.SearchFieldTypeString, Capabilities: caps},
+			// facet is string-only, so the numeric one declares filter alone.
+			{Name: resource.SEARCH_FIELD_CREATED, Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		},
+	}, nil)
+
+	sf := newKindSearchFields(provider, gvr.Group, gvr.Resource, nil)
+	keyword := sf.keywordFields
+	numbers := sf.numberOrBoolFields
+
+	// managedBy is the interesting one: it is declared standard but absent from
+	// StandardSearchFields(), so a reserved-name check alone lets a kind take it.
+	for _, name := range []string{resource.SEARCH_FIELD_TAGS, resource.SEARCH_FIELD_DESCRIPTION, resource.SEARCH_FIELD_MANAGED_BY} {
+		assert.NotEqual(t, resource.SEARCH_FIELD_PREFIX+name, keyword[name].name, "keyword lookup for %q", name)
+		assert.NotEqual(t, resource.SEARCH_FIELD_PREFIX+name, sf.storedFacetField(name), "facet lookup for %q", name)
+	}
+	// created is standard and numeric, so the bare name must not reach the kind's
+	// own field either.
+	assert.NotContains(t, numbers, resource.SEARCH_FIELD_CREATED+"_unused")
+	assert.Equal(t, resource.SEARCH_FIELD_CREATED, numbers[resource.SEARCH_FIELD_CREATED].name)
+
+	// Each field is still reachable under its prefixed name.
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, keyword[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, sf.storedFacetField(resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS))
 }

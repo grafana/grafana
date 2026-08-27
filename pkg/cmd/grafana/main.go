@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/extensions"
 	_ "github.com/grafana/grafana/pkg/operators"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/server/bootstrap"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -21,7 +22,7 @@ import (
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "9.2.0"
+var version = "10.2.0"
 var commit = bootstrap.DefaultCommitValue
 var enterpriseCommit = bootstrap.DefaultCommitValue
 var buildBranch = "main"
@@ -81,6 +82,20 @@ func MainApp() *cli.App {
 	f, err := server.InitializeAPIServerFactory()
 	if err == nil {
 		cmd := f.GetCLICommand(buildInfo)
+		if cmd != nil {
+			app.Commands = append(app.Commands, cmd)
+		}
+	}
+
+	// Add the enterprise command line to run the standalone cloud-apps router
+	rf, err := server.InitializeRouterFactory()
+	if err == nil {
+		cmd := rf.GetCLICommand(router.BuildInfo{
+			Version:     version,
+			Commit:      commit,
+			BuildBranch: buildBranch,
+			BuildStamp:  buildstamp,
+		})
 		if cmd != nil {
 			app.Commands = append(app.Commands, cmd)
 		}

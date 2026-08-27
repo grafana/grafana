@@ -31,7 +31,7 @@ func hybridKey() *resourcepb.ResourceKey {
 
 func TestFuseRRF_OverlapRanksHighest(t *testing.T) {
 	lex := []lexicalHit{
-		{uid: "a", title: "A", folder: "f1"},
+		{uid: "a", title: "A", folder: "f1", managerKind: "repo", managerID: "m1"},
 		{uid: "b", title: "B", folder: "f2"},
 	}
 	sem := []vector.VectorSearchResult{
@@ -51,6 +51,8 @@ func TestFuseRRF_OverlapRanksHighest(t *testing.T) {
 	// lexical title wins over the embeddings row's stale title
 	assert.Equal(t, "A", out[0].Title)
 	assert.Equal(t, "f1", out[0].Folder)
+	assert.Equal(t, "repo", out[0].ManagedByKind)
+	assert.Equal(t, "m1", out[0].ManagedById)
 	require.Len(t, out[0].Chunks, 1)
 	assert.Equal(t, "panel/2", out[0].Chunks[0].Subresource)
 	assert.Equal(t, "a2", out[0].Chunks[0].Content)
@@ -176,6 +178,22 @@ func lexTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{Results: table}
 }
 
+func managerTableResponse(rows ...[3]string) *resourcepb.ResourceSearchResponse {
+	table := &resourcepb.ResourceTable{
+		Columns: []*resourcepb.ResourceTableColumnDefinition{
+			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+		},
+	}
+	for _, r := range rows {
+		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
+			Key:   &resourcepb.ResourceKey{Name: r[0]},
+			Cells: [][]byte{[]byte(r[1]), []byte(r[2])},
+		})
+	}
+	return &resourcepb.ResourceSearchResponse{Results: table}
+}
+
 func TestLexicalHitsFromResponse(t *testing.T) {
 	hits := lexicalHitsFromResponse(lexTableResponse(
 		[3]string{"u1", "Title One", "f1"},
@@ -184,6 +202,23 @@ func TestLexicalHitsFromResponse(t *testing.T) {
 	require.Len(t, hits, 2)
 	assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
 	assert.Equal(t, lexicalHit{uid: "u2", title: "Title Two", folder: "f2"}, hits[1])
+}
+
+func TestLexicalHitsFromResponse_ManagerColumns(t *testing.T) {
+	resp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+		Columns: []*resourcepb.ResourceTableColumnDefinition{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			{Name: SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			{Name: SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+		},
+		Rows: []*resourcepb.ResourceTableRow{{
+			Key:   &resourcepb.ResourceKey{Name: "u1"},
+			Cells: [][]byte{[]byte("Title"), []byte("repo"), []byte("m1")},
+		}},
+	}}
+	hits := lexicalHitsFromResponse(resp)
+	require.Len(t, hits, 1)
+	assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
 }
 
 func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
@@ -314,7 +349,7 @@ func TestHybridLexicalRequest(t *testing.T) {
 	assert.Equal(t, "cpu", out.Query)
 	assert.Equal(t, int64(40), out.Limit)
 	assert.Same(t, req.Key, out.Options.Key)
-	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER}, out.Fields)
+	assert.Equal(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID}, out.Fields)
 
 	require.Len(t, out.Options.Fields, 4)
 	assert.Equal(t, SEARCH_FIELD_NAME, out.Options.Fields[0].Key)
@@ -397,6 +432,12 @@ type hybridFakeIndex struct {
 	folderResp   *resourcepb.ResourceSearchResponse
 	folderErr    error
 	gotFolderReq *resourcepb.ResourceSearchRequest
+
+	// Managed-by resolution reuses the lexical leg's index with no Query;
+	// route by that.
+	managedByResp   *resourcepb.ResourceSearchResponse
+	managedByErr    error
+	gotManagedByReq *resourcepb.ResourceSearchRequest
 }
 
 func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
@@ -408,6 +449,13 @@ func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req 
 			return lexTableResponse(), nil
 		}
 		return h.folderResp, h.folderErr
+	}
+	if req.Query == "" {
+		h.gotManagedByReq = req
+		if h.managedByResp == nil && h.managedByErr == nil {
+			return lexTableResponse(), nil
+		}
+		return h.managedByResp, h.managedByErr
 	}
 	h.gotReq = req
 	return h.resp, h.err
@@ -572,27 +620,49 @@ func TestHybridSearch_LexicalLegFailureFailsRequest(t *testing.T) {
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
 
-func TestHybridSearch_LexicalEmbeddedErrorCodes(t *testing.T) {
-	// Embedded codes with retry semantics survive; anything else is a
-	// server fault for a server-built request.
+func TestHybridSearch_LexicalErrorCodes(t *testing.T) {
+	// Embedded codes with retry semantics survive; anything else is a server
+	// fault for a server-built request. Both ways the lexical leg reports an
+	// ErrorResult must yield the same code.
 	cases := map[int32]codes.Code{
 		http.StatusServiceUnavailable:  codes.Unavailable,
 		http.StatusTooManyRequests:     codes.ResourceExhausted,
 		http.StatusBadRequest:          codes.Internal,
 		http.StatusInternalServerError: codes.Internal,
 	}
-	for embedded, want := range cases {
-		idx := &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
-		}}
-		s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
-		s.search = &fakeSearchBackend{idx: idx}
 
-		_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-			Key: validKey(), Query: "q",
-		})
-		require.Error(t, err)
-		assert.Equal(t, want, status.Code(err), "embedded code %d", embedded)
+	// The wrapper status is deliberately one that would win status.Code if the
+	// details result were merged with it instead of replacing it — that is how
+	// a server-built request's own 400 used to reach the caller as
+	// InvalidArgument.
+	forms := map[string]func(*testing.T, int32) *hybridFakeIndex{
+		"response-embedded": func(_ *testing.T, embedded int32) *hybridFakeIndex {
+			return &hybridFakeIndex{resp: &resourcepb.ResourceSearchResponse{
+				Error: &resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+			}}
+		},
+		"grpc details": func(t *testing.T, embedded int32) *hybridFakeIndex {
+			st, err := status.New(codes.InvalidArgument, "wrapper").WithDetails(
+				&resourcepb.ErrorResult{Code: embedded, Message: "lexical failure"},
+			)
+			require.NoError(t, err)
+			return &hybridFakeIndex{err: st.Err()}
+		},
+	}
+
+	for form, newIndex := range forms {
+		for embedded, want := range cases {
+			t.Run(fmt.Sprintf("%s/%d", form, embedded), func(t *testing.T) {
+				s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), &fakeVectorBackend{})
+				s.search = &fakeSearchBackend{idx: newIndex(t, embedded)}
+
+				_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+					Key: validKey(), Query: "q",
+				})
+				require.Error(t, err)
+				assert.Equal(t, want, status.Code(err))
+			})
+		}
 	}
 }
 
@@ -965,6 +1035,82 @@ func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
 			require.Len(t, resp.Results, 1)
 			assert.Empty(t, resp.Results[0].FolderTitle)
 			assert.Equal(t, "f1", resp.Results[0].Folder, "folder uid still returned")
+		})
+	}
+}
+
+func TestHybridSearch_ResolvesManagedByForSemanticOnlyHits(t *testing.T) {
+	lexResp := lexTableResponse([3]string{"lexonly", "Lex Only", "f1"})
+	backend := &fakeVectorBackend{
+		results: []vector.VectorSearchResult{
+			{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1},
+		},
+	}
+	s, idx, _ := newHybridTestServer(lexResp, backend)
+	idx.managedByResp = managerTableResponse([3]string{"semonly", "repo", "m1"})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+
+	managed := map[string][2]string{}
+	for _, r := range resp.Results {
+		managed[r.Key.Name] = [2]string{r.ManagedByKind, r.ManagedById}
+	}
+	assert.Equal(t, [2]string{"", ""}, managed["lexonly"])
+	assert.Equal(t, [2]string{"repo", "m1"}, managed["semonly"])
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+	require.NotNil(t, idx.gotManagedByReq)
+	require.Len(t, idx.gotManagedByReq.Options.Fields, 1)
+	assert.Equal(t, []string{"semonly"}, idx.gotManagedByReq.Options.Fields[0].Values, "only the semantic-only uid is looked up")
+	assert.Equal(t, "q", idx.gotReq.Query, "lexical-leg request assertions stay untouched by the managed-by lookup")
+}
+
+func TestHybridSearch_SkipsManagedByLookupWhenNoSemanticOnlyHits(t *testing.T) {
+	lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
+	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+
+	_, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+	assert.Nil(t, idx.gotManagedByReq, "no semantic-only hits: nothing to resolve")
+}
+
+func TestHybridSearch_ManagedByResolutionFailsOpen(t *testing.T) {
+	for name, setup := range map[string]func(*hybridFakeIndex){
+		"transport error": func(idx *hybridFakeIndex) {
+			idx.managedByErr = errors.New("index exploded")
+		},
+		"payload-embedded error": func(idx *hybridFakeIndex) {
+			idx.managedByResp = &resourcepb.ResourceSearchResponse{
+				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			backend := &fakeVectorBackend{
+				results: []vector.VectorSearchResult{
+					{UID: "semonly", Title: "Sem Only", Subresource: "panel/1", Content: "s1", Score: 0.1},
+				},
+			}
+			s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
+			setup(idx)
+
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
+			})
+			require.NoError(t, err, "managed-by resolution is display sugar; it must never fail the search")
+			require.Len(t, resp.Results, 1)
+			assert.Empty(t, resp.Results[0].ManagedByKind)
+			assert.Empty(t, resp.Results[0].ManagedById)
 		})
 	}
 }

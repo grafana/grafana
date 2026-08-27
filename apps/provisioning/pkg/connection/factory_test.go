@@ -13,8 +13,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace/noop"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// noopTracer is a no-op tracer for the many factory tests that don't assert on spans.
+var noopTracer = noop.NewTracerProvider().Tracer("test")
 
 func TestProvideFactory(t *testing.T) {
 	tests := []struct {
@@ -31,13 +38,13 @@ func TestProvideFactory(t *testing.T) {
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			wantErr: false,
 		},
@@ -66,7 +73,7 @@ func TestProvideFactory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			extras := tt.setupExtras(t)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -93,23 +100,23 @@ func TestFactory_Types(t *testing.T) {
 	}{
 		{
 			name:       "should return only enabled types that have extras",
-			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			expectedLen:  2,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
 		},
 		{
 			name:       "should return sorted list of types",
-			extraTypes: []provisioning.ConnectionType{provisioning.GitlabConnectionType, provisioning.GithubConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.GitlabOAuthConnectionType, provisioning.GithubConnectionType},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			expectedLen:  2,
-			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabConnectionType},
+			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
 			checkSorted:  true,
 		},
 		{
@@ -123,15 +130,15 @@ func TestFactory_Types(t *testing.T) {
 			name:       "should not return types that are enabled but have no extras",
 			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			expectedLen:  1,
 			expectedList: []provisioning.ConnectionType{provisioning.GithubConnectionType},
 		},
 		{
 			name:       "should not return types that have extras but are not enabled",
-			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabConnectionType},
+			extraTypes: []provisioning.ConnectionType{provisioning.GithubConnectionType, provisioning.GitlabOAuthConnectionType},
 			enabled: map[provisioning.ConnectionType]struct{}{
 				provisioning.GithubConnectionType: {},
 			},
@@ -159,7 +166,7 @@ func TestFactory_Types(t *testing.T) {
 				extras = append(extras, extra)
 			}
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
 			require.NoError(t, err)
 
 			types := factory.Types()
@@ -196,7 +203,7 @@ func TestFactory_Build(t *testing.T) {
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 				extra := connection.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
-				extra.EXPECT().Build(ctx, &provisioning.Connection{
+				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
 						Type: provisioning.GithubConnectionType,
@@ -212,10 +219,10 @@ func TestFactory_Build(t *testing.T) {
 		},
 		{
 			name:           "should return error when type is not enabled",
-			connectionType: provisioning.GitlabConnectionType,
+			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 
 				return []connection.Extra{extra}, nil, nil
 			},
@@ -224,12 +231,12 @@ func TestFactory_Build(t *testing.T) {
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
-				assert.Contains(t, err.Error(), "connection type \"gitlab\" is not enabled")
+				assert.Contains(t, err.Error(), "connection type \"gitlabOAuth\" is not enabled")
 			},
 		},
 		{
 			name:           "should return error when type is not supported",
-			connectionType: provisioning.GitlabConnectionType,
+			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				extra := connection.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
@@ -241,7 +248,7 @@ func TestFactory_Build(t *testing.T) {
 			},
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
-				assert.Contains(t, err.Error(), "connection type \"gitlab\" is not supported")
+				assert.Contains(t, err.Error(), "connection type \"gitlabOAuth\" is not supported")
 			},
 		},
 		{
@@ -251,7 +258,7 @@ func TestFactory_Build(t *testing.T) {
 				buildErr := errors.New("build error")
 				extra := connection.NewMockExtra(t)
 				extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
-				extra.EXPECT().Build(ctx, &provisioning.Connection{
+				extra.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
 						Type: provisioning.GithubConnectionType,
@@ -270,7 +277,7 @@ func TestFactory_Build(t *testing.T) {
 		},
 		{
 			name:           "should build with multiple extras registered",
-			connectionType: provisioning.GitlabConnectionType,
+			connectionType: provisioning.GitlabOAuthConnectionType,
 			setupExtras: func(t *testing.T, ctx context.Context) ([]connection.Extra, connection.Connection, error) {
 				mockConnection := connection.NewMockConnection(t)
 				mockConnection.EXPECT().Test(mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
@@ -279,19 +286,19 @@ func TestFactory_Build(t *testing.T) {
 				extra1.EXPECT().Type().Return(provisioning.GithubConnectionType)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
-				extra2.EXPECT().Build(ctx, &provisioning.Connection{
+				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
+				extra2.EXPECT().Build(mock.Anything, &provisioning.Connection{
 					ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 					Spec: provisioning.ConnectionSpec{
-						Type: provisioning.GitlabConnectionType,
+						Type: provisioning.GitlabOAuthConnectionType,
 					},
 				}).Return(mockConnection, nil)
 
 				return []connection.Extra{extra1, extra2}, mockConnection, nil
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			wantErr: false,
 		},
@@ -303,7 +310,7 @@ func TestFactory_Build(t *testing.T) {
 
 			extras, expectedConnection, _ := tt.setupExtras(t, ctx)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
 			require.NoError(t, err)
 
 			conn := &provisioning.Connection{
@@ -327,6 +334,49 @@ func TestFactory_Build(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestFactory_Build_EmitsSpan verifies Build runs under a provisioning.connection.build
+// span so the token decryption it triggers has a descriptive parent regardless of the
+// caller.
+func TestFactory_Build_EmitsSpan(t *testing.T) {
+	recorder := tracetest.NewSpanRecorder()
+	tp := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+
+	mockConnection := connection.NewMockConnection(t)
+	extra := connection.NewMockExtra(t)
+	extra.EXPECT().Type().Return(provisioning.GithubConnectionType)
+	extra.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil)
+
+	factory, err := connection.ProvideFactory(
+		map[provisioning.ConnectionType]struct{}{provisioning.GithubConnectionType: {}},
+		[]connection.Extra{extra},
+		tp.Tracer("test"),
+	)
+	require.NoError(t, err)
+
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-conn", Namespace: "my-ns"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+	}
+
+	_, err = factory.Build(context.Background(), conn)
+	require.NoError(t, err)
+
+	var buildSpan sdktrace.ReadOnlySpan
+	for _, s := range recorder.Ended() {
+		if s.Name() == "provisioning.connection.build" {
+			buildSpan = s
+			break
+		}
+	}
+	require.NotNil(t, buildSpan, "expected a provisioning.connection.build span")
+
+	attrs := buildSpan.Attributes()
+	assert.Contains(t, attrs, attribute.String("connection.name", "my-conn"))
+	assert.Contains(t, attrs, attribute.String("connection.namespace", "my-ns"))
+	assert.Contains(t, attrs, attribute.String("connection.type", string(provisioning.GithubConnectionType)))
 }
 
 func TestFactory_Mutate(t *testing.T) {
@@ -385,14 +435,14 @@ func TestFactory_Mutate(t *testing.T) {
 				extra1.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				extra2.EXPECT().Mutate(ctx, obj).Return(nil)
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
@@ -446,7 +496,7 @@ func TestFactory_Mutate(t *testing.T) {
 				extras = append(extras, tt.setupExtras(t, ctx, tt.obj)...)
 			}
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
 			require.NoError(t, err)
 
 			err = factory.Mutate(ctx, tt.obj)
@@ -496,7 +546,7 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error when connection type is not supported",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabConnectionType,
+					Type: provisioning.GitlabOAuthConnectionType,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
@@ -513,7 +563,7 @@ func TestFactory_Validate(t *testing.T) {
 				assert.Equal(t, "spec.title", errs[0].Field)
 				assert.Contains(t, errs[0].Detail, "title is required")
 				assert.Equal(t, "spec.type", errs[1].Field)
-				assert.Contains(t, errs[1].Detail, "connection type \"gitlab\" is not supported")
+				assert.Contains(t, errs[1].Detail, "connection type \"gitlabOAuth\" is not supported")
 			},
 		},
 		{
@@ -544,12 +594,12 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error when connection type is not enabled",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabConnectionType,
+					Type: provisioning.GitlabOAuthConnectionType,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
 				extra := connection.NewMockExtra(t)
-				extra.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
@@ -561,7 +611,7 @@ func TestFactory_Validate(t *testing.T) {
 				assert.Equal(t, "spec.title", errs[0].Field)
 				assert.Contains(t, errs[0].Detail, "title is required")
 				assert.Equal(t, "spec.type", errs[1].Field)
-				assert.Contains(t, errs[1].Detail, "connection type \"gitlab\" is not enabled")
+				assert.Contains(t, errs[1].Detail, "connection type \"gitlabOAuth\" is not enabled")
 			},
 		},
 		{
@@ -626,14 +676,14 @@ func TestFactory_Validate(t *testing.T) {
 				extra1.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
 				extra2 := connection.NewMockExtra(t)
-				extra2.EXPECT().Type().Return(provisioning.GitlabConnectionType)
+				extra2.EXPECT().Type().Return(provisioning.GitlabOAuthConnectionType)
 				extra2.EXPECT().Validate(ctx, mock.Anything).Return(field.ErrorList{})
 
 				return []connection.Extra{extra1, extra2}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType: {},
-				provisioning.GitlabConnectionType: {},
+				provisioning.GithubConnectionType:      {},
+				provisioning.GitlabOAuthConnectionType: {},
 			},
 			expectedErrs: 0,
 		},
@@ -641,7 +691,7 @@ func TestFactory_Validate(t *testing.T) {
 			name: "should return error for unsupported type before checking enabled",
 			connection: &provisioning.Connection{
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.BitbucketConnectionType,
+					Type: provisioning.BitbucketOAuthConnectionType,
 				},
 			},
 			setupExtras: func(t *testing.T, ctx context.Context) []connection.Extra {
@@ -650,8 +700,8 @@ func TestFactory_Validate(t *testing.T) {
 				return []connection.Extra{extra}
 			},
 			enabled: map[provisioning.ConnectionType]struct{}{
-				provisioning.GithubConnectionType:    {},
-				provisioning.BitbucketConnectionType: {}, // Even if enabled, not supported
+				provisioning.GithubConnectionType:         {},
+				provisioning.BitbucketOAuthConnectionType: {}, // Even if enabled, not supported
 			},
 			expectedErrs: 2,
 			validateError: func(t *testing.T, errs []*field.Error) {
@@ -659,7 +709,7 @@ func TestFactory_Validate(t *testing.T) {
 				assert.Equal(t, "spec.title", errs[0].Field)
 				assert.Contains(t, errs[0].Detail, "title is required")
 				assert.Equal(t, "spec.type", errs[1].Field)
-				assert.Contains(t, errs[1].Detail, "connection type \"bitbucket\" is not supported")
+				assert.Contains(t, errs[1].Detail, "connection type \"bitbucketOAuth\" is not supported")
 			},
 		},
 	}
@@ -669,7 +719,7 @@ func TestFactory_Validate(t *testing.T) {
 			ctx := context.Background()
 			extras := tt.setupExtras(t, ctx)
 
-			factory, err := connection.ProvideFactory(tt.enabled, extras)
+			factory, err := connection.ProvideFactory(tt.enabled, extras, noopTracer)
 			require.NoError(t, err)
 
 			var obj runtime.Object = tt.connection

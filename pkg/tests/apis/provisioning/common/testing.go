@@ -1511,6 +1511,12 @@ func WithRepositoryTypes(types []string) GrafanaOption {
 	}
 }
 
+func WithConnectionTypes(types []string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningConnectionTypes = types
+	}
+}
+
 func WithProvisioningPublicRootURL(url string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningPublicRootURL = url
@@ -3324,6 +3330,25 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 	}
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
 		waitForReady:      true,
+		initialFiles:      initialFiles,
+		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
+		workflows:         workflows,
+	})
+}
+
+// CreateGithubRepoWithoutWaitingForReady is like CreateGithubRepo but does not
+// wait for the Ready condition — for tests where the repository is expected to
+// end up unhealthy (e.g. a webhook creation failure), so the caller can drive
+// its own wait against the specific status it expects instead of timing out on
+// a Ready condition that will never turn true.
+func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady:      false,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
 		user:              h.githubTransportUser(t),

@@ -2,11 +2,16 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import React, { useCallback, useEffect } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
+import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
+import {
+  setupAdminConfigGet,
+  setupAlertmanagersStatus,
+} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -471,6 +476,308 @@ describe('Step1AlertmanagerResources', () => {
 
       const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
       expect(policyTreeInput).toHaveValue('my-alertmanager-production');
+    });
+  });
+
+  describe('Auto-sync checkbox', () => {
+    const MIMIR_DS = {
+      id: 10,
+      uid: 'mimir-uid',
+      orgId: 1,
+      name: 'Mimir Alertmanager',
+      type: 'alertmanager',
+      url: 'http://localhost:9009',
+      jsonData: { implementation: 'mimir' },
+    };
+    const MIMIR_DS_2 = {
+      id: 11,
+      uid: 'mimir-uid-2',
+      orgId: 1,
+      name: 'Mimir Alertmanager 2',
+      type: 'alertmanager',
+      url: 'http://localhost:9010',
+      jsonData: { implementation: 'mimir' },
+    };
+
+    // Mirrors MIMIR_DS/MIMIR_DS_2 in the frontend datasource list, so the same datasource is both
+    // selectable in the picker and recognized as Auto-sync-capable via the backend-sourced list.
+    const mimirDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
+      name: MIMIR_DS.name,
+      uid: MIMIR_DS.uid,
+      type: 'alertmanager' as SupportedRulesSourceType,
+      jsonData: { implementation: AlertManagerImplementation.mimir, handleGrafanaManagedAlerts: true },
+    });
+    const mimirDataSource2 = mockDataSource<AlertManagerDataSourceJsonData>({
+      name: MIMIR_DS_2.name,
+      uid: MIMIR_DS_2.uid,
+      type: 'alertmanager' as SupportedRulesSourceType,
+      jsonData: { implementation: AlertManagerImplementation.mimir, handleGrafanaManagedAlerts: true },
+    });
+
+    beforeEach(() => {
+      setupAlertmanagersStatus(server);
+    });
+
+    it('is not rendered without the feature toggle, even for admins', () => {
+      grantUserRole('Admin');
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+
+      expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+    });
+
+    describe('with the feature toggle on', () => {
+      testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
+      beforeEach(() => {
+        setupDataSources(alertmanagerDataSource, mimirDataSource);
+        // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
+        // render below fires these two queries regardless of what the test exercises — mock them
+        // by default for the whole block rather than per test.
+        setupAdminConfigGet(server, null);
+        setupDatasourcesEndpoint(server, [MIMIR_DS]);
+      });
+
+      it('is not rendered for non-admins', () => {
+        grantUserRole('Editor');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+      });
+
+      it('is not rendered for the YAML source', () => {
+        grantUserRole('Admin');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'yaml' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.queryByRole('switch', { name: /auto-sync/i })).not.toBeInTheDocument();
+      });
+
+      it('is rendered for admins on the datasource source', () => {
+        grantUserRole('Admin');
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeInTheDocument();
+      });
+
+      it('disables Policy Tree Name and skips the dry-run once checked', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+        const onTriggerDryRun = jest.fn();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} onTriggerDryRun={onTriggerDryRun} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        onTriggerDryRun.mockClear();
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+
+        expect(screen.getByPlaceholderText(/prometheus-prod/i)).toBeDisabled();
+        expect(onTriggerDryRun).not.toHaveBeenCalled();
+      });
+
+      it('always lists every Alertmanager datasource regardless of auto-sync checked state', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        expect(await screen.findByText('Alertmanager')).toBeInTheDocument();
+        // role="option" excludes the current-value display shown outside the menu, and the prefix
+        // match tolerates the badge/URL text also picked up in the option's accessible name.
+        expect(screen.getByRole('option', { name: /^Mimir Alertmanager/ })).toBeInTheDocument();
+      });
+
+      it('keeps the auto-sync switch disabled and the datasource options unbadged while the auto-sync capability query is loading, even for a Mimir datasource', async () => {
+        grantUserRole('Admin');
+        let resolveDatasources = (_response: unknown) => {};
+        const datasourcesResponse = new Promise((resolve) => {
+          resolveDatasources = resolve;
+        });
+        server.use(
+          http.get('/api/datasources', async () => {
+            await datasourcesResponse;
+            return HttpResponse.json([MIMIR_DS]);
+          })
+        );
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
+
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        // Scope to the option itself — "Auto-sync" is also the checkbox's own (unconditional) label.
+        expect(within(mimirOption).queryByText('Auto-sync')).not.toBeInTheDocument();
+
+        resolveDatasources(undefined);
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        const mimirOptionAfterLoad = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOptionAfterLoad).getByText('Auto-sync')).toBeInTheDocument();
+      });
+
+      it('does not uncheck an already-enabled Auto-sync while the capability query is still loading', async () => {
+        grantUserRole('Admin');
+        let resolveDatasources = (_response: unknown) => {};
+        const datasourcesResponse = new Promise((resolve) => {
+          resolveDatasources = resolve;
+        });
+        server.use(
+          http.get('/api/datasources', async () => {
+            await datasourcesResponse;
+            return HttpResponse.json([MIMIR_DS]);
+          })
+        );
+
+        render(
+          <TestWrapper
+            defaultValues={{
+              notificationsSource: 'datasource',
+              notificationsDatasourceUID: MIMIR_DS.uid,
+              autoSyncNotificationsEnabled: true,
+            }}
+          >
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // The reset effect must not race ahead and clear a persisted, still-valid selection just
+        // because the query hasn't resolved yet.
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        resolveDatasources(undefined);
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+      });
+
+      it('disables the auto-sync switch when a non-Mimir/Cortex datasource is selected', async () => {
+        grantUserRole('Admin');
+
+        render(
+          <TestWrapper
+            defaultValues={{
+              notificationsSource: 'datasource',
+              notificationsDatasourceUID: alertmanagerDataSource.uid,
+            }}
+          >
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+      });
+
+      it('enables the auto-sync switch when a Mimir/Cortex datasource is selected', async () => {
+        grantUserRole('Admin');
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+      });
+
+      it('unchecks and disables auto-sync when switching to a datasource that does not support it', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByText('Alertmanager'));
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).not.toBeChecked());
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
+      });
+
+      it('keeps auto-sync checked when switching between two Mimir/Cortex datasources', async () => {
+        grantUserRole('Admin');
+        setupDataSources(alertmanagerDataSource, mimirDataSource, mimirDataSource2);
+        setupDatasourcesEndpoint(server, [MIMIR_DS, MIMIR_DS_2]);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled());
+        await user.click(screen.getByRole('switch', { name: /auto-sync/i }));
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+
+        await user.click(screen.getByRole('combobox'));
+        await user.click(screen.getByText('Mimir Alertmanager 2'));
+
+        // Give any (incorrect) reset effect a chance to fire before asserting it didn't.
+        await waitFor(() =>
+          expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('mimir-alertmanager-2')
+        );
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeChecked();
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeEnabled();
+      });
+
+      it('labels each datasource option with its auto-sync support', async () => {
+        grantUserRole('Admin');
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource' }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        await user.click(screen.getByRole('combobox'));
+
+        const mimirOption = await screen.findByRole('option', { name: /Mimir Alertmanager/i });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        const plainOption = screen.getByRole('option', { name: /^Alertmanager/i });
+        expect(within(plainOption).queryByText('Auto-sync')).not.toBeInTheDocument();
+      });
     });
   });
 });
