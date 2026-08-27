@@ -20,110 +20,128 @@ const labelsToFieldsTransform: DataTransformerConfig<LabelsToFieldsOptions> = {
 
 const labelsToFieldsRefId = { ...labelsToFieldsTransform, refId: 'test' };
 
+interface RenderOptions {
+  transformation?: DataTransformerConfig;
+  transformations?: DataTransformerConfig[];
+  onChange?: (index: number, config: DataTransformerConfig) => void;
+  dynamicRefId?: string;
+  reservedRefIds?: string[];
+}
+
+// dynamicRefId defaults to being set, since the refId editor only renders when it is.
+function renderHeader({
+  transformation = mergeTransform,
+  transformations = [mergeTransform, labelsToFieldsTransform],
+  onChange = () => {},
+  dynamicRefId = 'merge-A-B',
+  reservedRefIds,
+}: RenderOptions = {}) {
+  return render(
+    <TransformationOperationRowHeader
+      index={0}
+      transformation={transformation}
+      transformations={transformations}
+      transformationTypeName="1 - Labels to fields"
+      onChange={onChange}
+      dynamicRefId={dynamicRefId}
+      reservedRefIds={reservedRefIds}
+    />
+  );
+}
+
+async function typeRefId(value: string) {
+  await userEvent.click(screen.getByTestId('transformation-refid-div'));
+  await userEvent.type(screen.getByTestId('transformation-refid-input'), value);
+}
+
 describe('TransformationOperationRowHeader', () => {
-  it('renders the modal with the title and empty refId for ', () => {
-    const { unmount } = render(
-      <TransformationOperationRowHeader
-        index={0}
-        transformation={mergeTransform}
-        transformations={[mergeTransform, labelsToFieldsTransform]}
-        transformationTypeName="1 - Labels to fields"
-        onChange={() => {}}
-      />
-    );
+  it('renders the transformation type name', () => {
+    renderHeader();
 
-    // Check if the modal title is rendered with the correct text
     expect(screen.getByText('1 - Labels to fields')).toBeInTheDocument();
+  });
+
+  it('renders the auto placeholder when no static refId is set', () => {
+    renderHeader({ dynamicRefId: '' });
+
     expect(screen.getByText('(Auto)')).toBeInTheDocument();
-
-    // Unmount the component to clean up
-    unmount();
   });
 
-  it('calls onChange when the the refId is changed', async () => {
-    const mockOnChange = jest.fn();
-    const { unmount } = render(
-      <TransformationOperationRowHeader
-        index={0}
-        transformation={mergeTransform}
-        transformations={[mergeTransform, labelsToFieldsTransform]}
-        transformationTypeName="1 - Labels to fields"
-        onChange={mockOnChange}
-        dynamicRefId=""
-      />
-    );
-
-    // Find and click the modal's close button
-    const beforeEditField = screen.getByTestId('transformation-refid-div');
-    await userEvent.click(beforeEditField);
-    const refIdInput = screen.getByTestId('transformation-refid-input');
-    await userEvent.click(refIdInput);
-    await userEvent.type(refIdInput, 'test refid');
-
-    // blur the field
-    await userEvent.click(document.body);
-    expect(mockOnChange).toHaveBeenCalledWith(0, { id: 'merge', options: {}, refId: 'test refid' });
-
-    unmount();
-  });
-
-  it('shows an error message if the refID is already used', async () => {
-    const mockOnChange = jest.fn();
-
-    const { unmount } = render(
-      <TransformationOperationRowHeader
-        index={0}
-        transformation={mergeTransform}
-        transformations={[mergeTransform, labelsToFieldsRefId]}
-        transformationTypeName="1 - Labels to fields"
-        onChange={mockOnChange}
-        dynamicRefId=""
-      />
-    );
-
-    // Find and click the modal's close button
-    const beforeEditField = screen.getByTestId('transformation-refid-div');
-    await userEvent.click(beforeEditField);
-    const refIdInput = screen.getByTestId('transformation-refid-input');
-    await userEvent.click(refIdInput);
-    await userEvent.type(refIdInput, 'test');
-    expect(screen.getByText('Transformation name already exists')).toBeInTheDocument();
-    // blur the field
-    await userEvent.click(document.body);
-    expect(mockOnChange).not.toHaveBeenCalled();
-
-    unmount();
-  });
-
-  it('displays the dynamic id if provided', async () => {
-    const { unmount } = render(
+  it('hides the refId editor for transformations that do not derive their refId from the input', () => {
+    render(
       <TransformationOperationRowHeader
         index={0}
         transformation={mergeTransform}
         transformations={[mergeTransform, labelsToFieldsTransform]}
         transformationTypeName="1 - Labels to fields"
         onChange={() => {}}
-        dynamicRefId="test-A-B"
       />
     );
+
+    expect(screen.getByText('1 - Labels to fields')).toBeInTheDocument();
+    expect(screen.queryByTestId('transformation-refid-div')).not.toBeInTheDocument();
+    expect(screen.queryByText('(Auto)')).not.toBeInTheDocument();
+  });
+
+  it('calls onChange when the refId is changed', async () => {
+    const onChange = jest.fn();
+    renderHeader({ onChange });
+
+    await typeRefId('test refid');
+    await userEvent.click(document.body);
+
+    expect(onChange).toHaveBeenCalledWith(0, { id: 'merge', options: {}, refId: 'test refid' });
+  });
+
+  it('rejects a refId already used by another transformation', async () => {
+    const onChange = jest.fn();
+    renderHeader({ transformations: [mergeTransform, labelsToFieldsRefId], onChange });
+
+    await typeRefId('test');
+    expect(screen.getByText('Transformation name already exists')).toBeInTheDocument();
+
+    await userEvent.click(document.body);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('rejects a refId already used by a query or an earlier transformation', async () => {
+    const onChange = jest.fn();
+    renderHeader({ onChange, reservedRefIds: ['A', 'reduce-A-A'] });
+
+    await typeRefId('A');
+    expect(
+      screen.getByText('Transformation name is already used by a query or an earlier transformation')
+    ).toBeInTheDocument();
+
+    await userEvent.click(document.body);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('rejects a refId containing a template variable', async () => {
+    const onChange = jest.fn();
+    renderHeader({ onChange });
+
+    await typeRefId('$transformName');
+    expect(screen.getByText('Transformation name cannot contain a variable')).toBeInTheDocument();
+
+    await userEvent.click(document.body);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('displays the dynamic refId when no static refId is set', () => {
+    renderHeader({ dynamicRefId: 'test-A-B' });
 
     expect(screen.getByText('test-A-B')).toBeInTheDocument();
-    unmount();
   });
 
-  it('displays the static id if provided, even if dynamic ref id is also provided', async () => {
-    const { unmount } = render(
-      <TransformationOperationRowHeader
-        index={0}
-        transformation={labelsToFieldsRefId}
-        transformations={[labelsToFieldsRefId, mergeTransform]}
-        transformationTypeName="1 - Labels to fields"
-        onChange={() => {}}
-        dynamicRefId="refId"
-      />
-    );
+  it('displays the static refId in preference to the dynamic one', () => {
+    renderHeader({
+      transformation: labelsToFieldsRefId,
+      transformations: [labelsToFieldsRefId, mergeTransform],
+      dynamicRefId: 'labelsToFields-A-B',
+    });
 
     expect(screen.getByText('test')).toBeInTheDocument();
-    unmount();
+    expect(screen.queryByText('labelsToFields-A-B')).not.toBeInTheDocument();
   });
 });
