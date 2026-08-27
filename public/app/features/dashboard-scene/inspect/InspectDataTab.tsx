@@ -52,9 +52,6 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
   const panel = model.state.panelRef.resolve();
   const dataProvider = sceneGraph.getData(panel);
 
-  // Subscribed whether or not its frames are the ones on screen: what the panel's plugin contributes
-  // can change without the query re-running — a plugin finishing its load, a visualization switch —
-  // and that is what decides whether the toggle is offered at all.
   const { data: transformedData } = dataProvider.useState();
   const { data: sourceData } = getQuerySourceOf(dataProvider).useState();
   const data = options.withTransforms ? transformedData : sourceData;
@@ -84,8 +81,7 @@ function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>)
 }
 
 /**
- * Whether anything transforms this panel's data, which is what decides if the toggle between the
- * query result and the rendered frames is worth offering.
+ * Whether anything transforms this panel's data
  */
 function hasTransformations(dataProvider: SceneDataProvider) {
   if (!(dataProvider instanceof SceneDataTransformer)) {
@@ -96,14 +92,12 @@ function hasTransformations(dataProvider: SceneDataProvider) {
     return true;
   }
 
-  // Resolved against the current frames, not just whether the plugin registered a supplier — a
-  // supplier is free to resolve to nothing for them.
   const { prepend, append } = dataProvider.getResolvedSystemTransformations();
 
   return prepend.length > 0 || append.length > 0;
 }
 
-/** The query result, before this panel's transformations: the transformer's source, when it has one. */
+/** The query result before this panel's transformations. */
 function getQuerySourceOf(dataProvider: SceneDataProvider): SceneDataProvider {
   if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
     return dataProvider.state.$data;
