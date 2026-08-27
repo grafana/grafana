@@ -3,7 +3,6 @@ import { render, screen } from 'test/test-utils';
 import { FieldType, toDataFrame } from '@grafana/data';
 import { type ScalarDimensionConfig } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
-import { Field } from '@grafana/ui';
 
 import { type ScalarDimensionOptions } from '../types';
 
@@ -21,21 +20,20 @@ const makeProps = makePropsFactory<ScalarDimensionConfig, ScalarDimensionOptions
 beforeEach(() => mockComboboxRect());
 
 describe('ScalarDimensionEditor', () => {
-  it('uses the parent field label as the combobox accessible name', () => {
+  it('labels the field combobox with an inline Field row', () => {
     const { props } = makeProps({ min: 0, max: 360, fixed: 15 });
-    render(
-      <Field label="Rotation angle">
-        <ScalarDimensionEditor {...props} />
-      </Field>
-    );
+    render(<ScalarDimensionEditor {...props} />);
 
-    expect(screen.getByRole('combobox', { name: 'Rotation angle' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Field' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Mod' })).toBeChecked();
+    expect(screen.getByLabelText('Value')).toHaveValue(15);
   });
 
-  it('falls back to a Scalar name when no id is provided', () => {
-    const { props } = makeProps({ min: 0, max: 360, fixed: 15 });
-    render(<ScalarDimensionEditor {...props} id={undefined} />);
+  it('hides the fixed value input when a field is selected', () => {
+    const { props } = makeProps({ min: 0, max: 360, field: 'temp', fixed: 15 });
+    render(<ScalarDimensionEditor {...props} />);
 
-    expect(screen.getByRole('combobox', { name: 'Scalar' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Field' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Value')).not.toBeInTheDocument();
   });
 });

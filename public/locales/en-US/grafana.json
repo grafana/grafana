@@ -8389,6 +8389,7 @@
         "label-fixed-values": "Fixed value"
       },
       "label": "Scalar",
+      "label-field": "Field",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",

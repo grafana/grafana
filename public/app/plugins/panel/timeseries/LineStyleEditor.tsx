@@ -84,7 +84,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
   const hasDashPattern = value?.fill && value?.fill !== 'solid' && value?.fill !== 'accessible';
 
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={2} alignItems="flex-start">
       <RadioButtonGroup
         value={value?.fill || 'solid'}
         options={lineFillOptions}
@@ -102,16 +102,16 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
         }}
       />
       {hasDashPattern && (
-        <Stack wrap={true} alignItems="flex-start">
-          <Field
-            noMargin
-            htmlFor={dashPatternId}
-            label={t('timeseries.line-style-editor.label-dash-pattern', 'Dash pattern')}
-            description={t(
-              'timeseries.line-style-editor.description-dash-pattern',
-              'Comma or space separated lengths. Example: 10, 20'
-            )}
-          >
+        <Field
+          noMargin
+          htmlFor={dashPatternId}
+          label={t('timeseries.line-style-editor.label-dash-pattern', 'Dash pattern')}
+          description={t(
+            'timeseries.line-style-editor.description-dash-pattern',
+            'Comma or space separated lengths. Example: 10, 20'
+          )}
+        >
+          <Stack wrap={true} alignItems="center">
             <Select
               inputId={dashPatternId}
               allowCustomValue={true}
@@ -126,19 +126,19 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
               }}
               formatCreateLabel={(text) => `Segments: ${parseText(text).join(', ')}`}
             />
-          </Field>
-          <a
-            title={t(
-              'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
-              'The input expects a segment list'
-            )}
-            href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
-          </a>
-        </Stack>
+            <a
+              title={t(
+                'timeseries.line-style-editor.title-the-input-expects-a-segment-list',
+                'The input expects a segment list'
+              )}
+              href="https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/setLineDash#Parameters"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <IconButton name="question-circle" tooltip={t('timeseries.line-style-editor.tooltip-help', 'Help')} />
+            </a>
+          </Stack>
+        </Field>
       )}
     </Stack>
   );

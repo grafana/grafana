@@ -124,7 +124,7 @@ describe('LineStyleEditor', () => {
       ).toBeInTheDocument();
     });
 
-    it('labels the dash pattern combobox and explains the input format', () => {
+    it('labels the dash pattern combobox and keeps help inside the field', () => {
       render(
         <LineStyleEditor
           value={{ fill: 'dash', dash: [10, 10] }}
@@ -139,6 +139,7 @@ describe('LineStyleEditor', () => {
           name: 'Dash pattern Comma or space separated lengths. Example: 10, 20',
         })
       ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Help' })).toBeInTheDocument();
     });
 
     it('should show default segments when dash array is empty', () => {
