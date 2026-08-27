@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'flex-start',
+      height: theme.flags.visualDesignRefresh ? theme.spacing(3) : undefined,
 
       '&:focus-visible': {
         outline: `2px solid ${theme.colors.accent.main}`,
