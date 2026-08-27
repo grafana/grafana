@@ -33,6 +33,7 @@ import {
   buildVariableResource,
   canManageGlobalVariables,
   canManageVariableScope,
+  isRecreateVariableSave,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
@@ -166,6 +167,10 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
   const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
   const canManageSourceScope =
     sourceScopeReady && canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
+  const canDeleteVariables = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  // Renaming or re-scoping goes through recreateVariable (create-then-delete),
+  // so it needs delete rights or it leaves the original behind.
+  const isRecreate = isRecreateVariableSave(source, logicalName, folderUid);
   const canSave =
     !isBusy &&
     !hasNameError &&
@@ -174,11 +179,11 @@ function VariableEditorLoaded({ source, onBack, initialVariable }: VariableEdito
     hasValidFolderScope &&
     selectedScopeReady &&
     canManageSelectedScope &&
-    (isNew || canManageSourceScope);
+    (isNew || canManageSourceScope) &&
+    (!isRecreate || canDeleteVariables);
   // variables:write (or create) can open /edit/:name, but delete is a separate action —
   // same variables:delete gate as the list page, plus source-scope rights.
-  const canDelete =
-    !isBusy && Boolean(source) && canManageSourceScope && contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  const canDelete = !isBusy && Boolean(source) && canManageSourceScope && canDeleteVariables;
   // Viewers can open unmanageable scopes to inspect them, but must not relocate (copy-as-move).
   const canChangeFolder = isNew || canManageSourceScope;
 

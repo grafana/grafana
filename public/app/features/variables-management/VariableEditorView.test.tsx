@@ -71,6 +71,18 @@ describe('VariableEditorView delete action', () => {
 
     expect(await screen.findByRole('button', { name: 'Delete' })).toBeDisabled();
   });
+
+  it('keeps Save enabled for an in-place edit when the user cannot delete', async () => {
+    jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.VariablesDelete);
+
+    render(<VariableEditorView source={folderVariable} onBack={jest.fn()} />);
+
+    expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
+  });
 });
 
 describe('VariableEditorView folder help', () => {

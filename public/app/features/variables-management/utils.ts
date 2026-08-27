@@ -23,6 +23,21 @@ export function canManageGlobalVariables(): boolean {
 }
 
 /**
+ * Rename or re-scope changes the derived metadata.name, so Save is create-then-delete
+ * (see recreateVariable). In-place spec-only edits are a PATCH.
+ */
+export function isRecreateVariableSave(
+  source: Variable | undefined,
+  logicalName: string,
+  folderUid: string | undefined
+): boolean {
+  if (!source) {
+    return false;
+  }
+  return logicalName !== getVariableSpecName(source) || folderUid !== (getVariableFolderUid(source) ?? '');
+}
+
+/**
  * Whether the user may mutate a variable in the given scope.
  * - `undefined` — no folder selected yet (creating without root rights)
  * - `''` — org-global / root; requires {@link canManageGlobalVariables}

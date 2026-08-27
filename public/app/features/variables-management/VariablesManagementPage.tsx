@@ -94,6 +94,8 @@ export default function VariablesManagementPage() {
   const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
   const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
   const canDelete = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  // Move is create-then-delete under the hood (see bulkMoveVariables).
+  const canMove = canCreate && canDelete;
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -279,7 +281,7 @@ export default function VariablesManagementPage() {
           </EmptyState>
         ) : (
           <div className={styles.content}>
-            {selected.size > 0 && (canWrite || canDelete) && (
+            {selected.size > 0 && canDelete && (
               <Stack gap={1} alignItems="center">
                 <Text color="secondary">
                   {t('variables-management.page.selected-count', '', {
@@ -288,7 +290,7 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                {canWrite && (
+                {canMove && (
                   <Button
                     variant="secondary"
                     onClick={() => setPendingAction('move')}
@@ -297,15 +299,13 @@ export default function VariablesManagementPage() {
                     <Trans i18nKey="variables-management.page.move">Move</Trans>
                   </Button>
                 )}
-                {canDelete && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setPendingAction('delete')}
-                    disabled={isProcessing || !canMutateSelection}
-                  >
-                    <Trans i18nKey="variables-management.page.delete">Delete</Trans>
-                  </Button>
-                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => setPendingAction('delete')}
+                  disabled={isProcessing || !canMutateSelection}
+                >
+                  <Trans i18nKey="variables-management.page.delete">Delete</Trans>
+                </Button>
               </Stack>
             )}
             <VariablesTable
@@ -315,7 +315,7 @@ export default function VariablesManagementPage() {
               selected={selected}
               onSetSelected={onSetSelected}
               onEdit={canWrite ? onEdit : undefined}
-              selectable={canWrite || canDelete}
+              selectable={canDelete}
             />
           </div>
         )}

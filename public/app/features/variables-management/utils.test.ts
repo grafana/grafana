@@ -8,6 +8,7 @@ import {
   buildVariablesTree,
   canManageGlobalVariables,
   canManageVariableScope,
+  isRecreateVariableSave,
   getNextAvailableVariableName,
   getVariableEditableType,
   getVariableFolderPickerExcludeUIDs,
@@ -91,6 +92,27 @@ describe('canManageGlobalVariables', () => {
   it('returns false for Editors', () => {
     contextSrv.hasRole = jest.fn((role: string) => role === 'Editor');
     expect(canManageGlobalVariables()).toBe(false);
+  });
+});
+
+describe('isRecreateVariableSave', () => {
+  it('is false for a new variable', () => {
+    expect(isRecreateVariableSave(undefined, 'env', 'folder-a')).toBe(false);
+  });
+
+  it('is false for an in-place spec edit', () => {
+    expect(isRecreateVariableSave(makeVariable('env', 'folder-a'), 'env', 'folder-a')).toBe(false);
+    expect(isRecreateVariableSave(makeVariable('env'), 'env', '')).toBe(false);
+  });
+
+  it('is true when the logical name changes', () => {
+    expect(isRecreateVariableSave(makeVariable('env', 'folder-a'), 'region', 'folder-a')).toBe(true);
+  });
+
+  it('is true when the folder scope changes', () => {
+    expect(isRecreateVariableSave(makeVariable('env', 'folder-a'), 'env', 'folder-b')).toBe(true);
+    expect(isRecreateVariableSave(makeVariable('env', 'folder-a'), 'env', '')).toBe(true);
+    expect(isRecreateVariableSave(makeVariable('env'), 'env', 'folder-a')).toBe(true);
   });
 });
 
