@@ -30,6 +30,13 @@ export default (env: Env = {}) => {
         chunks: 'all',
         minChunks: 1,
         cacheGroups: {
+          grafanaUiSlate: {
+            test: /[\\/]node_modules[\\/]/,
+            chunks: (chunk) => chunk.name === 'grafana-ui-slate',
+            name: 'grafana-ui-slate',
+            priority: 30,
+            enforce: true,
+          },
           moment: {
             test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
             chunks: 'initial',
