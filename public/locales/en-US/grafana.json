@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Inherited from folder",
-      "locked-aria-label": "Locked permission indicator",
       "remove-aria-label": "Remove permission for {{identifier}}",
       "tooltip-inherited-permission": "Inherited permission",
       "tooltip-provisioned-permission": "Provisioned permission"
@@ -8782,7 +8781,9 @@
     "metric-detail-panel": {
       "aria-label": "Metric details",
       "close": "Close metric details",
-      "from-query": "Query {{refId}}"
+      "from-query": "Query {{refId}}",
+      "unknown-type": "Unknown type",
+      "unknown-type-tooltip": "This datasource reported no recognized type for this metric"
     },
     "metrics-list": {
       "collapse-metric": "Collapse {{name}}",
@@ -12960,8 +12961,7 @@
       "label": "Add block",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
-      "visualization": "Visualization",
-      "visualization-placeholder": "Coming soon"
+      "visualization": "Visualization"
     },
     "cell": {
       "code": {
@@ -12989,6 +12989,10 @@
         "tooltip-link": "Link",
         "tooltip-numbered-list": "Numbered list",
         "tooltip-strikethrough": "Strikethrough"
+      },
+      "query": {
+        "add": "Add query",
+        "run": "Run query"
       }
     },
     "errors": {
@@ -13017,13 +13021,19 @@
     },
     "history": {
       "add-block": "Add block",
+      "add-query": "Add query",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
+      "duplicate-query": "Duplicate query",
       "edit-block": "Edit block",
+      "edit-query": "Edit query",
       "move-block": "Move block",
       "redo": "Redo",
       "redo-action": "Redo: {{action}}",
+      "remove-query": "Remove query",
+      "select-query": "Select query",
       "split-block": "Split block",
+      "switch-datasource": "Switch datasource",
       "undo": "Undo",
       "undo-action": "Undo: {{action}}"
     },
@@ -15923,7 +15933,6 @@
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
       "language-preference-placeholder": "Choose language",
-      "theme-description": "Enjoying the experimental themes? Tell us what you'd like to see <2>here.</2>",
       "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
@@ -17884,6 +17893,14 @@
       "select-all": "Select all variables",
       "select-folder": "Select all variables in folder {{title}}",
       "select-variable": "Select variable {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "Check it out",
+      "description": "We've had a redesign!",
+      "revert": "Take me back",
+      "title": "New styles"
     }
   },
   "visualization": {
