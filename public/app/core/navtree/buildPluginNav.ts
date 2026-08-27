@@ -44,9 +44,12 @@ const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, A
  *   unsupported ([navigation.app_sections] is: delivered via frontend
  *   settings, applied by appNavConfigFor)
  * - assistant includes gated on per-org plugin jsonData (the Investigations
- *   page, trial-mode restrictions) are not reproduced — jsonData is not
- *   readable client-side; the deployment-mode filtering is (see
+ *   page, trial-mode and ossMode restrictions) are not reproduced — jsonData
+ *   is not readable client-side; the deployment-mode filtering is (see
  *   APP_NAV_CONFIG's filterInclude)
+ * - nesting page includes under their nearest path ancestor
+ *   (grafana.pluginPathNesting) is not reproduced yet; the flag has only just
+ *   gained a React target, so the client build still appends includes flat
  * - page includes without a path are skipped (the meta spec carries no slug
  *   for the legacy /plugins/<id>/page/<slug> fallback URL)
  */

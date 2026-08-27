@@ -99,7 +99,6 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     sectionId: NavID.observability,
     sortWeight: 5,
     text: 'Database',
-    isNew: true,
   },
   'grafana-k8s-app': {
     sectionId: NavID.observability,
@@ -188,13 +187,15 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   [ASSISTANT_APP_ID]: {
     sectionId: NavID.root,
     sortWeight: NavWeight.assistant,
-    text: 'Assistant',
+    text: 'AI',
     subTitle: 'AI-powered assistant for Grafana',
     icon: 'ai-sparkle',
     // Enterprise and cloud stacks show every assistant page; OSS deployments
-    // only the core ones. The Go builder additionally restricts trial-mode
-    // orgs (per-org plugin jsonData), which is not readable client-side —
-    // trial orgs run on cloud stacks, so they see all pages here.
+    // only the core ones. The Go builder additionally reads per-org plugin
+    // jsonData, which is not readable client-side: an `ossMode` stack is
+    // restricted to the OSS paths server-side but shows every page here, and
+    // trial-mode orgs are restricted to a narrower set than we apply. Both are
+    // cloud-only, so they over-show rather than hide anything.
     filterInclude: (include) =>
       config.buildInfo.edition !== GrafanaEdition.OpenSource ||
       config.namespace.startsWith('stacks-') ||

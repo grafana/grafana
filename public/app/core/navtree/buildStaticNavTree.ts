@@ -16,14 +16,7 @@ import { getHomeNode } from './sections/home.navEntry';
 import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
-import {
-  applyAppSubUrl,
-  buildEntries,
-  findNavById,
-  type NavEntryBuilder,
-  sortNavTree,
-  updateNavById,
-} from './utils';
+import { applyAppSubUrl, buildEntries, findNavById, type NavEntryBuilder, sortNavTree, updateNavById } from './utils';
 
 /**
  * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
@@ -48,7 +41,7 @@ import {
  * decision at boot time (a bootdata boolean alongside the tree) and key off
  * that, rather than re-evaluating the flag here.
  */
-export function isClientNavTreeEnabled(): boolean {
+function isClientNavTreeEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
 }
 
@@ -59,9 +52,7 @@ export function isClientNavTreeEnabled(): boolean {
  * alone renders the static tree only.
  */
 export function arePluginNavItemsEnabled(): boolean {
-  return (
-    isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)
-  );
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
 /**
