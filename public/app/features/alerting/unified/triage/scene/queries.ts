@@ -40,6 +40,16 @@ function isNegativeOperator(operator: MatcherOperator): boolean {
   return operator === '!=' || operator === '!~';
 }
 
+/**
+ * An exclusion with an empty value is not really an exclusion of a value — because
+ * Prometheus reads a label the series doesn't have as empty, `cluster!=""` is asking
+ * "does this series have a cluster at all?". That's a question about any of the
+ * backing labels, so it spreads across branches like an inclusion does.
+ */
+function excludesAValue(matcher: MatcherExpr): boolean {
+  return isNegativeOperator(matcher.operator) && matcher.value !== '';
+}
+
 function renameMatchers(matchers: MatcherExpr[], name: string): MatcherExpr[] {
   return matchers.map((matcher) => ({ ...matcher, name }));
 }
@@ -59,6 +69,8 @@ function renameMatchers(matchers: MatcherExpr[], name: string): MatcherExpr[] {
  *   that isn't on the series as empty, so a series with `cluster="foo"` and no
  *   `cluster_name` would still match the `cluster_name!="foo"` branch and come back
  *   in the union.
+ *
+ * See `excludesAValue` for why an exclusion with an empty value goes the first way.
  */
 function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
@@ -69,8 +81,8 @@ function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = [])
         canonicalKey,
         labelKeys,
         matchers,
-        includeMatchers: matchers.filter((m) => !isNegativeOperator(m.operator)),
-        excludeMatchers: matchers.filter((m) => isNegativeOperator(m.operator)),
+        branchedMatchers: matchers.filter((m) => !excludesAValue(m)),
+        sharedMatchers: matchers.filter(excludesAValue),
       };
     })
     .filter((entry) => entry.matchers.length > 0);
@@ -79,17 +91,17 @@ function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = [])
   const baseMatchers = allMatchers.filter((m) => !combinedCanonicalKeys.has(m.name));
 
   // Exclusions apply to every branch, so they live alongside the non-combined matchers.
-  const expandedExcludeMatchers = combinedMatchers.flatMap((entry) =>
-    entry.labelKeys.flatMap((labelKey) => renameMatchers(entry.excludeMatchers, labelKey))
+  const expandedSharedMatchers = combinedMatchers.flatMap((entry) =>
+    entry.labelKeys.flatMap((labelKey) => renameMatchers(entry.sharedMatchers, labelKey))
   );
 
-  let branches: MatcherExpr[][] = [[...baseMatchers, ...expandedExcludeMatchers]];
+  let branches: MatcherExpr[][] = [[...baseMatchers, ...expandedSharedMatchers]];
   for (const entry of combinedMatchers) {
-    if (entry.includeMatchers.length === 0) {
+    if (entry.branchedMatchers.length === 0) {
       continue;
     }
     branches = branches.flatMap((branch) =>
-      entry.labelKeys.map((labelKey) => [...branch, ...renameMatchers(entry.includeMatchers, labelKey)])
+      entry.labelKeys.map((labelKey) => [...branch, ...renameMatchers(entry.branchedMatchers, labelKey)])
     );
   }
 

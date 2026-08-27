@@ -203,6 +203,14 @@ describe('triage queries combined filter exclusions', () => {
     expect(query).not.toContain(' or ');
   });
 
+  it('treats an empty-value exclusion as "has any of these labels"', () => {
+    const query = summaryChartQuery('cluster!=""').expr;
+
+    // Prometheus reads a missing label as empty, so ANDing the two here would mean
+    // "has both labels" and match almost nothing. Branching keeps it to "has either".
+    expect(query).toBe('count by (alertstate) ((GRAFANA_ALERTS{cluster!=""} or GRAFANA_ALERTS{cluster_name!=""}))');
+  });
+
   it('carries exclusions into the deduplicated unique-instances query', () => {
     const query = uniqueAlertInstancesQuery('cluster!="prod-me-central-1"').expr;
 
