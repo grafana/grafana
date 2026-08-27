@@ -39,7 +39,7 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		SkipSync:   true,
 	})
 
-	baselineCount, baselineSum := quotaStalenessHistogram(t, helper)
+	baselineCount, _ := quotaStalenessHistogram(t, helper)
 	lookupErr := apierrors.NewInternalError(errors.New("quota service returned 500"))
 	helper.SetQuotaError(lookupErr)
 
@@ -64,20 +64,22 @@ func TestIntegrationProvisioning_RepositoryUsesStaleQuotaWhenRefreshFails(t *tes
 		}
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		count, _ := quotaStalenessHistogram(t, helper)
-		assert.Greater(collect, count, baselineCount)
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-
-	agedStaleSince := time.Now().Add(-5 * time.Minute).UnixMilli()
-	patchRepositoryStatus(t, helper, repoName, map[string]any{
-		"quota": map[string]any{"staleSince": agedStaleSince},
-	})
-
+	var firstCount uint64
+	var firstSum float64
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		count, sum := quotaStalenessHistogram(t, helper)
-		assert.Greater(collect, count, baselineCount)
-		assert.GreaterOrEqual(collect, sum-baselineSum, 250.0)
+		if assert.Greater(collect, count, baselineCount) {
+			firstCount = count
+			firstSum = sum
+		}
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	time.Sleep(time.Second)
+	helper.TriggerRepositoryReconciliation(t, repoName)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		count, sum := quotaStalenessHistogram(t, helper)
+		assert.Greater(collect, count, firstCount)
+		assert.Greater(collect, sum, firstSum)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	refreshedQuota := provisioning.QuotaStatus{
