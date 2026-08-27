@@ -95,6 +95,9 @@ const config: KnipConfig = {
       webpack: {
         config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
       },
+      rspack: {
+        config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
+      },
       postcss: {
         config: 'scripts/webpack/postcss.config.js',
       },
