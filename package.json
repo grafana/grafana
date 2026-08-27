@@ -69,6 +69,7 @@
     "start:rspack:noTsCheck": "yarn start:rspack -- --env noTsCheck=1",
     "start:rspack:noLint": "yarn start:rspack -- --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.ts --profile --json > compilation-stats.json",
+    "stats:rspack": "NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 rspack build --config scripts/rspack/rspack.prod.ts --config-name grafana --env fullStats --json compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes-generate": "yarn workspace @grafana/data themes-schema && esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --conditions=@grafana-app/source --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
