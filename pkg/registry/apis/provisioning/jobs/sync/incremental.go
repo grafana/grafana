@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"go.opentelemetry.io/otel/attribute"
@@ -47,7 +46,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if err != nil {
 		compareSpan.RecordError(err)
 		compareSpan.End()
-		return tracing.Error(span, fmt.Errorf("compare files error: %w", err))
+		return apptracing.Error(span, fmt.Errorf("compare files error: %w", err))
 	}
 	compareSpan.End()
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
@@ -69,12 +68,12 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
-			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
+			return apptracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 		}
 
 		target, err := repositoryResources.List(ctx)
 		if err != nil {
-			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+			return apptracing.Error(span, fmt.Errorf("list managed resources: %w", err))
 		}
 
 		for i := range target.Items {
@@ -86,7 +85,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
 		diff, relocations, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
-			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
+			return apptracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
 
 		logger := logging.FromContext(ctx)
@@ -178,7 +177,7 @@ func applyIncrementalChanges(
 			return nil, ctx.Err()
 		}
 		if err := progress.TooManyErrors(); err != nil {
-			return nil, tracing.Error(span, err)
+			return nil, apptracing.Error(span, err)
 		}
 
 		// Check if this resource is nested under a failed folder creation

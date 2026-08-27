@@ -9,7 +9,9 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 )
@@ -53,4 +55,19 @@ func FromContext(ctx context.Context) trace.Tracer {
 // migrate to `tracing.Start(ctx, name, opts...)` unchanged.
 func Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	return FromContext(ctx).Start(ctx, name, opts...)
+}
+
+// Error records err on span, marks the span as failed, and returns err so
+// callers can `return tracing.Error(span, err)`. Unlike the main module's
+// pkg/infra/tracing.Error it does not add the errutil message_id attribute:
+// this module cannot depend on the main grafana module.
+func Error(span trace.Span, err error) error {
+	span.SetStatus(codes.Error, err.Error())
+	span.RecordError(err)
+	return err
+}
+
+// Errorf wraps fmt.Errorf and records the error on span, like Error.
+func Errorf(span trace.Span, format string, args ...any) error {
+	return Error(span, fmt.Errorf(format, args...))
 }

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	apptracing "github.com/grafana/grafana/apps/provisioning/pkg/tracing"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -76,7 +75,7 @@ func FullSync(
 				progress.SetFinalMessage(ctx, "root folder cannot be claimed by this repository")
 				return nil
 			}
-			return tracing.Error(span, fmt.Errorf("create root folder: %w", err))
+			return apptracing.Error(span, fmt.Errorf("create root folder: %w", err))
 		}
 	}
 	ensureFolderSpan.End()
@@ -92,7 +91,7 @@ func FullSync(
 	compareSpan.End()
 
 	if err != nil {
-		return tracing.Error(span, fmt.Errorf("compare changes: %w", err))
+		return apptracing.Error(span, fmt.Errorf("compare changes: %w", err))
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
