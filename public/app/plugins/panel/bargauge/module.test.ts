@@ -51,6 +51,13 @@ describe('bargauge module', () => {
     expect(displayMode?.defaultValue).toBe(BarGaugeDisplayMode.Gradient);
   });
 
+  it('registers showNameForSingleSeries as an always-visible, default-off switch', () => {
+    const showNameForSingleSeries = buildItems().find((item) => item.path === 'showNameForSingleSeries');
+
+    expect(showNameForSingleSeries?.defaultValue).toBe(false);
+    expect(showNameForSingleSeries?.showIf).toBeUndefined();
+  });
+
   it('registers two namePlacement radios gated by orientation', () => {
     const items = buildItems().filter((item) => item.path === 'namePlacement');
     expect(items).toHaveLength(2);

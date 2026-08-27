@@ -20,6 +20,7 @@ exports[`bargauge module registers the expected bar gauge options 1`] = `
   "valueMode",
   "namePlacement",
   "namePlacement",
+  "showNameForSingleSeries",
   "showUnfilled",
   "sizing",
   "minVizWidth",

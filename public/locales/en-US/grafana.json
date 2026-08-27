@@ -4334,6 +4334,7 @@
     "description-max-height": "Maximum row height (horizontal orientation)",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
+    "description-show-name-for-single-series": "Show the series name even when there is only one bar",
     "description-show-unfilled-area": "When enabled renders the unfilled region as gray",
     "display-mode-options": {
       "label-basic": "Basic",
@@ -4352,6 +4353,7 @@
       "label-left": "Left",
       "label-top": "Top"
     },
+    "name-show-name-for-single-series": "Show name for single series",
     "name-show-unfilled-area": "Show unfilled area",
     "name-value-display": "Value display",
     "presets": {
