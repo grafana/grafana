@@ -581,6 +581,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/types/ @grafana/grafana-frontend-platform
 /packages/grafana-data/src/types/scopes.ts @grafana/grafana-operator-experience-squad
 /packages/grafana-data/src/types/suggestions.ts @grafana/dataviz-squad
+/packages/grafana-data/src/types/timeCompare.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/__snapshots__/ @grafanabot
 /packages/grafana-data/src/utils/anyToNumber.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/arrayUtils* @grafana/grafana-frontend-platform
@@ -1013,6 +1014,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/dashboard-scene/panel-edit/PanelStylesSection*.tsx/ @grafana/dataviz-squad
+/public/app/features/dashboard-scene/scene/panel-timerange/timeCompare/ @grafana/dataviz-squad
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
