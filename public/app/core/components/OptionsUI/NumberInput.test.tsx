@@ -235,4 +235,22 @@ describe('NumberInput', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Out of range. Range: 1 to 200');
   });
+
+  it('describes the input with the range when valid and only the error when invalid', async () => {
+    const user = userEvent.setup();
+    render(<NumberInput value={5} onChange={jest.fn()} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    const range = screen.getByText('Range: 1 to 200');
+    expect(input).toHaveAttribute('aria-describedby', range.id);
+
+    await user.clear(input);
+    await user.type(input, '-9');
+    await user.tab();
+
+    const alert = screen.getByRole('alert');
+    expect(input).toHaveAttribute('aria-describedby', alert.id);
+    expect(alert.id).not.toBe(range.id);
+    expect(alert).toHaveTextContent('Out of range. Range: 1 to 200');
+  });
 });

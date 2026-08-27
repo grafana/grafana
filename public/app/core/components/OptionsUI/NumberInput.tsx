@@ -180,9 +180,7 @@ export const NumberInput = memo(
       [commitValue, emitInRangeValueDebounced]
     );
 
-    const describedBy = [rangeText ? rangeId : undefined, inputCorrected ? errorId : undefined]
-      .filter(Boolean)
-      .join(' ');
+    const describedBy = inputCorrected ? errorId : rangeText ? rangeId : undefined;
     const errorMessage = rangeText
       ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
       : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
@@ -206,18 +204,14 @@ export const NumberInput = memo(
           width={width}
           suffix={suffix}
           invalid={inputCorrected}
-          aria-describedby={describedBy || undefined}
+          aria-describedby={describedBy}
         />
         {rangeText && (
           <div id={rangeId} className={styles.rangeHint}>
             {rangeText}
           </div>
         )}
-        {inputCorrected && (
-          <FieldValidationMessage id={errorId} horizontal>
-            {errorMessage}
-          </FieldValidationMessage>
-        )}
+        {inputCorrected && <FieldValidationMessage id={errorId}>{errorMessage}</FieldValidationMessage>}
       </div>
     );
   }
