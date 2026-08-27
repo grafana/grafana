@@ -749,10 +749,10 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 }
 
 // garbageCollectGroupResource scans batches of entries in the datastore for a given
-// group+resource, in ascending order of resource version. For each resource it finds the
+// group+resource, in ascending order of resource version. For each object it finds the
 // newest deletion marker older than the cutoff timestamp and hard-deletes that marker plus
-// every older revision of the same resource.
-// Revisions newer than that marker are retained, so trash left behind by a resource that was
+// every older revision of the same object.
+// Revisions newer than that marker are retained, so trash left behind by an object that was
 // deleted and later recreated with the same name is collected, while the recreated revisions
 // (and any deletion still within the retention window) are kept.
 func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) error {
@@ -767,9 +767,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
 	totalDeleted := int64(0)
-	totalDryRun := int64(0)
 	deletedPerNamespace := map[string]int64{}
-	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -782,39 +780,27 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
-	// scan the entire dataset ascending
-	// for every object we see, buffer all revisions older than the configured retention
-	// on flush, delete every revision up to an expired delete marker
-	var currentResource ListRequestKey
+	var currentObject ListRequestKey
 	var buffer []DataKey
-	lastExpiredDeleteIdx := -1
 
-	flush := func() error {
-		if lastExpiredDeleteIdx < 0 {
-			buffer = buffer[:0]
+	deleteBuffered := func() error {
+		if len(buffer) == 0 {
 			return nil
 		}
-		toDelete := buffer[:lastExpiredDeleteIdx+1]
-		ns := currentResource.Namespace
-		if b.garbageCollection.DryRun {
-			totalDryRun += int64(len(toDelete))
-			dryRunPerNamespace[ns] += int64(len(toDelete))
-		} else {
-			if err := b.dataStore.batchDelete(ctx, toDelete); err != nil {
+		if !b.garbageCollection.DryRun {
+			if err := b.dataStore.batchDelete(ctx, buffer); err != nil {
 				return fmt.Errorf("failed to batch delete keys: %s", err)
 			}
-			totalDeleted += int64(len(toDelete))
-			deletedPerNamespace[ns] += int64(len(toDelete))
 		}
+		totalDeleted += int64(len(buffer))
+		deletedPerNamespace[currentObject.Namespace] += int64(len(buffer))
 		buffer = buffer[:0]
-		lastExpiredDeleteIdx = -1
 		return nil
 	}
 
 	for {
 		keysProcessed := int64(0)
 
-		// traverse a fixed number of keys (batchSize) in ascending order of resource version
 		it := b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
@@ -829,13 +815,12 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 			keysProcessed++
 
-			// parse the datakey to get the action and resource version
 			dk, err := ParseKey(dataKey)
 			if err != nil {
 				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
-			k := ListRequestKey{
+			objectKey := ListRequestKey{
 				Group:     dk.Group,
 				Resource:  dk.Resource,
 				Namespace: dk.Namespace,
@@ -845,24 +830,23 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// advance the start key so the next batch resumes strictly after this key
 			startKey = PrefixRangeEnd(dataKey)
 
-			if k != currentResource {
-				// Moved to a new resource: flush the trash gathered for the previous one
-				// and reset the per-resource state.
-				if err := flush(); err != nil {
-					return err
-				}
-				currentResource = k
+			if objectKey != currentObject {
+				// The previous object's leftover buffer does not have a delete past its retention period.
+				buffer = buffer[:0]
+				currentObject = objectKey
 			}
 
-			// Scanning ascending, once we reach a revision at or after the cutoff there can
-			// be no more expired revisions for this resource, so it is retained.
+			// ascending scan, skip anything that's too new to be considered
 			if dk.ResourceVersion >= cutoffTimestamp {
 				continue
 			}
 
 			buffer = append(buffer, dk)
 			if dk.Action == DataActionDeleted {
-				lastExpiredDeleteIdx = len(buffer) - 1
+				// Every buffered revision is <= this expired marker's RV, so it is all trash.
+				if err := deleteBuffered(); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -878,38 +862,22 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		}
 	}
 
-	// Flush the last resource's trash: it never hits a resource-boundary flush because
-	// there is no following resource. This is a no-op when nothing is buffered.
-	if err := flush(); err != nil {
-		return err
-	}
-
 	if totalDeleted > 0 {
-		b.log.Info("garbage collection deleted history",
+		msg := "garbage collection deleted history"
+		perNamespaceMsg := "garbage collection deleted history per namespace"
+		if b.garbageCollection.DryRun {
+			msg = "garbage collection dry run"
+			perNamespaceMsg = "garbage collection dry run per namespace"
+		}
+
+		b.log.Info(msg,
 			"group", group,
 			"resource", resourceName,
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
 		for ns, count := range deletedPerNamespace {
-			b.log.Info("garbage collection deleted history per namespace",
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
-	}
-
-	if totalDryRun > 0 {
-		b.log.Info("garbage collection dry run",
-			"group", group,
-			"resource", resourceName,
-			"rows", totalDryRun,
-			"seconds", time.Since(start).Seconds(),
-		)
-		for ns, count := range dryRunPerNamespace {
-			b.log.Info("garbage collection dry run per namespace",
+			b.log.Info(perNamespaceMsg,
 				"group", group,
 				"resource", resourceName,
 				"namespace", ns,
