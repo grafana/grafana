@@ -1,5 +1,6 @@
 import { logError } from '@grafana/runtime';
 import { iamAPIv0alpha1, type UserPermissions } from 'app/api/clients/iam/v0alpha1';
+import { extractErrorMessage } from 'app/api/utils';
 import { dispatch } from 'app/store/store';
 import { type UserPermission } from 'app/types/accessControl';
 
@@ -27,7 +28,9 @@ export async function loadUserPermissions(): Promise<UserPermission | null> {
       return acc;
     }, {});
   } catch (error) {
-    logError(error instanceof Error ? error : new Error('Failed to load user permissions'));
+    // unwrap() rejects with a serialised RTK Query error rather than an Error,
+    // so pull the message out instead of testing for an Error instance.
+    logError(new Error(extractErrorMessage(error, 'Failed to load user permissions')));
     return null;
   }
 }

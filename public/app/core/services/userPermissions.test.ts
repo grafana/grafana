@@ -44,10 +44,19 @@ describe('loadUserPermissions', () => {
     expect(await loadUserPermissions()).toEqual({});
   });
 
-  it('returns null and logs the error when the request fails', async () => {
-    mockResponse(Promise.reject(new Error('boom')));
+  // unwrap() rejects with a serialised RTK Query error, not an Error instance,
+  // so the message has to be extracted from that shape rather than passed through.
+  it('returns null and logs the error message when the request fails', async () => {
+    mockResponse(Promise.reject({ status: 500, data: { message: 'authz exploded' } }));
 
     expect(await loadUserPermissions()).toBeNull();
-    expect(logError).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(expect.objectContaining({ message: 'authz exploded' }));
+  });
+
+  it('falls back to a generic message when the error carries none', async () => {
+    mockResponse(Promise.reject({ status: 'FETCH_ERROR' }));
+
+    expect(await loadUserPermissions()).toBeNull();
+    expect(logError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Failed to load user permissions' }));
   });
 });
