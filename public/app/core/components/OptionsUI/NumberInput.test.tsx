@@ -186,6 +186,20 @@ describe('NumberInput', () => {
     jest.useRealTimers();
   });
 
+  it('emits a pending in-range value after a parent rerender', () => {
+    jest.useFakeTimers();
+    const firstOnChange = jest.fn();
+    const secondOnChange = jest.fn();
+    const { rerender } = render(<NumberInput value={5} onChange={firstOnChange} min={1} max={200} />);
+
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '8' } });
+    rerender(<NumberInput value={5} onChange={secondOnChange} min={1} max={200} />);
+    act(() => jest.advanceTimersByTime(500));
+
+    expect(firstOnChange).not.toHaveBeenCalled();
+    expect(secondOnChange).toHaveBeenCalledWith(8);
+  });
+
   it('keeps a parent InlineField label when no id is passed', () => {
     render(
       <InlineField label="Window size">
