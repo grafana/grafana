@@ -35,9 +35,11 @@ import (
 // namespaces under, isolating them from user-managed folders. One folder per
 // ruler datasource UID so distinct rulers never collide. prune and
 // IsManagedFolder key on the folder UID, not this title, so a pre-existing user
-// folder with the same title is harmless.
+// folder with the same title is harmless. "Admin" in the prefix flags that this
+// folder (and everything under it, including any promoted-to-native rules left
+// there — see promote) is locked to admin-only edit, not just sync-managed.
 func rootFolderTitle(dsUID string) string {
-	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
+	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
 }
 
 const versionMessage = "external ruler sync"
