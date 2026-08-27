@@ -72,7 +72,7 @@ Configure how Grafana connects to your Loki server.
 {{< admonition type="note" >}}
 Enter only the base URL. Don't append API paths such as `/loki/api/v1/push`. That endpoint sends logs to Loki with an agent like Grafana Alloy; it isn't used to query Loki from the data source.
 
-If your Grafana instance runs on Grafana Cloud, a `localhost` or private network address refers to Grafana's servers rather than your network, so it can't reach a self-hosted Loki. Use [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to query Loki on a private network.
+If your Grafana instance runs on Grafana Cloud, a `localhost` or private network address refers to Grafana servers rather than your network, so it can't reach a self-hosted Loki. Use [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to query Loki on a private network.
 {{< /admonition >}}
 
 ### Authentication
@@ -89,7 +89,7 @@ Configure how Grafana authenticates with your Loki server. Select an authenticat
 | **Skip TLS verify**        | Toggle on to bypass TLS certificate verification. Skipping verification isn't recommended unless absolutely necessary or for testing.           |
 
 {{< admonition type="note" >}}
-For Grafana Cloud–hosted Loki, use **Basic authentication** with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's [access policy](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/) must include the `logs:read` scope. Create tokens in the Grafana Cloud Portal. A token's value is shown only once, so copy it when you create it.
+For Grafana Cloud-hosted Loki, use **Basic authentication** with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's [access policy](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/) must include the `logs:read` scope. Create tokens in the Grafana Cloud Portal. A token's value is shown only once, so copy it when you create it.
 {{< /admonition >}}
 
 #### Custom HTTP headers
@@ -135,11 +135,13 @@ To manage other alerting resources, such as the alerts these rules generate, add
 Configure query behavior for the data source.
 
 <!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
 
 | Setting           | Description                                                                                                                                                                                                       |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Maximum lines** | Sets the maximum number of log lines Loki returns. Increase the limit for a larger result set for ad hoc analysis. Decrease the limit if your browser is slow when displaying log results. The default is `1000`. |
 
+<!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
 #### Derived fields

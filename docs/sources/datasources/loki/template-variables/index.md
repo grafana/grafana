@@ -73,7 +73,7 @@ This default suits the regular expression match operator `=~`, but it can produc
 | Syntax         | Result                                                                                                     |
 | -------------- | ---------------------------------------------------------------------------------------------------------- |
 | `${app:raw}`   | Inserts the value with no escaping. Use this for custom or static values that must pass through unchanged. |
-| `${app:pipe}`  | Joins multiple values with `\|` without regex escaping.                                                    |
+| `${app:pipe}`  | Joins multiple values with `\|` without regular expression escaping.                                       |
 | `${app:regex}` | Escapes the values for a regular expression and joins them with `\|`.                                      |
 
 For example, to use a raw custom value in an exact-match selector:
@@ -85,6 +85,7 @@ For example, to use a raw custom value in an exact-match selector:
 For the complete list of format options, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
 <!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
 
 ## Use ad hoc filters
 
@@ -94,9 +95,10 @@ For example, if you add an ad hoc filter for `level = error`, Grafana appends th
 
 For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
+<!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
-## Use $\_\_auto variable for Loki metric queries
+## Use the `$__auto` variable for Loki metric queries
 
 Consider using the `$__auto` variable in your Loki metric queries, which will automatically be substituted with the [step value](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/#options) for range queries, and with the selected time range's value (computed from the starting and ending times) for instant queries.
 
@@ -107,7 +109,7 @@ sum(rate({app="payments"} |= `error` [$__auto]))
 ```
 
 {{< admonition type="note" >}}
-Prefer `$__auto` over `$__range` for the range in a metric query. The `$__range` variable resolves to the entire selected time range, so using it as a range vector, such as `[$__range]`, makes each data point aggregate over the whole window. This can scan far more data and extend the effective lookback beyond what you intend.
+Prefer `$__auto` over `$__range` for the range in a metric query. The `$__range` variable resolves to the entire selected time range, so using it as a range vector, such as `[$__range]`, makes each data point aggregate over the whole window. This can scan far more data and look back further than you intend.
 {{< /admonition >}}
 
 For more information about variables, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
@@ -117,7 +119,7 @@ For more information about variables, refer to [Global built-in variables](https
 Keep the following limitations in mind when you use template variables with the Loki data source:
 
 - **Only indexed labels are available for label variable queries.** A _Query_ variable of type **Label values** returns the values of indexed stream labels. Values that exist only as parsed fields or [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) aren't available, because the variable query doesn't run a log pipeline to extract them.
-- **Long time ranges can return incomplete values.** Label and label-value variable queries run over the dashboard's selected time range. Over a long range with high log volume, the query can time out or hit Loki's limits and return an incomplete list of values. Narrow the time range, or add a stream selector to the variable query, so it scans less data.
+- **Long time ranges can return incomplete values.** Label and label-value variable queries run over the dashboard's selected time range. Over a long range with high log volume, the query can time out or hit the limits configured in Loki and return an incomplete list of values. Narrow the time range, or add a stream selector to the variable query, so it scans less data.
 
 ## Label extraction and indexing in Loki
 
@@ -137,4 +139,4 @@ You can define a regular expression that extracts the log level (`INFO`), IP add
 
 Loki indexes the extracted labels. The index maps labels to their log entries, so Loki can retrieve logs by label without scanning the entire dataset. For example, if a `job` label represents the services in your application, Loki indexes each job's logs separately, so you can query a single job quickly.
 
-Combine Loki's indexed labels with Grafana template variables to build dynamic queries. Use template variables to select and filter logs by labels such as job names, instance IDs, or severity levels, so you can explore and visualize your log data interactively.
+Combine Loki indexed labels with Grafana template variables to build dynamic queries. Use template variables to select and filter logs by labels such as job names, instance IDs, or severity levels, so you can explore and visualize your log data interactively.

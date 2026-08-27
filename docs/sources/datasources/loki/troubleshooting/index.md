@@ -45,7 +45,7 @@ These errors occur when Grafana can't reach your Loki server.
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Incorrect URL or port          | Verify the **URL** setting. Loki listens on port `3100` by default, for example `http://localhost:3100`.                                                                                                                                |
 | API path in the URL            | Enter only the base Loki URL. Don't append API paths such as `/loki/api/v1/push`, which sends logs to Loki rather than querying it.                                                                                                     |
-| Localhost URL on Grafana Cloud | On Grafana Cloud, a `localhost` or private address points to Grafana's servers, not your network. Use [PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to reach a self-hosted Loki. |
+| Localhost URL on Grafana Cloud | On Grafana Cloud, a `localhost` or private address points to Grafana servers, not your network. Use [PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to reach a self-hosted Loki. |
 | Missing tenant header          | For a multi-tenant Loki, one with `auth_enabled: true`, add the `X-Scope-OrgID` custom HTTP header with your tenant ID.                                                                                                                 |
 | Network or firewall block      | Confirm the Grafana server can reach the Loki server, and that firewall rules allow the connection.                                                                                                                                     |
 | Authentication failure         | Verify the credentials, tokens, or TLS certificates in the data source configuration. For Grafana Cloud Loki, confirm the access policy token includes the `logs:read` scope.                                                           |
@@ -68,7 +68,7 @@ These errors occur when running queries against Loki.
 | --------------------------------- | ----------------------------------------------------------------------------------------- |
 | Time range doesn't contain logs   | Expand the dashboard time range or confirm logs exist in Loki for that period.            |
 | Label selector matches no streams | Verify your stream selector labels and values with the label browser in the query editor. |
-| Logs exceed retention             | Confirm the logs you expect are within Loki's configured retention period.                |
+| Logs exceed retention             | Confirm the logs you expect are within the retention period configured in Loki.                |
 
 ### Query timeout or "too many outstanding requests"
 

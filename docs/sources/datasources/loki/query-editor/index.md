@@ -20,7 +20,7 @@ review_date: 2026-07-29
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use Loki's query language, [LogQL](https://grafana.com/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log](#create-a-log-query) and [metric](#create-a-metric-query) queries that use the Loki query language, [LogQL](https://grafana.com/docs/loki/latest/logql/).
 
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
@@ -85,8 +85,8 @@ Select comparison operators from the following options:
 
 - `=` - equal to
 - `!=` - is not equal
-- `=~` - matches regex
-- `!~` - does not match regex
+- `=~` - matches a regular expression
+- `!~` - doesn't match a regular expression
 
 Select values by using the dropdown, which displays all possible values based on the label selected.
 
@@ -142,7 +142,7 @@ Switch to [Code mode](#code-mode) at any time to view or refine the generated qu
 In **Code mode**, you can write complex queries using a text editor with autocompletion, syntax highlighting, and query validation.
 It also provides the [label browser](#toolbar-elements) to further help you write queries.
 
-For more information about Loki's query language, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/logql/).
+For more information about the Loki query language, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/logql/).
 
 ### Use autocompletion
 
@@ -196,7 +196,7 @@ Match lines with a regular expression, for example any 4xx or 5xx status:
 {app="nginx"} |~ `status=(4|5)..`
 ```
 
-Parse structured logs, then filter on an extracted field. This example parses logfmt logs and keeps requests slower than 500 ms:
+Parse structured logs, then filter on an extracted field. This example parses `logfmt` logs and keeps requests slower than 500 ms:
 
 ```logql
 {app="payments"} | logfmt | duration > 500ms
@@ -230,7 +230,7 @@ To reset filters and use the initial log context query, click the **Revert to in
 
 Loki supports live tailing of logs in real-time in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
 
-Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
+Live tailing relies on two WebSocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
 
 To start tailing logs click the **Live** button in the top right corner of the Explore view.
 {{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
@@ -310,7 +310,7 @@ Count how many timeouts occurred in the last hour:
 count_over_time({app="payments"} |= `timeout` [1h])
 ```
 
-Calculate the 95th percentile request duration per route. This example parses logfmt logs and unwraps the numeric `duration` field:
+Calculate the 95th percentile request duration per route. This example parses `logfmt` logs and unwraps the numeric `duration` field:
 
 ```logql
 quantile_over_time(0.95, {app="payments"} | logfmt | unwrap duration [5m]) by (route)
