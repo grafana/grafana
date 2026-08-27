@@ -578,6 +578,7 @@ describe('TextNGPanel', () => {
       settle();
 
       expect(html()).toContain('web-2');
+      expect(html()).not.toContain('web-1');
     });
 
     it('re-renders the content when a referenced variable changes', () => {
@@ -595,6 +596,7 @@ describe('TextNGPanel', () => {
       settle();
 
       expect(html()).toContain('second');
+      expect(html()).not.toContain('first');
     });
   });
 
