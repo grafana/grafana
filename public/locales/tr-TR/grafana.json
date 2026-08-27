@@ -1624,6 +1624,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1694,7 +1698,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Uyarı kuralları",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Filtre",
         "folder": "Hedef klasör",
@@ -1713,7 +1716,6 @@
         "routing": "Bildirim yönlendirme",
         "routing-none": "Politika ağacı seçilmedi",
         "routing-tree": "Politika ağacı: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Uyarı kuralları içe aktarılmayacak.",
         "rules-title": "Uyarı Kuralları",
         "skipped": "Atlandı",
@@ -3880,6 +3882,8 @@
       "title-notification-policies": "Bildirim politikaları"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Kaynaklar içe aktarılamadı",
@@ -6870,6 +6874,11 @@
       "title": "Henüz eklenmiş pano bağlantısı yok"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -9072,15 +9081,16 @@
       "split-widen": "Bölmeyi genişlet"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "İzlemeyi paylaşma seçenekleri menüsünü aç",
+      "aria-label-share-dropdown": "",
       "critical-path": "Kritik yol",
       "critical-path-tooltip": "Kritik yoldaki aralıkları seçer. Bu, izdeki minimum süreyi belirleyen, bağımlı görevlerin en uzun dizisi olur.",
       "duration": "Süre",
       "errors": "Hata",
       "errors-tooltip": "Durumu \"hata\" olan aralıkları seçer.",
       "export-started": "Dışa aktarma işlemi başlatıldı",
+      "feedback-group": "",
       "filters": "Filtreler",
-      "give-feedback": "Geri Bildirim",
+      "give-feedback-item": "",
       "high-latency": "Yüksek gecikme",
       "high-latency-tooltip": "İzdeki en uzun %10'luk aralıkları seçer (p90).",
       "link-copied": "Bağlantı panoya kopyalandı",
@@ -9088,13 +9098,12 @@
       "path": "Yol",
       "route": "Yol",
       "services": "Hizmetler",
-      "share": "Paylaş",
       "share-copy-link": "Bağlantıyı kopyala",
       "share-export-json": "JSON olarak dışa aktar",
-      "share-tooltip": "İzlemeyi paylaş",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Başlangıç zamanı",
       "target": "Hedef",
-      "title-share-thoughts-about-tracing-grafana": "Grafana'daki izleme deneyiminiz hakkındaki görüşlerinizi paylaşın.",
       "tooltip-url": "{{route}} veya {{url}} veya {{target}} veya {{path}}",
       "trace-id": "İzleme kimliği",
       "url": "URL"
@@ -12945,6 +12954,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13008,7 +13025,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {

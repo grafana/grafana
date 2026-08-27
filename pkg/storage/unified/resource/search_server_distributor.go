@@ -225,13 +225,8 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			rsp, err := client.(*RingClient).Client.RebuildIndexes(rCtx, r)
-			if err != nil {
-				errorCh <- fmt.Errorf("instance %s: failed to distribute rebuild index request, %w", inst.Id, err)
-				return
-			}
-
-			if rsp.Error != nil {
-				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %s", inst.Id, rsp.Error.Message)
+			if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+				errorCh <- fmt.Errorf("instance %s: rebuild index request returned the error %w", inst.Id, err)
 				return
 			}
 
