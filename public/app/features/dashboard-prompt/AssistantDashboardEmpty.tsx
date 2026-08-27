@@ -29,9 +29,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   // Set at scene activation when the URL has editSource=assistant (modal /
   // create_dashboard), or on submit from this landing so the same session
   // tag applies without a remount.
-  const [assistantDriven, setAssistantDriven] = useState(
-    () => dashboard.getEditSessionSource() === 'assistant'
-  );
+  const [assistantDriven, setAssistantDriven] = useState(() => dashboard.getEditSessionSource() === 'assistant');
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
@@ -161,11 +159,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         </Stack>
       </div>
       {assistantDriven && (
-        <div
-          className={styles.interactionLock}
-          data-testid="dashboard-assistant-interaction-lock"
-          role="presentation"
-        >
+        <div className={styles.interactionLock} data-testid="dashboard-assistant-interaction-lock" role="presentation">
           <Spinner size="xl" />
         </div>
       )}
