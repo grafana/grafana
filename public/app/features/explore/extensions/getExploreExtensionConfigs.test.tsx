@@ -1,11 +1,20 @@
-import { PluginExtensionPoints } from '@grafana/data';
+import { render, screen } from 'test/test-utils';
+
+import { type PluginExtensionEventHelpers, PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 
 import { getExploreExtensionConfigs } from './getExploreExtensionConfigs';
 
 jest.mock('app/core/services/context_srv');
+
+// Stood in for so the lazy import resolves without dragging the notebook picker and its API into
+// this suite. What matters here is that the modal mounts it, pointed at the right pane.
+jest.mock('./AddToNotebook/ExploreToNotebookPanel', () => ({
+  ExploreToNotebookPanel: ({ exploreId }: { exploreId: string }) => <div>notebook picker for {exploreId}</div>,
+}));
 
 const contextSrvMock = jest.mocked(contextSrv);
 
@@ -81,6 +90,30 @@ describe('getExploreExtensionConfigs', () => {
       setNotebooksEnabled(true);
 
       expect(notebookExtension()?.configure?.(undefined)).toEqual({});
+    });
+
+    // The toolbar button is Explore's only way into the picker, and the pane it was clicked from is
+    // the one whose queries get captured - a split view has two.
+    it('opens the picker on the pane it was clicked from, in a modal wide enough for it', async () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setNotebooksEnabled(true);
+      const openModal = jest.fn();
+
+      notebookExtension()?.onClick?.(undefined, {
+        context: { exploreId: 'left' },
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+        openModal,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the handler reads only these three
+      } as unknown as PluginExtensionEventHelpers<{ exploreId: string }>);
+
+      expect(openModal).toHaveBeenCalledWith(
+        expect.objectContaining({ title: addPanelToNotebookTitle(), width: ADD_PANEL_MODAL_WIDTH })
+      );
+
+      const ModalBody = openModal.mock.calls[0][0].body;
+      render(<ModalBody onDismiss={jest.fn()} />);
+
+      expect(await screen.findByText('notebook picker for left')).toBeInTheDocument();
     });
   });
 
