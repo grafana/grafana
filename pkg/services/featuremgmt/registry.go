@@ -2332,6 +2332,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
