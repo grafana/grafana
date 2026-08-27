@@ -53,6 +53,17 @@ func interpolatePromQLVariables(expr string, q backend.DataQuery, minStep string
 	if err != nil {
 		calculatedStep = q.Interval
 	}
+
+	rateInterval := max(calculatedStep, 60*time.Second)
+	rateSeconds := fmt.Sprintf("%ds", int64(rateInterval.Seconds()))
+	rateMs := strconv.FormatInt(rateInterval.Milliseconds(), 10)
+	expr = strings.NewReplacer(
+		"${__rate_interval_ms}", rateMs,
+		"$__rate_interval_ms", rateMs,
+		"${__rate_interval}", rateSeconds,
+		"$__rate_interval", rateSeconds,
+	).Replace(expr)
+
 	timeRange := q.TimeRange.To.Sub(q.TimeRange.From)
 	return prommodels.InterpolateVariables(expr, q.Interval, calculatedStep, minStep, "", timeRange)
 }

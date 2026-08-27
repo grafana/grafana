@@ -329,4 +329,10 @@ func TestInterpolatePromQLVariables(t *testing.T) {
 		got := interpolatePromQLVariables("up", q, "")
 		assert.Equal(t, "up", got)
 	})
+
+	t.Run("matches the frontend's $__rate_interval formula instead of promlib's scrape-interval assumption", func(t *testing.T) {
+		q := rangeQuery(time.Hour, 1500, 15*time.Second)
+		got := interpolatePromQLVariables("rate(x[$__rate_interval])", q, "5m")
+		assert.Equal(t, "rate(x[300s])", got)
+	})
 }
