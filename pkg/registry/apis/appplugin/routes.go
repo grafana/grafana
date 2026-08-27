@@ -86,7 +86,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	// rest of its API still works, so this drops search rather than the group.
 	var searcher *search.Handler
 	if b.search != nil {
-		fields, err := resource.ManifestDataProvider(b.manifest)
+		fields, err := resource.NewSearchFieldsProvider([]*app.ManifestData{b.manifest})
 		if err != nil {
 			logging.DefaultLogger.Error("invalid manifest search fields; search and trash routes are not served",
 				"group", gv.Group, "version", gv.Version, "error", err)

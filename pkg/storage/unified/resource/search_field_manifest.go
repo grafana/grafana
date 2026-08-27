@@ -37,10 +37,10 @@ func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, err
 	for i, m := range manifests {
 		data[i] = m.ManifestData
 	}
-	return ManifestDataProvider(data...)
+	return NewSearchFieldsProvider(data)
 }
 
-func ManifestDataProvider(manifests ...*app.ManifestData) (SearchFieldsProvider, error) {
+func NewSearchFieldsProvider(manifests []*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 

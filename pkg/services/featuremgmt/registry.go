@@ -2876,14 +2876,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "preferences.rerouteLegacyAPIs",
-			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
-		},
-		{
 			Name:            "plugins.marketplaceLicensing",
 			Description:     "Enables marketplace plugin licensing",
 			Stage:           FeatureStageExperimental,
