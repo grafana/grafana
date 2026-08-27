@@ -1,13 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import {
-  type CustomTransformOperator,
-  type DataFrame,
-  type DataTransformerConfig,
-  type GrafanaTheme2,
-  type PanelData,
-} from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
@@ -19,7 +13,6 @@ import { type Transformation } from './types';
 interface TransformationFilterEditorProps {
   transformation: Transformation | null;
   transformations: Transformation[];
-  systemTransformations: Array<DataTransformerConfig | CustomTransformOperator>;
   queryData?: PanelData;
   onUpdate: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
 }
@@ -37,7 +30,6 @@ const NO_SERIES: DataFrame[] = [];
 export function TransformationFilterEditor({
   transformation,
   transformations,
-  systemTransformations,
   queryData,
   onUpdate,
 }: TransformationFilterEditorProps) {
@@ -50,7 +42,6 @@ export function TransformationFilterEditor({
   const prevOutput = usePreviousTransformationOutput({
     selectedTransformation: transformation,
     transformations,
-    systemTransformations,
     queryData: series,
     queryTargets: queryData?.request?.targets,
   });

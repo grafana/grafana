@@ -4,18 +4,11 @@ import { type DataFrame, type DataTransformerConfig, type FrameMatcher, getFrame
 
 import { type Transformation } from '../types';
 
-import {
-  NO_CONFIGS,
-  isInterpolatable,
-  precedingTransformations,
-  type TransformationConfigs,
-  useFrameReplay,
-} from './useTransformedFrames';
+import { NO_CONFIGS, isInterpolatable, precedingTransformations, useFrameReplay } from './useTransformedFrames';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
   transformations: Transformation[];
-  systemTransformations: TransformationConfigs;
   data: DataFrame[];
   isActive: boolean;
 }
@@ -53,16 +46,13 @@ function frameMatcherFor(config: DataTransformerConfig | undefined): FrameMatche
 
 /**
  * Replays the pipeline around the selected transformation for the debug view: input is everything
- * before it (filtered), output is after it runs. Counts the plugin's own transformations as
- * preceding, same as {@link precedingTransformations} — omitting them would replay input the
- * transformation never actually received.
+ * before it (filtered), output is after it runs.
  *
  * @returns Empty arrays if not active or transformation not found
  */
 export function useTransformationDebugData({
   selectedTransformation,
   transformations,
-  systemTransformations,
   data,
   isActive,
 }: UseTransformationDebugDataOptions): TransformationDebugData {
@@ -77,8 +67,8 @@ export function useTransformationDebugData({
       : null;
 
   const inputConfigs = useMemo(
-    () => (debugTarget ? precedingTransformations(debugTarget, transformations, systemTransformations) : NO_CONFIGS),
-    [debugTarget, transformations, systemTransformations]
+    () => (debugTarget ? precedingTransformations(debugTarget, transformations) : NO_CONFIGS),
+    [debugTarget, transformations]
   );
 
   const selfConfigs = useMemo(() => (debugTarget ? [debugTarget.transformConfig] : NO_CONFIGS), [debugTarget]);

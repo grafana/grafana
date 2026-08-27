@@ -155,6 +155,25 @@ describe('SaveDashboardDrawer', () => {
       expect(await screen.findByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
 
+    it('Should keep form state when switching between Details and Changes tabs', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
+
+      openAndRender();
+
+      await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
+      const message = await screen.findByLabelText('message');
+      await userEvent.type(message, 'my save note');
+
+      await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
+      expect(screen.getByLabelText('message')).not.toBeVisible();
+
+      await userEvent.click(screen.getByRole('tab', { name: /Details/ }));
+      expect(screen.getByLabelText('message')).toBeVisible();
+      expect(screen.getByLabelText('message')).toHaveValue('my save note');
+    });
+
     it('When refresh changed show save refresh option', async () => {
       const { dashboard, openAndRender } = setup();
 

@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { type DataTransformerInfo, type TransformerRegistryItem } from '@grafana/data';
 
 import { TransformationEditorPanel, TransformationEditorRenderer } from './TransformationEditorRenderer';
-import { NO_CONFIGS } from './hooks/useTransformedFrames';
 import { renderWithQueryEditorProvider } from './testUtils';
 import { type Transformation } from './types';
 
@@ -13,7 +12,17 @@ jest.mock('./hooks/useTransformationInputData', () => ({
 }));
 
 jest.mock('./TransformationFilterDisplay', () => ({
-  TransformationFilterEditor: () => <div data-testid="transformation-filter-display" />,
+  // Mirrors the live failure: the display hands `filter.options` to `RefIDMultiPicker`, which reads
+  // it as a string, so a dashboard supplying anything else throws from render.
+  TransformationFilterEditor: ({ transformation }: { transformation: Transformation | null }) => {
+    const filterOptions = transformation?.transformConfig.filter?.options;
+
+    if (filterOptions != null && typeof filterOptions !== 'string') {
+      throw new Error('value.startsWith is not a function');
+    }
+
+    return <div data-testid="transformation-filter-display" />;
+  },
 }));
 
 jest.mock('./TransformationEditor', () => ({
@@ -58,6 +67,25 @@ function makeTransformation(registryItem: TransformerRegistryItem | undefined): 
   };
 }
 
+/** A transformation carrying the filter a dashboard supplied, as its own config object. */
+function withFilter(transformation: Transformation, options: unknown): Transformation {
+  return {
+    ...transformation,
+    transformConfig: { ...transformation.transformConfig, filter: { id: 'byRefId', options } },
+  };
+}
+
+function panel(transformation: Transformation) {
+  return (
+    <TransformationEditorPanel
+      transformation={transformation}
+      transformations={[transformation]}
+      updateTransformation={jest.fn()}
+      showSupplementalDisplays
+    />
+  );
+}
+
 describe('TransformationEditorRenderer', () => {
   afterEach(() => {
     debugDisplayThrows = false;
@@ -70,16 +98,6 @@ describe('TransformationEditorRenderer', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
     debugDisplayThrows = true;
 
-    const panel = (transformation: Transformation) => (
-      <TransformationEditorPanel
-        transformation={transformation}
-        transformations={[transformation]}
-        systemTransformations={NO_CONFIGS}
-        updateTransformation={jest.fn()}
-        showSupplementalDisplays
-      />
-    );
-
     const { rerender } = render(panel(makeTransformation(mockRegistryItem)));
 
     expect(screen.queryByTestId('transformation-debug-display')).not.toBeInTheDocument();
@@ -88,6 +106,51 @@ describe('TransformationEditorRenderer', () => {
     rerender(panel({ ...makeTransformation(mockRegistryItem), transformId: 'another-transform' }));
 
     expect(screen.getByTestId('transformation-debug-display')).toBeInTheDocument();
+
+    consoleError.mockRestore();
+  });
+
+  it('clears a display that threw once the failing transformation is edited', () => {
+    // `transformId` is the transformation's id and its index, so it does not move when the options
+    // change — and editing them is how an option-induced throw gets fixed. Recovering on the config
+    // too is what keeps the alert from outliving the config that caused it.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const broken = withFilter(makeTransformation(mockRegistryItem), 42);
+    const { rerender } = render(panel(broken));
+
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('transformation-filter-display')).not.toBeInTheDocument();
+
+    // What removing the filter does: a fresh config object under the same id at the same index.
+    const { filter, ...withoutFilter } = broken.transformConfig;
+    rerender(panel({ ...broken, transformConfig: withoutFilter }));
+
+    expect(screen.getByTestId('transformation-filter-display')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    consoleError.mockRestore();
+  });
+
+  it('clears a display that threw when a transformation of the same type takes its index', () => {
+    // Deleting a transformation slides its successor into its index, which for a successor of the
+    // same type reproduces the id exactly. The alert would otherwise stand over a transformation
+    // that never threw, hiding the filter it could have edited.
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const throwing = withFilter(makeTransformation(mockRegistryItem), 42);
+    const successor = withFilter(makeTransformation(mockRegistryItem), '/^(?:A)$/');
+    // The premise: without colliding ids the boundary would recover for the wrong reason.
+    expect(successor.transformId).toBe(throwing.transformId);
+
+    const { rerender } = render(panel(throwing));
+
+    expect(screen.queryByTestId('transformation-filter-display')).not.toBeInTheDocument();
+
+    rerender(panel(successor));
+
+    expect(screen.getByTestId('transformation-filter-display')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     consoleError.mockRestore();
   });

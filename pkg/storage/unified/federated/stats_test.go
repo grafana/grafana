@@ -9,12 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -250,6 +252,38 @@ func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
 			got := counts(t, folderUID)
 			require.Equal(t, total, got["alertrules"]+got["recordingrules"],
 				"alertrules+recordingrules must equal the number of rules in %s", folderUID)
+		}
+	})
+}
+
+func TestLegacyTableIsStale(t *testing.T) {
+	cfgWithMode := func(resource string, mode grafanarest.DualWriterMode) *setting.Cfg {
+		return &setting.Cfg{UnifiedStorage: map[string]setting.UnifiedStorageConfig{
+			resource: {DualWriterMode: mode},
+		}}
+	}
+
+	t.Run("no config means the legacy table is still the source of truth", func(t *testing.T) {
+		s := &LegacyStatsGetter{}
+		require.False(t, s.legacyTableIsStale(alertRuleResource))
+	})
+
+	t.Run("unconfigured resource is still the source of truth", func(t *testing.T) {
+		s := &LegacyStatsGetter{Cfg: cfgWithMode(libraryPanelResource, grafanarest.Mode5)}
+		require.False(t, s.legacyTableIsStale(alertRuleResource))
+	})
+
+	t.Run("dual write modes keep the legacy table", func(t *testing.T) {
+		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode1, grafanarest.Mode2, grafanarest.Mode3} {
+			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
+			require.False(t, s.legacyTableIsStale(alertRuleResource), "mode %d", mode)
+		}
+	})
+
+	t.Run("unified storage modes drop the legacy table", func(t *testing.T) {
+		for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode4, grafanarest.Mode5} {
+			s := &LegacyStatsGetter{Cfg: cfgWithMode(alertRuleResource, mode)}
+			require.True(t, s.legacyTableIsStale(alertRuleResource), "mode %d", mode)
 		}
 	})
 }

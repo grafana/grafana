@@ -7,7 +7,6 @@ import { type Transformation } from '../types';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationInputData } from './useTransformationInputData';
-import { NO_CONFIGS } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -45,7 +44,6 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[0],
         allTransformations: transformations,
-        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -64,7 +62,6 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
-        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -96,7 +93,6 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[2],
         allTransformations: transformations,
-        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );
@@ -124,7 +120,6 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: selected,
           allTransformations: transformations,
-          systemTransformations: NO_CONFIGS,
           rawData,
         }),
       { initialProps: { selected: transformations[0] } }
@@ -156,7 +151,6 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: transformations[1],
           allTransformations: transformations,
-          systemTransformations: NO_CONFIGS,
           rawData: data,
         }),
       { initialProps: { data: rawData } }
@@ -192,7 +186,6 @@ describe('useTransformationInputData', () => {
         useTransformationInputData({
           selectedTransformation: transformations[1],
           allTransformations: transformations,
-          systemTransformations: NO_CONFIGS,
           rawData: data,
         }),
       { initialProps: { data: rawData } }
@@ -207,31 +200,6 @@ describe('useTransformationInputData', () => {
     // The joined frame this pipeline last produced, not the two unjoined ones it never emits.
     expect(result.current).toBe(mockPipelineOutput);
     expect(result.current).not.toBe(newRawData);
-  });
-
-  it('runs the plugin-registered transformations ahead of the preceding user ones', () => {
-    // These run ahead of every user transformation but are deliberately absent from the editable
-    // list, so replaying that list alone shows editors a field shape they will never receive. Which
-    // configs precede which is `precedingTransformations`' own concern; this only pins that they
-    // reach it.
-    const systemTransformations = [jest.fn()];
-    const transformations = [makeTransformation('joinByField'), makeTransformation('organize')];
-
-    renderHook(() =>
-      useTransformationInputData({
-        selectedTransformation: transformations[1],
-        allTransformations: transformations,
-        systemTransformations,
-        rawData,
-      })
-    );
-
-    // Order matters: the plugin's transformations produce the fields joinByField then consumes.
-    expect(mockTransformDataFrame).toHaveBeenCalledWith(
-      [...systemTransformations, transformations[0].transformConfig],
-      rawData,
-      expect.any(Object)
-    );
   });
 
   it('cleans up the subscription when the component unmounts', () => {
@@ -253,7 +221,6 @@ describe('useTransformationInputData', () => {
       useTransformationInputData({
         selectedTransformation: transformations[1],
         allTransformations: transformations,
-        systemTransformations: NO_CONFIGS,
         rawData,
       })
     );

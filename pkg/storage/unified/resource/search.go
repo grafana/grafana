@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math/rand"
-	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -804,7 +803,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 
 	// record metrics at the end
 	defer func() {
-		code := vectorSearchResponseCode(resp, retErr)
+		code := codes.OK
+		if retErr != nil {
+			code = status.Code(retErr)
+		} else if resp != nil && resp.Error != nil {
+			code = grpcCodeFromHTTPStatus(resp.Error.Code)
+		}
 		if s.vectorMetrics != nil {
 			metricutil.ObserveWithExemplar(ctx,
 				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -821,7 +825,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return errResp, nil
 	}
 
-	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
@@ -880,26 +883,20 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// External rows aren't unified-storage resources — the authz service
-	// has nothing to answer for them, so per-result checks are skipped
-	// and the caller does its own post-filtering.
-	var allowed map[vectorAuthzKey]bool
-	if !coll.IsExternal {
-		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
-		if err != nil {
-			if ctx.Err() != nil {
-				return nil, status.FromContextError(ctx.Err()).Err()
-			}
-			s.log.Error("vector search: authz batch check", "err", err)
-			return nil, status.Error(codes.Internal, "authz batch check")
+	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
 		}
+		s.log.Error("vector search: authz batch check", "err", err)
+		return nil, status.Error(codes.Internal, "authz batch check")
 	}
 
 	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
+		if !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -913,31 +910,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
-}
-
-// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
-// on the search-duration metric. ErrorResult carries HTTP-style codes; an
-// unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
-	switch {
-	case retErr != nil:
-		return status.Code(retErr)
-	case resp == nil || resp.Error == nil:
-		return codes.OK
-	}
-	switch resp.Error.Code {
-	case http.StatusBadRequest:
-		return codes.InvalidArgument
-	case http.StatusNotFound:
-		return codes.NotFound
-	case http.StatusForbidden:
-		return codes.PermissionDenied
-	case http.StatusUnauthorized:
-		return codes.Unauthenticated
-	default:
-		return codes.Unknown
-	}
 }
 
 // validateVectorSearchRequest returns a non-nil response with a

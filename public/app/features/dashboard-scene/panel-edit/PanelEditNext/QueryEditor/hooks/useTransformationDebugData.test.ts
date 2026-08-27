@@ -5,7 +5,7 @@ import { type DataFrame, type DataTransformerConfig, transformDataFrame } from '
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationDebugData } from './useTransformationDebugData';
-import { NO_CONFIGS, type TransformationConfigs } from './useTransformedFrames';
+import { type TransformationConfigs } from './useTransformedFrames';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
@@ -74,7 +74,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -107,7 +106,6 @@ describe('useTransformationDebugData', () => {
       const debug = useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       });
@@ -146,7 +144,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -168,7 +165,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -187,7 +183,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: false,
       })
@@ -204,7 +199,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: transformations[1],
         transformations,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: false,
       })
@@ -232,7 +226,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: filteredTransformation,
         transformations: [transformations[0], filteredTransformation],
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -260,7 +253,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: filteredTransformation,
         transformations: [transformations[0], filteredTransformation],
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -290,7 +282,6 @@ describe('useTransformationDebugData', () => {
       useTransformationDebugData({
         selectedTransformation: filteredTransformation,
         transformations: filtered,
-        systemTransformations: NO_CONFIGS,
         data,
         isActive: true,
       })
@@ -299,29 +290,5 @@ describe('useTransformationDebugData', () => {
     expect(result.current.input.map(({ name }) => name)).toEqual(['joined']);
     // The output is what the transformation produced, which the filter has already been applied to.
     expect(result.current.output.map(({ name }) => name)).toEqual(['joined', 'excluded']);
-  });
-
-  it('replays the plugin-registered transformations ahead of the preceding user ones', () => {
-    // They run ahead of every user transformation but are absent from the editable list, so replaying
-    // that list alone shows an input the debugged transformation never receives. Which configs
-    // precede which is `precedingTransformations`' own concern; this only pins that they reach it.
-    const systemTransformations = [jest.fn()];
-    respondByConfig({});
-
-    renderHook(() =>
-      useTransformationDebugData({
-        selectedTransformation: transformations[1],
-        transformations,
-        systemTransformations,
-        data,
-        isActive: true,
-      })
-    );
-
-    expect(mockTransformDataFrame).toHaveBeenCalledWith(
-      [...systemTransformations, transformations[0].transformConfig],
-      data,
-      expect.any(Object)
-    );
   });
 });
