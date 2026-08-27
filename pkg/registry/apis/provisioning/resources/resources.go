@@ -470,7 +470,8 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if err != nil {
 			return "", "", gvk, fmt.Errorf("failed to write resource: %w", err)
 		}
-		return newName, "", gvk, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
+		// folderName intentionally empty: old resource's identity is unknown.
+		return newName, "", gvk, size, fmt.Errorf("failed to parse previous file, old resource may need manual cleanup: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
