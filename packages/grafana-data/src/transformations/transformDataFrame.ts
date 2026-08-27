@@ -60,7 +60,7 @@ const getOperator =
         from(getTransformation(info)).pipe(
           mergeMap((transformation) => {
             const defaultOptions = transformation.defaultOptions ?? {};
-            const options = { ...defaultOptions, refId: config.refId, ...config.options };
+            const options = { ...defaultOptions, ...config.options };
 
             // when running within Scenes, we can skip var interpolation, since it's already handled upstream
             const isScenes = window.__grafanaSceneContext != null;
@@ -73,6 +73,11 @@ const getOperator =
                   }
                   return v;
                 });
+
+            // Applied after interpolation so the static refId stays the literal the user typed.
+            if (config.refId !== undefined) {
+              interpolated.refId = config.refId;
+            }
 
             return of(filterInput(before, matcher)).pipe(
               transformation.operator(interpolated, ctx),
