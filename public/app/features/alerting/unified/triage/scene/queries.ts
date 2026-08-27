@@ -41,10 +41,8 @@ function isNegativeOperator(operator: MatcherOperator): boolean {
 }
 
 /**
- * An exclusion with an empty value is not really an exclusion of a value — because
- * Prometheus reads a label the series doesn't have as empty, `cluster!=""` is asking
- * "does this series have a cluster at all?". That's a question about any of the
- * backing labels, so it spreads across branches like an inclusion does.
+ * `cluster!=""` rules out no value, it only asks "does the series have a cluster label
+ * set?". Any one of the label names can answer yes, so we treat it as an include.
  */
 function excludesAValue(matcher: MatcherExpr): boolean {
   return isNegativeOperator(matcher.operator) && matcher.value !== '';
@@ -57,20 +55,16 @@ function renameMatchers(matchers: MatcherExpr[], name: string): MatcherExpr[] {
 /**
  * Builds one or more metric selectors from the current ad-hoc filter string.
  *
- * Combined filters use a single user-facing key (for example `service`) while
- * alert series may have one of several backing label keys (`service`, `service_name`).
+ * A combined filter shows one key (`service`), but the series can carry the value under
+ * any of a few label names (`service`, `service_name`), so every matcher on such a key
+ * gets rewritten for each name:
  *
- * Which way we expand a matcher depends on whether it includes or excludes:
+ * - Include (`=`, `=~`): one selector per label name, joined with `or`.
+ * - Exclude (`!=`, `!~`): all names in a single selector. Separate `or` branches would
+ *   let the excluded series back in, since Prometheus reads a missing label as empty —
+ *   a series with `cluster="foo"` and no `cluster_name` passes `cluster_name!="foo"`.
  *
- * - Include (`=`, `=~`): one selector per backing label, joined with `or`. A series
- *   matches if any of its backing labels has the value.
- * - Exclude (`!=`, `!~`): every backing label goes into the same selector. Splitting
- *   these across `or` branches would undo the exclusion — Prometheus treats a label
- *   that isn't on the series as empty, so a series with `cluster="foo"` and no
- *   `cluster_name` would still match the `cluster_name!="foo"` branch and come back
- *   in the union.
- *
- * See `excludesAValue` for why an exclusion with an empty value goes the first way.
+ * See `excludesAValue` for why `!=""` counts as an include.
  */
 function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
