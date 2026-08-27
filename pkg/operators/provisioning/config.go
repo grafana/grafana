@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -332,6 +333,10 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 		RateLimiter:     flowcontrol.NewFakeAlwaysRateLimiter(),
 	}
 
+	// Propagate W3C trace context on Job updates and Repository/Connection status
+	// patches; otherwise they are leaf spans with no children on the apiserver side.
+	wrapWithTracing(config)
+
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
@@ -340,6 +345,15 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	c.provisioningClient = provisioningClient
 
 	return provisioningClient, nil
+}
+
+// wrapWithTracing wraps the rest config transport with otelhttp so outbound
+// requests carry W3C trace context. It composes with any existing WrapTransport
+// (e.g. the token-exchange wrapper) rather than replacing it.
+func wrapWithTracing(config *rest.Config) {
+	config.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+		return otelhttp.NewTransport(rt)
+	})
 }
 
 func (c *ControllerConfig) ResyncInterval() time.Duration {
