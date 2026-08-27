@@ -70,6 +70,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
         request: prompt,
         displayPrompt: prompt,
         datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
+        attachedDatasources: selectedDatasources,
         dashboards,
         folderUid: dashboard.state.meta.folderUid,
         skipNavigation: true,

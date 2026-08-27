@@ -13,6 +13,9 @@ export const STANDALONE_PROMPT_COMPONENT_ID = 'grafana-assistant-app/standalone-
 /** + menu sections this Grafana surface allows in the prompt picker. */
 const DASHBOARD_PROMPT_CONTEXT_SECTIONS = ['datasources', 'dashboards'] as const;
 
+/**
+ * keep in sync with grafana-assistant-app `StandaloneAssistantPromptProps`
+ */
 interface StandalonePromptProps {
   onSubmit: (prompt: string, selection: DashboardLandingPromptSelection[]) => void;
   placeholder?: string;
@@ -55,7 +58,11 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
       <Prompt
         onSubmit={onSubmit}
         placeholder={
-          placeholder ?? t('dashboard.empty.assistant-placeholder', 'Describe your dashboard to the assistant')
+          placeholder ??
+          t(
+            'dashboard.empty.assistant-placeholder',
+            'Describe your dashboard to the assistant. This will open the assistant chat and start a conversation.'
+          )
         }
         includeContextSections={DASHBOARD_PROMPT_CONTEXT_SECTIONS}
         hideModeSelector

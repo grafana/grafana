@@ -11,7 +11,9 @@ export interface PromptDashboardRef {
   title: string;
 }
 
-/** Serializable context picked on the new-dashboard landing prompt. */
+/**
+ * Host-side copy of grafana-assistant-app `PromptContextSelection`.
+ */
 export interface DashboardLandingPromptSelection {
   kind: 'datasource' | 'dashboard';
   uid: string;

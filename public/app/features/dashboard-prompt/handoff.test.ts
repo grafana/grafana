@@ -152,6 +152,18 @@ describe('startPlanningInAssistant skipNavigation', () => {
     );
   });
 
+  it('attaches picked datasources as context items without dumping the instruction-scope list', () => {
+    startPlanningInAssistant({
+      ...args,
+      skipNavigation: true,
+      attachedDatasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
+    });
+
+    const call = openAssistantMock.mock.calls[0][0];
+    expect(call.context).toHaveLength(2);
+    expect(call.context?.[1]?.node.data?.params).toEqual(expect.objectContaining({ datasourceUid: 'prom-1' }));
+  });
+
   it('does not attach the destination folder as context when already on the page', () => {
     startPlanningInAssistant({
       ...args,

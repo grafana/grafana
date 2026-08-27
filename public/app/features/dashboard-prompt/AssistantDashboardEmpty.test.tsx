@@ -85,6 +85,7 @@ describe('AssistantDashboardEmpty', () => {
       request: 'monitor checkout',
       displayPrompt: 'monitor checkout',
       datasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
+      attachedDatasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
       dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
       folderUid: dashboard.state.meta.folderUid,
       skipNavigation: true,
@@ -121,6 +122,7 @@ describe('AssistantDashboardEmpty', () => {
     expect(mockStartPlanning).toHaveBeenCalledWith(
       expect.objectContaining({
         datasources: [{ uid: 'prom-default', type: 'prometheus', name: 'Prometheus' }],
+        attachedDatasources: [],
         dashboards: [],
       })
     );
