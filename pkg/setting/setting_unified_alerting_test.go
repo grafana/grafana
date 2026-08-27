@@ -550,4 +550,18 @@ func TestResendDelay(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "resend_delay")
 	})
+
+	t.Run("rejects a zero duration", func(t *testing.T) {
+		f := ini.Empty()
+		sec, err := f.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = sec.NewKey("resend_delay", "0s")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+		err = cfg.ReadUnifiedAlertingSettings(f)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "resend_delay")
+	})
 }

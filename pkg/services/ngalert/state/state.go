@@ -215,8 +215,8 @@ func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 }
 
 // Maintain updates the end time using the most recent evaluation.
-func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
-	a.EndsAt = nextEndsTime(interval, evaluatedAt)
+func (a *State) Maintain(interval int64, evaluatedAt time.Time, resendDelay time.Duration) {
+	a.EndsAt = nextEndsTime(interval, evaluatedAt, resendDelay)
 }
 
 // addErrorInfoToAnnotations adds annotations to the state to indicate that an error occurred.
@@ -340,7 +340,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float6
 	return result
 }
 
-func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
+func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string, resendDelay time.Duration) {
 	switch {
 	case state.State == eval.Normal:
 		logger.Debug("Keeping state", "state", state.State)
@@ -364,14 +364,14 @@ func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logg
 			// If the KeepFiringFor duration has not been observed then the state is kept as Recovering.
 			// We must also set the next endsAt to a future time for the Alertmanager,
 			// as for it the alert is still firing.
-			state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 		}
 	case state.State == eval.Alerting && rule.KeepFiringFor > 0:
 		// If the old state is Alerting and the rule has a KeepFiringFor duration then
 		// the state should be set to Recovering when it transitions to Normal.
 		//
 		// EndsAt must be set to a future time for the Alertmanager, the same as for Alerting states.
-		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 		logger.Debug("Changing state",
 			"previous_state",
 			state.State,
@@ -400,11 +400,11 @@ func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logg
 	}
 }
 
-func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
+func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string, resendDelay time.Duration) {
 	switch state.State {
 	case eval.Alerting:
 		prevEndsAt := state.EndsAt
-		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 		// explicitly clear errors
 		state.Error = nil
 		logger.Debug("Keeping state",
@@ -417,7 +417,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	case eval.Pending:
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
-			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 			logger.Debug("Changing state",
 				"previous_state",
 				state.State,
@@ -430,7 +430,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 			state.SetAlerting(reason, result.EvaluatedAt, nextEndsAt)
 		}
 	default:
-		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 		if state.State != eval.Recovering && rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending.
 			// If the alert is currently in the Recovering state then we skip Pending and set it directly to Alerting.
@@ -459,13 +459,13 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	}
 }
 
-func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
+func resultError(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool, resendDelay time.Duration) {
 	handlerStr := "resultError"
 
 	switch rule.ExecErrState {
 	case models.AlertingErrState:
 		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
-		resultAlerting(state, rule, result, logger, models.StateReasonError)
+		resultAlerting(state, rule, result, logger, models.StateReasonError, resendDelay)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
 		state.addErrorInfoToAnnotations(result.Error, rule)
@@ -475,25 +475,25 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 			// Already in Error state, maintain it.
 			prevEndsAt := state.EndsAt
 			state.Error = result.Error
-			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 			logger.Debug("Keeping state", "state", state.State, "previous_ends_at", prevEndsAt, "next_ends_at", state.EndsAt)
 
 		case eval.Pending:
 			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 				// 'For' duration exceeded. Transition to Error.
-				nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+				nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
 			} else {
 				// Still pending. Maintain and update the Error field.
 				prevEndsAt := state.EndsAt
 				state.Error = result.Error
-				state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+				state.Maintain(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 				logger.Debug("Keeping state", "state", state.State, "previous_ends_at", prevEndsAt, "next_ends_at", state.EndsAt)
 			}
 		default:
 			// First occurrence of Error.
-			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
@@ -511,32 +511,32 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
-		resultNormal(state, rule, result, logger, "") // TODO: Should we add a reason?
+		resultNormal(state, rule, result, logger, "", resendDelay) // TODO: Should we add a reason?
 		state.addErrorInfoToAnnotations(result.Error, rule)
 	case models.KeepLastErrState:
 		logger := logger.New("previous_handler", handlerStr)
-		resultKeepLast(state, rule, result, logger)
+		resultKeepLast(state, rule, result, logger, resendDelay)
 		state.addErrorInfoToAnnotations(result.Error, rule)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
-		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay))
 		state.addErrorInfoToAnnotations(result.Error, rule)
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool) {
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, ignorePending bool, resendDelay time.Duration) {
 	handlerStr := "resultNoData"
 
 	switch rule.NoDataState {
 	case models.Alerting:
 		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", handlerStr)
-		resultAlerting(state, rule, result, logger, models.StateReasonNoData)
+		resultAlerting(state, rule, result, logger, models.StateReasonNoData, resendDelay)
 	case models.NoData:
 		switch state.State {
 		case eval.NoData:
 			// Already in NoData state. Maintain it.
 			prevEndsAt := state.EndsAt
-			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 			logger.Debug("Keeping state",
 				"state",
 				state.State,
@@ -547,19 +547,19 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		case eval.Pending:
 			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 				// 'For' duration exceeded. Transition to NoData.
-				nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+				nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.NoData, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
 				state.SetNoData("", result.EvaluatedAt, nextEndsAt)
 			} else {
 				// Still pending, maintain.
 				prevEndsAt := state.EndsAt
 				state.Error = nil
-				state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+				state.Maintain(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 				logger.Debug("Keeping state", "state", state.State, "previous_ends_at", prevEndsAt, "next_ends_at", state.EndsAt)
 			}
 		default:
 			// First occurrence of NoData.
-			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay)
 			if !ignorePending && state.State != eval.Recovering && rule.For > 0 {
 				// Set to Pending if there's a 'for' duration specified. Skip if Recovering.
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending, "previous_ends_at", state.EndsAt, "next_ends_at", nextEndsAt)
@@ -572,39 +572,39 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		}
 	case models.OK:
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", handlerStr)
-		resultNormal(state, rule, result, logger, models.StateReasonNoData)
+		resultNormal(state, rule, result, logger, models.StateReasonNoData, resendDelay)
 	case models.KeepLast:
 		logger := logger.New("previous_handler", handlerStr)
-		resultKeepLast(state, rule, result, logger)
+		resultKeepLast(state, rule, result, logger, resendDelay)
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
-		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt, resendDelay))
 		state.Annotations["Error"] = err.Error()
 	}
 }
 
-func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
+func resultKeepLast(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, resendDelay time.Duration) {
 	reason := models.ConcatReasons(result.State.String(), models.StateReasonKeepLast)
 
 	switch state.State {
 	case eval.Alerting:
 		logger.Debug("Execution keep last state is Alerting", "handler", "resultAlerting")
-		resultAlerting(state, rule, result, logger, reason)
+		resultAlerting(state, rule, result, logger, reason, resendDelay)
 	case eval.Pending:
 		// respect 'for' setting on rule
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 			logger.Debug("Execution keep last state is Pending", "handler", "resultAlerting")
-			resultAlerting(state, rule, result, logger, reason)
+			resultAlerting(state, rule, result, logger, reason, resendDelay)
 		} else {
 			logger.Debug("Ignoring set next state to pending")
 		}
 	case eval.Normal:
 		logger.Debug("Execution keep last state is Normal", "handler", "resultNormal")
-		resultNormal(state, rule, result, logger, reason)
+		resultNormal(state, rule, result, logger, reason, resendDelay)
 	default:
 		// this should not happen, add as failsafe
 		logger.Debug("Reverting invalid state to normal", "handler", "resultNormal")
-		resultNormal(state, rule, result, logger, reason)
+		resultNormal(state, rule, result, logger, reason, resendDelay)
 	}
 }
 
@@ -647,10 +647,13 @@ func (a *State) Equals(b *State) bool {
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
-func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
-	ends := ResendDelay
+func nextEndsTime(interval int64, evaluatedAt time.Time, resendDelay time.Duration) time.Time {
+	if resendDelay <= 0 {
+		resendDelay = ResendDelay
+	}
+	ends := resendDelay
 	intv := time.Second * time.Duration(interval)
-	if intv > ResendDelay {
+	if intv > resendDelay {
 		ends = intv
 	}
 	// Allow for at least two evaluation cycles to pass before expiring, every time.
@@ -826,7 +829,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	}
 }
 
-func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool) StateTransition {
+func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extraAnnotations data.Labels, logger log.Logger, takeImageFn takeImageFn, ignorePendingForNoDataAndError bool, resendDelay time.Duration) StateTransition {
 	a.LastEvaluationTime = result.EvaluatedAt
 	a.EvaluationDuration = result.EvaluationDuration
 	a.SetNextValues(result)
@@ -846,16 +849,16 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(a, alertRule, result, logger, "")
+		resultNormal(a, alertRule, result, logger, "", resendDelay)
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
-		resultAlerting(a, alertRule, result, logger, "")
+		resultAlerting(a, alertRule, result, logger, "", resendDelay)
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
-		resultError(a, alertRule, result, logger, ignorePendingForNoDataAndError)
+		resultError(a, alertRule, result, logger, ignorePendingForNoDataAndError, resendDelay)
 	case eval.NoData:
 		logger.Debug("Setting next state", "handler", "resultNoData")
-		resultNoData(a, alertRule, result, logger, ignorePendingForNoDataAndError)
+		resultNoData(a, alertRule, result, logger, ignorePendingForNoDataAndError, resendDelay)
 	case eval.Pending,
 		eval.Recovering: // we do not emit results with these states
 		logger.Debug("Ignoring set next state", "state", result.State)

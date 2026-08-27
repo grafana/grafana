@@ -644,8 +644,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if err != nil {
 		return fmt.Errorf("setting 'resend_delay' is invalid: %w", err)
 	}
-	if uaCfg.ResendDelay < 0 {
-		return fmt.Errorf("setting 'resend_delay' is invalid, only 0 or a positive duration are allowed")
+	if uaCfg.ResendDelay <= 0 {
+		return fmt.Errorf("setting 'resend_delay' is invalid, only a positive duration is allowed")
 	}
 
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
