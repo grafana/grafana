@@ -259,13 +259,13 @@
         src="[[$asset.FilePath]]"
         integrity="[[$asset.Integrity]]"
         crossorigin="anonymous"
-        type="module"
+        type="[[if $.ESModuleAssetsEnabled]]module[[else]]text/javascript[[end]]"
         defer
       ></script>
       [[end]]
     [[else]]
       [[range $asset := .Assets.JSFiles]]
-      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="module" defer></script>
+      <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="[[if $.ESModuleAssetsEnabled]]module[[else]]text/javascript[[end]]" defer></script>
       [[end]]
     [[end]]
 
