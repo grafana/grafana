@@ -126,6 +126,12 @@ export default (env: Env = {}): Configuration => ({
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
+      // TODO: Remove once Rspack replaces Webpack.
+      // Rspack emits worker chunks as ES modules (workerChunkLoading: 'import' below), which
+      // resolve to module-worker variants instead of the importScripts based originals used by
+      // the webpack build.
+      'app/core/utils/CorsWorker$': path.resolve(grafanaRoot, 'public/app/core/utils/CorsWorker.rspack.ts'),
+      'app/core/utils/CorsSharedWorker$': path.resolve(grafanaRoot, 'public/app/core/utils/CorsSharedWorker.rspack.ts'),
     },
     modules: [
       // default value
