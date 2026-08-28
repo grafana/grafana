@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import {
   type Row,
   type HeaderGroup,
@@ -65,15 +65,20 @@ export function CallTreeTable({
     }
   }, [availableWidth, shouldBeCompact, isCompact, setIsCompact]);
 
-  const functionColumnWidth = getFunctionColumnWidth(availableWidth, isCompact);
+  const functionColumnMinWidth = getFunctionColumnWidth(availableWidth, isCompact);
 
   if (width < 3 || height < 3) {
     return null;
   }
 
   return (
-    <div style={{ width, height, display: 'flex', flexDirection: 'column' }}>
-      <table {...getTableProps()} className={styles.table} style={{ flexShrink: 0 }}>
+    <div
+      ref={scrollContainerRef}
+      data-testid="call-tree-scroll-container"
+      className={styles.scrollContainer}
+      style={{ width, height, overflow: 'auto' }}
+    >
+      <table {...getTableProps()} className={styles.table}>
         <thead className={styles.thead}>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
@@ -81,17 +86,12 @@ export function CallTreeTable({
               <tr key={key} {...headerGroupProps}>
                 {headerGroup.headers.map((column) => {
                   const { key: headerKey, ...headerProps } = column.getHeaderProps(column.getSortByToggleProps());
-                  const columnWidth = column.id === 'label' ? functionColumnWidth : column.width;
                   return (
                     <th
                       key={headerKey}
                       {...headerProps}
                       className={styles.th}
-                      style={{
-                        ...(columnWidth !== undefined && { width: columnWidth }),
-                        textAlign: column.id === 'self' || column.id === 'total' ? 'right' : undefined,
-                        ...(column.minWidth !== undefined && { minWidth: column.minWidth }),
-                      }}
+                      style={getColumnStyle(column.id, functionColumnMinWidth, column.width, column.minWidth)}
                     >
                       {column.render('Header')}
                       {column.isSorted && (
@@ -108,66 +108,83 @@ export function CallTreeTable({
             );
           })}
         </thead>
-      </table>
-      <div
-        ref={scrollContainerRef}
-        style={{ flex: 1, overflowY: 'scroll', overflowX: 'auto' }}
-        className={styles.scrollContainer}
-      >
-        <table {...getTableProps()} className={styles.table}>
-          <tbody {...getTableBodyProps()} className={styles.tbody}>
-            {rows.map((row, rowIndex) => {
-              prepareRow(row);
-              const { key, ...rowProps } = row.getRowProps();
-              const isFocusedRow = row.original.id === focusedNodeId;
-              const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
-              const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
+        <tbody {...getTableBodyProps()} className={styles.tbody}>
+          {rows.map((row, rowIndex) => {
+            prepareRow(row);
+            const { key, ...rowProps } = row.getRowProps();
+            const isFocusedRow = row.original.id === focusedNodeId;
+            const isCallersTargetRow = callersNodeLabel && row.original.label === callersNodeLabel;
+            const isSearchMatchRow = currentSearchMatchId && row.original.id === currentSearchMatchId;
 
-              return (
-                <tr
-                  key={key}
-                  {...rowProps}
-                  ref={isSearchMatchRow ? searchMatchRowRef : null}
-                  className={cx(
-                    styles.tr,
-                    (isFocusedRow ||
-                      (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) &&
-                      styles.focusedRow,
-                    isCallersTargetRow && styles.callersTargetRow,
-                    isSearchMatchRow && styles.searchMatchRow
-                  )}
-                >
-                  {row.cells.map((cell) => {
-                    const { key: cellKey, ...cellProps } = cell.getCellProps();
-                    const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
-                    const isActionsColumn = cell.column.id === 'actions';
-                    const columnWidth = cell.column.id === 'label' ? functionColumnWidth : cell.column.width;
-                    return (
-                      <td
-                        key={cellKey}
-                        {...cellProps}
-                        className={cx(
-                          styles.td,
-                          isActionsColumn && styles.actionsColumnCell,
-                          isValueColumn && styles.valueColumnCell
-                        )}
-                        style={{
-                          ...(columnWidth !== undefined && { width: columnWidth }),
-                          ...(cell.column.minWidth !== undefined && { minWidth: cell.column.minWidth }),
-                        }}
-                      >
-                        {cell.render('Cell', { rowIndex })}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            return (
+              <tr
+                key={key}
+                {...rowProps}
+                ref={isSearchMatchRow ? searchMatchRowRef : null}
+                className={cx(
+                  styles.tr,
+                  (isFocusedRow ||
+                    (focusedNodeId?.startsWith('label:') && focusedNodeId.substring(6) === row.original.label)) &&
+                    styles.focusedRow,
+                  isCallersTargetRow && styles.callersTargetRow,
+                  isSearchMatchRow && styles.searchMatchRow
+                )}
+              >
+                {row.cells.map((cell) => {
+                  const { key: cellKey, ...cellProps } = cell.getCellProps();
+                  const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
+                  const isActionsColumn = cell.column.id === 'actions';
+                  const isLabelColumn = cell.column.id === 'label';
+                  return (
+                    <td
+                      key={cellKey}
+                      {...cellProps}
+                      className={cx(
+                        styles.td,
+                        isActionsColumn && styles.actionsColumnCell,
+                        isValueColumn && styles.valueColumnCell,
+                        isLabelColumn && styles.labelColumnCell
+                      )}
+                      style={getColumnStyle(
+                        cell.column.id,
+                        functionColumnMinWidth,
+                        cell.column.width,
+                        cell.column.minWidth
+                      )}
+                    >
+                      {cell.render('Cell', { rowIndex })}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
+}
+
+function getColumnStyle(
+  columnId: string,
+  functionColumnMinWidth: number | undefined,
+  columnWidth: number | string | undefined,
+  minWidth: number | undefined
+): CSSProperties {
+  if (columnId === 'label') {
+    return {
+      ...(functionColumnMinWidth !== undefined
+        ? { minWidth: functionColumnMinWidth }
+        : minWidth !== undefined && { minWidth }),
+      textAlign: 'left',
+    };
+  }
+
+  return {
+    ...(columnWidth !== undefined && { width: columnWidth, maxWidth: columnWidth }),
+    ...(minWidth !== undefined && { minWidth }),
+    textAlign: columnId === 'self' || columnId === 'total' ? 'right' : undefined,
+  };
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -175,6 +192,7 @@ function getStyles(theme: GrafanaTheme2) {
     scrollContainer: css({
       '&::-webkit-scrollbar': {
         width: '8px',
+        height: '8px',
       },
       '&::-webkit-scrollbar-track': {
         background: theme.colors.background.secondary,
@@ -188,13 +206,18 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     table: css({
-      width: '100%',
-      tableLayout: 'fixed',
-      borderCollapse: 'collapse',
+      width: 'max-content',
+      minWidth: '100%',
+      tableLayout: 'auto',
+      borderCollapse: 'separate',
+      borderSpacing: 0,
       fontSize: theme.typography.fontSize,
       color: theme.colors.text.primary,
     }),
     thead: css({
+      position: 'sticky',
+      top: 0,
+      zIndex: 2,
       backgroundColor: theme.colors.background.secondary,
     }),
     th: css({
@@ -202,9 +225,11 @@ function getStyles(theme: GrafanaTheme2) {
       height: '36px',
       textAlign: 'left',
       fontWeight: theme.typography.fontWeightMedium,
+      backgroundColor: theme.colors.background.secondary,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       cursor: 'pointer',
       userSelect: 'none',
+      whiteSpace: 'nowrap',
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
       },
@@ -246,12 +271,16 @@ function getStyles(theme: GrafanaTheme2) {
       borderBottom: 'none',
       height: '20px',
       verticalAlign: 'middle',
-      overflow: 'hidden',
+    }),
+    labelColumnCell: css({
+      overflow: 'visible',
+      whiteSpace: 'nowrap',
     }),
     sortIcon: css({
       marginLeft: theme.spacing(0.5),
     }),
     actionsColumnCell: css({
+      overflow: 'hidden',
       backgroundColor: theme.colors.background.secondary,
       '&:hover': {
         backgroundColor: theme.colors.background.secondary,

@@ -172,6 +172,28 @@ describe('FlameGraphCallTreeContainer', () => {
     expect(columnHeaders[2].textContent).toContain('Total');
   });
 
+  it('should allow horizontal scrolling so nested function names are not clipped', async () => {
+    await setup();
+
+    const scrollContainer = screen.getByTestId('call-tree-scroll-container');
+    expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
+
+    // Expanding the root also expands single-child chains, which used to push
+    // names past the fixed Function column with no way to scroll sideways.
+    await user.click(screen.getByText('total'));
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(screen.getByText('test/pkg/agent.(*Target).start.func1')).toBeInTheDocument();
+    expect(screen.getByText('test/pkg/agent.(*Target).scrape')).toBeInTheDocument();
+
+    const table = scrollContainer.querySelector('table');
+    expect(table).not.toBeNull();
+    expect(table!.querySelector('thead')).toBeInTheDocument();
+    expect(table!.querySelector('tbody')).toBeInTheDocument();
+  });
+
   it('should enter focus mode when Focus on callees is clicked', async () => {
     // Use search to make runtime.mallocgc visible in the tree
     await setup({ search: 'runtime.mallocgc' });
