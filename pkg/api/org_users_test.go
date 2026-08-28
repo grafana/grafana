@@ -48,6 +48,22 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
+type countingAuthnService struct {
+	*authntest.FakeService
+	enabledCalls map[string]int
+	configCalls  map[string]int
+}
+
+func (s *countingAuthnService) IsClientEnabled(ctx context.Context, name string) bool {
+	s.enabledCalls[name]++
+	return s.FakeService.IsClientEnabled(ctx, name)
+}
+
+func (s *countingAuthnService) GetClientConfig(ctx context.Context, name string) (authn.SSOClientConfig, bool) {
+	s.configCalls[name]++
+	return s.FakeService.GetClientConfig(ctx, name)
+}
+
 func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(testOrgID)
@@ -228,6 +244,39 @@ func TestIntegrationOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, "user2", resp[1].Login)
 			}, mock)
 	})
+}
+
+func TestSearchOrgUsersCachesExternalSyncStatusByAuthModule(t *testing.T) {
+	authnService := &countingAuthnService{
+		FakeService: &authntest.FakeService{
+			ExpectedClientConfig: &authntest.FakeSSOClientConfig{},
+		},
+		enabledCalls: map[string]int{},
+		configCalls:  map[string]int{},
+	}
+	hs := setupSimpleHTTPServer(featuremgmt.WithFeatures())
+	hs.authnService = authnService
+	hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{
+		OrgUsers: []*org.OrgUserDTO{{UserID: 1}, {UserID: 2}, {UserID: 3}, {UserID: 4}},
+	}}
+	hs.authInfoService = &authinfotest.FakeService{ExpectedRecentlyUsedLabel: map[int64]string{
+		1: login.GoogleAuthModule,
+		2: login.GoogleAuthModule,
+		3: login.GoogleAuthModule,
+		4: login.GithubAuthModule,
+	}}
+	reqCtx := &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+
+	_, err := hs.searchOrgUsersHelper(reqCtx, &org.SearchOrgUsersQuery{})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]int{
+		authn.ClientWithPrefix("google"): 1,
+		authn.ClientWithPrefix("github"): 1,
+	}, authnService.enabledCalls)
+	assert.Equal(t, map[string]int{
+		authn.ClientWithPrefix("google"): 1,
+		authn.ClientWithPrefix("github"): 1,
+	}, authnService.configCalls)
 }
 
 func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {

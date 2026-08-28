@@ -384,11 +384,17 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
 	}
 
+	externallySyncedByAuthModule := make(map[string]bool)
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, module)
+			isExternallySynced, ok := externallySyncedByAuthModule[module]
+			if !ok {
+				isExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, module)
+				externallySyncedByAuthModule[module] = isExternallySynced
+			}
+			filteredUsers[i].IsExternallySynced = isExternallySynced
 		}
 	}
 
