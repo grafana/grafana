@@ -1,25 +1,39 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
   type DataTransformerConfig,
   FieldType,
-  type LoadingState,
+  getDefaultTimeRange,
+  LoadingState,
   type PanelData,
+  type ResolvedSystemTransformations,
   type TimeRange,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
-import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { SceneDataNode, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { PanelPluginTransformationsBehaviour } from '../../scene/PanelPluginTransformationsBehaviour';
+import { getResolvedSystemTransformations, NO_SYSTEM_TRANSFORMATIONS } from '../../scene/systemTransformations';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
+import {
+  extractLabels,
+  frameWithLabels,
+  mockSystemTransformationPlugins,
+  registerPlugin,
+  systemTransformationPluginImportUtils,
+} from '../../utils/systemTransformationTestUtils';
+import { activateFullSceneTree } from '../../utils/test-utils';
 import { findVizPanelByKey } from '../../utils/utils';
 import { testDashboard } from '../testfiles/testDashboard';
 
@@ -32,15 +46,27 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
+jest.mock('app/features/plugins/importPanelPlugin', () => ({
+  syncGetPanelPlugin: (id: string) => mockSystemTransformationPlugins.get(id),
+  importPanelPlugin: (id: string) => Promise.resolve(mockSystemTransformationPlugins.get(id)),
+}));
+
+setPluginImportUtils(systemTransformationPluginImportUtils);
+
 function createModelMock(
   panelData: PanelData,
   transformations?: DataTransformerConfig[],
-  onChangeTransformationsMock?: Function
+  onChangeTransformationsMock?: Function,
+  systemTransformations?: Partial<ResolvedSystemTransformations>
 ) {
   return {
     getDataTransformer: () => new SceneDataTransformer({ data: panelData, transformations: transformations || [] }),
     getQueryRunner: () => new SceneQueryRunner({ queries: [], data: panelData }),
     onChangeTransformations: onChangeTransformationsMock,
+    // The real accessor resolves the panel plugin's supplier; this mock has no panel, so the
+    // resolved result is supplied directly.
+    getResolvedSystemTransformations: () =>
+      systemTransformations ? { ...NO_SYSTEM_TRANSFORMATIONS, ...systemTransformations } : NO_SYSTEM_TRANSFORMATIONS,
   } as unknown as PanelDataTransformationsTab;
 }
 
@@ -57,6 +83,40 @@ const mockData = {
     }),
   ],
 };
+
+/** The query result a plugin's transformations run against, for the tests that resolve them for real. */
+const rawData: PanelData = {
+  state: LoadingState.Done,
+  timeRange: getDefaultTimeRange(),
+  series: [frameWithLabels()],
+};
+
+/** Organize fields renders one row per field it is given, so its editor names the input's fields. */
+const organize: DataTransformerConfig = { id: 'organize', options: {} };
+
+/**
+ * Unlike {@link createModelMock}, this activates a real scene so the plugin's supplier is registered
+ * and the real resolver answers, rather than stubbing what the resolver would have returned.
+ */
+function createModelWithActivatedPlugin(pluginId: string, userTransformations: DataTransformerConfig[] = [organize]) {
+  // Needs a source to activate against; the tab reads the raw frames from the query runner below.
+  const transformer = new SceneDataTransformer({
+    $data: new SceneDataNode({ data: rawData }),
+    transformations: userTransformations,
+    $behaviors: [new PanelPluginTransformationsBehaviour()],
+  });
+  // Activating parents the transformer and is what registers the plugin's supplier.
+  activateFullSceneTree(new VizPanel({ pluginId, $data: transformer }));
+
+  return {
+    getDataTransformer: () => transformer,
+    getQueryRunner: () => new SceneQueryRunner({ queries: [], data: rawData }),
+    onChangeTransformations: jest.fn(),
+    // Delegates for real rather than stubbing a result, so these tests exercise the resolver the
+    // pipeline uses, unwrapped exactly as the tab unwraps it.
+    getResolvedSystemTransformations: () => getResolvedSystemTransformations(transformer),
+  } as unknown as PanelDataTransformationsTab;
+}
 
 describe('PanelDataTransformationsModel', () => {
   it('can change transformations', () => {
@@ -161,6 +221,125 @@ describe('PanelDataTransformationsTab', () => {
     await userEvent.click(confirmButton);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([]);
+  });
+
+  describe('system transformation rows', () => {
+    it('renders them as read-only rows around the user transformations', async () => {
+      const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], jest.fn(), {
+        prepend: [{ id: 'limit', options: {} }],
+        append: [{ id: 'reduce', options: {} }],
+      });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      const rows = await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow);
+      expect(rows.map((row) => row.textContent)).toEqual([
+        expect.stringContaining('Limit'),
+        expect.stringContaining('Reduce'),
+      ]);
+
+      // Read-only: no per-row remove button, unlike the user's editable row.
+      expect(screen.getByText('1 - Add field from calculation')).toBeInTheDocument();
+    });
+
+    it('still offers the empty message when the plugin has transformations and the user has none', async () => {
+      const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [{ id: 'limit', options: {} }] });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      expect(await screen.findAllByTestId(selectors.components.Transforms.systemTransformationRow)).toHaveLength(1);
+      // The suggested transformations, the SQL expression card and "Go to queries" live in here, and
+      // the user has configured nothing — a panel type whose plugin registers transformations would
+      // otherwise never show them.
+      expect(screen.getByTestId(selectors.components.Transforms.noTransformationsMessage)).toBeInTheDocument();
+      // Nothing of the user's to delete, so the destructive action is not offered.
+      expect(
+        screen.queryByTestId(selectors.components.Transforms.removeAllTransformationsButton)
+      ).not.toBeInTheDocument();
+    });
+
+    it('labels an operator-form transformation as code defined', async () => {
+      const modelMock = createModelMock(mockData, [], jest.fn(), { prepend: [() => (source) => source] });
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      const row = await screen.findByTestId(selectors.components.Transforms.systemTransformationRow);
+      expect(row).toHaveTextContent('Custom transformation (code defined)');
+    });
+
+    it('is absent when the plugin registers nothing', async () => {
+      const modelMock = createModelMock(mockData, [{ id: 'calculateField', options: {} }], jest.fn());
+      render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
+
+      await screen.findByText('1 - Add field from calculation');
+      expect(screen.queryByTestId(selectors.components.Transforms.systemTransformationRow)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('feeding the editor plugin-transformed fields', () => {
+    beforeEach(() => {
+      mockSystemTransformationPlugins.clear();
+      setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('feeds the editor the fields the plugin transformations produce', async () => {
+      registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => [extractLabels]));
+
+      render(<PanelDataTransformationsTabRendered model={createModelWithActivatedPlugin('logs-table')} />);
+
+      // `level` only exists because the plugin's extractFields ran first. Without it the user's
+      // organize transformation is configured against a field set it will never receive.
+      await waitFor(() => {
+        expect(screen.getByText('level')).toBeInTheDocument();
+      });
+      expect(screen.getByText('labels')).toBeInTheDocument();
+    });
+
+    it('feeds the editor the raw query fields when the plugin registers none', async () => {
+      registerPlugin('plain-table');
+
+      render(<PanelDataTransformationsTabRendered model={createModelWithActivatedPlugin('plain-table')} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('labels')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('level')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('feeding the drawer the frames a new transformation will receive', () => {
+    beforeEach(() => {
+      mockSystemTransformationPlugins.clear();
+      setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('judges applicability without the plugin appended transformations', async () => {
+      // Appended, so it runs after every user transformation: a row added from the drawer is placed
+      // ahead of it and never receives the `level` field it produces.
+      registerPlugin('logs-table', (plugin) => plugin.setSystemTransformations(() => ({ append: [extractLabels] })));
+
+      const model = createModelWithActivatedPlugin('logs-table', [
+        { id: 'organize', options: { excludeByName: { line: true } } },
+      ]);
+      render(<PanelDataTransformationsTabRendered model={model} />);
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Transforms.addTransformationButton));
+      const card = await screen.findByTestId(selectors.components.TransformTab.newTransform('Grouping to matrix'));
+
+      // Two fields: the query's three, less the one the user's organize drops. The panel renders
+      // three — `extractFields` puts `level` back — and judging against those would offer this
+      // transformation as applicable to a row that will only ever see two.
+      await waitFor(() =>
+        expect(within(card).getByTestId(selectors.components.Transforms.applicabilityInfo)).toHaveAccessibleName(
+          'Grouping to matrix requires at least 3 fields to work. Currently there are 2 fields.'
+        )
+      );
+    });
   });
 
   it('can filter transformations in the drawer', async () => {

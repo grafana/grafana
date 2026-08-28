@@ -40,6 +40,8 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
+import { createPanelDataTransformer } from './createPanelDataTransformer';
+
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
@@ -313,7 +315,7 @@ export function getDefaultVizPanel(): VizPanel {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
-      ? new SceneDataTransformer({
+      ? createPanelDataTransformer({
           $data: new SceneQueryRunner({
             queries: [{ refId: 'A' }],
             datasource: getDataSourceRef(datasourceSettings),

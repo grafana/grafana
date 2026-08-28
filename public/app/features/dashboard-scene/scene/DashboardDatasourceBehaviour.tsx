@@ -21,6 +21,7 @@ import {
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
+import { pluginTransformationsEnabled } from './systemTransformations';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -166,9 +167,13 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
       };
 
-      const dataTransformer = sourcePanelQueryRunner.parent;
+      const parent = sourcePanelQueryRunner.parent;
+      const dataTransformer = parent instanceof SceneDataTransformer ? parent : undefined;
 
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      // A transformer that can reprocess without its source re-querying needs its own subscription —
+      // which, with the flag on, is every panel.
+      // See https://github.com/grafana/grafana/issues/131531
+      if (dataTransformer && (dataTransformer.state.transformations.length > 0 || pluginTransformationsEnabled())) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and

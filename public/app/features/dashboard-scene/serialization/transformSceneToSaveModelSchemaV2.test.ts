@@ -7,7 +7,7 @@ import {
   getDefaultTimeRange,
 } from '@grafana/data';
 import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { ExpressionDatasourceRef, FlagKeys } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   behaviors,
@@ -45,6 +45,7 @@ import {
   defaultDataQueryKind,
   type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -1255,6 +1256,58 @@ describe('getVizPanelQueries', () => {
       // Verify it gets data from the nested $data (SceneDataNode) not the transformer
       expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
     });
+  });
+});
+
+describe('given a panel plugin that registers transformations', () => {
+  const timeRange = getDefaultTimeRange();
+  const userTransformation = { id: 'reduce', options: { reducers: ['max'] } };
+
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  function buildVizPanel() {
+    const rawFrame = toDataFrame({
+      name: 'raw-series',
+      fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+    });
+    const transformedFrame = toDataFrame({
+      name: 'plugin-transformed',
+      fields: [{ name: 'value', type: FieldType.number, values: [10, 20, 30] }],
+    });
+
+    // Each provider level carries its own current data, so the assertion can tell exactly which
+    // level was snapshotted — the transformer's own data must never be captured.
+    const dataProvider = new SceneDataTransformer({
+      $data: new SceneDataNode({ data: { series: [rawFrame], state: LoadingState.Done, timeRange } }),
+      transformations: [userTransformation],
+      data: { series: [transformedFrame], state: LoadingState.Done, timeRange },
+    });
+
+    // Registered directly rather than through a plugin, which is
+    // `PanelPluginTransformationsBehaviour`'s concern. A plain config rather than an operator, so a
+    // leak would be a plausible save model entry rather than something v2 would reject anyway.
+    dataProvider.setSystemTransformations({
+      supplier: () => ({ prepend: [{ id: 'organize', options: {} }] }),
+    });
+    // Resolved from the frames on every pass and never written to state, which is what keeps the
+    // serializer on a plain read of `state.transformations`.
+    expect(dataProvider.state.transformations).toEqual([userTransformation]);
+
+    return new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: dataProvider });
+  }
+
+  it('snapshots the raw query result', () => {
+    const result = getVizPanelQueries(buildVizPanel(), undefined, true);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+    expect(result[0].spec.query.spec.snapshot[0].schema?.name).toBe('raw-series');
   });
 });
 

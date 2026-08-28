@@ -10,7 +10,6 @@ import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
   type SceneComponentProps,
-  SceneDataTransformer,
   SceneObjectBase,
   type SceneObjectRef,
   type SceneObjectState,
@@ -33,6 +32,7 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { createPanelDataTransformer } from '../utils/createPanelDataTransformer';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -297,7 +297,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         }
 
         panel.setState({
-          $data: new SceneDataTransformer({
+          $data: createPanelDataTransformer({
             $data: new SceneQueryRunner({
               datasource: {
                 uid: ds,
