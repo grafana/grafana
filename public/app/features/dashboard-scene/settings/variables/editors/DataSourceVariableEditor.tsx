@@ -110,7 +110,7 @@ interface InputProps {
 function DataSourceValuesPreview({ variable }: InputProps) {
   const { options, staticOptions } = useGetAllVariableOptions(variable);
 
-  return <VariableValuesPreview options={options} staticOptions={staticOptions} />;
+  return <VariableValuesPreview options={options} staticOptions={staticOptions} pageSize={5} />;
 }
 
 function DataSourceTypeSelect({ variable, id }: InputProps) {
