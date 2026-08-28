@@ -257,7 +257,7 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
+        onChange={onMaxDataPointsBlur}
         defaultValue={value}
       />
     </InlineField>
@@ -299,7 +299,7 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
+        onChange={onMinIntervalBlur}
         defaultValue={value}
       />
     </InlineField>
