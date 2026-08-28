@@ -206,8 +206,9 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     table: css({
+      // Grow with function names; do not force 100% or a vertical scrollbar
+      // creates a few pixels of horizontal overflow.
       width: 'max-content',
-      minWidth: '100%',
       tableLayout: 'auto',
       borderCollapse: 'separate',
       borderSpacing: 0,
@@ -244,24 +245,31 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     focusedRow: css({
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
-      borderLeft: `3px solid ${theme.colors.primary.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      // border-collapse:separate ignores borders on <tr>; draw the marker on the first cell.
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
     }),
     callersTargetRow: css({
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
-      borderLeft: `3px solid ${theme.colors.info.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.info.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),
       },
     }),
     searchMatchRow: css({
       backgroundColor: theme.colors.warning.transparent,
-      borderLeft: `3px solid ${theme.colors.warning.main}`,
       fontWeight: theme.typography.fontWeightMedium,
+      '& > td:first-of-type': {
+        boxShadow: `inset 3px 0 0 0 ${theme.colors.warning.main}`,
+      },
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.warning.transparent, 0.1),
       },
