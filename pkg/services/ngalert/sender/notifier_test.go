@@ -425,11 +425,12 @@ func TestExternalLabels(t *testing.T) {
 		ExternalLabels: labels.FromStrings("a", "b"),
 		RelabelConfigs: []*relabel.Config{
 			{
-				SourceLabels: model.LabelNames{"alertname"},
-				TargetLabel:  "a",
-				Action:       "replace",
-				Regex:        relabel.MustNewRegexp("externalrelabelthis"),
-				Replacement:  "c",
+				SourceLabels:         model.LabelNames{"alertname"},
+				TargetLabel:          "a",
+				Action:               "replace",
+				Regex:                relabel.MustNewRegexp("externalrelabelthis"),
+				Replacement:          "c",
+				NameValidationScheme: model.UTF8Validation,
 			},
 		},
 	}, nil)
@@ -464,11 +465,12 @@ func TestHandlerRelabel(t *testing.T) {
 				Regex:        relabel.MustNewRegexp("drop"),
 			},
 			{
-				SourceLabels: model.LabelNames{"alertname"},
-				TargetLabel:  "alertname",
-				Action:       "replace",
-				Regex:        relabel.MustNewRegexp("rename"),
-				Replacement:  "renamed",
+				SourceLabels:         model.LabelNames{"alertname"},
+				TargetLabel:          "alertname",
+				Action:               "replace",
+				Regex:                relabel.MustNewRegexp("rename"),
+				Replacement:          "renamed",
+				NameValidationScheme: model.UTF8Validation,
 			},
 		},
 	}, nil)
@@ -798,7 +800,7 @@ func TestHangingNotifier(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	reg := prometheus.NewRegistry()
-	sdMetrics, err := discovery.RegisterSDMetrics(reg, discovery.NewRefreshMetrics(reg))
+	sdMetrics, err := discovery.CreateAndRegisterSDMetrics(reg)
 	require.NoError(t, err)
 	sdManager := discovery.NewManager(
 		ctx,
