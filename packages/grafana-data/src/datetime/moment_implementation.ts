@@ -7,6 +7,6 @@ const useLuxon = typeof window !== 'undefined' && '__grafanaUseLuxon' in window 
 
 // Both implementations expose the same runtime API but use different concrete return types.
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const moment: MomentFactory = useLuxon ? luxonMoment : (legacyMoment as unknown as MomentFactory);
+const moment: MomentFactory = !useLuxon ? luxonMoment : (legacyMoment as unknown as MomentFactory);
 
 export default moment;
