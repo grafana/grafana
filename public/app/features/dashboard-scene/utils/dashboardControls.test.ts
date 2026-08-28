@@ -267,6 +267,40 @@ describe('dashboardControls', () => {
       });
     });
 
+    it('should load default controls when a type-only ref resolves via plugin aliasIDs', (done) => {
+      // DataSourceVariable refs use pluginId, which may still be a legacy id (testdata).
+      // getDataSourceInstanceSettings resolves that through meta.aliasIDs to a real
+      // instance whose settings.type is the current plugin id. That is not a default-DS
+      // fallback and must not be skipped.
+      const typeOnlyRef: DataSourceRef = { type: 'testdata' };
+
+      getDataSourceInstanceSettingsMock.mockResolvedValue({
+        uid: 'testdata-uid',
+        type: 'grafana-testdata-datasource',
+        meta: { id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+      } as DataSourceInstanceSettings);
+
+      const mockDs = createMockDatasource({
+        uid: 'testdata-uid',
+        type: 'grafana-testdata-datasource',
+        getDefaultVariables: () => Promise.resolve([mockVariable1]),
+        getDefaultLinks: undefined,
+      });
+      getDataSourceInstanceMock.mockResolvedValue(mockDs);
+
+      const events: DefaultControlEvent[] = [];
+
+      loadDefaultControlsShared$([typeOnlyRef]).subscribe({
+        next: (event) => events.push(event),
+        complete: () => {
+          expect(getDataSourceInstanceMock).toHaveBeenCalledWith(typeOnlyRef);
+          expect(events).toHaveLength(1);
+          expect(events[0].type).toBe('variables');
+          done();
+        },
+      });
+    });
+
     it('should warn when a registered datasource fails to load, even if the error mentions not found', (done) => {
       const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
       const refs: DataSourceRef[] = [{ uid: 'ds-fail', type: 'broken' }];

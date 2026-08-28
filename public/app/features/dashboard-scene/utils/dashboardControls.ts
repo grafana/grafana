@@ -1,6 +1,6 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
-import { type DataSourceApi } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
@@ -71,11 +71,13 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
   // A type-only ref means "any instance of this plugin". Both async APIs fall back to the
   // default datasource when no instance matches; legacy get() rejected, and skipping is what
   // we want — otherwise the default DS's controls get emitted under the wrong type.
+  // settings.type may still differ when the instance matched via meta.aliasIDs (legacy
+  // plugin ids on DataSourceVariable refs); that is a real instance, not a fallback.
   const settings = await getDataSourceInstanceSettings(settingsLookupRef(ref));
   if (!settings) {
     return;
   }
-  if (!ref.uid && ref.type && settings.type !== ref.type) {
+  if (!ref.uid && ref.type && !matchesRequestedType(settings, ref.type)) {
     return;
   }
 
@@ -92,6 +94,11 @@ async function loadControlsFromRef(ref: DataSourceRef, subscriber: Subscriber<De
 
 function settingsLookupRef(ref: DataSourceRef): DataSourceRef {
   return ref.uid === '' ? { ...ref, uid: undefined } : ref;
+}
+
+// Mirrors getDataSourceInstanceSettings type lookup: exact type or aliasIDs match.
+function matchesRequestedType(settings: DataSourceInstanceSettings, type: string): boolean {
+  return settings.type === type || (settings.meta?.aliasIDs?.includes(type) ?? false);
 }
 
 async function emitDefaultVariables(ds: DataSourceApi, subscriber: Subscriber<DefaultControlEvent>) {
