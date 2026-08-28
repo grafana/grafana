@@ -11,9 +11,9 @@ import { type NotebookCellItem } from '../NotebookCellItem';
 import { NotebookCellRenderer } from '../NotebookCellRenderer';
 import { resolveScrollAlign } from '../cells/focusExtension';
 
+import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
-import { NotebookCellAddButton } from './NotebookCellAddButton';
 
 /**
  * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
@@ -37,8 +37,8 @@ interface Props {
   cell: NotebookCellItem;
   /**
    * The cell's position in `cells`. This doubles as the Draggable index, so it must stay dense and
-   * 0-based — dnd derives every drop boundary from it. Also the base for the add button's insertion
-   * index: `index + 1` (below, on a plain click) or `index` (above, on alt/option-click).
+   * 0-based — dnd derives every drop boundary from it. The insertion index handed to the divider is
+   * `index + 1`, because the divider belongs to the cell above it.
    */
   index: number;
   isEditing?: boolean;
@@ -62,7 +62,7 @@ interface Props {
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to this cell's add button, which decides whether to offset it to `index + 1`. */
+  /** Forwarded to this cell's divider, already offset to `index + 1`. See NotebookAddBlockDivider. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
@@ -93,9 +93,9 @@ interface Props {
 }
 
 /**
- * One notebook cell plus its edit-mode affordances: a drag handle and an add-cell button in the left
- * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
- * content dispatcher — everything editing-related lives here.
+ * One notebook cell plus its edit-mode affordances: a drag handle in the left gutter and the insertion
+ * point below it, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays
+ * a pure content dispatcher — everything editing-related lives here.
  */
 export function NotebookCellFrame({
   cell,
@@ -210,10 +210,6 @@ export function NotebookCellFrame({
             </div>
           )}
 
-          {isEditing && (
-            <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
-          )}
-
           {isEditing && onDuplicate && onDelete && (
             <>
               <div
@@ -243,6 +239,11 @@ export function NotebookCellFrame({
               onNavigate={onNavigate}
             />
           </div>
+
+          {/* index + 1: this divider inserts *after* the cell it belongs to. */}
+          {isEditing && (
+            <NotebookAddBlockDivider index={index + 1} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
+          )}
         </div>
       )}
     </Draggable>

@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { act, fireEvent, render, screen } from 'test/test-utils';
+import { fireEvent, render, screen } from 'test/test-utils';
 
 import { NotebookCellItem } from '../NotebookCellItem';
 
@@ -87,7 +87,7 @@ describe('NotebookCellFrame', () => {
     expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
   });
 
-  it('renders the handle and the add button in edit mode', async () => {
+  it('renders the handle and the insertion point in edit mode', async () => {
     renderFrame({ isEditing: true });
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
@@ -95,10 +95,10 @@ describe('NotebookCellFrame', () => {
     expect(screen.getByRole('button', { name: 'Add block' })).toBeInTheDocument();
   });
 
-  // The only behavioural pin on the insertion index. The frame at position i inserts at i + 1 below
-  // (a plain click) or i above (alt/option-click) — an off-by-one here would silently insert blocks in
+  // The only behavioural pin on the insertion index. A divider belongs to the cell above it, so the
+  // frame at position i hands its divider i + 1; an off-by-one here would silently insert blocks in
   // the wrong place once edit mode wires onAdd up.
-  it('inserts below its own cell on a plain click', async () => {
+  it('offers the insertion point below its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
@@ -106,55 +106,6 @@ describe('NotebookCellFrame', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 2);
-  });
-
-  it('inserts above its own cell on an alt/option-click', async () => {
-    const onAdd = jest.fn();
-    const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
-
-    // The modifier is read on mouseUp, not click — see NotebookCellAddButton's own comment on why —
-    // and the click that follows is what actually opens the menu (Dropdown's own useClick interaction).
-    const addButton = screen.getByRole('button', { name: 'Add block' });
-    fireEvent.mouseUp(addButton, { altKey: true });
-    fireEvent.click(addButton, { altKey: true });
-    await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
-
-    expect(onAdd).toHaveBeenCalledWith('heading', 1);
-  });
-
-  // Keyboard activation (Enter/Space) never fires mouseUp, so a cell that moved after mount —
-  // something inserted, deleted, or reordered above it — would otherwise keep offering its stale
-  // former position instead of its current one.
-  it('inserts at the current position after the cell moves, even without a prior mouse interaction', async () => {
-    const onAdd = jest.fn();
-    const cell = buildCell();
-    const { user, rerender } = render(frameTree({ cell, index: 1, isEditing: true, onAdd }));
-
-    rerender(frameTree({ cell, index: 2, isEditing: true, onAdd }));
-
-    act(() => {
-      screen.getByRole('button', { name: 'Add block' }).focus();
-    });
-    await user.keyboard('{Enter}');
-    await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
-
-    expect(onAdd).toHaveBeenCalledWith('heading', 3);
-  });
-
-  // Opening the menu moves focus into its own Portal (see Dropdown's FloatingFocusManager), which
-  // sits outside this cell's frame — breaking the frame's own :focus-within reveal and fading the
-  // trigger back out mid-interaction without this. jsdom doesn't evaluate :focus-within anyway, so
-  // this pins the explicit override the component applies instead of the collision itself.
-  it('stays revealed while its own menu is open', async () => {
-    const { user } = renderFrame({ isEditing: true });
-    // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
-    // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
-    const addButton = screen.getByRole('button', { name: 'Add block' });
-    const wrapper = addButton.closest('div');
-
-    await user.click(addButton);
-
-    expect(getComputedStyle(wrapper!).opacity).toBe('1');
   });
 
   // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
