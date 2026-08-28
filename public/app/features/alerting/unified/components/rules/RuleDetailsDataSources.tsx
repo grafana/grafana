@@ -21,7 +21,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
   const { rulesSource, rule } = props;
   const styles = useStyles2(getStyles);
 
-  const dataSourceByUid = useDataSourceInstanceListByUid();
+  const { byUid: dataSourceByUid } = useDataSourceInstanceListByUid();
 
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {

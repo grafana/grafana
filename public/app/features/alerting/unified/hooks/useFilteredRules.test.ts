@@ -365,6 +365,26 @@ describe('useFilteredRules', () => {
     });
     expect(result.current[0]?.groups[0]?.rules[0]?.name).toBe('Queries loki');
   });
+
+  it('does not exclude rules from a data source filter while the data source list is still loading', async () => {
+    const rule = mockCombinedRule({
+      name: 'Queries prometheus',
+      rulerRule: mockRulerGrafanaRule(undefined, {
+        data: [mockAlertQuery({ datasourceUid: dataSources.prometheus.uid })],
+      }),
+    });
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', [rule])],
+    });
+
+    // Filtering by a data source the rule doesn't query for would normally exclude it, but the
+    // async data source list hasn't resolved on this first render, so the filter is skipped.
+    const { result } = renderHook(() => useFilteredRules([ns], getFilter({ dataSourceNames: ['loki'] })));
+
+    expect(result.current[0]?.groups[0]?.rules).toHaveLength(1);
+
+    await waitFor(() => expect(result.current).toHaveLength(0));
+  });
 });
 
 // Legacy URLs may put free-text or search-syntax tokens in queryString instead of PromQL matchers.

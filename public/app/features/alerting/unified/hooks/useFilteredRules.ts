@@ -105,10 +105,13 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   const deferredNamespaces = useDeferredValue(namespaces);
   const deferredFilterState = useDeferredValue(filterState);
 
-  const dataSourceByUid = useDataSourceInstanceListByUid();
+  const { byUid: dataSourceByUid, isLoading, error } = useDataSourceInstanceListByUid();
+  // Skip the data-source filter (rather than exclude every rule) while the list is unresolved,
+  // since an empty map would otherwise look identical to "no rules match".
+  const skipDataSourceFilter = isLoading || !!error;
 
   return useMemo(() => {
-    const filteredRules = filterRules(deferredNamespaces, deferredFilterState, dataSourceByUid);
+    const filteredRules = filterRules(deferredNamespaces, deferredFilterState, dataSourceByUid, skipDataSourceFilter);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -127,13 +130,14 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     });
 
     return filteredRules;
-  }, [deferredNamespaces, deferredFilterState, dataSourceByUid]);
+  }, [deferredNamespaces, deferredFilterState, dataSourceByUid, skipDataSourceFilter]);
 };
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { dataSourceNames: [], labels: [], freeFormWords: [] },
-  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem> = new Map()
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem> = new Map(),
+  skipDataSourceFilter = false
 ): CombinedRuleNamespace[] => {
   let filteredNamespaces = namespaces;
 
@@ -155,7 +159,7 @@ export const filterRules = (
 
   try {
     const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(
-      reduceNamespaces(filterState, dataSourceByUid),
+      reduceNamespaces(filterState, dataSourceByUid, skipDataSourceFilter),
       []
     );
     matches.forEach((match) => {
@@ -172,7 +176,8 @@ export const filterRules = (
 
 const reduceNamespaces = (
   filterState: RulesFilter,
-  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
 ) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groupNameFilter = filterState.groupName;
@@ -182,7 +187,10 @@ const reduceNamespaces = (
       filteredGroups = fuzzyFilter(filteredGroups, (g) => g.name, groupNameFilter);
     }
 
-    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(reduceGroups(filterState, dataSourceByUid), []);
+    filteredGroups = filteredGroups.reduce<CombinedRuleGroup[]>(
+      reduceGroups(filterState, dataSourceByUid, skipDataSourceFilter),
+      []
+    );
 
     if (filteredGroups.length) {
       namespaceAcc.push({
@@ -196,7 +204,11 @@ const reduceNamespaces = (
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filterState: RulesFilter, dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>) => {
+const reduceGroups = (
+  filterState: RulesFilter,
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
+) => {
   const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
 
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
@@ -276,7 +288,7 @@ const reduceGroups = (filterState: RulesFilter, dataSourceByUid: ReadonlyMap<str
 
       if ('dataSourceNames' in matchesFilterFor) {
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState, dataSourceByUid);
+          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState, dataSourceByUid, skipDataSourceFilter);
 
           if (doesNotQueryDs) {
             matchesFilterFor.dataSourceNames = true;
@@ -357,9 +369,10 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
 const isQueryingDataSource = (
   rulerRule: RulerGrafanaRuleDTO,
   filterState: RulesFilter,
-  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>
+  dataSourceByUid: ReadonlyMap<string, DataSourceInstanceListItem>,
+  skipDataSourceFilter: boolean
 ): boolean => {
-  if (!filterState.dataSourceNames?.length) {
+  if (!filterState.dataSourceNames?.length || skipDataSourceFilter) {
     return true;
   }
 

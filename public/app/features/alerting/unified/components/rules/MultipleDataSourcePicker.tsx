@@ -74,7 +74,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   }, [alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type]);
 
   // Unrestricted by the type filters above, since `current` may reference a data source they'd exclude.
-  const dataSourceByUid = useDataSourceInstanceListByUid();
+  const { byUid: dataSourceByUid } = useDataSourceInstanceListByUid();
   const dataSourceByName = useMemo(() => {
     const map = new Map<string, DataSourceInstanceListItem>();
     dataSourceByUid.forEach((ds) => map.set(ds.name, ds));
