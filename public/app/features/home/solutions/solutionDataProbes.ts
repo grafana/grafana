@@ -13,17 +13,16 @@ import {
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
 
-// Span metrics prove App Observability is in use, under all three supported emitter namings
-// (the plugin's metricNames.ts): Tempo metrics-generator/legacy/Beyla emit traces_spanmetrics_*,
-// OTel collector >=0.109 emits traces_span_metrics_*, older collectors emit bare calls_total.
+// Span metrics prove App Observability is in use; one entry per emitter naming the plugin
+// supports: Tempo metrics-generator/Beyla, OTel collector >=0.109, older collectors.
 export const SPAN_METRICS_CALL_NAMES = [
   'traces_spanmetrics_calls_total',
   'traces_span_metrics_calls_total',
   'calls_total',
 ] as const;
 
-// The plugin's own inventory selector (makeServicesScene.ts). Mandatory with the bare
-// calls_total name: it reduces false positives from unrelated counters sharing that name.
+// The plugin's own service-inventory selector; reduces false positives from unrelated
+// counters sharing the bare calls_total name.
 export const APP_SPAN_KINDS = 'span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"';
 
 export const SPAN_METRICS_PROBE = SPAN_METRICS_CALL_NAMES.map(

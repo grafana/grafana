@@ -23,15 +23,13 @@ const runInstantQueriesMock = jest.mocked(runInstantQueries);
 const runRangeQueryMock = jest.mocked(runRangeQuery);
 const probeFoundMock = jest.mocked(probeFound);
 
-// Frozen query contracts: the three emitter namings unioned everywhere, the bounded span-kind
-// guard plus `job=~".+"` on the job-keyed service count, the server-side (SERVER|CONSUMER)
-// filter on errorRatio and the request rate, and the `or vector(0)` numerator on errorRatio.
+// Frozen literals: drift in the emitted PromQL must be a deliberate contract change.
 const SERVICES_QUERY =
-  'count(count by (job) (last_over_time(traces_spanmetrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]) or last_over_time(traces_span_metrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]) or last_over_time(calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])))';
+  'count(count by (job) (label_replace(last_over_time(traces_spanmetrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]), "__family__", "0", "", "") or label_replace(last_over_time(traces_span_metrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]), "__family__", "1", "", "") or label_replace(last_over_time(calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]), "__family__", "2", "", "")))';
 const ERROR_RATIO_QUERY =
-  '(sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h])) or vector(0)) / sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]))';
+  '(sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]), "__family__", "2", "", "")) or vector(0)) / sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]), "__family__", "2", "", ""))';
 const REQUEST_RATE_QUERY =
-  'sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))';
+  'sum(label_replace(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "0", "", "") or label_replace(rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "1", "", "") or label_replace(rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]), "__family__", "2", "", ""))';
 
 const listItem: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -44,8 +42,8 @@ const listItem: DataSourceInstanceListItem = {
 
 const datasource = { uid: 'prom-uid', type: 'prometheus' };
 
-function numberFrame(refId: string, values: number[], labels?: Record<string, string>): DataFrame {
-  return createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values, labels }] });
+function numberFrame(refId: string, values: number[]): DataFrame {
+  return createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values }] });
 }
 
 beforeEach(() => {
@@ -84,7 +82,7 @@ describe('fetchAppObservabilityStats', () => {
     await expect(fetchAppObservabilityStats(datasource)).resolves.toEqual({ services: 12, errorRatio: 0.004 });
   });
 
-  it('issues the pinned dual-naming queries as one partial-tolerant batch', async () => {
+  it('issues the pinned three-naming queries as one partial-tolerant batch', async () => {
     runInstantQueriesMock.mockResolvedValue([]);
 
     await fetchAppObservabilityStats(datasource);
@@ -103,20 +101,15 @@ describe('fetchAppObservabilityStats', () => {
     await expect(fetchAppObservabilityStats(datasource)).resolves.toEqual({ services: null, errorRatio: null });
   });
 
-  it('reads a zero error ratio as zero, whichever metric family produced the frames', async () => {
-    // Readers are refId-based: a traces_span_metrics_* (service_name-labeled) response reads
-    // the same as the spanmetrics-connector naming.
-    runInstantQueriesMock.mockResolvedValue([
-      numberFrame('services', [5], { service_name: 'checkout' }),
-      numberFrame('errorRatio', [0]),
-    ]);
+  it('preserves a numeric zero error ratio instead of reading it as absent', async () => {
+    runInstantQueriesMock.mockResolvedValue([numberFrame('services', [5]), numberFrame('errorRatio', [0])]);
 
     await expect(fetchAppObservabilityStats(datasource)).resolves.toEqual({ services: 5, errorRatio: 0 });
   });
 });
 
 describe('fetchAppObservabilityRequestSeries', () => {
-  it('issues the fixed-window server-span request-rate range query', async () => {
+  it('issues the fixed-window server-side request-rate range query', async () => {
     runRangeQueryMock.mockResolvedValue([
       createDataFrame({
         refId: 'requests',

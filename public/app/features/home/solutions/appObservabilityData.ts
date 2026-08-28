@@ -13,25 +13,26 @@ import {
 
 export interface AppObservabilityStats {
   services: number | null;
-  /** 24h fleet error ratio over server-side (SERVER|CONSUMER) spans. */
+  /** Fleet error ratio over server-side spans within the stats lookback. */
   errorRatio: number | null;
 }
 
 // "Seen recently" lookback matching the shared data probes.
 const LOOKBACK = `${DATA_LOOKBACK_HOURS}h`;
 
-// Server-side traffic per the app's own definition (its makeRedLabels): SERVER plus CONSUMER,
-// so message-queue consumers count as request handlers.
+// The app's "server-side" definition: SERVER plus CONSUMER, so message-queue consumers count
+// as request handlers.
 const SERVER_SIDE = 'span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"';
 
-// Left-biased series union of the three emitter namings (see SPAN_METRICS_CALL_NAMES).
-// `or` does not deduplicate: the job-keyed count collapses dual-emitting pipelines, while the
-// fleet sums below can briefly inflate during a naming migration — accepted.
-const overCallFamilies = (expr: (metric: string) => string) => SPAN_METRICS_CALL_NAMES.map(expr).join(' or ');
+// Additive `or` union across the call-name families: rate() drops __name__, so without the
+// synthetic __family__ tag an identically-labeled stopped family would shadow its successor
+// for a whole rate window and could split the error ratio across families. Ingestion rejects
+// __-prefixed labels, so the tag cannot collide; a pipeline genuinely dual-emitting counts twice.
+const overCallFamilies = (expr: (metric: string) => string) =>
+  SPAN_METRICS_CALL_NAMES.map((m, i) => `label_replace(${expr(m)}, "__family__", "${i}", "", "")`).join(' or ');
 
-// services counts instrumented jobs with span metrics in the lookback, keyed by `job` like the
-// app's Services inventory. job=~".+" keeps unidentifiable (jobless) series from reading as one
-// phantom service; they still count as traffic in the fleet sums below, which need no identity.
+// services: jobs with recent span metrics, keyed by `job` like the app's inventory; job=~".+"
+// excludes jobless series that would otherwise read as one phantom service.
 // errorRatio: `or vector(0)` keeps an error-free fleet at 0% while a failed query reads null.
 const STATS_QUERIES: Record<string, string> = {
   services: `count(count by (job) (${overCallFamilies((m) => `last_over_time(${m}{job=~".+",${APP_SPAN_KINDS}}[${LOOKBACK}])`)}))`,
@@ -61,14 +62,13 @@ export async function fetchAppObservabilityStats(
   };
 }
 
-/** Server-side request rate over 24h; null when the span metrics are absent. */
+/** Server-side request-rate sparkline; null when the span metrics are absent. */
 export async function fetchAppObservabilityRequestSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<FieldSparkline | null> {
   const frames = await runRangeQuery(
     'requests',
-    // [5m] rate window: span metrics are scrape-cadence series, so the synthetics-style
-    // window widening is unnecessary.
+    // [5m] rate window: span metrics arrive at scrape cadence, so no wide window is needed.
     `sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[5m])`)})`,
     24,
     ds
