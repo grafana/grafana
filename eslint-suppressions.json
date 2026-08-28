@@ -1200,11 +1200,6 @@
       "count": 5
     }
   },
-  "public/app/features/alerting/unified/home/Insights.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1266,21 +1261,6 @@
   "public/app/features/alerting/unified/testSetup/datasources.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/useLabelsBreakdown.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/types/alerting.ts": {

@@ -1,6 +1,6 @@
 import { type MetricFindValue, type TimeRange } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type AdHocFilterWithLabels, type AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { COMBINED_FILTER_LABEL_KEYS, DATASOURCE_UID, METRIC_NAME } from '../constants';
@@ -42,7 +42,7 @@ const metricQuery: PromQuery = { refId: 'keys', expr: METRIC_NAME };
  * scoped to the GRAFANA_ALERTS metric.
  */
 async function fetchTagKeys(timeRange: TimeRange): Promise<MetricFindValue[]> {
-  const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
+  const ds = await getDataSourceInstance({ uid: DATASOURCE_UID });
 
   if (!ds.getTagKeys) {
     return [];
@@ -59,7 +59,7 @@ async function fetchTagKeys(timeRange: TimeRange): Promise<MetricFindValue[]> {
  * scoped to the GRAFANA_ALERTS metric.
  */
 export async function fetchTagValues(timeRange: TimeRange, key: string): Promise<MetricFindValue[]> {
-  const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
+  const ds = await getDataSourceInstance({ uid: DATASOURCE_UID });
 
   if (!ds.getTagValues) {
     return [];
