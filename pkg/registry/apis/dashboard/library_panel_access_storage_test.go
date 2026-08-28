@@ -16,6 +16,7 @@ import (
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -123,6 +124,36 @@ func TestLibraryPanelAccessStorageRejectsConnectedDelete(t *testing.T) {
 	require.False(t, backend.deleteCalled)
 }
 
+func TestLibraryPanelAccessStorageDeleteLookupDoesNotRequireCallerReadAccess(t *testing.T) {
+	panel := testLibraryPanel("panel-a", "general")
+	backend := &deleteOnlyLibraryPanelStorage{
+		recordingLibraryPanelStorage: &recordingLibraryPanelStorage{object: panel},
+	}
+	var authorizeUsedCaller bool
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(ctx context.Context, obj runtime.Object, verb, namespace string) error {
+			authorizeUsedCaller = !identity.IsServiceIdentity(ctx)
+			require.Same(t, panel, obj)
+			require.Equal(t, utils.VerbDelete, verb)
+			require.Equal(t, "stacks-1", namespace)
+			return nil
+		},
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{OrgID: 1})
+	_, deleted, err := storage.Delete(ctx, panel.GetName(), nil, &metav1.DeleteOptions{})
+	require.NoError(t, err)
+	require.True(t, deleted)
+	require.True(t, backend.lookupUsedServiceIdentity)
+	require.True(t, authorizeUsedCaller)
+	require.True(t, backend.deleteCalled)
+}
+
 func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
 	oldPanel := testLibraryPanel("panel-a", "source")
 	backend := &recordingLibraryPanelStorage{object: oldPanel}
@@ -225,12 +256,25 @@ type collectionDeletingLibraryPanelStorage struct {
 	*nonWatchableLibraryPanelStorage
 }
 
+type deleteOnlyLibraryPanelStorage struct {
+	*recordingLibraryPanelStorage
+	lookupUsedServiceIdentity bool
+}
+
 func (s *collectionDeletingLibraryPanelStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
 	return nil, nil
 }
 
 func (s *watchableLibraryPanelStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
 	return s.watcher, nil
+}
+
+func (s *deleteOnlyLibraryPanelStorage) Get(ctx context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
+	s.lookupUsedServiceIdentity = identity.IsServiceIdentity(ctx)
+	if !s.lookupUsedServiceIdentity {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"}, "panel-a")
+	}
+	return s.object, nil
 }
 
 func (s *recordingLibraryPanelStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
