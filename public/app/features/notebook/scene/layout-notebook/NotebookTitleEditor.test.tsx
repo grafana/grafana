@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen } from 'test/test-utils';
+import { fireEvent, render, screen } from 'test/test-utils';
 
 import { NotebookTitleEditor } from './NotebookTitleEditor';
 
@@ -133,6 +133,36 @@ describe('NotebookTitleEditor', () => {
 
     expect(onChange).toHaveBeenLastCalledWith(TITLE);
     expect(screen.getByRole('heading', { name: TITLE })).toBeInTheDocument();
+  });
+
+  // An IME sends both of these while composing - Enter to confirm the candidate, Escape to abandon
+  // it - and neither is meant for the field. fireEvent rather than `user`, which cannot set
+  // isComposing.
+  describe('while an IME composition is in progress', () => {
+    it.each(['Enter', 'Escape'])('leaves the field open on %s', async (key) => {
+      const { user } = setup();
+
+      await user.click(getTrigger());
+      await user.clear(getInput());
+      await user.type(getInput(), 'Q3');
+      fireEvent.keyDown(getInput(), { key, isComposing: true });
+
+      expect(getInput()).toBeInTheDocument();
+      expect(getInput()).toHaveValue('Q3');
+    });
+
+    // Escape is the more expensive one to get wrong: it would hand back the pre-edit title rather
+    // than just dropping the candidate the composition was offering.
+    it('does not put back the title the edit started from on Escape', async () => {
+      const { user, onChange } = setup();
+
+      await user.click(getTrigger());
+      await user.clear(getInput());
+      await user.type(getInput(), 'Q3');
+      fireEvent.keyDown(getInput(), { key: 'Escape', isComposing: true });
+
+      expect(onChange).toHaveBeenLastCalledWith('Q3');
+    });
   });
 
   // The keystroke path refuses to report an empty title; Escape has to follow the same rule, or

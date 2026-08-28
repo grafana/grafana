@@ -68,6 +68,13 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    // An IME sends Enter to confirm its candidate and Escape to abandon it, both mid-composition.
+    // Acting on either closes the field out from under the composition, and commit would report a
+    // draft the confirmed characters have not reached yet.
+    if (event.nativeEvent.isComposing) {
+      return;
+    }
+
     if (event.key === 'Enter') {
       commit();
     } else if (event.key === 'Escape') {
