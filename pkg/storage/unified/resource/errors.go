@@ -89,6 +89,15 @@ func IsResourceVersionExpired(err error) bool {
 	return false
 }
 
+// IsConflict reports whether err is a storage conflict, whether it arrived as a typed
+// Kubernetes error or as a gRPC status whose ErrorResult apierrors cannot inspect.
+func IsConflict(err error) bool {
+	if apierrors.IsConflict(err) {
+		return true
+	}
+	return apierrors.IsConflict(GetError(errorResultFromGRPCDetails(err)))
+}
+
 // ErrorFromResponse resolves the outcome of a unified storage call — which
 // reports failure either through a transport error or through a response that
 // embeds an ErrorResult — into a single error, so callers need one error

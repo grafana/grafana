@@ -1,26 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { type DataSourceSettings, OrgRole } from '@grafana/data';
+import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
+import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useDispatch } from 'app/types/store';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { logError } from '../../Analytics';
+import { ALERTMANAGER_PROVIDED_ENTITY_TAGS, alertmanagerApi } from '../../api/alertmanagerApi';
+import { CONFIG_SINGLETON_NAME, configApi, useAutoSyncConfigQuery } from '../../api/configApi';
 import { dataSourcesApi } from '../../api/dataSourcesApi';
-import { isAlertmanagerDataSource } from '../../utils/datasource';
+import { isNotFoundError } from '../../api/util';
+import {
+  type AutoSyncState,
+  autoSyncInitializingMessage,
+  deriveAutoSyncState,
+  deriveReadiness,
+  deriveSyncSource,
+  filterMimirCortexDatasources,
+} from '../../utils/autoSync';
+import { AUTO_SYNC_CONFIG_POLL_INTERVAL_MS } from '../../utils/constants';
 import { stringifyErrorLike } from '../../utils/misc';
-
-export type AutoSyncState =
-  | { kind: 'unconfigured' }
-  | { kind: 'configured'; uid: string }
-  | { kind: 'operator-managed'; uid: string }
-  | { kind: 'no-datasources' }
-  | { kind: 'orphan-uid'; uid: string };
 
 export interface UseAutoSyncConfigurationResult {
   state: AutoSyncState;
@@ -33,81 +35,98 @@ export interface UseAutoSyncConfigurationResult {
   disableSync: () => Promise<boolean>;
   isPending: boolean;
   isLoading: boolean;
-}
-
-const MIMIR_CORTEX_IMPLEMENTATIONS: AlertManagerImplementation[] = [
-  AlertManagerImplementation.mimir,
-  AlertManagerImplementation.cortex,
-];
-
-function isMimirOrCortex(ds: DataSourceSettings<AlertManagerDataSourceJsonData>): boolean {
-  const impl = ds.jsonData?.implementation ?? AlertManagerImplementation.mimir;
-  return MIMIR_CORTEX_IMPLEMENTATIONS.includes(impl);
-}
-
-export function hasConfiguredUid(state: AutoSyncState): state is Extract<AutoSyncState, { uid: string }> {
-  return state.kind === 'configured' || state.kind === 'orphan-uid' || state.kind === 'operator-managed';
-}
-
-export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSyncState, { kind: 'operator-managed' }> {
-  return state.kind === 'operator-managed';
+  /** Whether `save`/`disableSync` can do anything — gate write affordances on this. */
+  isReady: boolean;
+  /** Why `isReady` is false, as copy to render next to the affordance it disabled. */
+  notReadyMessage?: string;
 }
 
 export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
-  // admin_config requires Org Admin; skip for everyone else so unconditional callers (e.g. the
-  // Import wizard) don't fire a guaranteed 403. Must match Step1's `isAutoSyncSegmentEnabled` gate.
-  const canAccess =
-    Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
-
-  const { currentData: configuration, isLoading: isLoadingConfig } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery(undefined, { skip: !canAccess });
+  const {
+    currentData: configResource,
+    isLoading: isLoadingConfig,
+    error: configError,
+  } = useAutoSyncConfigQuery({
+    // The sync worker owns seeding the singleton, and nothing here invalidates the Config — without
+    // polling, a pre-seed 404 stays cached as a rejection and "try again in a moment" never comes true.
+    pollingInterval: AUTO_SYNC_CONFIG_POLL_INTERVAL_MS,
+    skipPollingIfUnfocused: true,
+    refetchOnMountOrArgChange: true,
+  });
+  // Mirrors useAutoSyncConfigQuery's own RBAC gate: an unconditional caller (e.g. the Import
+  // wizard) must not fire a guaranteed-403 datasources fetch for a user who can't read the Config.
+  const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
       refetchOnMountOrArgChange: true,
-      skip: !canAccess,
+      skip: !canReadConfig,
     });
-  const [updateConfiguration, updateConfigurationState] =
-    alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
+  const [updateConfig, updateConfigState] = configApi.useUpdateConfigMutation();
 
-  const [operatorManagedUid, setOperatorManagedUid] = useState<string | null>(null);
+  const autoSyncEligibleAlertmanagers = useMemo(() => filterMimirCortexDatasources(allDatasources), [allDatasources]);
+  const source = useMemo(() => deriveSyncSource(configResource), [configResource]);
 
-  const autoSyncEligibleAlertmanagers = useMemo(
-    () => (allDatasources ?? []).filter(isAlertmanagerDataSource).filter(isMimirOrCortex),
-    [allDatasources]
-  );
-
-  const configuredUid = configuration?.external_alertmanager_uid ?? '';
-  const hasMatchingDatasource = autoSyncEligibleAlertmanagers.some((ds) => ds.uid === configuredUid);
-
-  // Track user-edited selection separately from the saved value so a background refetch
-  // doesn't overwrite an in-flight choice. Null means "follow the saved value".
+  // Kept apart from the saved value so a background refetch cannot overwrite an in-flight choice.
   const [selectedOverride, setSelectedOverride] = useState<string | null>(null);
-  const selectedUid = selectedOverride ?? configuredUid;
+  const selectedUid = selectedOverride ?? source.uid;
 
-  const state: AutoSyncState = useMemo(() => {
-    if (configuredUid && operatorManagedUid === configuredUid) {
-      return { kind: 'operator-managed', uid: configuredUid };
-    }
-    if (configuredUid && hasMatchingDatasource) {
-      return { kind: 'configured', uid: configuredUid };
-    }
-    if (configuredUid) {
-      return { kind: 'orphan-uid', uid: configuredUid };
-    }
-    if (autoSyncEligibleAlertmanagers.length === 0) {
-      return { kind: 'no-datasources' };
-    }
-    return { kind: 'unconfigured' };
-  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, autoSyncEligibleAlertmanagers.length]);
+  const state = useMemo(
+    () => deriveAutoSyncState(source, autoSyncEligibleAlertmanagers),
+    [source, autoSyncEligibleAlertmanagers]
+  );
+  const { isReady, notReadyMessage, readErrorMessage, readErrorStatus } = deriveReadiness(configResource, configError);
 
   const notify = useAppNotification();
+  const dispatch = useDispatch();
+
+  // Nothing else reports a failed read, and the tooltip is only seen by an admin who hovers it. Keyed
+  // on the message, not the error object, which the poll hands back new on every failing tick.
+  useEffect(() => {
+    if (!readErrorMessage) {
+      return;
+    }
+    logError(new Error(readErrorMessage), {
+      operation: 'getAutoSyncConfig',
+      ...(readErrorStatus && { status: readErrorStatus }),
+    });
+  }, [readErrorMessage, readErrorStatus]);
+
+  const notifyNotReady = () => {
+    if (readErrorMessage) {
+      notify.error(
+        t('alerting.settings.auto-sync.read-error-title', 'Could not load the auto-sync configuration'),
+        readErrorMessage
+      );
+      return;
+    }
+    notify.error(
+      t('alerting.settings.auto-sync.not-ready-title', 'Auto-sync is still initializing'),
+      autoSyncInitializingMessage()
+    );
+  };
 
   const persist = async (uid: string, opts?: { silent?: boolean }): Promise<boolean> => {
+    if (!configResource) {
+      notifyNotReady();
+      return false;
+    }
+
     try {
-      await updateConfiguration({
-        external_alertmanager_uid: uid,
-        notificationOptions: { showErrorAlert: false },
+      await updateConfig({
+        name: CONFIG_SINGLETON_NAME,
+        // Spec-scoped patch, not a whole-object PUT: the worker writes `status` every tick, so a PUT
+        // pinning metadata.resourceVersion 409s. Patching the parent path survives it being absent.
+        patch: [
+          {
+            op: 'add',
+            path: '/spec/externalAlertmanagerSync',
+            value: uid ? { datasourceUid: uid } : {},
+          },
+        ],
       }).unwrap();
+      // updateConfig invalidates only 'Config', in a different RTKQ slice; toggling sync rewrites the
+      // Alertmanager entities the worker imports.
+      dispatch(alertmanagerApi.util.invalidateTags([...ALERTMANAGER_PROVIDED_ENTITY_TAGS]));
       if (!opts?.silent) {
         notify.success(
           uid
@@ -118,10 +137,9 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
       setSelectedOverride(null);
       return true;
     } catch (err) {
-      // 409 means the operator-level ini key is authoritative for this org; the request will
-      // never succeed via the UI, and the user needs to be told via the operator-managed state.
-      if (isStatusCode(err, 409)) {
-        setOperatorManagedUid(configuredUid || uid);
+      // The singleton disappeared between load and save (or was never seeded).
+      if (isNotFoundError(err)) {
+        notifyNotReady();
         return false;
       }
       notify.error(
@@ -138,13 +156,11 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
     save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),
-    // Backend convention: empty string clears the configured UID.
+    // Clearing the UID, not deleting: delete is denied on the singleton, and admission permits clearing.
     disableSync: () => persist(''),
-    isPending: updateConfigurationState.isLoading,
+    isPending: updateConfigState.isLoading,
     isLoading: isLoadingConfig || isLoadingDatasources,
+    isReady,
+    notReadyMessage,
   };
-}
-
-function isStatusCode(err: unknown, status: number): boolean {
-  return typeof err === 'object' && err !== null && 'status' in err && err.status === status;
 }

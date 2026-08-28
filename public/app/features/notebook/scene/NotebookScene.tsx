@@ -20,7 +20,8 @@ import {
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 
 import { canEditNotebooks } from '../permissions';
 

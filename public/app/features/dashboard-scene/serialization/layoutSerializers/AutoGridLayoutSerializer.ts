@@ -18,7 +18,7 @@ import {
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { getGridItemKeyForPanelId } from '../../utils/utils';
+import { getGridItemKeyForPanelId } from '../../utils/utils-panels';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 
