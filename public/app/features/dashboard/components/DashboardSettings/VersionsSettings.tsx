@@ -3,7 +3,13 @@ import * as React from 'react';
 
 import { Spinner, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { type Resource } from 'app/features/apiserver/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyMessage,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+  type Resource,
+} from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
   type DecoratedRevisionModel,
@@ -80,9 +86,14 @@ export class VersionsSettings extends PureComponent<Props, State> {
         checked: false,
         uid: item.metadata.name,
         version: item.metadata.generation ?? 0,
-        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
-        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
-        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        // creationTimestamp on a history resource is the dashboard's creation time, not the version's,
+        // so it is only a fallback for versions saved before updatedTimestamp was recorded
+        created:
+          item.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ??
+          item.metadata.creationTimestamp ??
+          new Date().toISOString(),
+        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
+        message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
       })

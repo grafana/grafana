@@ -1,9 +1,13 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import * as React from 'react';
+import { useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 
 import { RevertDashboardModal } from './RevertDashboardModal';
@@ -16,6 +20,30 @@ type VersionsTableProps = {
 
 export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
+
+  const userKeys = useMemo(() => [...new Set(versions.map((v) => v.createdBy).filter(Boolean))], [versions]);
+  const { data: displayData } = useGetDisplayMappingQuery(userKeys.length > 0 ? { key: userKeys } : skipToken);
+  const isLoadingUserDisplayNames = userKeys.length > 0 && !displayData;
+
+  const versionsWithDisplayNames = useMemo(() => {
+    if (!displayData) {
+      return versions;
+    }
+
+    const displayMap = new Map<string, string>();
+    for (const item of displayData.display || []) {
+      displayMap.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
+      if (item.internalId) {
+        displayMap.set(String(item.internalId), item.displayName);
+      }
+    }
+
+    return versions.map((version) => {
+      const displayName = version.createdBy ? displayMap.get(version.createdBy) : undefined;
+      // users that no longer exist are not in the mapping, so keep the raw key
+      return displayName ? { ...version, createdBy: displayName } : version;
+    });
+  }, [versions, displayData]);
 
   return (
     <div className={styles.margin}>
@@ -39,7 +67,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
           </tr>
         </thead>
         <tbody>
-          {versions.map((version, idx) => (
+          {versionsWithDisplayNames.map((version, idx) => (
             <tr key={version.id}>
               <td>
                 <Checkbox
@@ -58,7 +86,7 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck }: VersionsT
               </td>
               <td>{version.version}</td>
               <td>{version.createdDateString}</td>
-              <td>{version.createdBy}</td>
+              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
               <td>{version.message}</td>
               <td className="text-right">
                 {idx === 0 ? (
