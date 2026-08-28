@@ -493,10 +493,9 @@ describe('QueryEditorRow', () => {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     });
 
-    it('scrolls the row into view once it renders (after the datasource loads)', async () => {
+    it('scrolls the row into view once it renders', async () => {
       render(<QueryEditorRow {...props(data)} scrollIntoView />);
 
-      // The row renders nothing until its datasource resolves, so the scroll must wait for that.
       // The jest-setup ResizeObserver mock may fire an extra re-pin, so assert on the first
       // (deliberate) call rather than the total count.
       await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
@@ -674,8 +673,8 @@ describe('QueryEditorRow', () => {
       );
 
       // Wait until the default-instance fallback has also rejected. The loading
-      // gate hides the editor during the attempt; the bug remounts the previous
-      // plugin after `isDatasourceLoading` clears.
+      // gate hides the editor during the attempt; after both lookups fail the
+      // previous plugin must stay unmounted, but the row (header/actions) stays.
       await waitFor(() => {
         expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
       });
@@ -684,6 +683,7 @@ describe('QueryEditorRow', () => {
       });
 
       expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
       expect(onDataSourceLoaded).toHaveBeenCalledTimes(1);
     });
 
@@ -708,9 +708,16 @@ describe('QueryEditorRow', () => {
       );
 
       await waitFor(() => {
-        expect(getDataSourceInstance).toHaveBeenCalled();
+        expect(jest.mocked(getDataSourceInstance).mock.calls.some((call) => call[0] == null)).toBe(true);
       });
-      expect(screen.queryByTestId(selectors.components.QueryEditorRows.rows)).not.toBeInTheDocument();
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+
+      // The row stays mounted after both lookups fail so the header picker remains
+      // a recovery path and dnd indices stay contiguous.
+      expect(screen.getByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(screen.queryByTestId('fake-query-editor')).not.toBeInTheDocument();
 
       rerender(
         <QueryEditorRow
@@ -720,7 +727,7 @@ describe('QueryEditorRow', () => {
         />
       );
 
-      expect(await screen.findByTestId(selectors.components.QueryEditorRows.rows)).toBeInTheDocument();
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
     });
   });
 

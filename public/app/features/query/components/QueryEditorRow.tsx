@@ -90,9 +90,7 @@ export interface Props<TQuery extends DataQuery> {
    */
   scopedVars?: ScopedVars;
   /**
-   * When true, scrolls the row into view once it first renders. The row renders nothing until its
-   * datasource loads, so the scroll fires whenever the DOM node actually appears rather than after
-   * a fixed delay.
+   * When true, scrolls the row into view once it first renders.
    */
   scrollIntoView?: boolean;
   /** Called after the scroll happens so the owner can clear the flag. */
@@ -111,7 +109,9 @@ interface State<TQuery extends DataQuery> {
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
-  id = '';
+  // Assigned here so the first paint (before the datasource instance loads) still has a
+  // non-empty Draggable id. Waiting until `componentDidMount` left it `''`.
+  id = uniqueId(this.props.id + '_');
   editorRef = createRef<HTMLDivElement>();
   private hasStartedScrollIntoView = false;
   private cancelScrollPin?: () => void;
@@ -128,9 +128,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   componentDidMount() {
-    const { data, query, id } = this.props;
+    const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
-    this.id = uniqueId(id + '_');
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
@@ -278,32 +277,30 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
-    if (this.isWaitingForDatasourceToLoad()) {
+    if (this.isWaitingForDatasourceToLoad() || !datasource) {
       return null;
     }
 
-    if (datasource) {
-      let QueryEditor = this.getQueryEditor(datasource);
+    let QueryEditor = this.getQueryEditor(datasource);
 
-      if (QueryEditor) {
-        return (
-          <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
-            <QueryEditor
-              key={datasource?.name}
-              query={query}
-              datasource={datasource}
-              onChange={onChange}
-              onRunQuery={onRunQuery}
-              onAddQuery={onAddQuery}
-              data={data}
-              range={range}
-              queries={queries}
-              app={app}
-              history={history}
-            />
-          </DataSourcePluginContextProvider>
-        );
-      }
+    if (QueryEditor) {
+      return (
+        <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
+          <QueryEditor
+            key={datasource?.name}
+            query={query}
+            datasource={datasource}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            onAddQuery={onAddQuery}
+            data={data}
+            range={range}
+            queries={queries}
+            app={app}
+            history={history}
+          />
+        </DataSourcePluginContextProvider>
+      );
     }
 
     return (
@@ -631,12 +628,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       'gf-form-disabled': isHidden,
     });
 
-    if (!datasource) {
-      return null;
-    }
-
+    // Always mount the operation row. Returning null here when `datasource` is missing
+    // unmounted the header picker and skipped a `@hello-pangea/dnd` index; the plugin
+    // editor is already hidden until a matching instance loads.
     const editor = this.renderPluginEditor();
-    const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
+    const DatasourceCheatsheet = datasource?.components?.QueryEditorHelp;
+    const pluginId = datasource?.type ?? this.props.dataSource.type;
 
     const queryOperationRow = (
       <QueryOperationRow
@@ -653,11 +650,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <div
           className={rowClasses}
           id={this.id}
-          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
-          data-plugin-id={datasource.type}
+          data-testid={selectors.components.Plugins.queryEditorRow(pluginId, query.refId)}
+          data-plugin-id={pluginId}
         >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
-            {showingHelp && DatasourceCheatsheet && (
+            {showingHelp && datasource && DatasourceCheatsheet && (
               <OperationRowHelp>
                 <DatasourceCheatsheet
                   onClickExample={(query) => this.onClickExample(query)}
