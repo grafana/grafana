@@ -9,7 +9,10 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
-import { setupAutoSyncConfig, setupAutoSyncConfigAbsent } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
