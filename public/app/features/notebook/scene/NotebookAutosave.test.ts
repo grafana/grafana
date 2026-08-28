@@ -478,6 +478,34 @@ describe('NotebookAutosave', () => {
 
         stopPanel();
       });
+
+      it('preserves a failed edit when discarding a later view-only change', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        scene.onEnterEditMode();
+        recolourLegend(panel, 'red');
+        jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+        await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+        scene.onExitEditMode();
+
+        recolourLegend(panel, 'blue');
+        const publish = jest.spyOn(appEvents, 'publish');
+        scene.onEnterEditMode();
+        const event = publish.mock.calls
+          .map(([published]) => published)
+          .find((published) => published instanceof ShowConfirmModalEvent);
+        event?.payload.onConfirm?.();
+
+        expect(panel.state.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'red',
+        });
+
+        stopPanel();
+      });
     });
 
     // The other half of the rule: a writer who recolours has to get it back when they reload.

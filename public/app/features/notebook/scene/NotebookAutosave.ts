@@ -8,13 +8,14 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { transformMappingsToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 
 import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from '../types';
 
 import { type NotebookScene } from './NotebookScene';
+
+type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
 /**
  * Two seconds is about how long a pause means someone stopped typing, rather than thinking mid-sentence.
@@ -63,10 +64,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
   private vizConfigsChangedWhileReading = new Set<string>();
   /** Each panel's normalized state immediately before its first reader-owned change. */
-  private vizConfigsBeforeReadingChange = new Map<
-    string,
-    { panel: VizPanel; config: ReturnType<typeof panelVizConfigState> }
-  >();
+  private vizConfigsBeforeReadingChange = new Map<string, { panel: VizPanel; config: PanelVizConfigState }>();
   /** Set while `discardVizChanges` writes, so restoring a panel is not recorded as editing it. */
   private restoringVizConfigs = false;
   /**
@@ -119,10 +117,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           const panel = this.scene.state.body.state.cells.find(
             (cell) => cell.state.elementName === revizzedPanel && cell.state.body === payload.changedObject
           )?.state.body;
-          if (panel && !this.vizConfigsBeforeReadingChange.has(revizzedPanel)) {
+          const config = panelVizConfigState(payload.prevState);
+          if (panel && config && !this.vizConfigsBeforeReadingChange.has(revizzedPanel)) {
             this.vizConfigsBeforeReadingChange.set(revizzedPanel, {
               panel,
-              config: panelVizConfigState(payload.prevState),
+              config,
             });
           }
         }
@@ -222,11 +221,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       const savedVizConfig = restorable.get(name);
       const beforeChange = this.vizConfigsBeforeReadingChange.get(name);
       const currentPanel = currentPanels.get(name);
+      const currentConfig = currentPanel && panelVizConfigState(currentPanel.state);
       if (
         !savedVizConfig ||
         !beforeChange ||
         currentPanel !== beforeChange.panel ||
-        isEqual(beforeChange.config, panelVizConfigState(currentPanel.state))
+        !currentConfig ||
+        isEqual(beforeChange.config, currentConfig)
       ) {
         this.vizConfigsChangedWhileReading.delete(name);
         this.vizConfigsBeforeReadingChange.delete(name);
@@ -252,20 +253,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
-   * Puts the saved look back, so editing carries on against the notebook as saved. Goes through the
-   * panel's own setters rather than `setState` because those also drop its cached processed data,
-   * which is what the old look would otherwise go on being drawn from.
+   * Puts back the look from immediately before reading changed it. This is usually the saved look, but
+   * can include an edit whose save failed. Goes through the panel's own setters rather than `setState`
+   * because those also drop its cached processed data, which the old look would otherwise keep drawing.
    */
   public discardVizChanges(): void {
     this.restoringVizConfigs = true;
     try {
-      for (const { elementName, panel, vizConfig } of this.restorablePanels()) {
-        if (!this.vizConfigsChangedWhileReading.has(elementName)) {
+      for (const { elementName, panel } of this.restorablePanels()) {
+        const beforeChange = this.vizConfigsBeforeReadingChange.get(elementName);
+        if (!this.vizConfigsChangedWhileReading.has(elementName) || !beforeChange || beforeChange.panel !== panel) {
           continue;
         }
 
-        panel.onOptionsChange(vizConfig.spec.options, true);
-        panel.onFieldConfigChange(transformMappingsToV1(vizConfig.spec.fieldConfig), true);
+        panel.onOptionsChange(beforeChange.config.options, true);
+        panel.onFieldConfigChange(beforeChange.config.fieldConfig, true);
       }
     } finally {
       this.restoringVizConfigs = false;
@@ -611,13 +613,21 @@ function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
 }
 
 /** The panel state a reader can change without editing the notebook. */
-function panelVizConfigState(state: SceneObjectState) {
+function panelVizConfigState(state: SceneObjectState): PanelVizConfigState | undefined {
+  if (!isVizPanelState(state)) {
+    return undefined;
+  }
+
   return {
-    pluginId: 'pluginId' in state ? state.pluginId : undefined,
-    pluginVersion: 'pluginVersion' in state ? state.pluginVersion : undefined,
-    options: 'options' in state ? state.options : undefined,
-    fieldConfig: 'fieldConfig' in state ? state.fieldConfig : undefined,
+    pluginId: state.pluginId,
+    pluginVersion: state.pluginVersion,
+    options: state.options,
+    fieldConfig: state.fieldConfig,
   };
+}
+
+function isVizPanelState(state: SceneObjectState): state is VizPanel['state'] {
+  return 'pluginId' in state && typeof state.pluginId === 'string' && 'options' in state && 'fieldConfig' in state;
 }
 
 /**
