@@ -4306,7 +4306,7 @@
                 "type": "string"
               },
               "lastAppliedHash": {
-                "description": "lastAppliedHash is the upstream config hash from the last successful\nsync via this resource. The worker reads it back (API path only) to\nskip an unchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.",
+                "description": "lastAppliedHash is the dedup key (upstream config hash combined with\nthe resolved targetDatasourceUid) from the last successful sync via\nthis resource. The worker reads it back (API path only) to skip an\nunchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.",
                 "type": "string"
               },
               "origin": {
