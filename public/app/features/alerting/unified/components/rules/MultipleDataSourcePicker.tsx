@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
+import { useAsync } from 'react-use';
 
 import {
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type SelectableValue,
   getDataSourceUID,
@@ -9,10 +11,12 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
+import { useDataSourceInstanceListByUid } from '../../hooks/useDataSourceInstanceListByUid';
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
 export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProps, 'onChange' | 'current'> {
@@ -21,11 +25,63 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
 }
 
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
-  const dataSourceSrv = getDataSourceSrv();
+  const {
+    autoFocus,
+    onBlur,
+    onClear,
+    openMenuOnFocus,
+    placeholder,
+    width,
+    inputId,
+    disabled = false,
+    isLoading = false,
+    current,
+    hideTextValue,
+    noDefault,
+    alerting,
+    tracing,
+    metrics,
+    mixed,
+    dashboard,
+    variables,
+    annotations,
+    pluginId,
+    type,
+    filter,
+    logs,
+  } = props;
 
   const [state, setState] = useState<{ error?: string }>();
 
-  const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
+  // `isDataSourceManagingAlerts` and `filter` need `jsonData`, absent from the slim list item.
+  const { value: dataSources = [] } = useAsync(async () => {
+    const items = await getDataSourceInstanceList({
+      alerting,
+      tracing,
+      metrics,
+      logs,
+      dashboard,
+      mixed,
+      variables,
+      annotations,
+      pluginId,
+      type,
+    });
+    const settled = await Promise.all(items.map((item) => getDataSourceInstanceSettings(item.uid)));
+    const settledSettings = settled.filter((ds): ds is DataSourceInstanceSettings => !!ds);
+    return filter ? settledSettings.filter(filter) : settledSettings;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type]);
+
+  // Unrestricted by the type filters above, since `current` may reference a data source they'd exclude.
+  const dataSourceByUid = useDataSourceInstanceListByUid();
+  const dataSourceByName = useMemo(() => {
+    const map = new Map<string, DataSourceInstanceListItem>();
+    dataSourceByUid.forEach((ds) => map.set(ds.name, ds));
+    return map;
+  }, [dataSourceByUid]);
+
+  const onChange = async (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
       props.onClear();
       return;
@@ -46,8 +102,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       action = 'add';
     }
 
-    const dsSettings = dataSourceSrv.getInstanceSettings(dataSourceName);
-
+    const dsSettings = await getDataSourceInstanceSettings(dataSourceName);
     if (dsSettings) {
       props.onChange(dsSettings, action);
       setState({ error: undefined });
@@ -55,13 +110,12 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   };
 
   const getCurrentValue = (): Array<SelectableValue<string>> | undefined => {
-    const { current, hideTextValue, noDefault } = props;
     if (!current && noDefault) {
       return;
     }
 
     return current?.map((dataSourceName: string) => {
-      const ds = dataSourceSrv.getInstanceSettings(dataSourceName);
+      const ds = dataSourceByUid.get(dataSourceName) ?? dataSourceByName.get(dataSourceName);
       if (ds) {
         return {
           label: ds.name.slice(0, 37),
@@ -88,23 +142,6 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   };
 
   const getDataSourceOptions = () => {
-    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
-      props;
-
-    const dataSources = dataSourceSrv.getList({
-      alerting,
-      tracing,
-      metrics,
-      logs,
-      dashboard,
-      mixed,
-      variables,
-      annotations,
-      pluginId,
-      filter,
-      type,
-    });
-
     const alertManagingDs = dataSources.filter(isDataSourceManagingAlerts).map((ds) => ({
       value: ds.name,
       label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
@@ -142,18 +179,6 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
 
     return groupedOptions;
   };
-
-  const {
-    autoFocus,
-    onBlur,
-    onClear,
-    openMenuOnFocus,
-    placeholder,
-    width,
-    inputId,
-    disabled = false,
-    isLoading = false,
-  } = props;
 
   const options = getDataSourceOptions();
   const value = getCurrentValue();

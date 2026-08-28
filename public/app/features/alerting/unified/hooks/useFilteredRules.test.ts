@@ -1,3 +1,6 @@
+import { waitFor } from '@testing-library/react';
+import { renderHook } from 'test/test-utils';
+
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
@@ -20,12 +23,13 @@ import { Annotation } from '../utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { getFilter } from '../utils/search';
 
-import { filterRules } from './useFilteredRules';
+import { filterRules, useFilteredRules } from './useFilteredRules';
 
 const dataSources = {
   prometheus: mockDataSource({ uid: 'prom-1', name: 'prometheus' }),
   loki: mockDataSource({ uid: 'loki-1', name: 'loki' }),
 };
+const dataSourceByUid = new Map(Object.values(dataSources).map((ds) => [ds.uid, { ...ds, isDefault: false }]));
 beforeAll(() => {
   setupDataSources(...Object.values(dataSources));
 });
@@ -172,7 +176,11 @@ describe('filterRules', function () {
       'Prometheus-ds'
     );
 
-    const filtered = filterRules([ns, cloudNs], getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }));
+    const filtered = filterRules(
+      [ns, cloudNs],
+      getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }),
+      dataSourceByUid
+    );
 
     expect(filtered[0].groups[0].rules).toHaveLength(2);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -327,6 +335,35 @@ describe('filterRules', function () {
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(longRuleName);
+  });
+});
+
+describe('useFilteredRules', () => {
+  it('resolves datasource uids to names from the async data source list before filtering', async () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'Queries prometheus',
+        rulerRule: mockRulerGrafanaRule(undefined, {
+          data: [mockAlertQuery({ datasourceUid: dataSources.prometheus.uid })],
+        }),
+      }),
+      mockCombinedRule({
+        name: 'Queries loki',
+        rulerRule: mockRulerGrafanaRule(undefined, {
+          data: [mockAlertQuery({ datasourceUid: dataSources.loki.uid })],
+        }),
+      }),
+    ];
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+    });
+
+    const { result } = renderHook(() => useFilteredRules([ns], getFilter({ dataSourceNames: ['loki'] })));
+
+    await waitFor(() => {
+      expect(result.current[0]?.groups[0]?.rules).toHaveLength(1);
+    });
+    expect(result.current[0]?.groups[0]?.rules[0]?.name).toBe('Queries loki');
   });
 });
 

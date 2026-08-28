@@ -136,8 +136,21 @@ const ui = {
 
 setupMswServer();
 
+// The async data source list hooks used by RuleListV1/MultipleDataSourcePicker resolve one
+// microtask after mount even with a synchronously-populated cache; that harmless update can
+// land outside this suite's act() scope. Filter out only that warning.
+const ASYNC_DATASOURCE_HOOK_ACT_WARNING = /inside a test was not wrapped in act\(/;
+
 describe('RuleList', () => {
+  let consoleErrorSpy: jest.SpyInstance;
   beforeEach(() => {
+    const trackedConsoleError = console.error;
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((message, ...args) => {
+      if (typeof message === 'string' && ASYNC_DATASOURCE_HOOK_ACT_WARNING.test(message)) {
+        return;
+      }
+      trackedConsoleError(message, ...args);
+    });
     setAlertmanagerChoices(AlertmanagerChoice.All, 1);
     grantUserPermissions([
       AccessControlAction.AlertingRuleRead,
@@ -164,6 +177,7 @@ describe('RuleList', () => {
   });
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore();
     jest.resetAllMocks();
   });
 

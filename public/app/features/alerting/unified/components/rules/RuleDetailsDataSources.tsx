@@ -3,11 +3,11 @@ import { type JSX, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type CombinedRule, type RulesSource } from 'app/types/unified-alerting';
 
+import { useDataSourceInstanceListByUid } from '../../hooks/useDataSourceInstanceListByUid';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { rulerRuleType } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';
@@ -21,6 +21,8 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
   const { rulesSource, rule } = props;
   const styles = useStyles2(getStyles);
 
+  const dataSourceByUid = useDataSourceInstanceListByUid();
+
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
@@ -29,7 +31,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
     if (rulerRuleType.grafana.rule(rule.rulerRule)) {
       const { data } = rule.rulerRule.grafana_alert;
       const unique = data.reduce<Record<string, { name: string; icon?: string }>>((dataSources, query) => {
-        const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+        const ds = dataSourceByUid.get(query.datasourceUid);
 
         if (!ds || ds.uid === ExpressionDatasourceUID) {
           return dataSources;
@@ -43,7 +45,7 @@ export function RuleDetailsDataSources(props: Props): JSX.Element | null {
     }
 
     return [];
-  }, [rule, rulesSource]);
+  }, [rule, rulesSource, dataSourceByUid]);
 
   if (dataSources.length === 0) {
     return null;
