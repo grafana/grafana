@@ -88,9 +88,11 @@ func attributes(obj, old *unstructured.Unstructured, op admission.Operation, sub
 func TestNewAdmissionOps(t *testing.T) {
 	require.Nil(t, newAdmissionOps(nil))
 
-	// CONNECT has no v3 representation, so declaring only it leaves nothing to call.
-	require.Nil(t, newAdmissionOps([]app.AdmissionOperation{app.AdmissionOperationConnect}))
+	require.Equal(t, admissionOps{admission.Connect: true},
+		newAdmissionOps([]app.AdmissionOperation{app.AdmissionOperationConnect}))
 
+	// ANY is the three operations the v3 request can express; CONNECT has to be
+	// declared on its own.
 	require.Equal(t, admissionOps{
 		admission.Create: true,
 		admission.Update: true,

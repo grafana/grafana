@@ -38,7 +38,7 @@ func TestKindStoreTrackManagedFields(t *testing.T) {
 	require.Equal(t, "test-app/v0alpha1", entries[0].APIVersion)
 
 	var fields map[string]any
-	require.NoError(t, json.Unmarshal(entries[0].FieldsV1.Raw, &fields))
+	require.NoError(t, json.Unmarshal(entries[0].FieldsV1.GetRawBytes(), &fields))
 	require.Contains(t, fields, "f:spec")
 	require.Contains(t, fields, "f:metadata")
 	require.NotContains(t, fields, "f:status", "the status subresource is not owned by a create")
@@ -49,7 +49,7 @@ func TestKindStoreTrackManagedFieldsWithoutStatusSubresource(t *testing.T) {
 		trackManagedFields(newTestResource(), &metav1.CreateOptions{FieldManager: "test-manager"})
 
 	var fields map[string]any
-	require.NoError(t, json.Unmarshal(obj.(*unstructured.Unstructured).GetManagedFields()[0].FieldsV1.Raw, &fields))
+	require.NoError(t, json.Unmarshal(obj.(*unstructured.Unstructured).GetManagedFields()[0].FieldsV1.GetRawBytes(), &fields))
 	require.Contains(t, fields, "f:status", "without the subresource, status is ordinary payload")
 }
 

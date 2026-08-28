@@ -193,11 +193,11 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 
 	// Every path segment must be documented or it is missing from the spec.
 	pathParams := func(op *spec3.Operation) []string {
-		out := []string{}
-		for _, p := range op.Parameters {
+		out := make([]string, len(op.Parameters))
+		for i, p := range op.Parameters {
 			require.Equal(t, "path", p.In)
 			require.True(t, p.Required)
-			out = append(out, p.Name)
+			out[i] = p.Name
 		}
 		return out
 	}

@@ -79,6 +79,8 @@ func newAdmissionOps(ops []app.AdmissionOperation) admissionOps {
 			out[admission.Update] = true
 		case app.AdmissionOperationDelete:
 			out[admission.Delete] = true
+		case app.AdmissionOperationConnect:
+			out[admission.Connect] = true
 		}
 	}
 	if len(out) == 0 {
@@ -270,6 +272,8 @@ func admissionOperation(op admission.Operation) (pluginv3.AdmissionReviewRequest
 		return pluginv3.AdmissionReviewRequest_OPERATION_UPDATE, true
 	case admission.Delete:
 		return pluginv3.AdmissionReviewRequest_OPERATION_DELETE, true
+	case admission.Connect:
+		// should not be called
 	}
 	return pluginv3.AdmissionReviewRequest_OPERATION_UNSPECIFIED, false
 }

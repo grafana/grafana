@@ -239,7 +239,7 @@ func TestIntegrationPluginManifestCreate(t *testing.T) {
 	require.Len(t, fields, 1, "the create is tracked as one entry")
 	require.Equal(t, thingAPIVersion, fields[0].APIVersion)
 	require.Equal(t, metav1.ManagedFieldsOperationUpdate, fields[0].Operation)
-	require.Contains(t, string(fields[0].FieldsV1.Raw), "f:spec")
+	require.Contains(t, fields[0].FieldsV1.GetRawString(), "f:spec")
 
 	got, err := client.Resource.Get(context.Background(), "thing-1", metav1.GetOptions{})
 	require.NoError(t, err)
