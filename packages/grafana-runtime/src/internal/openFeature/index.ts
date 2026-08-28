@@ -61,20 +61,25 @@ export function getOFREPWebProvider() {
 }
 
 export async function initOpenFeature() {
-  OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
-  OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
+  try {
+    OpenFeature.addHandler(ProviderEvents.Ready, checkDefaultProvider);
+    OpenFeature.addHandler(ProviderEvents.Error, checkDefaultProvider);
 
-  const lsProvider = getLocalStorageProvider();
-  const ofProvider = getOFREPWebProvider();
+    const lsProvider = getLocalStorageProvider();
+    const ofProvider = getOFREPWebProvider();
 
-  await OpenFeature.setProviderAndWait(
-    GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
-    new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
-    {
-      targetingKey: config.namespace,
-      ...config.openFeatureContext,
-    }
-  );
+    await OpenFeature.setProviderAndWait(
+      GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
+      new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+      {
+        targetingKey: config.namespace,
+        ...config.openFeatureContext,
+      }
+    );
+  } catch (err) {
+    console.error('Failed to initialize OpenFeature provider', err);
+    logError(new Error('Failed to initialize OpenFeature provider', { cause: err }));
+  }
 }
 
 /**

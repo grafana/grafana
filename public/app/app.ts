@@ -160,11 +160,7 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      try {
-        await initOpenFeature();
-      } catch (err) {
-        console.error('Failed to initialize OpenFeature provider', err);
-      }
+      await initOpenFeature();
 
       const initI18nPromise = initializeI18n({
         language: contextSrv.user.language,
