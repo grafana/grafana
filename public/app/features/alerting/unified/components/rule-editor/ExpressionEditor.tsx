@@ -142,7 +142,7 @@ function mapToValue(query: DataQuery): string {
   return (query as PromQuery | LokiQuery).expr;
 }
 
-function mapToQuery(existing: DataQuery, value: string | undefined): DataQuery {
+function mapToQuery(existing: DataQuery, value: string | undefined) {
   return { ...existing, expr: value };
 }
 

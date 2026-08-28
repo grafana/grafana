@@ -17,7 +17,7 @@ const QUERY: AlertQuery = {
   refId: 'A',
   datasourceUid: DATASOURCE_UID,
   queryType: '',
-  model: { refId: 'A', expr: 'up' },
+  model: { refId: 'A', expression: 'up' },
 };
 
 function renderEditor(props: Partial<RecordingRuleEditorProps> = {}) {
@@ -70,7 +70,7 @@ describe('RecordingRuleEditor', () => {
   });
 
   it('renders the query editor with the first query once the data source resolves', () => {
-    const QueryEditor = jest.fn(() => <div data-testid="query-editor" />);
+    const QueryEditor = jest.fn((_props: Record<string, unknown>) => <div data-testid="query-editor" />);
     jest.spyOn(runtimeUnstable, 'useDataSourceInstance').mockReturnValue({
       isLoading: false,
       dataSource: {

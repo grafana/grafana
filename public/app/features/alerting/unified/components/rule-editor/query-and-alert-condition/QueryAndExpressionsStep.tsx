@@ -260,7 +260,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>(isExpressionQueryInAlert);
 
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
-      await updateExpressionAndDatasource(updatedQueries);
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
@@ -276,6 +275,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       if (oldRefId && newRefId) {
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
+
+      // Runs after the reducer/form updates above so a slower-resolving call can't apply its
+      // (now stale) expression field after a faster, more recent call already has.
+      await updateExpressionAndDatasource(updatedQueries);
     },
     [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
@@ -291,10 +294,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const expression = query.model.expr;
 
       setValue('queries', updatedQueries, { shouldValidate: false });
-      await updateExpressionAndDatasource(updatedQueries);
-
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runQueriesPreview();
+
+      // Runs after the reducer/form updates above so a slower-resolving call can't apply its
+      // (now stale) expression field after a faster, more recent call already has.
+      await updateExpressionAndDatasource(updatedQueries);
     },
     [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
@@ -329,10 +334,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const newQueries = cloneDeep(queries);
       newQueries[0].datasourceUid = datasourceUid;
       setValue('queries', newQueries, { shouldValidate: false });
-
-      await updateExpressionAndDatasource(newQueries);
-
       dispatch(setDataQueries(newQueries));
+
+      // Runs after the reducer/form updates above so a slower-resolving call can't apply its
+      // (now stale) expression field after a faster, more recent call already has.
+      await updateExpressionAndDatasource(newQueries);
     },
     [queries, setValue, updateExpressionAndDatasource, dispatch]
   );
@@ -358,11 +364,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     }
 
     setValue('queries', newQueries, { shouldValidate: false });
-
-    await updateExpressionAndDatasource(newQueries);
-
     dispatch(setDataQueries(newQueries));
     runQueriesPreview();
+
+    // Runs after the reducer/form updates above so a slower-resolving call can't apply its
+    // (now stale) expression field after a faster, more recent call already has.
+    await updateExpressionAndDatasource(newQueries);
   };
 
   const removeExpressionsInQueries = useCallback(() => dispatch(removeExpressions()), [dispatch]);
@@ -396,12 +403,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         setValue('dataSourceName', newDsName);
       }
 
-      await updateExpressionAndDatasource(queries);
-
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
       removeExpressionsInQueries();
       setPrevCondition(condition);
+
+      // Runs after the reducer/form updates above so a slower-resolving call can't apply its
+      // (now stale) expression field after a faster, more recent call already has.
+      await updateExpressionAndDatasource(queries);
     }
   }, [
     getValues,

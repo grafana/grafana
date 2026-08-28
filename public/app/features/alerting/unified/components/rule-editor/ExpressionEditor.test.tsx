@@ -73,7 +73,7 @@ describe('ExpressionEditor', () => {
   });
 
   it('renders the query editor with the current expression once the data source resolves', () => {
-    const QueryEditor = jest.fn(() => <div data-testid="query-editor" />);
+    const QueryEditor = jest.fn((_props: Record<string, unknown>) => <div data-testid="query-editor" />);
     jest.spyOn(runtimeUnstable, 'useDataSourceInstance').mockReturnValue({
       isLoading: false,
       dataSource: {

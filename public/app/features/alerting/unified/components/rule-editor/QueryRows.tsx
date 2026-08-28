@@ -11,7 +11,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceInstanceSettings, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { reloadDataSourceInstanceSettings, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -28,10 +28,6 @@ import {
   errorFromPreviewData,
   getThresholdsForQueries,
 } from './util';
-
-function getDataSourceSettings(query: AlertQuery): Promise<DataSourceInstanceSettings | undefined> {
-  return getDataSourceInstanceSettings(query.datasourceUid);
-}
 
 interface Props {
   queries: AlertQuery[];
@@ -90,9 +86,14 @@ export const QueryRows = ({
     );
   };
 
-  const onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
-    const previousSettings = await getDataSourceSettings(queries[index]);
-
+  // previousSettings is the resolved settings QueryRowItem already has for this row (via its own
+  // useDataSourceInstanceSettings) — passed in rather than re-fetched, so this stays synchronous
+  // and cannot apply a stale result if the row's queries change before a fetch would resolve.
+  const onChangeDataSource = (
+    settings: DataSourceInstanceSettings,
+    index: number,
+    previousSettings?: DataSourceInstanceSettings
+  ) => {
     const updatedQueries = queries.map((item, itemIndex) => {
       if (itemIndex !== index) {
         return item;
@@ -193,7 +194,11 @@ interface QueryRowItemProps {
   threshold?: ThresholdDefinition;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
+  onChangeDataSource: (
+    settings: DataSourceInstanceSettings,
+    index: number,
+    previousSettings?: DataSourceInstanceSettings
+  ) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
   onChangeTimeRange: (timeRange: RelativeTimeRange, index: number) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -217,10 +222,26 @@ const QueryRowItem = ({
   onRunQueries,
   onSetCondition,
 }: QueryRowItemProps) => {
-  const { settings: dsSettings, isLoading: isDsSettingsLoading } = useDataSourceInstanceSettings(query.datasourceUid);
+  const {
+    settings: dsSettings,
+    isLoading: isDsSettingsLoading,
+    error: dsSettingsError,
+  } = useDataSourceInstanceSettings(query.datasourceUid);
 
   if (isDsSettingsLoading) {
     return null;
+  }
+
+  if (dsSettingsError) {
+    return (
+      <DataSourceLoadError
+        index={index}
+        model={query.model}
+        error={dsSettingsError}
+        onRetry={() => reloadDataSourceInstanceSettings()}
+        onRemoveQuery={() => onRemoveQuery(query)}
+      />
+    );
   }
 
   if (!dsSettings) {
@@ -252,7 +273,7 @@ const QueryRowItem = ({
       onChangeQuery={onChangeQuery}
       onRemoveQuery={onRemoveQuery}
       queries={queries}
-      onChangeDataSource={onChangeDataSource}
+      onChangeDataSource={(newSettings) => onChangeDataSource(newSettings, index, dsSettings)}
       onDuplicateQuery={onDuplicateQuery}
       onChangeTimeRange={onChangeTimeRange}
       onChangeQueryOptions={onChangeQueryOptions}
@@ -363,6 +384,42 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
             </pre>
           </div>
         )}
+      </QueryOperationRow>
+    </EmptyQueryWrapper>
+  );
+};
+
+interface DataSourceLoadErrorProps {
+  index: number;
+  model: AlertDataQuery;
+  error: Error;
+  onRetry: () => void;
+  onRemoveQuery: () => void;
+}
+
+const DataSourceLoadError = ({ index, model, error, onRetry, onRemoveQuery }: DataSourceLoadErrorProps) => {
+  const refId = model.refId;
+
+  return (
+    <EmptyQueryWrapper>
+      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
+        <Card noMargin>
+          <Card.Heading>
+            <Trans i18nKey="alerting.data-source-load-error.title">Could not load datasource</Trans>
+          </Card.Heading>
+          <Card.Description>{error.message}</Card.Description>
+          <Card.Figure>
+            <Icon name="exclamation-triangle" />
+          </Card.Figure>
+          <Card.Actions>
+            <Button key="retry" variant="secondary" onClick={onRetry}>
+              <Trans i18nKey="alerting.data-source-load-error.retry">Retry</Trans>
+            </Button>
+            <Button key="remove" variant="destructive" onClick={onRemoveQuery}>
+              <Trans i18nKey="alerting.data-source-load-error.remove-query">Remove query</Trans>
+            </Button>
+          </Card.Actions>
+        </Card>
       </QueryOperationRow>
     </EmptyQueryWrapper>
   );
