@@ -271,6 +271,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
 2026-05-22,queryEditorNext,preview,@grafana/datapro,false,false,true
+2026-07-31,queryeditor.coauthoringUi,experimental,@grafana/datapro,false,false,true
 2026-05-22,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
@@ -334,7 +335,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-05-22,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-05-22,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
-2026-05-22,preferences.rerouteLegacyAPIs,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -380,7 +380,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-06,grafana.rspackBuild,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false
 2026-08-06,grafana.unifiedDataSourcePicker,GA,@grafana/grafana-datasources-core-services,false,false,true
-2026-08-12,rawPrometheus.tableNg,experimental,@grafana/data-sources-plugins,false,false,true
+2026-08-20,rawPrometheus.tableNg,experimental,@grafana/data-sources-plugins,false,false,true
 2026-08-11,datasources.queryGateway,experimental,@grafana/data-sources-plugins,false,false,false
 2026-08-17,grafana.panelPluginTransformations,experimental,@grafana/dataviz-squad,false,false,true
 2026-08-18,grafana.dashboardsAutoHeightPanels,experimental,@grafana/dashboards-squad,false,false,true

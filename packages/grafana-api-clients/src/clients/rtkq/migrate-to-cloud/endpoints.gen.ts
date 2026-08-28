@@ -390,7 +390,7 @@ export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   id?: number;
   kind?: number;
   meta?: LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto;
-  model?: object;
+  model?: any;
   name?: string;
   orgId?: number;
   schemaVersion?: number;

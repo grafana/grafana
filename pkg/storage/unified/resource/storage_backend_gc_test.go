@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -503,9 +505,10 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 
 		// other-dash was deleted and not recreated: all of its history is removed.
-		// my-dash still exists (recreated after delete); GC skips deleting its history when
-		// GetLatestResourceKey succeeds, so all five revision keys remain.
-		// BatchSize=3 exercises pagination across both resources without dropping my-dash history.
+		// my-dash was recreated after delete; GC collects its trash (created, updated,
+		// deleted) but retains the two revisions from the recreation (created, updated).
+		// BatchSize=3 exercises pagination across both resources without dropping the
+		// recreated my-dash revisions.
 		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: "group/resource/namespace/",
 			EndKey:   "group/resource/namespace0",
@@ -518,7 +521,63 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			count++
 			return true
 		})
-		require.Equal(t, 5, count)
+		require.Equal(t, 2, count)
+	})
+
+	t.Run("garbage collects the trash of a resource recreated with the same name", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+		})
+		b := storageBackend
+
+		// replicates an object being deleted then recreated with the same name
+		revisions := []kv.DataAction{
+			DataActionCreated,
+			DataActionUpdated,
+			DataActionDeleted,
+			DataActionDeleted,
+			DataActionDeleted,
+			DataActionCreated,
+			DataActionUpdated,
+		}
+		for _, action := range revisions {
+			err := storageBackend.dataStore.Save(ctx, DataKey{
+				Namespace:       "namespace",
+				Group:           "group",
+				Resource:        "resource",
+				Name:            "resource1",
+				Folder:          "folderuid",
+				ResourceVersion: storageBackend.snowflake.Generate().Int64(),
+				Action:          action,
+			}, bytes.NewReader([]byte("{}")))
+			require.NoError(t, err)
+		}
+
+		countKeys := func() int {
+			it := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+				StartKey: "group/resource/namespace/",
+				EndKey:   "group/resource/namespace0",
+			})
+			count := 0
+			it(func(_ string, err error) bool {
+				require.NoError(t, err)
+				count++
+				return true
+			})
+			return count
+		}
+
+		require.Equal(t, 7, countKeys(), "expected 7 revisions before GC")
+
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
+		err := b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, countKeys(), "expected only the recreated revisions to remain")
 	})
 }
 
@@ -588,7 +647,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Equal(t, 0, count)
 	})
 
-	t.Run("nothing is eligble to delete", func(t *testing.T) {
+	t.Run("nothing is eligible to delete", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
