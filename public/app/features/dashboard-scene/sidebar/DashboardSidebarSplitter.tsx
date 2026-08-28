@@ -148,7 +148,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          className={cx(
+            styles.scrollContainer,
+            sidebarContext.position === 'left' && styles.scrollContainerLeftSidebar,
+            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar
+          )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
@@ -298,8 +302,13 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1.125, 1, 2, 2),
       marginTop: theme.spacing(-1),
     }),
+    scrollContainerLeftSidebar: css({
+      paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(1),
+    }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
     }),
     body: css({
       label: 'body',
