@@ -994,8 +994,8 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if storedManager.Kind != manager.Kind && storedManager.Kind != utils.ManagerKindUnknown {
 		return models.AlertRule{}, errProvenanceMismatch.Build(errutil.TemplateData{
 			Public: map[string]any{
-				"ProvidedProvenance": models.ManagerPropertiesToProvenance(manager),
-				"StoredProvenance":   models.ManagerPropertiesToProvenance(storedManager),
+				"ProvidedProvenance": manager.Kind,
+				"StoredProvenance":   storedManager.Kind,
 				"Operation":          "update",
 			},
 		})
