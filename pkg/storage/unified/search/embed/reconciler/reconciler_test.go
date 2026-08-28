@@ -878,39 +878,54 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	assert.Equal(t, snowflakeRV(150), vec.latestRV)
 }
 
-// Byte-triggered flushes (batch bytes cross maxStartupBatchBytes) must
-// preserve the count-flush invariants: every event processed, cursor
-// advanced once — even in DESC order, where a per-flush advance would
-// drop later, lower-RV batches.
+// Asserts the batch flushes on the byte cap. No flush count is exposed, so
+// observe it via the lazily-pulled iterator: yields-at-each-upsert is
+// [1,2,..] when flushing per event, [N,N,..] for one terminal flush. The
+// end-state invariants alone can't see the byte branch.
 func TestReconciler_StartupReconcile_FlushesAtByteBudget(t *testing.T) {
-	prevCount := startupBatchSize
-	startupBatchSize = 1000 // high enough that only the byte cap can fire
-	prevBytes := maxStartupBatchBytes
-	maxStartupBatchBytes = 1 // any non-empty value trips it → flush per event
-	t.Cleanup(func() {
-		startupBatchSize = prevCount
-		maxStartupBatchBytes = prevBytes
-	})
+	// run returns the iterator-yield count observed at each upsert.
+	run := func(t *testing.T, capBytes int) []int {
+		prevCount, prevBytes := startupBatchSize, maxStartupBatchBytes
+		startupBatchSize = 1000 // high enough that only the byte cap can fire
+		maxStartupBatchBytes = capBytes
+		t.Cleanup(func() {
+			startupBatchSize, maxStartupBatchBytes = prevCount, prevBytes
+		})
 
-	st := &fakeStorage{}
-	// Strictly descending RV order, mirroring the real SQL backend.
-	for i := 5; i >= 0; i-- {
-		rv := snowflakeRV(int64(100 + i*10))
-		name := fmt.Sprintf("dash-%d", i)
-		st.changes = append(st.changes,
-			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+		st := &fakeStorage{}
+		for i := 0; i < 6; i++ {
+			rv := snowflakeRV(int64(100 + i*10))
+			name := fmt.Sprintf("dash-%d", i)
+			st.changes = append(st.changes,
+				dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+		}
+
+		vec := newFakeVector()
+		vec.latestRV = snowflakeRV(50)
+
+		var yielded int
+		var atUpsert []int
+		st.onYield = func() { yielded++ }
+		vec.onUpsert = func() { atUpsert = append(atUpsert, yielded) }
+
+		s, _ := newReconciler(t, st, vec)
+		s.startupReconcile(context.Background())
+
+		require.Len(t, vec.upserts, 6, "every event embedded")
+		assert.Equal(t, snowflakeRV(150), vec.latestRV, "cursor advances to highest RV")
+		assert.Equal(t, 0, s.pendingLen(), "queue empty after startup")
+		return atUpsert
 	}
 
-	vec := newFakeVector()
-	vec.latestRV = snowflakeRV(50)
-	s, _ := newReconciler(t, st, vec)
+	t.Run("byte cap flushes per event", func(t *testing.T) {
+		// cap=1: every non-empty value trips the byte cap → flush per event.
+		assert.Equal(t, []int{1, 2, 3, 4, 5, 6}, run(t, 1))
+	})
 
-	s.startupReconcile(context.Background())
-
-	require.Len(t, vec.upserts, 6, "every event processed across byte-triggered flushes")
-	assert.Equal(t, snowflakeRV(150), vec.latestRV, "cursor advances to highest RV")
-	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
-	assert.Equal(t, 0, s.pendingLen(), "queue empty after startup")
+	t.Run("cap off defers to one terminal flush", func(t *testing.T) {
+		// 1<<40: neither cap fires for 6 events → one terminal flush.
+		assert.Equal(t, []int{6, 6, 6, 6, 6, 6}, run(t, 1<<40))
+	})
 }
 
 // TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
@@ -965,6 +980,41 @@ func TestReconciler_StartupReconcile_FreesEmbeddedValues(t *testing.T) {
 	for _, ev := range pending {
 		assert.Nil(t, ev.value, "embedded value released before re-enqueue")
 	}
+}
+
+// After a checkpoint write fails, the re-enqueued value-less events must
+// replay as no-ops (no re-embed, no delete) while still advancing the
+// cursor. Distinct from FreesEmbeddedValues, which pins the release itself.
+func TestReconciler_StartupReconcile_ReleasedValuesReplayAsNoOps(t *testing.T) {
+	st := &fakeStorage{}
+	for i := 0; i < 3; i++ {
+		rv := snowflakeRV(int64(100 + i*10))
+		name := fmt.Sprintf("dash-%d", i)
+		st.changes = append(st.changes,
+			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
+	}
+
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	vec.setLatestRVErr = errBoom // fail the checkpoint so the embedded events re-enqueue
+	s, text := newReconciler(t, st, vec)
+
+	s.startupReconcile(context.Background())
+	require.Len(t, vec.upserts, 3, "startup embedded all three")
+	require.Equal(t, 3, s.pendingLen(), "all re-enqueued after the checkpoint write failed")
+
+	embedCalls := text.calls
+	upserts := len(vec.upserts)
+
+	// Recover: checkpoint writes succeed; pending value-less events replay.
+	vec.setLatestRVErr = nil
+	s.processPending(context.Background())
+
+	assert.Equal(t, embedCalls, text.calls, "replay does not re-embed released values")
+	assert.Equal(t, upserts, len(vec.upserts), "replay does not upsert")
+	assert.Empty(t, vec.deletes, "replay does not delete")
+	assert.Equal(t, snowflakeRV(120), vec.latestRV, "cursor advances to highest RV on replay")
+	assert.Equal(t, 0, s.pendingLen(), "queue drained after replay")
 }
 
 // TestReconciler_StartupReconcile_DoesNotProcessWatchEvents verifies
