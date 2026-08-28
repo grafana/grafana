@@ -186,6 +186,17 @@ describe('NumberInput', () => {
     jest.useRealTimers();
   });
 
+  it('emits zero after the debounce', () => {
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={-1} max={200} />);
+
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '0' } });
+    act(() => jest.advanceTimersByTime(500));
+
+    expect(onChange).toHaveBeenCalledWith(0);
+  });
+
   it.each([
     ['blur', (input: HTMLInputElement) => fireEvent.blur(input)],
     ['Enter', (input: HTMLInputElement) => fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 })],
@@ -218,6 +229,18 @@ describe('NumberInput', () => {
 
     expect(firstOnChange).not.toHaveBeenCalled();
     expect(secondOnChange).toHaveBeenCalledWith(8);
+  });
+
+  it('does not emit a pending value outside updated bounds', () => {
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    const { rerender } = render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '8' } });
+    rerender(<NumberInput value={5} onChange={onChange} min={1} max={7} />);
+    act(() => jest.advanceTimersByTime(500));
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('keeps a parent InlineField label when no id is passed', () => {

@@ -35,6 +35,19 @@ function isIncompleteNumericInput(txt: string) {
   return txt === '-' || txt === '+' || txt === '.' || txt === '-.' || txt.endsWith('.');
 }
 
+function parseInRangeValue(text: string, min?: number, max?: number): number | undefined {
+  if (text === '' || isIncompleteNumericInput(text)) {
+    return undefined;
+  }
+
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
 function getRangeText(min?: number, max?: number) {
   if (min != null && max != null) {
     return t('options-ui.number-input.range-min-max', 'Range: {{min}} to {{max}}', { min, max });
@@ -94,12 +107,9 @@ export const NumberInput = memo(function NumberInput({
   const emitInRangeValueDebounced = useMemo(
     () =>
       debounce((txt: string) => {
-        if (txt === '' || isIncompleteNumericInput(txt)) {
-          return;
-        }
-        const parsed = Number(txt);
         const { value, min, max, onChange } = latestPropsRef.current;
-        if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
+        const parsed = parseInRangeValue(txt, min, max);
+        if (parsed === undefined) {
           return;
         }
         if (parsed !== value) {
@@ -157,13 +167,7 @@ export const NumberInput = memo(function NumberInput({
       setText(next);
       setInputCorrected(false);
 
-      if (next === '' || isIncompleteNumericInput(next)) {
-        emitInRangeValueDebounced.cancel();
-        return;
-      }
-
-      const parsed = Number(next);
-      if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
+      if (parseInRangeValue(next, min, max) === undefined) {
         emitInRangeValueDebounced.cancel();
         return;
       }
