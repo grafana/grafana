@@ -4,12 +4,12 @@ import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { InstantQueryRefIdIndex } from '@grafana/prometheus';
 import { useStyles2 } from '@grafana/ui';
 
-import { rawListItemColumnWidth } from './RawListItem';
+import { getRawListItemColumnWidth } from './RawListItem';
 
-const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean, totalNumberOfValues: number) => {
   return {
     valueNavigation: css({
-      width: rawListItemColumnWidth,
+      width: getRawListItemColumnWidth(totalNumberOfValues),
       fontWeight: 'bold',
     }),
     valueNavigationWrapper: css({
@@ -30,7 +30,7 @@ export const formatValueName = (name: string): string => {
 };
 
 export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; expanded: boolean }) => {
-  const styles = useStyles2(getItemLabelsStyles, expanded);
+  const styles = useStyles2(getItemLabelsStyles, expanded, valueLabels.length);
 
   return (
     <div className={styles.itemLabelsWrap}>

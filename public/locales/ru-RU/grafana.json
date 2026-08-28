@@ -982,9 +982,6 @@
       "used-by-rules_other": "Используется {{count}} правила оповещений"
     },
     "contact-points-filter": {
-      "aria-label-clear": "очистить",
-      "aria-label-search-contact-points": "поиск точек контакта",
-      "clear": "Очистить",
       "label-search-by-name-or-type": "Поиск по имени или типу",
       "placeholder-search": "Поиск"
     },
@@ -1638,6 +1635,10 @@
         "autosync-error-title": "",
         "autosync-importing-body": "",
         "autosync-importing-title": "",
+        "autosync-rules-error-body": "",
+        "autosync-rules-error-title": "",
+        "autosync-rules-imported-note": "",
+        "autosync-rules-note": "",
         "autosync-success-body": "",
         "autosync-success-title": "",
         "autosync-title": "",
@@ -1708,7 +1709,6 @@
       "review": {
         "autosync-badge": "",
         "back": "Правила оповещения",
-        "back-notifications": "",
         "enable-autosync": "",
         "filter": "Фильтр",
         "folder": "Целевая папка",
@@ -1727,7 +1727,6 @@
         "routing": "Маршрутизация уведомлений",
         "routing-none": "Дерево политик не выбрано",
         "routing-tree": "Дерево политик: {{name}}",
-        "rules-autosync-badge": "",
         "rules-skipped": "Правила оповещений импортированы не будут.",
         "rules-title": "Правила оповещения",
         "skipped": "Пропущено",
@@ -1755,14 +1754,14 @@
         "yaml-description": "Импорт правил из YAML-файла Prometheus."
       },
       "step1": {
-        "autosync-datasource-filtered": "",
         "autosync-label": "",
         "autosync-tooltip": "",
+        "autosync-tooltip-unsupported": "",
         "datasource": "Источник данных Alertmanager",
+        "datasource-autosync-badge": "",
         "heading": "Импорт ресурсов уведомлений",
         "next-disabled-tooltip": "Заполните обязательные поля и дождитесь завершения проверки, прежде чем продолжить.",
         "no-datasources": "Источники данных Alertmanager не найдены",
-        "no-mimir-cortex-datasources": "",
         "no-permission-desc": "У вас нет разрешения на импорт ресурсов уведомлений. Необходимо разрешение <strong>alerting.notifications:write</strong>. Вы можете пропустить этот шаг.",
         "no-permission-title": "Недостаточно разрешений",
         "policy-tree-autosync-disabled": "",
@@ -3296,6 +3295,7 @@
         "disable-confirm-body-generic": "После отключения непрерывная синхронизация прекратится. Ее можно включить позже, выбрав источник данных.",
         "disable-confirm-title": "Отключить автосинхронизацию с Mimir Alertmanager?",
         "disable-success": "Автосинхронизация с Mimir Alertmanager отключена",
+        "not-ready-body": "",
         "operator-managed-info": "Значение задается ключом <1>[unified_alerting] external_alertmanager_uid</1> в файле grafana.ini. Его не нельзя изменить через пользовательский интерфейс. Чтобы настроить синхронизацию здесь, измените файл конфигурации и перезапустите Grafana или удалите ключ.",
         "operator-managed-title": "Управляется оператором",
         "orphan-warning": "Недоступен UID настроенного источника данных {{uid}}. Чтобы продолжить, отключите синхронизацию или восстановите источник данных.",
@@ -3303,6 +3303,7 @@
         "picker-empty": "Отсутствуют источники данных Mimir или Cortex",
         "picker-label": "Источник данных",
         "picker-placeholder": "Выберите источник данных Mimir или Cortex Alertmanager…",
+        "read-error-message": "",
         "save-disabled-no-selection": "Для сохранения выберите источник данных Mimir или Cortex Alertmanager.",
         "save-disabled-staged-config": "",
         "save-error": "Не удалось сохранить автосинхронизацию с Mimir Alertmanager",
@@ -3942,6 +3943,8 @@
       "title-notification-policies": "Политики уведомления"
     },
     "wizard-import-to-gma": {
+      "autosync-rules-error": "",
+      "autosync-rules-imported-note": "",
       "autosync-success-body": "",
       "autosync-success-title": "",
       "error": "Не удалось импортировать ресурсы",
@@ -4451,7 +4454,7 @@
       "cancel-button": "Отмена",
       "confirmation-text": "Удалить",
       "delete-button": "Удалить",
-      "delete-modal-restore-dashboards-common": "Удаленные дашборды будут храниться в истории в течение 12 месяцев. Пользователи с соответствующими разрешениями могут восстановить удаленные ими дашборды, а администраторы — дашборды, удаленные любым пользователем. Журнал истории ограничен 1000 дашбордами. По достижении лимита старые дашборды могут удаляться.",
+      "delete-modal-restore-dashboards-common": "",
       "delete-modal-restore-dashboards-prefix-folder": "Это действие приведет к немедленному удалению выбранных папок.",
       "delete-modal-restore-dashboards-suffix-folder": "Их восстановление невозможно.",
       "delete-modal-title": "Удаление",
@@ -4475,14 +4478,14 @@
       "delete-modal-folder-empty_few": "Выбранные папки пусты",
       "delete-modal-folder-empty_many": "Выбранные папки пусты",
       "delete-modal-folder-empty_other": "Выбранные папки пусты",
-      "delete-modal-folder-not-empty_one": "Выбранная папка содержит другие ресурсы, которые будут удалены",
-      "delete-modal-folder-not-empty_few": "Выбранные папки содержат другие ресурсы, которые будут удалены",
-      "delete-modal-folder-not-empty_many": "Выбранные папки содержат другие ресурсы, которые будут удалены",
-      "delete-modal-folder-not-empty_other": "Выбранные папки содержат другие ресурсы, которые будут удалены",
-      "move-modal-folder-not-empty_one": "Выбранная папка содержит другие ресурсы, которые будут перемещены вместе с ней",
-      "move-modal-folder-not-empty_few": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними",
-      "move-modal-folder-not-empty_many": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними",
-      "move-modal-folder-not-empty_other": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними"
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_few": "",
+      "delete-modal-folder-not-empty_many": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_few": "",
+      "move-modal-folder-not-empty_many": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Последние удаленные"
@@ -4517,10 +4520,10 @@
       "folder-empty_few": "Выбранные папки пусты",
       "folder-empty_many": "Выбранные папки пусты",
       "folder-empty_other": "Выбранные папки пусты",
-      "folder-not-empty_one": "Выбранная папка содержит другие ресурсы, которые будут удалены",
-      "folder-not-empty_few": "Выбранные папки содержат другие ресурсы, которые будут удалены",
-      "folder-not-empty_many": "Выбранные папки содержат другие ресурсы, которые будут удалены",
-      "folder-not-empty_other": "Выбранные папки содержат другие ресурсы, которые будут удалены"
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Отмена",
@@ -4541,10 +4544,10 @@
       "move-warning-tooltip": "Подготовленные ресурсы можно перемещать только внутри подготовленной папки, а локальные ресурсы — в локальные папки.",
       "success-title": "Ресурсы перемещены",
       "target-folder": "Целевая папка",
-      "folder-not-empty_one": "Выбранная папка содержит другие ресурсы, которые будут перемещены вместе с ней",
-      "folder-not-empty_few": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними",
-      "folder-not-empty_many": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними",
-      "folder-not-empty_other": "Выбранные папки содержат другие ресурсы, которые будут перемещены вместе с ними"
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": "Дашборд"
@@ -4578,7 +4581,7 @@
       "button-deleting": "Удаление...",
       "delete-warning": "Эта папка и все вложенные элементы будут удалены.",
       "folder-empty": "Выбранная папка пуста",
-      "folder-not-empty": "Выбранная папка содержит другие ресурсы, которые будут удалены",
+      "folder-not-empty": "",
       "missing-info": "Отсутствуют обязательные поля",
       "success-message": "Папка удалена"
     },
@@ -6381,18 +6384,9 @@
         "name-builtin": "{{annoName}} (встроена)",
         "name-disabled": "{{annoName}} (отключена)",
         "reorder-description": "Изменить порядок списка аннотаций",
-        "title-above-dashboard-count_one": "Над дашбордом ({{count}})",
-        "title-above-dashboard-count_few": "Над дашбордом ({{count}})",
-        "title-above-dashboard-count_many": "Над дашбордом ({{count}})",
-        "title-above-dashboard-count_other": "Над дашбордом ({{count}})",
-        "title-controls-menu-count_one": "Меню управления ({{count}})",
-        "title-controls-menu-count_few": "Меню управления ({{count}})",
-        "title-controls-menu-count_many": "Меню управления ({{count}})",
-        "title-controls-menu-count_other": "Меню управления ({{count}})",
-        "title-hidden-count_one": "Скрыто ({{count}})",
-        "title-hidden-count_few": "Скрыто ({{count}})",
-        "title-hidden-count_many": "Скрыто ({{count}})",
-        "title-hidden-count_other": "Скрыто ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": ""
       },
       "dashboard-options": {
         "annotations": "Аннотации",
@@ -6405,7 +6399,6 @@
         "tooltip": "Параметры дашборда",
         "variables": "Переменные"
       },
-      "drag-to-reorder": "Перетащите для изменения порядка",
       "edit-schema": {
         "apply-button": "Применить изменения",
         "apply-button-disabled-tooltip": "Исправьте ошибки проверки перед применением изменений",
@@ -6468,19 +6461,10 @@
         "add-filter": "Добавить фильтр",
         "reorder-description": "Изменить порядок фильтров",
         "title": "Фильтры",
-        "tooltip": "Обзор фильтров",
-        "title-above-dashboard_one": "Над дашбордом ({{count}})",
-        "title-above-dashboard_few": "Над дашбордом ({{count}})",
-        "title-above-dashboard_many": "Над дашбордом ({{count}})",
-        "title-above-dashboard_other": "Над дашбордом ({{count}})",
-        "title-controls-menu_one": "Меню управления ({{count}})",
-        "title-controls-menu_few": "Меню управления ({{count}})",
-        "title-controls-menu_many": "Меню управления ({{count}})",
-        "title-controls-menu_other": "Меню управления ({{count}})",
-        "title-hidden_one": "Скрыто ({{count}})",
-        "title-hidden_few": "Скрыто ({{count}})",
-        "title-hidden_many": "Скрыто ({{count}})",
-        "title-hidden_other": "Скрыто ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "tooltip": "Обзор фильтров"
       },
       "group": {
         "different-parents": "",
@@ -6492,14 +6476,8 @@
         "add-link": "Добавить ссылку",
         "new-link": "Новая ссылка",
         "reorder-description": "Изменить порядок списка ссылок",
-        "title-above-dashboard_one": "Над дашбордом ({{count}})",
-        "title-above-dashboard_few": "Над дашбордом ({{count}})",
-        "title-above-dashboard_many": "Над дашбордом ({{count}})",
-        "title-above-dashboard_other": "Над дашбордом ({{count}})",
-        "title-controls-menu_one": "Меню управления ({{count}})",
-        "title-controls-menu_few": "Меню управления ({{count}})",
-        "title-controls-menu_many": "Меню управления ({{count}})",
-        "title-controls-menu_other": "Меню управления ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": ""
       },
       "outline": {
         "pane-header": "Структура содержимого",
@@ -6538,7 +6516,6 @@
       "section-variables": {
         "title": "Переменные"
       },
-      "select": "Выбрать",
       "snapshot": {
         "title": "Источник",
         "tooltip": "Открытие исходного дашборда"
@@ -6598,19 +6575,10 @@
         "reorder-description": "Измените порядок в списке переменных",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
-        "top-placement-default": "Над дашбордом",
-        "title-controls-menu_one": "Меню управления ({{count}})",
-        "title-controls-menu_few": "Меню управления ({{count}})",
-        "title-controls-menu_many": "Меню управления ({{count}})",
-        "title-controls-menu_other": "Меню управления ({{count}})",
-        "title-hidden_one": "Скрыто ({{count}})",
-        "title-hidden_few": "Скрыто ({{count}})",
-        "title-hidden_many": "Скрыто ({{count}})",
-        "title-hidden_other": "Скрыто ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_few": "{{placement}} ({{count}})",
-        "title-top-placement_many": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})"
+        "title-above-dashboard": "",
+        "title-controls-menu": "",
+        "title-hidden": "",
+        "top-placement": ""
       },
       "view-panel": {
         "disabled": "Отключено",
@@ -6982,6 +6950,11 @@
       "title": "Ссылки на дашборды еще не добавлены"
     }
   },
+  "dashboard-picker": {
+    "no-options": "",
+    "placeholder": "",
+    "unknown-dashboard": ""
+  },
   "dashboard-prompt": {
     "datasource-entry": {
       "generate-dashboard": ""
@@ -7130,8 +7103,12 @@
       "placeholder-your-metric-prefix": "Префикс метрик"
     },
     "control-edit-actions": {
+      "copied-tooltip-disabled": "",
+      "copy-clipboard-tooltip": "",
       "delete-tooltip": "",
+      "delete-tooltip-disabled": "",
       "duplicate-tooltip": "",
+      "duplicate-tooltip-disabled": "",
       "settings": ""
     },
     "conversion-warning-banner": {
@@ -7282,6 +7259,11 @@
     },
     "description-label": {
       "description": "Описание"
+    },
+    "draggable-items-list": {
+      "delete": "",
+      "duplicate": "",
+      "edit": ""
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7564,6 +7546,9 @@
       "confirmText-delete-all": "Удалить все",
       "delete-all-transformations": "Удалить все преобразования",
       "title-delete-all-transformations": "Удалить все преобразования?"
+    },
+    "panel-edit-actions": {
+      "edit-visualization": ""
     },
     "panel-edit-controls": {
       "table-view-aria-label-toggletableview": "Переключить табличное представление",
@@ -7915,10 +7900,31 @@
       "save-dashboard": "Сохранить дашборд",
       "title-unsaved-changes": "Несохраненные изменения"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": ""
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Параметры"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": ""
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7929,6 +7935,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": ""
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "Глобальная переменная или переменная папки с таким именем уже существует и будет заменена переменной этого дашборда."
@@ -9108,6 +9121,7 @@
       "label-stack-trace": "Трассировка стека",
       "label-summary-attributes": "Атрибуты сводки",
       "label-warnings": "Предупреждения",
+      "no-attributes": "",
       "overview-items": {
         "label": {
           "child-count": "Число дочерних элементов:",
@@ -9200,15 +9214,16 @@
       "split-widen": "Расширить область"
     },
     "trace-page-header": {
-      "aria-label-share-dropdown": "Открыть меню параметров трассировки общего доступа",
+      "aria-label-share-dropdown": "",
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
       "errors": "Ошибки",
       "errors-tooltip": "Выбирает диапазоны, в которых статус соответствует ошибке.",
       "export-started": "Экспорт запущен",
+      "feedback-group": "",
       "filters": "Фильтры",
-      "give-feedback": "Обратная связь",
+      "give-feedback-item": "",
       "high-latency": "Высокая задержка",
       "high-latency-tooltip": "Выбирает 10% самых длинных диапазонов в трассировке (p90).",
       "link-copied": "Ссылка скопирована в буфер обмена",
@@ -9216,13 +9231,12 @@
       "path": "Путь",
       "route": "Маршрут",
       "services": "Службы",
-      "share": "Поделиться",
       "share-copy-link": "Копировать ссылку",
       "share-export-json": "Экспорт в формате JSON",
-      "share-tooltip": "Поделиться трассировкой",
+      "share-group": "",
+      "share-tooltip": "",
       "start-time": "Время начала",
       "target": "Цель",
-      "title-share-thoughts-about-tracing-grafana": "Поделитесь своим мнением о трассировке в Grafana.",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
       "trace-id": "Идентификатор трассировки",
       "url": "URL-адрес"
@@ -9232,6 +9246,10 @@
         "body": "Эта трассировка была изначально отклонена с помощью адаптивных трассировок, но затем восстановлена. Восстановленная трассировка не включается в запросы TraceQL и может быть запрошена только по идентификатору трассировки. Подробнее см. в <2>документации</2>.",
         "title": "Трассировка восстановлена с помощью адаптивных трассировок"
       },
+      "application-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "Копировать в буфер обмена",
       "attribute-plugin-promo": {
         "learn-more": "Подробнее"
@@ -9239,6 +9257,18 @@
       "database-observability-promo": {
         "body": "Database Observability отображает визуальные планы выполнения, события ожидания и примеры запросов, помогая вам диагностировать проблемы за пределами трассировочных спанов.",
         "title": "Быстрее находите медленные запросы"
+      },
+      "frontend-observability-promo": {
+        "body": "",
+        "title": ""
+      },
+      "knowledge-graph-promo": {
+        "body": "",
+        "title": ""
+      },
+      "kubernetes-promo": {
+        "body": "",
+        "title": ""
       },
       "no-data": "Нет данных",
       "tooltip-copy-icon": "Скопировано"
@@ -12837,7 +12867,7 @@
       "title": "Профили"
     },
     "recently-deleted": {
-      "subtitle": "Удаленные дашборды хранятся в истории в течение 12 месяцев или до достижения лимита (1000 дашбордов).",
+      "subtitle": "",
       "title": "Последние удаленные"
     },
     "recorded-queries": {
@@ -13133,6 +13163,7 @@
         "format-bold": "",
         "format-italic": "",
         "format-strikethrough": "",
+        "loading-editor": "",
         "tooltip-bold": "",
         "tooltip-bulleted-list": "",
         "tooltip-code": "",
@@ -13149,6 +13180,14 @@
     }
   },
   "notebooks": {
+    "delete": {
+      "body": "",
+      "confirm": "",
+      "error": "",
+      "in-progress": "",
+      "success": "",
+      "title": ""
+    },
     "export": {
       "copied": "",
       "copy-markdown": "",
@@ -13216,7 +13255,8 @@
     "view": {
       "copy-link": "",
       "mode-edit": "",
-      "mode-view": ""
+      "mode-view": "",
+      "more-actions": ""
     }
   },
   "notifications": {
@@ -14053,10 +14093,11 @@
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
       "description-commit-message-template": "Используется это сообщение коммита, если поле «Комментарий» оставлено пустым при сохранении, перемещении, переименовании или удалении ресурса. Заполнители, подставляемые для каждой операции: {{actionVar}} (создать/обновить/удалить/переместить/переименовать), {{kindVar}} (дашборд/папка), {{idVar}} (уникальный идентификатор ресурса), {{titleVar}}, {{userNameVar}} (отображаемое имя), {{userLoginVar}} (имя пользователя), {{userEmailVar}}. Оставьте пустым, чтобы использовать встроенные сообщения по умолчанию.",
-      "description-connection": "Выберите подключение к приложению GitHub для использования",
+      "description-connection": "",
       "description-enabled": "После включения автоматического получения данных выбранный тип назначения нельзя изменить.",
       "description-read-only": "Ресурсы невозможно изменить через Grafana.",
       "description-title": "Понятное название конфигурации",
+      "error-connection-missing": "",
       "error-connection-required": "Требуется подключение",
       "error-fetch-branches": "Не удалось получить ветви",
       "error-required": "Поле является обязательным.",
@@ -14064,7 +14105,7 @@
       "error-save-repository": "Не удалось сохранить параметры репозитория",
       "label-automatic-pulling": "Автоматическое включение изменений",
       "label-commit-message-template": "Шаблон сообщения коммита",
-      "label-connection": "Подключение к приложению GitHub",
+      "label-connection": "",
       "label-enabled": "Включено",
       "label-interval-seconds": "Интервал (в секундах)",
       "label-repository-type": "Тип репозитория",
@@ -14094,38 +14135,53 @@
       "text-repository-not-ready": "Ошибка при подключении к репозиторию. Вы можете ввести название ветви вручную."
     },
     "connection": {
-      "disconnected-message": "Подключение к этому приложению GitHub прервано. Возможно, приложение было удалено или доступ к репозиторию отозван.",
-      "disconnected-title": "Подключение прервано"
+      "connected-title": "",
+      "disconnected-message": "",
+      "disconnected-title": "",
+      "pending-message": "",
+      "pending-title": ""
     },
     "connection-form": {
       "alert-connection-deleted": "Подключение удалено",
       "alert-connection-saved": "Подключение сохранено",
       "alert-connection-updated": "Подключение обновлено",
-      "available-repositories": "Это подключение обеспечивает доступ к следующим репозиториям",
+      "available-repositories-loading": "",
       "back-to-connections": "Назад к подключениям",
       "button-save": "Сохранить",
       "button-saving": "Сохранение...",
       "create-new-connection-button": "Создать подключение",
       "creating-connection-button": "Создание подключения...",
       "description-app-id": "Идентификатор вашего приложения GitHub",
+      "description-client-id": "",
+      "description-client-secret": "",
       "description-description": "Дополнительное описание для этого подключения",
       "description-installation-id": "Идентификатор установки вашего приложения GitHub",
       "description-private-key": "Закрытый ключ для вашего приложения GitHub в формате PEM",
       "description-provider": "Выберите тип услуги",
       "description-title": "Понятное название для этого подключения",
       "description-webhook-disabled": "При включенной настройке GitHub App не требует разрешения webhooks:write, а Grafana не будет регистрировать и получать события вебхуков. Используйте, когда нет доступа к Grafana из публичного интернета.",
+      "description-webhook-disabled-oauth": "",
+      "description-workspace": "",
+      "error-client-secret-new-app": "",
       "error-delete-connection": "Не удалось удалить подключение",
       "error-required": "Поле обязательно для заполнения",
       "error-save-connection": "Не удалось сохранить подключение",
       "error-submit": "Не удалось сохранить подключение",
       "grafana-repositories": "Репозитории, использующие это подключение",
       "label-app-id": "Идентификатор приложения GitHub",
+      "label-application-id": "",
+      "label-client-id": "",
+      "label-client-secret": "",
       "label-description": "Описание",
       "label-installation-id": "Идентификатор установки GitHub",
       "label-private-key": "Закрытый ключ (PEM)",
       "label-provider": "Поставщик услуги",
       "label-title": "Заголовок",
       "label-webhook-disabled": "Отключить интеграцию вебхуков",
+      "label-workspace": "",
+      "loading-types": "",
+      "no-types-message": "",
+      "no-types-title": "",
       "not-found": "Подключение не найдено",
       "not-found-description": "Запрашиваемое подключение отсутствует.",
       "page-subtitle": "Настройте подключение для аутентификации через внешние сервисы",
@@ -14134,15 +14190,21 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Дополнительное описание",
       "placeholder-installation-id": "12345678",
-      "placeholder-title": "Мое приложение GitHub"
+      "placeholder-title": "",
+      "reauthorize-button": "",
+      "available-repositories-count_one": "",
+      "available-repositories-count_few": "",
+      "available-repositories-count_many": "",
+      "available-repositories-count_other": ""
+    },
+    "connection-oauth": {
+      "error-authorize-failed": "",
+      "error-state-expired": ""
     },
     "connection-options": {
       "loading": "Загрузка…",
       "no-repos": "Нет репозиториев",
-      "repos-truncated_one": "{{shown}} + еще {{count}}",
-      "repos-truncated_few": "{{shown}} + еще {{count}}",
-      "repos-truncated_many": "{{shown}} + еще {{count}}",
-      "repos-truncated_other": "{{shown}} + еще {{count}}"
+      "repos-truncated": ""
     },
     "connections": {
       "add-connection": "Добавить подключение",
@@ -14151,6 +14213,8 @@
       "delete-confirm": "Вы действительно хотите удалить подключение? Это действие нельзя отменить.",
       "delete-title": "Удалите подключение",
       "error-loading": "Не удалось загрузить подключения",
+      "kind-github-app": "",
+      "kind-oauth-app": "",
       "no-connections": "Подключения не настроены",
       "no-results": "По вашему запросу ничего не найдено",
       "search-placeholder": "Поиск подключений",
@@ -14539,6 +14603,36 @@
         "subtitle": "Используйте этот параметр, если хотите синхронизировать весь экземпляр Grafana и управлять им через внешнее хранилище"
       }
     },
+    "oauth-app": {
+      "callback-url": "",
+      "callback-url-description": "",
+      "copy": "",
+      "create-and-authorize-button": "",
+      "help-instructions-bitbucket": "",
+      "help-instructions-github": "",
+      "help-instructions-gitlab": "",
+      "help-title": "",
+      "scope-bitbucket-pull-requests": "",
+      "scope-bitbucket-read-write": "",
+      "scope-bitbucket-repositories": "",
+      "scope-bitbucket-webhooks": "",
+      "waiting-authorization-button": ""
+    },
+    "oauth-authorization": {
+      "cancel-button": "",
+      "pending-body": "",
+      "pending-title": ""
+    },
+    "oauth-callback": {
+      "back-to-connections": "",
+      "done-message": "",
+      "done-title": "",
+      "error-authorize": "",
+      "error-missing-params": "",
+      "error-title": "",
+      "loading": "",
+      "page-title": ""
+    },
     "orphaned-drawer-notice": {
       "body": "Операции сохранения, перемещения и удаления через рабочий процесс Git недоступны. Если вы являетесь администратором, нажмите на предупреждение в верхней части дашборда, чтобы опубликовать или удалить его, либо обратитесь к администратору Grafana.",
       "title": "Репозиторий подготовки больше не существует"
@@ -14782,6 +14876,9 @@
       },
       "title-error-saving-file": "Ошибка при сохранении файла"
     },
+    "save-connection": {
+      "error-popup-blocked": ""
+    },
     "save-resource": {
       "button-cancel": "Отменить",
       "button-delete": "Удалить",
@@ -14895,6 +14992,7 @@
     },
     "validation": {
       "hidden-characters": "Это поле содержит скрытые символы, которые могли появиться при копировании и вставке. Повторно введите значение или удалите его и повторите попытку.",
+      "invalid-url": "",
       "url-with-credentials": "URL-адрес репозитория не должен содержать имя пользователя или пароль. Удалите учетные данные из URL-адреса и вместо этого используйте поле для токена."
     },
     "warning-title-default": "Предупреждение",
@@ -14925,11 +15023,16 @@
       "alert-point-permissions": "Детальные разрешения не поддерживаются. Действуют разрешения по умолчанию: администраторы, а также пользователи с правами редактирования и с правами просмотра сохраняют стандартные уровни доступа.",
       "alert-point-unsupported": "Оповещения и панели библиотеки не поддерживаются в подготовленных папках.",
       "alert-title": "Важно: прежде чем продолжить, ознакомьтесь с ограничениями Git Sync",
-      "auth-type-description": "Оба способа обеспечивают безопасный доступ к репозиториям GitHub. Выберите тот, который максимально соответствует вашим рабочим процессам и требованиям безопасности.",
+      "app-mode-label": "",
+      "auth-type-description": "",
+      "auth-type-description-generic": "",
       "auth-type-github-app-description": "Используйте приложение GitHub для обеспечения безопасности и совместной работы. Рекомендуется для использования в производственной среде.",
       "auth-type-github-app-label": "Подключение с помощью приложения GitHub",
       "auth-type-label": "Метод аутентификации",
+      "auth-type-oauth-app-description": "",
+      "auth-type-oauth-app-label": "",
       "auth-type-pat-description": "Используйте персональный токен доступа для аутентификации через GitHub. Подходит для индивидуального использования и тестирования.",
+      "auth-type-pat-description-generic": "",
       "auth-type-pat-label": "Подключение с помощью персонального токена доступа",
       "button-cancel": "Отмена",
       "button-cancelling": "Отмена...",
@@ -14937,7 +15040,8 @@
       "button-start": "Начать синхронизацию",
       "connect-step": "Установите подключение",
       "connect-step-local": "Подготовка файлов",
-      "connection-not-ready": "Выбранное подключение к приложению GitHub не готово. Список будет обновлен, как только подключение будет готово.",
+      "connection-not-ready": "",
+      "connection-status": "",
       "discard-modal": {
         "body": "Конфигурация репозитория будет удалена, и вы потеряете весь прогресс. Действительно отменить изменения?",
         "confirm": "Да, отменить",
@@ -14946,20 +15050,21 @@
       },
       "git-protocol-alert-body": "Репозиторий типа Pure Git взаимодействует с вашим Git-сервером с помощью <2>протокола Git v2 Smart HTTP</2>. SSH и устаревший протокол v1 не поддерживаются. Прежде чем продолжить, убедитесь, что ваш Git-сервер поддерживает протокол Smart HTTP. Подробнее — в <5>документации по ограничениям использования</5>.",
       "git-protocol-alert-title": "Поддерживается только протокол Smart HTTP Git v2",
-      "github-app-connection-status": "Состояние подключения:",
       "github-app-creation-default-error": "Не удалось создать подключение",
       "github-app-creation-failed": "Не удалось создать подключение к приложению GitHub",
       "github-app-error-loading": "Не удалось загрузить подключения",
       "github-app-error-required": "Требуется подключение",
       "github-app-help-instructions": "Создайте приложение GitHub, сгенерируйте закрытый ключ, установите его и вставьте данные ниже. <2>Посмотреть пошаговые инструкции</2>",
       "github-app-help-title": "Нужна помощь в создании приложения GitHub?",
+      "github-app-kind-app": "",
+      "github-app-kind-label": "",
+      "github-app-kind-oauth": "",
       "github-app-mode-existing": "Выберите существующее приложение",
-      "github-app-mode-label": "Конфигурация приложения GitHub",
       "github-app-mode-new": "Подключитесь к новому приложению",
-      "github-app-no-connections": "Подключения к GitHub не найдены",
-      "github-app-no-connections-message": "У вас нет подключений к приложению GitHub. Выберите «Подключиться к новому приложению», чтобы установить соединение.",
-      "github-app-select-connection": "Выберите подключение к приложению GitHub",
       "give-feedback-link": "Отправить отзыв",
+      "oauth-app-connection-label": "",
+      "oauth-app-creation-default-error": "",
+      "select-connection": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "Настройте репозиторий",
       "step-connect": "Подключить",
@@ -15459,8 +15564,8 @@
       "restore": "Восстановить"
     },
     "limit-banner": {
-      "at-limit-body": "Grafana сохраняет недавно удаленные дашборды (до {{limit}}). Старые записи удаляются навсегда.",
-      "at-limit-title": "Достигнут лимит удаленных дашбордов"
+      "at-limit-body": "",
+      "at-limit-title": ""
     },
     "page": {
       "no-deleted-dashboards": "В последнее время вы не удаляли ни одного дашборда.",
@@ -15479,6 +15584,10 @@
       "text_few": "Это действие приведет к восстановлению {{numberOfDashboards}} дашбордов.",
       "text_many": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда.",
       "text_other": "Это действие приведет к восстановлению {{numberOfDashboards}} дашборда."
+    },
+    "unavailable": {
+      "body": "",
+      "title": ""
     }
   },
   "recentlyDeleted": {
