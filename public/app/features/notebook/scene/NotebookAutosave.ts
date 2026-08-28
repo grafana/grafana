@@ -4,7 +4,7 @@ import { type Unsubscribable } from 'rxjs';
 import { SceneObjectStateChangedEvent, type SceneObjectStateChangedPayload } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
-import { updateNotebook } from '../api/notebookResource';
+import { createNotebook, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../types';
 
@@ -48,8 +48,16 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private savedTimeSettings?: NotebookSpec['timeSettings'];
   /** Whether the time settings now in the scene are the notebook's own, rather than one reader's. */
   private timeSettingsEdited = false;
+  /**
+   * Whether the current difference from `baseline` came from an edit, not from a reader just looking at
+   * the notebook. A legend click changes scene state too. Without this flag, reopening the notebook
+   * would save that change as if it were a real edit.
+   */
+  private editedByWriter = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
+  /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
+  private adoptingUid = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
   private inFlightSave?: Promise<void>;
   private saveAgainWhenIdle = false;
@@ -68,17 +76,20 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       // Entering edit mode publishes state changes of its own, so without a baseline the first
       // comparison would write the notebook straight back unchanged.
       this.recordWritten(this.buildSpecToSave());
-    } else {
+    } else if (this.editedByWriter) {
       // A scene is cached and reactivated when you come back to a notebook, so this can be the same
-      // controller with edits that never reached the server. Waiting for a change that may never come
-      // would lose them, and scheduling costs nothing when there is nothing to write.
+      // controller holding an edit that never reached the server. Reschedule only if that edit came from
+      // someone allowed to write. A reader clicking a legend leaves the same kind of difference behind,
+      // and reopening the notebook must not save it.
       this.schedule();
     }
 
     this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-      if (!this.scene.state.isEditing) {
+      if (!this.scene.state.isEditing || this.adoptingUid) {
         return;
       }
+
+      this.editedByWriter = true;
 
       if (changesTimeSettings(payload, this.scene)) {
         this.timeSettingsEdited = true;
@@ -109,6 +120,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // These writers hand over a whole document, time settings included, so what is in the scene now is
     // the notebook's own.
     this.timeSettingsEdited = true;
+    this.editedByWriter = true;
     this.schedule();
     this.flush();
 
@@ -239,6 +251,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.timeSettingsEdited = false;
+    this.editedByWriter = false;
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -254,11 +267,6 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     // Two writes in flight can land out of order and let the older spec win.
     if (this.inFlight) {
       this.saveAgainWhenIdle = true;
-      return;
-    }
-
-    const { uid } = this.scene.state;
-    if (!uid) {
       return;
     }
 
@@ -286,7 +294,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
 
-    this.inFlightSave = updateNotebook(uid, spec)
+    // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
+    // write is what creates it. Everything either branch does afterwards is the same.
+    const { uid } = this.scene.state;
+
+    this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
         this.recordWritten(spec, serialized);
         this.hasSavedOnce = true;
@@ -316,6 +328,29 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           this.saveNow();
         }
       });
+  }
+
+  /**
+   * Writes the spec, creating the notebook if this is its first save.
+   *
+   * The uid is adopted onto the scene before this resolves, so a save queued behind this one updates the
+   * notebook that was just created rather than creating a second. Only reached with something to write,
+   * which is what stops a blank notebook nobody typed in from being created at all.
+   */
+  private write(uid: string | undefined, spec: NotebookSpec): Promise<{ generation?: number }> {
+    if (uid) {
+      return updateNotebook(uid, spec);
+    }
+
+    return createNotebook(spec).then(({ uid: created, generation }) => {
+      this.adoptingUid = true;
+      try {
+        this.scene.setState({ uid: created });
+      } finally {
+        this.adoptingUid = false;
+      }
+      return { generation };
+    });
   }
 }
 
