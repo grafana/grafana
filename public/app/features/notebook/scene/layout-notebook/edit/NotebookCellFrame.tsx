@@ -272,12 +272,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     scrollMarginBottom: theme.spacing(4),
   }),
   frameEditing: css({
-    paddingLeft: theme.spacing(7),
-    marginLeft: theme.spacing(-7),
+    paddingLeft: theme.spacing(4),
+    marginLeft: theme.spacing(-4),
     paddingTop: theme.spacing(3),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(10),
-      marginLeft: theme.spacing(-10),
+      paddingLeft: theme.spacing(7),
+      marginLeft: theme.spacing(-7),
     },
     [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       opacity: 1,
@@ -331,9 +331,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       right: 0,
       bottom: 0,
-      left: theme.spacing(7),
+      left: theme.spacing(4),
       [theme.breakpoints.up('md')]: {
-        left: theme.spacing(10),
+        left: theme.spacing(7),
       },
       backgroundColor: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
@@ -357,9 +357,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
     // pointer has to drift right past the gutter before the actions bar appears.
     left: 0,
-    width: theme.spacing(15),
+    width: theme.spacing(12),
     [theme.breakpoints.up('md')]: {
-      width: theme.spacing(18),
+      width: theme.spacing(15),
     },
     height: theme.spacing(4),
     pointerEvents: 'auto',
@@ -382,10 +382,10 @@ function dropLine(theme: GrafanaTheme2, edge: NotebookCellDropIndicator) {
     position: 'absolute' as const,
     [edge]: 0,
     // Matches frameEditing's gutter padding-left, so the line still starts at the cell's own content
-    // edge rather than bleeding into the wider hit-box reserved for the drag handle and add button.
-    left: theme.spacing(7),
+    // edge rather than bleeding into the wider hit-box reserved for the drag handle.
+    left: theme.spacing(4),
     [theme.breakpoints.up('md')]: {
-      left: theme.spacing(10),
+      left: theme.spacing(7),
     },
     right: 0,
     height: 2,
