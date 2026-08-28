@@ -1741,7 +1741,7 @@ export type SetRoleAssignmentsApiArg = {
   roleUid: string;
   setRoleAssignmentsCommand: SetRoleAssignmentsCommand;
 };
-export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ AccesscontrolStatus;
+export type GetAccessControlStatusApiResponse = /** status 200 (empty) */ AccessControlStatus;
 export type GetAccessControlStatusApiArg = void;
 export type ListTeamsRolesApiResponse = /** status 200 (empty) */ {
   [key: string]: RoleDto[];
@@ -3200,7 +3200,7 @@ export type SetRoleAssignmentsCommand = {
   teams?: number[];
   users?: number[];
 };
-export type AccesscontrolStatus = {
+export type AccessControlStatus = {
   enabled?: boolean;
 };
 export type RolesSearchQuery = {
