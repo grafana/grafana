@@ -59,10 +59,11 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
-import { getHeaderTags, getTraceName } from '../model/trace-viewer';
+import { isErrorSpan } from '../TraceTimelineViewer/utils';
+import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
-import { getServiceColorKey } from '../utils/service-name';
+import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
@@ -161,18 +162,24 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   }
 
   const { method, status, url } = getHeaderTags(trace.spans);
-  const traceName = getTraceName(trace.spans);
+  const rootSpan = getRootSpan(trace.spans);
+  const serviceName = rootSpan ? getServiceDisplayName(rootSpan.process) : '';
+  const operationName = rootSpan?.operationName ?? '';
+  const statusValue = status && status.length > 0 ? status[0].value.toString() : undefined;
+  const statusClass = statusValue?.charAt(0);
+  const showWarningIcon = statusClass === '4';
+  const showErrorIcon =
+    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === '5');
+  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === '2';
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
 
   let statusColor: BadgeColor = 'green';
-  if (status && status.length > 0) {
-    if (status[0].value.toString().charAt(0) === '4') {
-      statusColor = 'orange';
-    } else if (status[0].value.toString().charAt(0) === '5') {
-      statusColor = 'red';
-    }
+  if (statusClass === '4') {
+    statusColor = 'orange';
+  } else if (statusClass === '5') {
+    statusColor = 'red';
   }
 
   const copyTraceId = () => {
@@ -234,10 +241,34 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       {/* Main title row */}
       <div className={styles.titleRow}>
         <div className={styles.titleSection}>
-          <h1 className={styles.title}>{traceName}</h1>
+          {showErrorIcon && (
+            <Icon
+              name="exclamation-triangle"
+              className={styles.errorIcon}
+              aria-label={t('explore.trace-page-header.error-indicator', 'Trace has errors')}
+            />
+          )}
+          {showWarningIcon && (
+            <Icon
+              name="exclamation-triangle"
+              className={styles.warningIcon}
+              aria-label={t('explore.trace-page-header.warning-indicator', 'Trace has client errors')}
+            />
+          )}
+          {showSuccessIcon && (
+            <Icon
+              name="check-circle"
+              className={styles.successIcon}
+              aria-label={t('explore.trace-page-header.success-indicator', 'Trace succeeded')}
+            />
+          )}
+          <h1 className={styles.title} aria-label={[serviceName, operationName].filter(Boolean).join(' ')}>
+            {serviceName && <span className={styles.serviceName}>{serviceName}</span>}
+            {operationName && <span className={styles.operationName}>{operationName}</span>}
+          </h1>
           <div className={styles.badges}>
             {method && method.length > 0 && <Badge text={method[0].value} color="blue" />}
-            {status && status.length > 0 && <Badge text={status[0].value} color={statusColor} />}
+            {statusValue && <Badge text={statusValue} color={statusColor} />}
           </div>
         </div>
 
@@ -450,26 +481,58 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleSection: css({
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       flex: 1,
       minWidth: 0, // Allow text truncation
     }),
 
     title: css({
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: theme.spacing(1),
       color: theme.colors.text.primary,
-      fontSize: theme.typography.h3.fontSize,
-      fontWeight: theme.typography.h3.fontWeight,
-      lineHeight: theme.typography.h3.lineHeight,
+      fontSize: theme.typography.h4.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: theme.typography.h4.lineHeight,
       margin: 0,
       minWidth: 0,
+      overflow: 'hidden',
+    }),
+
+    serviceName: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
 
+    operationName: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      lineHeight: theme.typography.body.lineHeight,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+
+    errorIcon: css({
+      color: theme.colors.error.text,
+      flexShrink: 0,
+    }),
+
+    warningIcon: css({
+      color: theme.colors.warning.text,
+      flexShrink: 0,
+    }),
+
+    successIcon: css({
+      color: theme.colors.success.text,
+      flexShrink: 0,
+    }),
+
     badges: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       alignItems: 'center',
       flexShrink: 0,
     }),
