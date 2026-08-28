@@ -539,8 +539,11 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
     }
 
-    // Alt/option-click: read at the trigger's own click, not the later menu-item pick.
+    // Alt/option-click: the modifier is read on the trigger's own mouseUp (see NotebookCellAddButton's
+    // own comment on why), not the later menu-item pick; the click that follows is what actually opens
+    // the menu (Dropdown's own useClick interaction).
     async function pickCodeAbove(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      fireEvent.mouseUp(trigger, { altKey: true });
       fireEvent.click(trigger, { altKey: true });
       await user.click(screen.getByRole('menuitem', { name: 'Code' }));
     }

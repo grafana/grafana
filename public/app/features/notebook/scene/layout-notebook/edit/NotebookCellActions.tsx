@@ -34,12 +34,7 @@ export function NotebookCellActions({ onDuplicate, onDelete, className }: Props)
 const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     position: 'absolute',
-    // Sits inside the frame's own reserved top padding (NotebookCellFrame's frameEditing paddingTop),
-    // not above the frame's own top edge — that edge belongs to the previous cell, and this bar used
-    // to reach past it to sit there instead.
     top: theme.spacing(0.5),
-    // Matches the frame's gutter width (NotebookCellFrame's frameEditing) so this lines up above the
-    // cell's own content, not the handle/add-button column.
     left: theme.spacing(7),
     [theme.breakpoints.up('md')]: {
       left: theme.spacing(10),
@@ -54,9 +49,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z2,
     opacity: 0,
-    // Invisible is not enough while hidden — it would still win the hit test and turn a click meant
-    // for this cell's own content into a duplicate or delete. The frame's reveal rule restores
-    // pointer-events along with the opacity.
     pointerEvents: 'none',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),

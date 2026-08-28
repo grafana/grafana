@@ -12969,11 +12969,6 @@
       "visualization": "Visualization"
     },
     "cell": {
-      "add-button": {
-        "tooltip-above-mac": "<strong>Option-click</strong> to add above",
-        "tooltip-above-other": "<strong>Alt-click</strong> to add above",
-        "tooltip-below": "<strong>Click</strong> to add below"
-      },
       "code": {
         "aria-label-editor": "Code",
         "aria-label-language": "Code language",

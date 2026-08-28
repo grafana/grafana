@@ -87,7 +87,11 @@ describe('NotebookCellFrame', () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add block' }), { altKey: true });
+    // The modifier is read on mouseUp, not click — see NotebookCellAddButton's own comment on why —
+    // and the click that follows is what actually opens the menu (Dropdown's own useClick interaction).
+    const addButton = screen.getByRole('button', { name: 'Add block' });
+    fireEvent.mouseUp(addButton, { altKey: true });
+    fireEvent.click(addButton, { altKey: true });
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 1);
