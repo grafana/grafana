@@ -1,7 +1,14 @@
-import { SceneObjectBase, SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneObjectBase, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { createNotebook, updateNotebook } from '../api/notebookResource';
+import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -18,6 +25,13 @@ jest.mock('../api/notebookResource', () => ({
 // number has to be a deliberate edit here too.
 const IDLE_BEFORE_SAVE_MS = 2000;
 const MAX_WAIT_MS = 15000;
+
+// The panel cases below restore a saved viz config through the panel's own option/fieldConfig API,
+// and that re-applies the plugin's defaults, so the panels here need a plugin that actually loads.
+setPluginImportUtils({
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 /** Concrete stand-in: SceneObjectBase is abstract, and overlay just needs a SceneObject. */
 class TestOverlay extends SceneObjectBase {}
@@ -46,6 +60,46 @@ function buildScene() {
 function editFirstCell(scene: NotebookScene, text: string) {
   const [cell] = scene.state.body.state.cells;
   scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text } });
+}
+
+/** A notebook whose only cell is a panel, for the reader-owned viz config cases below. */
+function buildSceneWithPanel() {
+  const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+  const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+
+  const scene = new NotebookScene({
+    uid: 'nb-1',
+    title: 'My notebook',
+    body: new NotebookLayoutManager({ cells: [cell] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({ refresh: '', intervals: ['10s'] }),
+  });
+
+  return { scene, cell, panel };
+}
+
+/** What reading does to a panel: picking a colour off the legend writes a field override. */
+function recolourLegend(panel: VizPanel) {
+  panel.setState({
+    fieldConfig: {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'up' },
+          properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+        },
+      ],
+    },
+  });
+}
+
+/** The viz config of the panel element in each write, so a test can say what was actually sent. */
+function savedVizConfigs() {
+  return jest.mocked(updateNotebook).mock.calls.map(([, spec]) => {
+    const element = spec.elements.panel1;
+    return element.kind === 'Panel' ? element.spec.vizConfig : undefined;
+  });
 }
 
 function savedTexts() {
@@ -256,6 +310,175 @@ describe('NotebookAutosave', () => {
     await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
     expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  /** Meant to stay theirs: visible while they are reading, and never written. */
+  describe('a viz config a reader changed', () => {
+    it('is not written, and is not reported as an unsaved change when edit mode opens', async () => {
+      const { scene, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      recolourLegend(panel);
+      scene.onEnterEditMode();
+
+      expect(scene.autosave.state.status).toBe('idle');
+
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('stays on the panel for as long as they are reading it', async () => {
+      const { scene, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      recolourLegend(panel);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(panel.state.fieldConfig.overrides).toHaveLength(1);
+    });
+
+    /** A panel loads its plugin on activate, which a renderer would do, and both answers need it. */
+    describe('the prompt shown when edit mode opens', () => {
+      async function readAndRecolour() {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        recolourLegend(panel);
+        const publish = jest.spyOn(appEvents, 'publish');
+        scene.onEnterEditMode();
+
+        const event = publish.mock.calls
+          .map(([published]) => published)
+          .find((published) => published instanceof ShowConfirmModalEvent);
+
+        return { scene, panel, stopPanel, payload: event?.payload };
+      }
+
+      it('is not shown when the reader left the notebook looking as it was saved', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        const publish = jest.spyOn(appEvents, 'publish');
+        scene.onEnterEditMode();
+
+        expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+        expect(scene.state.isEditing).toBe(true);
+
+        stopPanel();
+      });
+
+      // Cancel, escape and the close button cannot carry an answer, and this is why none need to.
+      it('holds the notebook in view mode until the question is answered', async () => {
+        const { scene, panel, stopPanel, payload } = await readAndRecolour();
+
+        expect(payload).toBeDefined();
+        expect(scene.state.isEditing).toBeFalsy();
+
+        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+        expect(scene.state.isEditing).toBeFalsy();
+        expect(panel.state.fieldConfig.overrides).toHaveLength(1);
+        expect(updateNotebook).not.toHaveBeenCalled();
+        // Still pending, so the next attempt at editing asks again rather than letting it through.
+        expect(scene.autosave.viewOnlyVizChanges()).toEqual(['panel1']);
+
+        stopPanel();
+      });
+
+      // Nothing saved behind it, so prompting would offer a choice that does nothing either way.
+      it('is not shown for a panel whose saved look we do not hold', async () => {
+        const scene = buildScene();
+        deactivate = scene.activate();
+
+        const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+        const cell = new NotebookCellItem({ elementName: 'added-now', source: 'user', body: panel });
+        scene.state.body.setState({ cells: [...scene.state.body.state.cells, cell] });
+
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+        recolourLegend(panel);
+
+        const publish = jest.spyOn(appEvents, 'publish');
+        scene.onEnterEditMode();
+
+        expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+
+        stopPanel();
+      });
+
+      it('writes the colour when they keep it', async () => {
+        const { scene, panel, stopPanel, payload } = await readAndRecolour();
+
+        // Keep is the modal's alternative action, not its confirm: see askAboutViewOnlyChanges.
+        payload?.onAltAction?.();
+        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+        expect(scene.state.isEditing).toBe(true);
+        expect(panel.state.fieldConfig.overrides).toHaveLength(1);
+        expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+
+        stopPanel();
+      });
+
+      it('puts the saved colour back and writes nothing when they discard it', async () => {
+        const { scene, panel, stopPanel, payload } = await readAndRecolour();
+
+        payload?.onConfirm?.();
+        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+        expect(scene.state.isEditing).toBe(true);
+        expect(panel.state.fieldConfig.overrides).toEqual([]);
+        expect(updateNotebook).not.toHaveBeenCalled();
+
+        stopPanel();
+      });
+    });
+
+    // The other half of the rule: a writer who recolours has to get it back when they reload.
+    it('is written when the change was made in edit mode', async () => {
+      const { scene, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      recolourLegend(panel);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+    });
+
+    // Disowned when the session starts, so it stays out even though that panel is the one edited.
+    it('is not written when a reader set it before edit mode and only a query was edited after', async () => {
+      const { scene, cell, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+
+      recolourLegend(panel);
+      scene.onEnterEditMode();
+      cell.onQueryChange([{ refId: 'A', expr: 'up' } as DataQuery]);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toEqual([]);
+    });
+
+    // Nothing saved to disown, so its own config is the one to write. Substituting an absent one
+    // would save a panel with no visualization at all.
+    it('is still written in full for a panel added in this session', async () => {
+      const scene = activateEditing();
+      const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+      const cell = new NotebookCellItem({ elementName: 'panel1', source: 'user', body: panel });
+
+      scene.state.body.setState({ cells: [...scene.state.body.state.cells, cell] });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      expect(savedVizConfigs()[0]?.group).toBe('timeseries');
+    });
   });
 
   // Entering edit mode is itself a state change, and without care the handler that watches for edits
