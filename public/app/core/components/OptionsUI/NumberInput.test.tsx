@@ -218,7 +218,7 @@ describe('NumberInput', () => {
     const onChange = jest.fn();
     render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
 
-    const input = screen.getByRole('spinbutton');
+    const input = screen.getByRole<HTMLInputElement>('spinbutton');
     fireEvent.change(input, { target: { value: '8' } });
     commit(input);
 
