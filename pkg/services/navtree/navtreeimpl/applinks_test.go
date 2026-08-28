@@ -646,6 +646,85 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	})
 }
 
+func TestAddAppLinksDrilldownPruning(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	metricsDrilldownApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-metricsdrilldown-app",
+			Name: "Metrics drilldown",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Metrics",
+					Path:       "/a/grafana-metricsdrilldown-app/",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+			},
+		},
+	}
+
+	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
+		settings := map[string]*pluginsettings.DTO{}
+		for _, p := range pluginList {
+			settings[p.ID] = &pluginsettings.DTO{ID: 0, OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+		}
+		service := ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: settings},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: pluginList},
+		}
+		// Use the production nav defaults so the test exercises the real
+		// grafana-metricsdrilldown-app -> NavIDDrilldown mapping.
+		service.readNavigationSettings()
+		return service
+	}
+
+	// navtree.go creates this empty shell before addAppLinks runs; addPluginToSection
+	// only attaches Drilldown app children to a section that already exists.
+	drilldownShell := func() *navtree.NavLink {
+		return &navtree.NavLink{Text: "Drilldown", Id: navtree.NavIDDrilldown}
+	}
+
+	t.Run("RemoveEmptyDrilldownSection removes the section when no Drilldown app plugin is installed", func(t *testing.T) {
+		service := newService(nil)
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(drilldownShell())
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		treeRoot.RemoveEmptyDrilldownSection()
+		require.Nil(t, treeRoot.FindById(navtree.NavIDDrilldown))
+	})
+
+	t.Run("RemoveEmptyDrilldownSection keeps the section when a Drilldown app plugin is installed", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{metricsDrilldownApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(drilldownShell())
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		treeRoot.RemoveEmptyDrilldownSection()
+		drilldownNode := treeRoot.FindById(navtree.NavIDDrilldown)
+		require.NotNil(t, drilldownNode)
+		require.Len(t, drilldownNode.Children, 1)
+		require.Equal(t, "Metrics", drilldownNode.Children[0].Text)
+	})
+}
+
 func TestBuildDataConnectionsNavLink(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

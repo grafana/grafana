@@ -475,7 +475,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
-/e2e-playwright/dashboards-suite/new-datasource-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-query-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-text-box-variable.spec.ts @grafana/dashboards-squad
@@ -638,6 +637,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/data-sources-plugins
 /packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/data-sources-plugins
 /packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/data-sources-plugins
+
+# @grafana/plugin-compat
+/packages/grafana-plugin-compat/ @grafana/grafana-catalog
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform

@@ -86,7 +86,7 @@ func NewSearchOptions(
 		// MergeManifestsByKind is the single point a future live-manifest source will
 		// be added to; the built-in manifests are the only source today.
 		manifests := resource.MergeManifestsByKind(resource.AppManifests())
-		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
 		if err != nil {
 			return resource.SearchOptions{}, err
 		}
