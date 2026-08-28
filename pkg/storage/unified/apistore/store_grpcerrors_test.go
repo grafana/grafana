@@ -11,6 +11,7 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
@@ -177,4 +178,103 @@ func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
 			require.Equal(t, 2, client.deletes, "the conflict must be retried")
 		})
 	}
+}
+
+// alwaysFailsClient returns the same failure on every attempt, so a test can drive the retry
+// budget to exhaustion or assert a non-retryable error is returned immediately.
+type alwaysFailsClient struct {
+	resource.ResourceClient
+	value   []byte
+	err     error
+	updates int
+	deletes int
+}
+
+func (c *alwaysFailsClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return &resourcepb.ReadResponse{Value: c.value, ResourceVersion: 1}, nil
+}
+
+func (c *alwaysFailsClient) Update(context.Context, *resourcepb.UpdateRequest, ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	c.updates++
+	return nil, c.err
+}
+
+func (c *alwaysFailsClient) Delete(context.Context, *resourcepb.DeleteRequest, ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	c.deletes++
+	return nil, c.err
+}
+
+// requireKubernetesError asserts the storage boundary converted the error to a Kubernetes status
+// error rather than leaking the raw transport error.
+func requireKubernetesError(t *testing.T, err error) {
+	t.Helper()
+	require.Error(t, err)
+	var apistatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apistatus, "expected a Kubernetes status error, got %T: %v", err, err)
+	_, isGRPC := grpcstatus.FromError(err)
+	require.False(t, isGRPC, "raw gRPC status leaked out of the storage boundary: %v", err)
+}
+
+func TestNonRetryableGRPCErrorIsConverted(t *testing.T) {
+	forbidden := grpcErrorWithResult(grpccodes.PermissionDenied, &resourcepb.ErrorResult{
+		Code:    http.StatusForbidden,
+		Reason:  string(metav1.StatusReasonForbidden),
+		Message: "forbidden",
+	})
+
+	t.Run("GuaranteedUpdate", func(t *testing.T) {
+		client := &alwaysFailsClient{value: testObject(t), err: forbidden}
+		s := testStorage(t, client)
+
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+		}
+
+		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+		requireKubernetesError(t, err)
+		require.Equal(t, 1, client.updates, "a non-retryable error must not be retried")
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		client := &alwaysFailsClient{value: testObject(t), err: forbidden}
+		s := testStorage(t, client)
+
+		err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+		requireKubernetesError(t, err)
+		require.Equal(t, 1, client.deletes, "a non-retryable error must not be retried")
+	})
+}
+
+func TestExhaustedConflictRetriesReturnKubernetesError(t *testing.T) {
+	conflict := grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  string(metav1.StatusReasonConflict),
+		Message: "conflict",
+	})
+
+	t.Run("GuaranteedUpdate", func(t *testing.T) {
+		client := &alwaysFailsClient{value: testObject(t), err: conflict}
+		s := testStorage(t, client)
+
+		tryUpdate := func(in runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+			return in.(*unstructured.Unstructured).DeepCopy(), nil, nil
+		}
+
+		err := s.GuaranteedUpdate(testContext(t), "example/test", &unstructured.Unstructured{}, false, &storage.Preconditions{}, tryUpdate, nil)
+		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+		requireKubernetesError(t, err)
+		require.Greater(t, client.updates, 1, "the conflict must be retried before giving up")
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		client := &alwaysFailsClient{value: testObject(t), err: conflict}
+		s := testStorage(t, client)
+
+		err := s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+		require.True(t, apierrors.IsConflict(err), "expected Conflict, got: %v", err)
+		requireKubernetesError(t, err)
+		require.Greater(t, client.deletes, 1, "the conflict must be retried before giving up")
+	})
 }

@@ -326,6 +326,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		resErr := resource.AsErrorResult(err)
 		if resErr.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
+		} else {
+			err = resource.GetError(resErr)
 		}
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
@@ -424,7 +426,10 @@ func (s *Storage) Delete(
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-			if isRetryableStorageError(err) {
+			// Classify before normalization so attached gRPC status details remain available.
+			retryable := isRetryableStorageError(err)
+			err = resource.GetError(resource.AsErrorResult(err))
+			if retryable {
 				lastErr = err
 				bo.Wait()
 				continue
@@ -779,7 +784,10 @@ func (s *Storage) GuaranteedUpdate(
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
 		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
-			if isRetryableStorageError(err) {
+			// Classify before normalization so attached gRPC status details remain available.
+			retryable := isRetryableStorageError(err)
+			err = resource.GetError(resource.AsErrorResult(err))
+			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
 				// discard its return and retry instead of surfacing it.
