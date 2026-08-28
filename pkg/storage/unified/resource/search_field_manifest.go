@@ -12,35 +12,23 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
-// NewManifestBackedProvider builds a SearchFieldsProvider from the search
-// fields declared in the given app manifests. It walks every version's kinds,
-// converts each declared field into a SearchFieldDefinition, and returns the
-// same map-backed provider NewMapProvider produces, so the per-field and
-// cross-version consistency checks apply here too.
-//
-// Panics on an invalid declaration, like NewMapProvider, because in a
-// compiled-in manifest that is a bug. Runtime callers use
-// ManifestBackedProvider instead.
-func NewManifestBackedProvider(manifests []app.Manifest) SearchFieldsProvider {
-	p, err := ManifestBackedProvider(manifests)
+// NewManifestBackedProvider is ManifestBackedProvider for compiled-in
+// manifests, where an invalid declaration is a bug rather than bad input, so it
+// panics instead of returning an error.
+func NewManifestBackedProvider(manifests ...*app.ManifestData) SearchFieldsProvider {
+	p, err := ManifestBackedProvider(manifests...)
 	if err != nil {
 		panic(err.Error())
 	}
 	return p
 }
 
-// ManifestBackedProvider is NewManifestBackedProvider's error-returning form,
-// for manifests read at runtime, which can be malformed without this build
-// being at fault.
-func ManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, error) {
-	data := make([]*app.ManifestData, len(manifests))
-	for i, m := range manifests {
-		data[i] = m.ManifestData
-	}
-	return NewSearchFieldsProvider(data)
-}
-
-func NewSearchFieldsProvider(manifests []*app.ManifestData) (SearchFieldsProvider, error) {
+// ManifestBackedProvider builds a SearchFieldsProvider from the search fields
+// declared across every version's kinds. It returns the same map-backed
+// provider NewMapProvider does, so the per-field and cross-version consistency
+// checks apply here too. Manifests read at runtime can be malformed without
+// this build being at fault, hence the error rather than a panic.
+func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
@@ -112,18 +100,18 @@ func manifestSearchFieldsToDefinitions(in []app.ManifestVersionKindSearchField) 
 
 // manifestDeclaredKindKeys returns the (group, resource) key of every kind that
 // declares at least one search field in any version.
-func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]bool {
+func manifestDeclaredKindKeys(manifests []*app.ManifestData) map[LowerGroupResource]bool {
 	keys := map[LowerGroupResource]bool{}
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			for _, kind := range version.Kinds {
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[NewLowerGroupResource(m.ManifestData.Group, ManifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.Group, ManifestResourceName(kind))] = true
 			}
 		}
 	}
@@ -134,16 +122,14 @@ func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]b
 // drives bleve mappings. Every kind that declares search fields in its manifest
 // is mapped to a single manifest-backed provider; each entry queries it for its
 // own (group, resource).
-func SearchFieldProviders(manifests []app.Manifest) (map[LowerGroupResource]SearchFieldsProvider, error) {
+func SearchFieldProviders(manifests ...*app.ManifestData) (map[LowerGroupResource]SearchFieldsProvider, error) {
 	declared := manifestDeclaredKindKeys(manifests)
 	out := make(map[LowerGroupResource]SearchFieldsProvider, len(declared))
 	if len(declared) == 0 {
 		return out, nil
 	}
 
-	// A single manifest-backed provider covers every declared kind; each map
-	// entry queries it for its own (group, resource).
-	manifestProvider, err := ManifestBackedProvider(manifests)
+	manifestProvider, err := ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,9 +156,9 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 // ApplyManifests rebuilds the registry from the built-in and live manifest sets
 // and swaps them in. On error the registry is left unchanged, so a bad reload
 // keeps the current search fields.
-func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []app.Manifest) error {
+func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.ManifestData) error {
 	merged := MergeManifestsByKind(builtin, live)
-	selectable, hashes, providers, err := SearchFieldsForManifests(merged)
+	selectable, hashes, providers, err := SearchFieldsForManifests(merged...)
 	if err != nil {
 		return err
 	}
@@ -180,20 +166,20 @@ func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []app.Manifest
 	return nil
 }
 
-// SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from one
-// manifest list, so a reload can rebuild them together and keep them consistent.
-func SearchFieldsForManifests(manifests []app.Manifest) (
+// SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from the
+// same manifests, so a reload can rebuild them together and keep them consistent.
+func SearchFieldsForManifests(manifests ...*app.ManifestData) (
 	selectable map[LowerGroupResource][]string,
 	hashes map[LowerGroupResource]string,
 	providers map[LowerGroupResource]SearchFieldsProvider,
 	err error,
 ) {
-	providers, err = SearchFieldProviders(manifests)
+	providers, err = SearchFieldProviders(manifests...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	hashes = SearchFieldsHashesForProviders(providers)
-	selectable = SelectableFieldsForManifests(manifests)
+	selectable = SelectableFieldsForManifests(manifests...)
 	return selectable, hashes, providers, nil
 }
 
@@ -210,15 +196,15 @@ func SearchFieldsForManifests(manifests []app.Manifest) (
 // Manifests within one source share a priority. A well-formed source declares
 // each kind in a single manifest; if two manifests in the same source declare
 // the same kind, the first is used and a warning is logged.
-func MergeManifestsByKind(sources ...[]app.Manifest) []app.Manifest {
+func MergeManifestsByKind(sources ...[]*app.ManifestData) []*app.ManifestData {
 	// Highest-priority source first, so lower-priority sources drop a kind a
 	// higher one already claimed.
 	claimedBy := map[LowerGroupResource]kindClaim{}
-	var merged []app.Manifest
+	var merged []*app.ManifestData
 	for i := len(sources) - 1; i >= 0; i-- {
 		warnDuplicateKindsWithinSource(sources[i])
 		for _, m := range sources[i] {
-			if m.ManifestData == nil {
+			if m == nil {
 				merged = append(merged, m)
 				continue
 			}
@@ -236,15 +222,15 @@ func MergeManifestsByKind(sources ...[]app.Manifest) []app.Manifest {
 // search fields for the same kind. That should not happen (a manifest is one
 // app with a unique group, carrying all its kinds), so this only surfaces a
 // malformed source; the merge keeps the first manifest's declaration.
-func warnDuplicateKindsWithinSource(src []app.Manifest) {
+func warnDuplicateKindsWithinSource(src []*app.ManifestData) {
 	seen := map[LowerGroupResource]string{}
 	for _, m := range src {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		group := m.ManifestData.Group
+		group := m.Group
 		declared := map[LowerGroupResource]bool{}
-		for _, v := range m.ManifestData.Versions {
+		for _, v := range m.Versions {
 			for _, k := range v.Kinds {
 				if declaresSearchFields(k) {
 					declared[NewLowerGroupResource(group, ManifestResourceName(k))] = true
@@ -254,10 +240,10 @@ func warnDuplicateKindsWithinSource(src []app.Manifest) {
 		for key := range declared {
 			if first, ok := seen[key]; ok {
 				manifestMergeLogger.Warn("multiple manifests in one source declare search fields for the same kind, using the first",
-					"group", key.Group, "resource", key.Resource, "first", first, "duplicate", m.ManifestData.AppName)
+					"group", key.Group, "resource", key.Resource, "first", first, "duplicate", m.AppName)
 				continue
 			}
-			seen[key] = m.ManifestData.AppName
+			seen[key] = m.AppName
 		}
 	}
 }
@@ -280,11 +266,11 @@ type kindClaim struct {
 // records the ones it keeps. ok is false only when no kind survives, so a
 // manifest whose kinds carry only selectable fields is kept: the merge output
 // also drives selectable-field wiring, not just search fields.
-func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClaim) (app.Manifest, bool) {
-	group := m.ManifestData.Group
-	appName := m.ManifestData.AppName
+func pruneClaimedKinds(m *app.ManifestData, claimedBy map[LowerGroupResource]kindClaim) (*app.ManifestData, bool) {
+	group := m.Group
+	appName := m.AppName
 
-	md := *m.ManifestData
+	md := *m
 	versions := make([]app.ManifestVersion, 0, len(md.Versions))
 	kept := map[LowerGroupResource]bool{}
 	declaredVersions := map[LowerGroupResource]map[string]bool{}
@@ -323,10 +309,10 @@ func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClai
 	}
 
 	if !anyKind {
-		return app.Manifest{}, false
+		return nil, false
 	}
 	md.Versions = versions
-	return app.Manifest{ManifestData: &md, Location: m.Location}, true
+	return &md, true
 }
 
 // logOverriddenKind logs a kind dropped in favor of a higher-priority source. It
