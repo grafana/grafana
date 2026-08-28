@@ -6495,6 +6495,11 @@
         "top-placement": "Above dashboard"
       },
       "view-panel": {
+        "columns-category": "Columns",
+        "columns-drag-to-reorder": "Drag and drop to reorder",
+        "columns-hide": "Hide {{fieldName}}",
+        "columns-no-fields": "Data has no fields",
+        "columns-show": "Show {{fieldName}}",
         "disabled": "Disabled",
         "fanout-by-series": "By series",
         "fanout-category": "Fan-out by series or label",
