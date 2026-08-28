@@ -13,16 +13,13 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { type DataSourceSrv, DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import * as grafanaRuntimeUnstable from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { type BackendSrv } from 'app/core/services/backend_srv';
-import {
-  EXTERNAL_VANILLA_ALERTMANAGER_UID,
-  mockDataSources,
-} from 'app/features/alerting/unified/components/settings/mocks/server';
+import { EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -31,6 +28,14 @@ import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQuery
 setupMswServer();
 
 describe('AlertingQueryRunner', () => {
+  beforeEach(() => {
+    mockDataSourceInstance();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should successfully map response and return panel data by refId', async () => {
     const response = createFetchResponse<AlertingQueryResponse>({
       results: {
@@ -38,7 +43,6 @@ describe('AlertingQueryRunner', () => {
         B: { frames: [createDataFrameJSON([5, 6])] },
       },
     });
-    setupDataSources(...Object.values(mockDataSources));
 
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
@@ -99,8 +103,7 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response),
-      }),
-      mockDataSourceSrv()
+      })
     );
 
     const data = runner.get();
@@ -109,8 +112,7 @@ describe('AlertingQueryRunner', () => {
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
 
-      // these test are flakey since the absolute computed "timeRange" can differ from the relative "defaultRelativeTimeRange"
-      // so instead we will check if the size of the timeranges match
+      // Compare relative range sizes, not absolute timeRange, to avoid flakiness from clock drift.
       const relativeA = rangeUtil.timeRangeToRelative(data.A.timeRange);
       const relativeB = rangeUtil.timeRangeToRelative(data.B.timeRange);
       const defaultRange = getDefaultRelativeTimeRange();
@@ -182,6 +184,7 @@ describe('AlertingQueryRunner', () => {
 
   it('should emit error state if fetch request fails', async () => {
     const error = new Error('could not query data');
+
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(error),
@@ -203,11 +206,12 @@ describe('AlertingQueryRunner', () => {
   });
 
   it('should not push any values if all queries fail filterQuery check', async () => {
+    mockDataSourceInstance({ filterQuery: () => false });
+
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
-      }),
-      mockDataSourceSrv({ filterQuery: () => false })
+      })
     );
 
     const data = runner.get();
@@ -223,11 +227,12 @@ describe('AlertingQueryRunner', () => {
       },
     });
 
+    mockDataSourceInstance({ filterQuery: (model: AlertDataQuery) => model.hide !== true });
+
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(results),
-      }),
-      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
+      })
     );
 
     const data = runner.get();
@@ -279,12 +284,11 @@ interface MockOpts {
   filterQuery?: (query: DataQuery) => boolean;
 }
 
-const mockDataSourceSrv = (opts?: MockOpts) => {
+const mockDataSourceInstance = (opts?: MockOpts) => {
   const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
   ds.filterQuery = opts?.filterQuery;
-  return {
-    get: () => Promise.resolve(ds),
-  } as unknown as DataSourceSrv;
+  jest.spyOn(grafanaRuntimeUnstable, 'getDataSourceInstance').mockResolvedValue(ds);
+  return ds;
 };
 
 const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: number[] }): DataFrame => {
@@ -356,11 +360,12 @@ describe('prepareQueries', () => {
       }),
     ];
 
+    mockDataSourceInstance({ filterQuery: (model: AlertDataQuery) => model.hide !== true });
+
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(),
-      }),
-      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
+      })
     );
 
     const queriesToRun = await runner.prepareQueries(queries);
