@@ -146,7 +146,7 @@ describe('ResourceTreeView', () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
 
       await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
-      await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 1: Not in sync
+      await user.keyboard('{ArrowDown}{Enter}'); // index 1: Not in sync
 
       expect(await screen.findByText('Pending Dashboard')).toBeInTheDocument();
       expect(screen.queryByText('Synced Dashboard')).not.toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('ResourceTreeView', () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
 
       await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
-      await user.keyboard('{ArrowDown}{Enter}'); // index 0: Synced
+      await user.keyboard('{Enter}'); // index 0: Synced
 
       expect(await screen.findByText('Synced Dashboard')).toBeInTheDocument();
       expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
@@ -169,7 +169,7 @@ describe('ResourceTreeView', () => {
       // parent folder must not linger just because it aggregates a (now hidden) pending child.
       await user.type(screen.getByPlaceholderText('Search by path or title'), 'synced');
       await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
-      await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 1: Not in sync
+      await user.keyboard('{ArrowDown}{Enter}'); // index 1: Not in sync
 
       expect(screen.queryByText('Synced Dashboard')).not.toBeInTheDocument();
       expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
@@ -181,7 +181,7 @@ describe('ResourceTreeView', () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
 
       await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
-      await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{Enter}'); // index 2: Warnings
+      await user.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // index 2: Warnings
 
       // None of the sample resources are missing metadata, so filtering by Warnings hides them all.
       expect(screen.queryByText('Synced Dashboard')).not.toBeInTheDocument();
