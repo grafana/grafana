@@ -2853,7 +2853,7 @@ export type DeleteDashboardSnapshotApiResponse =
 export type DeleteDashboardSnapshotApiArg = {
   key: string;
 };
-export type GetDashboardSnapshotApiResponse = unknown;
+export type GetDashboardSnapshotApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
 export type GetDashboardSnapshotApiArg = {
   key: string;
 };
@@ -4971,7 +4971,7 @@ export type ACertificateRepresentsAnX509Certificate = {
     interpreted as an actual maximum path length of zero. Otherwise, that
     combination is interpreted as InhibitAnyPolicy not being set. */
   RequireExplicitPolicyZero?: boolean;
-  SerialNumber?: string;
+  SerialNumber?: number;
   Signature?: number[];
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;

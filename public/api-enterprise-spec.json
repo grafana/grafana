@@ -3287,7 +3287,7 @@
           "type": "boolean"
         },
         "SerialNumber": {
-          "type": "string"
+          "type": "integer"
         },
         "Signature": {
           "type": "array",
@@ -4468,7 +4468,12 @@
     "DsPermissionType": {
       "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
       "type": "integer",
-      "format": "int64"
+      "format": "int64",
+      "enum": [
+        0,
+        1,
+        2
+      ]
     },
     "Duration": {
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
@@ -8968,7 +8973,10 @@
   },
   "responses": {
     "SMTPNotEnabledError": {
-      "description": ""
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "acceptedResponse": {
       "description": "AcceptedResponse",
@@ -9457,7 +9465,10 @@
       }
     },
     "getDashboardSnapshotResponse": {
-      "description": ""
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
     },
     "getDashboardsTagsResponse": {
       "description": "",

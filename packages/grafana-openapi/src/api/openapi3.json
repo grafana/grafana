@@ -15,6 +15,13 @@
         "description": "(empty)"
       },
       "SMTPNotEnabledError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "StateHistory": {
@@ -712,6 +719,13 @@
         "description": "(empty)"
       },
       "getDashboardSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DashboardFullWithMeta"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getDashboardsTagsResponse": {
@@ -3709,7 +3723,7 @@
             "type": "boolean"
           },
           "SerialNumber": {
-            "type": "string"
+            "type": "integer"
           },
           "Signature": {
             "items": {
@@ -5004,6 +5018,7 @@
       },
       "DsPermissionType": {
         "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
+        "enum": [0, 1, 2],
         "format": "int64",
         "type": "integer"
       },
@@ -15441,7 +15456,7 @@
             }
           },
           {
-            "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.\ntype: array",
+            "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
             "in": "query",
             "name": "tags",
             "schema": {
@@ -17493,7 +17508,7 @@
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
           {
-            "description": "description: The dashboard UID",
+            "description": "The dashboard UID",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -17768,7 +17783,7 @@
             }
           },
           {
-            "description": "Source datasource UID filter to be applied to correlations\ntype: array",
+            "description": "Source datasource UID filter to be applied to correlations",
             "in": "query",
             "name": "sourceUID",
             "schema": {
@@ -21153,7 +21168,7 @@
         "operationId": "searchQueries",
         "parameters": [
           {
-            "description": "List of data source UIDs to search for\ntype: array",
+            "description": "List of data source UIDs to search for",
             "in": "query",
             "name": "datasourceUid",
             "schema": {
@@ -22238,7 +22253,7 @@
             }
           },
           {
-            "description": "List of tags to search for\ntype: array",
+            "description": "List of tags to search for",
             "in": "query",
             "name": "tag",
             "schema": {

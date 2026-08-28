@@ -1895,7 +1895,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.\ntype: array",
+            "description": "Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.",
             "name": "tags",
             "in": "query"
           },
@@ -3842,7 +3842,7 @@
           },
           {
             "type": "string",
-            "description": "description: The dashboard UID",
+            "description": "The dashboard UID",
             "name": "uid",
             "in": "path",
             "required": true
@@ -4104,7 +4104,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "Source datasource UID filter to be applied to correlations\ntype: array",
+            "description": "Source datasource UID filter to be applied to correlations",
             "name": "sourceUID",
             "in": "query"
           }
@@ -7426,7 +7426,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "List of data source UIDs to search for\ntype: array",
+            "description": "List of data source UIDs to search for",
             "name": "datasourceUid",
             "in": "query"
           },
@@ -8537,7 +8537,7 @@
               "type": "string"
             },
             "collectionFormat": "multi",
-            "description": "List of tags to search for\ntype: array",
+            "description": "List of tags to search for",
             "name": "tag",
             "in": "query"
           },
@@ -13899,7 +13899,7 @@
           "type": "boolean"
         },
         "SerialNumber": {
-          "type": "string"
+          "type": "integer"
         },
         "Signature": {
           "type": "array",
@@ -15223,7 +15223,12 @@
     "DsPermissionType": {
       "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
       "type": "integer",
-      "format": "int64"
+      "format": "int64",
+      "enum": [
+        0,
+        1,
+        2
+      ]
     },
     "Duration": {
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
@@ -23961,7 +23966,10 @@
       }
     },
     "SMTPNotEnabledError": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
     },
     "StateHistory": {
       "description": "(empty)",
@@ -24465,7 +24473,10 @@
       }
     },
     "getDashboardSnapshotResponse": {
-      "description": "(empty)"
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
+      }
     },
     "getDashboardsTagsResponse": {
       "description": "(empty)",

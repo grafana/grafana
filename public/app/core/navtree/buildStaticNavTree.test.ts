@@ -1,25 +1,45 @@
 import { type NavModelItem } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/internal';
+import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
-import { applyAppSubUrl, findNavById as findById, sortNavTree } from './utils';
+import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
 
 describe('buildStaticNavTree', () => {
   describe('sections', () => {
-    it('builds Home and Profile for a signed-in user with no permissions', () => {
+    it('builds the minimal tree for a user with no permissions', () => {
       setup();
+      // cfg is an attachment-parent shell here; pruneEmptyNavSections removes it
+      const tree = buildStaticNavTree();
 
-      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.profile]);
+      expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.cfg, NavID.profile, NavID.help]);
     });
 
-    it('seeds Home first, then the sections a user can see', () => {
+    it('orders sections by sort weight', () => {
       setup({ permissions: DASHBOARD_READER });
 
-      expect(ids(buildStaticNavTree())).toEqual([NavID.home, NavID.dashboards, NavID.profile]);
+      expect(ids(buildStaticNavTree())).toEqual([
+        NavID.home,
+        NavID.bookmarks,
+        NavID.starred,
+        NavID.dashboards,
+        NavID.cfg,
+        NavID.profile,
+        NavID.help,
+      ]);
+    });
+
+    it('omits signed-in-only sections for anonymous users', () => {
+      setup({ isSignedIn: false, config: { anonymousEnabled: true } });
+      const tree = buildStaticNavTree();
+
+      expect(findById(tree, NavID.profile)).toBeUndefined();
+      expect(findById(tree, NavID.bookmarks)).toBeUndefined();
     });
 
     it('points home at the login page when signed out and anonymous access is disabled', () => {
@@ -32,7 +52,10 @@ describe('buildStaticNavTree', () => {
       setup({ permissions: DASHBOARD_READER, config: { appSubUrl: '/grafana' } });
       const tree = applyAppSubUrl(buildStaticNavTree());
 
+      expect(findById(tree, NavID.starred)?.url).toBe('/grafana/dashboards?starred');
       expect(findById(tree, NavID.dashboards)?.url).toBe('/grafana/dashboards');
+      // Anchor-only urls (Help) are left alone
+      expect(findById(tree, NavID.help)?.url).toBe('#');
     });
 
     it('shows global variables under dashboards with the toggle and write access', () => {
@@ -125,33 +148,140 @@ describe('buildStaticNavTree', () => {
     );
   });
 
-  describe('profile section', () => {
-    it('builds the profile node from user details', () => {
+  describe('administration section', () => {
+    it('always contains the subsection shells so plugin pages and enterprise items can inject into them', () => {
       setup();
-      const profile = findById(buildStaticNavTree(), NavID.profile);
+      const tree = buildStaticNavTree();
 
-      expect(profile?.text).toBe('Test User');
-      expect(profile?.subTitle).toBe('testuser');
-      expect(ids(profile?.children ?? [])).toEqual(['profile/settings', 'profile/notifications', 'profile/password']);
+      expect(findById(tree, NavID.cfg)).toBeDefined();
+      expect(ids(findById(tree, NavID.cfg)?.children ?? [])).toEqual([
+        NavID.cfgGeneral,
+        NavID.cfgPlugins,
+        NavID.cfgAccess,
+      ]);
     });
 
-    it('omits the change password link when the login form is disabled', () => {
-      setup({ config: { disableLoginForm: true } });
+    it('builds general, plugins, access and authentication nodes for an admin', () => {
+      setup({
+        orgRole: 'Admin',
+        isGrafanaAdmin: true,
+        permissions: [
+          AccessControlAction.OrgsRead,
+          AccessControlAction.OrgsWrite,
+          AccessControlAction.SettingsRead,
+          AccessControlAction.SettingsWrite,
+          AccessControlAction.DataSourcesExplore,
+          AccessControlAction.OrgUsersRead,
+          AccessControlAction.ActionTeamsCreate,
+          AccessControlAction.ServiceAccountsRead,
+        ],
+      });
 
-      expect(ids(findById(buildStaticNavTree(), NavID.profile)?.children ?? [])).not.toContain('profile/password');
+      const cfg = findById(buildStaticNavTree(), NavID.cfg);
+      expect(ids(cfg?.children ?? [])).toEqual([NavID.cfgGeneral, NavID.cfgPlugins, NavID.cfgAccess, 'authentication']);
+      expect(ids(findById(cfg?.children ?? [], NavID.cfgGeneral)?.children ?? [])).toEqual([
+        'upgrading',
+        'org-settings',
+        'server-settings',
+        'global-orgs',
+      ]);
+      expect(ids(findById(cfg?.children ?? [], NavID.cfgAccess)?.children ?? [])).toEqual([
+        'global-users',
+        'teams',
+        'serviceaccounts',
+      ]);
+      expect(cfg?.subTitle).toBe('Organization: Main Org.');
     });
 
-    it('omits the change password link when login is disabled', () => {
-      setup({ config: { auth: { disableLogin: true } } });
+    it('hides the stats and license item on enterprise builds, where enterprise registers its own', () => {
+      setup({
+        orgRole: 'Admin',
+        isGrafanaAdmin: true,
+        permissions: [AccessControlAction.OrgsRead, AccessControlAction.OrgsWrite, AccessControlAction.SettingsRead],
+      });
+      config.buildInfo = { ...config.buildInfo, edition: GrafanaEdition.Enterprise };
 
-      expect(ids(findById(buildStaticNavTree(), NavID.profile)?.children ?? [])).not.toContain('profile/password');
+      const general = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
+      expect(ids(general?.children ?? [])).toEqual(['org-settings', 'server-settings', 'global-orgs']);
     });
 
-    it('omits the profile node for anonymous users', () => {
-      setup({ isSignedIn: false, config: { anonymousEnabled: true } });
+    it('gates provisioning on the config param, for org admins and server admins', () => {
+      const provisioning = (tree: NavModelItem[]) => {
+        const general = findById(findById(tree, NavID.cfg)?.children ?? [], NavID.cfgGeneral);
+        return findById(general?.children ?? [], 'provisioning');
+      };
 
-      expect(findById(buildStaticNavTree(), NavID.profile)).toBeUndefined();
+      setup({ orgRole: 'Admin', config: { provisioningEnabled: true } });
+      expect(provisioning(buildStaticNavTree())).toBeDefined();
+
+      // A Grafana server admin passes regardless of org role, like Go's HasRole
+      setup({ orgRole: 'Viewer', isGrafanaAdmin: true, config: { provisioningEnabled: true } });
+      expect(provisioning(buildStaticNavTree())).toBeDefined();
+
+      setup({ orgRole: 'Admin' });
+      expect(provisioning(buildStaticNavTree())).toBeUndefined();
     });
+
+    it('requires server admin for the organizations item', () => {
+      setup({ permissions: [AccessControlAction.OrgsRead], isGrafanaAdmin: false });
+
+      const general = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgGeneral);
+      expect(findById(general?.children ?? [], 'global-orgs')).toBeUndefined();
+    });
+
+    it('shows the plugins page for org admins without plugin permissions', () => {
+      setup({ orgRole: 'Admin' });
+
+      const plugins = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      expect(ids(plugins?.children ?? [])).toContain('plugins');
+    });
+
+    it('shows the extensions page in dev environments', () => {
+      setup();
+      config.buildInfo.env = 'development';
+
+      const plugins = findById(findById(buildStaticNavTree(), NavID.cfg)?.children ?? [], NavID.cfgPlugins);
+      expect(ids(plugins?.children ?? [])).toContain('extensions');
+    });
+  });
+
+  describe('help', () => {
+    it('adds support bundles with config and permission', () => {
+      setup({ permissions: [AccessControlAction.ActionSupportBundlesRead], config: { supportBundlesEnabled: true } });
+
+      expect(ids(findById(buildStaticNavTree(), NavID.help)?.children ?? [])).toEqual(['support-bundles']);
+    });
+  });
+});
+
+describe('pruneEmptyNavSections', () => {
+  it('removes empty cfg/access and cfg shells like the server does', () => {
+    setup();
+    const tree = pruneEmptyNavSections(buildStaticNavTree());
+
+    expect(ids(tree)).toEqual([NavID.home, NavID.bookmarks, NavID.profile, NavID.help]);
+  });
+
+  it('keeps sections that gained children', () => {
+    setup({ orgRole: 'Admin', permissions: [AccessControlAction.OrgUsersRead] });
+    const tree = pruneEmptyNavSections(buildStaticNavTree());
+
+    expect(ids(tree)).toContain(NavID.cfg);
+    const cfg = findById(tree, NavID.cfg);
+    expect(ids(cfg?.children ?? [])).toContain(NavID.cfgAccess);
+  });
+
+  it('removes empty General and Plugins and data admin subsections like the server does', () => {
+    // org.users:read keeps cfg/access (and so cfg) alive, while General and
+    // Plugins and data have no visible children for an editor with this
+    // permission set
+    setup({ orgRole: 'Editor', permissions: [AccessControlAction.OrgUsersRead] });
+    const cfg = findById(pruneEmptyNavSections(buildStaticNavTree()), NavID.cfg);
+
+    expect(cfg).toBeDefined();
+    expect(ids(cfg?.children ?? [])).not.toContain(NavID.cfgGeneral);
+    expect(ids(cfg?.children ?? [])).not.toContain(NavID.cfgPlugins);
+    expect(ids(cfg?.children ?? [])).toContain(NavID.cfgAccess);
   });
 });
 
