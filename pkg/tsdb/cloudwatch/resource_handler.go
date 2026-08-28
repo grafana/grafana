@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"sort"
@@ -102,9 +103,7 @@ func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Value
 	var responseHeaders http.Header
 	if nextToken != nil {
 		nextParams := url.Values{}
-		for k, v := range parameters {
-			nextParams[k] = v
-		}
+		maps.Copy(nextParams, parameters)
 		nextParams.Set("nextToken", *nextToken)
 		responseHeaders = http.Header{
 			"Link": []string{fmt.Sprintf("<?%s>; rel=\"next\"", nextParams.Encode())},

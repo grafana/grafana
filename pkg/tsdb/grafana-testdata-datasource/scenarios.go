@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
 	"math"
 	"math/rand"
 	"sort"
@@ -320,9 +321,7 @@ func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.Query
 			if sResp, err := handler(ctx, sReq); err != nil {
 				ctxLogger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
 			} else {
-				for refID, dr := range sResp.Responses {
-					resp.Responses[refID] = dr
-				}
+				maps.Copy(resp.Responses, sResp.Responses)
 			}
 		}
 	}

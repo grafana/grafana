@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"iter"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
@@ -348,9 +349,7 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 	defer f.mu.Unlock()
 	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[key] {
-		out[k] = v
-	}
+	maps.Copy(out, f.storedSubs[key])
 	if len(out) == 0 {
 		return nil, "", nil
 	}

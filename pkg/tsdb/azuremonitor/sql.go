@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"regexp"
 	"strings"
 
@@ -163,9 +164,7 @@ func (s *Service) normalizeGrafanaSQLRequest(ctx context.Context, req *backend.Q
 // mergeTableParams combines explicit TableParameterValues with suffix segments from the table name.
 func mergeTableParams(table string, explicit map[string]any) map[string]any {
 	out := make(map[string]any)
-	for k, v := range explicit {
-		out[k] = v
-	}
+	maps.Copy(out, explicit)
 	parts := strings.SplitN(table, "_", 2)
 	if len(parts) < 2 {
 		return out
