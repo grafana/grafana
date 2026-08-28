@@ -160,8 +160,6 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      await initOpenFeature();
-
       const initI18nPromise = initializeI18n({
         language: contextSrv.user.language,
         ns: NAMESPACES,
@@ -180,8 +178,12 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
+
+      // This needs to be done after the `initEchoSrv` so that Faro is available.
+      await initOpenFeature();
 
       if (config.featureToggles.cujTracking) {
         setJourneyTracker(new JourneyTrackerImpl());
