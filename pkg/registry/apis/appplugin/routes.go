@@ -159,9 +159,12 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 			Namespace: request.NamespaceValue(ctx),
 			Path:      path,
 		}
+
 		if resource != "" {
-			name := mux.Vars(r)[nameParameter]
-			if name != "" {
+			parent := &pluginv3.RouteResource{}
+			parent.SetResource(resource)
+
+			if name := mux.Vars(r)[nameParameter]; name != "" {
 				// The getter is wired in UpdateAPIGroupInfo; a route that somehow
 				// serves before then must not panic on the request path.
 				if b.getter == nil {
@@ -186,17 +189,11 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
-				parent := &pluginv3.RouteResource{}
-				parent.SetResource(resource)
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
-				info.Parent = parent
-				info.Path = resource + "/" + name + "/" + path
-			} else {
-				info.Path = resource + "/" + path
-				// ?? info should still have easy access to "resource" part of the path
 			}
+			info.Parent = parent
 		}
 		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)

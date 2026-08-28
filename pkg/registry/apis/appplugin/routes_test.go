@@ -327,7 +327,8 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		require.Equal(t, "thing-1", get.gotName)
 
 		parent := client.req.GetParent()
-		require.Equal(t, "testkinds/thing-1/reload", client.req.GetPath())
+		require.NotNil(t, parent)
+		require.Equal(t, "reload", client.req.GetPath())
 		require.Equal(t, "testkinds", parent.GetResource())
 		require.Equal(t, "thing-1", parent.GetName())
 		require.Equal(t, "42", parent.GetRv())
@@ -346,8 +347,8 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(
 			httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/reload", nil))
 
-		require.Equal(t, "testkinds/reload", client.req.GetPath())
-		require.Nil(t, client.req.GetParent())
+		require.Equal(t, "reload", client.req.GetPath())
+		require.Equal(t, "testkinds", client.req.GetParent().GetResource())
 		require.Empty(t, get.gotName, "storage is not read when there is no name")
 	})
 
