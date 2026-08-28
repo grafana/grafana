@@ -30,7 +30,9 @@ const (
 // hands them to the org as freely-editable. Without this check, clearing
 // spec.promote back to false would make the worker resume "syncing" — i.e.
 // silently reclaim and overwrite whatever the org has since done with those
-// rules.
+// rules. That risk only exists while the sync-owned folder is still there:
+// if it's gone, a resumed sync just recreates an empty one, so the revert is
+// safe to allow.
 func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Config] {
 	return func(ctx context.Context, req validation.Request[*v0alpha1.Config]) error {
 		obj := req.Object
@@ -47,7 +49,17 @@ func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Co
 		}
 
 		if promotionCommitted(req.OldObject) && !externalRulerSyncPromote(obj) {
-			return fmt.Errorf("externalRulerSync.promote: promotion is a one-way action and cannot be reverted once committed")
+			folderExists := true // fail-safe default: matches this guard's pre-existing unconditional behavior
+			if cfg.ExternalRulerSyncFolderExists != nil {
+				exists, err := cfg.ExternalRulerSyncFolderExists(ctx, externalRulerSyncStatusUID(req.OldObject))
+				if err != nil {
+					return fmt.Errorf("externalRulerSync.promote: check sync folder: %w", err)
+				}
+				folderExists = exists
+			}
+			if folderExists {
+				return fmt.Errorf("externalRulerSync.promote: promotion is a one-way action and cannot be reverted once committed")
+			}
 		}
 
 		return nil
@@ -67,6 +79,17 @@ func promotionCommitted(obj *v0alpha1.Config) bool {
 		}
 	}
 	return false
+}
+
+// externalRulerSyncStatusUID returns the datasource UID actually used on the
+// last sync attempt (status, not spec, which may have since changed). This
+// is the UID the sync worker named the canonical folder after, so it's what
+// the folder-existence check must use.
+func externalRulerSyncStatusUID(c *v0alpha1.Config) string {
+	if c == nil || c.Status.ExternalRulerSync == nil || c.Status.ExternalRulerSync.DatasourceUid == nil {
+		return ""
+	}
+	return *c.Status.ExternalRulerSync.DatasourceUid
 }
 
 func externalRulerSyncPromote(c *v0alpha1.Config) bool {

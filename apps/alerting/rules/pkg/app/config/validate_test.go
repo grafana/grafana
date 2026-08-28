@@ -33,6 +33,8 @@ func configWithPromotionCommittedStatus() *v0alpha1.Config {
 		Type:   conditionTypeExternalRulerSynced,
 		Reason: promotionCommittedReason,
 	}}
+	uid := "ds-uid"
+	c.Status.ExternalRulerSync = &v0alpha1.ConfigV0alpha1StatusExternalRulerSync{DatasourceUid: &uid}
 	return c
 }
 
@@ -138,5 +140,74 @@ func TestValidateConfigWrite(t *testing.T) {
 			OldObject: configWithUID(v0alpha1.ConfigSingletonName, "ds-uid"),
 		})
 		require.NoError(t, err)
+	})
+
+	t.Run("nil folder-exists callback defaults to blocking the revert (fail-safe)", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("blocks the revert while the canonical sync folder still exists", func(t *testing.T) {
+		var gotUID string
+		fn := ValidateConfigWrite(RuntimeConfig{
+			ExternalRulerSyncFolderExists: func(_ context.Context, uid string) (bool, error) {
+				gotUID = uid
+				return true, nil
+			},
+		})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "one-way")
+		assert.Equal(t, "ds-uid", gotUID, "checks the status UID (last actually synced), not spec")
+	})
+
+	t.Run("allows the revert once the canonical sync folder is gone", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{
+			ExternalRulerSyncFolderExists: func(context.Context, string) (bool, error) {
+				return false, nil
+			},
+		})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("a folder-exists lookup error rejects the write instead of silently choosing either default", func(t *testing.T) {
+		fn := ValidateConfigWrite(RuntimeConfig{
+			ExternalRulerSyncFolderExists: func(context.Context, string) (bool, error) {
+				return false, errors.New("datastore unavailable")
+			},
+		})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(false),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "check sync folder")
+	})
+
+	t.Run("folder-exists callback is not consulted when promote is being re-affirmed, not reverted", func(t *testing.T) {
+		called := false
+		fn := ValidateConfigWrite(RuntimeConfig{
+			ExternalRulerSyncFolderExists: func(context.Context, string) (bool, error) {
+				called = true
+				return true, nil
+			},
+		})
+		err := fn(ctx, validation.Request[*v0alpha1.Config]{
+			Object:    configWithPromote(true),
+			OldObject: configWithPromotionCommittedStatus(),
+		})
+		require.NoError(t, err)
+		assert.False(t, called)
 	})
 }
