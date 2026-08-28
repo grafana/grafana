@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Dropdown, IconButton, useStyles2 } from '@grafana/ui';
 
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './NotebookBlockTypeMenu';
@@ -32,8 +32,38 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
         overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, pendingIndex)} />}
         placement="bottom-start"
       >
-        <IconButton name="plus" aria-label={t('notebook.add-block.label', 'Add block')} onMouseUp={onMouseUp} />
+        <IconButton
+          name="plus"
+          aria-label={t('notebook.add-block.label', 'Add block')}
+          tooltip={<AddButtonTooltipContent />}
+          onMouseUp={onMouseUp}
+        />
       </Dropdown>
+    </div>
+  );
+}
+
+function AddButtonTooltipContent() {
+  const isMac = navigator.userAgent.includes('Mac');
+
+  return (
+    <div>
+      <div>
+        <Trans i18nKey="notebook.cell.add-button.tooltip-below">
+          <strong>Click</strong> to add below
+        </Trans>
+      </div>
+      <div>
+        {isMac ? (
+          <Trans i18nKey="notebook.cell.add-button.tooltip-above-mac">
+            <strong>Option-click</strong> to add above
+          </Trans>
+        ) : (
+          <Trans i18nKey="notebook.cell.add-button.tooltip-above-other">
+            <strong>Alt-click</strong> to add above
+          </Trans>
+        )}
+      </div>
     </div>
   );
 }
