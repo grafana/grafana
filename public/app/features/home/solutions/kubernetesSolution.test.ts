@@ -7,6 +7,7 @@ import {
   type KubernetesHealth,
   resolveKubernetesDatasource,
 } from './kubernetesData';
+import { resetKubernetesFilters, saveKubernetesFilters } from './kubernetesFilters';
 import { kubernetesSolution } from './kubernetesSolution';
 import { pluginAvailability, setupGuideEnabled } from './pluginAvailability';
 import { accessibleAppPage } from './pluginPages';
@@ -55,6 +56,9 @@ beforeEach(() => {
   mockSetupGuideEnabled.mockResolvedValue(false);
   mockAccessibleAppPage.mockReset();
   mockAccessibleAppPage.mockImplementation(async (appId, path) => `/a/${appId}${path}`);
+  // Real kubernetesFilters module: start every test from a clean, empty snapshot.
+  resetKubernetesFilters();
+  window.localStorage.clear();
 });
 
 describe('kubernetesSolution', () => {
@@ -186,6 +190,17 @@ describe('kubernetesSolution stats and sparkline', () => {
       caption: 'Cluster CPU · last 24h',
     });
     expect(mockFetchCpu).toHaveBeenCalledWith(datasource);
+  });
+
+  it('captions the CPU trend as namespace CPU while a namespace filter is active', async () => {
+    const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
+    mockFetchCpu.mockResolvedValue(series);
+    await saveKubernetesFilters({ namespaces: ['team-a'] });
+
+    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
+      series,
+      caption: 'Namespace CPU · last 24h',
+    });
   });
 
   it('omits the sparkline when the CPU metric is unavailable', async () => {

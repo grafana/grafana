@@ -14,11 +14,13 @@ import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import {
   fetchClusterCpuSeries,
+  fetchKubernetesFilterOptions,
   fetchKubernetesHealth,
   fetchKubernetesInventory,
   resolveKubernetesDatasource,
   resetKubernetesPrometheusResolution,
 } from './kubernetesData';
+import { resetKubernetesFilters, saveKubernetesFilters } from './kubernetesFilters';
 import { resetProbeHealth } from './probeUtils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -95,6 +97,7 @@ beforeEach(() => {
   // The /health cache is module-level and shared across scans; a cached OK would leak between tests.
   resetProbeHealth();
   dataByUid = {};
+  resetKubernetesFilters();
   probeErrorUids = new Set();
   probeHangUids = new Set();
   probeFailuresByUid = {};
@@ -661,5 +664,161 @@ describe('Kubernetes Prometheus resolution', () => {
 
     await expect(resolveKubernetesDatasource()).resolves.toBeNull();
     expect(cpuCalls()).toHaveLength(0);
+  });
+});
+
+describe('Kubernetes query filters', () => {
+  async function seedFiltersAndResolve() {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    await saveKubernetesFilters({ cluster: 'prod', namespaces: ['team-a', 'team-b'] });
+    return resolveRequiredDatasource();
+  }
+
+  it('scopes each signal per the cluster/namespace contract and leaves the probe unfiltered', async () => {
+    const datasource = await seedFiltersAndResolve();
+    await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
+    await fetchClusterCpuSeries(datasource);
+
+    const [inventory] = inventoryCalls();
+    const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
+    expect(inventoryExprs).toEqual({
+      // Clusters are not namespaced: cluster matcher only.
+      clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod"}[24h])))',
+      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}[24h])))',
+    });
+
+    const [health] = healthCalls();
+    const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
+    expect(healthExprs).toEqual({
+      unhealthyPods:
+        'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a|team-b"})',
+      restarts1h:
+        'sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a|team-b"}[1h]))',
+      // Nodes are not namespaced: cluster matcher only.
+      notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"})',
+      // Trailing empty alternative keeps namespace-less (cluster-level) alerts counted.
+      alertsFiring:
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"})',
+    });
+
+    expect(cpuCalls()[0][0].queries[0].expr).toBe(
+      'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a|team-b"}[5m]))'
+    );
+
+    // Stale filters must never influence datasource detection.
+    const [probe] = probeCalls();
+    expect(probe[0].queries[0].expr).toBe('count(last_over_time(kube_namespace_status_phase[24h]))');
+  });
+
+  it('carries the same filter matcher to the state-history alerts datasource', async () => {
+    const original = config.unifiedAlerting.stateHistory;
+    config.unifiedAlerting.stateHistory = { prometheusTargetDatasourceUID: 'ash-uid' };
+    try {
+      const datasource = await seedFiltersAndResolve();
+      dataByUid['ash-uid'] = 1;
+      await fetchKubernetesHealth(datasource);
+
+      const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
+      expect(ashCalls).toHaveLength(1);
+      expect(ashCalls[0][0].queries[0].expr).toBe(
+        'count(GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"})'
+      );
+    } finally {
+      config.unifiedAlerting.stateHistory = original;
+    }
+  });
+
+  it('escapes string-literal and regex characters in filter values', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    await saveKubernetesFilters({ cluster: 'pro"d\\', namespaces: ['a.b|c'] });
+    const datasource = await resolveRequiredDatasource();
+    await fetchKubernetesInventory(datasource);
+
+    const [inventory] = inventoryCalls();
+    const podsExpr = inventory[0].queries.find((q) => q.refId === 'pods')?.expr;
+    // Exact-match cluster: string-literal escaping only.
+    expect(podsExpr).toContain(String.raw`cluster="pro\"d\\"`);
+    // Namespaces are regex alternatives: regex-escaped, then literal-escaped.
+    expect(podsExpr).toContain(String.raw`namespace=~"a\\.b\\|c"`);
+  });
+});
+
+describe('fetchKubernetesFilterOptions', () => {
+  const ds = { uid: 'k8s-uid', type: 'prometheus' };
+  let failedRefIds: Set<string>;
+
+  function labeledField(label: string, value: string) {
+    return { name: 'Value', type: FieldType.number, values: [1], labels: { [label]: value } };
+  }
+
+  beforeEach(() => {
+    failedRefIds = new Set();
+    // Discovery frames carry label values, which the shared harness never emits: dedicated runner.
+    mockCreateQueryRunner.mockImplementation(() => {
+      let captured: CapturedRun | undefined;
+      const runner = {
+        run: (opts: CapturedRun) => {
+          captured = opts;
+          run(opts);
+        },
+        get: () => {
+          const refId = captured?.queries[0].refId ?? '';
+          if (failedRefIds.has(refId)) {
+            return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
+          }
+          const series =
+            refId === 'clusters'
+              ? // Multi-frame shape: one frame per series.
+                [
+                  createDataFrame({ refId, fields: [labeledField('cluster', 'staging')] }),
+                  createDataFrame({ refId, fields: [labeledField('cluster', 'prod')] }),
+                ]
+              : // Multi-field shape: one frame, one number field per series.
+                [
+                  createDataFrame({
+                    refId,
+                    fields: [labeledField('namespace', 'team-a'), labeledField('namespace', 'default')],
+                  }),
+                ];
+          return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
+        },
+        cancel: jest.fn(),
+        destroy,
+      };
+      return runner as unknown as QueryRunner;
+    });
+  });
+
+  it('collects sorted label values from both discovery shapes with unfiltered exprs', async () => {
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
+      clusters: ['prod', 'staging'],
+      namespaces: ['default', 'team-a'],
+    });
+
+    const exprs = (run.mock.calls as RunCall[]).map(([o]) => o.queries[0].expr).sort();
+    expect(exprs).toEqual([
+      'group by (cluster) (last_over_time(kube_node_info[24h]))',
+      'group by (namespace) (last_over_time(kube_namespace_status_phase[24h]))',
+    ]);
+  });
+
+  it('nulls only the failed picker so the other keeps its options', async () => {
+    failedRefIds = new Set(['clusters']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
+      clusters: null,
+      namespaces: ['default', 'team-a'],
+    });
+
+    failedRefIds = new Set(['namespaces']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
+      clusters: ['prod', 'staging'],
+      namespaces: null,
+    });
+
+    failedRefIds = new Set(['clusters', 'namespaces']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: null, namespaces: null });
   });
 });

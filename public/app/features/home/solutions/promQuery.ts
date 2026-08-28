@@ -72,6 +72,28 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 }
 
 /**
+ * Distinct, sorted values of `label` across every series returned for `refId`. Handles both
+ * multi-frame and multi-number-field vector shapes.
+ */
+export function readLabelValues(frames: DataFrame[], refId: string, label: string): string[] {
+  const values = new Set<string>();
+  for (const frame of frames) {
+    if (frame.refId !== refId) {
+      continue;
+    }
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        const v = field.labels?.[label];
+        if (v) {
+          values.add(v);
+        }
+      }
+    }
+  }
+  return [...values].sort();
+}
+
+/**
  * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core
  * plumbing owns request building, interval math, and frame conversion. Works for any datasource
  * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws on query

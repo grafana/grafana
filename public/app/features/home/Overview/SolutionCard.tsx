@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { Badge, Card, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
+import { KubernetesFiltersButton } from '../solutions/KubernetesFiltersModal';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 import { SolutionStatsRow } from '../solutions/SolutionStatsRow';
 import { type Solution, type SolutionOffer } from '../solutions/types';
@@ -100,6 +101,13 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
+
+      {solution.id === 'kubernetes' && datasource && (
+        <Card.SecondaryActions>
+          {/* Only Kubernetes has per-user filters; fold into Solution if a second solution grows them. */}
+          <KubernetesFiltersButton datasource={datasource} />
+        </Card.SecondaryActions>
+      )}
     </Card>
   );
 }

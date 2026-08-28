@@ -13,6 +13,7 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
+import { getKubernetesFilters } from './kubernetesFilters';
 import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { solutionOffer } from './solutionOffer';
@@ -148,7 +149,15 @@ export function kubernetesSolution(): Solution {
     },
     sparkline: async () => {
       const series = await clusterCpu();
-      return series ? { series, caption: t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h') } : null;
+      if (!series) {
+        return null;
+      }
+      // Snapshot read (no storage hit): a namespace-scoped series must not be captioned "Cluster CPU".
+      const { namespaces } = await getKubernetesFilters();
+      const caption = namespaces?.length
+        ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
+        : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
+      return { series, caption };
     },
     cta: async () => {
       const ds = await datasource();

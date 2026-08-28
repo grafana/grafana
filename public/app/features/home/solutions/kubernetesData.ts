@@ -1,3 +1,5 @@
+import { escapeRegExp } from 'lodash';
+
 import {
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
@@ -6,6 +8,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { getKubernetesFilters, type KubernetesHomeFilters } from './kubernetesFilters';
 import {
   createTtlCachedPromise,
   findDatasourceWithData,
@@ -13,7 +16,7 @@ import {
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
 } from './probeUtils';
-import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import { readLabelValues, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 /** Kubernetes Monitoring app plugin ID. @lintignore */
 export const KUBERNETES_APP_ID = 'grafana-k8s-app';
@@ -33,20 +36,50 @@ export interface KubernetesHealth {
 // Lookback for the inventory queries and the namespace probe: "seen recently", tolerating scrape gaps.
 const KUBE_STATE_LOOKBACK = '24h';
 
-// refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
-const INVENTORY_QUERIES: Record<string, string> = {
-  clusters: `count(group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}])))`,
-  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info[${KUBE_STATE_LOOKBACK}])))`,
+// PromQL string-literal escaping for label matcher values (custom user input; control chars would break the literal).
+const escapeLabelValue = (value: string) =>
+  value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
+
+const clusterMatcher = (f: KubernetesHomeFilters): string | null =>
+  f.cluster ? `cluster="${escapeLabelValue(f.cluster)}"` : null;
+
+// Values are regex alternatives: regex-escape first, then string-literal-escape the result.
+const namespaceRegex = (namespaces: string[]): string =>
+  namespaces.map((n) => escapeLabelValue(escapeRegExp(n))).join('|');
+
+const namespaceMatcher = (f: KubernetesHomeFilters): string | null =>
+  f.namespaces?.length ? `namespace=~"${namespaceRegex(f.namespaces)}"` : null;
+
+// Trailing empty alternative also matches series with no namespace label: cluster-level alerts stay counted.
+const alertNamespaceMatcher = (f: KubernetesHomeFilters): string | null =>
+  f.namespaces?.length ? `namespace=~"${namespaceRegex(f.namespaces)}|"` : null;
+
+// '' (not '{}') when no matchers so unfiltered queries stay byte-identical to the historical strings.
+const selector = (...matchers: Array<string | null>): string => {
+  const active = matchers.filter(Boolean);
+  return active.length ? `{${active.join(',')}}` : '';
 };
 
-const HEALTH_QUERIES: Record<string, string> = {
-  unhealthyPods: 'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown"})',
-  restarts1h: 'sum(increase(kube_pod_container_status_restarts_total[1h]))',
-  notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown"})',
-};
+// refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
+const inventoryQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
+  clusters: `count(group by (cluster) (last_over_time(kube_node_info${selector(clusterMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
+  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
+});
+
+// Clusters and nodes are not namespaced, so their signals ignore the namespace filter.
+const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
+  unhealthyPods: `sum(kube_pod_status_phase${selector('phase=~"Pending|Failed|Unknown"', clusterMatcher(f), namespaceMatcher(f))})`,
+  restarts1h: `sum(increase(kube_pod_container_status_restarts_total${selector(clusterMatcher(f), namespaceMatcher(f))}[1h]))`,
+  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f))})`,
+});
 
 // Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
-const ALERTS_MATCHER = '{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""}';
+const alertsMatcher = (f: KubernetesHomeFilters): string =>
+  selector(
+    'alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""',
+    clusterMatcher(f),
+    alertNamespaceMatcher(f)
+  );
 
 // Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.
 const NAMESPACE_PROBE = `count(last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`;
@@ -108,7 +141,7 @@ export async function resolveKubernetesDatasource(): Promise<DataSourceInstanceL
 export async function fetchKubernetesInventory(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<KubernetesInventory> {
-  const frames = await runInstantQueries(INVENTORY_QUERIES, ds);
+  const frames = await runInstantQueries(inventoryQueries(await getKubernetesFilters()), ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
@@ -125,17 +158,17 @@ export async function fetchKubernetesHealth(
   const grafanaAlertsUid = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
   const sameDatasource = !grafanaAlertsUid || grafanaAlertsUid === ds.uid;
 
+  const filters = await getKubernetesFilters();
+  const alerts = alertsMatcher(filters);
   const queries: Record<string, string> = {
-    ...HEALTH_QUERIES,
+    ...healthQueries(filters),
     // Same datasource: union with `or` so identical series never double-count.
-    alertsFiring: sameDatasource
-      ? `count(ALERTS${ALERTS_MATCHER} or ${grafanaMetric}${ALERTS_MATCHER})`
-      : `count(ALERTS${ALERTS_MATCHER})`,
+    alertsFiring: sameDatasource ? `count(ALERTS${alerts} or ${grafanaMetric}${alerts})` : `count(ALERTS${alerts})`,
   };
 
   const [frames, grafanaAlertsFiring] = await Promise.all([
     runInstantQueries(queries, ds),
-    sameDatasource ? Promise.resolve(null) : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric),
+    sameDatasource ? Promise.resolve(null) : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric, alerts),
   ]);
 
   const dsAlertsFiring = readScalar(frames, 'alertsFiring');
@@ -153,10 +186,10 @@ export async function fetchKubernetesHealth(
 }
 
 // A broken/absent state-history datasource must not blank the whole health row: fail to null.
-async function fetchGrafanaManagedAlertCount(uid: string, metric: string): Promise<number | null> {
+async function fetchGrafanaManagedAlertCount(uid: string, metric: string, matcher: string): Promise<number | null> {
   try {
     const frames = await runInstantQueries(
-      { grafanaAlertsFiring: `count(${metric}${ALERTS_MATCHER})` },
+      { grafanaAlertsFiring: `count(${metric}${matcher})` },
       { uid, type: 'prometheus' }
     );
     return readScalar(frames, 'grafanaAlertsFiring');
@@ -169,6 +202,44 @@ async function fetchGrafanaManagedAlertCount(uid: string, metric: string): Promi
 export async function fetchClusterCpuSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<FieldSparkline | null> {
-  const frames = await runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds);
+  const filters = await getKubernetesFilters();
+  const frames = await runRangeQuery(
+    'cpu',
+    `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', clusterMatcher(filters), namespaceMatcher(filters))}[5m]))`,
+    24,
+    ds
+  );
   return readSeries(frames, 'cpu');
+}
+
+export interface KubernetesFilterOptions {
+  /** null = discovery failed for this picker (options unavailable, manual entry still works). */
+  clusters: string[] | null;
+  namespaces: string[] | null;
+}
+
+/**
+ * Label values feeding the filter pickers. The two discovery queries run separately —
+ * `runInstantQueries` with `partial` silently drops failed refIds, and a per-picker failure
+ * must stay visible to the modal.
+ */
+export async function fetchKubernetesFilterOptions(
+  ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
+): Promise<KubernetesFilterOptions> {
+  const read = async (refId: string, expr: string, label: string) => {
+    const frames = await runInstantQueries({ [refId]: expr }, ds);
+    return readLabelValues(frames, refId, label);
+  };
+  const [clusters, namespaces] = await Promise.allSettled([
+    read('clusters', `group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'cluster'),
+    read(
+      'namespaces',
+      `group by (namespace) (last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`,
+      'namespace'
+    ),
+  ]);
+  return {
+    clusters: clusters.status === 'fulfilled' ? clusters.value : null,
+    namespaces: namespaces.status === 'fulfilled' ? namespaces.value : null,
+  };
 }

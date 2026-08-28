@@ -1,7 +1,8 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
+import { resetKubernetesFilters, saveKubernetesFilters } from './solutions/kubernetesFilters';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
@@ -17,6 +18,9 @@ jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }))
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
+// Kubernetes detection now flows through the real detectSignal(resolveKubernetesDatasource); pin it
+// so the signal snapshot is deterministic and no real datasource probe runs.
+jest.mock('./solutions/kubernetesData', () => ({ resolveKubernetesDatasource: jest.fn().mockResolvedValue(null) }));
 
 const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
   kubernetes: jest.mocked(kubernetesSolution),
@@ -66,6 +70,9 @@ beforeEach(() => {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
   }
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
+  // Real kubernetesFilters module: start every test from a clean, empty snapshot.
+  resetKubernetesFilters();
+  window.localStorage.clear();
 });
 
 describe('useHomepageSolutions', () => {
@@ -122,14 +129,13 @@ describe('useHomepageSolutions', () => {
       metrics: 'active',
       logs: 'inactive',
       traces: 'unknown',
-      kubernetes: 'active',
+      kubernetes: 'inactive',
       spanMetrics: 'active',
       synthetics: 'inactive',
     });
     expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
-    expect(fixtures.kubernetes.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
   });
@@ -149,5 +155,42 @@ describe('useHomepageSolutions', () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
     await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
+  });
+
+  it('rebuilds only the kubernetes solution when filters change, keeping the rest and signals stable', async () => {
+    // Production kubernetesSolution() returns a fresh object per call; mirror that so the rebuild is observable.
+    mockFactories.kubernetes.mockImplementation(() => solution('kubernetes', 'active'));
+    const { result } = renderHook(() => useHomepageSolutions());
+
+    const before = result.current.solutions;
+    const signalsBefore = result.current.signals;
+
+    await act(async () => {
+      await saveKubernetesFilters({ cluster: 'x' });
+    });
+
+    const after = result.current.solutions;
+    const find = (list: Solution[], id: SolutionId) => list.find((s) => s.id === id);
+    expect(find(after, 'kubernetes')).not.toBe(find(before, 'kubernetes'));
+    for (const id of ['traces', 'metrics', 'logs', 'synthetics'] as const) {
+      expect(find(after, id)).toBe(find(before, id));
+    }
+    expect(result.current.signals).toBe(signalsBefore);
+
+    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(2);
+    expect(mockFactories.traces).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribes on unmount so later filter saves do not rebuild the solution', async () => {
+    const { unmount } = renderHook(() => useHomepageSolutions());
+    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    await act(async () => {
+      await saveKubernetesFilters({ cluster: 'y' });
+    });
+
+    expect(mockFactories.kubernetes).toHaveBeenCalledTimes(1);
   });
 });
