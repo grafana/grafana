@@ -6022,7 +6022,6 @@
     "notebook-layout": {
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
-      "pill": "Published Notebook",
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
@@ -13102,7 +13101,6 @@
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
       "count-truncated_one": "First {{count}} notebook loaded",
       "count-truncated_other": "First {{count}} notebooks loaded",
-      "create-error": "Failed to create notebook",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -13110,7 +13108,6 @@
       "load-error": "Failed to load notebooks",
       "loading": "Loading notebooks",
       "new-notebook": "New notebook",
-      "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
       "partial-load-error": "Some notebooks could not be loaded",
       "search-placeholder": "Search notebooks by title...",
@@ -13126,6 +13123,9 @@
       },
       "unknown-author": "Anonymous"
     },
+    "new": {
+      "default-title": "Notebook #{{token}}"
+    },
     "save-status": {
       "failed": "Save failed",
       "pending": "Unsaved changes",
@@ -13134,6 +13134,7 @@
       "saving": "Saving…"
     },
     "view": {
+      "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
       "mode-edit": "Edit",
       "mode-view": "View",

@@ -1,6 +1,6 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Stack, TagList, Text, useStyles2 } from '@grafana/ui';
+import { Stack, TagList, Text, useStyles2 } from '@grafana/ui';
 
 import { getNeutralTagListStyle } from '../../tagColors';
 
@@ -19,9 +19,9 @@ interface Props {
   onTitleChange?: (title: string) => void;
 }
 
-// The notebook document header: a "Published Notebook" badge, the title, and the document's metadata
-// as labelled rows. Presentational only, so it stays out of the layout manager and can be tested on
-// its own — editing arrives as a callback rather than by reaching for the scene.
+// The notebook document header: the title and the document's metadata as labelled rows.
+// Presentational only, so it stays out of the layout manager and can be tested on its own — editing
+// arrives as a callback rather than by reaching for the scene.
 export function NotebookDocumentHeader({
   title,
   tags,
@@ -41,7 +41,6 @@ export function NotebookDocumentHeader({
 
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">
-      <Badge text={t('dashboard.notebook-layout.pill', 'Published Notebook')} color="blue" icon="book" />
       {canEditTitle && onTitleChange ? (
         <NotebookTitleEditor title={title ?? ''} onChange={onTitleChange} />
       ) : title ? (
