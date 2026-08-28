@@ -10614,6 +10614,7 @@
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
       "errors-and-notices": "Errors and notices",
+      "explain-with-assistant": "Explain with Assistant",
       "fix-with-assistant": "Fix with Assistant",
       "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",

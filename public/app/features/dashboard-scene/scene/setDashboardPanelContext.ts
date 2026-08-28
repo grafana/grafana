@@ -1,4 +1,4 @@
-import { distinctUntilChanged, firstValueFrom, takeWhile } from 'rxjs';
+import { distinctUntilChanged, takeWhile } from 'rxjs';
 
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
@@ -267,12 +267,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
  * resolves it through the same path and can inspect the panel's live queries/data with its own
  * tools instead of trusting a frozen description we send in the prompt.
  */
-async function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
-  const available = await firstValueFrom(isAssistantAvailable());
-  if (!available) {
-    return;
-  }
-
+function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
   const panelData = sceneGraph.getData(vizPanel).state.data;
   const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
   const entries = buildEntries(panelData?.series, errors);
@@ -281,7 +276,9 @@ async function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
     return;
   }
 
-  const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text');
+  // Everything below is model-facing (it's serialized into the `<ref />` the assistant sends the
+  // LLM), so the fallback stays in English like the prompt does.
+  const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text') || 'Untitled';
   const panelKey = vizPanel.state.key;
   const hasError = entries.some((entry) => entry.severity === 'error');
   // Prompt text sent to the assistant is intentionally not translated (matching
@@ -304,7 +301,9 @@ async function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
       createAssistantContextItem('structured', {
         data: {
           name: `Panel: ${panelTitle}`,
-          panelId: panelKey?.split('-')[1],
+          // A string, matching PanelSelectButton in grafana-assistant-app — nothing reads this
+          // field back, it's only serialized into the `<ref />` for the model.
+          panelId: String(getPanelIdForVizPanel(vizPanel)),
           panelKey,
         },
       }),

@@ -37,12 +37,19 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 const mockIsAssistantAvailable = jest.fn();
 const mockOpenAssistant = jest.fn();
+const mockCreateAssistantContextItem = jest.fn();
 
 jest.mock('@grafana/assistant', () => ({
   isAssistantAvailable: () => mockIsAssistantAvailable(),
   openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
-  createAssistantContextItem: (type: string, params: object) => ({ type, ...params }),
+  createAssistantContextItem: (...args: unknown[]) => mockCreateAssistantContextItem(...args),
 }));
+
+// Opaque on purpose. The real `createAssistantContextItem` returns a `{ node: { ... } }` tree, so
+// standing in a different shape here and then asserting against that shape would pass no matter
+// how this call site drifted. Instead the tests assert the arguments we pass it (its real
+// signature still type-checks the call site) and that whatever it returns reaches `openAssistant`.
+const PANEL_CONTEXT_ITEM = Symbol('panel context item');
 
 const mockGetAssistantChatIdToContinue = jest.fn();
 
@@ -88,6 +95,7 @@ beforeEach(() => {
   stubFFEnabled(false);
   mockIsAssistantAvailable.mockReset().mockReturnValue(of(false));
   mockOpenAssistant.mockReset();
+  mockCreateAssistantContextItem.mockReset().mockReturnValue(PANEL_CONTEXT_ITEM);
   mockGetAssistantChatIdToContinue.mockReset();
 });
 
@@ -663,7 +671,7 @@ describe('setDashboardPanelContext', () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
-      await context.onInvestigateErrors?.();
+      context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).not.toHaveBeenCalled();
     });
@@ -673,6 +681,7 @@ describe('setDashboardPanelContext', () => {
 
       const { vizPanel, context } = buildTestScene({});
       vizPanel.setState({
+        title: 'CPU usage',
         $data: new SceneDataNode({
           data: {
             state: LoadingState.Error,
@@ -683,21 +692,44 @@ describe('setDashboardPanelContext', () => {
         }),
       });
 
-      await context.onInvestigateErrors?.();
+      context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).toHaveBeenCalledWith(
         expect.objectContaining({
           origin: 'grafana/panel-status-popover',
           prompt: expect.stringContaining('fix the query errors'),
-          // Attaches a reference to the panel itself (matching the assistant's own
-          // "select a panel as context" picker) rather than a text snapshot of its errors.
-          context: [
-            expect.objectContaining({
-              type: 'structured',
-              data: expect.objectContaining({ panelId: '4', panelKey: 'panel-4' }),
-            }),
-          ],
+          context: [PANEL_CONTEXT_ITEM],
         })
+      );
+      // Attaches a reference to the panel itself (matching the assistant's own "select a panel as
+      // context" picker) rather than a text snapshot of its errors.
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('falls back to a placeholder name for an untitled panel', () => {
+      // Otherwise the context pill reads "Panel: " with nothing after it.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        title: '',
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith(
+        'structured',
+        expect.objectContaining({ data: expect.objectContaining({ name: 'Panel: Untitled' }) })
       );
     });
 
@@ -717,7 +749,7 @@ describe('setDashboardPanelContext', () => {
         }),
       });
 
-      await context.onInvestigateErrors?.();
+      context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
     });
@@ -740,7 +772,7 @@ describe('setDashboardPanelContext', () => {
         }),
       });
 
-      await context.onInvestigateErrors?.();
+      context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).toHaveBeenCalledWith(
         expect.objectContaining({ appendContext: true, chatId: 'active-chat-id' })
@@ -763,7 +795,7 @@ describe('setDashboardPanelContext', () => {
         }),
       });
 
-      await context.onInvestigateErrors?.();
+      context.onInvestigateErrors?.();
 
       expect(mockOpenAssistant).toHaveBeenCalledWith(
         expect.objectContaining({
