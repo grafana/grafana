@@ -17,6 +17,38 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 
+const mockUseGetDisplayMappingQuery = jest.fn();
+
+jest.mock('app/api/clients/iam/v0alpha1', () => ({
+  useGetDisplayMappingQuery: (...args: unknown[]) => mockUseGetDisplayMappingQuery(...args),
+}));
+
+// all history resources for a dashboard share the dashboard's creationTimestamp, so it cannot
+// be used as the version date
+const DASHBOARD_CREATION_TIMESTAMP = '2020-01-15T12:00:00Z';
+
+function createHistoryResource(
+  version: number,
+  annotations: Record<string, string>,
+  creationTimestamp = DASHBOARD_CREATION_TIMESTAMP
+) {
+  return {
+    apiVersion: 'v1beta1',
+    kind: 'Dashboard',
+    metadata: {
+      name: '_U4zObQMz',
+      generation: version,
+      creationTimestamp,
+      annotations,
+    },
+    spec: { version },
+  };
+}
+
+function historyList(items: Array<ReturnType<typeof createHistoryResource>>) {
+  return { metadata: { continue: '' }, items };
+}
+
 const queryByFullText = (text: string) =>
   screen.queryByText((_, node: Element | undefined | null) => {
     if (node) {
@@ -52,6 +84,7 @@ describe('VersionSettings', () => {
     // see https://github.com/testing-library/user-event/issues/833
     user = userEvent.setup({ delay: null });
     jest.clearAllMocks();
+    mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined });
     jest.useFakeTimers();
   });
 
@@ -246,5 +279,174 @@ describe('VersionSettings', () => {
     await user.click(screen.getByText(/view json diff/i));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+  });
+
+  describe('version dates', () => {
+    test('uses the updatedTimestamp annotation rather than the shared dashboard creationTimestamp', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(2, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-editor',
+          }),
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2023-02-20T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-editor',
+          }),
+        ])
+      );
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      const rows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
+
+      expect(rows[0]).toHaveTextContent('2024-06-10');
+      expect(rows[1]).toHaveTextContent('2023-02-20');
+      expect(screen.queryByText(/2020-01-15/)).not.toBeInTheDocument();
+    });
+
+    test('falls back to creationTimestamp when the version has no updatedTimestamp', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([createHistoryResource(1, { 'grafana.app/updatedBy': 'user:uid-editor' }, '2021-11-03T12:00:00Z')])
+      );
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      const rows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
+
+      expect(rows[0]).toHaveTextContent('2021-11-03');
+    });
+  });
+
+  describe('updated by display names', () => {
+    test('resolves identity keys to display names by identity, not by array index', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(2, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-ryan',
+          }),
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2024-06-09T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-bhaskar',
+          }),
+        ])
+      );
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:uid-ryan', 'user:uid-bhaskar'],
+          display: [
+            { identity: { type: 'user', name: 'uid-bhaskar' }, displayName: 'Bhaskar Surroy' },
+            { identity: { type: 'user', name: 'uid-ryan' }, displayName: 'Ryan Brown' },
+          ],
+        },
+      });
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      const rows = within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row');
+
+      expect(rows[0]).toHaveTextContent('Ryan Brown');
+      expect(rows[1]).toHaveTextContent('Bhaskar Surroy');
+      expect(screen.queryByText('user:uid-ryan')).not.toBeInTheDocument();
+      expect(screen.queryByText('user:uid-bhaskar')).not.toBeInTheDocument();
+    });
+
+    test('resolves the legacy numeric internalId when that is what the annotation holds', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/updatedBy': '3420',
+          }),
+        ])
+      );
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['3420'],
+          display: [{ identity: { type: 'user', name: 'uid-ivan' }, displayName: 'Ivan Ortega', internalId: 3420 }],
+        },
+      });
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      expect(screen.getByText('Ivan Ortega')).toBeInTheDocument();
+    });
+
+    test('falls back to the createdBy annotation when the version has no updatedBy', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/createdBy': 'user:uid-creator',
+          }),
+        ])
+      );
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:uid-creator'],
+          display: [{ identity: { type: 'user', name: 'uid-creator' }, displayName: 'Creator User' }],
+        },
+      });
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+    });
+
+    test('keeps the raw key when the user no longer exists', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-unknown',
+          }),
+        ])
+      );
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: { keys: ['user:uid-unknown'], display: [], invalidKeys: ['user:uid-unknown'] },
+      });
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      expect(screen.getByText('user:uid-unknown')).toBeInTheDocument();
+    });
+
+    test('requests the display mapping once per unique identity key', async () => {
+      mockListDashboardHistory.mockResolvedValue(
+        historyList([
+          createHistoryResource(2, {
+            'grafana.app/updatedTimestamp': '2024-06-10T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-editor',
+          }),
+          createHistoryResource(1, {
+            'grafana.app/updatedTimestamp': '2024-06-09T12:00:00Z',
+            'grafana.app/updatedBy': 'user:uid-editor',
+          }),
+        ])
+      );
+
+      setup();
+
+      await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+
+      expect(mockUseGetDisplayMappingQuery).toHaveBeenLastCalledWith({ key: ['user:uid-editor'] });
+    });
   });
 });
