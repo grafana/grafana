@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Dropdown, IconButton, useStyles2 } from '@grafana/ui';
 
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './NotebookBlockTypeMenu';
+
+const isMac = navigator.userAgent.includes('Mac');
 
 interface Props {
   /** This cell's own position. Plain click inserts at index + 1 (below); alt/option-click at index (above). */
@@ -21,6 +23,14 @@ interface Props {
 export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   const styles = useStyles2(getStyles);
   const [pendingIndex, setPendingIndex] = useState(index + 1);
+  const labelId = useId();
+
+  // Keyboard activation (Enter/Space on the trigger) never fires mouseUp, so without this, a cell
+  // that moved — something inserted, deleted, or reordered above it — since mount or since its last
+  // mouse interaction would keep offering its stale former position instead of its current one.
+  useEffect(() => {
+    setPendingIndex(index + 1);
+  }, [index]);
 
   const onMouseUp = (event: React.MouseEvent) => {
     setPendingIndex(event.altKey ? index : index + 1);
@@ -28,14 +38,18 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
 
   return (
     <div className={cx(styles.wrapper, className)}>
+      <span id={labelId} className="sr-only">
+        {t('notebook.add-block.label', 'Add block')}
+      </span>
       <Dropdown
         overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, pendingIndex)} />}
         placement="bottom-start"
       >
         <IconButton
           name="plus"
-          aria-label={t('notebook.add-block.label', 'Add block')}
+          aria-labelledby={labelId}
           tooltip={<AddButtonTooltipContent />}
+          tooltipPlacement="left"
           onMouseUp={onMouseUp}
         />
       </Dropdown>
@@ -44,8 +58,6 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
 }
 
 function AddButtonTooltipContent() {
-  const isMac = navigator.userAgent.includes('Mac');
-
   return (
     <div>
       <div>

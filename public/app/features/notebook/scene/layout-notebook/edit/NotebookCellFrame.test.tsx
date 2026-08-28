@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { fireEvent, render, screen } from 'test/test-utils';
+import { act, fireEvent, render, screen } from 'test/test-utils';
 
 import { NotebookCellItem } from '../NotebookCellItem';
 
@@ -120,6 +120,25 @@ describe('NotebookCellFrame', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 1);
+  });
+
+  // Keyboard activation (Enter/Space) never fires mouseUp, so a cell that moved after mount —
+  // something inserted, deleted, or reordered above it — would otherwise keep offering its stale
+  // former position instead of its current one.
+  it('inserts at the current position after the cell moves, even without a prior mouse interaction', async () => {
+    const onAdd = jest.fn();
+    const cell = buildCell();
+    const { user, rerender } = render(frameTree({ cell, index: 1, isEditing: true, onAdd }));
+
+    rerender(frameTree({ cell, index: 2, isEditing: true, onAdd }));
+
+    act(() => {
+      screen.getByRole('button', { name: 'Add block' }).focus();
+    });
+    await user.keyboard('{Enter}');
+    await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
+
+    expect(onAdd).toHaveBeenCalledWith('heading', 3);
   });
 
   // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
