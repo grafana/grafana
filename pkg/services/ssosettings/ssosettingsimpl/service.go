@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	maps0 "maps"
 	"slices"
 	"strings"
 	"sync"
@@ -790,10 +789,10 @@ func mergeSecrets(settings map[string]any, storedSettings map[string]any) (map[s
 	return settingsWithSecrets, nil
 }
 
-func overrideMaps(maps ...map[string]any) map[string]any {
+func overrideMaps(input ...map[string]any) map[string]any {
 	result := make(map[string]any)
-	for _, m := range maps {
-		maps0.Copy(result, m)
+	for _, m := range input {
+		maps.Copy(result, m)
 	}
 	return result
 }
