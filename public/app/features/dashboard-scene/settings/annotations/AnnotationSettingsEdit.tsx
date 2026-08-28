@@ -34,7 +34,7 @@ import StandardAnnotationQueryEditor from 'app/features/annotations/components/S
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
-import { getPanelIdForVizPanel } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 type Props = {
   annotation: AnnotationQuery;
