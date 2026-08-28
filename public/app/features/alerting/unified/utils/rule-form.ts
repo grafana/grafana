@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
@@ -41,7 +41,10 @@ import {
 
 import { type LokiQuery } from '../../../loki-helpers/types';
 import { EvalFunction } from '../../state/alertDef';
-import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
+import {
+  resolveNamedPolicyName,
+  stripInternalLabels,
+} from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
@@ -114,13 +117,33 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addE
   return list;
 }
 
+interface SelectedPolicyAndLabels {
+  selectedPolicy: string | undefined;
+  labels: Labels;
+}
+
+// Resolves selectedPolicy from the dedicated field or, failing that, the legacy label — and, when it
+// comes from the label, strips that label from the returned labels in the same step. Doing this
+// atomically ensures the two representations never coexist in form state: if the label lingered
+// after being read into selectedPolicy, PolicyTreeSelector would keep editing it via the label
+// instead of selectedPolicy, and a save would then write the stale pre-edit selectedPolicy.
+function resolveSelectedPolicyAndLabels(
+  notificationSettings: GrafanaNotificationSettings | undefined,
+  labels: Labels
+): SelectedPolicyAndLabels {
+  const selectedPolicy = resolveNamedPolicyName(notificationSettings, labels);
+  const migratedFromLabel = selectedPolicy !== undefined && notificationSettings?.policy === undefined;
+  return { selectedPolicy, labels: migratedFromLabel ? stripInternalLabels(labels) : labels };
+}
+
 export function getNotificationSettingsForDTO(
   manualRouting: boolean,
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
-  // selectedPolicy is only populated for rules routed via notification_settings.policy so emit it in both toggle states.
-  // Legacy label-routed rules leave selectedPolicy unset and keep routing through the label.
+  // selectedPolicy is populated whenever a rule has named-policy routing, whether via the dedicated
+  // field or migrated at read time from the legacy label (see resolveSelectedPolicyAndLabels) — so
+  // emitting { policy: selectedPolicy } here covers both and completes the migration on save.
   if (selectedPolicy && !manualRouting) {
     return { policy: selectedPolicy };
   }
@@ -182,13 +205,9 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
-  const labels = arrayToRecord(cleanLabels(values.labels));
-  // The legacy label must not be sent whenever the policy field is in use, so the two routing
-  // mechanisms never coexist in the same payload: either when the new policy routing is active
-  // (toggle on) or when we are writing a route to notification_settings.policy.
-  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.policy) {
-    delete labels[NAMED_ROOT_LABEL_NAME];
-  }
+  // The legacy label is fully superseded by notification_settings.policy — never send it, so it can
+  // never coexist with (or mask) the dedicated field in the saved rule.
+  const labels = stripInternalLabels(arrayToRecord(cleanLabels(values.labels)));
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -371,11 +390,10 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       // grafana alerting rule
       const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-      const selectedPolicy =
-        ga.notification_settings?.policy ??
-        (config.featureToggles.alertingPolicyRoutingSettings
-          ? normalizedRule.labels?.[NAMED_ROOT_LABEL_NAME]
-          : undefined);
+      const { selectedPolicy, labels: formLabels } = resolveSelectedPolicyAndLabels(
+        ga.notification_settings,
+        normalizedRule.labels ?? {}
+      );
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
           ...defaultFormValues,
@@ -391,7 +409,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           queries: ga.data,
           condition: ga.condition,
           annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
-          labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
+          labels: listifyLabelsOrAnnotations(formLabels, true),
           folder: { title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
@@ -522,9 +540,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-  const cloneSelectedPolicy =
-    ga.notification_settings?.policy ??
-    (config.featureToggles.alertingPolicyRoutingSettings ? rule.labels?.[NAMED_ROOT_LABEL_NAME] : undefined);
+  const { selectedPolicy, labels: formLabels } = resolveSelectedPolicyAndLabels(ga.notification_settings, labels ?? {});
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
       ...commonProperties,
@@ -534,10 +550,11 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       keepFiringFor: keepFiringFor || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
+      labels: listifyLabelsOrAnnotations(formLabels, true),
 
       contactPoints: routingSettings,
       manualRouting: Boolean(routingSettings),
-      selectedPolicy: cloneSelectedPolicy,
+      selectedPolicy,
 
       editorSettings: getEditorSettingsFromDTO(ga),
     };
