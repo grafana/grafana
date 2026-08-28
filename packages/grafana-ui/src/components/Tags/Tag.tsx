@@ -76,25 +76,32 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
   const { background, text } =
     colorIndex === undefined ? getTagColorsFromName(name, theme) : getTagColor(colorIndex, theme);
   return {
-    wrapper: css({
-      appearance: 'none',
-      borderStyle: 'none',
-      // needed for the icon/text gap below to take effect
-      display: visualRefreshEnabled ? 'inline-flex' : undefined,
-      alignItems: visualRefreshEnabled ? 'center' : undefined,
-      fontWeight: visualRefreshEnabled ? theme.typography.fontWeightRegular : theme.typography.fontWeightMedium,
-      fontSize: visualRefreshEnabled ? '10px' : theme.typography.size.sm,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-      verticalAlign: 'baseline',
-      backgroundColor: background,
-      color: text,
-      whiteSpace: 'pre',
-      textShadow: 'none',
-      padding: visualRefreshEnabled ? `3px ${theme.spacing.x1}` : '3px 6px',
-      borderRadius: visualRefreshEnabled ? theme.shape.radius.pill : theme.shape.radius.sm,
-      gap: visualRefreshEnabled ? theme.spacing.x0_5 : undefined,
-      height: visualRefreshEnabled ? '22px' : undefined,
-    }),
+    wrapper: css(
+      {
+        appearance: 'none',
+        borderStyle: 'none',
+        fontWeight: theme.typography.fontWeightMedium,
+        fontSize: theme.typography.size.sm,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        verticalAlign: 'baseline',
+        backgroundColor: background,
+        color: text,
+        whiteSpace: 'pre',
+        textShadow: 'none',
+        padding: '3px 6px',
+        borderRadius: theme.shape.radius.sm,
+      },
+      visualRefreshEnabled && {
+        gap: theme.spacing.x0_5,
+        borderRadius: theme.shape.radius.pill,
+        padding: `3px ${theme.spacing.x1}`,
+        // needed for the icon/text gap below to take effect
+        display: 'inline-flex',
+        alignItems: 'center',
+        fontSize: theme.typography.size.xs,
+        fontWeight: theme.typography.fontWeightRegular,
+      }
+    ),
     hover: css({
       '&:hover': {
         opacity: 0.85,
