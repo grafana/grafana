@@ -1,6 +1,8 @@
+import { useState } from 'react';
+
 import { t } from '@grafana/i18n';
-import { Icon, InteractiveTable, Stack } from '@grafana/ui';
-import { type JobResourceSummary } from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Icon, InteractiveTable, Modal, Stack } from '@grafana/ui';
+import { type JobResourceSummary, type ResourceSyncIssue } from 'app/api/clients/provisioning/v0alpha1';
 
 import { getKindInfoByGroupKind } from '../utils/resourceKinds';
 
@@ -10,7 +12,51 @@ type SummaryCell = {
   };
 };
 
-const getSummaryColumns = () => [
+interface IssueModalState {
+  title: string;
+  messages: string[];
+}
+
+// resourceErrors/resourceWarnings are the categorized counterparts to the
+// deprecated flat-string errors/warnings -- prefer them, but fall back for
+// historic jobs recorded before this field existed.
+function getIssueMessages(issues: ResourceSyncIssue[] | undefined, fallback: string[] | undefined): string[] {
+  if (issues?.length) {
+    return issues.map((issue) => (issue.path ? `${issue.path}: ${issue.message}` : issue.message));
+  }
+  return fallback ?? [];
+}
+
+function CountLink({
+  count,
+  messages,
+  title,
+  onShowIssues,
+}: {
+  count?: number;
+  messages: string[];
+  title: string;
+  onShowIssues: (state: IssueModalState) => void;
+}) {
+  const text = count?.toString() || '-';
+  if (!messages.length) {
+    return <span>{text}</span>;
+  }
+  return (
+    <Button
+      variant="secondary"
+      fill="text"
+      size="sm"
+      icon="angle-right"
+      iconPlacement="right"
+      onClick={() => onShowIssues({ title, messages })}
+    >
+      {text}
+    </Button>
+  );
+}
+
+const getSummaryColumns = (onShowIssues: (state: IssueModalState) => void) => [
   {
     id: 'resource',
     header: t('provisioning.job-summary.column-resource', 'Resource'),
@@ -48,12 +94,32 @@ const getSummaryColumns = () => [
   {
     id: 'warnings',
     header: t('provisioning.job-summary.column-warnings', 'Warnings'),
-    cell: ({ row: { original: item } }: SummaryCell) => item.warning?.toString() || '-',
+    cell: ({ row: { original: item } }: SummaryCell) => {
+      const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      return (
+        <CountLink
+          count={item.warning}
+          messages={getIssueMessages(item.resourceWarnings, item.warnings)}
+          title={t('provisioning.job-summary.warnings-modal-title', '{{kind}} warnings', { kind })}
+          onShowIssues={onShowIssues}
+        />
+      );
+    },
   },
   {
     id: 'errors',
     header: t('provisioning.job-summary.column-errors', 'Errors'),
-    cell: ({ row: { original: item } }: SummaryCell) => item.error?.toString() || '-',
+    cell: ({ row: { original: item } }: SummaryCell) => {
+      const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
+      return (
+        <CountLink
+          count={item.error}
+          messages={getIssueMessages(item.resourceErrors, item.errors)}
+          title={t('provisioning.job-summary.errors-modal-title', '{{kind}} errors', { kind })}
+          onShowIssues={onShowIssues}
+        />
+      );
+    },
   },
   {
     id: 'total',
@@ -70,14 +136,25 @@ interface Props {
 }
 
 export function JobSummary({ summary }: Props) {
+  const [issueModal, setIssueModal] = useState<IssueModalState | null>(null);
+
   return (
     <Stack direction="column" gap={2}>
       <InteractiveTable
         data={summary}
-        columns={getSummaryColumns()}
+        columns={getSummaryColumns(setIssueModal)}
         getRowId={(item) => `${item.group ?? ''}/${item.kind ?? ''}`}
         pageSize={10}
       />
+      {issueModal && (
+        <Modal title={issueModal.title} isOpen onDismiss={() => setIssueModal(null)}>
+          <ul>
+            {issueModal.messages.map((msg, i) => (
+              <li key={i}>{msg}</li>
+            ))}
+          </ul>
+        </Modal>
+      )}
     </Stack>
   );
 }

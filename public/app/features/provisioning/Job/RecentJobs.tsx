@@ -49,7 +49,7 @@ function formatJobDuration(job: Job): string | null {
   }
   return intervalToAbbreviatedDurationString(interval, true);
 }
-
+// TODO fcai: status update
 const getJobColumns = (showAuthor: boolean) => [
   {
     id: 'jobId',

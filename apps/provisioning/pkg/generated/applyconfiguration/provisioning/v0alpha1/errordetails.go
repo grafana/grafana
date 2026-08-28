@@ -18,6 +18,7 @@ import (
 // does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
 // communicate validation or external reference errors that users can resolve by editing spec fields.
 // TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
+// TODO fcai:
 type ErrorDetailsApplyConfiguration struct {
 	// Type is a machine-readable description of the cause of the error.
 	// This is intended for programmatic handling and matches Kubernetes' CauseType values.

@@ -1801,23 +1801,37 @@ export type JobSpec = {
   /** Required when the action is `test` */
   test?: TestJobOptions;
 };
+export type ResourceSyncIssue = {
+  /** Message is a human-readable, actionable description of the issue. */
+  message: string;
+  /** Path is the repository file path this issue applies to, when known. */
+  path?: string;
+  /** Reason is a machine-readable category for this issue (see the ReasonX constants). Empty when the underlying error has no classifier. */
+  reason?: string;
+};
 export type JobResourceSummary = {
   create?: number;
   delete?: number;
   /** Create or update (export) */
   error?: number;
-  /** Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info */
+  /** Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info
+    
+    Deprecated: use ResourceErrors, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers. */
   errors?: string[];
   group?: string;
   kind?: string;
   /** No action required (useful for sync) */
   noop?: number;
+  /** ResourceErrors/ResourceWarnings are the categorized counterparts to Errors/Warnings above, added alongside them (rather than replacing them) to keep the flat-string fields backwards compatible for any consumer still reading them. */
+  resourceErrors?: ResourceSyncIssue[];
+  resourceWarnings?: ResourceSyncIssue[];
   total?: number;
   /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
   totalChanges?: number;
   update?: number;
   /** The error count */
   warning?: number;
+  /** Deprecated: use ResourceWarnings, which carries the same messages plus a machine-readable Reason and the affected Path. Kept for backwards compatibility with existing consumers. */
   warnings?: string[];
   write?: number;
 };

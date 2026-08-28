@@ -26,8 +26,21 @@ type JobResourceSummaryApplyConfiguration struct {
 	TotalChanges *int64 `json:"totalChanges,omitempty"`
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
-	Errors   []string `json:"errors,omitempty"`
+	//
+	// Deprecated: use ResourceErrors, which carries the same messages plus a
+	// machine-readable Reason and the affected Path. Kept for backwards
+	// compatibility with existing consumers.
+	Errors []string `json:"errors,omitempty"`
+	// Deprecated: use ResourceWarnings, which carries the same messages plus a
+	// machine-readable Reason and the affected Path. Kept for backwards
+	// compatibility with existing consumers.
 	Warnings []string `json:"warnings,omitempty"`
+	// ResourceErrors/ResourceWarnings are the categorized counterparts to
+	// Errors/Warnings above, added alongside them (rather than replacing them)
+	// to keep the flat-string fields backwards compatible for any consumer
+	// still reading them.
+	ResourceErrors   []ResourceSyncIssueApplyConfiguration `json:"resourceErrors,omitempty"`
+	ResourceWarnings []ResourceSyncIssueApplyConfiguration `json:"resourceWarnings,omitempty"`
 }
 
 // JobResourceSummaryApplyConfiguration constructs a declarative configuration of the JobResourceSummary type for use with
@@ -140,6 +153,32 @@ func (b *JobResourceSummaryApplyConfiguration) WithErrors(values ...string) *Job
 func (b *JobResourceSummaryApplyConfiguration) WithWarnings(values ...string) *JobResourceSummaryApplyConfiguration {
 	for i := range values {
 		b.Warnings = append(b.Warnings, values[i])
+	}
+	return b
+}
+
+// WithResourceErrors adds the given value to the ResourceErrors field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ResourceErrors field.
+func (b *JobResourceSummaryApplyConfiguration) WithResourceErrors(values ...*ResourceSyncIssueApplyConfiguration) *JobResourceSummaryApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithResourceErrors")
+		}
+		b.ResourceErrors = append(b.ResourceErrors, *values[i])
+	}
+	return b
+}
+
+// WithResourceWarnings adds the given value to the ResourceWarnings field in the declarative configuration
+// and returns the receiver, so that objects can be build by chaining "With" function invocations.
+// If called multiple times, values provided by each call will be appended to the ResourceWarnings field.
+func (b *JobResourceSummaryApplyConfiguration) WithResourceWarnings(values ...*ResourceSyncIssueApplyConfiguration) *JobResourceSummaryApplyConfiguration {
+	for i := range values {
+		if values[i] == nil {
+			panic("nil value passed to WithResourceWarnings")
+		}
+		b.ResourceWarnings = append(b.ResourceWarnings, *values[i])
 	}
 	return b
 }

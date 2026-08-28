@@ -239,7 +239,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if obj.GetName() == "" {
 		if obj.GetGenerateName() == "" {
-			return nil, NewResourceValidationError(ErrMissingName)
+			// Return parsed (rather than nil) so callers can still report the
+			// GVK resolved above, even though the resource itself is invalid.
+			return parsed, NewResourceValidationError(ErrMissingName)
 		}
 		// Generate a new UID
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())

@@ -273,7 +273,14 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	if err != nil {
 		parseSpan.RecordError(err)
 		parseSpan.End()
-		return "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse file: %w", err)
+		// parsed may still carry a resolved GVK (e.g. a valid dashboard missing
+		// its name) even though parsing failed overall — report it if so, rather
+		// than losing the resource's kind for a validation error.
+		var gvk schema.GroupVersionKind
+		if parsed != nil {
+			gvk = parsed.GVK
+		}
+		return "", gvk, size, fmt.Errorf("failed to parse file: %w", err)
 	}
 	parseSpan.End()
 
@@ -291,7 +298,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
-		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
+		return "", parsed.GVK, NewResourceValidationError(ErrMissingName)
 	}
 
 	// Check if the resource already exists
