@@ -28,8 +28,11 @@ const MAX_WAIT_MS = 15000;
 
 // The panel cases below restore a saved viz config through the panel's own option/fieldConfig API,
 // and that re-applies the plugin's defaults, so the panels here need a plugin that actually loads.
+// Each plugin answers to the id it was asked for, as the real loader does. A panel records the id of
+// the plugin it loaded, so a stub that ignored the id would make every load look like a panel being
+// switched to a different visualization.
 setPluginImportUtils({
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}).useFieldConfig()),
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
 });
 
@@ -469,6 +472,24 @@ describe('NotebookAutosave', () => {
 
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+    });
+
+    // A query can suggest a visualization, which switches the panel's plugin (see PanelQueryEditor).
+    // That is written by the same plugin load that applies a plugin's defaults, so it is only told
+    // apart from one by the id having moved. Taken for a plugin load, the switch is never saved.
+    it('is written when a panel was switched to another visualization in edit mode', async () => {
+      const { scene, panel } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      const stopPanel = panel.activate();
+      await jest.advanceTimersByTimeAsync(0);
+
+      scene.onEnterEditMode();
+      await panel.changePluginType('table', { showHeader: true }, undefined);
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs()[0]?.group).toBe('table');
+
+      stopPanel();
     });
 
     // Disowned when the session starts, so it stays out even though that panel is the one edited.

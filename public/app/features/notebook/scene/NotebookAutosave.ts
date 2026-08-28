@@ -1,7 +1,11 @@
 import { debounce } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
-import { SceneObjectStateChangedEvent, type SceneObjectStateChangedPayload } from '@grafana/scenes';
+import {
+  SceneObjectStateChangedEvent,
+  type SceneObjectState,
+  type SceneObjectStateChangedPayload,
+} from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { transformMappingsToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 
@@ -485,21 +489,26 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
  * cell, because the element name lives there and a VizPanel does not carry one.
  */
 function changedVizConfigElement(payload: SceneObjectStateChangedPayload, scene: NotebookScene): string | undefined {
-  const { changedObject, partialUpdate } = payload;
-
-  // A panel rewrites its own options and field config when its plugin loads, to apply that plugin's
-  // defaults. It sets the plugin id and version in the same breath and nothing a person does touches
-  // those, so they are what tells the two apart. Missed, every panel looks changed before anyone
-  // touches it.
-  if ('pluginId' in partialUpdate || 'pluginVersion' in partialUpdate) {
-    return undefined;
-  }
+  const { changedObject, partialUpdate, prevState, newState } = payload;
 
   if (!('fieldConfig' in partialUpdate) && !('options' in partialUpdate)) {
     return undefined;
   }
 
+  // A panel rewrites its own options and field config when its plugin loads, to apply that plugin's
+  // defaults, and sets the plugin id and version in the same breath. Switching a panel to another
+  // visualization is that same write, because `changePluginType` loads the new plugin to do it, so
+  // the two cannot be told apart by what they set. Whether the id moved is what separates them.
+  if (('pluginId' in partialUpdate || 'pluginVersion' in partialUpdate) && !changedPluginType(prevState, newState)) {
+    return undefined;
+  }
+
   return scene.state.body.state.cells.find((cell) => cell.state.body === changedObject)?.state.elementName;
+}
+
+/** Whether a panel state change swapped the panel's plugin, rather than loading the one it already had. */
+function changedPluginType(prevState: SceneObjectState, newState: SceneObjectState): boolean {
+  return 'pluginId' in prevState && 'pluginId' in newState && prevState.pluginId !== newState.pluginId;
 }
 
 /**
