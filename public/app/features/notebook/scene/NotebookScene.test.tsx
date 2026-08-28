@@ -4,6 +4,7 @@ import { act, render, screen } from 'test/test-utils';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   config,
   HistoryWrapper,
@@ -105,11 +106,11 @@ describe('NotebookScene', () => {
   });
 
   // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
-  // state and are otherwise activated by their renderers. With the controls row hidden nothing
-  // renders the refresh picker, so without an explicit activation its interval never starts and the
-  // spec's autoRefresh silently does nothing.
-  it('activates the refresh picker when the time controls are hidden', () => {
-    const scene = buildScene(true);
+  // state and would otherwise be activated by their renderers. Nothing renders the refresh picker at
+  // all now, so without an explicit activation its interval never starts and the spec's autoRefresh
+  // silently does nothing.
+  it.each([true, false])('activates the refresh picker with hideTimeControls %s', (hideTimeControls) => {
+    const scene = buildScene(hideTimeControls);
 
     const deactivate = scene.activate();
 
@@ -119,12 +120,29 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  it('leaves the refresh picker to its renderer when the time controls are shown', () => {
+  // The time range is picked in the document body now. A picker left in the controls row as well
+  // would give the notebook two of them, disagreeing about which window it is showing.
+  it('renders its only time picker in the document, and no refresh picker at all', () => {
     const scene = buildScene(false);
-
     activate(scene);
 
-    expect(scene.state.refreshPicker.isActive).toBe(false);
+    render(<scene.Component model={scene} />);
+
+    const pickers = screen.getAllByTestId(selectors.components.TimePicker.openButton);
+    expect(pickers).toHaveLength(1);
+    expect(screen.getByRole('group', { name: 'Time' })).toContainElement(pickers[0]);
+    expect(screen.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+  });
+
+  // hideTimeControls is read off the spec here but rendered by the body, so it has to be pushed
+  // down — including after a whole-state swap replaces the body with a rebuilt one.
+  it('pushes hideTimeControls down to the body', () => {
+    const scene = buildScene(false);
+    activate(scene);
+
+    scene.setState({ hideTimeControls: true });
+
+    expect(scene.state.body.state.hideTimeControls).toBe(true);
   });
 
   describe('edit mode', () => {

@@ -78,13 +78,20 @@ describe('deserializeNotebookLayout', () => {
     expect(roundTripped).toEqual(layout);
   });
 
-  it('surfaces the notebook title and tags on the layout manager for the document header', () => {
+  it('surfaces the notebook title, tags and time-control visibility on the layout manager for the document header', () => {
     const { layout, elements } = fixture();
 
-    const manager = deserializeNotebookLayout(layout, elements, { title: 'My notebook', tags: ['incident'] });
+    const manager = deserializeNotebookLayout(layout, elements, {
+      title: 'My notebook',
+      tags: ['incident'],
+      hideTimeControls: true,
+    });
 
     expect(manager.state.title).toBe('My notebook');
     expect(manager.state.tags).toEqual(['incident']);
+    // Seeded rather than left to the scene's first push, or the row flashes in on a notebook that asked
+    // for it to be hidden.
+    expect(manager.state.hideTimeControls).toBe(true);
   });
 
   describe('panel ids', () => {

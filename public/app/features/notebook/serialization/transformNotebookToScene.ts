@@ -24,7 +24,11 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     description: spec.description,
     tags: spec.tags,
     uid: resource.metadata.name,
-    body: deserializeNotebookLayout(spec.layout, spec.elements, { title: spec.title, tags: spec.tags }),
+    body: deserializeNotebookLayout(spec.layout, spec.elements, {
+      title: spec.title,
+      tags: spec.tags,
+      hideTimeControls: timeSettings.hideTimepicker,
+    }),
     $timeRange: buildSceneTimeRange(timeSettings),
     timePicker: new SceneTimePicker({
       quickRanges: timeSettings.quickRanges,

@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { dateTime, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { useNotebookFieldFacetQuery } from '../../list/notebookSearchApi';
 
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -23,20 +26,31 @@ function setLibraryTags(...tags: string[]) {
   );
 }
 
+/** A notebook still holding a relative range, which is what a saved one looks like until it is touched. */
+const RELATIVE_RANGE: TimeRange = {
+  from: dateTime('2026-08-26T09:00:00Z'),
+  to: dateTime('2026-08-26T15:00:00Z'),
+  raw: { from: 'now-6h', to: 'now' },
+};
+
 function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader>> = {}) {
   const onTagsChange = jest.fn();
+  const onTimeRangeChange = jest.fn();
+  const onTimeZoneChange = jest.fn();
   const rendered = render(
     <NotebookDocumentHeader
       title="Q2 latency regression"
       tags={['latency']}
-      timeFrom="now-6h"
-      timeTo="now"
+      timeRange={RELATIVE_RANGE}
+      timeZone="utc"
       onTagsChange={onTagsChange}
+      onTimeRangeChange={onTimeRangeChange}
+      onTimeZoneChange={onTimeZoneChange}
       {...props}
     />
   );
 
-  return { ...rendered, onTagsChange };
+  return { ...rendered, onTagsChange, onTimeRangeChange, onTimeZoneChange };
 }
 
 /**
@@ -69,11 +83,30 @@ describe('NotebookDocumentHeader', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('labels the time range too, so the two rows read as a pair', () => {
+  // The label is a plain span rather than a <label>, because the picker is a button and htmlFor would
+  // associate with nothing — the group is what carries the name over to it.
+  it('names the time picker with the row it sits in', () => {
     setup({ isEditing: false });
 
-    expect(screen.getByText('Time')).toBeInTheDocument();
-    expect(screen.getByText('now-6h → now')).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Time' })).toContainElement(
+      screen.getByTestId(selectors.components.TimePicker.openButton)
+    );
+  });
+
+  it('offers the time picker while the notebook is being read, not only while editing', () => {
+    setup({ isEditing: false });
+
+    expect(screen.getByTestId(selectors.components.TimePicker.openButton)).toHaveTextContent(
+      '2026-08-26 09:00:00 to 2026-08-26 15:00:00'
+    );
+  });
+
+  // timeSettings.hideTimepicker is a spec field a notebook can arrive with, and it now means this row.
+  it('drops the time row entirely when the notebook hides its time controls', () => {
+    setup({ hideTimeControls: true });
+
+    expect(screen.queryByText('Time')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
   });
 
   it('offers the tag picker once the notebook is being edited', () => {

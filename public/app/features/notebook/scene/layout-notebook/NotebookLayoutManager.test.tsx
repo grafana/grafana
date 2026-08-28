@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -183,9 +184,49 @@ describe('NotebookLayoutManager', () => {
 
     expect(screen.getByText('Published Notebook')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
-    expect(screen.getByText(/now-6h/)).toBeInTheDocument();
+    // The manager's range is relative; what the header shows is the window it resolves to.
+    expect(screen.getByRole('group', { name: 'Time' })).toBeInTheDocument();
+    expect(screen.queryByText('Last 6 hours')).not.toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
+  });
+
+  describe('the time range', () => {
+    // UTC so a typed timestamp means the same thing wherever the suite runs.
+    const buildManagerInUtc = () =>
+      new NotebookLayoutManager({
+        cells: [],
+        title: 'My notebook',
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone: 'utc' }),
+      });
+
+    it('writes a range picked in the header back to the scene, as fixed timestamps', async () => {
+      const manager = buildManagerInUtc();
+      const { user } = renderManager(manager);
+
+      await user.click(screen.getByTestId(selectors.components.TimePicker.openButton));
+      await user.clear(await screen.findByTestId(selectors.components.TimePicker.fromField));
+      await user.type(screen.getByTestId(selectors.components.TimePicker.fromField), '2026-08-20 00:00:00');
+      await user.clear(screen.getByTestId(selectors.components.TimePicker.toField));
+      await user.type(screen.getByTestId(selectors.components.TimePicker.toField), '2026-08-21 00:00:00');
+      await user.click(screen.getByTestId(selectors.components.TimePicker.applyTimeRange));
+
+      // ISO rather than 'now-6h': this is what buildTimeSettingsSpec goes on to save.
+      expect(manager.state.$timeRange?.state.from).toBe('2026-08-20T00:00:00.000Z');
+      expect(manager.state.$timeRange?.state.to).toBe('2026-08-21T00:00:00.000Z');
+    });
+
+    // The scene owns the spec's hideTimepicker and pushes it down, exactly as it does with tags.
+    it('drops the row once the scene says the notebook hides its time controls', async () => {
+      const manager = buildManagerInUtc();
+      renderManager(manager);
+
+      act(() => manager.setHideTimeControls(true));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+      });
+    });
   });
 
   it('renders a narrative markdown cell and shows a collapsed cell by name only', async () => {
