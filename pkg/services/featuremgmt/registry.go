@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -974,7 +974,7 @@ var (
 			Description: "Enables RBAC for playlists",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
 		},
 		{
@@ -2332,6 +2332,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "kubernetesTeamsApi",
 			Description:  "Enables team APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2874,14 +2882,6 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preferences.rerouteLegacyAPIs",
-			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",

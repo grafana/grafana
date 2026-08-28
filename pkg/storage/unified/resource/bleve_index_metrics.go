@@ -3,13 +3,11 @@ package resource
 import (
 	"time"
 
-	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency         *prometheus.HistogramVec
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -41,14 +39,6 @@ var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 5
 
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
-		IndexLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "index_server_index_latency_seconds",
-			Help:                            "Time (in seconds) until index is updated with new event",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1, // enable native histograms
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "index_server_index_size",
 			Help: "Size of the index in bytes - only for file-based indices",

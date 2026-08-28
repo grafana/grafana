@@ -789,9 +789,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	}
 
 	if rule.NotificationSettings != nil {
-		for k, v := range rule.NotificationSettings.ToLabels(features) {
-			extraLabels[k] = v
-		}
+		maps.Copy(extraLabels, rule.NotificationSettings.ToLabels(features))
 	}
 	return extraLabels
 }
@@ -887,9 +885,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		}
 	}
 
-	for key, val := range extraAnnotations {
-		a.Annotations[key] = val
-	}
+	maps.Copy(a.Annotations, extraAnnotations)
 
 	nextState := StateTransition{
 		State:               a,

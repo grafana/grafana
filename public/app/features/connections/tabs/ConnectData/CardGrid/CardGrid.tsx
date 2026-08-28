@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
@@ -88,7 +88,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
           key={item.id}
           noMargin
           className={styles.card}
-          href={item.url}
+          href={item.url ? locationUtil.assureBaseUrl(item.url) : undefined}
           data-testid={selectors.pages.Connections.AddNewConnection.pluginCard(item.name)}
           onClick={(e) => {
             if (onClickItem) {

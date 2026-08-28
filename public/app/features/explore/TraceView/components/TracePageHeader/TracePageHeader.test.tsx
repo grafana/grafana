@@ -16,6 +16,7 @@ import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import {
+  CoreApp,
   type IconName,
   type LinkModel,
   MutableDataFrame,
@@ -104,6 +105,7 @@ const setup = (
 
   const viewRangeTime: [number, number] = [0, 0];
   const defaultProps = {
+    app: CoreApp.Unknown,
     trace: traceOverride,
     timeZone: '',
     search: DEFAULT_SPAN_FILTERS,

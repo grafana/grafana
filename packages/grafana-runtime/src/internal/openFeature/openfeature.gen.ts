@@ -127,6 +127,8 @@ export const FlagKeys = {
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
+  /** Routes library panel requests from /api to the /apis endpoint */
+  LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -139,6 +141,8 @@ export const FlagKeys = {
   OtelLogsFormatting: "otelLogsFormatting",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
+  /** Enables RBAC for playlists */
+  PlaylistsRBAC: "playlistsRBAC",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -161,6 +165,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Enables AI-assisted coauthoring in code query editors */
+  QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
   RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
@@ -821,6 +827,17 @@ export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Routes library panel requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `libraryelements.kubernetesLibraryPanels`
+ * - default value: `false`
+ */
+export const useFlagLibraryelementsKubernetesLibraryPanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("libraryelements.kubernetesLibraryPanels", false, options).value;
+};
+
+/**
  * Enables the logs tableNG panel to replace existing tableRT
  *
  * **Details:**
@@ -884,6 +901,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("paneledit.buttonLabels", false, options).value;
+};
+
+/**
+ * Enables RBAC for playlists
+ *
+ * **Details:**
+ * - flag key: `playlistsRBAC`
+ * - default value: `false`
+ */
+export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("playlistsRBAC", false, options).value;
 };
 
 /**
@@ -1005,6 +1033,17 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
+};
+
+/**
+ * Enables AI-assisted coauthoring in code query editors
+ *
+ * **Details:**
+ * - flag key: `queryeditor.coauthoringUi`
+ * - default value: `false`
+ */
+export const useFlagQueryeditorCoauthoringUi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryeditor.coauthoringUi", false, options).value;
 };
 
 /**

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -236,9 +237,7 @@ func (m *mapKV) Batch(_ context.Context, _ string, ops []kv.BatchOp) error {
 	defer m.mu.Unlock()
 
 	snapshot := make(map[string][]byte, len(m.data))
-	for k, v := range m.data {
-		snapshot[k] = v
-	}
+	maps.Copy(snapshot, m.data)
 
 	for i, op := range ops {
 		switch op.Mode {
