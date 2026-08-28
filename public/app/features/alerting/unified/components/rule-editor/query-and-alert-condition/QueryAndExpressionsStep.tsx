@@ -7,7 +7,8 @@ import { useEffectOnce } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   Alert,
   Button,
@@ -382,7 +383,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     addExpressionsInQueries(prevExpressions);
   }, [prevExpressions, addExpressionsInQueries]);
 
-  const onClickSwitch = useCallback(() => {
+  const onClickSwitch = useCallback(async () => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
@@ -394,7 +395,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       setValue('type', RuleFormType.cloudAlerting);
       // dataSourceName is used only by Mimir/Loki alerting and recording rules
       // It should be empty for Grafana managed alert rules
-      const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
+      const newDsName = (await getDataSourceInstanceSettings(queries[0].datasourceUid))?.name;
       if (newDsName) {
         setValue('dataSourceName', newDsName);
       }
@@ -731,14 +732,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 const useSetExpressionAndDataSource = () => {
   const { setValue } = useFormContext<RuleFormValues>();
 
-  return (updatedQueries: AlertQuery[]) => {
+  return async (updatedQueries: AlertQuery[]) => {
     // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
     const query = updatedQueries[0];
     if (!query) {
       return;
     }
 
-    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    const dataSourceSettings = await getDataSourceInstanceSettings(query.datasourceUid);
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
     }

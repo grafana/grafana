@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { type FC, useCallback, useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -44,13 +43,12 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     setData(panelData?.[queries[0]?.refId]);
   }, [panelData, queries]);
 
+  const { error: dataSourceError, isLoading: isLoadingDataSource, dataSource } = useDataSourceInstance(dataSourceName);
   const {
-    error,
-    loading,
-    value: dataSource,
-  } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+    settings: dsi,
+    isLoading: isLoadingSettings,
+    error: settingsError,
+  } = useDataSourceInstanceSettings(dataSourceName);
 
   const handleChangedQuery = useCallback(
     (changedQuery: DataQuery) => {
@@ -89,14 +87,15 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     [dataSource, queries, onChangeQuery]
   );
 
-  if (loading || dataSource?.name !== dataSourceName) {
+  if (isLoadingDataSource || isLoadingSettings || dataSource?.name !== dataSourceName) {
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
-    const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
+  if (dataSourceError || settingsError || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
+    const errorMessage =
+      dataSourceError?.message ||
+      settingsError?.message ||
+      'Data source plugin does not export any Query Editor component';
     return (
       <div>
         <Trans i18nKey="alerting.recording-rule-editor.error-no-query-editor">

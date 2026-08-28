@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
+import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, type PanelData } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2 } from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -28,6 +30,7 @@ export const QueryEditor = ({
   onSetCondition,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const { settingsByUid, isLoading } = useDataSourceSettingsByUid(queries.map((query) => query.datasourceUid));
 
   return (
     <div className={styles.container}>
@@ -40,6 +43,8 @@ export const QueryEditor = ({
         onDuplicateQuery={onDuplicateQuery}
         condition={condition}
         onSetCondition={onSetCondition}
+        dataSourceSettingsByUid={settingsByUid}
+        isLoadingDataSourceSettings={isLoading}
       />
     </div>
   );
@@ -51,3 +56,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
 });
+
+interface UseDataSourceSettingsByUidResult {
+  settingsByUid: Record<string, DataSourceInstanceSettings>;
+  isLoading: boolean;
+}
+
+// QueryRows is a class component and can't use hooks, so settings are resolved here instead.
+function useDataSourceSettingsByUid(uids: string[]): UseDataSourceSettingsByUidResult {
+  const uniqueUids = Array.from(new Set(uids)).sort();
+  const uidsKey = uniqueUids.join(',');
+
+  const { value, loading } = useAsync(async () => {
+    const settingsList = await Promise.all(uniqueUids.map((uid) => getDataSourceInstanceSettings(uid)));
+    const entries = uniqueUids
+      .map((uid, index): [string, DataSourceInstanceSettings | undefined] => [uid, settingsList[index]])
+      .filter((entry): entry is [string, DataSourceInstanceSettings] => entry[1] !== undefined);
+    return Object.fromEntries(entries);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uidsKey]);
+
+  return { settingsByUid: value ?? {}, isLoading: loading };
+}

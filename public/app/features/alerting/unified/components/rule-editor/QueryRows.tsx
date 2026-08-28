@@ -10,10 +10,9 @@ import {
   getDataSourceRef,
   rangeUtil,
 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { Trans, t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
-import { Button, Card, Icon, Stack } from '@grafana/ui';
+import { Button, Card, Icon, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -36,6 +35,10 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
+
+  // Data source settings, resolved by the parent (see QueryEditor.tsx)
+  dataSourceSettingsByUid: Record<string, DataSourceInstanceSettings>;
+  isLoadingDataSourceSettings: boolean;
 }
 
 export class QueryRows extends PureComponent<Props> {
@@ -145,7 +148,7 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
-    return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    return this.props.dataSourceSettingsByUid[query.datasourceUid];
   };
 
   render() {
@@ -174,6 +177,15 @@ export class QueryRows extends PureComponent<Props> {
                     }
 
                     if (!dsSettings) {
+                      if (this.props.isLoadingDataSourceSettings) {
+                        return (
+                          <LoadingPlaceholder
+                            key={`${query.refId}-${index}`}
+                            text={t('alerting.query-rows.loading-data-source', 'Loading data source...')}
+                          />
+                        );
+                      }
+
                       return (
                         <DatasourceNotFound
                           key={`${query.refId}-${index}`}
