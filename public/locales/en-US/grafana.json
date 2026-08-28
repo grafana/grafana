@@ -6025,7 +6025,11 @@
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
-      "time": "Time"
+      "time": "Time",
+      "title-edit": "Edit title",
+      "title-label": "Title",
+      "title-placeholder": "Add a title",
+      "title-required": "Please enter a title"
     },
     "on-create-new-row": {
       "new-row": {
@@ -9731,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "in a few seconds",
+        "fewSecondsPast": "a few seconds ago",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Day before yesterday",
           "previousFiscalQuarter": "Previous fiscal quarter",
@@ -13011,6 +13017,13 @@
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
+    },
+    "panel-changes": {
+      "confirm-cancel": "Cancel",
+      "confirm-discard": "Discard",
+      "confirm-keep": "Keep",
+      "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
+      "confirm-title": "Unsaved panel changes"
     }
   },
   "notebooks": {

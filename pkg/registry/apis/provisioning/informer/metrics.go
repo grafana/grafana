@@ -1,13 +1,13 @@
 package informer
 
 import (
-	"errors"
 	"strconv"
 	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/client-go/tools/cache"
 
@@ -35,9 +35,10 @@ type informerMetrics struct {
 	relistRequests    *prometheus.CounterVec
 }
 
-// newInformerMetrics builds the delivery metrics on reg, reusing collectors
-// already registered there so every delta source in the process shares one set.
-// A nil reg leaves the collectors unregistered.
+// newInformerMetrics builds the delivery metrics on reg. One instance serves
+// every recorder in a delta source, which pass their own resource label, so a
+// process builds this once per delta source. A nil reg leaves the collectors
+// unregistered.
 func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 	latencyOpts := func(name, help string) prometheus.HistogramOpts {
 		return prometheus.HistogramOpts{
@@ -50,53 +51,35 @@ func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 		}
 	}
 	return &informerMetrics{
-		liveEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+		liveEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_live_events_total",
 			Help: "Events delivered live to provisioning informer handlers, by resource and verb.",
-		}, []string{"resource", "verb"})),
-		relistEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+		}, []string{"resource", "verb"}),
+		relistEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_relist_events_total",
 			Help: "Events delivered by the periodic re-list/resync to provisioning informer handlers, by resource and verb. Adds and deletes are changes the live stream did not deliver here; updates are re-deliveries of unchanged objects.",
-		}, []string{"resource", "verb"})),
-		liveLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
+		}, []string{"resource", "verb"}),
+		liveLatency: promauto.With(reg).NewHistogramVec(latencyOpts(
 			"grafana_provisioning_informer_live_event_latency_seconds",
 			"Time from a change's resource version being issued to its live event reaching the informer handlers.",
-		), []string{"resource"})),
-		relistLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
+		), []string{"resource"}),
+		relistLatency: promauto.With(reg).NewHistogramVec(latencyOpts(
 			"grafana_provisioning_informer_relist_event_latency_seconds",
 			"Time from a change's resource version being issued to its recovery by a re-list, for adds the live stream did not deliver. Re-deliveries of unchanged objects carry no latency.",
-		), []string{"resource"})),
-		reconnects: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+		), []string{"resource"}),
+		reconnects: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_nats_reconnects_total",
 			Help: "Times an informer's NATS subscription was (re)established after a gap. Live events published during the gap never reach this replica; the informer forces a re-list to recover them.",
-		}, []string{"resource"})),
-		natsSubscriptions: registerOrReuse(reg, prometheus.NewGauge(prometheus.GaugeOpts{
+		}, []string{"resource"}),
+		natsSubscriptions: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_provisioning_informer_nats_subscriptions",
 			Help: "Number of provisioning informers currently holding an open live NATS subscription. Below the running informer count means some run re-list-only — before their subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect. Always 0 on the apiserver watch path, which has no NATS subscription.",
-		})),
-		relistRequests: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+		}),
+		relistRequests: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_relist_requests_total",
 			Help: "LIST API requests the re-list issued, one per page followed (unified storage caps a page at 500 items / 2 MB). Divided by the number of re-lists it is the average page count per snapshot; a rising ratio means the resource is outgrowing a single page. Recorded on the NATS informer path only — the apiserver watch lists via client-go internally.",
-		}, []string{"resource"})),
+		}, []string{"resource"}),
 	}
-}
-
-// registerOrReuse registers c on reg, returning the collector already
-// registered under the same descriptor when there is one — several delta
-// sources built against the same registry share one set of collectors. A nil
-// reg returns c unregistered.
-func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
-	if reg == nil {
-		return c
-	}
-	if err := reg.Register(c); err != nil {
-		are := prometheus.AlreadyRegisteredError{}
-		if errors.As(err, &are) {
-			return are.ExistingCollector.(C)
-		}
-		panic(err)
-	}
-	return c
 }
 
 func (m *informerMetrics) observeLive(resourceName, verb string, rv int64) {
