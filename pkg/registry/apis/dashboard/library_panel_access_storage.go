@@ -21,13 +21,21 @@ type libraryPanelUpdateAuthorizer func(ctx context.Context, oldObj, newObj runti
 type libraryPanelDeleteValidator func(ctx context.Context, name, namespace string) error
 type libraryPanelFolderValidator func(ctx context.Context, obj runtime.Object) error
 
-// libraryPanelAccessStorage enforces writes at the standalone storage boundary.
-// Standalone app-platform API servers do not reliably populate old objects for
+type libraryPanelStorage interface {
+	rest.Storage
+	rest.Getter
+	rest.Lister
+	rest.CreaterUpdater
+	rest.GracefulDeleter
+}
+
+// libraryPanelAccessStorage enforces writes at the storage boundary.
+// App-platform API servers do not reliably populate old objects for
 // update/delete admission, so admission alone can otherwise allow those writes.
 // Materializing UpdatedObjectInfo here also gives PATCH the existing object it
 // needs before the unified store performs the update.
 type libraryPanelAccessStorage struct {
-	store           rest.StandardStorage
+	store           libraryPanelStorage
 	table           rest.TableConvertor
 	resource        schema.GroupResource
 	authorize       libraryPanelAuthorizer
@@ -42,7 +50,7 @@ var (
 )
 
 func newLibraryPanelAccessStorage(
-	store rest.StandardStorage,
+	store libraryPanelStorage,
 	authorize libraryPanelAuthorizer,
 	authorizeUpdate libraryPanelUpdateAuthorizer,
 	validateDelete libraryPanelDeleteValidator,
@@ -84,7 +92,11 @@ func (s *libraryPanelAccessStorage) List(ctx context.Context, options *metainter
 }
 
 func (s *libraryPanelAccessStorage) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	return s.store.Watch(ctx, options)
+	watcher, ok := s.store.(rest.Watcher)
+	if !ok {
+		return nil, apierrors.NewMethodNotSupported(s.resource, "watch")
+	}
+	return watcher.Watch(ctx, options)
 }
 
 func (s *libraryPanelAccessStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
