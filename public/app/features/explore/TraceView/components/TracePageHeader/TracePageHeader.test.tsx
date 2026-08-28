@@ -155,8 +155,7 @@ describe('TracePageHeader test', () => {
     setup();
 
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading).toHaveTextContent('lb');
-    expect(heading).toHaveTextContent('HTTP Client');
+    expect(heading).toHaveTextContent('lb HTTP Client');
     expect(heading).not.toHaveTextContent('lb: HTTP Client');
     expect(screen.getByLabelText('Trace succeeded')).toBeInTheDocument();
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();

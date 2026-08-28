@@ -263,7 +263,9 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             />
           )}
           <h1 className={styles.title} aria-label={traceTitle}>
-            {serviceName && <span className={styles.serviceName}>{serviceName}</span>}
+            {serviceName && (
+              <span className={styles.serviceName}>{operationName ? `${serviceName} ` : serviceName}</span>
+            )}
             {operationName && <span className={styles.operationName}>{operationName}</span>}
           </h1>
           <div className={styles.badges}>
