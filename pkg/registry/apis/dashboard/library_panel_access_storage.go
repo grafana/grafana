@@ -12,6 +12,7 @@ import (
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -184,14 +185,20 @@ func (s *libraryPanelAccessStorage) Update(ctx context.Context, name string, obj
 }
 
 func (s *libraryPanelAccessStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	obj, err := s.store.Get(ctx, name, &metav1.GetOptions{})
+	namespace := requestcontext.NamespaceValue(ctx)
+	// The lookup only materializes the panel's authorization target. In legacy
+	// storage, Get applies the independent read permission, but delete must remain
+	// available to roles that grant delete without read. Use a namespace-scoped
+	// service identity for the lookup, then authorize and delete as the caller.
+	lookupCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	obj, err := s.store.Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
-	if err := s.authorize(ctx, obj, utils.VerbDelete, requestcontext.NamespaceValue(ctx)); err != nil {
+	if err := s.authorize(ctx, obj, utils.VerbDelete, namespace); err != nil {
 		return nil, false, err
 	}
-	if err := s.validateDelete(ctx, name, requestcontext.NamespaceValue(ctx)); err != nil {
+	if err := s.validateDelete(ctx, name, namespace); err != nil {
 		return nil, false, err
 	}
 	return s.store.Delete(ctx, name, deleteValidation, options)
