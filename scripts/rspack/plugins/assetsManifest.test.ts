@@ -120,6 +120,8 @@ describe('assets manifest', () => {
 
     const integrityMap = new Map(Object.values(entries).map((entry) => [entry.src, entry.integrity]));
     const entrypointFilePaths = Object.entries(entrypoints)
+      // Rspack injects an esModule flag into the entrypoints object as a temporary workaround for
+      // the backend to detect builds that emit es modules. Filtered here as it's not an actual entrypoint and has no assets.
       .filter(([name]) => name !== 'esModule')
       .flatMap(([, entrypoint]) => Object.values(entrypoint.assets).flat());
 
