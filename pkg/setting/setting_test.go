@@ -889,9 +889,9 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		require.Empty(t, cfg.FrontendDevServerURL)
 	})
 
-	// The harness runs in development mode and enforces a policy, so it reads the same shipped
-	// default as everyone else. It must still exercise the built assets, not a dev server a
-	// contributor happens to have running.
+	// The harness runs in development mode, so it would otherwise pick up the shipped default.
+	// It must exercise the built assets, not a dev server a contributor happens to have
+	// running, and its ini clears the setting to say so.
 	t.Run("the e2e harness never uses the dev server", func(t *testing.T) {
 		cfg := NewCfg()
 		require.NoError(t, cfg.Load(CommandLineArgs{

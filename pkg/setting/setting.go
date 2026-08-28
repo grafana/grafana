@@ -2431,10 +2431,10 @@ func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
 
 	// The page loads its assets from the dev server's own origin, which no `'self'` policy
 	// admits, so the browser would block every bundle. Ignoring the dev server serves the build
-	// on disk instead, which works. This is what keeps the e2e harness off the dev server: it
-	// runs in development mode with a policy enforced.
+	// on disk instead, which works. Warn rather than fail: defaults.ini ships a server_url, so
+	// refusing to start would strand anyone who enables a policy and never touched the setting.
 	if cfg.CSPEnabled {
-		cfg.Logger.Info("Ignoring frontend_dev.server_url, a content security policy is enforced", "url", raw)
+		cfg.Logger.Warn("Ignoring frontend_dev.server_url, a content security policy is enforced", "url", raw)
 		return
 	}
 
