@@ -1,4 +1,4 @@
-import { firstValueFrom } from 'rxjs';
+import { distinctUntilChanged, firstValueFrom, takeWhile } from 'rxjs';
 
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
@@ -230,12 +230,33 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
     // A live subscription, not a one-shot check: the assistant app plugin can still be loading
     // when this runs (its extension registration lands whenever its bundle finishes fetching),
-    // so availability can flip from false to true shortly after. forceRender() is needed because
-    // mutating `context` doesn't itself trigger a re-render.
-    isAssistantAvailable().subscribe((available) => {
-      context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;
-      vizPanel.forceRender();
-    });
+    // so availability can flip from false to true shortly after.
+    //
+    // Bounded rather than torn down, because there is nothing here to tear it down from:
+    // `extendPanelContext` is called from the panel's first render, when the panel is already
+    // active, so an activation handler registered here would only run on some later activation.
+    // `isAssistantAvailable()` is built on the plugin extension registries — it never completes
+    // and re-emits on every registration — so `distinctUntilChanged` drops that churn and
+    // `takeWhile` completes on the first `true`: availability never flips back, so once the
+    // answer is yes there is nothing left to watch.
+    let isFirstValue = true;
+
+    isAssistantAvailable()
+      .pipe(
+        distinctUntilChanged(),
+        takeWhile((available) => !available, true)
+      )
+      .subscribe((available) => {
+        context.onInvestigateErrors = available ? () => investigatePanelErrorsWithAssistant(vizPanel) : undefined;
+
+        // Mutating `context` isn't observable on its own, so a later flip needs a re-render. The
+        // first value arrives synchronously, while this panel context is still being built for the
+        // render that asked for it, where forceRender() (a setState) is both moot and unsafe.
+        if (!isFirstValue) {
+          vizPanel.forceRender();
+        }
+        isFirstValue = false;
+      });
   }
 }
 

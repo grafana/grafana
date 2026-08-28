@@ -641,6 +641,27 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalled();
     });
 
+    it('ignores registry churn that does not change availability, and stops watching once available', () => {
+      // `isAssistantAvailable()` re-emits on every plugin extension registration, not only when
+      // availability actually changes, so every panel would otherwise re-render on each one.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      availability.next(false);
+      expect(forceRenderSpy).not.toHaveBeenCalled();
+
+      availability.next(true);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+
+      // Availability never flips back, so the subscription completes here instead of living on
+      // past the panel it closes over — nothing in a panel context can tear it down.
+      expect(availability.observed).toBe(false);
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
