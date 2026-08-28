@@ -849,11 +849,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                 {...dropProvided.droppableProps}
               >
                 {cells.map((cell, index) => (
-                  // The trailing slot's own placeholder/"/" menu (see NotebookCellRenderer) keys off
-                  // whether a cell's own content is empty, not its position — the invariant above just
-                  // guarantees the last cell always qualifies, with the same drag handle, add button and
-                  // hover actions every other cell already has, since it's a real cell rendered through
-                  // the exact same path.
                   <NotebookCellFrame
                     key={cell.state.key}
                     cell={cell}
@@ -866,8 +861,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
-                    // Bound here rather than resolved inside the frame: the cells list belongs to the
-                    // manager, so the frame never needs to reach back up for its own position.
                     onAdd={onAdd}
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}

@@ -184,40 +184,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
   }),
   frameEditing: css({
-    // Wide enough for the drag handle and the add-cell button side by side — see the same numbers in
-    // NotebookCellActions.tsx, and dragging/dropLine below, which all anchor off this same gutter.
     paddingLeft: theme.spacing(7),
     marginLeft: theme.spacing(-7),
-    // Reserves blank space at the top of this frame's own box for the actions bar and its hover
-    // bridge (see actionsHoverBridge below) to sit in. Without it, they'd have nowhere to render
-    // except outside the box entirely — on top of whatever the previous cell happens to be.
     paddingTop: theme.spacing(3),
     [theme.breakpoints.up('md')]: {
       paddingLeft: theme.spacing(10),
       marginLeft: theme.spacing(-10),
     },
-    // The reveal, and only the reveal: the hidden state stays in each affordance's own single-class
-    // rule. A rule here setting opacity: 0 would out-specify the add button's own `revealed` class
-    // and hide it under its own open menu. `>` keeps it to this frame's own affordances.
     [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       opacity: 1,
-      // Paired with the actions bar's own `pointer-events: none`: while hidden it must not answer
-      // the hit test in the reserved band above the content. Reaching it from inside the frame still
-      // works — the frame is already hovered, so the bar is already interactive by the time the
-      // pointer arrives on it.
       pointerEvents: 'auto',
     },
   }),
   handle: css({
     position: 'absolute',
-    // frameEditing's padding-left now reserves exactly this gutter, so the handle sits flush at the
-    // padding box's own edge — no more reaching outside it with a negative offset.
     left: 0,
     width: theme.spacing(3),
     height: theme.spacing(3),
-    // Top-aligned rather than centred: spacing(4) clears the reserved band above (frameEditing's own
-    // paddingTop) and lines up with the first line of a narrative cell, whatever the cell's height.
-    // Centring would put the handle 150px down a panel cell.
     top: theme.spacing(4),
     display: 'flex',
     alignItems: 'center',
