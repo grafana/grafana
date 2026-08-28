@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"slices"
+	"strconv"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -51,16 +53,87 @@ func NewTrashAuthorizer(
 	}
 }
 
+// TrashItem is one object Prepare may need a folder check for.
+type TrashItem struct {
+	Folder    string
+	DeletedBy string
+}
+
+// Prepare resolves the folder checks items will need in one call per batch, so the
+// Allowed calls that follow read the cache instead of waiting for a round trip each.
+//
+// Only a hint: a folder left undecided is checked on its own by FolderAdmin.
+func (a *TrashAuthorizer) Prepare(ctx context.Context, items []TrashItem) {
+	var pending []string
+	seen := make(map[string]bool, len(items))
+	for _, item := range items {
+		if a.deletedByCaller(item.DeletedBy) || seen[item.Folder] {
+			continue
+		}
+		if _, decided := a.folderAdmin[item.Folder]; decided {
+			continue
+		}
+		seen[item.Folder] = true
+		pending = append(pending, item.Folder)
+	}
+
+	for batch := range slices.Chunk(pending, claims.MaxBatchCheckItems) {
+		a.prepareBatch(ctx, batch)
+	}
+}
+
+func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) {
+	checks := make([]claims.BatchCheckItem, 0, len(folders))
+	for i, folder := range folders {
+		checks = append(checks, claims.BatchCheckItem{
+			CorrelationID: strconv.Itoa(i),
+			Verb:          utils.VerbSetPermissions,
+			Group:         a.key.Group,
+			Resource:      a.key.Resource,
+			Folder:        folder,
+		})
+	}
+
+	resp, err := a.access.BatchCheck(ctx, a.user, claims.BatchCheckRequest{
+		Namespace: a.key.Namespace,
+		Checks:    checks,
+	})
+	if err != nil {
+		if a.onCheckError != nil {
+			a.onCheckError(err)
+		}
+		return
+	}
+
+	for i, folder := range folders {
+		result, ok := resp.Results[strconv.Itoa(i)]
+		if !ok {
+			continue
+		}
+		if result.Error != nil {
+			if a.onCheckError != nil {
+				a.onCheckError(result.Error)
+			}
+			continue
+		}
+		a.folderAdmin[folder] = result.Allowed
+	}
+}
+
 // Allowed reports whether the caller may see an object in folder deleted by
 // deletedBy.
 //
 // deletedBy is compared first because it needs no authorization call. The two
 // conditions are ORed, so the order affects only cost, not the answer.
 func (a *TrashAuthorizer) Allowed(ctx context.Context, folder, deletedBy string) bool {
-	if a.namespaceMatches && deletedBy != "" && deletedBy == a.user.GetUID() {
+	if a.deletedByCaller(deletedBy) {
 		return true
 	}
 	return a.FolderAdmin(ctx, folder)
+}
+
+func (a *TrashAuthorizer) deletedByCaller(deletedBy string) bool {
+	return a.namespaceMatches && deletedBy != "" && deletedBy == a.user.GetUID()
 }
 
 // FolderAdmin reports whether the caller administers folder.
