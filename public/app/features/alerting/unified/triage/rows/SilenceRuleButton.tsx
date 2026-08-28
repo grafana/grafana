@@ -4,8 +4,9 @@ import { useCallback, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
+import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
+import { type PromRulesResponse, prometheusApi } from '../../api/prometheusApi';
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
@@ -22,25 +23,12 @@ interface SilenceRuleButtonProps {
 export function SilenceRuleButton({ ruleUID }: SilenceRuleButtonProps) {
   const [showDrawer, setShowDrawer] = useState(false);
 
-  // Silencing is granted either across the org or per folder. The org-wide half is a plain
-  // permission check that costs nothing, so for most people the button is there immediately and
-  // this row never talks to the server.
-  const canSilenceOrgWide = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create }));
-
-  // Only when that isn't enough does it matter which folder the rule is in - and the rule is the
-  // only place to get that, since the list is built from metrics that carry the folder's name but
-  // not its UID. Skipped entirely for everyone else.
-  const { currentData: rulerRule } = alertRuleApi.endpoints.getAlertRule.useQuery(
-    canSilenceOrgWide ? skipToken : { uid: ruleUID }
-  );
-  const canSilenceInFolder = isGranted(
-    useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rulerRule?.grafana_alert.namespace_uid })
-  );
+  const canSilence = useCanSilenceRule(ruleUID);
 
   const handleOpen = useCallback(() => setShowDrawer(true), []);
   const handleClose = useCallback(() => setShowDrawer(false), []);
 
-  if (!canSilenceOrgWide && !canSilenceInFolder) {
+  if (!canSilence) {
     return null;
   }
 
@@ -55,4 +43,63 @@ export function SilenceRuleButton({ ruleUID }: SilenceRuleButtonProps) {
       {showDrawer && <SilenceGrafanaRuleDrawer ruleUid={ruleUID} onClose={handleClose} />}
     </>
   );
+}
+
+/**
+ * Whether the current user may silence this rule.
+ *
+ * Silencing is granted either across the org or per folder, and the two halves cost very different
+ * things to check. The org-wide half is a plain permission check with no I/O, so most people get an
+ * answer without this list touching the server at all.
+ *
+ * Only when that comes back empty does the rule's folder matter, and the rows can't supply it - the
+ * list is built from metrics carrying the folder's name but not its UID. Rather than look up each
+ * rule, we ask for the rules once and share the answer across every row.
+ */
+function useCanSilenceRule(ruleUID: string): boolean {
+  const canSilenceOrgWide = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create }));
+
+  // Same query arguments from every row, so the cache turns this into a single request for the
+  // whole page however many rules are on it.
+  const { currentData: rules } = prometheusApi.endpoints.getGrafanaGroups.useQuery(
+    canSilenceOrgWide ? skipToken : { limitAlerts: 0 }
+  );
+
+  const folderUID = ruleFolderIndex(rules)?.get(ruleUID);
+  const canSilenceInFolder = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID }));
+
+  return canSilenceOrgWide || canSilenceInFolder;
+}
+
+/**
+ * Rule UID to the UID of the folder it lives in.
+ *
+ * Keyed on the response itself so the index is built once per response rather than once per row -
+ * the cache hands every row the same object.
+ */
+const folderIndexes = new WeakMap<object, Map<string, string>>();
+
+function ruleFolderIndex(
+  response: PromRulesResponse<GrafanaPromRuleGroupDTO> | undefined
+): Map<string, string> | undefined {
+  if (!response) {
+    return undefined;
+  }
+
+  const cached = folderIndexes.get(response);
+  if (cached) {
+    return cached;
+  }
+
+  const index = new Map<string, string>();
+  for (const group of response.data.groups) {
+    for (const rule of group.rules) {
+      if ('uid' in rule && rule.uid) {
+        index.set(rule.uid, group.folderUid);
+      }
+    }
+  }
+  folderIndexes.set(response, index);
+
+  return index;
 }
