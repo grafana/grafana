@@ -14,9 +14,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
+	dashinternal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -24,9 +29,11 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -307,6 +314,71 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 				Name:      "panel-a",
 			}, gotRequest)
 			require.Equal(t, tt.expectedFolder, gotFolder)
+		})
+	}
+}
+
+func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, dashv0.AddToScheme(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	optsGetter, err := apistore.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: codecs.LegacyCodec(dashv0.LibraryPanelResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		selectStorage func(legacy, unified grafanarest.Storage) grafanarest.Storage
+	}{
+		{
+			name: "legacy storage selected",
+			selectStorage: func(legacy, _ grafanarest.Storage) grafanarest.Storage {
+				return legacy
+			},
+		},
+		{
+			name: "unified storage selected",
+			selectStorage: func(_, unified grafanarest.Storage) grafanarest.Storage {
+				return unified
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var selectedStorage grafanarest.Storage
+			builder := &DashboardsAPIBuilder{}
+			groupInfo := &genericapiserver.APIGroupInfo{
+				VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
+			}
+			err := builder.storageForVersion(
+				groupInfo,
+				apiserverbuilder.APIGroupOptions{
+					Scheme:     scheme,
+					OptsGetter: optsGetter,
+					DualWriteBuilder: func(_ schema.GroupResource, legacy, unified grafanarest.Storage) (grafanarest.Storage, error) {
+						selectedStorage = tt.selectStorage(legacy, unified)
+						return selectedStorage, nil
+					},
+				},
+				dashv0.DashboardResourceInfo,
+				&dashv0.LibraryPanelResourceInfo,
+				nil,
+				func(runtime.Object, *dashinternal.DashboardAccess) (runtime.Object, error) {
+					return &dashv0.DashboardWithAccessInfo{}, nil
+				},
+			)
+			require.NoError(t, err)
+
+			versionStorage := groupInfo.VersionedResourcesStorageMap[dashv0.LibraryPanelResourceInfo.GroupVersion().Version]
+			installedStorage := versionStorage[dashv0.LibraryPanelResourceInfo.StoragePath()]
+			require.IsType(t, &libraryPanelAccessStorage{}, installedStorage)
+			wrapper := installedStorage.(*libraryPanelAccessStorage)
+			require.Same(t, selectedStorage, wrapper.store)
+
+			_, dashboardWrapped := versionStorage[dashv0.DashboardResourceInfo.StoragePath()].(*libraryPanelAccessStorage)
+			require.False(t, dashboardWrapped, "library panel authorization must not wrap dashboard storage")
 		})
 	}
 }

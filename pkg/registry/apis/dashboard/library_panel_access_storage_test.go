@@ -7,10 +7,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	requestcontext "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -59,7 +61,7 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 	require.Equal(t, "patched", description)
 }
 
-func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
+func TestLibraryPanelAccessStorageRejectsDeniedWrites(t *testing.T) {
 	panel := testLibraryPanel("panel-a", "general")
 	backend := &recordingLibraryPanelStorage{object: panel}
 	denied := apierrors.NewForbidden(
@@ -70,7 +72,7 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 	storage := newLibraryPanelAccessStorage(
 		backend,
 		func(_ context.Context, _ runtime.Object, verb, _ string) error {
-			if verb == utils.VerbDelete {
+			if verb == utils.VerbCreate || verb == utils.VerbDelete {
 				return denied
 			}
 			return nil
@@ -80,7 +82,10 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
+	_, err := storage.Create(context.Background(), panel, nil, &metav1.CreateOptions{})
+	require.ErrorIs(t, err, denied)
+
+	_, _, err = storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.updateCalled)
 
@@ -149,11 +154,56 @@ func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
 	require.False(t, backend.updateCalled)
 }
 
+func TestLibraryPanelAccessStoragePreservesWatchSupport(t *testing.T) {
+	expected := watch.NewFake()
+	backend := &watchableLibraryPanelStorage{
+		nonWatchableLibraryPanelStorage: &nonWatchableLibraryPanelStorage{},
+		watcher:                         expected,
+	}
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	actual, err := storage.Watch(context.Background(), &metainternalversion.ListOptions{})
+	require.NoError(t, err)
+	require.Same(t, expected, actual)
+}
+
+func TestLibraryPanelAccessStorageRejectsWatchWhenSelectedStorageCannotWatch(t *testing.T) {
+	storage := newLibraryPanelAccessStorage(
+		&nonWatchableLibraryPanelStorage{},
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	_, err := storage.Watch(context.Background(), &metainternalversion.ListOptions{})
+	require.True(t, apierrors.IsMethodNotSupported(err))
+}
+
 type recordingLibraryPanelStorage struct {
 	rest.StandardStorage
 	object       runtime.Object
 	updateCalled bool
 	deleteCalled bool
+}
+
+type nonWatchableLibraryPanelStorage struct {
+	libraryPanelStorage
+}
+
+type watchableLibraryPanelStorage struct {
+	*nonWatchableLibraryPanelStorage
+	watcher watch.Interface
+}
+
+func (s *watchableLibraryPanelStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
+	return s.watcher, nil
 }
 
 func (s *recordingLibraryPanelStorage) Get(context.Context, string, *metav1.GetOptions) (runtime.Object, error) {
