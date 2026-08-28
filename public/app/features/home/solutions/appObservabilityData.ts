@@ -3,32 +3,39 @@ import { type DataSourceInstanceListItem, type DataSourceInstanceSettings, type 
 import { PROBE_TIMEOUT_MS } from './probeUtils';
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 import {
+  APP_SPAN_KINDS,
   CLOUD_UTILITY_PROM_DATASOURCE_UIDS,
   DATA_LOOKBACK_HOURS,
   probeFound,
+  SPAN_METRICS_CALL_NAMES,
   SPAN_METRICS_PROBE,
 } from './solutionDataProbes';
 
 export interface AppObservabilityStats {
   services: number | null;
-  /** 24h fleet error ratio over server spans. */
+  /** 24h fleet error ratio over server-side (SERVER|CONSUMER) spans. */
   errorRatio: number | null;
 }
 
 // "Seen recently" lookback matching the shared data probes.
 const LOOKBACK = `${DATA_LOOKBACK_HOURS}h`;
 
-// Span metrics arrive under two emitter namings (see SPAN_METRICS_PROBE): the spanmetrics
-// connector emits traces_spanmetrics_* with a `service` label, OTel/Alloy emits
-// traces_span_metrics_* with `service_name`. Every query unions both families with `or`; a
-// service dual-emitting both namings during a pipeline migration counts twice — accepted.
-//
-// errorRatio counts server spans only so client/internal spans don't multiply one request,
-// matching the trace-based alerting guidance. `or vector(0)` on the numerator keeps an
-// error-free fleet at 0% while a failed query still reads null.
+// Server-side traffic per the app's own definition (its makeRedLabels): SERVER plus CONSUMER,
+// so message-queue consumers count as request handlers.
+const SERVER_SIDE = 'span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"';
+
+// Left-biased series union of the three emitter namings (see SPAN_METRICS_CALL_NAMES).
+// `or` does not deduplicate: the job-keyed count collapses dual-emitting pipelines, while the
+// fleet sums below can briefly inflate during a naming migration — accepted.
+const overCallFamilies = (expr: (metric: string) => string) => SPAN_METRICS_CALL_NAMES.map(expr).join(' or ');
+
+// services counts instrumented jobs with span metrics in the lookback, keyed by `job` like the
+// app's Services inventory. job=~".+" keeps unidentifiable (jobless) series from reading as one
+// phantom service; they still count as traffic in the fleet sums below, which need no identity.
+// errorRatio: `or vector(0)` keeps an error-free fleet at 0% while a failed query reads null.
 const STATS_QUERIES: Record<string, string> = {
-  services: `count(count by (service, service_name) (last_over_time(traces_spanmetrics_calls_total[${LOOKBACK}]) or last_over_time(traces_span_metrics_calls_total[${LOOKBACK}])))`,
-  errorRatio: `(sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[${LOOKBACK}]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[${LOOKBACK}])) or vector(0)) / sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[${LOOKBACK}]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER"}[${LOOKBACK}]))`,
+  services: `count(count by (job) (${overCallFamilies((m) => `last_over_time(${m}{job=~".+",${APP_SPAN_KINDS}}[${LOOKBACK}])`)}))`,
+  errorRatio: `(sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE},status_code="STATUS_CODE_ERROR"}[${LOOKBACK}])`)}) or vector(0)) / sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[${LOOKBACK}])`)})`,
 };
 
 // Single attempt inside the probe timeout; errors read as no data in the parallel scan.
@@ -54,7 +61,7 @@ export async function fetchAppObservabilityStats(
   };
 }
 
-/** Server-span request rate over 24h; null when the span metrics are absent. */
+/** Server-side request rate over 24h; null when the span metrics are absent. */
 export async function fetchAppObservabilityRequestSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>
 ): Promise<FieldSparkline | null> {
@@ -62,7 +69,7 @@ export async function fetchAppObservabilityRequestSeries(
     'requests',
     // [5m] rate window: span metrics are scrape-cadence series, so the synthetics-style
     // window widening is unnecessary.
-    'sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[5m]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER"}[5m]))',
+    `sum(${overCallFamilies((m) => `rate(${m}{${SERVER_SIDE}}[5m])`)})`,
     24,
     ds
   );

@@ -13,9 +13,22 @@ import {
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
 
-// Span metrics prove App Observability is in use, under both supported emitter namings:
-// the spanmetrics connector emits traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
-export const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
+// Span metrics prove App Observability is in use, under all three supported emitter namings
+// (the plugin's metricNames.ts): Tempo metrics-generator/legacy/Beyla emit traces_spanmetrics_*,
+// OTel collector >=0.109 emits traces_span_metrics_*, older collectors emit bare calls_total.
+export const SPAN_METRICS_CALL_NAMES = [
+  'traces_spanmetrics_calls_total',
+  'traces_span_metrics_calls_total',
+  'calls_total',
+] as const;
+
+// The plugin's own inventory selector (makeServicesScene.ts). Mandatory with the bare
+// calls_total name: it reduces false positives from unrelated counters sharing that name.
+export const APP_SPAN_KINDS = 'span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"';
+
+export const SPAN_METRICS_PROBE = SPAN_METRICS_CALL_NAMES.map(
+  (m) => `count(last_over_time(${m}{${APP_SPAN_KINDS}}[${DATA_LOOKBACK_HOURS}h]))`
+).join(' or ');
 
 // Platform telemetry, never the org's product data: excluded unconditionally.
 export const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([

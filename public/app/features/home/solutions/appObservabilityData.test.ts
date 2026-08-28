@@ -6,7 +6,7 @@ import {
   probeSpanMetrics,
 } from './appObservabilityData';
 import { runInstantQueries, runRangeQuery } from './promQuery';
-import { probeFound, SPAN_METRICS_PROBE } from './solutionDataProbes';
+import { probeFound } from './solutionDataProbes';
 
 jest.mock('./promQuery', () => ({
   ...jest.requireActual('./promQuery'),
@@ -23,14 +23,15 @@ const runInstantQueriesMock = jest.mocked(runInstantQueries);
 const runRangeQueryMock = jest.mocked(runRangeQuery);
 const probeFoundMock = jest.mocked(probeFound);
 
-// Frozen query contracts: both emitter namings unioned everywhere, the server-span filter on
-// errorRatio and the request rate only, and the `or vector(0)` numerator on errorRatio.
+// Frozen query contracts: the three emitter namings unioned everywhere, the bounded span-kind
+// guard plus `job=~".+"` on the job-keyed service count, the server-side (SERVER|CONSUMER)
+// filter on errorRatio and the request rate, and the `or vector(0)` numerator on errorRatio.
 const SERVICES_QUERY =
-  'count(count by (service, service_name) (last_over_time(traces_spanmetrics_calls_total[24h]) or last_over_time(traces_span_metrics_calls_total[24h])))';
+  'count(count by (job) (last_over_time(traces_spanmetrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]) or last_over_time(traces_span_metrics_calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]) or last_over_time(calls_total{job=~".+",span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])))';
 const ERROR_RATIO_QUERY =
-  '(sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[24h]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER",status_code="STATUS_CODE_ERROR"}[24h])) or vector(0)) / sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[24h]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER"}[24h]))';
+  '(sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER",status_code="STATUS_CODE_ERROR"}[24h])) or vector(0)) / sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[24h]))';
 const REQUEST_RATE_QUERY =
-  'sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[5m]) or rate(traces_span_metrics_calls_total{span_kind="SPAN_KIND_SERVER"}[5m]))';
+  'sum(rate(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) or rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) or rate(calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))';
 
 const listItem: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -59,7 +60,14 @@ describe('probeSpanMetrics', () => {
     runInstantQueriesMock.mockResolvedValue([numberFrame('probe', [3])]);
 
     await expect(probeSpanMetrics()).resolves.toBe(listItem);
-    expect(runInstantQueriesMock).toHaveBeenCalledWith({ probe: SPAN_METRICS_PROBE }, listItem, expect.any(Number));
+    expect(runInstantQueriesMock).toHaveBeenCalledWith(
+      {
+        probe:
+          'count(last_over_time(traces_spanmetrics_calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])) or count(last_over_time(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h])) or count(last_over_time(calls_total{span_kind=~"SPAN_KIND_(CLIENT|PRODUCER|SERVER|CONSUMER)"}[24h]))',
+      },
+      listItem,
+      expect.any(Number)
+    );
   });
 
   it('returns null when no span-metrics series exists', async () => {
