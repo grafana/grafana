@@ -1,18 +1,18 @@
+import rspack, { type Compiler } from '@rspack/core';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import webpack, { type Compiler } from 'webpack';
 
-// webpack is CommonJS, so native node (which loads this config) can't import these as named values
-const { sources, Compilation } = webpack;
+// rspack exposes these as properties of the default export
+const { sources, Compilation } = rspack;
 
-// plugins/ -> webpack/ -> scripts/ -> repo root
+// plugins/ -> rspack/ -> scripts/ -> repo root
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 // selector source that, when changed in watch mode, should trigger a regenerate
 const selectorsSrc = path.join('packages', 'grafana-e2e-selectors', 'src');
 
 // runs the generator in a subprocess (tsx) and captures the JSON on stdout. we shell out rather than
-// import the generator directly because the webpack config is loaded by native node, which can't resolve
+// import the generator directly because the rspack config is loaded by native node, which can't resolve
 // the selector source's extensionless imports; tsx (esbuild resolution) can.
 function generate(): string {
   return execFileSync('yarn', ['workspace', '@grafana/e2e-selectors', 'generate-e2e-selectors-json', '--stdout'], {
