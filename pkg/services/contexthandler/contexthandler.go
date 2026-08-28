@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -30,11 +31,13 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
+	jwtService jwt.JWTService,
 ) *ContextHandler {
 	return &ContextHandler{
 		cfg:           cfg,
 		authenticator: authenticator,
 		features:      features,
+		jwtService:    jwtService,
 	}
 }
 
@@ -43,6 +46,7 @@ type ContextHandler struct {
 	cfg           *setting.Cfg
 	authenticator authn.Authenticator
 	features      featuremgmt.FeatureToggles
+	jwtService    jwt.JWTService
 }
 
 type reqContextKey = ctxkey.Key
@@ -119,8 +123,12 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	// inject ReqContext in the context
 	ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
+	// Snapshot the JWT settings once so authentication and outbound header
+	// clearing observe the same values for the whole request.
+	jwtSettings := h.jwtService.Settings()
+	ctx = jwt.WithSettings(ctx, jwtSettings)
 	// store list of possible auth header in context
-	ctx = WithAuthHTTPHeaders(ctx, h.cfg)
+	ctx = WithAuthHTTPHeaders(ctx, h.cfg, jwtSettings)
 	// Set the context for the http.Request.Context
 	// This modifies both r and reqContext.Req since they point to the same value
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)
@@ -246,7 +254,7 @@ func GetAuthHTTPHeaders(jwtAuth *setting.AuthJWTSettings, authProxy *setting.Aut
 
 // WithAuthHTTPHeaders returns a new context in which all possible configured auth header will be included
 // and later retrievable by AuthHTTPHeaderListFromContext.
-func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
+func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg, jwtAuth setting.AuthJWTSettings) context.Context {
 	list := AuthHTTPHeaderListFromContext(ctx)
 	if list == nil {
 		list = &AuthHTTPHeaderList{
@@ -254,7 +262,7 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 		}
 	}
 
-	list.Items = append(list.Items, GetAuthHTTPHeaders(&cfg.JWTAuth, &cfg.AuthProxy)...)
+	list.Items = append(list.Items, GetAuthHTTPHeaders(&jwtAuth, &cfg.AuthProxy)...)
 
 	return context.WithValue(ctx, authHTTPHeaderListKey, list)
 }
