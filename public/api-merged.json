@@ -12162,7 +12162,7 @@
     }
   },
   "definitions": {
-    "AccesscontrolStatus": {
+    "AccessControlStatus": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -13423,10 +13423,6 @@
           "type": "string"
         }
       }
-    },
-    "BackendStatus": {
-      "type": "integer",
-      "format": "int64"
     },
     "BacktestConfig": {
       "type": "object",
@@ -15223,12 +15219,7 @@
     "DsPermissionType": {
       "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
       "type": "integer",
-      "format": "int64",
-      "enum": [
-        0,
-        1,
-        2
-      ]
+      "format": "int64"
     },
     "Duration": {
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
@@ -24400,7 +24391,7 @@
     "getAccessControlStatusResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/AccesscontrolStatus"
+        "$ref": "#/definitions/AccessControlStatus"
       }
     },
     "getAllRolesResponse": {
