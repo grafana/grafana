@@ -94,7 +94,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
     'application-observability': pluginCard({
       id: 'application-observability',
       pluginId: APP_OBSERVABILITY_APP_ID,
-      appPath: '',
+      appPath: '/landing',
       icon: 'application-observability',
       color: (theme) => theme.visualization.getColorByName('green'),
       title: t('home.recommendations.application-observability.title', 'Explore your service map'),

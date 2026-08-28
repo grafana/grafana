@@ -2,10 +2,10 @@ import { renderHook } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
+import { appObservabilitySolution } from './solutions/appObservabilitySolution';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution, type SolutionId } from './solutions/types';
@@ -16,16 +16,16 @@ jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
 jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
-jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
+jest.mock('./solutions/appObservabilitySolution', () => ({ appObservabilitySolution: jest.fn() }));
 
 const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
   kubernetes: jest.mocked(kubernetesSolution),
   traces: jest.mocked(tracesSolution),
   metrics: jest.mocked(metricsSolution),
   logs: jest.mocked(logsSolution),
+  'app-observability': jest.mocked(appObservabilitySolution),
   synthetics: jest.mocked(syntheticsSolution),
 };
-const mockProbeSpanMetrics = jest.mocked(probeSpanMetrics);
 
 const datasource: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -61,12 +61,12 @@ beforeEach(() => {
     traces: solution('traces', 'unknown'),
     metrics: solution('metrics', 'active'),
     logs: solution('logs', 'inactive'),
+    'app-observability': solution('app-observability', 'active'),
     synthetics: solution('synthetics'),
   };
   for (const id of Object.keys(mockFactories) as SolutionId[]) {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
   }
-  mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
 });
 
 describe('useHomepageSolutions', () => {
@@ -89,7 +89,6 @@ describe('useHomepageSolutions', () => {
         expect(getter).not.toHaveBeenCalled();
       }
     }
-    expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
   });
 
   it('returns solutions in display order', () => {
@@ -100,6 +99,7 @@ describe('useHomepageSolutions', () => {
       'metrics',
       'logs',
       'traces',
+      'app-observability',
       'synthetics',
     ]);
   });
@@ -132,15 +132,7 @@ describe('useHomepageSolutions', () => {
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.kubernetes.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
-    expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
-  });
-
-  it('shares the memoized span-metrics probe between repeated snapshot reads', async () => {
-    const { result } = renderHook(() => useHomepageSolutions());
-
-    await Promise.all([result.current.signals(), result.current.signals()]);
-
-    expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(fixtures['app-observability'].signal).toHaveBeenCalledTimes(1);
   });
 
   it('maps a rejecting solution getter to unknown without rejecting the snapshot', async () => {

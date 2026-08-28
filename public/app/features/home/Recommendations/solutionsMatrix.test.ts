@@ -126,6 +126,16 @@ describe('orderCardsForSolution', () => {
     expect(orderCardsForSolution(cards, 'traces')).toEqual(['application-observability', 'kubernetes-monitoring']);
   });
 
+  it('leads mlt with K8s Monitoring for the App Observability view, demoting its own card', () => {
+    const { cards } = selectRecommendations(state(on, on, on, off));
+
+    expect(cards).toEqual(['application-observability', 'kubernetes-monitoring']);
+    expect(orderCardsForSolution(cards, 'app-observability')).toEqual([
+      'kubernetes-monitoring',
+      'application-observability',
+    ]);
+  });
+
   it('only reorders: every solution view yields a permutation of every reachable selection', () => {
     // All 12 reachable core combinations (kubernetes ⇒ metrics removes 4 of 16).
     const reachable: SolutionState[] = (['active', 'inactive'] as const).flatMap((m) =>

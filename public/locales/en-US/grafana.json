@@ -11343,6 +11343,16 @@
       "title": "Recommendations for your stack"
     },
     "solutions": {
+      "app-observability": {
+        "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces.",
+        "request-trend": "Request rate · last 24h",
+        "services_one": "{{value}} service",
+        "services_other": "{{value}} services",
+        "setup": "Set up Application Observability",
+        "setup-hint": "requires instrumentation",
+        "stats": "{{percent}}% errors · 24h",
+        "title": "Application Observability"
+      },
       "cta": {
         "enable": "Enable",
         "open-app": "Open {{appName}}",

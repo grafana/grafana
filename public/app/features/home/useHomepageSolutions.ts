@@ -1,12 +1,11 @@
-import memoize from 'micro-memoize';
 import { useMemo } from 'react';
 
+import { appObservabilitySolution } from './solutions/appObservabilitySolution';
 import { SOLUTION_IDS } from './solutions/constants';
 import { kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsSolution } from './solutions/metricsSolution';
-import { detectSignal, type SolutionState } from './solutions/solutionState';
-import { probeSpanMetrics } from './solutions/spanMetricsSignal';
+import { type SolutionState } from './solutions/solutionState';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution } from './solutions/types';
@@ -29,11 +28,9 @@ export function useHomepageSolutions(): HomepageSolutions {
       traces: tracesSolution(),
       metrics: metricsSolution(),
       logs: logsSolution(),
+      'app-observability': appObservabilitySolution(),
       synthetics: syntheticsSolution(),
     };
-
-    // App Observability is not a homepage solution; only the recommendation matrix reads this signal.
-    const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
 
     // Read core signals from their solutions so detection stays owned and memoized there.
     const signals = async (): Promise<SolutionState> => {
@@ -42,9 +39,7 @@ export function useHomepageSolutions(): HomepageSolutions {
         byId.logs.signal().catch(() => 'unknown' as const),
         byId.traces.signal().catch(() => 'unknown' as const),
         byId.kubernetes.signal().catch(() => 'unknown' as const),
-        spanMetricsSignal()
-          .then(({ status }) => status)
-          .catch(() => 'unknown' as const),
+        byId['app-observability'].signal().catch(() => 'unknown' as const),
         byId.synthetics.signal().catch(() => 'unknown' as const),
       ]);
       return { metrics, logs, traces, kubernetes, spanMetrics, synthetics };
