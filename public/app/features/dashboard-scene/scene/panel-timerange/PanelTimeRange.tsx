@@ -184,11 +184,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       // Only evaluate if the timeFrom if parent time is relative
       if (rangeUtil.isRelativeTimeRange(parentTimeRange.raw)) {
         const timezone = this.getTimeZone();
-        newTimeData.timeRange = {
-          from: dateMath.toDateTime(timeFromInfo.from, { timezone })!,
-          to: dateMath.toDateTime(timeFromInfo.to, { timezone })!,
-          raw: { from: timeFromInfo.from, to: timeFromInfo.to },
-        };
+        const from = dateMath.toDateTime(timeFromInfo.from, { timezone });
+        const to = dateMath.toDateTime(timeFromInfo.to, { timezone });
+        if (!from || !to) {
+          newTimeData.timeInfo = 'invalid time override';
+          return newTimeData;
+        }
+        newTimeData.timeRange = { from, to, raw: { from: timeFromInfo.from, to: timeFromInfo.to } };
         infoBlocks.push(timeFromInfo.display);
       }
     }

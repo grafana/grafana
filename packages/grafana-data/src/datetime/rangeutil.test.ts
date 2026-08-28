@@ -6,6 +6,7 @@ import {
   describeInterval,
   describeTimeRange,
   isRelativeTimeRange,
+  isValidTimeSpan,
   relativeToTimeRange,
   roundInterval,
   timeRangeToRelative,
@@ -461,5 +462,23 @@ describe('describeTextRange', () => {
   it('should handle now/y', () => {
     const info = describeTextRange('now/y');
     expect(info.display).toBe('This year so far');
+  });
+
+  it('should mark unparsable values as invalid even when the regex matches (#131339)', () => {
+    // The regex at line 414 is intentionally loose (unbounded digit
+    // group, not anchored at the end) so the user can type partial
+    // inputs. The parser, however, enforces a tighter grammar.
+    // Without the cross-check, a value like '604800s' matches the
+    // regex and gets a `display` string, but `isValidTimeSpan` reads
+    // `invalid` as `undefined` rather than `true`, so the value
+    // passes validation and a downstream caller ends up with
+    // `range.from === undefined`, which throws a `valueOf` TypeError
+    // at render time.
+    const info = describeTextRange('604800s');
+    expect(info.invalid).toBe(true);
+  });
+
+  it('isValidTimeSpan should reject values the parser rejects', () => {
+    expect(isValidTimeSpan('604800s')).toBe(false);
   });
 });
