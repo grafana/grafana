@@ -373,14 +373,33 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 
 			versionStorage := groupInfo.VersionedResourcesStorageMap[dashv0.LibraryPanelResourceInfo.GroupVersion().Version]
 			installedStorage := versionStorage[dashv0.LibraryPanelResourceInfo.StoragePath()]
-			require.IsType(t, &libraryPanelAccessStorage{}, installedStorage)
-			wrapper := installedStorage.(*libraryPanelAccessStorage)
+			var wrapper *libraryPanelAccessStorage
+			switch typed := installedStorage.(type) {
+			case *libraryPanelAccessStorage:
+				wrapper = typed
+			case *libraryPanelAccessStorageWithWatch:
+				wrapper = typed.libraryPanelAccessStorage
+			case *libraryPanelAccessStorageWithDeleteCollection:
+				wrapper = typed.libraryPanelAccessStorage
+			case *libraryPanelAccessStorageWithWatchAndDeleteCollection:
+				wrapper = typed.libraryPanelAccessStorage
+			}
+			ok := wrapper != nil
+			require.True(t, ok)
 			require.Same(t, selectedStorage, wrapper.store)
 
 			_, dashboardWrapped := versionStorage[dashv0.DashboardResourceInfo.StoragePath()].(*libraryPanelAccessStorage)
 			require.False(t, dashboardWrapped, "library panel authorization must not wrap dashboard storage")
 		})
 	}
+}
+
+func TestDashboardAPIBuilder_LibraryPanelFolderValidationAllowsProvisioningIdentity(t *testing.T) {
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
+	require.NoError(t, err)
+
+	builder := &DashboardsAPIBuilder{}
+	require.NoError(t, builder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "provisioned-folder")))
 }
 
 func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinationAccess(t *testing.T) {

@@ -45,9 +45,25 @@ type libraryPanelAccessStorage struct {
 }
 
 var (
-	_ rest.StandardStorage = (*libraryPanelAccessStorage)(nil)
-	_ rest.TableConvertor  = (*libraryPanelAccessStorage)(nil)
+	_ libraryPanelStorage    = (*libraryPanelAccessStorage)(nil)
+	_ rest.TableConvertor    = (*libraryPanelAccessStorage)(nil)
+	_ rest.Watcher           = (*libraryPanelAccessStorageWithWatch)(nil)
+	_ rest.CollectionDeleter = (*libraryPanelAccessStorageWithDeleteCollection)(nil)
 )
+
+type libraryPanelAccessStorageWithWatch struct {
+	*libraryPanelAccessStorage
+	watcher rest.Watcher
+}
+
+type libraryPanelAccessStorageWithDeleteCollection struct {
+	*libraryPanelAccessStorage
+}
+
+type libraryPanelAccessStorageWithWatchAndDeleteCollection struct {
+	*libraryPanelAccessStorageWithDeleteCollection
+	watcher rest.Watcher
+}
 
 func newLibraryPanelAccessStorage(
 	store libraryPanelStorage,
@@ -55,9 +71,9 @@ func newLibraryPanelAccessStorage(
 	authorizeUpdate libraryPanelUpdateAuthorizer,
 	validateDelete libraryPanelDeleteValidator,
 	validateFolder libraryPanelFolderValidator,
-) *libraryPanelAccessStorage {
+) libraryPanelStorage {
 	table, _ := store.(rest.TableConvertor)
-	return &libraryPanelAccessStorage{
+	storage := &libraryPanelAccessStorage{
 		store:           store,
 		table:           table,
 		resource:        schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"},
@@ -66,6 +82,25 @@ func newLibraryPanelAccessStorage(
 		validateDelete:  validateDelete,
 		validateFolder:  validateFolder,
 	}
+	watcher, canWatch := store.(rest.Watcher)
+	_, canDeleteCollection := store.(rest.CollectionDeleter)
+	switch {
+	case canWatch && canDeleteCollection:
+		return &libraryPanelAccessStorageWithWatchAndDeleteCollection{
+			libraryPanelAccessStorageWithDeleteCollection: &libraryPanelAccessStorageWithDeleteCollection{
+				libraryPanelAccessStorage: storage,
+			},
+			watcher: watcher,
+		}
+	case canWatch:
+		return &libraryPanelAccessStorageWithWatch{
+			libraryPanelAccessStorage: storage,
+			watcher:                   watcher,
+		}
+	case canDeleteCollection:
+		return &libraryPanelAccessStorageWithDeleteCollection{libraryPanelAccessStorage: storage}
+	}
+	return storage
 }
 
 func (s *libraryPanelAccessStorage) New() runtime.Object     { return s.store.New() }
@@ -91,12 +126,12 @@ func (s *libraryPanelAccessStorage) List(ctx context.Context, options *metainter
 	return s.store.List(ctx, options)
 }
 
-func (s *libraryPanelAccessStorage) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	watcher, ok := s.store.(rest.Watcher)
-	if !ok {
-		return nil, apierrors.NewMethodNotSupported(s.resource, "watch")
-	}
-	return watcher.Watch(ctx, options)
+func (s *libraryPanelAccessStorageWithWatch) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	return s.watcher.Watch(ctx, options)
+}
+
+func (s *libraryPanelAccessStorageWithWatchAndDeleteCollection) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
+	return s.watcher.Watch(ctx, options)
 }
 
 func (s *libraryPanelAccessStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
@@ -162,6 +197,6 @@ func (s *libraryPanelAccessStorage) Delete(ctx context.Context, name string, del
 	return s.store.Delete(ctx, name, deleteValidation, options)
 }
 
-func (s *libraryPanelAccessStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+func (s *libraryPanelAccessStorageWithDeleteCollection) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
 	return nil, apierrors.NewMethodNotSupported(s.resource, "deletecollection")
 }

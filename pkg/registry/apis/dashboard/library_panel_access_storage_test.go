@@ -168,12 +168,14 @@ func TestLibraryPanelAccessStoragePreservesWatchSupport(t *testing.T) {
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	actual, err := storage.Watch(context.Background(), &metainternalversion.ListOptions{})
+	watcher, ok := storage.(rest.Watcher)
+	require.True(t, ok)
+	actual, err := watcher.Watch(context.Background(), &metainternalversion.ListOptions{})
 	require.NoError(t, err)
 	require.Same(t, expected, actual)
 }
 
-func TestLibraryPanelAccessStorageRejectsWatchWhenSelectedStorageCannotWatch(t *testing.T) {
+func TestLibraryPanelAccessStorageDoesNotAdvertiseWatchWhenSelectedStorageCannotWatch(t *testing.T) {
 	storage := newLibraryPanelAccessStorage(
 		&nonWatchableLibraryPanelStorage{},
 		func(context.Context, runtime.Object, string, string) error { return nil },
@@ -182,7 +184,24 @@ func TestLibraryPanelAccessStorageRejectsWatchWhenSelectedStorageCannotWatch(t *
 		func(context.Context, runtime.Object) error { return nil },
 	)
 
-	_, err := storage.Watch(context.Background(), &metainternalversion.ListOptions{})
+	_, ok := storage.(rest.Watcher)
+	require.False(t, ok)
+	_, ok = storage.(rest.CollectionDeleter)
+	require.False(t, ok)
+}
+
+func TestLibraryPanelAccessStoragePreservesDeleteCollectionCapability(t *testing.T) {
+	storage := newLibraryPanelAccessStorage(
+		&collectionDeletingLibraryPanelStorage{nonWatchableLibraryPanelStorage: &nonWatchableLibraryPanelStorage{}},
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	deleter, ok := storage.(rest.CollectionDeleter)
+	require.True(t, ok)
+	_, err := deleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &metainternalversion.ListOptions{})
 	require.True(t, apierrors.IsMethodNotSupported(err))
 }
 
@@ -200,6 +219,14 @@ type nonWatchableLibraryPanelStorage struct {
 type watchableLibraryPanelStorage struct {
 	*nonWatchableLibraryPanelStorage
 	watcher watch.Interface
+}
+
+type collectionDeletingLibraryPanelStorage struct {
+	*nonWatchableLibraryPanelStorage
+}
+
+func (s *collectionDeletingLibraryPanelStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+	return nil, nil
 }
 
 func (s *watchableLibraryPanelStorage) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {

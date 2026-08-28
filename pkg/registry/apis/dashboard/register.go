@@ -548,6 +548,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 }
 
 func (b *DashboardsAPIBuilder) validateLibraryPanelFolder(ctx context.Context, obj runtime.Object) error {
+	if auth, ok := authlib.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(auth) {
+		return nil
+	}
 	_, folderUID, err := libraryPanelAuthorizationTarget(obj)
 	if err != nil {
 		return err
