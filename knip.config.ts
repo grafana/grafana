@@ -33,6 +33,8 @@ const config: KnipConfig = {
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
+    'public/app/core/utils/CorsWorker.rspack.ts',
+    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
