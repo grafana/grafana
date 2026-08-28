@@ -203,12 +203,12 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 }
 
 // allowSelfAuthorizer allows any authenticated identity to GET the current-user
-// endpoint (users/~). That handler only ever returns the caller's own display
-// info derived from context, so it needs no users:read permission.
+// endpoints (users/~ and users/~/permissions). Those handlers only return data
+// for the caller derived from context, so they need no users:read permission.
 func allowSelfAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		if attr.IsResourceRequest() && attr.GetResource() == iamv0.UserResourceInfo.GetName() &&
-			attr.GetSubresource() == "" && attr.GetName() == display.CurrentUserName &&
+			(attr.GetSubresource() == "" || attr.GetSubresource() == "permissions") && attr.GetName() == display.CurrentUserName &&
 			attr.GetVerb() == utils.VerbGet {
 			if _, ok := authlib.AuthInfoFrom(ctx); ok {
 				return authorizer.DecisionAllow, "", nil

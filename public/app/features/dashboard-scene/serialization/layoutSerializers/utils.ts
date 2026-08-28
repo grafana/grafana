@@ -41,7 +41,8 @@ import { type DashboardGridItem } from '../../scene/layout-default/DashboardGrid
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
-import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
+import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';

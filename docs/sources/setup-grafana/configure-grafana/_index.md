@@ -216,6 +216,14 @@ Directory where Grafana automatically scans and looks for plugins. For informati
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
+#### `bundled_plugins`
+
+Directory where Grafana looks for the plugins that ship with the Grafana distribution, such as the Prometheus and PostgreSQL data sources. Defaults to `data/plugins-bundled`, relative to the Grafana home path.
+
+The Debian and RPM packages install these plugins under `/var/lib/grafana/plugins-bundled` so that Grafana can update them, and the `grafana-server` systemd unit passes a matching `cfg:default.paths.bundled_plugins` argument. If you override this option, or you edit the systemd unit, keep the two values in step. When they disagree, Grafana finds no bundled plugins and the data sources they provide stop working.
+
+Grafana downloads any missing bundled plugin from `grafana.com` on startup, so a mismatch is easy to miss on a host with internet access. On an air-gapped host, this directory decides whether the bundled data sources work at all. For information about installing plugins yourself, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
+
 #### `provisioning`
 
 Directory that contains [provisioning](../../administration/provisioning/) configuration files that Grafana applies on startup.

@@ -1,6 +1,6 @@
 import { type Action } from 'redux';
 
-import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { locationUtil, type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -76,7 +76,7 @@ function NewDataSourceView({
         />
         <div className="page-action-bar__spacer" />
         <LinkButton
-          href={ROUTES.DataSources}
+          href={locationUtil.assureBaseUrl(ROUTES.DataSources)}
           fill="outline"
           variant="secondary"
           icon="arrow-left"

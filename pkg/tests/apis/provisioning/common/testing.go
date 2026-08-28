@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -3337,6 +3338,25 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 	})
 }
 
+// CreateGithubRepoWithoutWaitingForReady is like CreateGithubRepo but does not
+// wait for the Ready condition — for tests where the repository is expected to
+// end up unhealthy (e.g. a webhook creation failure), so the caller can drive
+// its own wait against the specific status it expects instead of timing out on
+// a Ready condition that will never turn true.
+func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, repoName string, initialFiles map[string][]byte, webhookBaseURL string, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	extraValues := map[string]any{}
+	if webhookBaseURL != "" {
+		extraValues["WebhookBaseURL"] = webhookBaseURL
+	}
+	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
+		waitForReady:      false,
+		initialFiles:      initialFiles,
+		templateVariables: extraValues,
+		user:              h.githubTransportUser(t),
+		workflows:         workflows,
+	})
+}
+
 func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	return h.createRepo(t, repoName, "github", "instance", createRepoOpts{
 		waitForReady: true,
@@ -3433,9 +3453,7 @@ func (h *GitTestHelper) createRepo(
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
 	}
-	for k, v := range opts.templateVariables {
-		templateValues[k] = v
-	}
+	maps.Copy(templateValues, opts.templateVariables)
 
 	tmpl := TestdataPath(repoType + ".json.tmpl")
 	repoObj := h.RenderObject(t, tmpl, templateValues)
