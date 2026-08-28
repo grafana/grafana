@@ -186,6 +186,26 @@ describe('NumberInput', () => {
     jest.useRealTimers();
   });
 
+  it.each([
+    ['blur', (input: HTMLInputElement) => fireEvent.blur(input)],
+    ['Enter', (input: HTMLInputElement) => fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 })],
+  ])('commits immediately on %s and cancels the pending debounced change', (_event, commit) => {
+    jest.useFakeTimers();
+    const onChange = jest.fn();
+    render(<NumberInput value={5} onChange={onChange} min={1} max={200} />);
+
+    const input = screen.getByRole('spinbutton');
+    fireEvent.change(input, { target: { value: '8' } });
+    commit(input);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(8);
+
+    act(() => jest.advanceTimersByTime(500));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   it('emits a pending in-range value after a parent rerender', () => {
     jest.useFakeTimers();
     const firstOnChange = jest.fn();

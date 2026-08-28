@@ -71,7 +71,6 @@ export const NumberInput = memo(function NumberInput({
 }: Props) {
   const [text, setText] = useState('');
   const [inputCorrected, setInputCorrected] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const latestPropsRef = useRef({ value, min, max, onChange });
   const rangeId = useId();
   const errorId = useId();
@@ -111,8 +110,7 @@ export const NumberInput = memo(function NumberInput({
   );
 
   const commitValue = useCallback(
-    (raw?: string) => {
-      const txt = raw ?? inputRef.current?.value ?? '';
+    (txt: string) => {
       if (txt === '') {
         setInputCorrected(false);
         if (value !== undefined) {
@@ -204,7 +202,6 @@ export const NumberInput = memo(function NumberInput({
       <Input
         type="number"
         id={id}
-        ref={inputRef}
         min={min}
         max={max}
         step={step}
