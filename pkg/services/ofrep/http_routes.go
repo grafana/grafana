@@ -120,6 +120,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
+		b.logger.Debug("serving flag evaluation request", "handler", "oneFlagHandler", "flag", flagKey, "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
 	}
@@ -154,6 +155,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
+		b.logger.Debug("serving flag evaluation request", "handler", "allFlagsHandler", "authenticated", isAuthedReq, "authNamespace", authNamespace, "evalCtxNamespace", evalCtx.namespace, "slug", evalCtx.slug)
 		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
 		return
 	}

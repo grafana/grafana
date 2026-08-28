@@ -22,8 +22,6 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
-	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
-
 	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
@@ -75,8 +73,6 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedUser bool, namespace string, w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
-
-	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
 
 	r = r.WithContext(ctx)
 
