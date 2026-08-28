@@ -1,10 +1,11 @@
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
   SceneObjectStateChangedEvent,
   type SceneObjectState,
   type SceneObjectStateChangedPayload,
+  type VizPanel,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { transformMappingsToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
@@ -55,10 +56,17 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private timeSettingsEdited = false;
   /** The viz config of each panel in `baseline`, by element name, sent again in place of the scene's. */
   private savedVizConfigs?: Map<string, PanelKind['spec']['vizConfig']>;
+  /** The panel each saved viz config belongs to, so a reused element name cannot inherit it. */
+  private savedVizPanels?: Map<string, VizPanel>;
   /** The panels whose viz config was edited this session, by element name. As `timeSettingsEdited`. */
   private vizConfigsEdited = new Set<string>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
   private vizConfigsChangedWhileReading = new Set<string>();
+  /** Each panel's normalized state immediately before its first reader-owned change. */
+  private vizConfigsBeforeReadingChange = new Map<
+    string,
+    { panel: VizPanel; config: ReturnType<typeof panelVizConfigState> }
+  >();
   /** Set while `discardVizChanges` writes, so restoring a panel is not recorded as editing it. */
   private restoringVizConfigs = false;
   /**
@@ -108,6 +116,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         // Remembered because it survives into edit mode looking like a change to the notebook.
         if (revizzedPanel) {
           this.vizConfigsChangedWhileReading.add(revizzedPanel);
+          const panel = this.scene.state.body.state.cells.find(
+            (cell) => cell.state.elementName === revizzedPanel && cell.state.body === payload.changedObject
+          )?.state.body;
+          if (panel && !this.vizConfigsBeforeReadingChange.has(revizzedPanel)) {
+            this.vizConfigsBeforeReadingChange.set(revizzedPanel, {
+              panel,
+              config: panelVizConfigState(payload.prevState),
+            });
+          }
         }
         return;
       }
@@ -157,6 +174,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       this.vizConfigsEdited.add(name);
     }
     this.vizConfigsChangedWhileReading.clear();
+    this.vizConfigsBeforeReadingChange.clear();
     this.editedByWriter = true;
     this.schedule();
     this.flush();
@@ -193,12 +211,31 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * would answer the prompt by doing nothing.
    */
   public viewOnlyVizChanges(): string[] {
-    const restorable = new Set<string>();
-    for (const { elementName } of this.restorablePanels()) {
-      restorable.add(elementName);
+    const restorable = new Map<string, PanelKind['spec']['vizConfig']>();
+    for (const { elementName, vizConfig } of this.restorablePanels()) {
+      restorable.set(elementName, vizConfig);
     }
 
-    return [...this.vizConfigsChangedWhileReading].filter((name) => restorable.has(name));
+    const currentPanels = collectVizPanels(this.scene);
+    const changes: string[] = [];
+    for (const name of this.vizConfigsChangedWhileReading) {
+      const savedVizConfig = restorable.get(name);
+      const beforeChange = this.vizConfigsBeforeReadingChange.get(name);
+      const currentPanel = currentPanels.get(name);
+      if (
+        !savedVizConfig ||
+        !beforeChange ||
+        currentPanel !== beforeChange.panel ||
+        isEqual(beforeChange.config, panelVizConfigState(currentPanel.state))
+      ) {
+        this.vizConfigsChangedWhileReading.delete(name);
+        this.vizConfigsBeforeReadingChange.delete(name);
+      } else {
+        changes.push(name);
+      }
+    }
+
+    return changes;
   }
 
   /** Treats the named panels' current look as the notebook's own, so the next save writes it. */
@@ -208,6 +245,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.vizConfigsChangedWhileReading.clear();
+    this.vizConfigsBeforeReadingChange.clear();
     // Set like any other edit, so a save that fails here is retried when the notebook is reopened.
     this.editedByWriter = true;
     this.schedule();
@@ -234,6 +272,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.vizConfigsChangedWhileReading.clear();
+    this.vizConfigsBeforeReadingChange.clear();
   }
 
   /**
@@ -242,7 +281,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    */
   private *restorablePanels() {
     const saved = this.savedVizConfigs;
-    if (!saved?.size) {
+    const savedPanels = this.savedVizPanels;
+    if (!saved?.size || !savedPanels?.size) {
       return;
     }
 
@@ -250,7 +290,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       const { elementName, body: panel } = cell.state;
       const vizConfig = saved.get(elementName);
 
-      if (panel && vizConfig && panel.getPlugin()) {
+      if (panel && panel === savedPanels.get(elementName) && vizConfig && panel.getPlugin()) {
         yield { elementName, panel, vizConfig };
       }
     }
@@ -344,27 +384,35 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * The spec a save would send: the scene as it is, except for the parts a reader owns rather than the
    * notebook, which stay as they were saved. Time settings are one, panel viz configs are the other.
    */
-  private buildSpecToSave(): NotebookSpec {
+  private buildSpecToSave(
+    timeSettingsEdited = this.timeSettingsEdited,
+    vizConfigsEdited = this.vizConfigsEdited
+  ): NotebookSpec {
     const spec = transformNotebookSceneToSaveModel(this.scene);
-    const timeSettings =
-      this.timeSettingsEdited || !this.savedTimeSettings ? spec.timeSettings : this.savedTimeSettings;
+    const timeSettings = timeSettingsEdited || !this.savedTimeSettings ? spec.timeSettings : this.savedTimeSettings;
 
-    return { ...spec, timeSettings, elements: this.withSavedVizConfigs(spec.elements) };
+    return { ...spec, timeSettings, elements: this.withSavedVizConfigs(spec.elements, vizConfigsEdited) };
   }
 
   /**
    * Puts the saved viz config back on the panels nobody edited this session. One that was edited keeps
    * the scene's, and one added this session has nothing saved yet, so its own stands until it is.
    */
-  private withSavedVizConfigs(elements: NotebookSpec['elements']): NotebookSpec['elements'] {
+  private withSavedVizConfigs(
+    elements: NotebookSpec['elements'],
+    vizConfigsEdited: ReadonlySet<string>
+  ): NotebookSpec['elements'] {
     const saved = this.savedVizConfigs;
-    if (!saved?.size) {
+    const savedPanels = this.savedVizPanels;
+    if (!saved?.size || !savedPanels?.size) {
       return elements;
     }
 
+    const currentPanels = collectVizPanels(this.scene);
     const result: Record<string, NotebookElement> = {};
     for (const [name, element] of Object.entries(elements)) {
-      const savedVizConfig = this.vizConfigsEdited.has(name) ? undefined : saved.get(name);
+      const savedVizConfig =
+        !vizConfigsEdited.has(name) && currentPanels.get(name) === savedPanels.get(name) ? saved.get(name) : undefined;
       result[name] =
         element.kind === 'Panel' && savedVizConfig
           ? { ...element, spec: { ...element.spec, vizConfig: savedVizConfig } }
@@ -375,13 +423,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /** Records a spec as one there is no longer any reason to write. */
-  private recordWritten(spec: NotebookSpec, serialized = JSON.stringify(spec)): void {
+  private recordWritten(
+    spec: NotebookSpec,
+    serialized = JSON.stringify(spec),
+    panels = collectVizPanels(this.scene)
+  ): void {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
-    this.timeSettingsEdited = false;
-    this.vizConfigsEdited.clear();
-    this.editedByWriter = false;
+    this.savedVizPanels = panels;
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -402,10 +452,15 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.changePending = false;
 
+    const timeSettingsEdited = this.timeSettingsEdited;
+    const vizConfigsEdited = new Set(this.vizConfigsEdited);
+    const editedByWriter = this.editedByWriter;
+    const panels = collectVizPanels(this.scene);
+
     let spec: NotebookSpec;
     let serialized: string;
     try {
-      spec = this.buildSpecToSave();
+      spec = this.buildSpecToSave(timeSettingsEdited, vizConfigsEdited);
       serialized = JSON.stringify(spec);
     } catch (error) {
       // `hasSomethingToWrite` leaves this for the save to report, because this is the one place with
@@ -421,6 +476,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
+    // From here these flags belong only to changes that arrive after this request starts. If the
+    // request fails, its snapshot is merged back below so none of those earlier edits are lost.
+    this.timeSettingsEdited = false;
+    this.vizConfigsEdited.clear();
+    this.editedByWriter = false;
     this.inFlight = true;
     this.setState({ status: 'saving', errorMessage: undefined });
 
@@ -430,7 +490,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
-        this.recordWritten(spec, serialized);
+        this.recordWritten(spec, serialized, panels);
         this.hasSavedOnce = true;
         this.setState({
           // Something can have changed while this was in flight, and reporting it saved would claim
@@ -444,6 +504,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       })
       .catch((error) => {
         // Leave the baseline alone, so the next comparison still sees a difference and tries again.
+        this.timeSettingsEdited ||= timeSettingsEdited;
+        for (const name of vizConfigsEdited) {
+          this.vizConfigsEdited.add(name);
+        }
+        this.editedByWriter ||= editedByWriter;
         this.setState({
           status: 'error',
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -525,6 +590,29 @@ function collectVizConfigs(spec: NotebookSpec): Map<string, PanelKind['spec']['v
   }
 
   return configs;
+}
+
+/** The current panel instance for every element name, used to distinguish deletion and name reuse. */
+function collectVizPanels(scene: NotebookScene): Map<string, VizPanel> {
+  const panels = new Map<string, VizPanel>();
+
+  for (const cell of scene.state.body.state.cells) {
+    if (cell.state.body) {
+      panels.set(cell.state.elementName, cell.state.body);
+    }
+  }
+
+  return panels;
+}
+
+/** The panel state a reader can change without editing the notebook. */
+function panelVizConfigState(state: SceneObjectState) {
+  return {
+    pluginId: 'pluginId' in state ? state.pluginId : undefined,
+    pluginVersion: 'pluginVersion' in state ? state.pluginVersion : undefined,
+    options: 'options' in state ? state.options : undefined,
+    fieldConfig: 'fieldConfig' in state ? state.fieldConfig : undefined,
+  };
 }
 
 /**

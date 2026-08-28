@@ -82,14 +82,14 @@ function buildSceneWithPanel() {
 }
 
 /** What reading does to a panel: picking a colour off the legend writes a field override. */
-function recolourLegend(panel: VizPanel) {
+function recolourLegend(panel: VizPanel, color = 'red') {
   panel.setState({
     fieldConfig: {
       defaults: {},
       overrides: [
         {
           matcher: { id: 'byName', options: 'up' },
-          properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+          properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: color } }],
         },
       ],
     },
@@ -325,6 +325,7 @@ describe('NotebookAutosave', () => {
 
       expect(scene.autosave.state.status).toBe('idle');
 
+      // Advance past the autosave ceiling to prove entering edit mode did not queue a write.
       await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
 
       expect(updateNotebook).not.toHaveBeenCalled();
@@ -364,6 +365,25 @@ describe('NotebookAutosave', () => {
         deactivate = scene.activate();
         const stopPanel = panel.activate();
         await jest.advanceTimersByTimeAsync(0);
+
+        const publish = jest.spyOn(appEvents, 'publish');
+        scene.onEnterEditMode();
+
+        expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+        expect(scene.state.isEditing).toBe(true);
+
+        stopPanel();
+      });
+
+      it('is not shown when the reader reverted their change before editing', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        const savedFieldConfig = panel.state.fieldConfig;
+        recolourLegend(panel);
+        panel.setState({ fieldConfig: savedFieldConfig });
 
         const publish = jest.spyOn(appEvents, 'publish');
         scene.onEnterEditMode();
@@ -518,6 +538,25 @@ describe('NotebookAutosave', () => {
       expect(updateNotebook).toHaveBeenCalledTimes(1);
       expect(savedVizConfigs()[0]?.group).toBe('timeseries');
     });
+
+    it('does not reuse the saved config when a panel is replaced with the same element name', async () => {
+      const { scene } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      const replacementPanel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 2));
+      recolourLegend(replacementPanel);
+      const replacementCell = new NotebookCellItem({
+        elementName: 'panel1',
+        source: 'user',
+        body: replacementPanel,
+      });
+
+      scene.state.body.setState({ cells: [replacementCell] });
+      await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+      expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+    });
   });
 
   // Entering edit mode is itself a state change, and without care the handler that watches for edits
@@ -667,6 +706,39 @@ describe('NotebookAutosave', () => {
     await saved;
 
     expect(savedTexts()).toEqual(['First', 'Second']);
+  });
+
+  it('keeps a panel edit made while an earlier panel save is in flight', async () => {
+    let finishFirstSave = () => {};
+    jest
+      .mocked(updateNotebook)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirstSave = () => resolve({ generation: 2 });
+          })
+      )
+      .mockResolvedValue({ generation: 3 });
+
+    const { scene, panel } = buildSceneWithPanel();
+    deactivate = scene.activate();
+    scene.onEnterEditMode();
+
+    recolourLegend(panel, 'red');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    recolourLegend(panel, 'blue');
+    finishFirstSave();
+    await Promise.resolve();
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    expect(updateNotebook).toHaveBeenCalledTimes(2);
+    expect(savedVizConfigs()[1]?.spec.fieldConfig.overrides).toEqual([
+      {
+        matcher: { id: 'byName', options: 'up' },
+        properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'blue' } }],
+      },
+    ]);
   });
 
   it('collapses several rapid edits into one request carrying the last of them', async () => {
