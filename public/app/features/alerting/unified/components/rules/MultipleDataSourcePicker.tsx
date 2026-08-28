@@ -54,7 +54,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   const [state, setState] = useState<{ error?: string }>();
 
   // `isDataSourceManagingAlerts` and `filter` need `jsonData`, absent from the slim list item.
-  const { value: dataSources = [] } = useAsync(async () => {
+  const { value: dataSources = [], loading: isLoadingOptions } = useAsync(async () => {
     const items = await getDataSourceInstanceList({
       alerting,
       tracing,
@@ -74,7 +74,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   }, [alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type]);
 
   // Unrestricted by the type filters above, since `current` may reference a data source they'd exclude.
-  const { byUid: dataSourceByUid } = useDataSourceInstanceListByUid();
+  const { byUid: dataSourceByUid, isLoading: isLoadingCurrentDataSources } = useDataSourceInstanceListByUid();
   const dataSourceByName = useMemo(() => {
     const map = new Map<string, DataSourceInstanceListItem>();
     dataSourceByUid.forEach((ds) => map.set(ds.name, ds));
@@ -187,7 +187,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   return (
     <div data-testid={selectors.components.DataSourcePicker.container}>
       <MultiSelect
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingOptions || isLoadingCurrentDataSources}
         disabled={disabled}
         data-testid={selectors.components.DataSourcePicker.inputV2}
         inputId={inputId || 'data-source-picker'}

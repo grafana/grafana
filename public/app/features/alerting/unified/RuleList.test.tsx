@@ -138,15 +138,22 @@ setupMswServer();
 
 // The async data source list hooks used by RuleListV1/MultipleDataSourcePicker resolve one
 // microtask after mount even with a synchronously-populated cache; that harmless update can
-// land outside this suite's act() scope. Filter out only that warning.
-const ASYNC_DATASOURCE_HOOK_ACT_WARNING = /inside a test was not wrapped in act\(/;
+// land outside this suite's act() scope. React reports the component name as a separate arg
+// (the message is a format string), so check both — matching on the message alone would also
+// swallow act() warnings from unrelated components.
+const ACT_WARNING_MESSAGE = /inside a test was not wrapped in act\(/;
+const KNOWN_ASYNC_DATASOURCE_HOOK_COMPONENTS = ['RuleListV1', 'MultipleDataSourcePicker'];
 
 describe('RuleList', () => {
   let consoleErrorSpy: jest.SpyInstance;
   beforeEach(() => {
     const trackedConsoleError = console.error;
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation((message, ...args) => {
-      if (typeof message === 'string' && ASYNC_DATASOURCE_HOOK_ACT_WARNING.test(message)) {
+      const isKnownAsyncDataSourceHookWarning =
+        typeof message === 'string' &&
+        ACT_WARNING_MESSAGE.test(message) &&
+        args.some((arg) => typeof arg === 'string' && KNOWN_ASYNC_DATASOURCE_HOOK_COMPONENTS.includes(arg));
+      if (isKnownAsyncDataSourceHookWarning) {
         return;
       }
       trackedConsoleError(message, ...args);

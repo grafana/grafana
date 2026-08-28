@@ -1,6 +1,7 @@
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import * as runtimeUnstable from '@grafana/runtime/unstable';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { mockDataSource } from '../../mocks';
@@ -67,6 +68,21 @@ describe('MultipleDataSourcePicker', () => {
         .map((el) => el.textContent);
       expect(labels).toEqual(['mimir', 'loki']);
     });
+  });
+
+  it('shows a loading indicator instead of "No datasources found" while options are resolving', async () => {
+    setupDataSources(mockDataSource({ name: 'loki', jsonData: {} }, { alerting: true }));
+    jest.spyOn(runtimeUnstable, 'getDataSourceInstanceList').mockReturnValue(new Promise(() => {}));
+
+    const user = userEvent.setup();
+    render(<MultipleDataSourcePicker alerting current={[]} onChange={jest.fn()} />);
+
+    await user.click(getInput());
+
+    expect(screen.getByText('Loading options...')).toBeInTheDocument();
+    expect(screen.queryByText('No datasources found')).not.toBeInTheDocument();
+
+    jest.restoreAllMocks();
   });
 
   it('calls onChange with the resolved data source settings when an option is selected', async () => {
