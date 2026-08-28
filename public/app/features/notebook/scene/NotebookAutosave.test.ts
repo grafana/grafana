@@ -425,6 +425,25 @@ describe('NotebookAutosave', () => {
         stopPanel();
       });
 
+      // Keep is an edit like any other, so the retry that protects a failed edit has to cover it too.
+      it('sends the kept colour again when its save failed and the notebook is reopened', async () => {
+        const { scene, stopPanel, payload } = await readAndRecolour();
+        jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+
+        payload?.onAltAction?.();
+        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+        expect(scene.autosave.state.status).toBe('error');
+
+        deactivate?.();
+        deactivate = scene.activate();
+        await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+        expect(updateNotebook).toHaveBeenCalledTimes(2);
+        expect(savedVizConfigs()[1]?.spec.fieldConfig.overrides).toHaveLength(1);
+
+        stopPanel();
+      });
+
       it('puts the saved colour back and writes nothing when they discard it', async () => {
         const { scene, panel, stopPanel, payload } = await readAndRecolour();
 
@@ -550,6 +569,38 @@ describe('NotebookAutosave', () => {
 
     expect(scene.state.isEditing).toBeFalsy();
     expect(savedTexts()).toEqual(['Written elsewhere']);
+  });
+
+  // A document rebuilds the scene, so the panel looks it carries are the notebook's. Held back as a
+  // reader's, a document that only restyled a panel matched what was saved and wrote nothing at all.
+  it('saves the panel looks carried by a document announced by a writer', async () => {
+    const { scene, panel } = buildSceneWithPanel();
+    deactivate = scene.activate();
+
+    recolourLegend(panel);
+    await scene.autosave.saveDocumentChange();
+
+    expect(savedVizConfigs()[0]?.spec.fieldConfig.overrides).toHaveLength(1);
+  });
+
+  // The scene a reader changed is gone, replaced by the document. Left pending, the prompt would offer
+  // to put back a look the write had already replaced.
+  it('stops asking about a reader change once an announced document has replaced it', async () => {
+    const { scene, panel } = buildSceneWithPanel();
+    deactivate = scene.activate();
+    const stopPanel = panel.activate();
+    await jest.advanceTimersByTimeAsync(0);
+
+    recolourLegend(panel);
+    await scene.autosave.saveDocumentChange();
+
+    const publish = jest.spyOn(appEvents, 'publish');
+    scene.onEnterEditMode();
+
+    expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+    expect(scene.state.isEditing).toBe(true);
+
+    stopPanel();
   });
 
   it('tells a writer whose save failed, instead of letting it report a write that never landed', async () => {

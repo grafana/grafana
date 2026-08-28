@@ -146,9 +146,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * reached the server.
    */
   public async saveDocumentChange(): Promise<void> {
-    // These writers hand over a whole document, time settings included, so what is in the scene now is
-    // the notebook's own.
+    // These writers hand over a whole document, so everything in the scene now is the notebook's own,
+    // and whatever a reader had changed went with the scene this one replaced.
     this.timeSettingsEdited = true;
+    for (const name of this.savedVizConfigs?.keys() ?? []) {
+      this.vizConfigsEdited.add(name);
+    }
+    this.vizConfigsChangedWhileReading.clear();
     this.editedByWriter = true;
     this.schedule();
     this.flush();
@@ -200,6 +204,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.vizConfigsChangedWhileReading.clear();
+    // Set like any other edit, so a save that fails here is retried when the notebook is reopened.
+    this.editedByWriter = true;
     this.schedule();
   }
 
