@@ -29,13 +29,14 @@ function renderBanner(route: string, initialEntry: string) {
 }
 
 describe('SuggestedDashboardsBanner', () => {
-  it('should render the banner when route is Template and URL params are present', () => {
+  it('should render the banner when route is Template and URL params are present', async () => {
     renderBanner(
       DashboardRoutes.Template,
       '/dashboard/templates/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1'
     );
 
-    expect(screen.getByText(/You are viewing/)).toBeInTheDocument();
+    // the banner content renders after the lazy SuggestedDashboardsLoader resolves
+    expect(await screen.findByText(/You are viewing/)).toBeInTheDocument();
     expect(screen.getByText(/other suggested dashboards/)).toBeInTheDocument();
     expect(screen.getByText(/create one from scratch/)).toBeInTheDocument();
   });
