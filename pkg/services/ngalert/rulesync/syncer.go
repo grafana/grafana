@@ -598,9 +598,13 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	// even though targetUID itself isn't delimited.
 	dedupKey := fmt.Sprintf("%d:%s", hash, rc.targetUID)
 
-	// A missing root folder forces a re-apply regardless of dedupKey: it was
-	// renamed or deleted since the last apply, and the persisted key would
-	// otherwise match forever. apply() recreates it fresh either way.
+	// A missing root folder forces a re-apply regardless of dedupKey, since
+	// the persisted key would otherwise match forever. If the folder was
+	// deleted, apply() recreates it. If it was only renamed, recreation
+	// fails safely instead (folder UIDs are a deterministic hash of the
+	// title, so the new folder would collide with the old one's UID) —
+	// nothing gets overwritten, but sync stays stuck until the old folder
+	// is actually deleted.
 	rootMissing, err := s.rootFolderMissing(svcCtx, orgID, svcUser, rc.uid)
 	if err != nil {
 		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("check sync root folder: %w", err)})
