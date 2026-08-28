@@ -5,7 +5,7 @@ import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/
 
 import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
-import { isEmptyMarkdown } from '../../scene/layout-notebook/NotebookLayoutManager';
+import { isEmptyMarkdown } from '../../scene/layout-notebook/isEmptyMarkdown';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';

@@ -40,6 +40,7 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
@@ -941,17 +942,6 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
     case 'visualization':
       return undefined;
   }
-}
-
-/**
- * Whether `content` is an untouched, empty markdown cell — the shape the trailing-slot invariant (see
- * setCellContent and the renderer's own bootstrap effect) watches for. `undefined` (a panel or
- * collapsed cell, which carries no `content` at all) deliberately does *not* count: it isn't a
- * typeable markdown slot either, so a panel ending up last must still get a fresh empty cell appended
- * after it, exactly like any other non-empty trailing content would.
- */
-export function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
-  return content?.kind === 'Markdown' && content.spec.text === '';
 }
 
 /**
