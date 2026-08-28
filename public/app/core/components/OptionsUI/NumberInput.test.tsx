@@ -75,6 +75,19 @@ describe('NumberInput', () => {
     });
   });
 
+  it.each([
+    ['a finite number', 25, 25],
+    ['zero', 0, 0],
+    ['undefined', undefined, null],
+    ['NaN', Number.NaN, null],
+  ])('synchronizes the input when the controlled value changes to %s', (_description, value, expected) => {
+    const { rerender } = render(<NumberInput value={15} onChange={jest.fn()} />);
+
+    rerender(<NumberInput value={value} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('spinbutton')).toHaveValue(expected);
+  });
+
   it('corrects input as per min and max', async () => {
     const data = setup(-10, 10);
     let input = data.input;

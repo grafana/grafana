@@ -21,6 +21,10 @@ interface Props {
   suffix?: React.ReactNode;
 }
 
+function formatValue(value?: number): string {
+  return value == null || Number.isNaN(value) ? '' : String(value);
+}
+
 function isInRange(n: number, min?: number, max?: number) {
   if (min != null && n < min) {
     return false;
@@ -96,7 +100,7 @@ export const NumberInput = memo(function NumberInput({
       if (current !== '' && Number.isFinite(Number(current)) && Number(current) === value) {
         return current;
       }
-      return isNaN(value!) ? '' : `${value}`;
+      return formatValue(value);
     });
   }, [value]);
 
@@ -131,7 +135,7 @@ export const NumberInput = memo(function NumberInput({
 
       const parsed = Number(txt);
       if (!Number.isFinite(parsed)) {
-        setText(value == null || Number.isNaN(value) ? '' : `${value}`);
+        setText(formatValue(value));
         setInputCorrected(false);
         return;
       }
