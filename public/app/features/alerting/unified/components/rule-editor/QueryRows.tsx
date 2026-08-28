@@ -93,20 +93,22 @@ export const QueryRows = ({
     );
   };
 
-  const onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
-    const updatedQueries = queries.map((item, itemIndex) => {
-      if (itemIndex !== index) {
-        return item;
-      }
+  const onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
+    const updatedQueries = await Promise.all(
+      queries.map(async (item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
 
-      const previousSettings = getDataSourceSettings(item);
+        const previousSettings = getDataSourceSettings(item);
 
-      // Copy model if changing to a datasource of same type.
-      if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings);
-      }
-      return newModel(item, settings);
-    });
+        // Copy model if changing to a datasource of same type.
+        if (settings.type === previousSettings?.type) {
+          return copyModel(item, settings);
+        }
+        return newModel(item, settings);
+      })
+    );
 
     onQueriesChange(updatedQueries);
   };
@@ -275,9 +277,12 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
   };
 }
 
-function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+async function newModel(
+  item: AlertQuery,
+  settings: DataSourceInstanceSettings
+): Promise<Omit<AlertQuery, 'datasource'>> {
   const isExpression = isExpressionQuery(item);
-  const isInstant = isExpression ? false : getInstantFromDataQuery(item);
+  const isInstant = isExpression ? false : await getInstantFromDataQuery(item);
 
   const newQuery: Omit<AlertQuery, 'datasource'> = {
     refId: item.refId,

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useEffectOnce } from 'react-use';
+import { useAsync, useEffectOnce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -41,7 +41,12 @@ import {
   getDefaultOrFirstCompatibleDataSource,
   getRulesDataSources,
 } from '../../../utils/datasource';
-import { type PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
+import {
+  type PromOrLokiQuery,
+  getDefaultQueries,
+  getInstantFromDataQuery,
+  isPromOrLokiQuery,
+} from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
   isCloudRecordingRuleByType,
@@ -81,6 +86,15 @@ import {
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
 import { onlyOneDSInQueries } from './utils';
+
+async function resolveOptimizeReduceExpressionPayload(
+  updatedQueries: AlertQuery[],
+  expressionQueries: Array<AlertQuery<ExpressionQuery>>
+) {
+  const dataQuery = updatedQueries.length === 1 ? updatedQueries[0] : undefined;
+  const isInstantDataQuery = dataQuery ? ((await getInstantFromDataQuery(dataQuery)) ?? false) : false;
+  return { updatedQueries, expressionQueries, isInstantDataQuery };
+}
 
 interface Props {
   editingExistingRule: boolean;
@@ -126,7 +140,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
 
     if (!editingExistingRule && isOptimizeReducerEnabled) {
-      dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
+      resolveOptimizeReduceExpressionPayload(dataQueries, expressionQueries).then((payload) =>
+        dispatch(optimizeReduceExpression(payload))
+      );
     }
   });
 
@@ -191,7 +207,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     setValue('queries', queries, { shouldValidate: false });
   }, [queries, runQueries, setValue]);
 
-  const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
+  const { value: defaultOrFirstCompatibleDataSource } = useAsync(() => getDefaultOrFirstCompatibleDataSource(), []);
+  const noCompatibleDataSources = defaultOrFirstCompatibleDataSource === undefined;
 
   const emptyQueries = queries.length === 0;
 
@@ -251,7 +268,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
 
   const onChangeQueries = useCallback(
-    (updatedQueries: AlertQuery[]) => {
+    async (updatedQueries: AlertQuery[]) => {
       // Most data sources triggers onChange and onRunQueries consecutively
       // It means our reducer state is always one step behind when runQueries is invoked
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
@@ -266,8 +283,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      // Must dispatch before setDataQueries: it mutates state.queries, which setDataQueries then rebuilds from.
       if (!editingExistingRule && isOptimizeReducerEnabled) {
-        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+        const payload = await resolveOptimizeReduceExpressionPayload(updatedQueries, expressionQueries);
+        dispatch(optimizeReduceExpression(payload));
       }
 
       dispatch(setDataQueries(updatedQueries));
@@ -430,9 +449,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const switchMode = isGrafanaAlertingType
     ? {
         isAdvancedMode: !simplifiedQueryStep,
-        setAdvancedMode: (isAdvanced: boolean) => {
+        setAdvancedMode: async (isAdvanced: boolean) => {
           if (!getValues('editorSettings.simplifiedQueryEditor')) {
-            if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
+            if (!(await areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries))) {
               setShowResetModal(true);
               return;
             }
@@ -546,8 +565,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               >
                 <Button
                   type="button"
-                  onClick={() => {
-                    dispatch(addNewDataQuery());
+                  onClick={async () => {
+                    const datasource = await getDefaultOrFirstCompatibleDataSource();
+                    dispatch(addNewDataQuery(datasource));
                   }}
                   variant="secondary"
                   data-testid={selectors.components.QueryTab.addQuery}
@@ -670,10 +690,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </div>
         }
         confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
-        onConfirm={() => {
+        onConfirm={async () => {
           setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);
-          dispatch(resetToSimpleCondition());
+          dispatch(resetToSimpleCondition(await getDefaultQueries()));
         }}
         onDismiss={() => setShowResetModal(false)}
       />

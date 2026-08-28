@@ -1,5 +1,11 @@
-import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourceSettings,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
@@ -322,15 +328,21 @@ export function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: strin
   return ds.uid;
 }
 
-export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
-  return getDataSourceSrv().getList({ alerting: true })[0];
+export async function getFirstCompatibleDataSource(): Promise<DataSourceInstanceListItem | undefined> {
+  const dataSources = await getDataSourceInstanceList({ alerting: true });
+  return dataSources[0];
 }
 
-export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
-  const defaultDataSource = getDataSourceSrv().getInstanceSettings('default');
+export async function getDefaultOrFirstCompatibleDataSource(): Promise<DataSourceInstanceListItem | undefined> {
+  const defaultDataSource = await getDataSourceInstanceSettings('default');
   const defaultIsCompatible = defaultDataSource?.meta.alerting ?? false;
 
-  return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
+  if (defaultDataSource && defaultIsCompatible) {
+    // isDefault isn't guaranteed here, but we resolved this via the 'default' ref, so it is one.
+    return { ...defaultDataSource, isDefault: true };
+  }
+
+  return getFirstCompatibleDataSource();
 }
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {

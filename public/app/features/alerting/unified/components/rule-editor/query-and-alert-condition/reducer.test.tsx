@@ -1,4 +1,8 @@
-import { type RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import {
+  type DataSourceInstanceListItem,
+  type RelativeTimeRange,
+  getDefaultRelativeTimeRange,
+} from '@grafana/data';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import {
   ExpressionDatasourceUID,
@@ -17,6 +21,7 @@ import {
   optimizeReduceExpression,
   queriesAndExpressionsReducer,
   removeExpression,
+  resetToSimpleCondition,
   rewireExpressions,
   setDataQueries,
   updateExpression,
@@ -45,8 +50,7 @@ const thresholdExpression: AlertQuery<ExpressionQuery> = {
   },
 };
 
-const ds1 = {
-  id: 1,
+const ds1: DataSourceInstanceListItem = {
   uid: 'c8eceabb-0275-4108-8f03-8f74faf4bf6d',
   type: 'prometheus',
   name: 'gdev-prometheus',
@@ -57,18 +61,10 @@ const ds1 = {
         small: 'http://example.com/logo.png',
       },
     },
-  },
-  jsonData: {},
-  access: 'proxy',
+  } as DataSourceInstanceListItem['meta'],
+  readOnly: false,
+  isDefault: false,
 };
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getList: () => [ds1],
-    getInstanceSettings: () => ds1,
-  }),
-}));
 
 const alertQuery: AlertQuery = {
   refId: 'A',
@@ -138,9 +134,28 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery],
     };
 
-    const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery());
+    const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery(ds1));
     expect(newState.queries).toHaveLength(2);
     expect(newState).toMatchSnapshot();
+  });
+
+  it('should not add a query when no compatible data source is available', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery],
+    };
+
+    const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery(undefined));
+    expect(newState).toEqual(initialState);
+  });
+
+  it('should reset to the simple condition default queries', () => {
+    const initialState: QueriesAndExpressionsState = {
+      queries: [alertQuery, expressionQuery],
+    };
+
+    const defaultQueries: AlertQuery[] = [alertQuery];
+    const newState = queriesAndExpressionsReducer(initialState, resetToSimpleCondition(defaultQueries));
+    expect(newState).toEqual({ queries: defaultQueries });
   });
 
   it('should set data queries', () => {
@@ -397,6 +412,7 @@ describe('Query and expressions reducer', () => {
       optimizeReduceExpression({
         updatedQueries: [alertQuery],
         expressionQueries: [reduceExpression, thresholdExpression],
+        isInstantDataQuery: true,
       })
     );
     expect(newState).toMatchSnapshot();
@@ -412,6 +428,7 @@ describe('Query and expressions reducer', () => {
       optimizeReduceExpression({
         updatedQueries: [alertQuery],
         expressionQueries: [thresholdExpression, reduceExpression],
+        isInstantDataQuery: true,
       })
     );
     expect(newState).toMatchSnapshot();
@@ -427,6 +444,7 @@ describe('Query and expressions reducer', () => {
       optimizeReduceExpression({
         updatedQueries: [alertQuery, alertQuery],
         expressionQueries: [reduceExpression, thresholdExpression],
+        isInstantDataQuery: true,
       })
     );
     expect(newState).toEqual(initialState);
@@ -449,7 +467,11 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(
       initialState,
-      optimizeReduceExpression({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
+      optimizeReduceExpression({
+        updatedQueries: [alertQuery],
+        expressionQueries: [thresholdExpression],
+        isInstantDataQuery: false,
+      })
     );
     expect(newState).toMatchSnapshot();
   });

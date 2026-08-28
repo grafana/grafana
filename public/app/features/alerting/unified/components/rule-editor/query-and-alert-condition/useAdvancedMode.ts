@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useEffectOnce } from 'react-use';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
@@ -10,23 +11,16 @@ import { type SimpleCondition } from '../../../types/rule-form';
 
 import { getSimpleConditionFromExpressions } from './SimpleCondition';
 
-function initializeSimpleCondition(
-  isGrafanaAlertingType: boolean,
-  dataQueries: Array<AlertQuery<AlertDataQuery>>,
-  expressionQueries: Array<AlertQuery<ExpressionQuery>>
-) {
-  if (isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
-    return getSimpleConditionFromExpressions(expressionQueries);
-  } else {
-    return {
-      whenField: ReducerID.last,
-      evaluator: {
-        params: [0],
-        type: EvalFunction.IsAbove,
-      },
-    };
-  }
+function defaultSimpleCondition(): SimpleCondition {
+  return {
+    whenField: ReducerID.last,
+    evaluator: {
+      params: [0],
+      type: EvalFunction.IsAbove,
+    },
+  };
 }
+
 export function determineAdvancedMode(simplifiedQueryEditor: boolean | undefined, isGrafanaAlertingType: boolean) {
   return simplifiedQueryEditor === false || !isGrafanaAlertingType;
 }
@@ -43,9 +37,19 @@ export const useAdvancedMode = (
 ) => {
   const isAdvancedMode = determineAdvancedMode(simplifiedQueryEditor, isGrafanaAlertingType);
 
-  const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    initializeSimpleCondition(isGrafanaAlertingType, dataQueries, expressionQueries)
-  );
+  const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(defaultSimpleCondition());
+
+  useEffectOnce(() => {
+    // Resolves the real initial value once transformability's async datasource lookup settles.
+    async function resolveInitialSimpleCondition() {
+      const transformable =
+        isGrafanaAlertingType && (await areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries));
+      if (transformable) {
+        setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
+      }
+    }
+    resolveInitialSimpleCondition();
+  });
 
   useEffect(() => {
     if (isGrafanaAlertingType && !isAdvancedMode) {

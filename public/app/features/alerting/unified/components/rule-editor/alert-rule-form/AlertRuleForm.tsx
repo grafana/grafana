@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -7,7 +7,7 @@ import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -103,11 +103,15 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
-  const defaultValues: RuleFormValues = useMemo(() => {
+  const getDefaultValues = useCallback(async (): Promise<RuleFormValues> => {
     // If we have an existing AND a prefill, then we're coming from the restore dialog
     // and we want to merge the two
     if (existing && prefill) {
-      return { ...formValuesFromExistingRule(existing), ...formValuesFromPrefill(prefill) };
+      const [existingValues, prefillValues] = await Promise.all([
+        formValuesFromExistingRule(existing),
+        formValuesFromPrefill(prefill),
+      ]);
+      return { ...existingValues, ...prefillValues };
     }
     if (existing) {
       return formValuesFromExistingRule(existing);
@@ -122,14 +126,14 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
-    defaultValues,
+    defaultValues: getDefaultValues,
     shouldFocusError: true,
   });
 
   const {
     handleSubmit,
     watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isLoading: isLoadingDefaultValues },
     trigger,
   } = formAPI;
 
@@ -194,7 +198,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
             trackNewGrafanaAlertRuleFormSavedSuccess({
               simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
               simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-              canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+              canBeTransformedToSimpleQuery: await areQueriesTransformableToSimpleCondition(
+                dataQueries,
+                expressionQueries
+              ),
             });
           }
         } else {
@@ -240,7 +247,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           trackNewGrafanaAlertRuleFormSavedSuccess({
             simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
             simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-            canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+            canBeTransformedToSimpleQuery: await areQueriesTransformableToSimpleCondition(
+              dataQueries,
+              expressionQueries
+            ),
           });
         }
 
@@ -259,7 +269,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           trackNewGrafanaAlertRuleFormSavedSuccess({
             simplifiedQueryEditor: values.editorSettings?.simplifiedQueryEditor ?? false,
             simplifiedNotificationEditor: values.editorSettings?.simplifiedNotificationEditor ?? false,
-            canBeTransformedToSimpleQuery: areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries),
+            canBeTransformedToSimpleQuery: await areQueriesTransformableToSimpleCondition(
+              dataQueries,
+              expressionQueries
+            ),
           });
         }
       } else {
@@ -298,6 +311,10 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
     }
     locationService.getHistory().goBack();
   };
+
+  if (isLoadingDefaultValues) {
+    return <Spinner />;
+  }
 
   if (!type) {
     return null;

@@ -1,15 +1,12 @@
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceListItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { mockAlertQuery, mockDataSource, mockReduceExpression, mockThresholdExpression } from '../mocks';
+import { setupDataSources } from '../testSetup/datasources';
 import { RuleFormType } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../utils/datasource';
 import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
-}));
 
 import {
   formValuesFromPrefill,
@@ -29,42 +26,44 @@ const mocks = {
 };
 
 // Setup mock implementation
-mocks.getDefaultOrFirstCompatibleDataSource.mockReturnValue(
+mocks.getDefaultOrFirstCompatibleDataSource.mockResolvedValue(
   mockDataSource({
     type: DataSourceType.Prometheus,
-  })
+  }) as DataSourceInstanceListItem
 );
 
 // TODO Not sure why queries are an empty array in the default form values
-const defaultFormValues = {
-  ...getDefaultFormValues(),
-  queries: getDefaultQueries(),
-};
+async function getExpectedDefaultFormValues() {
+  return {
+    ...getDefaultFormValues(),
+    queries: await getDefaultQueries(),
+  };
+}
 
 describe('formValuesFromQueryParams', () => {
-  it('should return default values when given invalid JSON', () => {
-    const result = formValuesFromQueryParams('invalid json', RuleFormType.grafana);
+  it('should return default values when given invalid JSON', async () => {
+    const result = await formValuesFromQueryParams('invalid json', RuleFormType.grafana);
 
-    expect(result).toEqual(defaultFormValues);
+    expect(result).toEqual(await getExpectedDefaultFormValues());
   });
 
-  it('should preserve evaluateEvery when provided', () => {
+  it('should preserve evaluateEvery when provided', async () => {
     // "Continue in Alerting" from the panel drawer passes the rule's interval through this param;
     // it must not be overwritten with the default.
     const ruleDefinition = JSON.stringify({ evaluateEvery: '5m' });
 
-    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+    const result = await formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
 
     expect(result.evaluateEvery).toBe('5m');
   });
 
-  it('should fall back to the default evaluateEvery when not provided', () => {
-    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
+  it('should fall back to the default evaluateEvery when not provided', async () => {
+    const result = await formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
 
-    expect(result.evaluateEvery).toBe(defaultFormValues.evaluateEvery);
+    expect(result.evaluateEvery).toBe((await getExpectedDefaultFormValues()).evaluateEvery);
   });
 
-  it('should normalize annotations', () => {
+  it('should normalize annotations', async () => {
     const ruleDefinition = JSON.stringify({
       annotations: [
         { key: 'custom', value: 'my custom annotation' },
@@ -76,7 +75,7 @@ describe('formValuesFromQueryParams', () => {
       ],
     });
 
-    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+    const result = await formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
 
     const [summary, description, runbookURL, ...rest] = result.annotations;
 
@@ -89,8 +88,8 @@ describe('formValuesFromQueryParams', () => {
   });
 
   describe('when simplified query editor is enabled', () => {
-    it('should enable simplified query editor if queries are transformable to simple condition', () => {
-      const result = formValuesFromQueryParams(
+    it('should enable simplified query editor if queries are transformable to simple condition', async () => {
+      const result = await formValuesFromQueryParams(
         JSON.stringify({
           queries: [
             mockAlertQuery(),
@@ -105,8 +104,8 @@ describe('formValuesFromQueryParams', () => {
       expect(result.editorSettings!.simplifiedQueryEditor).toBe(true);
     });
 
-    it('should disable simplified query editor if queries are not transformable to simple condition', () => {
-      const result = formValuesFromQueryParams(
+    it('should disable simplified query editor if queries are not transformable to simple condition', async () => {
+      const result = await formValuesFromQueryParams(
         JSON.stringify({
           queries: [mockAlertQuery(), mockAlertQuery(), mockThresholdExpression({ expression: 'B' })],
         }),
@@ -118,8 +117,8 @@ describe('formValuesFromQueryParams', () => {
     });
   });
 
-  it('should default to instant queries for loki and prometheus if not specified', () => {
-    const result = formValuesFromQueryParams(
+  it('should default to instant queries for loki and prometheus if not specified', async () => {
+    const result = await formValuesFromQueryParams(
       JSON.stringify({
         queries: [
           mockAlertQuery({ datasourceUid: 'loki', model: { refId: 'A', datasource: { type: DataSourceType.Loki } } }),
@@ -140,8 +139,8 @@ describe('formValuesFromQueryParams', () => {
     expect(prometheusQuery.model.range).toBe(false);
   });
 
-  it('should preserver instant and range values if specified', () => {
-    const result = formValuesFromQueryParams(
+  it('should preserver instant and range values if specified', async () => {
+    const result = await formValuesFromQueryParams(
       JSON.stringify({
         queries: [
           mockAlertQuery({
@@ -165,7 +164,7 @@ describe('formValuesFromQueryParams', () => {
     expect(prometheusQuery.model.instant).toBe(false);
   });
 
-  it('should reveal hidden queries', () => {
+  it('should reveal hidden queries', async () => {
     const ruleDefinition = JSON.stringify({
       queries: [
         { refId: 'A', model: { refId: 'A', hide: true } },
@@ -174,7 +173,7 @@ describe('formValuesFromQueryParams', () => {
       ],
     });
 
-    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+    const result = await formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
 
     expect(result.queries.length).toBe(3);
 
@@ -214,97 +213,88 @@ describe('getDefaultFormValues', () => {
   const grafanaConfig = config;
   const uaConfig = grafanaConfig.unifiedAlerting;
 
-  const mockGetInstanceSettings = jest.fn();
-
-  beforeEach(() => {
-    (getDataSourceSrv as jest.Mock).mockReturnValue({
-      getInstanceSettings: mockGetInstanceSettings,
-    });
-  });
-
   afterEach(() => {
     uaConfig.defaultRecordingRulesTargetDatasourceUID = undefined;
-    jest.clearAllMocks();
   });
 
   it('should set targetDatasourceUid from config when datasource is valid for recording rules', () => {
     const expectedDatasourceUid = 'test-datasource-uid';
     uaConfig.defaultRecordingRulesTargetDatasourceUID = expectedDatasourceUid;
 
-    const validDataSource = mockDataSource({
-      uid: expectedDatasourceUid,
-      type: DataSourceType.Prometheus,
-      jsonData: {
-        allowAsRecordingRulesTarget: true,
-      },
-    });
-    mockGetInstanceSettings.mockReturnValue(validDataSource);
+    setupDataSources(
+      mockDataSource({
+        uid: expectedDatasourceUid,
+        type: DataSourceType.Prometheus,
+        jsonData: {
+          allowAsRecordingRulesTarget: true,
+        },
+      })
+    );
 
     const result = getDefaultFormValues();
 
     expect(result.targetDatasourceUid).toBe(expectedDatasourceUid);
-    expect(mockGetInstanceSettings).toHaveBeenCalledWith(expectedDatasourceUid);
   });
 
   it('should set targetDatasourceUid to undefined when datasource has allowAsRecordingRulesTarget disabled', () => {
     const datasourceUid = 'test-datasource-uid';
     uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
 
-    const invalidDataSource = mockDataSource({
-      uid: datasourceUid,
-      type: DataSourceType.Prometheus,
-      jsonData: {
-        allowAsRecordingRulesTarget: false,
-      },
-    });
-    mockGetInstanceSettings.mockReturnValue(invalidDataSource);
+    setupDataSources(
+      mockDataSource({
+        uid: datasourceUid,
+        type: DataSourceType.Prometheus,
+        jsonData: {
+          allowAsRecordingRulesTarget: false,
+        },
+      })
+    );
 
     const result = getDefaultFormValues();
 
     expect(result.targetDatasourceUid).toBeUndefined();
-    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
   });
 
   it('should set targetDatasourceUid to undefined when datasource type is not supported', () => {
     const datasourceUid = 'test-datasource-uid';
     uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
 
-    const nonPrometheusDataSource = mockDataSource({
-      uid: datasourceUid,
-      type: DataSourceType.Loki,
-      jsonData: {
-        allowAsRecordingRulesTarget: true,
-      },
-    });
-    mockGetInstanceSettings.mockReturnValue(nonPrometheusDataSource);
+    setupDataSources(
+      mockDataSource({
+        uid: datasourceUid,
+        type: DataSourceType.Loki,
+        jsonData: {
+          allowAsRecordingRulesTarget: true,
+        },
+      })
+    );
 
     const result = getDefaultFormValues();
 
     expect(result.targetDatasourceUid).toBeUndefined();
-    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
   });
 
   it('should set targetDatasourceUid to undefined when datasource does not exist', () => {
     const datasourceUid = 'non-existent-datasource-uid';
     uaConfig.defaultRecordingRulesTargetDatasourceUID = datasourceUid;
 
-    mockGetInstanceSettings.mockReturnValue(null);
+    setupDataSources();
 
     const result = getDefaultFormValues();
 
     expect(result.targetDatasourceUid).toBeUndefined();
-    expect(mockGetInstanceSettings).toHaveBeenCalledWith(datasourceUid);
   });
 
   it('should set targetDatasourceUid to undefined when defaultRecordingRulesTargetDatasourceUID is not provided', () => {
+    setupDataSources();
+
     const result = getDefaultFormValues();
     expect(result.targetDatasourceUid).toBeUndefined();
-    expect(mockGetInstanceSettings).not.toHaveBeenCalled();
   });
 });
 
 describe('formValuesFromPrefill', () => {
-  it('should preserve threshold expression query structure', () => {
+  it('should preserve threshold expression query structure', async () => {
     const prefillData = {
       folder: { uid: 'test-folder', title: 'Test Folder' },
       group: 'test-group',
@@ -354,7 +344,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
 
     const queryC = result.queries.find((q) => q.refId === 'C');
     expect(queryC?.model).toHaveProperty('type', 'threshold');
@@ -367,7 +357,7 @@ describe('formValuesFromPrefill', () => {
     expect(queryC?.model).not.toHaveProperty('range');
   });
 
-  it('should preserve reduce expression query structure', () => {
+  it('should preserve reduce expression query structure', async () => {
     const prefillData = {
       queries: [
         {
@@ -387,7 +377,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const query = result.queries[0];
 
     expect(query.model).toHaveProperty('type', 'reduce');
@@ -397,7 +387,7 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).not.toHaveProperty('range');
   });
 
-  it('should preserve math expression query structure', () => {
+  it('should preserve math expression query structure', async () => {
     const prefillData = {
       queries: [
         {
@@ -426,7 +416,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const query = result.queries[0];
 
     expect(query.model).toHaveProperty('type', 'math');
@@ -434,7 +424,7 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).toHaveProperty('conditions');
   });
 
-  it('should preserve classic_conditions expression query structure', () => {
+  it('should preserve classic_conditions expression query structure', async () => {
     const prefillData = {
       queries: [
         {
@@ -470,7 +460,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const [query] = result.queries.filter(isExpressionQueryInAlert);
 
     expect(query.model).toHaveProperty('type', 'classic_conditions');
@@ -479,7 +469,7 @@ describe('formValuesFromPrefill', () => {
     expect(query.model.conditions?.[1].evaluator.type).toBe('within_range');
   });
 
-  it('should preserve resample expression query structure', () => {
+  it('should preserve resample expression query structure', async () => {
     const prefillData = {
       queries: [
         {
@@ -511,7 +501,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const query = result.queries[0];
 
     expect(query.model).toHaveProperty('type', 'resample');
@@ -520,7 +510,7 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).toHaveProperty('window', '2m');
   });
 
-  it('should preserve Prometheus query fields', () => {
+  it('should preserve Prometheus query fields', async () => {
     const prefillData = {
       queries: [
         {
@@ -544,7 +534,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const [query] = result.queries.filter(isAlertQueryOfAlertData);
 
     expect(query.model).toHaveProperty('expr', 'rate(promhttp_metric_handler_requests_total{}[15m])');
@@ -555,7 +545,7 @@ describe('formValuesFromPrefill', () => {
     expect(query.model.range).toBe(false);
   });
 
-  it('should not add default values to query models', () => {
+  it('should not add default values to query models', async () => {
     const prefillData = {
       queries: [
         {
@@ -567,7 +557,7 @@ describe('formValuesFromPrefill', () => {
       ],
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
     const query = result.queries[0];
 
     // Should NOT have defaults added
@@ -577,13 +567,13 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).not.toHaveProperty('queryType');
   });
 
-  it('should preserve missingSeriesEvalsToResolve when duplicating a rule', () => {
+  it('should preserve missingSeriesEvalsToResolve when duplicating a rule', async () => {
     const prefillData = {
       type: RuleFormType.grafana,
       missingSeriesEvalsToResolve: 5,
     };
 
-    const result = formValuesFromPrefill(prefillData);
+    const result = await formValuesFromPrefill(prefillData);
 
     expect(result.missingSeriesEvalsToResolve).toBe(5);
   });

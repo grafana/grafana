@@ -11,8 +11,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -339,7 +340,7 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   };
 }
 
-export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
+export async function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): Promise<RuleFormValues> {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
   const normalizedRule = fixMissingRefIdsInExpressionModel(rule);
 
@@ -412,7 +413,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   } else {
     // DATASOURCE-MANAGED RULES
     if (rulerRuleType.dataSource.alertingRule(normalizedRule)) {
-      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+      const datasourceUid = (await getDataSourceInstanceSettings(ruleSourceName))?.uid ?? '';
 
       const defaultQuery = {
         refId: 'A',
@@ -440,7 +441,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         group: group.name,
       };
     } else if (rulerRuleType.dataSource.recordingRule(normalizedRule)) {
-      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+      const datasourceUid = (await getDataSourceInstanceSettings(ruleSourceName))?.uid ?? '';
 
       const defaultQuery = {
         refId: 'A',
@@ -589,8 +590,8 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
-  const dataSource = getDefaultOrFirstCompatibleDataSource();
+export const getDefaultQueries = async (isRecordingRule = false): Promise<AlertQuery[]> => {
+  const dataSource = await getDefaultOrFirstCompatibleDataSource();
   if (!dataSource) {
     const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
     return [...expressions];
@@ -747,7 +748,7 @@ export const dataQueriesToGrafanaQueries = async (
   const result: AlertQuery[] = [];
 
   for (const target of queries) {
-    const datasource = await getDataSourceSrv().get(target.datasource?.uid ? target.datasource : panelDataSourceRef);
+    const datasource = await getDataSourceInstance(target.datasource?.uid ? target.datasource : panelDataSourceRef);
     const dsRef = { uid: datasource.uid, type: datasource.type };
 
     const range = rangeUtil.relativeToTimeRange(relativeTimeRange);
@@ -774,7 +775,7 @@ export const dataQueriesToGrafanaQueries = async (
       result.push(newQuery);
       // queries
     } else {
-      const datasourceSettings = getDataSourceSrv().getInstanceSettings(dsRef);
+      const datasourceSettings = await getDataSourceInstanceSettings(dsRef);
       if (datasourceSettings && datasourceSettings.meta.alerting) {
         const newQuery: AlertQuery = {
           refId: interpolatedTarget.refId,
@@ -975,14 +976,14 @@ export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQue
   return 'expr' in model;
 }
 
-export function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): boolean | undefined {
+export async function getInstantFromDataQuery(query: AlertQuery<AlertDataQuery>): Promise<boolean | undefined> {
   const dataSourceUID = query.datasourceUid ?? query.model.datasource?.uid;
   if (!dataSourceUID) {
     return undefined;
   }
 
   // find the datasource type from the UID
-  const type = getDataSourceSrv().getInstanceSettings(dataSourceUID)?.type;
+  const type = (await getDataSourceInstanceSettings(dataSourceUID))?.type;
   if (!type) {
     return undefined;
   }
