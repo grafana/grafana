@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { createOrderFieldsComparer, type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Box, Icon, IconButton, Text, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
@@ -76,7 +76,7 @@ export function ViewPanelColumnOptions({ panel, pane }: Props) {
 
   return (
     <OptionsPaneCategory
-      title={t('dashboard.sidebar.view-panel.columns-category', 'Columns')}
+      title={t('dashboard.sidebar.view-panel.columns-category', 'Adhoc transformations')}
       id="columns"
       isOpenDefault={true}
     >
@@ -87,6 +87,11 @@ export function ViewPanelColumnOptions({ panel, pane }: Props) {
           </Text>
         </Box>
       )}
+      <Box paddingBottom={1}>
+        <Text variant="bodySmall" weight="medium">
+          {t('dashboard.sidebar.view-panel.columns-reorder', 'Reorder and hide columns')}
+        </Text>
+      </Box>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="view-panel-columns" direction="vertical">
           {(provided) => (
@@ -105,6 +110,14 @@ export function ViewPanelColumnOptions({ panel, pane }: Props) {
           )}
         </Droppable>
       </DragDropContext>
+      <Box paddingY={2}>
+        <Text variant="bodySmall" weight="medium">
+          {t('dashboard.sidebar.view-panel.columns-nest', 'Group and nest columns')}
+        </Text>
+      </Box>
+      <Box paddingLeft={1}>
+        <Trans i18nKey="dashboard-scene.view-panel-column-options.todo">TODO</Trans>
+      </Box>
     </OptionsPaneCategory>
   );
 }
