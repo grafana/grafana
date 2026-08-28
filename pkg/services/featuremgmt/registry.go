@@ -3288,6 +3288,15 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:         "datasources.querier.newName",
+			Description:  "Data source query service, use the new name",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.panelPluginTransformations",
 			Description: "Let panel plugins register system transformations",
 			Stage:       FeatureStageExperimental,
