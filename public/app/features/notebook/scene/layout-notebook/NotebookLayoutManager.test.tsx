@@ -15,14 +15,6 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-//
-// CodeCell passes only its (optional) focus request as `extensions`, so any non-empty array means one
-// was made. A markdown cell's baseline is higher and fixed, not merely "non-empty": every markdown
-// cell rendered through this tree gets the live-preview extension, the placeholder (SpecialMarkdownCell
-// passes one to every markdown cell unconditionally — see NotebookCellRenderer), and the Enter/
-// Shift-Enter keymap (also unconditional now — Shift-Enter's list-continuation binding no longer
-// depends on onSubmit), for a baseline of 3. A focus request adds exactly one more on top of that.
-//
 // Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
@@ -61,7 +53,7 @@ jest.mock('@grafana/ui/unstable', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 4 : 1;
+      const focusThreshold = ariaLabel === 'Markdown' ? 6 : 3;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {
@@ -1474,6 +1466,101 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
     });
+  });
+
+  // A Markdown/Code cell's own boundary-aware ArrowUp/Down keymap lives inside a real CodeMirror
+  // keymap, which — same as onAdvance/Enter above — this file's mocked CodeMirrorEditor never
+  // actually runs (see navigationKeymap's own dedicated test in focusExtension.test.ts for that
+  // part). A Collapsed cell has no editor at all, so its own frame is what ArrowUp/Down reaches
+  // instead — real DOM/React the whole way, and so exercised here for the manager's own resolution
+  // of "which cell is next" and the resulting focus grant.
+  describe('arrow-key navigation between cells', () => {
+    function collapsedFrame() {
+      return screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+    }
+
+    it('moves focus down from a collapsed cell into the markdown cell after it', async () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      const frame = collapsedFrame();
+      frame.focus();
+      fireEvent.keyDown(frame, { key: 'ArrowDown' });
+
+      // The trailing-empty-cell invariant adds its own second markdown cell once "Hello" lands, so
+      // more than one "Markdown" editor exists by now — the focused one is the one that matters.
+      await waitFor(() => {
+        const editors = screen.getAllByLabelText('Markdown');
+        expect(editors.some((editor) => editor === document.activeElement)).toBe(true);
+      });
+      expect(screen.getByDisplayValue('Hello')).toHaveFocus();
+    });
+
+    it('does nothing pressing ArrowUp on the first cell — no wraparound', () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      const frame = collapsedFrame();
+      frame.focus();
+      fireEvent.keyDown(frame, { key: 'ArrowUp' });
+
+      expect(frame).toHaveFocus();
+    });
+
+    // The rest of every other affordance on this frame (drag handle, actions bar, the add-block
+    // divider) is edit-mode-only too — arrow-key navigation follows the same rule rather than being
+    // a special case, which is also why the frame is not even a tab stop outside edit mode.
+    it('does not respond to arrow keys outside edit mode', () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, false));
+
+      expect(screen.getByText('hidden-panel').closest('[tabindex]')).toBeNull();
+    });
+
+    it.each([
+      ['down', 'ArrowDown', 'a', 'tall', 'start'],
+      ['up', 'ArrowUp', 'tall', 'a', 'end'],
+    ] as const)(
+      'scrolls to reveal the caret edge moving %s',
+      (_direction, key, sourceName, targetName, expectedBlock) => {
+        const cells = [
+          new NotebookCellItem({ elementName: 'a', source: 'user', collapsed: true }),
+          new NotebookCellItem({ elementName: 'tall', source: 'user', collapsed: true }),
+        ];
+        renderManager(buildManager(cells, true));
+
+        const sourceFrame = screen.getByText(sourceName).closest('[tabindex]') as HTMLElement;
+        const targetFrame = screen.getByText(targetName).closest('[tabindex]') as HTMLElement;
+        jest.spyOn(targetFrame, 'getBoundingClientRect').mockReturnValue({ height: 2000 } as DOMRect);
+        const scrollIntoView = jest.spyOn(targetFrame, 'scrollIntoView');
+
+        sourceFrame.focus();
+        fireEvent.keyDown(sourceFrame, { key });
+
+        expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: expectedBlock }));
+      }
+    );
   });
 });
 

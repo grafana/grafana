@@ -51,7 +51,7 @@ jest.mock('./BuildDashboardButton', () => {
   const { LinkButton } = jest.requireActual('@grafana/ui');
   return {
     BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
-      <LinkButton href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</LinkButton>
+      <LinkButton href={`/dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</LinkButton>
     ),
   };
 });
@@ -220,7 +220,7 @@ describe('EditDataSourceActions', () => {
       render(<EditDataSourceActions uid="test-uid" />);
 
       const dashboardLink = screen.getByText('Build a dashboard').closest('a');
-      expect(dashboardLink).toHaveAttribute('href', 'dashboard/new-with-ds/test-uid');
+      expect(dashboardLink).toHaveAttribute('href', '/dashboard/new-with-ds/test-uid');
     });
   });
 

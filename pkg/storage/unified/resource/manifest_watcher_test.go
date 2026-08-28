@@ -117,8 +117,8 @@ func TestManifestWatcher_PollConvertsManifests(t *testing.T) {
 	require.Len(t, got, 2)
 	groups := map[string]bool{}
 	for _, m := range got {
-		require.NotNil(t, m.ManifestData)
-		groups[m.ManifestData.Group] = true
+		require.NotNil(t, m)
+		groups[m.Group] = true
 	}
 	require.True(t, groups["dashboard.grafana.app"])
 	require.True(t, groups["folder.grafana.app"])
@@ -130,8 +130,8 @@ func TestManifestWatcher_OnChangeFiresOnlyWhenChanged(t *testing.T) {
 	)
 
 	var calls int
-	var last []app.Manifest
-	w := newManifestWatcher(client, 0, func(m []app.Manifest) {
+	var last []*app.ManifestData
+	w := newManifestWatcher(client, 0, func(m []*app.ManifestData) {
 		calls++
 		last = m
 	}, nil)
@@ -211,7 +211,7 @@ func TestManifestWatcher_PicksUpChangesOnNextPoll(t *testing.T) {
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(client, 0, func([]app.Manifest) { calls++ }, nil)
+	w := newManifestWatcher(client, 0, func([]*app.ManifestData) { calls++ }, nil)
 
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
@@ -248,7 +248,7 @@ func TestManifestWatcher_KeepsPreviousManifestOnParseFailure(t *testing.T) {
 
 	got := w.Manifests()
 	require.Len(t, got, 1)
-	require.Equal(t, "dashboard.grafana.app", got[0].ManifestData.Group)
+	require.Equal(t, "dashboard.grafana.app", got[0].Group)
 }
 
 func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
@@ -256,7 +256,7 @@ func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
 		testAppManifestObj("A", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(client, 0, func([]app.Manifest) { calls++ }, nil)
+	w := newManifestWatcher(client, 0, func([]*app.ManifestData) { calls++ }, nil)
 	w.runPollCycle(t.Context())
 	require.Equal(t, 1, calls)
 
@@ -298,7 +298,7 @@ func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
 
 	got := w.Manifests()
 	require.Len(t, got, 1)
-	require.Equal(t, "dashboard.grafana.app", got[0].ManifestData.Group)
+	require.Equal(t, "dashboard.grafana.app", got[0].Group)
 }
 
 func TestNewManifestWatcherConfig(t *testing.T) {

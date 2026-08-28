@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"slices"
@@ -743,7 +744,13 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"group", gr.Group,
 				"resource", gr.Resource,
 				"error", err)
-			break
+
+			// A cancelled context means the process is shutting down, so give up on the whole
+			// cycle. Any other failure only affects this group, and stopping here would leave
+			// the groups after it uncollected for good.
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}
 }
@@ -2798,9 +2805,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
 			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
-			for key, value := range lastMicroRV {
-				batchLastMicroRV[key] = value
-			}
+			maps.Copy(batchLastMicroRV, lastMicroRV)
 		}
 
 		for _, req := range batch {

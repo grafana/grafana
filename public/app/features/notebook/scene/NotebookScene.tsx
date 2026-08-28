@@ -22,7 +22,8 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { canEditNotebooks } from '../permissions';

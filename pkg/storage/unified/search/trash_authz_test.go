@@ -37,6 +37,9 @@ type trashAccessClient struct {
 	// Every folder checked, in order, including repeats, so tests can assert on the
 	// cache.
 	adminCheckFolders []string
+	// Round trips spent on folder admin checks, which is what the trash scan keeps
+	// low: a batch counts once, however many folders it carried.
+	adminCalls int
 	// Counted so a test can show which rule ran.
 	readChecks int
 }
@@ -44,6 +47,7 @@ type trashAccessClient struct {
 func (c *trashAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	if req.Verb == utils.VerbSetPermissions {
 		c.adminCheckFolders = append(c.adminCheckFolders, folder)
+		c.adminCalls++
 		return authlib.CheckResponse{Allowed: c.adminFolders[folder], Zookie: authlib.NoopZookie{}}, nil
 	}
 	c.readChecks++
@@ -59,9 +63,19 @@ func (c *trashAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ aut
 
 func (c *trashAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	admin := false
 	for _, item := range req.Checks {
+		if item.Verb == utils.VerbSetPermissions {
+			admin = true
+			c.adminCheckFolders = append(c.adminCheckFolders, item.Folder)
+			results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: c.adminFolders[item.Folder]}
+			continue
+		}
 		c.readChecks++
 		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: c.readAll}
+	}
+	if admin {
+		c.adminCalls++
 	}
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
@@ -277,6 +291,32 @@ func TestTrashAuthz_FolderAdminCheckIsCachedPerFolder(t *testing.T) {
 			require.Len(t, namesOf(res), 8)
 			assert.Equal(t, 2, ac.adminCheckCount(),
 				"one check per folder, not per item; got checks for %v", ac.adminCheckFolders)
+		})
+	}
+}
+
+// Asked one at a time, a listing spanning many folders waits for one round trip
+// after another.
+func TestTrashAuthz_FolderChecksForAPageCostOneRoundTrip(t *testing.T) {
+	for _, path := range trashIndexBuilders() {
+		t.Run(path.name, func(t *testing.T) {
+			index := path.build(t)
+			const folderCount = 40
+			docs := make([]*resource.BulkIndexItem, 0, folderCount)
+			admin := map[string]bool{}
+			for i := range folderCount {
+				folder := fmt.Sprintf("folder-%02d", i)
+				admin[folder] = true
+				docs = append(docs, trashDoc("dash-"+folder, folder, trashAlice))
+			}
+			indexDocs(t, index, docs)
+
+			ac := &trashAccessClient{adminFolders: admin}
+			res := runTrashSearch(t, index, ac, "carol", trashQueryFor(nil))
+
+			require.Len(t, namesOf(res), folderCount)
+			assert.Equal(t, folderCount, ac.adminCheckCount(), "every folder is still decided")
+			assert.Equal(t, 1, ac.adminCalls, "in one round trip")
 		})
 	}
 }

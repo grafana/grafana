@@ -708,6 +708,32 @@ describe('NotebookAutosave', () => {
     expect(savedTexts()).toEqual(['First', 'Second']);
   });
 
+  it('keeps a time range edit made while an earlier save is in flight', async () => {
+    let finishFirstSave = () => {};
+    jest
+      .mocked(updateNotebook)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirstSave = () => resolve({ generation: 2 });
+          })
+      )
+      .mockResolvedValue({ generation: 3 });
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    finishFirstSave();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(updateNotebook).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(updateNotebook).mock.calls[0][1].timeSettings.from).toBe('now-6h');
+    expect(jest.mocked(updateNotebook).mock.calls[1][1].timeSettings.from).toBe('now-1h');
+  });
+
   it('keeps a panel edit made while an earlier panel save is in flight', async () => {
     let finishFirstSave = () => {};
     jest
@@ -739,6 +765,39 @@ describe('NotebookAutosave', () => {
         properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'blue' } }],
       },
     ]);
+  });
+
+  it('clears writer ownership when a queued save has no spec change', async () => {
+    let finishFirstSave = () => {};
+    jest
+      .mocked(updateNotebook)
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishFirstSave = () => resolve({ generation: 2 });
+          })
+      )
+      .mockResolvedValue({ generation: 3 });
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    scene.showModal(new TestOverlay({}));
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    finishFirstSave();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+    expect(scene.autosave.state.status).toBe('saved');
+
+    scene.onExitEditMode();
+    editFirstCell(scene, 'changed outside edit mode');
+    deactivate?.();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
   });
 
   it('collapses several rapid edits into one request carrying the last of them', async () => {

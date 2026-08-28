@@ -471,7 +471,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     if (serialized === this.baseline) {
       // Lots of things change the scene without changing what gets saved. Left on `pending`, the
-      // notebook would go on saying it has unsaved changes when it has none.
+      // notebook would go on saying it has unsaved changes when it has none. Clear the ownership flags
+      // too: this can be a no-op queued behind an in-flight save, and leaving its flag set would let a
+      // later view-only mutation ride in on reactivation as though a writer had made it.
+      this.timeSettingsEdited = false;
+      this.vizConfigsEdited.clear();
+      this.editedByWriter = false;
       this.setState({ status: this.restingStatus() });
       return;
     }

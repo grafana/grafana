@@ -49,10 +49,10 @@ import { djb2Hash } from '../utils/djb2Hash';
 import {
   calculateGridItemDimensions,
   getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
   getQueryRunnerFor,
   isLibraryPanel,
 } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';

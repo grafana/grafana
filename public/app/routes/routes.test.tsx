@@ -113,3 +113,67 @@ describe('notebooks route guards', () => {
     expect(blank?.component).toBe(byUid?.component);
   });
 });
+
+describe('variables route guards', () => {
+  const previousPermissions = contextSrv.user.permissions;
+
+  afterEach(() => {
+    contextSrv.user.permissions = previousPermissions;
+  });
+
+  function getRouteRolesGuard(path: string) {
+    const route = getAppRoutes().find((r) => r.path === path);
+    if (!route?.roles) {
+      throw new Error(`Route not found or has no roles guard: ${path}`);
+    }
+    return route.roles;
+  }
+
+  const permissionGatedRoutes: Array<[string, AccessControlAction]> = [
+    ['/dashboards/variables', AccessControlAction.VariablesRead],
+    ['/dashboards/variables/new', AccessControlAction.VariablesCreate],
+  ];
+
+  it.each(permissionGatedRoutes)('rejects %s without the required permission', (path) => {
+    contextSrv.user.permissions = {};
+
+    expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
+  });
+
+  it.each(permissionGatedRoutes)('allows %s with the required permission', (path, action) => {
+    contextSrv.user.permissions = { [action]: true };
+
+    expect(getRouteRolesGuard(path)()).toEqual([]);
+  });
+
+  // Route guards look at flattened user.permissions, not orgRole. Viewers always have
+  // variables:read (fixed:variables:reader); folder Edit also grants variables:create/write.
+  it('allows a Viewer (variables:read only) to open the list but not create or edit', () => {
+    contextSrv.user.permissions = { [AccessControlAction.VariablesRead]: true };
+
+    expect(getRouteRolesGuard('/dashboards/variables')()).toEqual([]);
+    expect(getRouteRolesGuard('/dashboards/variables/new')()).toEqual(['Reject']);
+    expect(getRouteRolesGuard('/dashboards/variables/edit/:name')()).toEqual(['Reject']);
+  });
+
+  it('allows a Viewer with folder Edit to open list, create, and edit', () => {
+    contextSrv.user.permissions = {
+      [AccessControlAction.VariablesRead]: true,
+      [AccessControlAction.VariablesCreate]: true,
+      [AccessControlAction.VariablesWrite]: true,
+    };
+
+    expect(getRouteRolesGuard('/dashboards/variables')()).toEqual([]);
+    expect(getRouteRolesGuard('/dashboards/variables/new')()).toEqual([]);
+    expect(getRouteRolesGuard('/dashboards/variables/edit/:name')()).toEqual([]);
+  });
+
+  it.each([AccessControlAction.VariablesWrite, AccessControlAction.VariablesCreate])(
+    'allows /dashboards/variables/edit/:name with %s',
+    (action) => {
+      contextSrv.user.permissions = { [action]: true };
+
+      expect(getRouteRolesGuard('/dashboards/variables/edit/:name')()).toEqual([]);
+    }
+  );
+});
