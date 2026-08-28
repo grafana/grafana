@@ -5273,6 +5273,7 @@
         "name": "preferences.rerouteLegacyAPIs",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-25T09:11:50Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
@@ -5744,9 +5745,23 @@
     },
     {
       "metadata": {
+        "name": "queryeditor.coauthoringUi",
+        "resourceVersion": "1785472536188",
+        "creationTimestamp": "2026-07-31T04:35:36Z"
+      },
+      "spec": {
+        "description": "Enables AI-assisted coauthoring in code query editors",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1786565901949",
-        "creationTimestamp": "2026-08-12T20:18:21Z"
+        "resourceVersion": "1787255970144",
+        "creationTimestamp": "2026-08-20T19:59:30Z"
       },
       "spec": {
         "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",

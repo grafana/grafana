@@ -26,6 +26,7 @@ policy:
             - Workflow .github/workflows/lint-build-docs.yml succeeded or skipped
             - Workflow .github/workflows/policybot.yml succeeded or skipped
             - Workflow .github/workflows/pr-build-grafana.yml succeeded or skipped
+            - Workflow .github/workflows/pr-bundle-size.yml succeeded or skipped
             - Workflow .github/workflows/pr-checks.yml succeeded or skipped
             - Workflow .github/workflows/pr-commands.yml succeeded or skipped
             - Workflow .github/workflows/pr-dependabot-update-go-workspace.yml succeeded or skipped
@@ -395,6 +396,19 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-build-grafana.yml
+  - name: Workflow .github/workflows/pr-bundle-size.yml succeeded or skipped
+    if:
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-bundle-size\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-bundle-size.yml
   - name: Workflow .github/workflows/pr-checks.yml succeeded or skipped
     if:
       file_not_deleted:

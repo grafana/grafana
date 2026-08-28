@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
@@ -529,7 +530,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
-      roles: config.featureToggles.playlistsRBAC
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
         : undefined,
       component: SafeDynamicImport(

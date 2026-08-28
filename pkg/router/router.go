@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"strings"
 	"sync"
@@ -255,9 +256,7 @@ func (cr *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *ht
 		return
 	}
 
-	for k, v := range rec.header {
-		w.Header()[k] = v
-	}
+	maps.Copy(w.Header(), rec.header)
 	if rec.statusCode == http.StatusOK {
 		cr.openapiDocs.Store(cacheKey, openapiCacheEntry{rv: entry.rv, etag: etag, body: rec.body.Bytes()})
 		w.Header().Set("ETag", etag)

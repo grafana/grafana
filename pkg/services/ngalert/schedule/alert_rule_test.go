@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"runtime"
@@ -1507,9 +1508,7 @@ func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *s
 		LastSentAt:         &ts,
 		LastEvaluationTime: ts,
 	}
-	for k, v := range rule.Labels {
-		s.Labels[k] = v
-	}
+	maps.Copy(s.Labels, rule.Labels)
 	for k, v := range state.GetRuleExtraLabels(&logtest.Fake{}, rule, "", true, featuremgmt.WithFeatures()) {
 		if _, ok := s.Labels[k]; !ok {
 			s.Labels[k] = v
