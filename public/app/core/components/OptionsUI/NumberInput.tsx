@@ -87,7 +87,7 @@ export const NumberInput = memo(function NumberInput({
   suffix,
 }: Props) {
   const [text, setText] = useState('');
-  const [inputCorrected, setInputCorrected] = useState(false);
+  const [showCorrectionError, setShowCorrectionError] = useState(false);
   const latestPropsRef = useRef({ value, min, max, onChange });
   const rangeId = useId();
   const errorId = useId();
@@ -126,7 +126,7 @@ export const NumberInput = memo(function NumberInput({
   const commitValue = useCallback(
     (txt: string) => {
       if (txt === '') {
-        setInputCorrected(false);
+        setShowCorrectionError(false);
         if (value !== undefined) {
           onChange(undefined);
         }
@@ -136,7 +136,7 @@ export const NumberInput = memo(function NumberInput({
       const parsed = Number(txt);
       if (!Number.isFinite(parsed)) {
         setText(formatValue(value));
-        setInputCorrected(false);
+        setShowCorrectionError(false);
         return;
       }
 
@@ -152,7 +152,7 @@ export const NumberInput = memo(function NumberInput({
 
       setText(`${next}`);
       if (corrected) {
-        setInputCorrected(true);
+        setShowCorrectionError(true);
       }
       if (next !== value) {
         onChange(next);
@@ -169,7 +169,7 @@ export const NumberInput = memo(function NumberInput({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const next = e.currentTarget.value;
       setText(next);
-      setInputCorrected(false);
+      setShowCorrectionError(false);
 
       if (parseInRangeValue(next, min, max) === undefined) {
         emitInRangeValueDebounced.cancel();
@@ -199,7 +199,7 @@ export const NumberInput = memo(function NumberInput({
     [commitValue, emitInRangeValueDebounced]
   );
 
-  const localDescribedBy = inputCorrected ? errorId : rangeText ? rangeId : undefined;
+  const localDescribedBy = showCorrectionError ? errorId : rangeText ? rangeId : undefined;
   const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
   const errorMessage = rangeText
     ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
@@ -222,7 +222,7 @@ export const NumberInput = memo(function NumberInput({
         disabled={fieldDisabled}
         width={width}
         suffix={suffix}
-        invalid={inputCorrected || fieldContext.invalid}
+        invalid={showCorrectionError || fieldContext.invalid}
         aria-describedby={describedBy}
       />
       {rangeText && (
@@ -230,7 +230,7 @@ export const NumberInput = memo(function NumberInput({
           {rangeText}
         </div>
       )}
-      {inputCorrected && <FieldValidationMessage id={errorId}>{errorMessage}</FieldValidationMessage>}
+      {showCorrectionError && <FieldValidationMessage id={errorId}>{errorMessage}</FieldValidationMessage>}
     </div>
   );
 });
