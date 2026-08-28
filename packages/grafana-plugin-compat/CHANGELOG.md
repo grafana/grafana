@@ -1,3 +1,3 @@
-# (2026-08-14)
+# Unreleased
 
-First public release
+This package has not been published yet.
