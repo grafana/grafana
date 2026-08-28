@@ -6,7 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
-  SceneDataTransformer,
   sceneGraph,
   type SceneGridItemStateLike,
   SceneGridLayout,
@@ -35,6 +34,7 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getSourceDataProvider } from '../utils/getSourceDataProvider';
 import {
   getDashboardSceneFor,
   getLibraryPanelBehavior,
@@ -404,12 +404,8 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
-        // Get raw untransformed data
-        if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data?.state.data) {
-          objToStringify = getPanelDataFrames(dataProvider.state.$data!.state.data);
-        } else {
-          objToStringify = getPanelDataFrames(dataProvider.state.data);
-        }
+        const sourceData = getSourceDataProvider(dataProvider)?.state.data;
+        objToStringify = getPanelDataFrames(sourceData ?? dataProvider.state.data);
       }
       break;
     }

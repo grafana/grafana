@@ -14,9 +14,10 @@
 import type * as z from 'zod';
 
 import { type DataFrame, type DataQueryError, LoadingState } from '@grafana/data';
-import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
+import { sceneGraph, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { getSourceDataProvider } from '../../utils/getSourceDataProvider';
 import { getVizPanelKeyForPanelId } from '../../utils/utils';
 import type {
   FrameSchema,
@@ -74,8 +75,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
     return undefined;
   }
 
-  const innerProvider = dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
-  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+  const panelData = (getSourceDataProvider(dataProvider) ?? dataProvider).state?.data;
 
   if (!panelData) {
     return { loadingState: LoadingState.Loading, hasError: false, hasNoData: false };
@@ -141,8 +141,7 @@ function getDataFrameSchema(vizPanel: VizPanel): FrameSchema[] | undefined {
     return undefined;
   }
 
-  const innerProvider = dataProvider instanceof SceneDataTransformer ? dataProvider.state.$data : dataProvider;
-  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+  const panelData = (getSourceDataProvider(dataProvider) ?? dataProvider).state?.data;
 
   if (!panelData?.series || !Array.isArray(panelData.series)) {
     return undefined;
