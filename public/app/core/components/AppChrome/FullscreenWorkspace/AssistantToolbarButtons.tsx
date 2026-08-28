@@ -7,10 +7,8 @@ import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import {
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';

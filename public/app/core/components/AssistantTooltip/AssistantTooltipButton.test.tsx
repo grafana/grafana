@@ -6,7 +6,7 @@ import { createDataFrame, dateTime, FieldType, store, type TimeRange } from '@gr
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
-} from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { setFullscreenWorkspaceActive } from 'app/core/components/AppChrome/FullscreenWorkspace/fullscreenWorkspaceState';
 
 import { AssistantTooltipButton } from './AssistantTooltipButton';

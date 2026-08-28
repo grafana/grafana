@@ -3,7 +3,7 @@ import { store } from '@grafana/data';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentMetaFromComponentId,
-} from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+} from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
 import { isFullscreenWorkspaceActive } from 'app/core/components/AppChrome/FullscreenWorkspace/fullscreenWorkspaceState';
 
 // Active conversation id stored by the assistant app.
@@ -18,7 +18,7 @@ const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
  * localStorage key `useExtensionSidebarContext()` mirrors its state from, and the workspace half
  * reads the mirror `useFullscreenWorkspace()` publishes.
  */
-export function isAssistantVisible(): boolean {
+function isAssistantVisible(): boolean {
   const dockedComponentId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const isDockedInSidebar = getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
 

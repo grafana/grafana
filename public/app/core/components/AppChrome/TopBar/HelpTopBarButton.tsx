@@ -6,10 +6,10 @@ import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
-  useExtensionSidebarContext,
-  getComponentIdFromComponentMeta,
   getInteractiveLearningPluginId,
+  useExtensionSidebarContext,
 } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
 import { useHelpNode } from './useHelpNode';
