@@ -173,6 +173,9 @@ type batchAccessClient struct {
 	callbackAccessClient
 	batches    [][]string
 	batchError error
+	// itemError answers every item in the batch with an error, which is what rbac
+	// does for an invalid namespace or subject.
+	itemError error
 }
 
 func (c *batchAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
@@ -183,6 +186,13 @@ func (c *batchAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo,
 	c.batches = append(c.batches, folders)
 	if c.batchError != nil {
 		return authlib.BatchCheckResponse{}, c.batchError
+	}
+	if c.itemError != nil {
+		results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+		for _, item := range req.Checks {
+			results[item.CorrelationID] = authlib.BatchCheckResult{Error: c.itemError}
+		}
+		return authlib.BatchCheckResponse{Results: results}, nil
 	}
 	return c.callbackAccessClient.BatchCheck(ctx, id, req)
 }
@@ -237,5 +247,32 @@ func TestTrashAuthorizer_PrepareFailureFallsBackToSingleCheck(t *testing.T) {
 
 	require.Len(t, *reported, 1)
 	assert.ErrorIs(t, (*reported)[0], boom)
+	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
+}
+
+// authlib denies k6-app in the single check and has no such rule for batches, so
+// batching a decision for it would disclose what every other path hides.
+func TestTrashAuthorizer_PrepareLeavesK6FolderToTheSingleCheck(t *testing.T) {
+	a, ac, _ := newBatchAuthorizer("carol", func(string) bool { return true })
+
+	a.Prepare(t.Context(), []TrashItem{
+		{Folder: "k6-app", DeletedBy: "user:alice"},
+		{Folder: "folder-1", DeletedBy: "user:alice"},
+	})
+
+	require.Len(t, ac.batches, 1)
+	assert.Equal(t, []string{"folder-1"}, ac.batches[0], "k6-app is not batched")
+}
+
+// A batch that answers some folders with an error leaves them to FolderAdmin, which
+// reports its own failure. Reporting here too would double every line of an outage.
+func TestTrashAuthorizer_PrepareDoesNotReportPerItemErrors(t *testing.T) {
+	boom := errors.New("item failed")
+	a, ac, reported := newBatchAuthorizer("carol", func(string) bool { return true })
+	ac.itemError = boom
+
+	a.Prepare(t.Context(), []TrashItem{{Folder: "folder-1", DeletedBy: "user:alice"}})
+
+	assert.Empty(t, *reported)
 	assert.True(t, a.Allowed(t.Context(), "folder-1", "user:alice"), "the single check still decides it")
 }

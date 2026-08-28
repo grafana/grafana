@@ -55,7 +55,12 @@ func trashAuthorized(
 			authorizer.Prepare(ctx, items)
 
 			for _, info := range batch {
-				considered++
+				// Per item, not per batch: a folder Prepare left undecided still costs a
+				// check, and on a dead context that reads as a denial rather than an error.
+				if err := ctx.Err(); err != nil {
+					yield(docInfo{}, err)
+					return false
+				}
 				if !authorizer.Allowed(ctx, info.folder, info.deletedBy) {
 					continue
 				}
@@ -69,6 +74,9 @@ func trashAuthorized(
 
 		batch := make([]docInfo, 0, trashBatchSize)
 		for info := range candidates {
+			// Counted where the candidate is pulled, so a batch cut short by the caller
+			// still reports what the scan read.
+			considered++
 			batch = append(batch, info)
 			if len(batch) < trashBatchSize {
 				continue

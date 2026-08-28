@@ -53,6 +53,14 @@ func NewTrashAuthorizer(
 	}
 }
 
+// k6FolderUID is hidden from anyone but a service account. The single check in
+// authlib denies it outright, and BatchCheck has no such rule, so batching a
+// decision for it would answer differently from every other path.
+//
+// Spelled here rather than imported from pkg/services/accesscontrol, which unified
+// storage does not depend on.
+const k6FolderUID = "k6-app"
+
 // TrashItem is one object Prepare may need a folder check for.
 type TrashItem struct {
 	Folder    string
@@ -67,7 +75,7 @@ func (a *TrashAuthorizer) Prepare(ctx context.Context, items []TrashItem) {
 	var pending []string
 	seen := make(map[string]bool, len(items))
 	for _, item := range items {
-		if a.deletedByCaller(item.DeletedBy) || seen[item.Folder] {
+		if a.deletedByCaller(item.DeletedBy) || seen[item.Folder] || item.Folder == k6FolderUID {
 			continue
 		}
 		if _, decided := a.folderAdmin[item.Folder]; decided {
@@ -106,14 +114,11 @@ func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) {
 	}
 
 	for i, folder := range folders {
+		// A folder left undecided here is checked on its own by FolderAdmin, which
+		// reports its own failure. Reporting again here would double every log line
+		// of an authz outage, once per item.
 		result, ok := resp.Results[strconv.Itoa(i)]
-		if !ok {
-			continue
-		}
-		if result.Error != nil {
-			if a.onCheckError != nil {
-				a.onCheckError(result.Error)
-			}
+		if !ok || result.Error != nil {
 			continue
 		}
 		a.folderAdmin[folder] = result.Allowed
