@@ -1,4 +1,4 @@
-import { of, Subject } from 'rxjs';
+import { delay, of, Subject } from 'rxjs';
 
 import {
   type AdHocVariableModel,
@@ -657,14 +657,32 @@ describe('setDashboardPanelContext', () => {
 
       availability.next(false);
       availability.next(false);
-      expect(forceRenderSpy).not.toHaveBeenCalled();
+      availability.next(false);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
 
       availability.next(true);
-      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(2);
 
       // Availability never flips back, so the subscription completes here instead of living on
       // past the panel it closes over — nothing in a panel context can tear it down.
       expect(availability.observed).toBe(false);
+    });
+
+    it('re-renders when availability arrives asynchronously, as it always does in practice', async () => {
+      // `isAssistantAvailable()` resolves through the plugin extension registries, which are
+      // promise-backed, so its first value always lands after the render that built this panel
+      // context. Without the re-render the popover never picks the action up — a panel sitting in
+      // a static error state has no other reason to render again.
+      mockIsAssistantAvailable.mockReturnValue(of(true).pipe(delay(0)));
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
     it('does nothing when the panel currently has no errors or notices', async () => {
