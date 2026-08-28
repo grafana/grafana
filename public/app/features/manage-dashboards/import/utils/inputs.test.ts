@@ -1860,6 +1860,43 @@ describe('applyV2Inputs', () => {
     expect(sectionConst?.kind === 'ConstantVariable' && sectionConst.spec.query).toBe('row-staging');
   });
 
+  it('keeps the query variable refresh setting when binding the datasource picked at import', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'duration',
+            refresh: 'onTimeRangeChanged',
+            options: [],
+            current: { text: '', value: '' },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
+            },
+          },
+        },
+      ],
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+    const variable = result.variables?.[0] as QueryVariableKind;
+
+    expect(variable.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(variable.spec.refresh).toBe('onTimeRangeChanged');
+  });
+
   it('remaps datasources on section QueryVariables and clears export labels', () => {
     const dashboard = {
       title: 'old',
@@ -2197,6 +2234,26 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable?.spec.options).toEqual([]);
       expect(variable?.spec.current).toEqual({ text: '', value: '' });
       expect(variable?.spec.refresh).toBe('onDashboardLoad');
+    });
+
+    it.each([
+      { refresh: 'onTimeRangeChanged' as const, expected: 'onTimeRangeChanged' },
+      { refresh: 'never' as const, expected: 'never' },
+      { refresh: 'onDashboardLoad' as const, expected: 'onDashboardLoad' },
+    ])('maps refresh $refresh to $expected when remapping the datasource', ({ refresh, expected }) => {
+      const base = createQueryVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...base, spec: { ...base.spec, refresh } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const variable = getQueryVariable(result);
+
+      expect(variable?.spec.query?.datasource?.name).toBe('new-prom-uid');
+      expect(variable?.spec.options).toEqual([]);
+      expect(variable?.spec.refresh).toBe(expected);
     });
 
     it('preserves variable reference and keeps options intact', () => {
