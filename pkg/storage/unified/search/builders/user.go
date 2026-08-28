@@ -11,7 +11,7 @@ import (
 // iamManifests is the slice the IAM builders pass to the standard document
 // builder. It carries the selectable-field declarations the builder uses to
 // populate IndexableDocument.SelectableFields for IAM kinds.
-var iamManifests = []app.Manifest{iam.LocalManifest()}
+var iamManifests = []*app.ManifestData{iam.LocalManifest().ManifestData}
 
 // iamProvider is shared by all IAM builders and their exported field sets, so
 // the manifest is parsed once.

@@ -12,15 +12,15 @@ func SelectableFields() map[LowerGroupResource][]string {
 	return SelectableFieldsForManifests(AppManifests())
 }
 
-func AppManifestsWithKinds(manifiests []app.Manifest) []app.Manifest {
+func AppManifestsWithKinds(manifiests []*app.ManifestData) []*app.ManifestData {
 	// Include manifests with kinds in any version.
-	filtered := make([]app.Manifest, 0, len(manifiests))
+	filtered := make([]*app.ManifestData, 0, len(manifiests))
 	for _, m := range manifiests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
 		hasKinds := false
-		for _, v := range m.ManifestData.Versions {
+		for _, v := range m.Versions {
 			if len(v.Kinds) > 0 {
 				hasKinds = true
 				break
@@ -36,9 +36,12 @@ func AppManifestsWithKinds(manifiests []app.Manifest) []app.Manifest {
 // SelectableFieldsForManifests returns a map keyed by (group, kind) to the list
 // of selectable fields (across all versions). Each kind is also keyed by
 // (group, plural), pointing to the same fields.
-func SelectableFieldsForManifests(manifests []app.Manifest) map[LowerGroupResource][]string {
+func SelectableFieldsForManifests(manifests []*app.ManifestData) map[LowerGroupResource][]string {
 	fields := map[LowerGroupResource][]string{}
 	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
 		for k, v := range selectableFieldsForManifest(m) {
 			fields[k] = v
 		}
@@ -46,11 +49,11 @@ func SelectableFieldsForManifests(manifests []app.Manifest) map[LowerGroupResour
 	return fields
 }
 
-func selectableFieldsForManifest(m app.Manifest) map[LowerGroupResource][]string {
+func selectableFieldsForManifest(m *app.ManifestData) map[LowerGroupResource][]string {
 	kindFields := map[string]map[string]bool{}
 	kinds := map[string]app.ManifestVersionKind{}
 
-	for _, version := range m.ManifestData.Versions {
+	for _, version := range m.Versions {
 		for _, kind := range version.Kinds {
 			if len(kind.SelectableFields) > 0 {
 				kinds[kind.Kind] = kind
@@ -73,8 +76,8 @@ func selectableFieldsForManifest(m app.Manifest) map[LowerGroupResource][]string
 		}
 		slices.Sort(fs)
 
-		fields[NewLowerGroupResource(m.ManifestData.Group, v.Kind)] = fs
-		fields[NewLowerGroupResource(m.ManifestData.Group, v.Plural)] = fs
+		fields[NewLowerGroupResource(m.Group, v.Kind)] = fs
+		fields[NewLowerGroupResource(m.Group, v.Plural)] = fs
 	}
 
 	return fields

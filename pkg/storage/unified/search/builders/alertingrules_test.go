@@ -18,7 +18,7 @@ import (
 
 // rulesManifests is the rule kinds' manifest; the tests derive the rule search
 // fields from it the way the shared registry does in production.
-var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
+var rulesManifests = []*app.ManifestData{rulesmanifest.LocalManifest().ManifestData}
 
 var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
 

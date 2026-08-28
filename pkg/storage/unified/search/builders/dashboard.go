@@ -48,7 +48,7 @@ const DASHBOARD_ERRORS_TODAY = "errors_today"
 // fields (no resource path); DashboardDocumentBuilder fills them in from the
 // parsed spec and the usage-insights stats.
 var DashboardSearchFields = resource.NewManifestBackedProvider(
-	[]app.Manifest{dashboardapp.LocalManifest()},
+	[]*app.ManifestData{dashboardapp.LocalManifest().ManifestData},
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {

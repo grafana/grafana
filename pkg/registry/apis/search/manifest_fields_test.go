@@ -25,10 +25,10 @@ func servedVersions(t *testing.T, group, resourceName string) []string {
 
 	var out []string
 	for _, m := range resource.AppManifests() {
-		if m.ManifestData == nil || m.ManifestData.Group != group {
+		if m == nil || m.Group != group {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			if !version.Served {
 				continue
 			}

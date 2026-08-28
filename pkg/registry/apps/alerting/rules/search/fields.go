@@ -59,7 +59,7 @@ func buildSearchColumns() map[string]*resourcepb.ResourceTableColumnDefinition {
 		fieldFolder: std.Field(fieldFolder),
 	}
 
-	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	provider := resource.NewManifestBackedProvider([]*app.ManifestData{rulesmanifest.LocalManifest().ManifestData})
 	for _, gr := range []schema.GroupResource{
 		alertrule.ResourceInfo.GroupResource(),
 		recordingrule.ResourceInfo.GroupResource(),

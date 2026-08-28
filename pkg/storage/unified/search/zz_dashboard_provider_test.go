@@ -11,5 +11,5 @@ import (
 // provider from its manifest, the way production does, for seeding a test
 // registry.
 func DashboardSearchFieldsProviderForTest() resource.SearchFieldsProvider {
-	return resource.NewManifestBackedProvider([]app.Manifest{dashboardapp.LocalManifest()})
+	return resource.NewManifestBackedProvider([]*app.ManifestData{dashboardapp.LocalManifest().ManifestData})
 }
