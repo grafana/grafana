@@ -355,9 +355,9 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	raw, err = client.Get().AbsPath(route).DoRaw(ctx)
 	require.Error(t, err)
 
-	// clientWrapper returns a ServiceUnavailable, but httpadapter.HandlerFunc
+	// The lazy v3 client returns a ServiceUnavailable, but httpadapter.HandlerFunc
 	// turns any CallRoute failure into a plain-text 500, so the status reason
 	// and the k8s Status body are both lost on the way out.
 	require.True(t, apierrors.IsInternalError(err), "got %v", err)
-	require.Contains(t, string(raw), "does not implement the v3 route service")
+	require.Contains(t, string(raw), "does not implement ClientV3")
 }
