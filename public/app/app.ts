@@ -39,6 +39,7 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  logError,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
@@ -160,6 +161,15 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
+      // Capture any error generated to pass to Faro once available.
+      let openFeatureError: unknown;
+      try {
+        await initOpenFeature();
+      } catch (err) {
+        openFeatureError = err;
+        console.error('Failed to initialize OpenFeature provider', err);
+      }
+
       const initI18nPromise = initializeI18n({
         language: contextSrv.user.language,
         ns: NAMESPACES,
@@ -179,11 +189,13 @@ export class GrafanaApp {
       setBackendSrv(backendSrv);
       await initEchoSrv();
 
+      // This needs to be done after the `initEchoSrv` since that initializes Faro.
+      if (openFeatureError) {
+        logError(new Error('Failed to initialize OpenFeature provider', { cause: openFeatureError }));
+      }
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-
-      // This needs to be done after the `initEchoSrv` so that Faro is available.
-      await initOpenFeature();
 
       if (config.featureToggles.cujTracking) {
         setJourneyTracker(new JourneyTrackerImpl());
