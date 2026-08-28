@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
@@ -12,9 +12,9 @@ import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { type AlertRuleRow as AlertRuleRowType } from '../types';
 
+import { AlertRuleRowActions } from './AlertRuleRowActions';
 import { GenericRow } from './GenericRow';
 import { RowActions } from './InstanceCountBadges';
-import { SilenceRuleButton } from './SilenceRuleButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -66,17 +66,7 @@ export function AlertRuleRow({
         actions={
           <RowActions
             counts={row.instanceCounts}
-            actionButton={
-              <Stack direction="row" gap={0.5} alignItems="center">
-                <SilenceRuleButton ruleUID={ruleUID} />
-                <IconButton
-                  name="eye"
-                  tooltip={t('alerting.triage.rule-details-tooltip', 'Rule details')}
-                  onClick={handleDrawerOpen}
-                  data-testid={selectors.pages.Alerting.Triage.ruleDetailsButton}
-                />
-              </Stack>
-            }
+            actionButton={<AlertRuleRowActions ruleUID={ruleUID} ruleName={title} />}
           />
         }
         metadata={

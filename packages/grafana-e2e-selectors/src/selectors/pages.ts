@@ -118,11 +118,8 @@ export const versionedPages = {
       ruleNameButton: {
         '13.3.0': 'data-testid triage rule-name-button',
       },
-      ruleSilenceButton: {
-        '13.3.0': 'data-testid triage rule-silence-button',
-      },
-      ruleDetailsButton: {
-        '13.3.0': 'data-testid triage rule-details-button',
+      ruleActionsButton: {
+        '13.3.0': 'data-testid triage rule-actions-button',
       },
     },
   },
