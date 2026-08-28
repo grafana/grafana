@@ -40,9 +40,7 @@ func folderUIDFromVariableMetadataName(metadataName string) string {
 // VariableUIDScopeResolver converts a scope prefixed with "variables:uid:" into
 // the variable UID scope plus its parent folder (and ancestors).
 // When the parent folder no longer exists, it still returns the direct folder and
-// variable scopes so folders:* grants can authorize (e.g. Admin get/list of
-// orphans). Root-writer orphan cleanup for update/delete is handled by admission
-// allowMissingFolder (requires folders:uid:general / folders:*).
+// variable scopes so folders:* grants can authorize get/list.
 func VariableUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeVariablesProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {

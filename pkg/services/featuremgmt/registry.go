@@ -1953,11 +1953,11 @@ var (
 		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
