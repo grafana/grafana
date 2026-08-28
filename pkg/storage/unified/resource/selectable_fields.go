@@ -12,8 +12,9 @@ func SelectableFields() map[LowerGroupResource][]string {
 	return SelectableFieldsForManifests(AppManifests()...)
 }
 
+// AppManifestsWithKinds keeps only the manifests declaring a kind in some
+// version.
 func AppManifestsWithKinds(manifiests ...*app.ManifestData) []*app.ManifestData {
-	// Include manifests with kinds in any version.
 	filtered := make([]*app.ManifestData, 0, len(manifiests))
 	for _, m := range manifiests {
 		if m == nil {

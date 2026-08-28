@@ -12,15 +12,9 @@ import (
 
 var manifestMergeLogger = log.New("search-manifest-merge")
 
-// NewManifestBackedProvider builds a SearchFieldsProvider from the search
-// fields declared in the given app manifests. It walks every version's kinds,
-// converts each declared field into a SearchFieldDefinition, and returns the
-// same map-backed provider NewMapProvider produces, so the per-field and
-// cross-version consistency checks apply here too.
-//
-// Panics on an invalid declaration, like NewMapProvider, because in a
-// compiled-in manifest that is a bug. Runtime callers use
-// ManifestBackedProvider instead.
+// NewManifestBackedProvider is ManifestBackedProvider for compiled-in
+// manifests, where an invalid declaration is a bug rather than bad input, so it
+// panics instead of returning an error.
 func NewManifestBackedProvider(manifests ...*app.ManifestData) SearchFieldsProvider {
 	p, err := ManifestBackedProvider(manifests...)
 	if err != nil {
@@ -29,9 +23,11 @@ func NewManifestBackedProvider(manifests ...*app.ManifestData) SearchFieldsProvi
 	return p
 }
 
-// ManifestBackedProvider is NewManifestBackedProvider's error-returning form,
-// for manifests read at runtime, which can be malformed without this build
-// being at fault.
+// ManifestBackedProvider builds a SearchFieldsProvider from the search fields
+// declared across every version's kinds. It returns the same map-backed
+// provider NewMapProvider does, so the per-field and cross-version consistency
+// checks apply here too. Manifests read at runtime can be malformed without
+// this build being at fault, hence the error rather than a panic.
 func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
@@ -133,8 +129,6 @@ func SearchFieldProviders(manifests ...*app.ManifestData) (map[LowerGroupResourc
 		return out, nil
 	}
 
-	// A single manifest-backed provider covers every declared kind; each map
-	// entry queries it for its own (group, resource).
 	manifestProvider, err := ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
@@ -172,8 +166,8 @@ func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.Manifes
 	return nil
 }
 
-// SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from one
-// manifest list, so a reload can rebuild them together and keep them consistent.
+// SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from the
+// same manifests, so a reload can rebuild them together and keep them consistent.
 func SearchFieldsForManifests(manifests ...*app.ManifestData) (
 	selectable map[LowerGroupResource][]string,
 	hashes map[LowerGroupResource]string,

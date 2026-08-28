@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// rulesManifests is the rule kinds' manifest; the tests derive the rule search
-// fields from it the way the shared registry does in production.
+// rulesManifestData is the rule kinds' manifest; the tests derive the rule
+// search fields from it the way the shared registry does in production.
 var rulesManifestData = rulesmanifest.LocalManifest().ManifestData
 
 var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifestData)
