@@ -48,7 +48,11 @@ export function generateAssetsManifest(
   }
 
   return {
-    entrypoints,
+    entrypoints: {
+      ...entrypoints,
+      // Lets webassets.go pick the correct <script type="text/javascript | module">.
+      esModule: compilation.outputOptions.module === true,
+    },
     ...manifestAssets,
   };
 }

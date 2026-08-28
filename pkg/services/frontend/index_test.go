@@ -50,9 +50,12 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 
 	// Create test assets manifest
 	urlPrefix := "public/" + dir
+	// Mirrors real builds: only the rspack manifest declares esModule.
+	esModule := dir == "build/rspack"
 
 	manifest := fmt.Sprintf(`{
 		"entrypoints": {
+			"esModule": %[2]t,
 			"app": {
 				"assets": {
 					"js": [
@@ -87,7 +90,7 @@ func writeTestWebAssets(tb testing.TB, publicDir string, dir string) {
 			"src": "%[1]s/app.js",
 			"integrity": "sha256-test456"
 		}
-	}`, urlPrefix)
+	}`, urlPrefix, esModule)
 
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
 	require.NoError(tb, err)
@@ -146,6 +149,9 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Contains(t, body, previewURL+"public/build/app.preview.js")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
 		assert.NotContains(t, body, "src=\"public/build/app.js\"")
+
+		// script type matches the served preview manifest's esModule, rather than the default build.
+		assert.Contains(t, body, `type="module"`)
 
 		// The page should flag that preview assets are active
 		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
@@ -233,8 +239,8 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		assert.Equal(t, 200, recorder.Code)
 
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"text/javascript\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"text/javascript\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\" type=\"module\"")
+		assert.Contains(t, body, "src=\"public/build/rspack/app.js\" type=\"module\"")
 		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
 		assert.Contains(t, body, "// test boot stub for build/rspack")
 	})
