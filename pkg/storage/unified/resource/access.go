@@ -3,11 +3,12 @@ package resource
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -19,13 +20,6 @@ import (
 
 type groupResource map[string]map[string]interface{}
 
-const (
-	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authz_limited_client"
-)
-
-var metOnce sync.Once
-
 type accessMetrics struct {
 	checkDuration      *prometheus.HistogramVec
 	compileDuration    *prometheus.HistogramVec
@@ -34,47 +28,59 @@ type accessMetrics struct {
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
-	m := &accessMetrics{
-		checkDuration: prometheus.NewHistogramVec(
+	return &accessMetrics{
+		checkDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "check_duration_seconds",
-				Help:      "duration of the access check calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_check_duration_seconds",
+				Help: "duration of the access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb", "allowed"}),
-		compileDuration: prometheus.NewHistogramVec(
+		compileDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "compile_duration_seconds",
-				Help:      "duration of the access compile calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_compile_duration_seconds",
+				Help: "duration of the access compile calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb"}),
-		batchCheckDuration: prometheus.NewHistogramVec(
+		batchCheckDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "batch_check_duration_seconds",
-				Help:      "duration of the batch access check calls going through the authz service",
-			}, []string{"check_count"}),
-		errorsTotal: prometheus.NewCounterVec(
+				Name: "grafana_grpc_authz_limited_client_batch_check_duration_seconds",
+				Help: "duration of the batch access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
+			}, []string{"check_count_bucket"}),
+		errorsTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "errors_total",
-				Help:      "Number of errors",
+				Name: "grafana_grpc_authz_limited_client_errors_total",
+				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
 	}
+}
 
-	if reg != nil {
-		metOnce.Do(func() {
-			reg.MustRegister(m.checkDuration)
-			reg.MustRegister(m.compileDuration)
-			reg.MustRegister(m.batchCheckDuration)
-			reg.MustRegister(m.errorsTotal)
-		})
+// batchSizeBucket keeps the batch size out of the label value, which would
+// otherwise add a series per size. Ranges cover 1 to batchCheckChunkSize (50),
+// the sizes search produces, and are spelled out so changing that constant
+// cannot reshape existing series unnoticed.
+func batchSizeBucket(n int) string {
+	switch {
+	case n <= 1:
+		return "1"
+	case n <= 10:
+		return "2-10"
+	case n <= 25:
+		return "11-25"
+	case n <= 50:
+		return "26-50"
+	default:
+		return "51+"
 	}
-
-	return m
 }
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
@@ -99,6 +105,8 @@ type authzLimitedClient struct {
 }
 
 type AuthzOptions struct {
+	// Registry is where the client's metrics are registered. A nil Registry
+	// leaves them unregistered, which is what tests want.
 	Registry         prometheus.Registerer
 	ExemptionEnabled bool
 	ExemptResources  []string
@@ -107,9 +115,6 @@ type AuthzOptions struct {
 // NewAuthzLimitedClient creates a new authzLimitedClient.
 func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims.AccessClient {
 	logger := log.New("limited-authz-client")
-	if opts.Registry == nil {
-		opts.Registry = prometheus.DefaultRegisterer
-	}
 	exemptions, err := parseAuthzExemptions(opts.ExemptResources)
 	if err != nil {
 		// Callers validate with ValidateAuthzOptions first. Drop the whole list
@@ -300,11 +305,9 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	}
 
 	// Merge results from underlying client
-	for correlationID, result := range resp.Results {
-		results[correlationID] = result
-	}
+	maps.Copy(results, resp.Results)
 
-	c.metrics.batchCheckDuration.WithLabelValues(fmt.Sprintf("%d", len(req.Checks))).Observe(time.Since(t).Seconds())
+	c.metrics.batchCheckDuration.WithLabelValues(batchSizeBucket(len(req.Checks))).Observe(time.Since(t).Seconds())
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 

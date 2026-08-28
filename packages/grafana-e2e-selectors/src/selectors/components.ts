@@ -1068,6 +1068,14 @@ export const versionedComponents = {
       [MIN_GRAFANA_VERSION]: 'Query editor row',
     },
   },
+  QueryEditorCoauthoring: {
+    selectionToolbar: {
+      '13.3.0': 'data-testid query-coauthoring-selection-toolbar',
+    },
+    container: {
+      '13.3.0': 'data-testid query-coauthoring-scroll-body',
+    },
+  },
   QueryEditorRow: {
     actionButton: {
       '10.4.0': (title: string) => `data-testid ${title}`,

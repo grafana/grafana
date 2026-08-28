@@ -1,21 +1,14 @@
 package builders
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// iamManifests is the slice the IAM builders pass to the standard document
-// builder. It carries the selectable-field declarations the builder uses to
-// populate IndexableDocument.SelectableFields for IAM kinds.
-var iamManifests = []app.Manifest{iam.LocalManifest()}
-
 // iamProvider is shared by all IAM builders and their exported field sets, so
 // the manifest is parsed once.
-var iamProvider = resource.NewManifestBackedProvider(iamManifests)
+var iamProvider = resource.NewManifestBackedProvider(iam.LocalManifest().ManifestData)
 
 const (
 	USER_EMAIL                 = "email"

@@ -375,7 +375,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -1953,11 +1953,11 @@ var (
 		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -2328,6 +2328,14 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},
@@ -2874,14 +2882,6 @@ var (
 			Generate:    Generate{Go: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preferences.rerouteLegacyAPIs",
-			Description: "Use K8s client implementation for legacy preferences API",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{Go: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:            "plugins.marketplaceLicensing",

@@ -56,6 +56,10 @@ const defaultLockRetryInterval = 10 * time.Second
 // can override.
 var startupBatchSize = 1000
 
+// maxStartupBatchBytes caps a startup batch's accumulated value bytes at
+// 64 MiB before flushing. Package-level so tests can override.
+var maxStartupBatchBytes = 64 * 1024 * 1024
+
 // pendingEvent flattens (group, resource, namespace, name) instead of
 // holding a *resourcepb.ResourceKey because that type embeds a sync.Mutex
 // (via protoimpl.MessageState), which `go vet`'s copylocks check rejects
@@ -477,6 +481,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 
 	batch := make([]*pendingEvent, 0, startupBatchSize)
+	var batchBytes int
 	for mr, err := range seq {
 		if ctx.Err() != nil {
 			return
@@ -505,11 +510,13 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 			continue
 		}
 		batch = append(batch, ev)
-		if len(batch) >= startupBatchSize {
+		batchBytes += len(ev.value)
+		if len(batch) >= startupBatchSize || batchBytes >= maxStartupBatchBytes {
 			if !flush(batch) {
 				return
 			}
 			batch = batch[:0]
+			batchBytes = 0
 		}
 	}
 	if len(batch) > 0 {
@@ -661,6 +668,11 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 			continue
 		}
+		// successes accumulates across the whole startup backlog; drop the
+		// embedded value so retention doesn't grow unbounded. Nothing reads
+		// it afterwards — re-enqueue on checkpoint failure is a no-op for an
+		// already-embedded resource.
+		ev.value = nil
 		successes = append(successes, ev)
 		if ev.rv > maxRv {
 			maxRv = ev.rv

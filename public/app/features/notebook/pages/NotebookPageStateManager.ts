@@ -1,12 +1,16 @@
+import { customAlphabet } from 'nanoid';
+
+import { t } from '@grafana/i18n';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
+import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
-import { type Spec as NotebookSpec } from '../types';
+import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
@@ -18,6 +22,16 @@ export interface NotebookLoadError {
   messageId?: string;
   message: string;
 }
+
+/**
+ * Names a new notebook something you can tell apart from the last one, because autosave creates them
+ * without asking for a name and a library of identical titles is unreadable.
+ *
+ * The token is invented here and is not the notebook's uid. It cannot be: the title is part of the
+ * spec that creates the notebook, and the apiserver does not pick a name until it has created it.
+ * Alphabet and length copied from the provisioning drawer, which already needed a short readable one.
+ */
+const generateTitleToken = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -46,8 +60,19 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   // outcome — but the counter is correct by construction and does not depend on that.
   private requestSeq = 0;
 
+  // The blank notebook that newNotebook() hands out, kept here until it saves itself or gets replaced.
+  // It has no uid yet, so the cache above can't hold it. Once its first save creates it, the page moves
+  // to the real url. Without this field, that move would fetch the notebook fresh from the server and
+  // throw away the scene someone is typing in, along with its caret and undo history.
+  private unsavedScene?: NotebookScene;
+
   public async loadNotebook(uid: string): Promise<void> {
     const seq = ++this.requestSeq;
+
+    if (this.adoptUnsavedScene(uid)) {
+      return;
+    }
+
     this.setState({ isLoading: true, loadError: undefined });
 
     try {
@@ -109,6 +134,51 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         },
       });
     }
+  }
+
+  /**
+   * Builds an empty notebook with no resource behind it, for the blank route.
+   *
+   * Nothing is fetched and nothing is written: the notebook is created by its first save, which is
+   * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
+   * uid and this notebook has none.
+   */
+  public newNotebook(): void {
+    // A load already in flight would otherwise resolve on top of this and replace the blank notebook
+    // with whichever one the page was previously asked for.
+    this.requestSeq++;
+
+    const spec: NotebookSpec = {
+      ...defaultNotebookSpec(),
+      title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
+    };
+
+    // Held so the page can keep this exact scene once its first save gives it a uid.
+    this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+
+    this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
+  }
+
+  /**
+   * Takes up the blank notebook once its first save has created it, instead of fetching a notebook we
+   * already have on screen.
+   *
+   * Reads the uid off the scene instead of having autosave report it. If autosave called into the page
+   * directly, that would create an import cycle back through `transformNotebookToScene`.
+   */
+  private adoptUnsavedScene(uid: string): boolean {
+    const scene = this.unsavedScene;
+    if (scene?.state.uid !== uid) {
+      return false;
+    }
+
+    this.unsavedScene = undefined;
+    // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
+    // it from a fetch. The generation is the one its create returned.
+    this.cache.set(uid, { generation: scene.autosave.state.savedGeneration, scene });
+    this.setState({ scene, isLoading: false, loadError: undefined });
+
+    return true;
   }
 
   /** Whether a newer load (or a page teardown) has taken over since the given one started. */

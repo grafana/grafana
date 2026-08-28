@@ -8,23 +8,28 @@ import { t } from '@grafana/i18n';
 import {
   sceneGraph,
   SceneObjectBase,
+  VizPanel,
   type SceneComponentProps,
   type SceneObject,
   type SceneObjectState,
-  type VizPanel,
+  type SceneQueryRunner,
 } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
-import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   type CellContentKind,
   defaultCodeCellContentKind,
   defaultMarkdownCellContentKind,
+  defaultVisualizationPanelKind,
   type NotebookLayoutItemKind,
   type NotebookLayoutKind,
 } from '../../types';
@@ -36,6 +41,8 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
+import { isEmptyMarkdown } from './isEmptyMarkdown';
+import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
@@ -59,6 +66,18 @@ interface PendingContentEdit {
   elementName: string;
   before: CellContentKind;
   after: CellContentKind;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
+// Query text edits coalesce the same way content typing does — see setCellQueries. Scoped by cell
+// identity rather than elementName: unlike narrative content, no two cells ever share one query
+// runner, so there's no sibling-fanout step to mirror from applyCellContent.
+interface PendingQueriesEdit {
+  cell: NotebookCellItem;
+  runner: SceneQueryRunner;
+  before: DataQuery[];
+  after: DataQuery[];
   action: NotebookEditAction;
   timer?: ReturnType<typeof setTimeout>;
 }
@@ -89,6 +108,7 @@ export class NotebookLayoutManager
   public readonly descriptor = NotebookLayoutManager.descriptor;
 
   private pendingContentEdit?: PendingContentEdit;
+  private pendingQueriesEdit?: PendingQueriesEdit;
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
@@ -96,7 +116,7 @@ export class NotebookLayoutManager
     // Typing is grouped into one undo step that sits in a field until the typing stops. Without this,
     // closing the notebook mid-word would leave that step behind, and the next typing would join it.
     this.addActivationHandler(() => {
-      return () => this.commitContentEdits();
+      return () => this.commitPendingEdits();
     });
   }
 
@@ -116,6 +136,14 @@ export class NotebookLayoutManager
    */
   public setTagsFromHeader(tags: string[]): void {
     this.notebookScene?.onTagsChange(tags);
+  }
+
+  /**
+   * The title is forwarded up for the same reason the tags are: the scene owns it, and it is what the
+   * save model reads. A notebook rendered without a scene above it keeps its title read-only.
+   */
+  public setTitleFromHeader(title: string): void {
+    this.notebookScene?.onTitleChange(title);
   }
 
   /**
@@ -139,11 +167,30 @@ export class NotebookLayoutManager
     return undefined;
   }
 
+  /**
+   * The cells that are part of the notebook, as opposed to the ones that are part of the editor.
+   *
+   * Editing keeps an empty block at the bottom ready to type in (see appendSystemCell), and nothing
+   * about it came from the person editing. Saving it wrote an empty paragraph into notebooks that were
+   * only opened, and it would have created a notebook out of a blank page nobody typed in.
+   *
+   * Only the last one, and only when it is empty: an empty block anywhere else is one somebody left
+   * there on purpose. Unless nothing else is real either: clearing or undoing what was typed can
+   * leave two empty cells and no content at all, and a notebook in that state is still blank.
+   */
+  public contentCells(): NotebookCellItem[] {
+    const { cells } = this.state;
+    const last = cells[cells.length - 1];
+    const withoutTrailingSlot = last && isEmptyMarkdown(last.state.content) ? cells.slice(0, -1) : cells;
+
+    return withoutTrailingSlot.every((cell) => isEmptyMarkdown(cell.state.content)) ? [] : withoutTrailingSlot;
+  }
+
   // Serialization lives here instead of in a helper file, so that this file never has to import the
   // serializer. If both files imported each other they would form a cycle, which is what this layout
   // avoids. The serializer still imports this class to build it when reading a notebook, one way only.
   public serialize(): NotebookLayoutKind {
-    const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
+    const cells: NotebookLayoutItemKind[] = this.contentCells().map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
@@ -173,6 +220,11 @@ export class NotebookLayoutManager
   /** Refreshes the header's copy of the tags. NotebookScene owns them and pushes on every change. */
   public setTags(tags: string[] | undefined): void {
     this.setState({ tags });
+  }
+
+  /** Refreshes the header's copy of the title, pushed by NotebookScene exactly as setTags is. */
+  public setTitle(title: string | undefined): void {
+    this.setState({ title });
   }
 
   /**
@@ -295,6 +347,108 @@ export class NotebookLayoutManager
     }
   }
 
+  private getQueryRunnerForCell(cell: NotebookCellItem): SceneQueryRunner | undefined {
+    return getQueryRunnerFor(cell.state.body);
+  }
+
+  public setCellQueries = (cell: NotebookCellItem, queries: DataQuery[]): void => {
+    const runner = this.getQueryRunnerForCell(cell);
+    if (!runner || isEqual(runner.state.queries, queries)) {
+      return;
+    }
+
+    const pending = this.pendingQueriesEdit;
+    if (pending?.cell === cell) {
+      this.extendQueriesEdit(pending, queries);
+    } else {
+      this.commitQueriesEdits();
+      this.startQueriesEdit(cell, runner, runner.state.queries, queries);
+    }
+  };
+
+  private extendQueriesEdit(edit: PendingQueriesEdit, queries: DataQuery[]): void {
+    setQueryRunnerQueries(edit.runner, queries);
+    edit.after = queries;
+
+    if (isEqual(edit.before, edit.after)) {
+      this.editHistory?.discard(edit.action);
+      this.finishQueriesEdit(edit);
+      return;
+    }
+
+    this.scheduleQueriesEditCommit(edit);
+  }
+
+  private startQueriesEdit(
+    cell: NotebookCellItem,
+    runner: SceneQueryRunner,
+    before: DataQuery[],
+    queries: DataQuery[]
+  ): void {
+    const history = this.editHistory;
+    if (!history) {
+      setQueryRunnerQueries(runner, queries);
+      return;
+    }
+
+    // perform and undo read `edit` when they run, not now — see startContentEdit's own comment on why.
+    const edit: PendingQueriesEdit = {
+      cell,
+      runner,
+      before,
+      after: queries,
+      action: {
+        label: t('notebooks.history.edit-query', 'Edit query'),
+        perform: () => {
+          this.finishQueriesEdit(edit);
+          setQueryRunnerQueries(edit.runner, edit.after);
+        },
+        undo: () => {
+          this.finishQueriesEdit(edit);
+          setQueryRunnerQueries(edit.runner, edit.before);
+        },
+      },
+    };
+
+    this.pendingQueriesEdit = edit;
+    setQueryRunnerQueries(runner, edit.after);
+    history.record(edit.action);
+    this.scheduleQueriesEditCommit(edit);
+  }
+
+  public commitQueriesEdits(): void {
+    if (this.pendingQueriesEdit) {
+      this.finishQueriesEdit(this.pendingQueriesEdit);
+    }
+  }
+
+  private scheduleQueriesEditCommit(edit: PendingQueriesEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishQueriesEdit(edit), CONTENT_EDIT_COALESCE_MS);
+  }
+
+  private finishQueriesEdit(edit: PendingQueriesEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingQueriesEdit === edit) {
+      this.pendingQueriesEdit = undefined;
+    }
+  }
+
+  /** Discrete, one-shot query-array mutation: add/remove/duplicate a row, or switch its datasource. */
+  public runQueryEdit(cell: NotebookCellItem, label: string, queries: DataQuery[]): void {
+    const runner = this.getQueryRunnerForCell(cell);
+    if (!runner || isEqual(runner.state.queries, queries)) {
+      return;
+    }
+
+    const before = runner.state.queries;
+    this.executeEdit({
+      label,
+      perform: () => setQueryRunnerQueries(runner, queries),
+      undo: () => setQueryRunnerQueries(runner, before),
+    });
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -307,6 +461,11 @@ export class NotebookLayoutManager
    * claimed the slot before convertCell runs.
    */
   public convertCell(cell: NotebookCellItem, type: NotebookBlockType): void {
+    if (type === 'visualization') {
+      this.convertCellToPanel(cell);
+      return;
+    }
+
     const content = contentForBlockType(type);
     if (!content) {
       return;
@@ -321,6 +480,36 @@ export class NotebookLayoutManager
     }
 
     this.setCellContent(cell, content);
+  }
+
+  /**
+   * Turns an existing narrative cell into a panel cell in place, for the "/" menu's Visualization pick
+   * — addCell's own buildPanelCell builds the fresh-insert equivalent. Bypasses setCellContent's
+   * content-diffing undo/coalescing machinery, which is built around comparing two CellContentKind
+   * values and doesn't apply to a content -> body transition.
+   */
+  private convertCellToPanel(cell: NotebookCellItem): void {
+    const previousContent = cell.state.content;
+    const previousElementName = cell.state.elementName;
+    const panel = this.buildVisualizationPanel();
+    // A sibling cell may legally still reference previousElementName (see onContentChange); give the
+    // converted cell a fresh one only then, so serialize() doesn't collapse both into one entry.
+    const hasSharedName = this.state.cells.some(
+      (other) => other !== cell && other.state.elementName === previousElementName
+    );
+    const elementName = hasSharedName ? this.nextElementName(previousElementName) : previousElementName;
+
+    this.executeEdit({
+      label: t('notebooks.history.add-block', 'Add block'),
+      perform: () => cell.setElementBody(panel, elementName),
+      undo: () => cell.setState({ body: undefined, content: previousContent, elementName: previousElementName }),
+    });
+  }
+
+  /** A fresh, unconfigured Panel VizPanel — shared by buildCellFor (insert) and convertCellToPanel. */
+  private buildVisualizationPanel(): VizPanel {
+    const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
+    return new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), nextId()));
   }
 
   /**
@@ -345,9 +534,24 @@ export class NotebookLayoutManager
    * shared by `addCell` (a reader-initiated, undoable insert) and `appendSystemCell` (the "always one
    * more empty block ready" invariant's own automatic appends, which must stay off the undo stack:
    * they're bookkeeping the notebook performs on the reader's behalf, not a distinct action anyone
-   * asked for). `undefined` when `type` has nothing to build yet (Visualization).
+   * asked for).
+   *
+   * Visualization is the one block type that builds a `body` (a real Panel VizPanel) rather than
+   * `content` — see buildVisualizationPanel and this file's own header comment on why a query-first
+   * cell is a Panel element, not a bespoke content kind.
    */
   private buildCellFor(type: NotebookBlockType, index: number): { cell: NotebookCellItem; index: number } | undefined {
+    const clampedIndex = Math.max(0, Math.min(index, this.state.cells.length));
+
+    if (type === 'visualization') {
+      const cell = new NotebookCellItem({
+        elementName: this.nextElementName(type),
+        source: 'user',
+        body: this.buildVisualizationPanel(),
+      });
+      return { cell, index: clampedIndex };
+    }
+
     const content = contentForBlockType(type);
     if (!content) {
       return undefined;
@@ -362,7 +566,7 @@ export class NotebookLayoutManager
       content,
     });
 
-    return { cell, index: Math.max(0, Math.min(index, this.state.cells.length)) };
+    return { cell, index: clampedIndex };
   }
 
   /**
@@ -374,11 +578,6 @@ export class NotebookLayoutManager
    * Returns the new cell so the caller can hand it the caret; undefined when nothing was inserted.
    */
   public addCell = (type: NotebookBlockType, index: number): NotebookCellItem | undefined => {
-    const content = contentForBlockType(type);
-    if (!content) {
-      return undefined;
-    }
-
     // The divider below the trailing empty slot offers index === cells.length. Inserting *after*
     // that slot would leave it stranded mid-document once the invariant appends a replacement after
     // the new block. Inserting *before* it keeps the empty cell at the tail, and still goes through
@@ -494,13 +693,20 @@ export class NotebookLayoutManager
   }
 
   private executeEdit(action: NotebookEditAction): void {
-    this.commitContentEdits();
+    this.commitPendingEdits();
     const history = this.editHistory;
     if (history) {
       history.execute(action);
     } else {
       action.perform();
     }
+  }
+
+  // Flushes both coalescing edit kinds before a discrete action starts, so neither is left sitting
+  // underneath it on the undo stack, still open.
+  public commitPendingEdits(): void {
+    this.commitContentEdits();
+    this.commitQueriesEdits();
   }
 
   private insertCell(cell: NotebookCellItem, index: number): void {
@@ -590,25 +796,32 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
+  const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
 
   // Only the drop position lives in React state; the reorder itself lives on the model. onDragUpdate
   // fires when the drop index changes, not on every pointer move, so this re-renders the list a
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
-  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number; caretOffset?: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{
+    key: string;
+    id: number;
+    caretOffset?: number;
+    scrollAlign?: ScrollLogicalPosition;
+  } | null>(null);
   const nextFocusId = useRef(0);
-  // `caretOffset` only matters for a split (see onAdvance below): the new cell's content there isn't
-  // just short starter text but carries the reader's own text along with it, so the default "end of
-  // document" would land the caret after that carried-over text instead of at the actual split point.
-  const requestFocus = useCallback((key: string | null | undefined, caretOffset?: number) => {
-    if (!key) {
-      setFocusRequest(null);
-      return;
-    }
-    nextFocusId.current += 1;
-    setFocusRequest({ key, id: nextFocusId.current, caretOffset });
-  }, []);
+
+  const requestFocus = useCallback(
+    (key: string | null | undefined, caretOffset?: number, scrollAlign?: ScrollLogicalPosition) => {
+      if (!key) {
+        setFocusRequest(null);
+        return;
+      }
+      nextFocusId.current += 1;
+      setFocusRequest({ key, id: nextFocusId.current, caretOffset, scrollAlign });
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isEditing) {
@@ -630,6 +843,20 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       requestFocus(model.addCell(type, index)?.state.key);
     },
     [model, requestFocus]
+  );
+
+  // ArrowUp/ArrowDown once the caret (or, for a Panel/Collapsed cell, the frame itself — see
+  // NotebookCellFrame) has nowhere further to go within the current cell. No wraparound at the
+  // first/last cell, matching every other block editor.
+  const onNavigate = useCallback(
+    (fromIndex: number, direction: 'up' | 'down') => {
+      const target = cells[direction === 'up' ? fromIndex - 1 : fromIndex + 1];
+      if (!target) {
+        return;
+      }
+      requestFocus(target.state.key, direction === 'down' ? 0 : undefined, direction === 'down' ? 'start' : 'end');
+    },
+    [cells, requestFocus]
   );
 
   const onDragStart = useCallback((start: DragStart) => {
@@ -664,6 +891,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
           timeTo={timeRange.to}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
+          onTitleChange={onTitleChange}
         />
       </header>
 
@@ -696,6 +924,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     caretOffset={
                       focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
                     }
+                    scrollAlign={
+                      focusRequest && cell.state.key === focusRequest.key ? focusRequest.scrollAlign : undefined
+                    }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
@@ -716,6 +947,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
+                    // Undefined outside edit mode, same as every other affordance here — a read-only
+                    // Code cell still mounts a (readOnly) CodeMirror instance, so without this its own
+                    // ArrowUp/Down keymap would happily fire while just reading the notebook.
+                    onNavigate={isEditing ? (direction) => onNavigate(index, direction) : undefined}
                   />
                 ))}
                 {dropProvided.placeholder}
@@ -734,6 +969,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
  * they're adding, but the editor underneath is the same one. A heading starts with its marker already
  * typed so the live-preview cell opens straight into "type your heading text" rather than a blank
  * block the reader has to know to prefix themselves.
+ *
+ * Visualization isn't handled here — it builds a `body` (a Panel VizPanel), not `content`. See
+ * buildCellFor and convertCellToPanel; both intercept it before ever reaching this function, so the
+ * case below is unreachable in practice — kept for the switch's own exhaustiveness.
  */
 function contentForBlockType(type: NotebookBlockType): CellContentKind | undefined {
   switch (type) {
@@ -746,17 +985,6 @@ function contentForBlockType(type: NotebookBlockType): CellContentKind | undefin
     case 'visualization':
       return undefined;
   }
-}
-
-/**
- * Whether `content` is an untouched, empty markdown cell — the shape the trailing-slot invariant (see
- * setCellContent and the renderer's own bootstrap effect) watches for. `undefined` (a panel or
- * collapsed cell, which carries no `content` at all) deliberately does *not* count: it isn't a
- * typeable markdown slot either, so a panel ending up last must still get a fresh empty cell appended
- * after it, exactly like any other non-empty trailing content would.
- */
-function isEmptyMarkdown(content: CellContentKind | undefined): boolean {
-  return content?.kind === 'Markdown' && content.spec.text === '';
 }
 
 /**

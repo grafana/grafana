@@ -6,9 +6,10 @@
 package searchroutes
 
 import (
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
@@ -78,7 +79,7 @@ func Build(
 //
 // Panics on a bad declaration, because in a compiled-in manifest that is a bug.
 func BuildFromManifests(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	searchEnabled bool,
 	trashEnabled bool,
 	tracer tracing.Tracer,
@@ -107,7 +108,7 @@ func BuildFromManifests(
 // Returns an error rather than panicking, because manifests read at runtime can
 // be malformed without this build being at fault.
 func BuildForServedGroupVersions(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	served map[schema.GroupVersion]bool,
 	searchEnabled bool,
 	trashEnabled bool,
@@ -121,7 +122,7 @@ func BuildForServedGroupVersions(
 		return nil, nil
 	}
 
-	provider, err := resource.ManifestBackedProvider(manifests)
+	provider, err := resource.ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
 	}
@@ -130,14 +131,14 @@ func BuildForServedGroupVersions(
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			if !version.Served {
 				continue
 			}
-			gv := schema.GroupVersion{Group: m.ManifestData.Group, Version: version.Name}
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
 			if !served[gv] {
 				continue
 			}

@@ -262,7 +262,10 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, reg)
+	// The chain gets a registerer labelled with the server it belongs to, so a
+	// process that builds more than one chain can register the same collectors
+	// for each.
+	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders, ServerRegisterer(reg, ServerMain))
 
 	// set priority for aggregated discovery
 	for i, b := range builders {

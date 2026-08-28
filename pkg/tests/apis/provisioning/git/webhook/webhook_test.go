@@ -199,9 +199,43 @@ func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testin
 		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "repository should record the initial webhook failure")
 
+	// The controller reads the repository from its informer cache, so a reconcile
+	// pass that starts before the HealthFailureHook patch has propagated there
+	// still sees a pre-failure status and legitimately re-attempts the create.
+	// That makes "exactly one attempt" the wrong invariant; what must hold is
+	// that attempts stop once the cooldown is visible. Settle first, then require
+	// silence — a controller that hot-loops never settles and fails in
+	// waitForStableCount instead.
+	settled := waitForStableCount(t, &webhookCreateCalls, 2*time.Second, common.WaitTimeoutDefault)
+
 	require.Never(t, func() bool {
-		return webhookCreateCalls.Load() > 1
-	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
+		return webhookCreateCalls.Load() > settled
+	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried while the hook failure cooldown is active")
+}
+
+// waitForStableCount polls counter until it holds the same value for stableFor,
+// and returns that value. It fails the test if the counter is still moving after
+// timeout, which is what a hook-failure hot loop looks like.
+func waitForStableCount(t *testing.T, counter *atomic.Int32, stableFor, timeout time.Duration) int32 {
+	t.Helper()
+
+	const pollInterval = 50 * time.Millisecond
+	deadline := time.Now().Add(timeout)
+	last := counter.Load()
+	stableSince := time.Now()
+
+	for time.Now().Before(deadline) {
+		time.Sleep(pollInterval)
+		switch current := counter.Load(); {
+		case current != last:
+			last, stableSince = current, time.Now()
+		case time.Since(stableSince) >= stableFor:
+			return current
+		}
+	}
+
+	t.Fatalf("webhook creation attempts never stopped: still climbing after %s (last count %d)", timeout, last)
+	return 0
 }
 
 // TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment verifies the
