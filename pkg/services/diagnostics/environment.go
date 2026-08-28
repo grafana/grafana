@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"slices"
 	"sort"
 
@@ -160,9 +161,7 @@ func CollectEnvironment(ctx context.Context, cfg *setting.Cfg, store PluginVersi
 
 	if len(refs.DatasourcesByUID) > 0 {
 		env.Datasources = make(map[string]string, len(refs.DatasourcesByUID))
-		for uid, pluginID := range refs.DatasourcesByUID {
-			env.Datasources[uid] = pluginID
-		}
+		maps.Copy(env.Datasources, refs.DatasourcesByUID)
 	}
 
 	pluginIDs := refs.PluginIDs()

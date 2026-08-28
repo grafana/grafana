@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -285,9 +286,7 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	}
 
 	// Merge results from underlying client
-	for correlationID, result := range resp.Results {
-		results[correlationID] = result
-	}
+	maps.Copy(results, resp.Results)
 
 	c.metrics.batchCheckDuration.WithLabelValues(fmt.Sprintf("%d", len(req.Checks))).Observe(time.Since(t).Seconds())
 	return claims.BatchCheckResponse{Results: results}, nil
