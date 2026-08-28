@@ -23,6 +23,7 @@ export interface SidebarContextValue {
   isHiddenPreference: boolean;
   canGoBack?: boolean;
   onToggleDock?: () => void;
+  onTogglePosition?: () => void;
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
@@ -59,8 +60,8 @@ export interface UseSideBarOptions {
   /** Open previous pane */
   onGoBack?: () => void;
   /**
-   * Optional key to use for persisting sidebar state (docked / compact / size)
-   * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistenceKey}.{docked|compact|size}`
+   * Optional key to use for persisting sidebar state (docked / compact / size / position)
+   * Can only be app name as the final local storage key will be `grafana.ui.sidebar.{persistenceKey}.{docked|compact|size|position}`
    */
   persistenceKey?: string;
   /** Whether the sidebar is hidden by default */
@@ -71,6 +72,8 @@ export interface UseSideBarOptions {
    * persistenceKeys (e.g. dashboard view vs edit mode share a single hide preference).
    */
   hiddenPersistenceKey?: string;
+  /** Optional override for sharing the position preference across consumers. */
+  positionPersistenceKey?: string;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
@@ -78,7 +81,7 @@ export const SIDE_BAR_WIDTH_WITH_TEXT = 8;
 
 export function useSidebar({
   hasOpenPane,
-  position = 'right',
+  position: defaultPosition = 'right',
   tabsMode,
   defaultToCompact = true,
   defaultToDocked = false,
@@ -91,8 +94,14 @@ export function useSidebar({
   canGoBack,
   defaultIsHidden = false,
   hiddenPersistenceKey,
+  positionPersistenceKey,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
+  const [position, setPosition] = useSidebarSavedState<SidebarPosition>(
+    positionPersistenceKey ?? persistenceKey,
+    'position',
+    defaultPosition
+  );
   const [isDocked, setIsDocked] = useSidebarSavedState(persistenceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistenceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistenceKey, 'size', 240);
@@ -114,6 +123,11 @@ export function useSidebar({
   const onToggleDock = useCallback(() => {
     setIsDocked((prev) => !prev);
   }, [setIsDocked]);
+
+  const onTogglePosition = useCallback(() => {
+    setIsDocked(() => true);
+    setPosition((prev) => (prev === 'right' ? 'left' : 'right'));
+  }, [setIsDocked, setPosition]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -164,6 +178,7 @@ export function useSidebar({
   return {
     isDocked: effectiveIsDocked,
     onToggleDock: isMobile || isTemporarilyShown ? undefined : onToggleDock,
+    onTogglePosition: isMobile ? undefined : onTogglePosition,
     onResize,
     outerWrapperProps,
     position,
@@ -200,10 +215,19 @@ function readFromStore<T>(persistenceKey: string | undefined, subKey: string, de
     return Number.isNaN(value) ? defaultValue : (value as T);
   }
 
+  if (typeof defaultValue === 'string') {
+    const value = store.get(`grafana.ui.sidebar.${persistenceKey}.${subKey}`);
+    if ((defaultValue === 'left' || defaultValue === 'right') && value !== 'left' && value !== 'right') {
+      return defaultValue;
+    }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return (value || defaultValue) as T;
+  }
+
   return defaultValue;
 }
 
-export function useSidebarSavedState<T = number | boolean>(
+export function useSidebarSavedState<T = number | boolean | string>(
   persistenceKey: string | undefined,
   subKey: string,
   defaultValue: T

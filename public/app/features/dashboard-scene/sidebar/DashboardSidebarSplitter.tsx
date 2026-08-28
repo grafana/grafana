@@ -95,6 +95,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
     hiddenPersistenceKey: 'dashboard',
+    positionPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => sidebar.closePane(),
     onGoBack: () => sidebar.goBackToPrevious(),
@@ -173,6 +174,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         containerRef={containerRef}
         isDocked={sidebarContext.isDocked}
         isHidden={sidebarContext.isHidden}
+        sidebarPosition={sidebarContext.position}
       >
         <ElementSelectionContext.Provider value={selectionContext}>
           <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
