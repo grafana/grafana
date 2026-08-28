@@ -1,5 +1,3 @@
-import { useSessionStorage } from 'react-use';
-
 import { type ElementSelectionContextItem } from '@grafana/ui';
 
 import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
@@ -9,11 +7,7 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { type DashboardSidebar } from './DashboardSidebar';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 
-export const SIDEBAR_COLLAPSED_KEY = 'grafana.dashboards.sidebar.isCollapsed';
-
-export function useSidebarCollapsed() {
-  return useSessionStorage(SIDEBAR_COLLAPSED_KEY, false);
-}
+export { SIDEBAR_COLLAPSED_KEY, useSidebarCollapsed } from './sidebarCollapsed';
 
 export function getEditableElementForSelection(
   sidebar: DashboardSidebar,

@@ -49,7 +49,7 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
 
   const handleAddLink = useCallback(async () => {
     const { openAddLinkPane } = await import(
-      /* webpackChunkName: "dashboard-add-controls" */ '../settings/links/LinkAddEditableElement'
+      /* webpackChunkName: "dashboard-add-controls" */ '../settings/links/LinkEdit'
     );
     openAddLinkPane(dashboard);
     DashboardInteractions.addLinkButtonClicked({ source: 'variable_controls' });

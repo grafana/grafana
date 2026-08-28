@@ -32,7 +32,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
-import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/sidebarCollapsed';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,

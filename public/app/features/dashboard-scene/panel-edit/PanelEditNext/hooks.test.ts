@@ -3,7 +3,7 @@ import type React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
-import { useSidebarCollapsed } from '../../sidebar/shared';
+import { useSidebarCollapsed } from '../../sidebar/sidebarCollapsed';
 import { getDashboardSceneFor } from '../../utils/utils';
 import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
@@ -25,7 +25,7 @@ jest.mock('./constants', () => ({
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
   QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
 }));
-jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
+jest.mock('../../sidebar/sidebarCollapsed', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
 jest.mock('../PanelEditor', () => ({}));
 jest.mock('../splitter/useSnappingSplitter', () => ({ useSnappingSplitter: jest.fn() }));

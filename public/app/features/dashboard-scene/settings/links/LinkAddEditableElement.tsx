@@ -1,8 +1,6 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
-import type { DashboardLink } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -12,7 +10,6 @@ import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
-import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
   LinkBooleanSwitch,
@@ -22,52 +19,20 @@ import {
   LinkTextInput,
   LinkTypeSelect,
 } from './LinkBasicOptions';
+import { duplicateLink, LinkEdit } from './LinkEdit';
 import { linkEditActions } from './actions';
-import { NEW_LINK } from './utils';
 
-// Default to dropdown for new links because if a dashboard has a lot of links,
-// the side pane will be pushed down the page and be unscrollable
-export function createDefaultLink(): DashboardLink {
-  return { ...NEW_LINK, asDropdown: true };
-}
-
-function createLinkEdit(dashboard: DashboardSceneLike, linkIndex: number): LinkEdit {
-  const selectionId = linkSelectionId(linkIndex);
-  return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
-}
-
-export function openAddLinkPane(dashboard: DashboardSceneLike) {
-  const newLink = createDefaultLink();
-  const linkIndex = (dashboard.state.links ?? []).length;
-  const element = createLinkEdit(dashboard, linkIndex);
-
-  linkEditActions.addLink({ dashboard, link: newLink, addedObject: element });
-}
-
-export function linkSelectionId(linkIndex: number) {
-  return `dashboard-link-${linkIndex}`;
-}
-
-export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number) {
-  const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
-}
-
-export function duplicateLink(dashboard: DashboardSceneLike, linkIndex: number) {
-  const links = dashboard.state.links ?? [];
-  const link = { ...links[linkIndex] };
-  link.title = `${link.title} - Copy`;
-
-  linkEditActions.addLink({ dashboard, link, addedObject: createLinkEdit(dashboard, linkIndex) });
-  openEditLinkPane(dashboard, links.length);
-}
-
-export interface LinkEditState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardSceneLike>;
-  linkIndex: number;
-}
-
-export class LinkEdit extends SceneObjectBase<LinkEditState> {}
+// Re-exported for convenience; the implementations live in the lightweight
+// LinkEdit module so view-path code does not need to import this file.
+export {
+  createDefaultLink,
+  duplicateLink,
+  LinkEdit,
+  type LinkEditState,
+  linkSelectionId,
+  openAddLinkPane,
+  openEditLinkPane,
+} from './LinkEdit';
 
 function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   const dashboard = linkEdit.state.dashboardRef.resolve();

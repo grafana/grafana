@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
 import { annotationEditActions } from '../settings/annotations/actions';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
@@ -14,6 +13,14 @@ import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
 import { AnnotationEditActions } from './edit-actions-popover/AnnotationEditActions';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+
+// The annotation query editor pulls in the standard annotation editor and data source
+// picker, so it is loaded on demand when the user opens the query editor.
+const AnnotationQueryEditorModal = lazy(() =>
+  import(/* webpackChunkName: "dashboard-edit-actions" */ '../settings/annotations/AnnotationQueryEditorModal').then(
+    (m) => ({ default: m.AnnotationQueryEditorModal })
+  )
+);
 
 type DashboardDataLayerControlsProps = {
   dashboard: DashboardScene;
@@ -88,7 +95,9 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   return (
     <>
       {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
-        <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+        <Suspense fallback={null}>
+          <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+        </Suspense>
       )}
       <EditActionsPopover content={editActions}>
         <div className={styles.container}>
