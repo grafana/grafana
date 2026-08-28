@@ -93,7 +93,7 @@ function ActionsMenu({ ruleUID, onSilence }: ActionsMenuProps) {
           )}
           <Menu.Item
             label={t('alerting.triage.view-alert-rule', 'View alert rule')}
-            icon="eye"
+            icon="external-link-alt"
             url={rulesNav.detailsPageLink('grafana', ruleIdentifier)}
             target="_blank"
           />

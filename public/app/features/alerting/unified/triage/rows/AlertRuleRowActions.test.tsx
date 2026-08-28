@@ -201,5 +201,7 @@ describe('AlertRuleRowActions', () => {
     const viewRule = await ui.viewRuleItem.find();
     expect(viewRule).toHaveAttribute('href', `/alerting/grafana/${ruleUID}/view`);
     expect(viewRule).toHaveAttribute('target', '_blank');
+    // The external-link icon is what tells you it leaves this page, so it goes with the target.
+    expect(within(viewRule).getByTestId('icon-external-link-alt')).toBeInTheDocument();
   });
 });

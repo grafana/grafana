@@ -3733,6 +3733,9 @@
         "title": "Rule Details"
       },
       "rule-details-aria-label": "Open details for {{ruleName}}",
+      "rule-details-drawer": {
+        "silence-no-permission": "You do not have permission to create silences"
+      },
       "rule-not-found": {
         "description": "The requested rule could not be found.",
         "title": "Rule not found"
