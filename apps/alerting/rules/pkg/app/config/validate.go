@@ -31,8 +31,9 @@ const (
 // spec.promote back to false would make the worker resume "syncing" — i.e.
 // silently reclaim and overwrite whatever the org has since done with those
 // rules. That risk only exists while the sync-owned folder is still there:
-// if it's gone, a resumed sync just recreates an empty one, so the revert is
-// safe to allow.
+// if it's gone, there's nothing left to overwrite, so the revert is safe
+// (regardless of whether a resumed sync can actually recreate the folder —
+// see rootFolderMissing).
 func ValidateConfigWrite(cfg RuntimeConfig) validation.ValidateFunc[*v0alpha1.Config] {
 	return func(ctx context.Context, req validation.Request[*v0alpha1.Config]) error {
 		obj := req.Object
