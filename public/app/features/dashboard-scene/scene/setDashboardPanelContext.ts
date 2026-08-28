@@ -9,10 +9,7 @@ import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import {
-  getActiveAssistantChatId,
-  isAssistantSidebarOpen,
-} from 'app/core/components/AssistantTooltip/assistantSidebarState';
+import { getAssistantChatIdToContinue } from 'app/core/components/AssistantTooltip/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -294,15 +291,15 @@ async function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
     ? 'Investigate and fix the query errors causing this panel to fail.'
     : 'Investigate the query notices for this panel and explain what they mean and what I should do about them.';
 
-  // When the assistant is already docked open, target its active chat instead of just
-  // republishing the same "open" props — otherwise the sidebar being open already swallows this.
   openAssistant({
     origin: 'grafana/panel-status-popover',
     mode: 'assistant',
     prompt,
     autoSend: true,
     appendContext: true,
-    chatId: isAssistantSidebarOpen() ? getActiveAssistantChatId() : undefined,
+    // When the assistant is already on screen, target its active chat instead of just
+    // republishing the same "open" props — otherwise it being open already swallows this.
+    chatId: getAssistantChatIdToContinue(),
     context: [
       createAssistantContextItem('structured', {
         data: {

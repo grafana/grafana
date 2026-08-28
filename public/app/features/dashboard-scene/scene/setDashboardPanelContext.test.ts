@@ -44,12 +44,10 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: (type: string, params: object) => ({ type, ...params }),
 }));
 
-const mockIsAssistantSidebarOpen = jest.fn();
-const mockGetActiveAssistantChatId = jest.fn();
+const mockGetAssistantChatIdToContinue = jest.fn();
 
 jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
-  isAssistantSidebarOpen: () => mockIsAssistantSidebarOpen(),
-  getActiveAssistantChatId: () => mockGetActiveAssistantChatId(),
+  getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
@@ -90,8 +88,7 @@ beforeEach(() => {
   stubFFEnabled(false);
   mockIsAssistantAvailable.mockReset().mockReturnValue(of(false));
   mockOpenAssistant.mockReset();
-  mockIsAssistantSidebarOpen.mockReset().mockReturnValue(false);
-  mockGetActiveAssistantChatId.mockReset();
+  mockGetAssistantChatIdToContinue.mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
@@ -704,9 +701,9 @@ describe('setDashboardPanelContext', () => {
       );
     });
 
-    it('does not target a chat when the assistant sidebar is closed', async () => {
+    it('does not target a chat when the assistant is not on screen', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
-      mockIsAssistantSidebarOpen.mockReturnValue(false);
+      mockGetAssistantChatIdToContinue.mockReturnValue(undefined);
 
       const { vizPanel, context } = buildTestScene({});
       vizPanel.setState({
@@ -722,16 +719,14 @@ describe('setDashboardPanelContext', () => {
 
       await context.onInvestigateErrors?.();
 
-      expect(mockGetActiveAssistantChatId).not.toHaveBeenCalled();
       expect(mockOpenAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
     });
 
-    it('targets the active chat when the assistant sidebar is already open', async () => {
-      // Otherwise this silently does nothing: opening the assistant while it's already docked
-      // open just republishes the same props instead of landing in the active conversation.
+    it('targets the active chat when the assistant is already on screen', async () => {
+      // Otherwise this silently does nothing: opening the assistant while it's already open just
+      // republishes the same props instead of landing in the active conversation.
       mockIsAssistantAvailable.mockReturnValue(of(true));
-      mockIsAssistantSidebarOpen.mockReturnValue(true);
-      mockGetActiveAssistantChatId.mockReturnValue('active-chat-id');
+      mockGetAssistantChatIdToContinue.mockReturnValue('active-chat-id');
 
       const { vizPanel, context } = buildTestScene({});
       vizPanel.setState({

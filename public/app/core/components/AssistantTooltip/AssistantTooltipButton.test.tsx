@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
 import { createDataFrame, dateTime, FieldType, store, type TimeRange } from '@grafana/data';
 import {
+  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
 } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
+import { setFullscreenWorkspaceActive } from 'app/core/components/AppChrome/FullscreenWorkspace/fullscreenWorkspaceState';
 
 import { AssistantTooltipButton } from './AssistantTooltipButton';
 import { type AssistantTooltipContext } from './buildAssistantContext';
@@ -18,40 +18,25 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
 }));
 
-jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
-  ...jest.requireActual('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider'),
-  useExtensionSidebarContext: jest.fn(),
-}));
-
-jest.mock('app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace', () => ({
-  useFullscreenWorkspace: jest.fn(),
-}));
-
 const POINT_1_MS = Date.UTC(2026, 6, 24, 12, 0, 0);
 const POINT_2_MS = Date.UTC(2026, 6, 24, 12, 1, 0);
 const POINT_2_ISO = new Date(POINT_2_MS).toISOString();
 
 const mockUseAssistant = jest.mocked(useAssistant);
 const mockCreateContextItem = jest.mocked(createAssistantContextItem);
-const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
-const mockUseFullscreenWorkspace = jest.mocked(useFullscreenWorkspace);
 
+// The shared visibility check is hook-free, so drive the sources it actually reads rather than
+// mocking hooks the component no longer calls.
 function setSidebar(open: boolean, pluginId = 'grafana-assistant-app') {
-  mockUseExtensionSidebarContext.mockReturnValue({
-    isOpen: open,
-    dockedComponentId: open ? getComponentIdFromComponentMeta(pluginId, 'Assistant') : undefined,
-    setDockedComponentId: jest.fn(),
-    availableComponents: new Map(),
-    extensionSidebarWidth: 300,
-    setExtensionSidebarWidth: jest.fn(),
-  });
+  if (open) {
+    store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentIdFromComponentMeta(pluginId, 'Assistant'));
+  } else {
+    store.delete(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+  }
 }
 
 function setFullscreenWorkspace(active: boolean) {
-  mockUseFullscreenWorkspace.mockReturnValue({
-    fullscreenWorkspaceFeatureFlagEnabled: active,
-    fullscreenWorkspaceActive: active,
-  });
+  setFullscreenWorkspaceActive(active);
 }
 
 function makeSeries() {
