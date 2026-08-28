@@ -1959,8 +1959,7 @@ export type GetAnnotationsApiArg = {
   panelId?: number;
   /** Max limit for results returned. */
   limit?: number;
-  /** Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
-    type: array */
+  /** Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags. */
   tags?: string[];
   /** Return alerts or user created annotations
     Description:
@@ -2232,8 +2231,7 @@ export type GetCorrelationsApiArg = {
   limit?: number;
   /** Page index for starting fetching correlations */
   page?: number;
-  /** Source datasource UID filter to be applied to correlations
-    type: array */
+  /** Source datasource UID filter to be applied to correlations */
   sourceUid?: string[];
 };
 export type DatasourceProxyDeleteByUiDcallsApiResponse = unknown;
@@ -2597,8 +2595,7 @@ export type QueryPublicDashboardApiArg = {
 };
 export type SearchQueriesApiResponse = /** status 200 (empty) */ QueryHistorySearchResponse;
 export type SearchQueriesApiArg = {
-  /** List of data source UIDs to search for
-    type: array */
+  /** List of data source UIDs to search for */
   datasourceUid?: string[];
   /** Text inside query or comments that is searched for */
   searchString?: string;
@@ -2728,8 +2725,7 @@ export type SearchApiResponse = /** status 200 (empty) */ HitList;
 export type SearchApiArg = {
   /** Search Query */
   query?: string;
-  /** List of tags to search for
-    type: array */
+  /** List of tags to search for */
   tag?: string[];
   /** Type to search for, dash-folder or dash-db
     Description:
