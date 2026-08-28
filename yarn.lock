@@ -6386,23 +6386,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/ofrep-core@npm:^2.2.0":
-  version: 2.2.0
-  resolution: "@openfeature/ofrep-core@npm:2.2.0"
+"@openfeature/ofrep-core@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "@openfeature/ofrep-core@npm:2.3.0"
   peerDependencies:
     "@openfeature/core": ^1.6.0
-  checksum: 10/7fbce29d2eb50fa1cf3d81f7085d48ff4b0c5e95104c78190d23e0b9a018c4ac8370b416bd330499bd0295a9593608eefd5a48cace160d221d3d58862246a09f
+  checksum: 10/29bfd56d4400c0e8426153cb753c81f11d4120694301a65c6501277c70520d99a5055e0131f7a8a1839f2712e537b6ac5570cec52bf3824572b08f4681b17f06
   languageName: node
   linkType: hard
 
 "@openfeature/ofrep-web-provider@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@openfeature/ofrep-web-provider@npm:0.4.1"
+  version: 0.4.3
+  resolution: "@openfeature/ofrep-web-provider@npm:0.4.3"
   dependencies:
-    "@openfeature/ofrep-core": "npm:^2.2.0"
+    "@openfeature/ofrep-core": "npm:^2.3.0"
   peerDependencies:
-    "@openfeature/web-sdk": ^1.4.0
-  checksum: 10/8ec4b870a4e4ecea67ab64bfe09d424f7be30327a8c9904faece5af3108a9389396a1851b5218eb59a5f7da2aa69ec4653169c242d16089a768a7e6919db6818
+    "@openfeature/web-sdk": ^1.10.0
+  checksum: 10/3284a5a65b88f0da64e24cf55c158e13fc49e777fcd9e0f808c69fcb5c45c46a86b8f4dc263332ee63d85be349311bb6a533b1441949c57902d7030175213bb2
   languageName: node
   linkType: hard
 
