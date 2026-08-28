@@ -42,22 +42,6 @@ type searchWrapper struct {
 	logger        log.Logger
 }
 
-// If legacy is the main storage and we are writing to unified (dual writing),
-// exercise unified in the background so it is warm before it serves reads.
-func shouldMakeBackgroundCall(ctx context.Context, dual DualWriter, gr schema.GroupResource) (bool, error) {
-	unifiedIsMainStorage, err := dual.ReadFromUnified(ctx, gr)
-	if err != nil {
-		return false, err
-	}
-
-	status, err := dual.Status(ctx, gr)
-	if err != nil {
-		return false, err
-	}
-
-	return !unifiedIsMainStorage && status.WriteUnified, nil
-}
-
 func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest,
 	opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	client := s.legacyClient
@@ -69,12 +53,15 @@ func (s *searchWrapper) GetStats(ctx context.Context, in *resourcepb.ResourceSta
 		client = s.unifiedClient
 	}
 
-	makeBackgroundCall, err := shouldMakeBackgroundCall(ctx, s.dual, s.groupResource)
+	status, err := s.dual.Status(ctx, s.groupResource)
 	if err != nil {
 		return nil, err
 	}
 
-	if makeBackgroundCall {
+	// While legacy still serves reads and unified is being written to, call
+	// unified in the background as well, so it is exercised before it takes over
+	// reads. The result is thrown away.
+	if !unified && status.WriteUnified {
 		// Create background context with timeout but ignore parent cancelation
 		ctxBg := context.WithoutCancel(ctx)
 
