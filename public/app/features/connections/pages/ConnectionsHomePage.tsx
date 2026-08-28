@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName, locationUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -31,7 +31,9 @@ export default function ConnectionsHomePage() {
   const cardsData = (navIndex['connections']?.children ?? [])
     .filter((item) => item.url)
     .map((item) => {
-      const meta = cardMetadata[item.url!];
+      // item.url includes appSubUrl when Grafana is served under a sub-path;
+      // the metadata map is keyed by bare paths, so normalize before lookup.
+      const meta = cardMetadata[locationUtil.stripBaseFromUrl(item.url!)];
       return {
         ...item,
         text: meta?.text ?? item.text,

@@ -2,6 +2,7 @@ import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
+import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
@@ -38,11 +39,42 @@ const renderPage = (
 
 describe('Connections', () => {
   const mockDatasources = getMockDataSources(3);
+  const originalAppSubUrl = config.appSubUrl;
 
   beforeEach(() => {
     config.pluginAdminExternalManageEnabled = true;
     (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    config.appSubUrl = originalAppSubUrl;
+    locationUtil.initialize({ config, getTimeRangeForUrl: jest.fn(), getVariablesUrlParams: jest.fn() });
+  });
+
+  test('resolves card metadata when Grafana is served under a sub-path', async () => {
+    // Simulate GF_SERVER_ROOT_URL=https://example.com/grafana/ — the backend
+    // prepends appSubUrl to nav-tree urls, while CardMetadata is keyed by bare paths
+    config.appSubUrl = '/grafana';
+    locationUtil.initialize({ config, getTimeRangeForUrl: jest.fn(), getVariablesUrlParams: jest.fn() });
+
+    const store = configureStore({
+      navIndex: {
+        ...navIndex,
+        connections: {
+          ...navIndex.connections,
+          children: navIndex.connections.children?.map((child) => ({ ...child, url: `/grafana${child.url}` })),
+        },
+      },
+      plugins: getPluginsStateMock([]),
+    });
+    renderPage(ROUTES.Base, store);
+
+    // Subtitle comes from CardMetadata, not the nav-tree fallback
+    expect(
+      await screen.findByText('Connect data to Grafana through data sources, integrations and apps')
+    ).toBeVisible();
+    expect(screen.queryByText('Browse and create new connections')).not.toBeInTheDocument();
   });
 
   test('shows cloud subtitle and cards from nav tree when edition is Cloud', async () => {
