@@ -658,7 +658,13 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
+  // adhoc and groupby variables carry the same `datasource` shape as query variables, so they
+  // need the same placeholder resolution.
+  if (
+    (variableType === 'query' || variableType === 'adhoc' || variableType === 'groupby') &&
+    'datasource' in variable &&
+    isRecord(variable.datasource)
+  ) {
     const datasourceUid = variable.datasource.uid;
     if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
       const userInput = checkUserInputMatch(datasourceUid, inputs.dataSources, form.dataSources);
