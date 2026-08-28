@@ -225,6 +225,45 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 		}
 	})
 
+	t.Run("denies user requests when disabled even with a requester", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		userCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(userCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
+			})
+		}
+	})
+
+	t.Run("allows service identity read and delete when disabled so folder cleanup can remove leftovers", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		for _, verb := range []string{"get", "list", "watch", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionAllow, decision)
+				require.Empty(t, reason)
+			})
+		}
+	})
+
+	t.Run("denies service identity writes when disabled", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+		for _, verb := range []string{"create", "update", "patch"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(svcCtx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
+			})
+		}
+	})
+
 	t.Run("checks RBAC when the feature is enabled", func(t *testing.T) {
 		setGlobalVariablesToggle(t, true)
 		// With the flag on, the authorizer proceeds past the feature gate and

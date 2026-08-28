@@ -1663,6 +1663,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.recentlyDeletedViaTrash",
+        "resourceVersion": "1787654416364",
+        "creationTimestamp": "2026-08-25T10:40:16Z"
+      },
+      "spec": {
+        "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.vectorSearch",
         "resourceVersion": "1781031364322",
         "creationTimestamp": "2026-06-09T18:56:04Z",
@@ -2765,16 +2780,19 @@
     {
       "metadata": {
         "name": "foldersAppPlatformAPI",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-03T14:15:23Z"
+        "resourceVersion": "1787750985198",
+        "creationTimestamp": "2025-07-03T14:15:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-26 13:29:45.19833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables use of app platform API for folders",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5258,6 +5276,7 @@
         "name": "preferences.rerouteLegacyAPIs",
         "resourceVersion": "1783676521307",
         "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-25T09:11:50Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-10 09:42:01.307974 +0000 UTC"
         }
@@ -5729,9 +5748,23 @@
     },
     {
       "metadata": {
+        "name": "queryeditor.coauthoringUi",
+        "resourceVersion": "1785472536188",
+        "creationTimestamp": "2026-07-31T04:35:36Z"
+      },
+      "spec": {
+        "description": "Enables AI-assisted coauthoring in code query editors",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1786565901949",
-        "creationTimestamp": "2026-08-12T20:18:21Z"
+        "resourceVersion": "1787255970144",
+        "creationTimestamp": "2026-08-20T19:59:30Z"
       },
       "spec": {
         "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
@@ -5755,6 +5788,22 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "recentlyDeletedViaTrash",
+        "resourceVersion": "1787642659770",
+        "creationTimestamp": "2026-08-25T07:24:19Z",
+        "deletionTimestamp": "2026-08-25T10:40:16Z"
+      },
+      "spec": {
+        "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -6634,7 +6683,8 @@
       "metadata": {
         "name": "tracesDrilldown.useValueTypeFiltering",
         "resourceVersion": "1787032167500",
-        "creationTimestamp": "2026-08-18T05:49:27Z"
+        "creationTimestamp": "2026-08-18T05:49:27Z",
+        "deletionTimestamp": "2026-08-25T08:29:12Z"
       },
       "spec": {
         "description": "Enables value type filtering in Traces Drilldown",

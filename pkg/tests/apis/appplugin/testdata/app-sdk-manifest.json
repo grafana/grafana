@@ -1,0 +1,51 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "test-app-with-sdk-manifest"
+  },
+  "spec": {
+    "appName": "test-app-with-sdk-manifest",
+    "group": "test-app-with-backend",
+    "versions": [
+      {
+        "name": "v1",
+        "kinds": [
+          {
+            "kind": "Thing",
+            "plural": "things",
+            "scope": "Namespaced",
+            "folderScoped": false,
+            "schemas": {
+              "Thing": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {}
+                  }
+                }
+              }
+            },
+            "routes": {
+              "reload": {
+                "get": {
+                  "operationId": "reloadThing",
+                  "responses": {
+                    "200": {
+                      "description": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

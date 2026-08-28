@@ -645,7 +645,6 @@ type GetAnnotationsParams struct {
 	// Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
 	// in:query
 	// required:false
-	// type: array
 	// collectionFormat: multi
 	Tags []string `json:"tags"`
 	// Return alerts or user created annotations

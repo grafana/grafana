@@ -2,6 +2,7 @@ package ofrep
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -107,14 +108,16 @@ func parseEvalContextBody(body []byte) (evalContext, error) {
 
 // readEvalContext reads the request body, re-buffers it for downstream use,
 // and parses the evaluation context fields needed for validation and logging.
-func (b *APIBuilder) readEvalContext(w http.ResponseWriter, r *http.Request) (evalContext, error) {
+func (b *APIBuilder) readEvalContext(ctx context.Context, w http.ResponseWriter, r *http.Request) (evalContext, error) {
+	logger := b.logger.FromContext(ctx)
+
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
 	if err != nil {
 		return evalContext{}, err
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	b.logger.Debug("evaluation context from request", "ctx", string(body))
+	logger.Debug("evaluation context from request", "ctx", string(body))
 
 	if len(bytes.TrimSpace(body)) == 0 {
 		return evalContext{}, nil
@@ -122,7 +125,7 @@ func (b *APIBuilder) readEvalContext(w http.ResponseWriter, r *http.Request) (ev
 
 	evalCtx, err := parseEvalContextBody(body)
 	if err != nil {
-		b.logger.Warn("failed to unmarshal evaluation context", "error", err)
+		logger.Warn("failed to unmarshal evaluation context", "error", err)
 		return evalContext{}, err
 	}
 	return evalCtx, nil

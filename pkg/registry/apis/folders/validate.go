@@ -525,12 +525,8 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		Limit:  limit,
 		Offset: offset,
 	})
-	if err != nil {
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, false, fmt.Errorf("failed to search folders: %w", err)
-	}
-
-	if resp.Error != nil {
-		return nil, false, fmt.Errorf("search error: %s", resp.Error.Message)
 	}
 
 	if resp.Results == nil || len(resp.Results.Rows) == 0 {
@@ -569,12 +565,8 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	if err != nil {
-		return err
-	}
-
-	if resp != nil && resp.Error != nil {
-		return fmt.Errorf("could not verify if folder is empty: %v", resp.Error)
+	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+		return fmt.Errorf("could not verify if folder is empty: %w", err)
 	}
 
 	if resp.Stats == nil {

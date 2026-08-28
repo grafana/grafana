@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -479,9 +480,7 @@ func MergePermissions(a, b map[int64][]ac.Permission) map[int64][]ac.Permission 
 
 	result := make(map[int64][]ac.Permission, len(a)+len(b))
 	// Users only in a: alias the slice. No copy until we know we'll mutate it.
-	for userID, perms := range a {
-		result[userID] = perms
-	}
+	maps.Copy(result, a)
 
 	for userID, perms := range b {
 		existing, ok := result[userID]
