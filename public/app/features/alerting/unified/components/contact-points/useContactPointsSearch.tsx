@@ -1,7 +1,7 @@
-import { fuzzySearch } from '@grafana/data';
 import { uniq } from 'lodash';
 import { useMemo } from 'react';
 
+import { fuzzySearch } from '@grafana/data';
 import { RECEIVER_META_KEY } from 'app/features/alerting/unified/components/contact-points/constants';
 import { type ContactPointWithMetadata } from 'app/features/alerting/unified/components/contact-points/utils';
 
