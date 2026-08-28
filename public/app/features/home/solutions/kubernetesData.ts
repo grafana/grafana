@@ -49,16 +49,8 @@ const valuesRegex = (values: string[]): string => values.map((v) => escapeLabelV
 const namespaceMatcher = (f: KubernetesHomeFilters): string | null =>
   f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}"` : null;
 
-// Trailing empty alternative also matches series with no namespace label: cluster-level alerts stay counted.
-const alertNamespaceMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}|"` : null;
-
 const nodeMatcher = (f: KubernetesHomeFilters): string | null =>
   f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}"` : null;
-
-// Most alerts carry no node label (workload alerts are namespace/pod-scoped): keep them counted.
-const alertNodeMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}|"` : null;
 
 // '' (not '{}') when no matchers so unfiltered queries stay byte-identical to the historical strings.
 const selector = (...matchers: Array<string | null>): string => {
@@ -73,26 +65,36 @@ const podNodeScope = (f: KubernetesHomeFilters): string =>
     ? ` * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info${selector(clusterMatcher(f), nodeMatcher(f))})`
     : '';
 
+// Node readiness is namespace-blind; when namespaces are selected, count only nodes hosting
+// their pods so a healthy selection reads healthy even while unrelated nodes are down.
+const nodeNamespaceScope = (f: KubernetesHomeFilters): string =>
+  f.namespaces?.length
+    ? ` * on (cluster, node) group_left () group by (cluster, node) (kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))})`
+    : '';
+
 // refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
 const inventoryQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
   clusters: `count(group by (cluster) (last_over_time(kube_node_info${selector(clusterMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
   pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
 });
 
-// Clusters and nodes are not namespaced, so their signals ignore the namespace filter.
+// Every health signal is strictly scoped to the selection: a quiet selection must read healthy,
+// which flips the card out of its needs-attention state.
 const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
   unhealthyPods: `sum(kube_pod_status_phase${selector('phase=~"Pending|Failed|Unknown"', clusterMatcher(f), namespaceMatcher(f))}${podNodeScope(f)})`,
   restarts1h: `sum(increase(kube_pod_container_status_restarts_total${selector(clusterMatcher(f), namespaceMatcher(f))}[1h])${podNodeScope(f)})`,
-  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))})`,
+  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))}${nodeNamespaceScope(f)})`,
 });
 
-// Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
+// Firing alert instances scoped to Kubernetes workloads; heartbeats excluded. Strict label
+// matching: alerts without a selected namespace/node label are dropped, so a quiet selection
+// shows zero alerts even while the wider fleet is firing.
 const alertsMatcher = (f: KubernetesHomeFilters): string =>
   selector(
     'alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""',
     clusterMatcher(f),
-    alertNamespaceMatcher(f),
-    alertNodeMatcher(f)
+    namespaceMatcher(f),
+    nodeMatcher(f)
   );
 
 // Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.

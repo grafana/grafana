@@ -155,7 +155,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
           label={t('home.solutions.kubernetes.filters.namespaces-label', 'Namespaces')}
           description={t(
             'home.solutions.kubernetes.filters.namespaces-description',
-            'Cluster count and node readiness ignore namespace filters; cluster-level alerts stay included.'
+            'Health signals and alerts are scoped to the selected namespaces; the cluster count is not.'
           )}
         >
           <MultiCombobox<string>
@@ -173,7 +173,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
           label={t('home.solutions.kubernetes.filters.nodes-label', 'Nodes')}
           description={t(
             'home.solutions.kubernetes.filters.nodes-description',
-            'Pod health and restarts are matched to nodes via kube_pod_info; alerts without a node label stay included.'
+            'Pod health is attributed to nodes via kube_pod_info; only alerts labeled with a selected node are counted.'
           )}
         >
           <MultiCombobox<string>

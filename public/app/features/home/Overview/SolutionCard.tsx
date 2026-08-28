@@ -32,15 +32,21 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
 
   return (
     <Card noMargin className={styles.card}>
-      <Card.Heading className={styles.heading}>
+      {/* Card.Tags would reserve a right-hand grid column across the description rows and squeeze
+          the content, so the filter controls sit inside the heading, on the title's own line. */}
+      <Card.Heading className={styles.headingRow}>
         <Stack direction="row" gap={1.5} alignItems="center">
           <div className={cx(styles.icon, styles.activeIcon)}>
             <Icon name={solution.icon} size="lg" />
           </div>
-          <Stack direction="column" gap={0} minWidth={0}>
-            <Text element="h3" variant="h6">
-              {solution.title}
-            </Text>
+          <Stack direction="column" gap={0} grow={1} minWidth={0}>
+            <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+              <Text element="h3" variant="h6">
+                {solution.title}
+              </Text>
+              {/* Only Kubernetes has per-user filters; fold into Solution if a second solution grows them. */}
+              {solution.id === 'kubernetes' && datasource && <KubernetesFiltersButton datasource={datasource} />}
+            </Stack>
             <Stack direction="row" gap={1} alignItems="center">
               <span className={styles.statusDot} aria-hidden="true" />
               <Text variant="bodySmall" color="secondary">
@@ -57,14 +63,6 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </Stack>
         </Stack>
       </Card.Heading>
-
-      {solution.id === 'kubernetes' && datasource && (
-        // Tags is the card grid's top-right slot. Only Kubernetes has per-user filters;
-        // fold into Solution if a second solution grows them.
-        <Card.Tags className={styles.filtersSlot}>
-          <KubernetesFiltersButton datasource={datasource} />
-        </Card.Tags>
-      )}
 
       <Card.Description className={styles.content}>
         <SolutionStatsRow
@@ -235,20 +233,13 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
       },
     }),
   }),
-  heading: css({
-    // Card.Heading wraps its children in a span flex item whose automatic minimum size is the
-    // min-content of the nowrap `via …` text; let it shrink so that text can truncate.
-    '> span': {
-      minWidth: 0,
-    },
+  headingRow: css({
+    // Card.Heading wraps its children in a content-sized span; grow it so the
+    // space-between row above reaches the card's right edge.
+    '& > span': { flexGrow: 1, minWidth: 0 },
   }),
   actions: css({
     minWidth: 0,
-  }),
-  filtersSlot: css({
-    // Card.Tags centers itself across the heading/meta/description rows; && outranks the
-    // built-in class so the controls pin to the card's top right beside the heading.
-    '&&': { alignSelf: 'start' },
   }),
   icon: css({
     display: 'flex',

@@ -696,11 +696,12 @@ describe('Kubernetes query filters', () => {
         'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a|team-b"})',
       restarts1h:
         'sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a|team-b"}[1h]))',
-      // Nodes are not namespaced: cluster matcher only.
-      notReadyNodes: 'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"})',
-      // Trailing empty alternative keeps namespace-less (cluster-level) alerts counted.
+      // Namespace-blind node readiness is scoped to nodes hosting the selected namespaces' pods.
+      notReadyNodes:
+        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod"} * on (cluster, node) group_left () group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a|team-b"}))',
+      // Strict matching: alerts without a selected namespace label are dropped.
       alertsFiring:
-        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"})',
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b"})',
     });
 
     expect(cpuCalls()[0][0].queries[0].expr).toBe(
@@ -723,7 +724,7 @@ describe('Kubernetes query filters', () => {
       const ashCalls = (run.mock.calls as RunCall[]).filter(([o]) => o.datasource.uid === 'ash-uid');
       expect(ashCalls).toHaveLength(1);
       expect(ashCalls[0][0].queries[0].expr).toBe(
-        'count(GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b|"})'
+        'count(GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|team-b"})'
       );
     } finally {
       config.unifiedAlerting.stateHistory = original;
@@ -769,11 +770,12 @@ describe('Kubernetes query filters', () => {
         'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a"} * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"}))',
       restarts1h:
         'sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a"}[1h]) * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"}))',
+      // Node readiness intersects the node filter with nodes hosting the selected namespaces.
       notReadyNodes:
-        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"})',
-      // Trailing empty alternatives keep namespace-less and node-less alerts counted.
+        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"} * on (cluster, node) group_left () group by (cluster, node) (kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}))',
+      // Strict matching: alerts must carry a selected namespace and node label.
       alertsFiring:
-        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|",node=~"node-1|node-2|"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|",node=~"node-1|node-2|"})',
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"})',
     });
 
     expect(cpuCalls()[0][0].queries[0].expr).toBe(
