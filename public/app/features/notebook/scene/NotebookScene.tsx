@@ -120,6 +120,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.tags !== prevState.tags) {
           newState.body.setTags?.(newState.tags);
         }
+        // `title` is mirrored on the same terms as `tags` above.
+        if (newState.body !== prevState.body || newState.title !== prevState.title) {
+          newState.body.setTitle?.(newState.title);
+        }
         // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
         // the steps cannot run any more.
         if (newState.body !== prevState.body) {
@@ -187,6 +191,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    */
   public onTagsChange = (tags: string[]) => {
     this.setState({ tags });
+  };
+
+  /**
+   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
+   * the save model reads this state, and autosave writes on any change made while editing.
+   */
+  public onTitleChange = (title: string) => {
+    this.setState({ title });
   };
 
   public showModal(modal: SceneObject) {

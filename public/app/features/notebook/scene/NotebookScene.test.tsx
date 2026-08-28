@@ -458,4 +458,43 @@ describe('NotebookScene', () => {
       expect(scene.state.body.state.tags).toEqual(['rebuilt']);
     });
   });
+
+  describe('title', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      // Both, for the same reason as tags: the scene's copy is what the save model reads, the layout
+      // manager's is what the header renders, and pushing is what stops the two drifting.
+      expect(scene.state.title).toBe('Q3 latency regression');
+      expect(scene.state.body.state.title).toBe('Q3 latency regression');
+    });
+
+    it('reaches the save model, so autosave writes the rename', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(transformNotebookSceneToSaveModel(scene).title).toBe('Q3 latency regression');
+    });
+
+    // Pushed from the state subscription rather than from onTitleChange, so an APPLY_NOTEBOOK_SPEC
+    // swap reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          title: 'Rebuilt',
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+  });
 });
