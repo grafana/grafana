@@ -49,6 +49,20 @@ describe('MinIntervalOption', () => {
     expect(onChange).toHaveBeenCalledWith({ minInterval: '1m' });
   });
 
+  it('does not commit a partial decimal number while typing towards a unit (e.g. "1." on the way to "1.5s")', async () => {
+    const onChange = jest.fn();
+    render(<MinIntervalOption options={{}} onChange={onChange} />);
+
+    // typing "1.5s" char-by-char passes through "1" and "1.", which describeInterval accepts
+    // via Number("1."), but must not be committed upstream mid-typing
+    await userEvent.type(screen.getByRole('textbox'), '1.5s');
+
+    expect(onChange).not.toHaveBeenCalledWith({ minInterval: '1' });
+    expect(onChange).not.toHaveBeenCalledWith({ minInterval: '1.' });
+    expect(onChange).not.toHaveBeenCalledWith({ minInterval: '1.5' });
+    expect(onChange).toHaveBeenCalledWith({ minInterval: '1.5s' });
+  });
+
   it('commits a bare-number interval on blur', async () => {
     const onChange = jest.fn();
     render(<MinIntervalOption options={{}} onChange={onChange} />);

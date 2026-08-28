@@ -304,10 +304,10 @@ export function MinIntervalOption({
         return;
       }
 
-      // A bare number (e.g. "1") is ambiguous while typing: `describeInterval` treats it as
-      // seconds, but it could also be the start of a value with a unit, like "1m" or "30s".
+      // A bare number (e.g. "1" or "1.") is ambiguous while typing: `describeInterval` treats it as
+      // seconds, but it could also be the start of a value with a unit, like "1m" or "1.5s".
       // Only commit bare-number values once we know no more characters are coming (on blur).
-      if (requireUnit && /^-?\d+(?:\.\d+)?$/.test(minInterval)) {
+      if (requireUnit && /^-?\d+(?:\.\d*)?$/.test(minInterval)) {
         return;
       }
     }
