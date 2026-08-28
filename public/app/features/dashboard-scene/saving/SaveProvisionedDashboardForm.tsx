@@ -1,10 +1,11 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { omit } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -17,6 +18,7 @@ import {
   RadioButtonGroup,
   Spinner,
   TextLink,
+  useStyles2,
 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -38,6 +40,7 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: Props) {
+  const styles = useStyles2(getStyles);
   const hasK8sMeta = Boolean(dashboard.state.meta.k8s);
   const [exportFormat, setExportFormat] = useState<ExportFormat>(
     hasK8sMeta ? ExportFormat.V2Resource : ExportFormat.Classic
@@ -152,7 +155,12 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
         )}
 
         {isLossyClassicModel && (
-          <Alert title="" severity="warning" bottomSpacing={0} className={styles.warning}>
+          <Alert
+            title=""
+            severity="warning"
+            bottomSpacing={0}
+            className={cx(styles.warning, hasK8sMeta && styles.warningBelowOptions)}
+          >
             <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
               This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in
               the classic format and may be lost.
@@ -203,18 +211,25 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
   );
 }
 
-const styles = {
-  container: css({
-    height: '100%',
-    display: 'flex',
-  }),
-  json: css({
-    flexGrow: 1,
-    maxHeight: '800px',
-  }),
-  // Alert's wrapper sets flexGrow: 1, which in this column layout makes it swallow all the
-  // free space instead of the JSON editor below it.
-  warning: css({
-    flexGrow: 0,
-  }),
-};
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      height: '100%',
+      display: 'flex',
+    }),
+    json: css({
+      flexGrow: 1,
+      maxHeight: '800px',
+    }),
+    // Alert's wrapper sets flexGrow: 1, which in this column layout makes it swallow all the
+    // free space instead of the JSON editor below it.
+    warning: css({
+      flexGrow: 0,
+    }),
+    // The advanced options row adds its own bottom margin on top of the Stack's gap. Drop one of
+    // them so the warning sits as close to the controls as it does in the export drawer.
+    warningBelowOptions: css({
+      marginTop: theme.spacing(-2),
+    }),
+  };
+}
