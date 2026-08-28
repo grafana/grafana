@@ -18,15 +18,15 @@ runs:
       id: cache
       uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4 zizmor: ignore[cache-poisoning]
       with:
-        key: "frontend-build-v1-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml', '.yarn/releases/**', '.yarn/plugins/**', '.yarn/patches/**', '.github/actions/setup-node/**', '.github/actions/yarn-install/**', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', 'scripts/cli/env-util.ts', 'scripts/cli/package.json', 'scripts/tsconfig.base.json', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc', 'Makefile') }}-${{ steps.action.outputs.hash }}"
+        key: "frontend-build-v1-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'pnpm-workspace.yaml', 'patches/**', '.github/actions/setup-node/**', '.github/actions/pnpm-install/**', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', 'scripts/cli/env-util.ts', 'scripts/cli/package.json', 'scripts/tsconfig.base.json', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc', 'Makefile') }}-${{ steps.action.outputs.hash }}"
         path: |
           public/build
           public/build-swagger
           public/app/plugins/*/*/dist
 
-    - name: Install yarn dependencies
+    - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true'
-      uses: ./.github/actions/yarn-install
+      uses: ./.github/actions/pnpm-install
 
     - name: Build frontend
       if: steps.cache.outputs.cache-hit != 'true'

@@ -33,8 +33,8 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
@@ -89,12 +89,12 @@ jobs:
           done
 
       - name: Run diagnostics e2e
-        run: yarn playwright test --project=diagnostics --reporter=list
+        run: pnpm exec playwright test --project=diagnostics --reporter=list
         env:
           GRAFANA_URL: http://localhost:3002
           CI: true
           # Without this, Node resolves @grafana/* workspace packages via their built dist/
-          # output (not built here), rather than source -- see yarn e2e:pw in package.json.
+          # output (not built here), rather than source -- see the e2e:pw script in package.json.
           NODE_OPTIONS: '-C @grafana-app/source'
 
       - uses: actions/upload-artifact@v7

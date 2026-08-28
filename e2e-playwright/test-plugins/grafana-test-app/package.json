@@ -27,5 +27,5 @@
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
-  "packageManager": "yarn@4.17.1"
+  "packageManager": "pnpm@11.19.0"
 }

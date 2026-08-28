@@ -3,7 +3,7 @@ description: Sets up a node.js environment with presets for the Grafana reposito
 
 inputs:
   cache:
-    description: Whether to cache the yarn dependencies. Note, its recommended to use .github/actions/yarn-install instead as it has better caching.
+    description: Whether to cache the node dependencies. Note, its recommended to use .github/actions/pnpm-install instead as it has better caching.
     required: false
     default: 'false'
   cwd:
@@ -14,8 +14,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # pnpm isn't ambient like the yarn shim was; setup-node consumers run `pnpm` directly, so install it here.
+    # Point action-setup at the checkout dir's package.json to read the `packageManager` version —
+    # jobs that check out into a subdir (e.g. ./pr, ./base) pass `cwd`, and the workspace root has
+    # no package.json there for it to fall back on.
+    - uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+      with:
+        package_json_file: '${{ inputs.cwd }}/package.json'
     - uses: actions/setup-node@v6
       with:
         node-version-file: '${{ inputs.cwd }}/.nvmrc'
-        cache: ${{ inputs.cache == 'true' && 'yarn' || '' }}
-        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/yarn.lock', inputs.cwd) || 'false' }}
+        cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/pnpm-lock.yaml', inputs.cwd) || 'false' }}

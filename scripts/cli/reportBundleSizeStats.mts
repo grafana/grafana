@@ -12,7 +12,7 @@ const PUBLIC_PATH = 'public/build/';
 
 /**
  * Where the build wrote its output, relative to the repo root. Pass a different directory to measure
- * a build that does not write to public/build, e.g. `yarn bundle-size:stats public/build-rspack`.
+ * a build that does not write to public/build, e.g. `pnpm run bundle-size:stats public/build-rspack`.
  */
 const BUILD_DIR = path.resolve(REPO_ROOT, process.argv[2] || 'public/build');
 
@@ -43,7 +43,7 @@ async function readEntrypoints(manifestPath: string): Promise<Record<string, Ent
   try {
     contents = await readFile(manifestPath, 'utf8');
   } catch (err) {
-    throw new Error(`Could not read ${manifestPath}. Run 'yarn build' first.`, { cause: err });
+    throw new Error(`Could not read ${manifestPath}. Run 'pnpm run build' first.`, { cause: err });
   }
 
   return JSON.parse(contents).entrypoints;

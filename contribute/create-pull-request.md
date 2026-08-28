@@ -69,8 +69,8 @@ We use [ESLint](https://eslint.org/) to enforce code style and best practices, a
   - You may get an error when trying to commit something that decreases the overall code quality. You can either fix these errors or temporarily override the checks (for example, to commit something that's a work in progress). To do so, use `git commit --no-verify`. All errors will eventually have to be fixed before your code can be merged because...
 - **ESLint also runs as part of our CI**:
   - If you have fixed suppressed issues but not updated the suppressions file, you may see the following error message in the CI: `There are suppressions left that do not occur anymore.`.
-    To resolve the error, run the following command: `yarn lint:prune` and commit the changes.
-  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `yarn lint:prune` to ensure the file is up to date and commit.
+    To resolve the error, run the following command: `pnpm run lint:prune` and commit the changes.
+  - You may see merge conflicts for the `eslint-suppressions.json` file. To resolve, merge with the target branch (usually `main`) and resolve conflicts however you like, and then run `pnpm run lint:prune` to ensure the file is up to date and commit.
 
 ## Guidelines for backend development
 

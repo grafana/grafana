@@ -35,6 +35,16 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  // ml-regression chain (used by the regression transformer) ships ESM; pnpm's
+  // strict layout no longer hoists it where the default ignore would skip it.
+  'ml-regression-polynomial',
+  'ml-regression-simple-linear',
+  'ml-regression-base',
+  'ml-matrix',
+  'ml-array-rescale',
+  'ml-array-max',
+  'ml-array-min',
+  'is-any-array',
   '@react-hookz/web',
   '@ver0/deep-equal',
   '@marcbachmann/cel-js',
@@ -54,10 +64,12 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    // Transform listed ESM packages at the top level or nested under another package
-    // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
-    // entries like `d3` continue to cover related packages (d3-force, etc.).
-    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
+    // Transform listed ESM packages at the top level or nested under another
+    // `node_modules/` — either a package's own nested copy (@grafana/plugin-ui → uuid)
+    // or pnpm's `.pnpm/<pkg>@<ver>/node_modules/` store, which is where jest's
+    // realpath resolution lands for nearly every dependency. Prefix matching is used
+    // throughout so entries like `d3` keep covering related packages (d3-force, etc.).
+    `/node_modules/(?!(?:.*/node_modules/)?(?:${esModules}))`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],

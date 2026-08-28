@@ -6,7 +6,7 @@ import esbuild from 'rollup-plugin-esbuild';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 
 // This is the path to the root of the grafana project
-// Prefer PROJECT_CWD env var set by yarn berry
+// PROJECT_CWD is set by yarn berry but not pnpm; the package-relative fallback is used under pnpm (rollup runs from each package's dir)
 const projectCwd = process.env.PROJECT_CWD ?? '../../';
 
 export const entryPoint = 'src/index.ts';

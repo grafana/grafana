@@ -230,18 +230,18 @@ jobs:
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
-          yarn install
+          pnpm install
           npm version patch --no-git-tag-version
-          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
-          yarn install
-          yarn prettier:write
+          pnpm exec lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          pnpm install
+          pnpm run prettier:write
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
 
       # Single commit for all release-PR file changes (changelog + version bumps +
-      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # pnpm-lock.yaml refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
       # API, which gives us two things in one shot:
       #   1. Commits made via the API with a GitHub App installation token are auto-signed
       #      by GitHub under grafana-writer[bot]'s identity (Verified signature),

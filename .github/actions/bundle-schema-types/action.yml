@@ -36,7 +36,7 @@ runs:
         PLUGIN_SCHEMA_TYPES_OUT: ../plugin-extension-types/types/plugin-schema/index.d.ts
       run: |
         mkdir -p ../plugin-extension-types/types/plugin-schema
-        yarn gen-plugin-schema-types
+        pnpm run gen-plugin-schema-types
         echo "Generated TypeScript types from plugin schema"
       shell: bash
 

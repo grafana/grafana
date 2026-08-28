@@ -175,7 +175,7 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
     successUpstream = await startUpstream('success');
     failureUpstream = await startUpstream('failure');
 
-    // Unique per run: repeated/sharded runs (e.g. `yarn e2e:playwright:10x`) can execute this file
+    // Unique per run: repeated/sharded runs (e.g. `pnpm run e2e:playwright:10x`) can execute this file
     // more than once concurrently, and a fixed name would race across those runs.
     const runId = randomUUID();
 

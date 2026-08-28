@@ -20,7 +20,7 @@ const codeownersFilePath = path.join(__dirname, CODEOWNERS_MANIFEST_FILENAMES_BY
 
 if (!fs.existsSync(codeownersFilePath)) {
   console.error(`Codeowners file not found at ${codeownersFilePath} ...`);
-  console.error('Please run: yarn codeowners-manifest first to generate the mapping file');
+  console.error('Please run: pnpm run codeowners-manifest first to generate the mapping file');
   process.exit(1);
 }
 

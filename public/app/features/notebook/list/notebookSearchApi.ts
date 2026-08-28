@@ -5,7 +5,7 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
  * pkg/services/apiserver/searchroutes.
  *
  * Hand-written rather than generated: the endpoint's schemas cannot go through
- * `yarn generate-apis` today, because the envelope's `SearchResults` collides with the
+ * `pnpm run generate-apis` today, because the envelope's `SearchResults` collides with the
  * legacy dashboards-search schema of the same name once the spec processor strips k8s
  * name prefixes. These types therefore mirror pkg/apis/search/v0alpha1/types.go by hand
  * and have to be kept in step with it.

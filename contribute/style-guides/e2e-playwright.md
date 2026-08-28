@@ -24,19 +24,19 @@ Our framework structure is inspired by [Martin Fowler's Page Object](https://mar
 Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers.
 
 ```
-yarn playwright install chromium
+pnpm exec playwright install chromium
 ```
 
 The following script starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) (same server that is being used when running e2e tests in CI) on port 3001 and runs all the Playwright tests. The development server is provisioned with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources and apps.
 
 ```
-yarn e2e:playwright
+pnpm run e2e:playwright
 ```
 
 You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
 
 ```
-GRAFANA_URL=http://localhost:3000 yarn e2e:playwright
+GRAFANA_URL=http://localhost:3000 pnpm run e2e:playwright
 ```
 
 Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
@@ -46,40 +46,40 @@ Note this will not start a development server, so you must ensure that Grafana i
 1 - **To open the Playwright UI**. It starts the Grafana server and then Playwright, which runs against this server.
 
 ```
-yarn e2e:playwright --ui
+pnpm run e2e:playwright --ui
 ```
 
 2 - **To run an individual test**. It will run the test that matches the string passed to _grep_. Playwright will run all of them if you use a string that matches multiple tests.
 
 ```
-yarn e2e:playwright --grep <testname>
+pnpm run e2e:playwright --grep <testname>
 ```
 
 You can also run all the tests matching a specific tag with _@tagName_.
 
 ```
-yarn e2e:playwright --grep @<tagname>
+pnpm run e2e:playwright --grep @<tagname>
 ```
 
 3 - **To run a project**. It will run the entire project. You can find them in [grafana/playwright.config.ts](https://github.com/grafana/grafana/blob/main/playwright.config.ts#L90).
 
 ```
-yarn e2e:playwright --project <projectname>
+pnpm run e2e:playwright --project <projectname>
 ```
 
 4- **To open the last HTML report**. It will open a Chrome window with the test list and the related info (success/error, name, time, steps, ...).
 
 ```
-yarn playwright show-report
+pnpm exec playwright show-report
 ```
 
-You can open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
+You can open an arbitrary report with `pnpm exec playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
 
 - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
 - Clicking _Summary_.
 - Download the _playwright-html-<number>_ artifact.
 - Unzip.
-- Run `yarn playwright show-report <reportLocation>`
+- Run `pnpm exec playwright show-report <reportLocation>`
 
 You can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options) if you are curious about other commands.
 
@@ -277,13 +277,13 @@ You can add Playwright end-to-end tests for plugins to the [`e2e-playwright/plug
 
 ## Commands
 
-- `yarn e2e:playwright` runs all Playwright tests. Optionally, you can provide the `--project mysql` argument to run tests in a specific project.
+- `pnpm run e2e:playwright` runs all Playwright tests. Optionally, you can provide the `--project mysql` argument to run tests in a specific project.
 
-  The `yarn e2e:playwright` command starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
+  The `pnpm run e2e:playwright` command starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
 
   You can run against an arbitrary instance by setting the `GRAFANA_URL` environment variable:
 
-  `GRAFANA_URL=http://localhost:3000 yarn e2e:playwright`
+  `GRAFANA_URL=http://localhost:3000 pnpm run e2e:playwright`
 
   Note this will not start a development server, so you must ensure that Grafana is running and accessible at the specified URL.
 
