@@ -38,19 +38,21 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
 
   return (
     <>
-      {active && <Badge text={t('home.solutions.kubernetes.filters.filtered-badge', 'Filtered')} color="blue" />}
-      <IconButton
-        name="cog"
-        tooltip={
-          active
-            ? t(
-                'home.solutions.kubernetes.filters.customize-active',
-                'Customize Kubernetes monitoring (filters active)'
-              )
-            : t('home.solutions.kubernetes.filters.customize', 'Customize Kubernetes monitoring')
-        }
-        onClick={() => setOpen(true)}
-      />
+      <Stack direction="row" gap={1} alignItems="center">
+        {active && <Badge text={t('home.solutions.kubernetes.filters.filtered-badge', 'Filtered')} color="blue" />}
+        <IconButton
+          name="cog"
+          tooltip={
+            active
+              ? t(
+                  'home.solutions.kubernetes.filters.customize-active',
+                  'Customize Kubernetes monitoring (filters active)'
+                )
+              : t('home.solutions.kubernetes.filters.customize', 'Customize Kubernetes monitoring')
+          }
+          onClick={() => setOpen(true)}
+        />
+      </Stack>
       {/* Mounted only while open so every open starts from the persisted filters. */}
       {open && <KubernetesFiltersModal datasource={datasource} onDismiss={() => setOpen(false)} />}
     </>
@@ -148,6 +150,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             ]}
             value={cluster}
             onChange={(option) => setCluster(option.value)}
+            disabled={optionsLoading}
             loading={optionsLoading}
             createCustomValue
           />
@@ -165,6 +168,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             value={namespaces}
             onChange={(items) => setNamespaces(items.map((item) => item.value))}
             placeholder={t('home.solutions.kubernetes.filters.all-namespaces', 'All namespaces')}
+            disabled={optionsLoading}
             loading={optionsLoading}
             createCustomValue
           />

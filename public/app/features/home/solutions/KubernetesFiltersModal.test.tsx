@@ -5,7 +5,7 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { KubernetesFiltersButton } from './KubernetesFiltersModal';
-import { fetchKubernetesFilterOptions } from './kubernetesData';
+import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
 import {
   getKubernetesFilters,
   getKubernetesFiltersVersion,
@@ -164,5 +164,28 @@ describe('KubernetesFiltersButton', () => {
     await user.click(namespaceInput);
 
     expect(await screen.findByRole('option', { name: 'default' })).toBeInTheDocument();
+  });
+
+  it('disables both pickers until the options load, then enables them', async () => {
+    let resolveOptions!: (options: KubernetesFilterOptions) => void;
+    mockFetchOptions.mockReturnValue(
+      new Promise((resolve) => {
+        resolveOptions = resolve;
+      })
+    );
+
+    const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
+
+    await openGear(user);
+    await screen.findByRole('button', { name: 'Save' });
+
+    const [clusterInput, namespaceInput] = screen.getAllByRole('combobox');
+    expect(clusterInput).toBeDisabled();
+    expect(namespaceInput).toBeDisabled();
+
+    resolveOptions({ clusters: ['prod'], namespaces: ['default'] });
+
+    await waitFor(() => expect(clusterInput).toBeEnabled());
+    expect(namespaceInput).toBeEnabled();
   });
 });

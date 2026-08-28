@@ -42,11 +42,15 @@ export function SolutionStatsRow({
     return null;
   }
 
+  // useAsync retains the previous value while re-resolving (the fact fns change identity when a
+  // solution rebuilds, e.g. after a Kubernetes filter save): show skeletons instead of numbers
+  // from the old scope until the refetch lands.
+
   return (
     <Stack direction="row" gap={gap} alignItems="center">
       {showStats && (
         <div className={styles.stats}>
-          {resolvedStats === null ? (
+          {statsPending || resolvedStats === null ? (
             <Stack direction="column" gap={0} data-testid={statsTestId}>
               <Skeleton width={96} height={compact ? 22 : 28} />
               <Skeleton width={72} />
@@ -67,8 +71,11 @@ export function SolutionStatsRow({
       )}
 
       {showSparkline && (
-        <div className={styles.sparkline} data-testid={trend === null ? sparklineTestId : undefined}>
-          {trend === null ? <Skeleton height={56} /> : <SolutionSparkline sparkline={trend} />}
+        <div
+          className={styles.sparkline}
+          data-testid={sparklinePending || trend === null ? sparklineTestId : undefined}
+        >
+          {sparklinePending || trend === null ? <Skeleton height={56} /> : <SolutionSparkline sparkline={trend} />}
         </div>
       )}
     </Stack>

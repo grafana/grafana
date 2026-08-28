@@ -58,6 +58,14 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
         </Stack>
       </Card.Heading>
 
+      {solution.id === 'kubernetes' && datasource && (
+        // Tags is the card grid's top-right slot. Only Kubernetes has per-user filters;
+        // fold into Solution if a second solution grows them.
+        <Card.Tags className={styles.filtersSlot}>
+          <KubernetesFiltersButton datasource={datasource} />
+        </Card.Tags>
+      )}
+
       <Card.Description className={styles.content}>
         <SolutionStatsRow
           stats={solution.stats}
@@ -101,13 +109,6 @@ export function SolutionCard({ solution, needsAttention }: SolutionCardProps) {
           </LinkButton>
         ) : null}
       </Card.Actions>
-
-      {solution.id === 'kubernetes' && datasource && (
-        <Card.SecondaryActions>
-          {/* Only Kubernetes has per-user filters; fold into Solution if a second solution grows them. */}
-          <KubernetesFiltersButton datasource={datasource} />
-        </Card.SecondaryActions>
-      )}
     </Card>
   );
 }
@@ -243,6 +244,11 @@ const getStyles = (theme: GrafanaTheme2, needsAttention: boolean) => ({
   }),
   actions: css({
     minWidth: 0,
+  }),
+  filtersSlot: css({
+    // Card.Tags centers itself across the heading/meta/description rows; && outranks the
+    // built-in class so the controls pin to the card's top right beside the heading.
+    '&&': { alignSelf: 'start' },
   }),
   icon: css({
     display: 'flex',
