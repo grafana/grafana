@@ -287,6 +287,25 @@ describe('loading state', () => {
     resolveEval();
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
   });
+
+  it('never shows the loading bar for a federated rule', async () => {
+    jest.mocked(useDataSourceInstanceList).mockReturnValue({ items: [], isLoading: true, error: undefined });
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+    // A federated rule group renders neither preview branch regardless of loading state (RuleViewer
+    // shows FederatedRuleWarning above the tabs instead), so this tab must render nothing here too.
+    rule.group.source_tenants = ['tenant-a'];
+
+    render(<QueryAndCondition rule={rule} />);
+
+    expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument();
+  });
 });
 
 // ---------------------------------------------------------------------------

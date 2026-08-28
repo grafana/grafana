@@ -107,8 +107,9 @@ const QueryAndCondition = ({ rule }: Props) => {
 
   return (
     <>
-      {/* Held above both branches: a preview without its data source renders nothing, not even a loading bar. */}
-      {isDsLoading && <EvalLoadingBar />}
+      {/* Held above both branches: a preview without its data source renders nothing, not even a loading bar.
+          Federated rules render neither branch regardless of loading state, so they're excluded here too. */}
+      {!isFederatedRule && isDsLoading && <EvalLoadingBar />}
 
       {!isDsLoading && rulerRuleType.grafana.rule(rule.rulerRule) && !isFederatedRule && (
         <GrafanaRuleQueryViewer
