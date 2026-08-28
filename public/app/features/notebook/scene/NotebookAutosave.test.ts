@@ -24,13 +24,12 @@ jest.mock('../api/notebookResource', () => ({
 // Mirrors the constants in NotebookAutosave. Duplicated rather than exported so that changing a timing
 // number has to be a deliberate edit here too.
 const IDLE_BEFORE_SAVE_MS = 2000;
+/** The longest a change can wait, so a test expecting no write advances by this. */
 const MAX_WAIT_MS = 15000;
 
 // The panel cases below restore a saved viz config through the panel's own option/fieldConfig API,
 // and that re-applies the plugin's defaults, so the panels here need a plugin that actually loads.
-// Each plugin answers to the id it was asked for, as the real loader does. A panel records the id of
-// the plugin it loaded, so a stub that ignored the id would make every load look like a panel being
-// switched to a different visualization.
+// It answers to the id asked for, or every load would look like a switch to a different plugin.
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,

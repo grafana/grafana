@@ -42,7 +42,7 @@ export interface NotebookAutosaveState {
  * skips the write when they match.
  *
  * Changes only count while the notebook is being edited. Reading one changes it too: the time picker is
- * there for readers, and picking a colour off a legend writes a field override. Both belong to whoever
+ * there for readers, and using a panel writes to its options and field config. Both belong to whoever
  * was reading rather than to the notebook, so both are held back from a save until someone editing says
  * otherwise. Writers that never enter edit mode call `saveDocumentChange` instead.
  */
@@ -63,8 +63,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private restoringVizConfigs = false;
   /**
    * Whether the current difference from `baseline` came from an edit, not from a reader just looking at
-   * the notebook. A legend click changes scene state too. Without this flag, reopening the notebook
-   * would save that change as if it were a real edit.
+   * the notebook. A reader using a panel changes scene state too. Without this flag, reopening the
+   * notebook would save that change as if it were a real edit.
    */
   private editedByWriter = false;
   private changeSub?: Unsubscribable;
@@ -92,8 +92,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     } else if (this.editedByWriter) {
       // A scene is cached and reactivated when you come back to a notebook, so this can be the same
       // controller holding an edit that never reached the server. Reschedule only if that edit came from
-      // someone allowed to write. A reader clicking a legend leaves the same kind of difference behind,
-      // and reopening the notebook must not save it.
+      // someone allowed to write. A reader using a panel leaves the same kind of difference behind, and
+      // reopening the notebook must not save it.
       this.schedule();
     }
 
@@ -178,7 +178,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /**
    * Marks the start of an editing session.
    *
-   * A time range or a legend colour left behind by reading the notebook belongs to whoever was reading
+   * A time range or a panel's look left behind by reading the notebook belongs to whoever was reading
    * it, so a session starts by disowning what is there and counts only the changes made from here on.
    */
   public notifyEditingStarted(): void {
@@ -216,7 +216,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /**
    * Puts the saved look back, so editing carries on against the notebook as saved. Goes through the
    * panel's own setters rather than `setState` because those also drop its cached processed data,
-   * which is what the old colour would otherwise go on being drawn from.
+   * which is what the old look would otherwise go on being drawn from.
    */
   public discardVizChanges(): void {
     this.restoringVizConfigs = true;
