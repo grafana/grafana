@@ -44,15 +44,21 @@ const clusterMatcher = (f: KubernetesHomeFilters): string | null =>
   f.cluster ? `cluster="${escapeLabelValue(f.cluster)}"` : null;
 
 // Values are regex alternatives: regex-escape first, then string-literal-escape the result.
-const namespaceRegex = (namespaces: string[]): string =>
-  namespaces.map((n) => escapeLabelValue(escapeRegExp(n))).join('|');
+const valuesRegex = (values: string[]): string => values.map((v) => escapeLabelValue(escapeRegExp(v))).join('|');
 
 const namespaceMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.namespaces?.length ? `namespace=~"${namespaceRegex(f.namespaces)}"` : null;
+  f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}"` : null;
 
 // Trailing empty alternative also matches series with no namespace label: cluster-level alerts stay counted.
 const alertNamespaceMatcher = (f: KubernetesHomeFilters): string | null =>
-  f.namespaces?.length ? `namespace=~"${namespaceRegex(f.namespaces)}|"` : null;
+  f.namespaces?.length ? `namespace=~"${valuesRegex(f.namespaces)}|"` : null;
+
+const nodeMatcher = (f: KubernetesHomeFilters): string | null =>
+  f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}"` : null;
+
+// Most alerts carry no node label (workload alerts are namespace/pod-scoped): keep them counted.
+const alertNodeMatcher = (f: KubernetesHomeFilters): string | null =>
+  f.nodes?.length ? `node=~"${valuesRegex(f.nodes)}|"` : null;
 
 // '' (not '{}') when no matchers so unfiltered queries stay byte-identical to the historical strings.
 const selector = (...matchers: Array<string | null>): string => {
@@ -60,17 +66,24 @@ const selector = (...matchers: Array<string | null>): string => {
   return active.length ? `{${active.join(',')}}` : '';
 };
 
+// Pod-health metrics (kube_pod_status_phase, restart counters) carry no node label: attribute
+// pods to nodes by joining kube_pod_info. max by () collapses duplicate info series.
+const podNodeScope = (f: KubernetesHomeFilters): string =>
+  f.nodes?.length
+    ? ` * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info${selector(clusterMatcher(f), nodeMatcher(f))})`
+    : '';
+
 // refId -> portable kube-state-metrics PromQL: inventory uses last_over_time[24h], health stats are instant vectors.
 const inventoryQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
-  clusters: `count(group by (cluster) (last_over_time(kube_node_info${selector(clusterMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
-  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
+  clusters: `count(group by (cluster) (last_over_time(kube_node_info${selector(clusterMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
+  pods: `count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info${selector(clusterMatcher(f), namespaceMatcher(f), nodeMatcher(f))}[${KUBE_STATE_LOOKBACK}])))`,
 });
 
 // Clusters and nodes are not namespaced, so their signals ignore the namespace filter.
 const healthQueries = (f: KubernetesHomeFilters): Record<string, string> => ({
-  unhealthyPods: `sum(kube_pod_status_phase${selector('phase=~"Pending|Failed|Unknown"', clusterMatcher(f), namespaceMatcher(f))})`,
-  restarts1h: `sum(increase(kube_pod_container_status_restarts_total${selector(clusterMatcher(f), namespaceMatcher(f))}[1h]))`,
-  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f))})`,
+  unhealthyPods: `sum(kube_pod_status_phase${selector('phase=~"Pending|Failed|Unknown"', clusterMatcher(f), namespaceMatcher(f))}${podNodeScope(f)})`,
+  restarts1h: `sum(increase(kube_pod_container_status_restarts_total${selector(clusterMatcher(f), namespaceMatcher(f))}[1h])${podNodeScope(f)})`,
+  notReadyNodes: `sum(kube_node_status_condition${selector('condition="Ready",status=~"false|unknown"', clusterMatcher(f), nodeMatcher(f))})`,
 });
 
 // Firing alert instances scoped to Kubernetes workloads; heartbeats excluded.
@@ -78,7 +91,8 @@ const alertsMatcher = (f: KubernetesHomeFilters): string =>
   selector(
     'alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!=""',
     clusterMatcher(f),
-    alertNamespaceMatcher(f)
+    alertNamespaceMatcher(f),
+    alertNodeMatcher(f)
   );
 
 // Mirrors the k8s app's namespace detection (kube_namespace_status_phase), with the inventory lookback.
@@ -205,7 +219,7 @@ export async function fetchClusterCpuSeries(
   const filters = await getKubernetesFilters();
   const frames = await runRangeQuery(
     'cpu',
-    `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', clusterMatcher(filters), namespaceMatcher(filters))}[5m]))`,
+    `sum(rate(container_cpu_usage_seconds_total${selector('container!=""', clusterMatcher(filters), namespaceMatcher(filters), nodeMatcher(filters))}[5m]))`,
     24,
     ds
   );
@@ -216,10 +230,11 @@ export interface KubernetesFilterOptions {
   /** null = discovery failed for this picker (options unavailable, manual entry still works). */
   clusters: string[] | null;
   namespaces: string[] | null;
+  nodes: string[] | null;
 }
 
 /**
- * Label values feeding the filter pickers. The two discovery queries run separately —
+ * Label values feeding the filter pickers. The discovery queries run separately —
  * `runInstantQueries` with `partial` silently drops failed refIds, and a per-picker failure
  * must stay visible to the modal.
  */
@@ -230,16 +245,18 @@ export async function fetchKubernetesFilterOptions(
     const frames = await runInstantQueries({ [refId]: expr }, ds);
     return readLabelValues(frames, refId, label);
   };
-  const [clusters, namespaces] = await Promise.allSettled([
+  const [clusters, namespaces, nodes] = await Promise.allSettled([
     read('clusters', `group by (cluster) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'cluster'),
     read(
       'namespaces',
       `group by (namespace) (last_over_time(kube_namespace_status_phase[${KUBE_STATE_LOOKBACK}]))`,
       'namespace'
     ),
+    read('nodes', `group by (node) (last_over_time(kube_node_info[${KUBE_STATE_LOOKBACK}]))`, 'node'),
   ]);
   return {
     clusters: clusters.status === 'fulfilled' ? clusters.value : null,
     namespaces: namespaces.status === 'fulfilled' ? namespaces.value : null,
+    nodes: nodes.status === 'fulfilled' ? nodes.value : null,
   };
 }

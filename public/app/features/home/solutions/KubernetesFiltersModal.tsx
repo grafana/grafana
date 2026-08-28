@@ -14,7 +14,6 @@ import {
   Modal,
   MultiCombobox,
   Stack,
-  Text,
 } from '@grafana/ui';
 
 import { fetchKubernetesFilterOptions, type KubernetesFilterOptions } from './kubernetesData';
@@ -34,7 +33,7 @@ export function KubernetesFiltersButton({ datasource }: KubernetesFiltersButtonP
   const version = useSyncExternalStore(subscribeKubernetesFilters, getKubernetesFiltersVersion);
   const { value: filters } = useAsync(getKubernetesFilters, [version]);
   const [open, setOpen] = useState(false);
-  const active = Boolean(filters?.cluster || filters?.namespaces?.length);
+  const active = Boolean(filters?.cluster || filters?.namespaces?.length || filters?.nodes?.length);
 
   return (
     <>
@@ -106,6 +105,7 @@ interface FiltersFormProps {
 function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismiss }: FiltersFormProps) {
   const [cluster, setCluster] = useState(initial.cluster ?? '');
   const [namespaces, setNamespaces] = useState(initial.namespaces ?? []);
+  const [nodes, setNodes] = useState(initial.nodes ?? []);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
@@ -121,17 +121,12 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
     }
   };
 
-  const optionsFailed = options !== undefined && (options.clusters === null || options.namespaces === null);
+  const optionsFailed =
+    options !== undefined && (options.clusters === null || options.namespaces === null || options.nodes === null);
 
   return (
     <>
       <Stack direction="column" gap={2}>
-        <Text color="secondary">
-          {t(
-            'home.solutions.kubernetes.filters.intro',
-            "Scope this card's stats, health, and CPU to the clusters and namespaces you care about."
-          )}
-        </Text>
         {optionsFailed && (
           <Alert
             severity="warning"
@@ -173,6 +168,24 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
             createCustomValue
           />
         </Field>
+        <Field
+          noMargin
+          label={t('home.solutions.kubernetes.filters.nodes-label', 'Nodes')}
+          description={t(
+            'home.solutions.kubernetes.filters.nodes-description',
+            'Pod health and restarts are matched to nodes via kube_pod_info; alerts without a node label stay included.'
+          )}
+        >
+          <MultiCombobox<string>
+            options={(options?.nodes ?? []).map((value) => ({ value }))}
+            value={nodes}
+            onChange={(items) => setNodes(items.map((item) => item.value))}
+            placeholder={t('home.solutions.kubernetes.filters.all-nodes', 'All nodes')}
+            disabled={optionsLoading}
+            loading={optionsLoading}
+            createCustomValue
+          />
+        </Field>
         {saveError && (
           <Alert
             severity="error"
@@ -181,7 +194,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
         )}
       </Stack>
       <Modal.ButtonRow>
-        {Boolean(initial.cluster || initial.namespaces?.length) && (
+        {Boolean(initial.cluster || initial.namespaces?.length || initial.nodes?.length) && (
           <Button variant="secondary" fill="text" disabled={saving} onClick={() => save({})}>
             {t('home.solutions.kubernetes.filters.clear', 'Clear filters')}
           </Button>
@@ -189,7 +202,7 @@ function FiltersForm({ datasourceName, initial, options, optionsLoading, onDismi
         <Button variant="secondary" fill="outline" disabled={saving} onClick={onDismiss}>
           {t('home.solutions.kubernetes.filters.cancel', 'Cancel')}
         </Button>
-        <Button disabled={saving} onClick={() => save({ cluster: cluster || undefined, namespaces })}>
+        <Button disabled={saving} onClick={() => save({ cluster: cluster || undefined, namespaces, nodes })}>
           {t('home.solutions.kubernetes.filters.save', 'Save')}
         </Button>
       </Modal.ButtonRow>

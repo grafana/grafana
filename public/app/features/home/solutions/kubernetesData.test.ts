@@ -744,6 +744,42 @@ describe('Kubernetes query filters', () => {
     // Namespaces are regex alternatives: regex-escaped, then literal-escaped.
     expect(podsExpr).toContain(String.raw`namespace=~"a\\.b\\|c"`);
   });
+
+  it('joins pod health to nodes via kube_pod_info and matches node-labeled signals directly', async () => {
+    setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
+    dataByUid = { 'k8s-uid': 2 };
+    await saveKubernetesFilters({ cluster: 'prod', namespaces: ['team-a'], nodes: ['node-1', 'node-2'] });
+    const datasource = await resolveRequiredDatasource();
+    await fetchKubernetesInventory(datasource);
+    await fetchKubernetesHealth(datasource);
+    await fetchClusterCpuSeries(datasource);
+
+    const [inventory] = inventoryCalls();
+    const inventoryExprs = Object.fromEntries(inventory[0].queries.map((q) => [q.refId, q.expr]));
+    expect(inventoryExprs).toEqual({
+      clusters: 'count(group by (cluster) (last_over_time(kube_node_info{cluster="prod",node=~"node-1|node-2"}[24h])))',
+      pods: 'count(group by (cluster, namespace, pod) (last_over_time(kube_pod_info{cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[24h])))',
+    });
+
+    const [health] = healthCalls();
+    const healthExprs = Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]));
+    expect(healthExprs).toEqual({
+      // Pod-health metrics carry no node label: scoped via the kube_pod_info join.
+      unhealthyPods:
+        'sum(kube_pod_status_phase{phase=~"Pending|Failed|Unknown",cluster="prod",namespace=~"team-a"} * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"}))',
+      restarts1h:
+        'sum(increase(kube_pod_container_status_restarts_total{cluster="prod",namespace=~"team-a"}[1h]) * on (cluster, namespace, pod) group_left () max by (cluster, namespace, pod) (kube_pod_info{cluster="prod",node=~"node-1|node-2"}))',
+      notReadyNodes:
+        'sum(kube_node_status_condition{condition="Ready",status=~"false|unknown",cluster="prod",node=~"node-1|node-2"})',
+      // Trailing empty alternatives keep namespace-less and node-less alerts counted.
+      alertsFiring:
+        'count(ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|",node=~"node-1|node-2|"} or GRAFANA_ALERTS{alertstate="firing", alertname!~"Watchdog|InfoInhibitor", cluster!="",cluster="prod",namespace=~"team-a|",node=~"node-1|node-2|"})',
+    });
+
+    expect(cpuCalls()[0][0].queries[0].expr).toBe(
+      'sum(rate(container_cpu_usage_seconds_total{container!="",cluster="prod",namespace=~"team-a",node=~"node-1|node-2"}[5m]))'
+    );
+  });
 });
 
 describe('fetchKubernetesFilterOptions', () => {
@@ -776,13 +812,15 @@ describe('fetchKubernetesFilterOptions', () => {
                   createDataFrame({ refId, fields: [labeledField('cluster', 'staging')] }),
                   createDataFrame({ refId, fields: [labeledField('cluster', 'prod')] }),
                 ]
-              : // Multi-field shape: one frame, one number field per series.
-                [
-                  createDataFrame({
-                    refId,
-                    fields: [labeledField('namespace', 'team-a'), labeledField('namespace', 'default')],
-                  }),
-                ];
+              : refId === 'nodes'
+                ? [createDataFrame({ refId, fields: [labeledField('node', 'node-2'), labeledField('node', 'node-1')] })]
+                : // Multi-field shape: one frame, one number field per series.
+                  [
+                    createDataFrame({
+                      refId,
+                      fields: [labeledField('namespace', 'team-a'), labeledField('namespace', 'default')],
+                    }),
+                  ];
           return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
         },
         cancel: jest.fn(),
@@ -796,29 +834,40 @@ describe('fetchKubernetesFilterOptions', () => {
     await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
       clusters: ['prod', 'staging'],
       namespaces: ['default', 'team-a'],
+      nodes: ['node-1', 'node-2'],
     });
 
     const exprs = (run.mock.calls as RunCall[]).map(([o]) => o.queries[0].expr).sort();
     expect(exprs).toEqual([
       'group by (cluster) (last_over_time(kube_node_info[24h]))',
       'group by (namespace) (last_over_time(kube_namespace_status_phase[24h]))',
+      'group by (node) (last_over_time(kube_node_info[24h]))',
     ]);
   });
 
-  it('nulls only the failed picker so the other keeps its options', async () => {
+  it('nulls only the failed picker so the others keep their options', async () => {
     failedRefIds = new Set(['clusters']);
     await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
       clusters: null,
       namespaces: ['default', 'team-a'],
+      nodes: ['node-1', 'node-2'],
     });
 
     failedRefIds = new Set(['namespaces']);
     await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
       clusters: ['prod', 'staging'],
       namespaces: null,
+      nodes: ['node-1', 'node-2'],
     });
 
-    failedRefIds = new Set(['clusters', 'namespaces']);
-    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: null, namespaces: null });
+    failedRefIds = new Set(['nodes']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({
+      clusters: ['prod', 'staging'],
+      namespaces: ['default', 'team-a'],
+      nodes: null,
+    });
+
+    failedRefIds = new Set(['clusters', 'namespaces', 'nodes']);
+    await expect(fetchKubernetesFilterOptions(ds)).resolves.toEqual({ clusters: null, namespaces: null, nodes: null });
   });
 });

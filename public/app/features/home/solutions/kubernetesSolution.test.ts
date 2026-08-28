@@ -203,6 +203,17 @@ describe('kubernetesSolution stats and sparkline', () => {
     });
   });
 
+  it('captions the CPU trend as node CPU when a node filter is active, over the namespace caption', async () => {
+    const series = { x: { values: [1] }, y: { values: [2] } } as unknown as FieldSparkline;
+    mockFetchCpu.mockResolvedValue(series);
+    await saveKubernetesFilters({ namespaces: ['team-a'], nodes: ['node-1'] });
+
+    await expect(kubernetesSolution().sparkline()).resolves.toEqual({
+      series,
+      caption: 'Node CPU · last 24h',
+    });
+  });
+
   it('omits the sparkline when the CPU metric is unavailable', async () => {
     await expect(kubernetesSolution().sparkline()).resolves.toBeNull();
   });

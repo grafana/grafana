@@ -47,7 +47,11 @@ beforeEach(() => {
   mockGetVersion.mockReturnValue(0);
   mockSubscribe.mockReturnValue(() => {});
   mockSaveFilters.mockResolvedValue();
-  mockFetchOptions.mockResolvedValue({ clusters: ['prod', 'staging'], namespaces: ['default', 'team-a'] });
+  mockFetchOptions.mockResolvedValue({
+    clusters: ['prod', 'staging'],
+    namespaces: ['default', 'team-a'],
+    nodes: ['node-1', 'node-2'],
+  });
 });
 
 const openGear = async (user: UserEvent, name = 'Customize Kubernetes monitoring') => {
@@ -81,13 +85,13 @@ describe('KubernetesFiltersButton', () => {
     expect(within(dialog).getByText('default')).toBeInTheDocument();
   });
 
-  it('saves the chosen cluster and namespaces then closes', async () => {
+  it('saves the chosen cluster, namespaces, and nodes then closes', async () => {
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
     await openGear(user);
     await screen.findByRole('button', { name: 'Save' });
 
-    const [clusterInput, namespaceInput] = screen.getAllByRole('combobox');
+    const [clusterInput, namespaceInput, nodeInput] = screen.getAllByRole('combobox');
 
     await user.click(clusterInput);
     await user.click(await screen.findByRole('option', { name: 'prod' }));
@@ -95,9 +99,12 @@ describe('KubernetesFiltersButton', () => {
     await user.click(namespaceInput);
     await user.click(await screen.findByRole('option', { name: 'default' }));
 
+    await user.click(nodeInput);
+    await user.click(await screen.findByRole('option', { name: 'node-1' }));
+
     await user.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(mockSaveFilters).toHaveBeenCalledWith({ cluster: 'prod', namespaces: ['default'] });
+    expect(mockSaveFilters).toHaveBeenCalledWith({ cluster: 'prod', namespaces: ['default'], nodes: ['node-1'] });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
@@ -151,7 +158,7 @@ describe('KubernetesFiltersButton', () => {
   });
 
   it('warns when some options fail to load but still lists the loaded picker values', async () => {
-    mockFetchOptions.mockResolvedValue({ clusters: null, namespaces: ['default'] });
+    mockFetchOptions.mockResolvedValue({ clusters: null, namespaces: ['default'], nodes: ['node-1'] });
 
     const { user } = render(<KubernetesFiltersButton datasource={datasource} />);
 
@@ -166,7 +173,7 @@ describe('KubernetesFiltersButton', () => {
     expect(await screen.findByRole('option', { name: 'default' })).toBeInTheDocument();
   });
 
-  it('disables both pickers until the options load, then enables them', async () => {
+  it('disables the pickers until the options load, then enables them', async () => {
     let resolveOptions!: (options: KubernetesFilterOptions) => void;
     mockFetchOptions.mockReturnValue(
       new Promise((resolve) => {
@@ -179,13 +186,16 @@ describe('KubernetesFiltersButton', () => {
     await openGear(user);
     await screen.findByRole('button', { name: 'Save' });
 
-    const [clusterInput, namespaceInput] = screen.getAllByRole('combobox');
-    expect(clusterInput).toBeDisabled();
-    expect(namespaceInput).toBeDisabled();
+    const comboboxes = screen.getAllByRole('combobox');
+    expect(comboboxes).toHaveLength(3);
+    for (const input of comboboxes) {
+      expect(input).toBeDisabled();
+    }
 
-    resolveOptions({ clusters: ['prod'], namespaces: ['default'] });
+    resolveOptions({ clusters: ['prod'], namespaces: ['default'], nodes: ['node-1'] });
 
-    await waitFor(() => expect(clusterInput).toBeEnabled());
-    expect(namespaceInput).toBeEnabled();
+    await waitFor(() => expect(comboboxes[0]).toBeEnabled());
+    expect(comboboxes[1]).toBeEnabled();
+    expect(comboboxes[2]).toBeEnabled();
   });
 });

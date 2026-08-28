@@ -34,7 +34,7 @@ beforeEach(() => {
   mockSubscribeFilters.mockReset().mockReturnValue(() => {});
   mockGetFiltersVersion.mockReset().mockReturnValue(0);
   mockGetFilters.mockReset().mockResolvedValue({});
-  mockFetchFilterOptions.mockReset().mockResolvedValue({ clusters: [], namespaces: [] });
+  mockFetchFilterOptions.mockReset().mockResolvedValue({ clusters: [], namespaces: [], nodes: [] });
   document.addEventListener('click', interceptLinkClicks);
 });
 

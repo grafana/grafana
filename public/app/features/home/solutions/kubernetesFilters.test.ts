@@ -29,24 +29,35 @@ describe('normalizeKubernetesFilters', () => {
     expect(normalizeKubernetesFilters({ cluster: 7 })).toStrictEqual({});
   });
 
-  it('trims, dedupes, and drops non-string namespaces preserving first-seen order', () => {
-    expect(
-      normalizeKubernetesFilters({ namespaces: [' team-b ', 'team-a', 'team-b', 3, '', '  ', 'team-a'] })
-    ).toStrictEqual({ namespaces: ['team-b', 'team-a'] });
-  });
+  it.each(['namespaces', 'nodes'] as const)(
+    'trims, dedupes, and drops non-string %s preserving first-seen order',
+    (key) => {
+      expect(normalizeKubernetesFilters({ [key]: [' b ', 'a', 'b', 3, '', '  ', 'a'] })).toStrictEqual({
+        [key]: ['b', 'a'],
+      });
+    }
+  );
 
-  it('omits the namespaces key entirely when nothing survives', () => {
-    expect(normalizeKubernetesFilters({ namespaces: ['', 4, null] })).toStrictEqual({});
-    expect(normalizeKubernetesFilters({ namespaces: 'default' })).toStrictEqual({});
+  it.each(['namespaces', 'nodes'] as const)('omits the %s key entirely when nothing survives', (key) => {
+    expect(normalizeKubernetesFilters({ [key]: ['', 4, null] })).toStrictEqual({});
+    expect(normalizeKubernetesFilters({ [key]: 'default' })).toStrictEqual({});
   });
 });
 
 describe('kubernetes filters storage', () => {
   it('round-trips a save through storage, normalized', async () => {
-    await saveKubernetesFilters({ cluster: ' prod ', namespaces: ['team-a', 'team-a', ' team-b ', ''] });
+    await saveKubernetesFilters({
+      cluster: ' prod ',
+      namespaces: ['team-a', 'team-a', ' team-b ', ''],
+      nodes: [' node-1 ', 'node-1'],
+    });
     // Drop the in-memory snapshot so the read below proves persistence, not the cache.
     resetKubernetesFilters();
-    await expect(getKubernetesFilters()).resolves.toStrictEqual({ cluster: 'prod', namespaces: ['team-a', 'team-b'] });
+    await expect(getKubernetesFilters()).resolves.toStrictEqual({
+      cluster: 'prod',
+      namespaces: ['team-a', 'team-b'],
+      nodes: ['node-1'],
+    });
   });
 
   it('reads a corrupt stored value as no filters', async () => {

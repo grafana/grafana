@@ -152,11 +152,14 @@ export function kubernetesSolution(): Solution {
       if (!series) {
         return null;
       }
-      // Snapshot read (no storage hit): a namespace-scoped series must not be captioned "Cluster CPU".
-      const { namespaces } = await getKubernetesFilters();
-      const caption = namespaces?.length
-        ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
-        : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
+      // Snapshot read (no storage hit): a scoped series must not be captioned "Cluster CPU".
+      // Nodes are the narrower scope, so they win the caption when both filters are set.
+      const { namespaces, nodes } = await getKubernetesFilters();
+      const caption = nodes?.length
+        ? t('home.solutions.kubernetes.node-cpu', 'Node CPU · last 24h')
+        : namespaces?.length
+          ? t('home.solutions.kubernetes.namespace-cpu', 'Namespace CPU · last 24h')
+          : t('home.solutions.kubernetes.cluster-cpu', 'Cluster CPU · last 24h');
       return { series, caption };
     },
     cta: async () => {

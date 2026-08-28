@@ -5,6 +5,8 @@ export interface KubernetesHomeFilters {
   cluster?: string;
   /** Namespace label values; undefined = all namespaces. */
   namespaces?: string[];
+  /** Node label values; undefined = all nodes. */
+  nodes?: string[];
 }
 
 const storage = new UserStorage('grafana-home');
@@ -18,6 +20,20 @@ let pendingLoad: Promise<KubernetesHomeFilters> | undefined;
 let version = 0;
 const listeners = new Set<() => void>();
 
+// Shared list contract for namespaces and nodes: strings only, trimmed, empties dropped,
+// deduped preserving first-seen order.
+const cleanLabelValues = (input: unknown): string[] =>
+  Array.isArray(input)
+    ? [
+        ...new Set(
+          input
+            .filter((v): v is string => typeof v === 'string')
+            .map((v) => v.trim())
+            .filter(Boolean)
+        ),
+      ]
+    : [];
+
 /** Values are arbitrary Prometheus label values (custom entry allowed), so no shape validation. */
 export function normalizeKubernetesFilters(input: unknown): KubernetesHomeFilters {
   if (typeof input !== 'object' || input === null) {
@@ -30,18 +46,13 @@ export function normalizeKubernetesFilters(input: unknown): KubernetesHomeFilter
       filters.cluster = cluster;
     }
   }
-  if ('namespaces' in input && Array.isArray(input.namespaces)) {
-    const namespaces = [
-      ...new Set(
-        input.namespaces
-          .filter((n): n is string => typeof n === 'string')
-          .map((n) => n.trim())
-          .filter(Boolean)
-      ),
-    ];
-    if (namespaces.length) {
-      filters.namespaces = namespaces;
-    }
+  const namespaces = cleanLabelValues('namespaces' in input ? input.namespaces : undefined);
+  if (namespaces.length) {
+    filters.namespaces = namespaces;
+  }
+  const nodes = cleanLabelValues('nodes' in input ? input.nodes : undefined);
+  if (nodes.length) {
+    filters.nodes = nodes;
   }
   return filters;
 }
