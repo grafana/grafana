@@ -7,7 +7,8 @@ import { useEffectOnce } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   Alert,
   Button,
@@ -251,18 +252,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
 
   const onChangeQueries = useCallback(
-    (updatedQueries: AlertQuery[]) => {
-      // Most data sources triggers onChange and onRunQueries consecutively
-      // It means our reducer state is always one step behind when runQueries is invoked
-      // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
-      // As a workaround we update form values as soon as possible to avoid stale state
-      // This way we can access up to date queries in runQueriesPreview without waiting for re-render
+    async (updatedQueries: AlertQuery[]) => {
+      // onRunQueries fires right after onChange, before the reducer reflects updatedQueries —
+      // update form values now so runQueriesPreview reads fresh data instead of stale state.
       const previousQueries = getValues('queries');
 
       const expressionQueries = previousQueries.filter<AlertQuery<ExpressionQuery>>(isExpressionQueryInAlert);
 
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
-      updateExpressionAndDatasource(updatedQueries);
+      await updateExpressionAndDatasource(updatedQueries);
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
@@ -283,7 +281,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   );
 
   const onChangeRecordingRulesQueries = useCallback(
-    (updatedQueries: AlertQuery[]) => {
+    async (updatedQueries: AlertQuery[]) => {
       const query = updatedQueries[0];
 
       if (!isPromOrLokiQuery(query.model)) {
@@ -293,7 +291,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       const expression = query.model.expr;
 
       setValue('queries', updatedQueries, { shouldValidate: false });
-      updateExpressionAndDatasource(updatedQueries);
+      await updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runQueriesPreview();
@@ -327,12 +325,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   //when data source is changed in the cloud selector we need to update the queries in the reducer
 
   const onChangeCloudDatasource = useCallback(
-    (datasourceUid: string) => {
+    async (datasourceUid: string) => {
       const newQueries = cloneDeep(queries);
       newQueries[0].datasourceUid = datasourceUid;
       setValue('queries', newQueries, { shouldValidate: false });
 
-      updateExpressionAndDatasource(newQueries);
+      await updateExpressionAndDatasource(newQueries);
 
       dispatch(setDataQueries(newQueries));
     },
@@ -342,7 +340,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   // ExpressionEditor for cloud query needs to update queries in the reducer and in the form
   // otherwise the value is not updated for Grafana managed alerts
 
-  const onChangeExpression = (value: string) => {
+  const onChangeExpression = async (value: string) => {
     const newQueries = cloneDeep(queries);
 
     if (newQueries[0].model) {
@@ -361,7 +359,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
     setValue('queries', newQueries, { shouldValidate: false });
 
-    updateExpressionAndDatasource(newQueries);
+    await updateExpressionAndDatasource(newQueries);
 
     dispatch(setDataQueries(newQueries));
     runQueriesPreview();
@@ -382,7 +380,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     addExpressionsInQueries(prevExpressions);
   }, [prevExpressions, addExpressionsInQueries]);
 
-  const onClickSwitch = useCallback(() => {
+  const onClickSwitch = useCallback(async () => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
@@ -392,14 +390,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
       prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
-      // dataSourceName is used only by Mimir/Loki alerting and recording rules
-      // It should be empty for Grafana managed alert rules
-      const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
+      // dataSourceName only applies to Mimir/Loki rules — resolve it now, leave empty otherwise.
+      const newDsName = (await getDataSourceInstanceSettings(queries[0].datasourceUid))?.name;
       if (newDsName) {
         setValue('dataSourceName', newDsName);
       }
 
-      updateExpressionAndDatasource(queries);
+      await updateExpressionAndDatasource(queries);
 
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
@@ -731,14 +728,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 const useSetExpressionAndDataSource = () => {
   const { setValue } = useFormContext<RuleFormValues>();
 
-  return (updatedQueries: AlertQuery[]) => {
-    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+  return async (updatedQueries: AlertQuery[]) => {
+    // Sync the form's expression field from the reducer's prom/loki query, if one changed.
     const query = updatedQueries[0];
     if (!query) {
       return;
     }
 
-    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    const dataSourceSettings = await getDataSourceInstanceSettings(query.datasourceUid);
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
     }

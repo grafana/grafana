@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import { useCallback, useMemo } from 'react';
-import { useAsync } from 'react-use';
+import { useCallback } from 'react';
 
-import { CoreApp, DataSourcePluginContextProvider, type GrafanaTheme2, LoadingState } from '@grafana/data';
+import {
+  CoreApp,
+  type DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
+  type GrafanaTheme2,
+  LoadingState,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
@@ -31,23 +36,21 @@ export const ExpressionEditor = ({
 }: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
+  const {
+    settings: dsi,
+    isLoading: settingsLoading,
+    error: settingsError,
+  } = useExpressionDataSourceSettings(dataSourceName);
 
   const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
 
-  const {
-    error,
-    loading,
-    value: dataSource,
-  } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+  const { error: dsError, isLoading: dsLoading, dataSource } = useDataSourceInstance(dataSourceName);
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
       onChange(mapToValue(query));
     },
-    [onChange, mapToValue]
+    [onChange]
   );
 
   const [alertPreview, onPreview] = usePreview();
@@ -56,15 +59,14 @@ export const ExpressionEditor = ({
     onPreview();
   };
 
-  if (loading || dataSource?.name !== dataSourceName) {
+  if (dsLoading || settingsLoading || dataSource?.name !== dataSourceName) {
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
+  if (dsError || settingsError || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage =
-      error?.message ||
+      dsError?.message ||
+      settingsError?.message ||
       t(
         'alerting.expression-editor.error-no-component',
         'Data source plugin does not export any Query Editor component'
@@ -136,25 +138,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type QueryMappers<T extends DataQuery = DataQuery> = {
-  mapToValue: (query: T) => string;
-  mapToQuery: (existing: T, value: string | undefined) => T;
-};
+function mapToValue(query: DataQuery): string {
+  return (query as PromQuery | LokiQuery).expr;
+}
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
-  return useMemo(() => {
-    const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-    if (!settings) {
-      throw new Error(`Datasource ${dataSourceName} not found`);
-    }
+function mapToQuery(existing: DataQuery, value: string | undefined): DataQuery {
+  return { ...existing, expr: value };
+}
 
-    if (!isSupportedExternalRulesSourceType(settings.type)) {
-      throw new Error(`${settings.type} is not supported as an expression editor`);
-    }
+interface ExpressionDataSourceSettings {
+  settings?: DataSourceInstanceSettings;
+  isLoading: boolean;
+  error?: Error;
+}
 
-    return {
-      mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
-      mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
-    };
-  }, [dataSourceName]);
+// Only prometheus/loki-flavored data sources have an expression editor; surface anything else as an error.
+function useExpressionDataSourceSettings(dataSourceName: string): ExpressionDataSourceSettings {
+  const { settings, isLoading, error } = useDataSourceInstanceSettings(dataSourceName);
+
+  if (error || isLoading || !settings) {
+    return { settings, isLoading, error };
+  }
+  if (!isSupportedExternalRulesSourceType(settings.type)) {
+    return { settings, isLoading, error: new Error(`${settings.type} is not supported as an expression editor`) };
+  }
+  return { settings, isLoading };
 }

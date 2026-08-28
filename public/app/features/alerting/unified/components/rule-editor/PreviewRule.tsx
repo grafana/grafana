@@ -7,7 +7,7 @@ import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -68,9 +68,9 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   const { getValues } = useFormContext<RuleFormValues>();
   const isMounted = useMountedState();
 
-  const onPreview = useCallback(() => {
+  const onPreview = useCallback(async () => {
     const values = getValues(fields);
-    const request = createPreviewRequest(values);
+    const request = await createPreviewRequest(values);
 
     previewAlertRule(request)
       .pipe(takeWhile((response) => !isCompleted(response), true))
@@ -85,9 +85,9 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   return [preview, onPreview];
 }
 
-function createPreviewRequest(values: any[]): PreviewRuleRequest {
+async function createPreviewRequest(values: any[]): Promise<PreviewRuleRequest> {
   const [type, dataSourceName, condition, queries, expression] = values;
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
+  const dsSettings = await getDataSourceInstanceSettings(dataSourceName);
   if (!dsSettings) {
     throw new Error(`Cannot find data source settings for ${dataSourceName}`);
   }

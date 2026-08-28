@@ -11,7 +11,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -29,18 +29,15 @@ import {
   getThresholdsForQueries,
 } from './util';
 
-function getDataSourceSettings(query: AlertQuery): DataSourceInstanceSettings | undefined {
-  return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+function getDataSourceSettings(query: AlertQuery): Promise<DataSourceInstanceSettings | undefined> {
+  return getDataSourceInstanceSettings(query.datasourceUid);
 }
 
 interface Props {
-  // The query configuration
   queries: AlertQuery[];
   expressions: AlertQuery[];
   data: Record<string, PanelData>;
   onRunQueries: () => void;
-
-  // Query editing
   onQueriesChange: (queries: AlertQuery[]) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
@@ -93,13 +90,13 @@ export const QueryRows = ({
     );
   };
 
-  const onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
+  const onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
+    const previousSettings = await getDataSourceSettings(queries[index]);
+
     const updatedQueries = queries.map((item, itemIndex) => {
       if (itemIndex !== index) {
         return item;
       }
-
-      const previousSettings = getDataSourceSettings(item);
 
       // Copy model if changing to a datasource of same type.
       if (settings.type === previousSettings?.type) {
@@ -220,7 +217,11 @@ const QueryRowItem = ({
   onRunQueries,
   onSetCondition,
 }: QueryRowItemProps) => {
-  const dsSettings = getDataSourceSettings(query);
+  const { settings: dsSettings, isLoading: isDsSettingsLoading } = useDataSourceInstanceSettings(query.datasourceUid);
+
+  if (isDsSettingsLoading) {
+    return null;
+  }
 
   if (!dsSettings) {
     return (
