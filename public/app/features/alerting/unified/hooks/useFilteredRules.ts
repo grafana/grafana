@@ -288,7 +288,12 @@ const reduceGroups = (
 
       if ('dataSourceNames' in matchesFilterFor) {
         if (rulerRuleType.grafana.rule(rule.rulerRule)) {
-          const doesNotQueryDs = isQueryingDataSource(rule.rulerRule, filterState, dataSourceByUid, skipDataSourceFilter);
+          const doesNotQueryDs = isQueryingDataSource(
+            rule.rulerRule,
+            filterState,
+            dataSourceByUid,
+            skipDataSourceFilter
+          );
 
           if (doesNotQueryDs) {
             matchesFilterFor.dataSourceNames = true;
