@@ -24,7 +24,7 @@ export type AutoSyncState =
 
 export interface UseAutoSyncConfigurationResult {
   state: AutoSyncState;
-  mimirCortexDatasources: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
+  autoSyncEligibleAlertmanagers: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
   selectedUid: string;
   setSelectedUid: (uid: string) => void;
   /** Persists the given UID (or the current selection). Resolves to true on success. */
@@ -71,13 +71,13 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   const [operatorManagedUid, setOperatorManagedUid] = useState<string | null>(null);
 
-  const mimirCortexDatasources = useMemo(
+  const autoSyncEligibleAlertmanagers = useMemo(
     () => (allDatasources ?? []).filter(isAlertmanagerDataSource).filter(isMimirOrCortex),
     [allDatasources]
   );
 
   const configuredUid = configuration?.external_alertmanager_uid ?? '';
-  const hasMatchingDatasource = mimirCortexDatasources.some((ds) => ds.uid === configuredUid);
+  const hasMatchingDatasource = autoSyncEligibleAlertmanagers.some((ds) => ds.uid === configuredUid);
 
   // Track user-edited selection separately from the saved value so a background refetch
   // doesn't overwrite an in-flight choice. Null means "follow the saved value".
@@ -94,11 +94,11 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     if (configuredUid) {
       return { kind: 'orphan-uid', uid: configuredUid };
     }
-    if (mimirCortexDatasources.length === 0) {
+    if (autoSyncEligibleAlertmanagers.length === 0) {
       return { kind: 'no-datasources' };
     }
     return { kind: 'unconfigured' };
-  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, mimirCortexDatasources.length]);
+  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, autoSyncEligibleAlertmanagers.length]);
 
   const notify = useAppNotification();
 
@@ -134,7 +134,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   return {
     state,
-    mimirCortexDatasources,
+    autoSyncEligibleAlertmanagers,
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
     save: (uidOverride?: string, opts?: { silent?: boolean }) => persist(uidOverride ?? selectedUid, opts),

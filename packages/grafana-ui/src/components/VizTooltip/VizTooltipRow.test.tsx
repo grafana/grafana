@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { TimeCompareColorMode } from '@grafana/schema';
+
 import { VizTooltipRow } from './VizTooltipRow';
 import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipDelta } from './types';
 
@@ -131,6 +133,8 @@ describe('VizTooltipRow', () => {
     // Frozen literals from the default (dark) theme: colors.success.text / colors.error.text.
     const SUCCESS_TEXT = '#6ccf8e';
     const ERROR_TEXT = '#ff5286';
+    // Deliberately neither theme color, so "same as value" cannot pass by coincidence.
+    const SERIES_COLOR = '#112233';
 
     it('prefixes a positive delta with a plus sign and wraps it in parentheses', () => {
       // the sign is added here, not by the formatter, so it is worth pinning
@@ -168,6 +172,56 @@ describe('VizTooltipRow', () => {
     it('keeps the unit formatting carried by the delta text', () => {
       render(<VizTooltipRow {...defaultProps} delta={{ text: '5 B', numeric: 5 }} />);
       expect(screen.getByText('(+5 B)')).toBeInTheDocument();
+    });
+
+    // The tests above leave colorMode unset, which must behave as standard.
+    it.each([
+      {
+        desc: 'standard mode colors an increase with the success color',
+        colorMode: TimeCompareColorMode.Standard,
+        delta: { text: '5', numeric: 5 },
+        shown: '(+5)',
+        expected: SUCCESS_TEXT,
+      },
+      {
+        desc: 'standard mode colors a decrease with the error color',
+        colorMode: TimeCompareColorMode.Standard,
+        delta: { text: '-2', numeric: -2 },
+        shown: '(-2)',
+        expected: ERROR_TEXT,
+      },
+      {
+        desc: 'inverted mode colors an increase with the error color',
+        colorMode: TimeCompareColorMode.Inverted,
+        delta: { text: '5', numeric: 5 },
+        shown: '(+5)',
+        expected: ERROR_TEXT,
+      },
+      {
+        desc: 'inverted mode colors a decrease with the success color',
+        colorMode: TimeCompareColorMode.Inverted,
+        delta: { text: '-2', numeric: -2 },
+        shown: '(-2)',
+        expected: SUCCESS_TEXT,
+      },
+    ])('$desc', ({ colorMode, delta, shown, expected }) => {
+      render(<VizTooltipRow {...defaultProps} delta={{ ...delta, colorMode }} />);
+      expect(screen.getByText(shown)).toHaveStyle({ color: expected });
+    });
+
+    // Same as value ignores the sign entirely, so a decrease must not fall through to the error color.
+    it.each([
+      { delta: { text: '5', numeric: 5 }, shown: '(+5)' },
+      { delta: { text: '-2', numeric: -2 }, shown: '(-2)' },
+    ])('same as value mode colors a $delta.numeric delta with the series color', ({ delta, shown }) => {
+      render(
+        <VizTooltipRow
+          {...defaultProps}
+          color={SERIES_COLOR}
+          delta={{ ...delta, colorMode: TimeCompareColorMode.SameAsValue }}
+        />
+      );
+      expect(screen.getByText(shown)).toHaveStyle({ color: SERIES_COLOR });
     });
 
     it('renders no delta element when there is no delta', () => {

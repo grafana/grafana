@@ -56,8 +56,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
             })}
             nonEmptyMessage={t('browse-dashboards.action.delete-modal-folder-not-empty', '', {
               count: selectedFolders.length,
-              defaultValue_one: 'Selected folder contains other resources that will be deleted',
-              defaultValue_other: 'Selected folders contain other resources that will be deleted',
+              defaultValue_one: 'Selected folder contains resources that will be deleted',
+              defaultValue_other: 'Selected folders contain resources that will be deleted',
             })}
           />
           <Space v={2} />
