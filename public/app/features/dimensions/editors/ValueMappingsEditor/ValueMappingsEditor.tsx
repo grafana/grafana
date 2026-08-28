@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, MappingType, type StandardEditorProps, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -8,7 +8,15 @@ import { useStyles2, Stack, Icon, ColorPicker, Button, Modal } from '@grafana/ui
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
-import { buildEditRowModels, editModelToSaveModel, ValueMappingsEditorModal } from './ValueMappingsEditorModal';
+import { buildEditRowModels, editModelToSaveModel } from './editRowModels';
+
+// The modal only renders after the edit button is clicked, so load it (and its
+// drag-and-drop machinery) on demand.
+const ValueMappingsEditorModal = lazy(() =>
+  import(/* webpackChunkName: "value-mappings-editor-modal" */ './ValueMappingsEditorModal').then((m) => ({
+    default: m.ValueMappingsEditorModal,
+  }))
+);
 
 export interface Props extends StandardEditorProps<ValueMapping[]> {
   showIcon?: boolean;
@@ -107,12 +115,14 @@ export const ValueMappingsEditor = memo((props: Props) => {
         className={styles.modal}
         closeOnBackdropClick={false}
       >
-        <ValueMappingsEditorModal
-          value={value}
-          onChange={onChange}
-          onClose={onCloseEditor}
-          showIconPicker={showIconPicker}
-        />
+        <Suspense fallback={null}>
+          <ValueMappingsEditorModal
+            value={value}
+            onChange={onChange}
+            onClose={onCloseEditor}
+            showIconPicker={showIconPicker}
+          />
+        </Suspense>
       </Modal>
     </Stack>
   );

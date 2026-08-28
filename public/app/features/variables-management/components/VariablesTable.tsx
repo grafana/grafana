@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Icon, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
-import { getVariableTypeLabel } from 'app/features/dashboard-scene/settings/variables/utils';
+import { getVariableTypeLabel } from 'app/features/dashboard-scene/settings/variables/editableVariablesMetadata';
 
 import {
   getVariableEditableType,

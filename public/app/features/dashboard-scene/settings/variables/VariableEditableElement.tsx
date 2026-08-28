@@ -1,4 +1,4 @@
-import { type FormEvent, useId, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { VariableHide, VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,9 +34,9 @@ import {
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
 import { VariableDisplaySelect } from '../../settings/variables/components/VariableDisplaySelect';
+import { getEditableVariableMetadata } from '../../settings/variables/editableVariablesMetadata';
 import {
   dropShadowedPredefinedVariables,
-  getEditableVariableDefinition,
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
@@ -127,7 +127,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       };
     }
 
-    const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
+    const variableTypeMetadata = getEditableVariableMetadata(this.variable.state.type);
     const { label, name } = this.variable.state;
     const hasLabel = !!label && label.trim() !== '';
     const instanceName = hasLabel ? label! : name;
@@ -144,7 +144,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     }
 
     return {
-      typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
+      typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableTypeMetadata.name }),
       icon: 'gf-variable',
       instanceName,
       tooltip,
@@ -395,21 +395,45 @@ export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
   return !dashboardVariable;
 }
 
+type EditableVariablesRegistry = typeof import('./editableVariablesRegistry');
+
 function useVariableTypeCategory(variable: SceneVariable) {
   const oldVariableId = useId();
   const refreshId = useId();
   const newQueryVarEditorEnabled = useFlagGrafanaQueryVarEditorRedesign();
 
-  return useMemo(() => {
-    const variableEditorDef = getEditableVariableDefinition(variable.state.type);
+  // The editor registry pulls in every variable editor, so load it on demand.
+  // The category renders its title immediately and options pop in once loaded.
+  const [registry, setRegistry] = useState<EditableVariablesRegistry | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    import(/* webpackChunkName: "variable-editors" */ './editableVariablesRegistry').then((mod) => {
+      if (!cancelled) {
+        setRegistry(mod);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.variable.type-category', '{{type}} options', {
-        type: variableEditorDef.name,
+        type: getEditableVariableMetadata(variable.state.type).name,
       }),
       id: 'variable-type',
       isOpenDefault: true,
     });
+
+    if (!registry) {
+      return category;
+    }
+
+    const variableEditorDef = registry.getEditableVariableDefinition(variable.state.type);
 
     if (variableEditorDef.getOptions) {
       const options = variableEditorDef.getOptions(variable);
@@ -440,7 +464,7 @@ function useVariableTypeCategory(variable: SceneVariable) {
     }
 
     return category;
-  }, [oldVariableId, refreshId, newQueryVarEditorEnabled, variable]);
+  }, [oldVariableId, refreshId, newQueryVarEditorEnabled, variable, registry]);
 }
 
 function RefreshSelect({ variable }: { variable: QueryVariable }) {

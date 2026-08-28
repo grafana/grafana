@@ -17,7 +17,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { type ToolbarActionProps } from '../scene/new-toolbar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -205,6 +204,13 @@ function FiltersOverviewButton({
   const variables: SceneVariable[] = sceneGraph.getVariables(sidebar)?.useState().variables ?? [];
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
+  const onClick = useCallback(async () => {
+    const { DashboardFiltersOverviewPane } = await import(
+      /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
+    );
+    sidebar.openPane(new DashboardFiltersOverviewPane({}));
+  }, [sidebar]);
+
   if (!hasFilters) {
     return null;
   }
@@ -212,10 +218,10 @@ function FiltersOverviewButton({
   return (
     <Sidebar.Button
       icon="filter"
-      onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
+      onClick={onClick}
       title={t('dashboard.sidebar.filters.title', 'Filters')}
       tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
-      active={openPane instanceof DashboardFiltersOverviewPane}
+      active={openPane?.getId() === 'filters'}
     />
   );
 }
