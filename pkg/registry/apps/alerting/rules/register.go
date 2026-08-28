@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -94,6 +95,7 @@ func RegisterAppInstaller(
 		WatchNamespace:                      watchNamespace(cfg),
 		SearchRulesHandler:                  search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
 		ValidateExternalRulerSyncDatasource: newExternalRulerSyncDatasourceValidator(cfg, ng.DataSourceService, ng.DataProxy),
+		ExternalRulerSyncFolderExists:       newExternalRulerSyncFolderExistsValidator(ng),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
@@ -157,6 +159,31 @@ func newExternalRulerSyncDatasourceValidator(cfg *setting.Cfg, ds datasources.Da
 			return fmt.Errorf("failed to reach ruler config API: %w", err)
 		}
 		return nil
+	}
+}
+
+// newExternalRulerSyncFolderExistsValidator backs the promote-revert
+// admission guard (apps/alerting/rules/pkg/app/config.ValidateConfigWrite):
+// reports whether the canonical sync-owned folder for uid still exists,
+// resolving it by the same title the sync worker itself uses
+// (rulesync.RootFolderTitle).
+func newExternalRulerSyncFolderExistsValidator(ng *ngalert.AlertNG) func(ctx context.Context, uid string) (bool, error) {
+	return func(ctx context.Context, uid string) (bool, error) {
+		orgID := resolveOrgID(ctx)
+		user, _ := identity.GetRequester(ctx)
+		if user == nil || orgID < 1 {
+			// Can't resolve identity/org in this context; fail closed the same
+			// way the caller's nil-callback default does (assume it exists).
+			return true, nil
+		}
+		_, err := ng.Api.RuleStore.GetNamespaceByTitle(ctx, rulesync.RootFolderTitle(uid), orgID, user, "")
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return false, nil
+			}
+			return false, fmt.Errorf("look up sync root folder: %w", err)
+		}
+		return true, nil
 	}
 }
 

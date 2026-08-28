@@ -49,9 +49,10 @@ ConfigStatus: {
 		// (spec.externalRulerSync.datasourceUid).
 		origin?: "api" | "ini"
 
-		// lastAppliedHash is the upstream config hash from the last successful
-		// sync via this resource. The worker reads it back (API path only) to
-		// skip an unchanged re-apply across restarts and replicas, where an
+		// lastAppliedHash is the dedup key (upstream config hash combined with
+		// the resolved targetDatasourceUid) from the last successful sync via
+		// this resource. The worker reads it back (API path only) to skip an
+		// unchanged re-apply across restarts and replicas, where an
 		// in-memory-only dedup cache would otherwise start empty. Internal
 		// bookkeeping; not user-facing.
 		lastAppliedHash?: string

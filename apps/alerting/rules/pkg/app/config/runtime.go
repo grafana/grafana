@@ -58,4 +58,10 @@ type RuntimeConfig struct {
 	// and probes the datasource's ruler config API. Nil disables the check
 	// (returns no error).
 	ValidateExternalRulerSyncDatasource func(ctx context.Context, uid string) error
+	// ExternalRulerSyncFolderExists reports whether the canonical sync-owned
+	// folder for the last-synced datasource UID still exists. Backs the
+	// promote-revert admission guard: the revert is blocked only while that
+	// folder exists (nothing left to overwrite otherwise). Nil assumes it
+	// exists — the guard's original, more restrictive default.
+	ExternalRulerSyncFolderExists func(ctx context.Context, datasourceUid string) (bool, error)
 }

@@ -31,14 +31,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// rootFolderTitle is the title of the dedicated folder the syncer lands imported
-// namespaces under, isolating them from user-managed folders. One folder per
-// ruler datasource UID so distinct rulers never collide. prune and
-// IsManagedFolder key on the folder UID, not this title, so a pre-existing user
-// folder with the same title is harmless. "Admin" in the prefix flags that this
-// folder (and everything under it, including any promoted-to-native rules left
-// there — see promote) is locked to admin-only edit, not just sync-managed.
-func rootFolderTitle(dsUID string) string {
+// RootFolderTitle is the title of the dedicated folder the syncer lands
+// imported namespaces under, one per ruler datasource UID. prune and
+// IsManagedFolder key on the folder UID, not this title, so a pre-existing
+// user folder with the same title is harmless. Exported: the promote
+// admission guard (apps/alerting/rules/pkg/app/config, wired from
+// pkg/registry/apps/alerting/rules/register.go) resolves the same folder by
+// title to check it still exists before allowing a promote:false revert.
+func RootFolderTitle(dsUID string) string {
 	return fmt.Sprintf("[Alerting Admin] External Ruler Sync (%s)", dsUID)
 }
 
@@ -111,8 +111,12 @@ type ExternalRulerSyncer struct {
 	// folderPermissions restricts the sync folder to admin-only modification.
 	folderPermissions accesscontrol.FolderPermissionsService
 
-	lastSyncHashMu sync.RWMutex
-	lastSyncHash   map[int64]uint64
+	// lastSyncKey caches the last-applied dedup key per org: the upstream
+	// config's content hash combined with the resolved targetUID, so a
+	// spec-only targetUID change (not reflected in the upstream fetch) still
+	// forces a re-apply instead of being silently skipped. See SyncOrg.
+	lastSyncKeyMu sync.RWMutex
+	lastSyncKey   map[int64]string
 
 	// lastAttemptMu guards the per-org due-check cache dueForSync reads and
 	// SyncOrg writes: lastAttemptAt is when an org was last actually worked
@@ -167,7 +171,7 @@ func NewExternalRulerSyncer(
 		namespaceStore:    namespaceStore,
 		orgStore:          orgStore,
 		folderPermissions: folderPermissions,
-		lastSyncHash:      make(map[int64]uint64),
+		lastSyncKey:       make(map[int64]string),
 		lastAttemptAt:     make(map[int64]time.Time),
 		lastPollInterval:  make(map[int64]time.Duration),
 		clientGenerator:   clientGenerator,
@@ -219,12 +223,11 @@ type resolvedRulerSync struct {
 	targetUID string             // recording-rules write target (defaults to uid)
 	promote   bool               // one-way promote-to-native requested (API path only)
 	origin    externalSyncOrigin // where uid came from
-	// persistedHash is the last-applied upstream hash from Config status,
-	// read back on the API path only (that path already fetches the whole
-	// Config object; the ini path stays independent of apiserver availability
-	// for its own dedup decision, so it relies on the in-memory cache alone —
-	// the ini-only syncer's own version-churn gap from that is a known,
-	// separate, already-shipped limitation, not addressed here).
+	// persistedHash is the last-applied dedup key from Config status (see
+	// SyncOrg's dedupKey), read back on the API path only — the ini path has
+	// no Config resource and relies on lastSyncKey alone. SyncOrg checks this
+	// before lastSyncKey: it survives restarts and multiple replicas, where
+	// lastSyncKey is the fast path and fallback.
 	persistedHash string
 	// pollInterval is this org's effective sync cadence: spec.pollInterval when
 	// set on the API path, defaultRulerSyncPollInterval otherwise (including
@@ -425,7 +428,7 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 		return false, nil
 	}
 	svcCtx, user := identity.WithServiceIdentity(ctx, orgID)
-	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
+	root, err := s.namespaceStore.GetNamespaceByTitle(svcCtx, RootFolderTitle(rc.uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return false, nil
@@ -444,6 +447,20 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 		if child.UID == folderUID {
 			return true, nil
 		}
+	}
+	return false, nil
+}
+
+// rootFolderMissing reports whether the canonical root folder for uid is
+// gone. SyncOrg uses this to force a re-apply instead of letting a persisted
+// dedup key skip it forever once the folder has disappeared from under it.
+func (s *ExternalRulerSyncer) rootFolderMissing(ctx context.Context, orgID int64, user identity.Requester, uid string) (bool, error) {
+	_, err := s.namespaceStore.GetNamespaceByTitle(ctx, RootFolderTitle(uid), orgID, user, "")
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return true, nil
+		}
+		return false, err
 	}
 	return false, nil
 }
@@ -572,21 +589,38 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 	}
 	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
 
-	// Skip if the upstream is unchanged since the last successful apply. The
-	// persisted hash (from Config status, API path only) survives restarts and
-	// multiple replicas; the in-memory map is the fast path and the fallback
-	// when a persisted hash isn't available.
-	hashStr := strconv.FormatUint(hash, 10)
-	if rc.persistedHash != "" && rc.persistedHash == hashStr {
-		s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+	// dedupKey combines hash with targetUID in one string (rather than a
+	// second persisted field) so this reuses the existing single-string
+	// status.externalRulerSync.lastAppliedHash slot as-is: a targetUID-only
+	// spec change isn't reflected in hash at all, so comparing hash alone
+	// would silently ignore it forever. "%d:" is a safe, collision-free
+	// prefix — %d never emits ':', so the key is injective in (hash, targetUID)
+	// even though targetUID itself isn't delimited.
+	dedupKey := fmt.Sprintf("%d:%s", hash, rc.targetUID)
+
+	// A missing root folder forces a re-apply regardless of dedupKey: it was
+	// renamed or deleted since the last apply, and the persisted key would
+	// otherwise match forever. apply() recreates it fresh either way.
+	rootMissing, err := s.rootFolderMissing(svcCtx, orgID, svcUser, rc.uid)
+	if err != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("check sync root folder: %w", err)})
 		return
 	}
-	s.lastSyncHashMu.RLock()
-	prev, has := s.lastSyncHash[orgID]
-	s.lastSyncHashMu.RUnlock()
-	if has && prev == hash {
-		s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
-		return
+
+	// Skip if unchanged since the last apply and the root folder still exists
+	// — see persistedHash's doc comment for how the two dedup tiers combine.
+	if !rootMissing {
+		if rc.persistedHash != "" && rc.persistedHash == dedupKey {
+			s.logger.Debug("External ruler config unchanged since last sync (persisted)", "org_id", orgID)
+			return
+		}
+		s.lastSyncKeyMu.RLock()
+		prev, has := s.lastSyncKey[orgID]
+		s.lastSyncKeyMu.RUnlock()
+		if has && prev == dedupKey {
+			s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
+			return
+		}
 	}
 
 	if applyErr := s.apply(svcCtx, svcUser, orgID, ds, targetDS, cfg); applyErr != nil {
@@ -594,12 +628,12 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		return
 	}
 
-	s.lastSyncHashMu.Lock()
-	s.lastSyncHash[orgID] = hash
-	s.lastSyncHashMu.Unlock()
+	s.lastSyncKeyMu.Lock()
+	s.lastSyncKey[orgID] = dedupKey
+	s.lastSyncKeyMu.Unlock()
 	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
 	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
-	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr)
+	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, dedupKey)
 }
 
 type groupKey struct {
@@ -611,7 +645,7 @@ type groupKey struct {
 // them, and prunes previously-synced groups that vanished upstream. Returns a
 // classified *SyncError on failure.
 func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, targetDS *datasources.DataSource, cfg RulerConfig) *SyncError {
-	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(ds.UID), orgID, user, "")
+	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, RootFolderTitle(ds.UID), orgID, user, "")
 	if err != nil {
 		return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create root folder: %w", err)}
 	}
@@ -734,7 +768,7 @@ func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester
 // folder was never created (sync never actually ran), there's nothing to
 // promote either.
 func (s *ExternalRulerSyncer) promote(ctx context.Context, user identity.Requester, orgID int64, uid string) error {
-	root, err := s.namespaceStore.GetNamespaceByTitle(ctx, rootFolderTitle(uid), orgID, user, "")
+	root, err := s.namespaceStore.GetNamespaceByTitle(ctx, RootFolderTitle(uid), orgID, user, "")
 	if err != nil {
 		if errors.Is(err, dashboards.ErrFolderNotFound) {
 			return nil

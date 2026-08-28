@@ -186,8 +186,9 @@ func externalRulerSyncPromoteFromConfig(c *alertingrulesv0alpha1.Config) bool {
 	return *c.Spec.ExternalRulerSync.Promote
 }
 
-// externalRulerSyncLastAppliedHashFromConfig returns the persisted dedup hash
-// from status, or "" when any level in the nested optional chain is unset
+// externalRulerSyncLastAppliedHashFromConfig returns the persisted dedup key
+// from status (upstream content hash combined with targetUID — see SyncOrg's
+// dedupKey), or "" when any level in the nested optional chain is unset
 // (never synced yet, or synced by a build that predates this field).
 func externalRulerSyncLastAppliedHashFromConfig(c *alertingrulesv0alpha1.Config) string {
 	if c == nil ||
