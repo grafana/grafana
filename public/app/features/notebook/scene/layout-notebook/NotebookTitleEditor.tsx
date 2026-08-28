@@ -30,15 +30,32 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
   /** The title this edit started from, so Escape has something to put back. */
   const titleBeforeEdit = useRef(title);
 
+  /** Set only by the keyboard close paths: a blur has already put focus where the reader wanted it. */
+  const shouldRestoreFocus = useRef(false);
+
   // Stable, so it runs on mount alone - an inline callback would re-select the text on every keystroke.
   const focusInput = useCallback((input: HTMLInputElement | null) => {
     input?.focus();
     input?.select();
   }, []);
 
+  // The mirror of focusInput: closing the field unmounts the focused input, which drops focus onto the
+  // document, so the heading takes it back as it mounts - but only when a key was what closed it.
+  const focusTrigger = useCallback((button: HTMLButtonElement | null) => {
+    if (!shouldRestoreFocus.current) {
+      return;
+    }
+
+    shouldRestoreFocus.current = false;
+    button?.focus();
+  }, []);
+
   const commit = () => {
     const trimmed = draft.trim();
     if (!trimmed) {
+      // The field stays open, so nothing is going to take the focus back - and a flag left armed
+      // here would have the next close steal it after a deliberate click away.
+      shouldRestoreFocus.current = false;
       setShowEmptyError(true);
       return;
     }
@@ -76,9 +93,14 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
     }
 
     if (event.key === 'Enter') {
+      // The heading takes focus back as this key is still being processed, and Enter's default
+      // action would then land on the button that just arrived - reopening the field.
+      event.preventDefault();
+      shouldRestoreFocus.current = true;
       commit();
     } else if (event.key === 'Escape') {
       event.stopPropagation();
+      shouldRestoreFocus.current = true;
       setDraft(titleBeforeEdit.current);
       // An empty title is no more reportable here than it is on a keystroke, so an edit that started
       // untitled keeps what was typed instead of being handed its emptiness back.
@@ -100,6 +122,7 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
         */}
         <button
           type="button"
+          ref={focusTrigger}
           className={styles.trigger}
           title={t('dashboard.notebook-layout.title-edit', 'Edit title')}
           onClick={() => {

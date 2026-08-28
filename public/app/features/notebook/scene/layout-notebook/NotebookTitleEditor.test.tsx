@@ -135,6 +135,50 @@ describe('NotebookTitleEditor', () => {
     expect(screen.getByRole('heading', { name: TITLE })).toBeInTheDocument();
   });
 
+  // Closing unmounts the focused input, and a removed element drops focus onto the document - so a
+  // keyboard user who renames a notebook lands at the top of the page instead of back on the heading.
+  describe('focus after the field closes', () => {
+    it.each(['{enter}', '{Escape}'])('puts focus back on the heading on %s', async (key) => {
+      const { user } = setup();
+
+      await user.click(getTrigger());
+      await user.clear(getInput());
+      await user.type(getInput(), 'Q3 latency regression');
+      await user.keyboard(key);
+
+      expect(getTrigger()).toHaveFocus();
+    });
+
+    // The reason the restore is armed by the key handlers rather than by the field closing: a click
+    // has already put focus where the reader wanted it, and taking it back would be the worse bug.
+    it('leaves focus alone when a click outside closes the field', async () => {
+      const { user } = setup();
+
+      await user.click(getTrigger());
+      await user.clear(getInput());
+      await user.type(getInput(), 'Q3 latency regression');
+      await user.click(document.body);
+
+      expect(getTrigger()).not.toHaveFocus();
+    });
+
+    // Enter on an empty field is refused and the field stays open, so nothing consumes the restore.
+    // Left armed, it would fire on whatever closed the field next - here, a deliberate click away.
+    it('does not leave the restore armed when Enter is refused', async () => {
+      const { user } = setup();
+
+      await user.click(getTrigger());
+      await user.clear(getInput());
+      await user.keyboard('{enter}');
+      expect(getInput()).toBeInTheDocument();
+
+      await user.type(getInput(), 'Q3 latency regression');
+      await user.click(document.body);
+
+      expect(getTrigger()).not.toHaveFocus();
+    });
+  });
+
   // An IME sends both of these while composing - Enter to confirm the candidate, Escape to abandon
   // it - and neither is meant for the field. fireEvent rather than `user`, which cannot set
   // isComposing.
