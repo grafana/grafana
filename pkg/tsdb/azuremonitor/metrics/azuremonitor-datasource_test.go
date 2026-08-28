@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -279,7 +278,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			maps.Copy(tt.azureMonitorVariedProperties, commonAzureModelProps)
+			for k, v := range commonAzureModelProps {
+				tt.azureMonitorVariedProperties[k] = v
+			}
 			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
 			tsdbQuery := []backend.DataQuery{
 				{
