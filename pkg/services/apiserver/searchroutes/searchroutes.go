@@ -122,7 +122,7 @@ func BuildForServedGroupVersions(
 		return nil, nil
 	}
 
-	provider, err := resource.ManifestBackedProvider(manifests)
+	provider, err := resource.ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
 	}

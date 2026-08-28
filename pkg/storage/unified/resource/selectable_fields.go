@@ -9,10 +9,10 @@ import (
 // SelectableFields returns a map keyed by (group, kind) to the list of
 // selectable fields for known manifests.
 func SelectableFields() map[LowerGroupResource][]string {
-	return SelectableFieldsForManifests(AppManifests())
+	return SelectableFieldsForManifests(AppManifests()...)
 }
 
-func AppManifestsWithKinds(manifiests []*app.ManifestData) []*app.ManifestData {
+func AppManifestsWithKinds(manifiests ...*app.ManifestData) []*app.ManifestData {
 	// Include manifests with kinds in any version.
 	filtered := make([]*app.ManifestData, 0, len(manifiests))
 	for _, m := range manifiests {
@@ -36,7 +36,7 @@ func AppManifestsWithKinds(manifiests []*app.ManifestData) []*app.ManifestData {
 // SelectableFieldsForManifests returns a map keyed by (group, kind) to the list
 // of selectable fields (across all versions). Each kind is also keyed by
 // (group, plural), pointing to the same fields.
-func SelectableFieldsForManifests(manifests []*app.ManifestData) map[LowerGroupResource][]string {
+func SelectableFieldsForManifests(manifests ...*app.ManifestData) map[LowerGroupResource][]string {
 	fields := map[LowerGroupResource][]string{}
 	for _, m := range manifests {
 		if m == nil {

@@ -40,7 +40,7 @@ func manifestWithSearchFields() *app.ManifestData {
 }
 
 func TestNewManifestBackedProvider(t *testing.T) {
-	p := NewManifestBackedProvider([]*app.ManifestData{manifestWithSearchFields()})
+	p := NewManifestBackedProvider(manifestWithSearchFields())
 
 	v2 := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v2", Resource: "widgets"}
 	got := p.Fields(v2)
@@ -74,7 +74,7 @@ func TestNewManifestBackedProvider(t *testing.T) {
 func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.T) {
 	// No plural and no explicit preferredVersion: resource defaults to kind+"s"
 	// (lower-cased) and the last declaring version is preferred.
-	p := NewManifestBackedProvider([]*app.ManifestData{{
+	p := NewManifestBackedProvider(&app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{{
@@ -86,7 +86,7 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "name", Path: "spec.name", Type: "string", Capabilities: []string{"filter"}}},
 			}}},
 		},
-	}})
+	})
 
 	gvr := schema.GroupVersionResource{Group: "widgets.example.test", Version: "v1", Resource: "gadgets"}
 	require.Len(t, p.Fields(gvr), 1)
@@ -94,7 +94,7 @@ func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.
 }
 
 func TestSearchFieldProviders_MapsDeclaredKinds(t *testing.T) {
-	got, err := SearchFieldProviders([]*app.ManifestData{manifestWithSearchFields()})
+	got, err := SearchFieldProviders(manifestWithSearchFields())
 	require.NoError(t, err)
 
 	// The one kind that declares search fields is present and provider-backed.
@@ -117,7 +117,7 @@ func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
 		}},
 	}
 
-	got, err := SearchFieldProviders([]*app.ManifestData{manifestNoFields})
+	got, err := SearchFieldProviders(manifestNoFields)
 	require.NoError(t, err)
 	assert.Empty(t, got)
 }
@@ -139,12 +139,12 @@ func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
 		}},
 	}
 
-	got, err := SearchFieldProviders([]*app.ManifestData{invalid})
+	got, err := SearchFieldProviders(invalid)
 	require.Error(t, err)
 	assert.Nil(t, got)
 
 	// Same set through the constructor a runtime caller uses.
-	p, err := ManifestBackedProvider([]*app.ManifestData{invalid})
+	p, err := ManifestBackedProvider(invalid)
 	require.Error(t, err)
 	assert.Nil(t, p)
 }
@@ -166,7 +166,7 @@ func mergeTestKind(kind, field string) app.ManifestVersionKind {
 // fieldNames lets a test assert whose declaration of a kind survived a merge.
 func fieldNames(t *testing.T, manifests []*app.ManifestData, group, version, resource string) []string {
 	t.Helper()
-	p, err := ManifestBackedProvider(manifests)
+	p, err := ManifestBackedProvider(manifests...)
 	require.NoError(t, err)
 	fields := p.Fields(schema.GroupVersionResource{Group: group, Version: version, Resource: resource})
 	names := make([]string, 0, len(fields))
@@ -245,8 +245,8 @@ func TestMergeManifestsByKind(t *testing.T) {
 
 		merged := MergeManifestsByKind(in)
 
-		require.NotEmpty(t, SelectableFieldsForManifests(merged))
-		require.Equal(t, SelectableFieldsForManifests(in), SelectableFieldsForManifests(merged))
+		require.NotEmpty(t, SelectableFieldsForManifests(merged...))
+		require.Equal(t, SelectableFieldsForManifests(in...), SelectableFieldsForManifests(merged...))
 	})
 
 	t.Run("manifests without data pass through", func(t *testing.T) {
@@ -261,15 +261,15 @@ func TestSearchFieldsForManifests(t *testing.T) {
 	kind.SelectableFields = []string{"spec.two"}
 	manifests := []*app.ManifestData{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
 
-	selectable, hashes, providers, err := SearchFieldsForManifests(manifests)
+	selectable, hashes, providers, err := SearchFieldsForManifests(manifests...)
 	require.NoError(t, err)
 
 	// The three inputs all come from the same manifests.
-	wantProviders, err := SearchFieldProviders(manifests)
+	wantProviders, err := SearchFieldProviders(manifests...)
 	require.NoError(t, err)
 	require.Equal(t, wantProviders, providers)
 	require.Equal(t, SearchFieldsHashesForProviders(wantProviders), hashes)
-	require.Equal(t, SelectableFieldsForManifests(manifests), selectable)
+	require.Equal(t, SelectableFieldsForManifests(manifests...), selectable)
 
 	// The kind declares both search and selectable fields, so none is empty.
 	require.NotEmpty(t, providers)

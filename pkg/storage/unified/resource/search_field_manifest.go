@@ -21,8 +21,8 @@ var manifestMergeLogger = log.New("search-manifest-merge")
 // Panics on an invalid declaration, like NewMapProvider, because in a
 // compiled-in manifest that is a bug. Runtime callers use
 // ManifestBackedProvider instead.
-func NewManifestBackedProvider(manifests []*app.ManifestData) SearchFieldsProvider {
-	p, err := ManifestBackedProvider(manifests)
+func NewManifestBackedProvider(manifests ...*app.ManifestData) SearchFieldsProvider {
+	p, err := ManifestBackedProvider(manifests...)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -32,7 +32,7 @@ func NewManifestBackedProvider(manifests []*app.ManifestData) SearchFieldsProvid
 // ManifestBackedProvider is NewManifestBackedProvider's error-returning form,
 // for manifests read at runtime, which can be malformed without this build
 // being at fault.
-func ManifestBackedProvider(manifests []*app.ManifestData) (SearchFieldsProvider, error) {
+func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvider, error) {
 	fields := map[schema.GroupVersionResource][]SearchFieldDefinition{}
 	preferred := map[schema.GroupResource]string{}
 
@@ -126,7 +126,7 @@ func manifestDeclaredKindKeys(manifests []*app.ManifestData) map[LowerGroupResou
 // drives bleve mappings. Every kind that declares search fields in its manifest
 // is mapped to a single manifest-backed provider; each entry queries it for its
 // own (group, resource).
-func SearchFieldProviders(manifests []*app.ManifestData) (map[LowerGroupResource]SearchFieldsProvider, error) {
+func SearchFieldProviders(manifests ...*app.ManifestData) (map[LowerGroupResource]SearchFieldsProvider, error) {
 	declared := manifestDeclaredKindKeys(manifests)
 	out := make(map[LowerGroupResource]SearchFieldsProvider, len(declared))
 	if len(declared) == 0 {
@@ -135,7 +135,7 @@ func SearchFieldProviders(manifests []*app.ManifestData) (map[LowerGroupResource
 
 	// A single manifest-backed provider covers every declared kind; each map
 	// entry queries it for its own (group, resource).
-	manifestProvider, err := ManifestBackedProvider(manifests)
+	manifestProvider, err := ManifestBackedProvider(manifests...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func SearchFieldsHashesForProviders(providers map[LowerGroupResource]SearchField
 // keeps the current search fields.
 func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.ManifestData) error {
 	merged := MergeManifestsByKind(builtin, live)
-	selectable, hashes, providers, err := SearchFieldsForManifests(merged)
+	selectable, hashes, providers, err := SearchFieldsForManifests(merged...)
 	if err != nil {
 		return err
 	}
@@ -174,18 +174,18 @@ func ApplyManifests(registry *SearchFieldsRegistry, builtin, live []*app.Manifes
 
 // SearchFieldsForManifests builds a SearchFieldsRegistry's three inputs from one
 // manifest list, so a reload can rebuild them together and keep them consistent.
-func SearchFieldsForManifests(manifests []*app.ManifestData) (
+func SearchFieldsForManifests(manifests ...*app.ManifestData) (
 	selectable map[LowerGroupResource][]string,
 	hashes map[LowerGroupResource]string,
 	providers map[LowerGroupResource]SearchFieldsProvider,
 	err error,
 ) {
-	providers, err = SearchFieldProviders(manifests)
+	providers, err = SearchFieldProviders(manifests...)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 	hashes = SearchFieldsHashesForProviders(providers)
-	selectable = SelectableFieldsForManifests(manifests)
+	selectable = SelectableFieldsForManifests(manifests...)
 	return selectable, hashes, providers, nil
 }
 

@@ -10,7 +10,7 @@ import (
 
 func TestAppManifestsCanFilterOutManifestsWithNoKinds(t *testing.T) {
 	all := AppManifests()
-	for _, m := range AppManifestsWithKinds(all) {
+	for _, m := range AppManifestsWithKinds(all...) {
 		if m.AppName == "provisioning" {
 			t.Errorf("should not have a provisioning manifest as it has no kinds defined")
 		}
@@ -135,7 +135,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 		},
 	}
 
-	fields := SelectableFieldsForManifests([]*app.ManifestData{m1, m2, m3, m4})
+	fields := SelectableFieldsForManifests(m1, m2, m3, m4)
 	expected := map[LowerGroupResource][]string{
 		// Nothing for test1.grafana.app, as there were no selectable fields.
 		NewLowerGroupResource("test2.grafana.app", "testkind"):  {"spec.field1", "spec.field2"},
