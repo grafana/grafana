@@ -61,7 +61,7 @@ func recordingRuleKey(name string) *resourcepb.ResourceKey {
 // registry-backed builders extract them, as they do in production.
 func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifests...)
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifestData)
 	require.NoError(t, err)
 	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
 }
