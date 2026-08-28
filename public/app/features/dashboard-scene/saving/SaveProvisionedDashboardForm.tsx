@@ -152,7 +152,7 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
         )}
 
         {isLossyClassicModel && (
-          <Alert title="" severity="warning">
+          <Alert title="" severity="warning" bottomSpacing={0} className={styles.warning}>
             <Trans i18nKey="dashboard-scene.resource-export.classic-v2-warning">
               This dashboard uses the V2 schema. Features like tabs and conditional rendering cannot be represented in
               the classic format and may be lost.
@@ -211,5 +211,10 @@ const styles = {
   json: css({
     flexGrow: 1,
     maxHeight: '800px',
+  }),
+  // Alert's wrapper sets flexGrow: 1, which in this column layout makes it swallow all the
+  // free space instead of the JSON editor below it.
+  warning: css({
+    flexGrow: 0,
   }),
 };
