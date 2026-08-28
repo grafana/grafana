@@ -89,11 +89,7 @@ export function setupAutoSyncConfig(server: SetupServer, options: AutoSyncConfig
   return { requestSpy };
 }
 
-/**
- * 404 on both read and write: the sync worker has not seeded the singleton yet.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
- */
+/** 404 on both read and write: the sync worker has not seeded the singleton yet. */
 export function setupAutoSyncConfigAbsent(server: SetupServer) {
   const requestSpy = jest.fn();
   server.use(
