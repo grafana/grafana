@@ -1490,6 +1490,30 @@ describe('NotebookLayoutManager', () => {
 
       expect(screen.getByText('hidden-panel').closest('[tabindex]')).toBeNull();
     });
+
+    it.each([
+      ['down', 'ArrowDown', 'a', 'tall', 'start'],
+      ['up', 'ArrowUp', 'tall', 'a', 'end'],
+    ] as const)(
+      'scrolls to reveal the caret edge moving %s',
+      (_direction, key, sourceName, targetName, expectedBlock) => {
+        const cells = [
+          new NotebookCellItem({ elementName: 'a', source: 'user', collapsed: true }),
+          new NotebookCellItem({ elementName: 'tall', source: 'user', collapsed: true }),
+        ];
+        renderManager(buildManager(cells, true));
+
+        const sourceFrame = screen.getByText(sourceName).closest('[tabindex]') as HTMLElement;
+        const targetFrame = screen.getByText(targetName).closest('[tabindex]') as HTMLElement;
+        jest.spyOn(targetFrame, 'getBoundingClientRect').mockReturnValue({ height: 2000 } as DOMRect);
+        const scrollIntoView = jest.spyOn(targetFrame, 'scrollIntoView');
+
+        sourceFrame.focus();
+        fireEvent.keyDown(sourceFrame, { key });
+
+        expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: expectedBlock }));
+      }
+    );
   });
 });
 

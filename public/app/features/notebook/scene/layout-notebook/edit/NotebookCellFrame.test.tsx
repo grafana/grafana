@@ -169,7 +169,7 @@ describe('NotebookCellFrame', () => {
       expect(onNavigate).not.toHaveBeenCalled();
     });
 
-    it.each([{ ctrlKey: true }, { altKey: true }, { shiftKey: true }])(
+    it.each([{ ctrlKey: true }, { altKey: true }, { shiftKey: true }, { metaKey: true }])(
       'ignores an arrow key held with a modifier (%o)',
       (modifier) => {
         const onNavigate = jest.fn();
@@ -181,16 +181,6 @@ describe('NotebookCellFrame', () => {
         expect(onNavigate).not.toHaveBeenCalled();
       }
     );
-
-    it('still treats Cmd+Arrow as cell navigation', () => {
-      const onNavigate = jest.fn();
-      renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
-      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
-
-      fireEvent.keyDown(frame, { key: 'ArrowDown', metaKey: true });
-
-      expect(onNavigate).toHaveBeenCalledWith('down');
-    });
 
     it('labels the frame with the cell element name for an assistive-technology user', () => {
       renderFrame({ cell: buildCollapsedCell(), isEditing: true });

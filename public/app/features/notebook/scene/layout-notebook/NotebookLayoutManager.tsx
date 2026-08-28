@@ -819,7 +819,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       if (!target) {
         return;
       }
-      requestFocus(target.state.key, direction === 'down' ? 0 : undefined, direction === 'down' ? 'end' : 'start');
+      requestFocus(target.state.key, direction === 'down' ? 0 : undefined, direction === 'down' ? 'start' : 'end');
     },
     [cells, requestFocus]
   );

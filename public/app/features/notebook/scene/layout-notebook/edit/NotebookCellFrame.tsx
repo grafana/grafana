@@ -163,7 +163,7 @@ export function NotebookCellFrame({
       return;
     }
 
-    if (event.ctrlKey || event.altKey || event.shiftKey) {
+    if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
       return;
     }
     if (event.key === 'ArrowUp') {
