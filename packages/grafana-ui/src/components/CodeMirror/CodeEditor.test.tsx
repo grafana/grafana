@@ -152,8 +152,14 @@ describe('CodeMirror CodeEditor', () => {
     expect(tabBinding).toEqual(expect.objectContaining({ key: 'Tab', run: acceptCompletion }));
   });
 
-  it('binds Space to insert a space and start completions when completion sources are configured', () => {
-    render(<CodeEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} />);
+  it('leaves Space unbound by default, so a space cannot open the popup as an explicit request', () => {
+    render(<CodeEditor value="a sentence" onChange={jest.fn()} completionSources={[jest.fn()]} />);
+
+    expect(getKeyBindings().find((binding) => binding.key === 'Space')).toBeUndefined();
+  });
+
+  it('binds Space to insert a space and start completions when completeOnSpace is set', () => {
+    render(<CodeEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} completeOnSpace />);
 
     const spaceBinding = getKeyBindings().find((binding) => binding.key === 'Space');
     const replaceSelection = jest.fn(() => ({ changes: { from: 6, insert: ' ' } }));
