@@ -163,6 +163,10 @@ type Cfg struct {
 	EnforceDomain     bool
 	MinTLSVersion     string
 
+	// FrontendDevServerURL is the origin of the frontend bundler's dev server. Empty unless
+	// Env is Dev. See readFrontendDevSettings.
+	FrontendDevServerURL string
+
 	// Security settings
 	SecretKey             string
 	EmailCodeValidMinutes int
@@ -1609,6 +1613,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	// After readSecuritySettings: the dev server origin depends on whether a CSP is enforced.
+	cfg.readFrontendDevSettings(iniFile)
+
 	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
 		return err
 	}
@@ -2407,6 +2414,39 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	return nil
+}
+
+// readFrontendDevSettings resolves the frontend bundler's dev server origin. It stays empty
+// outside a development app_mode so a deployed Grafana can never be pointed at a bundler,
+// however the ini file is set up.
+func (cfg *Cfg) readFrontendDevSettings(iniFile *ini.File) {
+	if cfg.Env != Dev {
+		return
+	}
+
+	raw := valueAsString(iniFile.Section("frontend_dev"), "server_url", "")
+	if raw == "" {
+		return
+	}
+
+	// The page loads its assets from the dev server's own origin, which no `'self'` policy
+	// admits, so the browser would block every bundle. Ignoring the dev server serves the build
+	// on disk instead, which works. This is what keeps the e2e harness off the dev server: it
+	// runs in development mode with a policy enforced.
+	if cfg.CSPEnabled {
+		cfg.Logger.Info("Ignoring frontend_dev.server_url, a content security policy is enforced", "url", raw)
+		return
+	}
+
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		cfg.Logger.Warn("Ignoring invalid frontend_dev.server_url", "url", raw, "error", err)
+		return
+	}
+
+	// Only the origin is ever used, and a trailing slash would double up when joined with a
+	// request path.
+	cfg.FrontendDevServerURL = strings.TrimSuffix(parsed.Scheme+"://"+parsed.Host, "/")
 }
 
 // GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL

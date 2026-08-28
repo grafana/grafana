@@ -86,8 +86,17 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 	var err error
 	var result *dtos.EntryPointAssets
 
+	// A running bundler dev server stands in for the CDN: the browser then fetches bundles
+	// straight from it, which is what lets it hot-replace modules. Reading the manifest over
+	// HTTP also means the dev server never has to write a build to disk. Only the rspack
+	// build has a dev server; `yarn start` compiles to disk.
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
+	if cfg.Env == setting.Dev && cfg.FrontendDevServerURL != "" && buildDir == RspackBuildDir {
+		cdn = cfg.FrontendDevServerURL + "/"
+	}
 	if cdn != "" {
+		// A failure here is expected whenever the dev server is not running, and leaves
+		// result nil so the build on disk is used instead.
 		result, err = ReadWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
 
