@@ -4,7 +4,7 @@ import * as z from 'zod';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
-import { palette, resolvePaletteRefs } from './palette_new';
+import { resolvePaletteRefs } from './palette_new';
 import { type DeepRequired } from './types';
 
 interface MenuComponentTokens {
@@ -23,13 +23,11 @@ const badgeColorTokens = z.object({
   border: z.string().optional(),
 });
 
-type BadgeColorTokens = z.infer<typeof badgeColorTokens>;
-
 const DEFAULT_TAG_TEXT_COLOR = '#f7f8fa';
 /**
  * Default tag colours, used when a theme does not provide its own.
  */
-export const DEFAULT_TAG_COLORS: readonly TagColors[] = [
+export const DEFAULT_TAG_COLORS: TagColors[] = [
   { background: '#D32D20', text: DEFAULT_TAG_TEXT_COLOR },
   { background: '#1E72B8', text: DEFAULT_TAG_TEXT_COLOR },
   { background: '#B240A2', text: DEFAULT_TAG_TEXT_COLOR },
@@ -166,7 +164,6 @@ export const ThemeComponentsInputSchema = z
         })
         .optional(),
     }),
-    // keyed by BadgeColor ('brand' is handled separately)
     badge: z.object({
       blue: badgeColorTokens.optional(),
       red: badgeColorTokens.optional(),
@@ -174,7 +171,7 @@ export const ThemeComponentsInputSchema = z
       orange: badgeColorTokens.optional(),
       purple: badgeColorTokens.optional(),
       darkgrey: badgeColorTokens.optional(),
-      textColor: z.string().optional(),
+      brand: badgeColorTokens.optional(),
     }),
   })
   .partial();
@@ -182,24 +179,10 @@ export const ThemeComponentsInputSchema = z
 /** @beta */
 type ThemeComponentsInput = z.infer<typeof ThemeComponentsInputSchema>;
 
-// The menu, tag and badge props are overridden to preserve types that zod inference can't reproduce
+// The menu props are overridden to preserve types that zod inference can't reproduce
 /** @beta */
-export type ThemeComponents = DeepRequired<
-  Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu' | 'tag' | 'badge'>
-> & {
+export type ThemeComponents = DeepRequired<Omit<z.infer<typeof ThemeComponentsInputSchema>, 'menu'>> & {
   menu: MenuComponentTokens;
-  tag: {
-    colors: readonly TagColors[];
-  };
-  badge: {
-    blue?: BadgeColorTokens;
-    red?: BadgeColorTokens;
-    green?: BadgeColorTokens;
-    orange?: BadgeColorTokens;
-    purple?: BadgeColorTokens;
-    darkgrey?: BadgeColorTokens;
-    textColor: string;
-  };
 };
 
 export function createComponents(colors: ThemeColors, componentsInput: ThemeComponentsInput = {}): ThemeComponents {
@@ -318,10 +301,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
             : 'hsl(from #a6e3df h s l / 60%)',
       },
     },
-    badge: {
-      // apply to brand color in light theme to pass a11y contrast checks
-      textColor: palette.black,
-    },
+    badge: getBadgeColorTokens(colors),
   };
 
   // deep-merge caller overrides on top of the defaults
@@ -329,4 +309,41 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
   return mergeWith({}, defaults, resolvedInputs, (_, inputValue) =>
     Array.isArray(inputValue) ? inputValue : undefined
   );
+}
+
+function getBadgeColorTokens(colors: ThemeColors): ThemeComponents['badge'] {
+  const mode = colors.mode;
+  const BADGE_RED = mode === 'dark' ? '#F2495C' : '#E02F44';
+  const BADGE_ORANGE = mode === 'dark' ? '#FF9830' : '#FF780A';
+  const BADGE_GREEN = mode === 'dark' ? '#73BF69' : '#56A64B';
+  const BADGE_BLUE = mode === 'dark' ? '#5794F2' : '#3274D9';
+  const BADGE_PURPLE = mode === 'dark' ? '#B877D9' : '#A352CC';
+  const BADGE_DARKGREY = '#a9a9a9';
+
+  return {
+    red: getBadgeTokens(BADGE_RED, mode),
+    orange: getBadgeTokens(BADGE_ORANGE, mode),
+    green: getBadgeTokens(BADGE_GREEN, mode),
+    blue: getBadgeTokens(BADGE_BLUE, mode),
+    purple: getBadgeTokens(BADGE_PURPLE, mode),
+    darkgrey: getBadgeTokens(BADGE_DARKGREY, mode),
+    brand: {
+      background: colors.gradients.brandHorizontal,
+      border: 'transparent',
+      text: colors.primary.contrastText,
+    },
+  };
+}
+
+function getBadgeTokens(
+  color: string,
+  mode: ThemeColors['mode']
+): ThemeComponents['badge'][keyof ThemeComponents['badge']] {
+  const BADGE_TEXT_ADJUSTMENT = mode === 'dark' ? 15 : -25;
+
+  return {
+    background: `hsla(from ${color} h s l / 0.15)`,
+    border: `hsla(from ${color} h s l / 0.25)`,
+    text: `hsl(from ${color} h s calc(l + ${BADGE_TEXT_ADJUSTMENT}))`,
+  };
 }

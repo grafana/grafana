@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { type HTMLAttributes } from 'react';
 import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
-import tinycolor from 'tinycolor2';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
@@ -13,7 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent } from '../Tooltip/types';
 
-export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey' | 'brand';
+export type BadgeColor = keyof GrafanaTheme2['components']['badge'];
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text?: React.ReactNode;
@@ -65,57 +64,34 @@ const getSkeletonStyles = () => ({
 });
 
 const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
-  let sourceColor = theme.visualization.getColorByName(color);
-  let borderColor = '';
-  let bgColor = '';
-  let textColor = '';
-
-  if (theme.isDark) {
-    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
-    textColor = tinycolor(sourceColor).lighten(15).toString();
-  } else {
-    bgColor = tinycolor(sourceColor).setAlpha(0.15).toString();
-    borderColor = tinycolor(sourceColor).setAlpha(0.25).toString();
-    textColor = tinycolor(sourceColor).darken(25).toString();
-  }
-
-  if (theme.flags.visualDesignRefresh && color !== 'brand') {
-    const tokens = theme.components.badge[color];
-    bgColor = tokens?.background ?? bgColor;
-    borderColor = tokens?.border ?? borderColor;
-    textColor = tokens?.text ?? textColor;
-  }
-
-  if (color === 'brand') {
-    bgColor = theme.colors.gradients.brandHorizontal;
-    borderColor = theme.flags.visualDesignRefresh ? theme.colors.accent.contrastText : 'transparent';
-    textColor =
-      theme.flags.visualDesignRefresh && theme.isLight
-        ? theme.components.badge.textColor
-        : theme.colors.primary.contrastText;
-  }
+  const { background, border, text } = theme.components.badge[color];
 
   return {
-    wrapper: css({
-      display: 'inline-flex',
-      padding: theme.flags.visualDesignRefresh ? '1px 6px' : '1px 4px',
-      borderRadius: theme.flags.visualDesignRefresh ? theme.shape.radius.pill : theme.shape.radius.sm,
-      background: bgColor,
-      border: `1px solid ${borderColor}`,
-      color: textColor,
-      fontWeight: theme.typography.fontWeightRegular,
-      gap: theme.spacing(0.5),
-      fontSize: theme.typography.bodySmall.fontSize,
-      lineHeight: theme.typography.bodySmall.lineHeight,
-      alignItems: 'flex-start',
-      height: theme.flags.visualDesignRefresh ? theme.spacing(3) : undefined,
+    wrapper: css(
+      {
+        display: 'inline-flex',
+        padding: '1px 4px',
+        borderRadius: theme.shape.radius.sm,
+        background,
+        border: `1px solid ${border}`,
+        color: text,
+        fontWeight: theme.typography.fontWeightRegular,
+        gap: theme.spacing(0.5),
+        fontSize: theme.typography.bodySmall.fontSize,
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        alignItems: 'flex-start',
 
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.accent.main}`,
-        outlineOffset: '-2px',
+        '&:focus-visible': {
+          outline: `2px solid ${theme.colors.accent.main}`,
+          outlineOffset: '-2px',
+        },
       },
-    }),
+      theme.flags.visualDesignRefresh && {
+        borderRadius: theme.shape.radius.pill,
+        height: theme.spacing(3),
+        padding: '1px 6px',
+      }
+    ),
     iconWrap: css({
       display: 'inline-flex',
       alignItems: 'center',

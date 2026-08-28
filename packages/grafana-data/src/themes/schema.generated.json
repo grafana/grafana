@@ -1385,8 +1385,20 @@
               },
               "additionalProperties": false
             },
-            "textColor": {
-              "type": "string"
+            "brand": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "background": {
+                  "type": "string"
+                },
+                "border": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
