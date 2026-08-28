@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -19,10 +20,14 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
-import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { canEditNotebooks } from '../permissions';
+import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { NotebookAutosave } from './NotebookAutosave';
 import { NotebookEditHistory } from './NotebookEditHistory';
@@ -119,6 +124,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.tags !== prevState.tags) {
           newState.body.setTags?.(newState.tags);
         }
+        // `title` is mirrored on the same terms as `tags` above.
+        if (newState.body !== prevState.body || newState.title !== prevState.title) {
+          newState.body.setTitle?.(newState.title);
+        }
         // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
         // the steps cannot run any more.
         if (newState.body !== prevState.body) {
@@ -163,13 +172,62 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
+    // Asked before editing begins, so not answering leaves the notebook where it already was.
+    const changed = this.autosave.viewOnlyVizChanges();
+    if (changed.length > 0) {
+      this.askAboutViewOnlyChanges(changed);
+      return;
+    }
+
+    this.startEditing();
+  };
+
+  private startEditing(): void {
     // Before the state change, because entering edit mode is itself a state change and autosave decides
     // what to write the moment it sees one.
     this.autosave.notifyEditingStarted();
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
-  };
+  }
+
+  /**
+   * Asks what to do about anything a reader changed, and only starts editing once they say. Only the
+   * person who changed it knows whether they meant it for the notebook or for their own view.
+   *
+   * Laid out like the dashboard's unsaved-changes modal: discard confirms and keep is the alternative,
+   * so cancel carries nothing and leaves the notebook open for reading.
+   *
+   * Both answers start editing first, because `notifyEditingStarted` clears what counted as edited and
+   * a kept colour has to survive that.
+   */
+  private askAboutViewOnlyChanges(changed: string[]): void {
+    // Refusing produces no state change, so nothing would rewrite the url and `?edit=true` would sit
+    // there claiming a mode the notebook is not in. NotebookSceneUrlSync cleans it up for the same reason.
+    locationService.partial({ [NOTEBOOK_EDIT_PARAM]: null }, true);
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('notebook.panel-changes.confirm-title', 'Unsaved panel changes'),
+        text: t(
+          'notebook.panel-changes.confirm-text',
+          'Do you want to keep the changes you made while viewing this notebook?'
+        ),
+        yesText: t('notebook.panel-changes.confirm-discard', 'Discard'),
+        yesButtonVariant: 'destructive',
+        onConfirm: () => {
+          this.startEditing();
+          this.autosave.discardVizChanges();
+        },
+        altActionText: t('notebook.panel-changes.confirm-keep', 'Keep'),
+        onAltAction: () => {
+          this.startEditing();
+          this.autosave.keepVizChanges(changed);
+        },
+        noText: t('notebook.panel-changes.confirm-cancel', 'Cancel'),
+      })
+    );
+  }
 
   public onExitEditMode = () => {
     this.state.body.commitPendingEdits();
@@ -186,6 +244,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    */
   public onTagsChange = (tags: string[]) => {
     this.setState({ tags });
+  };
+
+  /**
+   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
+   * the save model reads this state, and autosave writes on any change made while editing.
+   */
+  public onTitleChange = (title: string) => {
+    this.setState({ title });
   };
 
   public showModal(modal: SceneObject) {
