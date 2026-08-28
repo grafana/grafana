@@ -122,8 +122,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			if err != nil {
 				// Note: special case for token rotation
 				// We don't want to fallthrough in this case
-				var tokenRotationErr authn.TokenNeedsRotationError
-				if errors.As(err, &tokenRotationErr) {
+				if _, ok := errors.AsType[authn.TokenNeedsRotationError](err); ok {
 					return nil, err
 				}
 
@@ -482,8 +481,7 @@ func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, 
 
 	l := s.log.FromContext(ctx)
 
-	var grfErr errutil.Error
-	if errors.As(err, &grfErr) {
+	if grfErr, ok := errors.AsType[errutil.Error](err); ok {
 		return grfErr.LogLevel.LogFunc(l)
 	}
 
@@ -539,12 +537,12 @@ func parseNamespace(path string) string {
 	// Possbile url paths can be found here:
 	// https://github.com/kubernetes/kubernetes/blob/803e9d64952407981b3815b1d749cc96a39ba3c6/staging/src/k8s.io/apiserver/pkg/endpoints/request/requestinfo.go#L104-L127
 	const namespacePath = "/namespaces/"
-	index := strings.Index(path, namespacePath)
-	if index == -1 {
+	_, after, ok := strings.Cut(path, namespacePath)
+	if !ok {
 		return ""
 	}
 
-	parts := strings.Split(path[index+len(namespacePath):], "/")
+	parts := strings.Split(after, "/")
 	if len(parts) == 0 {
 		return ""
 	}

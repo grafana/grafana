@@ -204,7 +204,7 @@ type DeleteMigrationSessionRequest struct {
 
 func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse) CloudMigrationSessionListResponseDTO {
 	slDTOs := make([]CloudMigrationSessionResponseDTO, len(sl.Sessions))
-	for i := 0; i < len(slDTOs); i++ {
+	for i := range slDTOs {
 		s := sl.Sessions[i]
 		slDTOs[i] = CloudMigrationSessionResponseDTO{
 			UID:     s.UID,

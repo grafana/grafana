@@ -89,15 +89,13 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		logger.Info("job queue controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
 		logger.Info("job driver stopped")
-	}()
+	})
 
 	// Start the informer and wait for its cache to sync.
 	go jobInformer.Run(ctx.Done())

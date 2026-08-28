@@ -41,13 +41,13 @@ func extractPath(obj map[string]any, path string) (any, error) {
 		return nil, fmt.Errorf("empty path")
 	}
 
-	idx := strings.Index(path, arrayProjection)
-	if idx < 0 {
+	before, after, ok0 := strings.Cut(path, arrayProjection)
+	if !ok0 {
 		return extractDotPath(obj, path)
 	}
 
-	pre := strings.TrimSuffix(path[:idx], ".")
-	post := strings.TrimPrefix(path[idx+len(arrayProjection):], ".")
+	pre := strings.TrimSuffix(before, ".")
+	post := strings.TrimPrefix(after, ".")
 
 	if strings.Contains(post, arrayProjection) {
 		return nil, fmt.Errorf("path %q: only one %s projection is supported", path, arrayProjection)

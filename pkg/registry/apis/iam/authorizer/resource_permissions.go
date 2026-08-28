@@ -129,10 +129,7 @@ func CanViewTargets[T any](r *ResourcePermissionsAuthorizer, ctx context.Context
 
 	allowed := make([]bool, n)
 	for start := 0; start < len(checks); start += types.MaxBatchCheckItems {
-		end := start + types.MaxBatchCheckItems
-		if end > len(checks) {
-			end = len(checks)
-		}
+		end := min(start+types.MaxBatchCheckItems, len(checks))
 		res, err := r.accessClient.BatchCheck(ctx, authInfo, types.BatchCheckRequest{
 			Namespace: namespace,
 			Checks:    checks[start:end],

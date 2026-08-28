@@ -214,9 +214,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 	errorCh := make(chan error, expectedInstances)
 
 	for _, inst := range rs.Instances {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 
 			client, err := ds.clientPool.GetClientForInstance(inst)
 			if err != nil {
@@ -236,7 +234,7 @@ func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.R
 			}
 
 			responseCh <- rsp
-		}()
+		})
 	}
 
 	wg.Wait()

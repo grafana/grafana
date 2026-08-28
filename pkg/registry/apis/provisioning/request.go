@@ -33,8 +33,7 @@ func readBody(r *http.Request, maxSize int64) ([]byte, error) {
 	limitedBody := http.MaxBytesReader(nil, r.Body, maxSize)
 	body, err := io.ReadAll(limitedBody)
 	if err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, apierrors.NewRequestEntityTooLargeError(
 				fmt.Sprintf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize),
 			)
@@ -64,8 +63,7 @@ func unmarshalJSON(r *http.Request, maxSize int64, v interface{}) error {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(v); err != nil {
-		var maxBytesError *http.MaxBytesError
-		if errors.As(err, &maxBytesError) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return fmt.Errorf("%s: max size %d bytes", errMsgRequestTooLarge, maxSize)
 		}
 		if err == io.EOF {

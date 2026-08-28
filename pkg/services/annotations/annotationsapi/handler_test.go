@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -269,7 +268,7 @@ func TestMigrationProxy(t *testing.T) {
 
 		t.Run("text-only PUT with omitted times updates in place and preserves the stored time range", func(t *testing.T) {
 			existing := existingAnno("anno-1")
-			existing.Spec.TimeEnd = ptr.To(int64(2000))
+			existing.Spec.TimeEnd = new(int64(2000))
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 
@@ -353,7 +352,7 @@ func TestMigrationProxy(t *testing.T) {
 
 		t.Run("editing a range preserves its end", func(t *testing.T) {
 			existing := existingAnno("anno-1")
-			existing.Spec.TimeEnd = ptr.To(int64(2000))
+			existing.Spec.TimeEnd = new(int64(2000))
 			client := &fakeClient{existing: existing}
 			proxy := newProxy(client)
 

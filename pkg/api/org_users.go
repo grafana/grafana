@@ -273,11 +273,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
@@ -307,11 +303,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {

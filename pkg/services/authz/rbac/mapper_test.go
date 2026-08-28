@@ -569,7 +569,7 @@ func TestGetAPIResourceName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Repeat to defeat Go's per-range map iteration randomization: a
 			// non-deterministic implementation would eventually return a different key.
-			for i := 0; i < 100; i++ {
+			for range 100 {
 				name, ok := tt.reg.GetAPIResourceName(tt.group, tt.resource)
 				assert.Equal(t, tt.wantOK, ok)
 				assert.Equal(t, tt.wantName, name)

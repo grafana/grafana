@@ -1085,9 +1085,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	})
 
 	if err != nil {
-		var quotaErr QuotaExceededError
 		msg := err.Error()
-		if errors.As(err, &quotaErr) {
+		if quotaErr, ok := errors.AsType[QuotaExceededError](err); ok {
 			msg = quotaErr.Message()
 		}
 		return &resourcepb.CreateResponse{

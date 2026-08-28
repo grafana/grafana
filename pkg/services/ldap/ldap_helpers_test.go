@@ -43,10 +43,7 @@ func TestGetUsersIteration(t *testing.T) {
 			_ = getUsersIteration(logins, func(first int, last int) error {
 				assert.Equal(t, pageSize*i, first)
 
-				expectedLast := pageSize*i + pageSize
-				if expectedLast > userCount {
-					expectedLast = userCount
-				}
+				expectedLast := min(pageSize*i+pageSize, userCount)
 
 				assert.Equal(t, expectedLast, last)
 

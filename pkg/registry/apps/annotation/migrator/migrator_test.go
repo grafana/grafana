@@ -199,7 +199,7 @@ func (w *fakeWriter) CountMigrated(_ context.Context, namespace string) (int64, 
 
 func makeRows(n int) []LegacyAnnotation {
 	rows := make([]LegacyAnnotation, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		rows[i] = LegacyAnnotation{ID: int64(i + 1), Epoch: int64(1000 + i), Text: fmt.Sprintf("a%d", i+1)}
 	}
 	return rows

@@ -344,7 +344,6 @@ func TestService_GetForProvider(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -461,7 +460,6 @@ func TestService_GetForProvider_StorageReadMode(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -590,7 +588,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -690,7 +687,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCasesUpsert {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -901,7 +897,6 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1057,7 +1052,6 @@ func TestService_List(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1418,7 +1412,6 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1742,9 +1735,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "encrypted-client-secret"
 
 		reloadable := ssosettingstests.NewMockReloadable(t)
@@ -1788,9 +1779,7 @@ func TestService_Upsert(t *testing.T) {
 
 		expected := settings
 		expected.Settings = make(map[string]any)
-		for key, value := range settings.Settings {
-			expected.Settings[key] = value
-		}
+		maps.Copy(expected.Settings, settings.Settings)
 		expected.Settings["client_secret"] = "current-client-secret"
 		expected.Settings["private_key"] = "current-private-key"
 
@@ -2528,7 +2517,6 @@ func TestService_decryptSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -2606,7 +2594,6 @@ func Test_ProviderService(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

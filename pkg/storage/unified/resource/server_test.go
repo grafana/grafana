@@ -765,8 +765,7 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),

@@ -1032,7 +1032,7 @@ func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
 // capWidget is a hub (internal) test type; capWidgetV1/capWidgetV2 are its external versions.
 type capWidget struct {
 	v1.TypeMeta   `json:",inline"`
-	v1.ObjectMeta `json:"metadata,omitempty"`
+	v1.ObjectMeta `json:"metadata"`
 	Value         string `json:"value"`
 }
 
@@ -1044,7 +1044,7 @@ func (in *capWidget) DeepCopyObject() runtime.Object {
 
 type capWidgetV1 struct {
 	v1.TypeMeta   `json:",inline"`
-	v1.ObjectMeta `json:"metadata,omitempty"`
+	v1.ObjectMeta `json:"metadata"`
 	Value         string `json:"value"`
 }
 
@@ -1056,7 +1056,7 @@ func (in *capWidgetV1) DeepCopyObject() runtime.Object {
 
 type capWidgetV2 struct {
 	v1.TypeMeta   `json:",inline"`
-	v1.ObjectMeta `json:"metadata,omitempty"`
+	v1.ObjectMeta `json:"metadata"`
 	Value         string `json:"value"`
 }
 

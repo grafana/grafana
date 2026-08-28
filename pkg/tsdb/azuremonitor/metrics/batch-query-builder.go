@@ -92,10 +92,7 @@ func createBatches(groups []BatchQueryGroup, dataPlaneURL string) []Batch {
 	for _, group := range groups {
 		ids := resourceIDsForGroup(group)
 		for i := 0; i < len(ids); i += maxBatchSize {
-			end := i + maxBatchSize
-			if end > len(ids) {
-				end = len(ids)
-			}
+			end := min(i+maxBatchSize, len(ids))
 			chunk := ids[i:end]
 
 			// Include only the queries that own at least one resource in this chunk.

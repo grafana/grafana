@@ -152,10 +152,7 @@ func (s *SimulationEngine) QueryData(ctx context.Context, req *backend.QueryData
 			to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 			stepMillis := q.Interval.Milliseconds()
 
-			maxPoints := q.MaxDataPoints * 2
-			if maxPoints > 10000 {
-				maxPoints = 10000
-			}
+			maxPoints := min(q.MaxDataPoints*2, 10000)
 			for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
 				t := time.UnixMilli(timeWalkerMs).UTC()
 				vals := sim.GetValues(t)

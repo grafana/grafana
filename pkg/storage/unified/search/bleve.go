@@ -1979,10 +1979,7 @@ func (b *bleveIndex) subtractSnapshotMutationCount(delta int64) error {
 	if err != nil {
 		return err
 	}
-	remaining := current - delta
-	if remaining < 0 {
-		remaining = 0
-	}
+	remaining := max(current-delta, 0)
 	return writeSnapshotMutationCount(b.index, remaining)
 }
 

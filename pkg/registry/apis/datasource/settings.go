@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -32,7 +31,7 @@ func (b *DataSourceAPIBuilder) getInstanceSettings(ctx context.Context, name str
 
 	ts, _ := obj.GetUpdatedTimestamp()
 	if ts == nil {
-		ts = ptr.To(obj.GetCreationTimestamp().Time)
+		ts = new(obj.GetCreationTimestamp().Time)
 	}
 
 	gvk := obj.GetGroupVersionKind()

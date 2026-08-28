@@ -243,12 +243,12 @@ func (b *BaseDialect) CreateIndexSQL(tableName string, index *Index) string {
 }
 
 func (b *BaseDialect) QuoteColList(cols []string) string {
-	var sourceColsSQL = ""
+	var sourceColsSQL strings.Builder
 	for _, col := range cols {
-		sourceColsSQL += b.dialect.Quote(col)
-		sourceColsSQL += "\n, "
+		sourceColsSQL.WriteString(b.dialect.Quote(col))
+		sourceColsSQL.WriteString("\n, ")
 	}
-	return strings.TrimSuffix(sourceColsSQL, "\n, ")
+	return strings.TrimSuffix(sourceColsSQL.String(), "\n, ")
 }
 
 func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string {

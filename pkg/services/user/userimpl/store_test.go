@@ -653,7 +653,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		userIdsToDisable := []int64{}
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			userIdsToDisable = append(userIdsToDisable, users[i].ID)
 		}
 		disableCmd := user.BatchDisableUsersCommand{
@@ -842,7 +842,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 3)
 		require.EqualValues(t, queryResult.TotalCount, 5)
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			require.Equal(t, fmt.Sprint("loginuser", i), queryResult.Users[i].Login)
 		}
 
@@ -854,7 +854,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 3)
 		require.EqualValues(t, queryResult.TotalCount, 5)
-		for i := 0; i < 3; i++ {
+		for i := range 3 {
 			require.Equal(t, fmt.Sprint("loginuser", 4-i), queryResult.Users[i].Login)
 		}
 	})
@@ -1070,7 +1070,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	t.Helper()
 
 	users := make([]*user.User, 5)
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		cmd := fn(i)
 		user, err := svc.Create(context.Background(), cmd)
 		require.Nil(t, err)

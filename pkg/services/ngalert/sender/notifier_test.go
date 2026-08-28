@@ -797,8 +797,7 @@ func TestHangingNotifier(t *testing.T) {
 	// Initialize the discovery manager
 	// This is relevant as the updates aren't sent continually in real life, but only each updatert.
 	// The old implementation of TestHangingNotifier didn't take that into account.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	reg := prometheus.NewRegistry()
 	refreshMetrics := discovery.NewRefreshMetrics(reg)
 	mechanismMetrics, err := discovery.RegisterSDMetrics(reg, refreshMetrics)

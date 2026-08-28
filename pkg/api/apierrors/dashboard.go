@@ -21,8 +21,7 @@ import (
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
 	// --- Dashboard errors ---
-	var dashboardErr dashboardaccess.DashboardErr
-	if errors.As(err, &dashboardErr) {
+	if dashboardErr, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
@@ -38,8 +37,7 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
-	var pluginErr dashboards.UpdatePluginDashboardError
-	if errors.As(err, &pluginErr) {
+	if pluginErr, ok := errors.AsType[dashboards.UpdatePluginDashboardError](err); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
 		if plugin, exists := pluginStore.Plugin(ctx, pluginErr.PluginId); exists {

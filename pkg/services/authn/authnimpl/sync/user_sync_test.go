@@ -2443,7 +2443,8 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
+//go:fix inline
+func strPtr(s string) *string { return new(s) }
 
 func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 	tests := []struct {
@@ -2462,7 +2463,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Admin",
 			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          strPtr("Editor"),
+			wantUpdateRole:          new("Editor"),
 		},
 		{
 			name:                    "explicit None role is synced (demotion)",
@@ -2471,7 +2472,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Editor",
 			assertedRole:            org.RoleNone,
-			wantUpdateRole:          strPtr("None"),
+			wantUpdateRole:          new("None"),
 		},
 		{
 			name:                    "unchanged role is not synced",

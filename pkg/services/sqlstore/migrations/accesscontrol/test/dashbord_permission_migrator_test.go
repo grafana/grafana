@@ -289,7 +289,7 @@ func TestAnnotationActionMigration(t *testing.T) {
 			require.NoError(t, errDeleteRole)
 
 			// Test running the migrations twice to make sure they don't conflict
-			for i := 0; i < 2; i++ {
+			for i := range 2 {
 				if i == 0 {
 					// put permissions
 					putTestPermissions(t, x, tc.putRolePerms)

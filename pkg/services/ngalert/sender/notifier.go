@@ -65,8 +65,8 @@ type Alert struct {
 	Annotations labels.Labels `json:"annotations"`
 
 	// The known time range for this alert. Both ends are optional.
-	StartsAt     time.Time `json:"startsAt,omitempty"`
-	EndsAt       time.Time `json:"endsAt,omitempty"`
+	StartsAt     time.Time `json:"startsAt"`
+	EndsAt       time.Time `json:"endsAt"`
 	GeneratorURL string    `json:"generatorURL,omitempty"`
 }
 

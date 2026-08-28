@@ -136,7 +136,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
-	for attempt := 0; attempt < claimConflictRetries; attempt++ {
+	for range claimConflictRetries {
 		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			// NotFound propagates as-is: the job was completed and deleted before we got here.

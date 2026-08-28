@@ -36,8 +36,7 @@ func ProvideService(
 
 func (s *Service) registerMetrics(prom prometheus.Registerer) error {
 	err := prom.Register(s.Metrics.PublicDashboardsAmount)
-	var alreadyRegisterErr prometheus.AlreadyRegisteredError
-	if errors.As(err, &alreadyRegisterErr) {
+	if alreadyRegisterErr, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 		if alreadyRegisterErr.ExistingCollector == alreadyRegisterErr.NewCollector {
 			err = nil
 		}

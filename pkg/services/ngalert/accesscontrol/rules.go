@@ -176,7 +176,7 @@ func checkFolderAccessByFullpath(user identity.Requester, rule models.Namespaced
 
 	folderUID := rule.GetNamespaceUID()
 	targetScopes := []string{folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}
-	for _, uid := range strings.Split(fullpath, "/") {
+	for uid := range strings.SplitSeq(fullpath, "/") {
 		if uid != "" && uid != folderUID {
 			targetScopes = append(targetScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(uid))
 		}

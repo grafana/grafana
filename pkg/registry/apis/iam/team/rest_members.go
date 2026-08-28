@@ -134,10 +134,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		if offset > total {
 			offset = total
 		}
-		end := offset + limit
-		if end > total {
-			end = total
-		}
+		end := min(offset+limit, total)
 		window := t.Spec.Members[offset:end]
 
 		items := make([]iamv0alpha1.GetTeamMembersTeamUser, len(window))

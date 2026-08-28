@@ -174,7 +174,7 @@ func TestReadDashboardRecursionLimits(t *testing.T) {
 	t.Run("deeply nested spec terminates and does not recurse past the limit", func(t *testing.T) {
 		// {"spec":{"spec":{ ... {"title":"deep"} ... }}}
 		json := `{"title":"deep"}`
-		for i := 0; i < 100; i++ {
+		for range 100 {
 			json = `{"spec":` + json + `}`
 		}
 

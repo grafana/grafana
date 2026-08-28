@@ -130,8 +130,8 @@ func (v *unifiedStorageConfigValue) Set(val string) error {
 	}
 
 	// Parse comma-separated key=value pairs
-	pairs := strings.Split(val, ",")
-	for _, pair := range pairs {
+	pairs := strings.SplitSeq(val, ",")
+	for pair := range pairs {
 		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) != 2 {
 			return fmt.Errorf("invalid format: %s (expected key=value)", pair)

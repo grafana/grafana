@@ -643,8 +643,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repository with path: %s", test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -807,8 +806,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -846,8 +844,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
-		var statusError *apierrors.StatusError
-		if errors.As(err, &statusError) {
+		if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 		}
@@ -1858,7 +1855,7 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 
 	// Enqueue several jobs against the repository so the finalizer has queued work
 	// to clear when the repository is deleted.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%02d", repo, i), repo)
 	}
 

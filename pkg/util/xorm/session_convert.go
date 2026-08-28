@@ -102,7 +102,7 @@ func (session *Session) byte2Time(col *core.Column, data []byte) (outTime time.T
 }
 
 var (
-	nullFloatType = reflect.TypeOf(sql.NullFloat64{})
+	nullFloatType = reflect.TypeFor[sql.NullFloat64]()
 )
 
 // convert a db data([]byte) to a field value

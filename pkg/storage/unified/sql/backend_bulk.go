@@ -698,10 +698,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 	insertStart := time.Now()
 	maxRows := bulkHistoryInsertRowLimit(b.dialect.DialectName())
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsertBulk, sqlBulkResourceHistoryInsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Rows:        rows[start:end],

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1306,11 +1307,8 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				for _, k := range allACMetadata {
 					key := v1beta1.AccessControlAnnotation(k)
 					var expected bool
-					for _, exp := range tc.expACMetadata {
-						if exp == k {
-							expected = true
-							break
-						}
+					if slices.Contains(tc.expACMetadata, k) {
+						expected = true
 					}
 					if expected {
 						assert.Equalf(t, "true", annotations[key], "expected annotation %s to be set", key)

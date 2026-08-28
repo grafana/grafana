@@ -1053,7 +1053,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 
 		// Create 9 more versions with modifications
 		rv := initialRV
-		for i := 0; i < 9; i++ {
+		for range 9 {
 			rv, err = WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
@@ -1635,7 +1635,7 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 			require.Nil(t, res.Error)
 			expectedItemCount := len(tc.expectedVersions)
 			require.Len(t, res.Items, expectedItemCount)
-			for i := 0; i < expectedItemCount; i++ {
+			for i := range expectedItemCount {
 				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
 				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
 			}
@@ -1836,7 +1836,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(updateNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
@@ -1907,7 +1907,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(createNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,

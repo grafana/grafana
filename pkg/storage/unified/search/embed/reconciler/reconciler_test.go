@@ -49,7 +49,7 @@ func minimalDashboard(uid, title string) []byte {
 // per-dashboard embedding does one EmbedText call regardless of panel count.
 func multiPanelDashboard(uid, title string, n int) []byte {
 	panels := make([]any, n)
-	for i := 0; i < n; i++ {
+	for i := range n {
 		panels[i] = map[string]any{"id": i + 1, "title": uid, "description": "panel"}
 	}
 	body, _ := json.Marshal(map[string]any{"uid": uid, "title": title, "panels": panels})
@@ -606,8 +606,7 @@ func TestReconciler_WatchConsumer_IgnoresUnrelatedResources(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newReconciler(t, st, vec)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	ch, err := st.WatchWriteEvents(ctx)
 	require.NoError(t, err)
 	go s.consumeWatchEvents(ctx, ch)
@@ -699,7 +698,7 @@ func TestReconciler_RetryCap_DropsEventAfterMaxAttempts(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "boom", 100, minimalDashboard("boom", "Boom")))
 
-	for i := 0; i < maxEventAttempts; i++ {
+	for range maxEventAttempts {
 		s.processPending(context.Background())
 	}
 
@@ -763,8 +762,7 @@ func TestReconciler_AcquireLockBlocking_BlocksUntilAvailable(t *testing.T) {
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
 	s.lockRetryInterval = 10 * time.Millisecond
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	type result struct {
 		release func()
@@ -886,7 +884,7 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 // real progress until a new write arrives.
 func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing.T) {
 	st := &fakeStorage{}
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
@@ -916,7 +914,7 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 	t.Cleanup(func() { startupBatchSize = prev })
 
 	st := &fakeStorage{}
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("iter-%d", i)
 		st.changes = append(st.changes,

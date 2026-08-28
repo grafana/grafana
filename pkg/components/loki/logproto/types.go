@@ -3,6 +3,7 @@ package logproto
 import (
 	"fmt"
 	"io"
+	"slices"
 	"time"
 )
 
@@ -47,9 +48,9 @@ func (m *Stream) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x18
 	}
 	if len(m.Entries) > 0 {
-		for iNdEx := len(m.Entries) - 1; iNdEx >= 0; iNdEx-- {
+		for _, v := range slices.Backward(m.Entries) {
 			{
-				size, err := m.Entries[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := v.MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}

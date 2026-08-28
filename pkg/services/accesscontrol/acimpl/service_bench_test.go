@@ -322,7 +322,7 @@ func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInU
 	roles := make([]accesscontrol.Role, teamCount)
 	teamRoles := make([]accesscontrol.TeamRole, teamCount)
 	permissions := make([]accesscontrol.Permission, teamCount)
-	for i := 0; i < teamCount; i++ {
+	for i := range teamCount {
 		teamIDs[i] = int64(i + 1)
 		roles[i] = accesscontrol.Role{
 			ID: teamIDs[i], UID: fmt.Sprintf("managed_teams_%d_permissions", teamIDs[i]),
@@ -377,7 +377,7 @@ func benchGetUserPermissionsManyTeamsConcurrent(b *testing.B, teamCount, concurr
 
 		var wg sync.WaitGroup
 		wg.Add(concurrency)
-		for i := 0; i < concurrency; i++ {
+		for range concurrency {
 			go func() {
 				defer wg.Done()
 				_, err := acService.GetUserPermissions(context.Background(), signedInUser, accesscontrol.Options{})

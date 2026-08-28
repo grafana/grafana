@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	requestK8s "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	claims "github.com/grafana/authlib/types"
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
@@ -329,7 +328,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 				)
 			}
 			patched := old.DeepCopy()
-			patched.Spec.Theme = ptr.To(theme)
+			patched.Spec.Theme = new(theme)
 			return patched, nil
 		})
 	}
@@ -350,7 +349,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "user-abc", p.Name)
 		require.Equal(t, "default", p.Namespace)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 
 		require.Equal(t, []string{"user-abc"}, fake.created)
 		require.Empty(t, fake.updated)
@@ -359,7 +358,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 	t.Run("updates preferences that already exist", func(t *testing.T) {
 		existing := newPref("user-abc")
 		existing.UID = "existing-uid"
-		existing.Spec.Theme = ptr.To("light")
+		existing.Spec.Theme = new("light")
 		fake := &fakeStorage{items: map[string]*preferences.Preferences{"user-abc": existing}}
 		store := newStore(fake)
 
@@ -369,7 +368,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 
 		p, ok := obj.(*preferences.Preferences)
 		require.True(t, ok)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 
 		require.Empty(t, fake.created)
 		require.Equal(t, []string{"user-abc"}, fake.updated)
@@ -399,7 +398,7 @@ func TestPreferencesStorage_Update(t *testing.T) {
 
 		p, ok := obj.(*preferences.Preferences)
 		require.True(t, ok)
-		require.Equal(t, ptr.To("dark"), p.Spec.Theme)
+		require.Equal(t, new("dark"), p.Spec.Theme)
 		require.Equal(t, []string{"user-abc"}, fake.updated)
 	})
 

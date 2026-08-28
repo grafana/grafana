@@ -568,7 +568,6 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				{"email-asc", true},
 				{"email-desc", false},
 			} {
-				tc := tc
 				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
 					rsp := apis.DoRequest(helper, apis.RequestParams{
 						User:   helper.Org1.Admin,

@@ -1502,10 +1502,7 @@ func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
 		return
 	}
 	s.bgTaskWg.Go(func() {
-		interval := s.rateLimitWindow / 2
-		if interval < time.Minute {
-			interval = time.Minute
-		}
+		interval := max(s.rateLimitWindow/2, time.Minute)
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		for {

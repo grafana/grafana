@@ -982,20 +982,17 @@ func IsRowAlreadyExistsError(err error) bool {
 		return true
 	}
 
-	var pg *pgconn.PgError
-	if errors.As(err, &pg) {
+	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pg.Code == "23505" // unique_violation
 	}
 
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
+	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
 		// https://www.postgresql.org/docs/current/errcodes-appendix.html
 		return pqerr.Code == "23505" // unique_violation
 	}
 
-	var mysqlerr *mysql.MySQLError
-	if errors.As(err, &mysqlerr) {
+	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		// https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
 		return mysqlerr.Number == 1062 // ER_DUP_ENTRY
 	}

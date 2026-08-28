@@ -89,7 +89,7 @@ func TestFuseRRF_GroupsChunksPerUID(t *testing.T) {
 
 func TestFuseRRF_ChunkCap(t *testing.T) {
 	sem := make([]vector.VectorSearchResult, 0, maxChunksPerHybridResult+5)
-	for i := 0; i < maxChunksPerHybridResult+5; i++ {
+	for i := range maxChunksPerHybridResult + 5 {
 		sem = append(sem, vector.VectorSearchResult{
 			UID: "a", Subresource: fmt.Sprintf("panel/%d", i), Content: "c", Score: float64(i),
 		})
@@ -1204,13 +1204,13 @@ func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
 	// past the Vertex 200-record cap — so the scorer must only ever see
 	// maxRerankCandidates texts.
 	rows := make([][3]string, 200)
-	for i := 0; i < 200; i++ {
+	for i := range 200 {
 		rows[i] = [3]string{fmt.Sprintf("lex-%03d", i), fmt.Sprintf("Lex %03d", i), "f"}
 	}
 	lexResp := lexTableResponse(rows...)
 
 	sem := make([]vector.VectorSearchResult, 150)
-	for i := 0; i < 150; i++ {
+	for i := range 150 {
 		sem[i] = vector.VectorSearchResult{
 			UID: fmt.Sprintf("sem-%03d", i), Title: fmt.Sprintf("Sem %03d", i),
 			Content: "c", Score: float64(i), Folder: "f",

@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -997,9 +998,7 @@ func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.
 
 	// Return a copy to avoid external modifications
 	rolesCopy := make(map[string]*accesscontrol.RoleDTO, len(s.roles))
-	for k, v := range s.roles {
-		rolesCopy[k] = v
-	}
+	maps.Copy(rolesCopy, s.roles)
 	return rolesCopy
 }
 

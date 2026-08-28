@@ -265,7 +265,6 @@ func TestMatchesAllowedPath(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			allGlobs, err := cacheGlobs(tc.allowList)
@@ -295,7 +294,6 @@ func TestCacheGlobs(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			cache, err := cacheGlobs(tc.allowList)

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -16,12 +17,7 @@ func NewKeepFieldsFrameProcessor(config KeepFieldsFrameProcessorConfig) *KeepFie
 }
 
 func stringInSlice(str string, slice []string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, str)
 }
 
 const FrameProcessorTypeKeepFields = "keepFields"

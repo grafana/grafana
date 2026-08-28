@@ -1049,8 +1049,7 @@ func dashboardErrResponse(err error, fallbackMessage string) response.Response {
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 	}
 
-	var statusErr *k8serrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr, ok := errors.AsType[*k8serrors.StatusError](err); ok {
 		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 

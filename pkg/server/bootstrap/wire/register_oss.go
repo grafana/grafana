@@ -1,5 +1,4 @@
 //go:build !enterprise && !pro
-// +build !enterprise,!pro
 
 package wire
 

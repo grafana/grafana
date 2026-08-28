@@ -60,7 +60,7 @@ type EntryPointInfo struct {
 	Assets struct {
 		JS  []string `json:"js,omitempty"`
 		CSS []string `json:"css,omitempty"`
-	} `json:"assets,omitempty"`
+	} `json:"assets"`
 }
 
 var (

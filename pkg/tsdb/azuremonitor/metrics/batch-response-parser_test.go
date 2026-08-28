@@ -370,7 +370,7 @@ func TestParseBatchResponse(t *testing.T) {
 func TestFramesFromBatchResponseValueAlias(t *testing.T) {
 	lowerID := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
 	q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
-		lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+		lowerID: {ResourceGroup: new("rg"), ResourceName: new("vm1")},
 	})
 	q.Alias = "{{namespace}} {{resourceName}} {{metric}}"
 
@@ -390,7 +390,7 @@ func TestFramesFromBatchResponseValueAlias(t *testing.T) {
 func TestFramesFromBatchResponseValueSubscriptionAlias(t *testing.T) {
 	lowerID := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
 	q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
-		lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+		lowerID: {ResourceGroup: new("rg"), ResourceName: new("vm1")},
 	})
 	q.Alias = "{{subscription}}"
 
@@ -414,7 +414,7 @@ func TestParseResponseLegacyBatchEquivalence(t *testing.T) {
 
 	build := func(grafanaSql bool) (data.Frames, data.Frames) {
 		q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
-			lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+			lowerID: {ResourceGroup: new("rg"), ResourceName: new("vm1")},
 		})
 		q.Alias = "{{resourceName}} {{metric}}"
 		q.GrafanaSql = grafanaSql

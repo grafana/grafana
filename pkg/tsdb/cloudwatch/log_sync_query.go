@@ -48,8 +48,7 @@ var executeSyncLogQuery = func(ctx context.Context, ds *DataSource, req *backend
 		}
 
 		getQueryResultsOutput, err := ds.syncQuery(ctx, logsClient, q, logsQuery, ds.Settings.LogsTimeout.Duration)
-		var sourceError backend.ErrorWithSource
-		if errors.As(err, &sourceError) {
+		if sourceError, ok := errors.AsType[backend.ErrorWithSource](err); ok {
 			resp.Responses[refId] = backend.ErrorResponseWithErrorSource(sourceError)
 			continue
 		}

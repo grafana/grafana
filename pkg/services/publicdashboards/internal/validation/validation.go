@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"slices"
+
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
@@ -54,10 +56,5 @@ func IsValidShortUID(uid string) bool {
 }
 
 func IsValidShareType(shareType models.ShareType) bool {
-	for _, t := range models.ValidShareTypes {
-		if t == shareType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(models.ValidShareTypes, shareType)
 }

@@ -138,7 +138,7 @@ func (c *Converter) convertWithLabelsColumn(metrics []influx.Metric) ([]telemetr
 		for i := 2; i < len(frame.fields); i++ {
 			if frame.fields[i].Len() < frame.fields[0].Len() {
 				numNulls := frame.fields[0].Len() - frame.fields[i].Len()
-				for j := 0; j < numNulls; j++ {
+				for range numNulls {
 					frame.fields[i].Append(nil)
 				}
 			}
@@ -213,7 +213,7 @@ func (s *metricFrame) extend(m influx.Metric) error {
 
 func tagsToLabels(tags []*influx.Tag) data.Labels {
 	labels := data.Labels{}
-	for i := 0; i < len(tags); i += 1 {
+	for i := range tags {
 		labels[tags[i].Key] = tags[i].Value
 	}
 	return labels
@@ -249,7 +249,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 			// we fill it with nulls up to the currently processed index.
 			if field.Len() < s.fields[0].Len()-1 {
 				numNulls := s.fields[0].Len() - 1 - field.Len()
-				for i := 0; i < numNulls; i++ {
+				for range numNulls {
 					field.Append(nil)
 				}
 			}
@@ -261,7 +261,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 			// we fill it with nulls up to the currently processed index.
 			if field.Len() < s.fields[0].Len()-1 {
 				numNulls := s.fields[0].Len() - 1 - field.Len()
-				for i := 0; i < numNulls; i++ {
+				for range numNulls {
 					field.Append(nil)
 				}
 			}

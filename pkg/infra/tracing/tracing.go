@@ -334,7 +334,7 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 	}
 
 	propagators := []propagation.TextMapPropagator{}
-	for _, p := range strings.Split(ots.cfg.Propagation, ",") {
+	for p := range strings.SplitSeq(ots.cfg.Propagation, ",") {
 		switch p {
 		case w3cPropagator:
 			propagators = append(propagators, propagation.TraceContext{}, propagation.Baggage{})

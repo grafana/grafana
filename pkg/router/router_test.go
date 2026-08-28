@@ -24,7 +24,6 @@ func (stubLoader) Notify(context.Context) (<-chan struct{}, error) { return make
 func withGroups(groups ...string) *GrafanaRouter {
 	s := NewGrafanaRouter(stubLoader{})
 	for _, g := range groups {
-		g := g
 		s.served[g] = &handlerEntry{
 			handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte(g))
@@ -217,8 +216,7 @@ func TestRunDoesNotBusyLoopOnClosedNotifyChannel(t *testing.T) {
 	loader := &countingLoader{notifyCh: notifyCh}
 	r := NewGrafanaRouter(loader)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	if err := r.Run(ctx); err != nil {
 		t.Fatalf("Run: %v", err)
 	}

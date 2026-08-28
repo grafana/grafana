@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"maps"
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -39,9 +40,7 @@ func AppManifestsWithKinds(manifiests []app.Manifest) []app.Manifest {
 func SelectableFieldsForManifests(manifests []app.Manifest) map[LowerGroupResource][]string {
 	fields := map[LowerGroupResource][]string{}
 	for _, m := range manifests {
-		for k, v := range selectableFieldsForManifest(m) {
-			fields[k] = v
-		}
+		maps.Copy(fields, selectableFieldsForManifest(m))
 	}
 	return fields
 }

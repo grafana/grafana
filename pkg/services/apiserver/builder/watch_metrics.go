@@ -28,8 +28,7 @@ func newWatchMetrics(reg prometheus.Registerer) *watchMetrics {
 
 	if reg != nil {
 		if err := reg.Register(h); err != nil {
-			var already prometheus.AlreadyRegisteredError
-			if errors.As(err, &already) {
+			if already, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 				h = already.ExistingCollector.(*prometheus.HistogramVec)
 			} else {
 				panic(err)

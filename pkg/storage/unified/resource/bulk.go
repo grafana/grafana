@@ -580,10 +580,7 @@ func (x *bulkRV) next(obj metav1.Object) int64 {
 
 	// Use the object's timestamp as the base, but never go below the last
 	// emitted RV so that every value is unique regardless of iterator order.
-	base := ts
-	if base < x.lastRV {
-		base = x.lastRV
-	}
+	base := max(ts, x.lastRV)
 
 	// Increment, keeping the sub-millisecond portion (low 22 bits) under 1000
 	// so that the snowflake ↔ microRV roundtrip (SnowflakeFromRV / RVFromSnowflake)

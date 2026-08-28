@@ -349,12 +349,10 @@ func isPermanentItemError(err error) bool {
 	}
 	// SQLSTATE class 22 = data exception, e.g. NUL byte in text. Class 23
 	// is excluded: missing partitions surface as 23514 check_violation.
-	var pgxErr *pgconn.PgError
-	if errors.As(err, &pgxErr) {
+	if pgxErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return strings.HasPrefix(pgxErr.Code, "22")
 	}
-	var pqErr *pq.Error
-	if errors.As(err, &pqErr) {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqErr.Code.Class() == "22"
 	}
 	return false

@@ -433,7 +433,7 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 
 	// convert the results to DTOs
 	dtoResults := make([]MigrateDataResponseItemDTO, len(results))
-	for i := 0; i < len(results); i++ {
+	for i := range results {
 		dtoResults[i] = MigrateDataResponseItemDTO{
 			Name:       results[i].Name,
 			Type:       MigrateDataType(results[i].Type),
@@ -548,7 +548,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 	}
 
 	dtos := make([]SnapshotDTO, len(snapshotList))
-	for i := 0; i < len(snapshotList); i++ {
+	for i := range snapshotList {
 		dtos[i] = SnapshotDTO{
 			SnapshotUID: snapshotList[i].UID,
 			Status:      fromSnapshotStatus(snapshotList[i].Status),

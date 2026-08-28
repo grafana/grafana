@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -71,7 +72,7 @@ type azureClaims struct {
 	Groups            []string               `json:"groups"`
 	Name              string                 `json:"name"`
 	ID                string                 `json:"oid"`
-	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
+	ClaimNames        claimNames             `json:"_claim_names"`
 	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
 	TenantID          string                 `json:"tid,omitempty"`
 	OAuthVersion      string                 `json:"ver,omitempty"`
@@ -544,10 +545,8 @@ func validateFederatedCredentialAudience(info *social.OAuthInfo, requester ident
 	if info.ClientAuthentication != social.ManagedIdentity {
 		return nil
 	}
-	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
-		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
-			return nil
-		}
+	if slices.Contains(supportedFederatedCredentialAudiences, info.FederatedCredentialAudience) {
+		return nil
 	}
 	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
 }
@@ -750,10 +749,5 @@ func (s *SocialAzureAD) isAllowedTenant(logger log.Logger, tenantID string) bool
 		return true
 	}
 
-	for _, t := range s.allowedOrganizations {
-		if t == tenantID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.allowedOrganizations, tenantID)
 }

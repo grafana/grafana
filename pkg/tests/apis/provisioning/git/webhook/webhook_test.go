@@ -70,10 +70,10 @@ func githubHealthCheckMocks() []ghmock.MockBackendOption {
 // repository's finalizer stuck and CleanupAllResources timing out.
 func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendOption {
 	hook := &github.Hook{
-		ID:     github.Ptr(hookID),
-		Active: github.Ptr(true),
+		ID:     new(hookID),
+		Active: new(true),
 		Events: []string{"pull_request", "push"}, // == subscribedEvents
-		Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
+		Config: &github.HookConfig{URL: new(webhookURL)},
 	}
 	encode := func(v any) http.HandlerFunc {
 		return func(w http.ResponseWriter, _ *http.Request) {
@@ -270,8 +270,8 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			_ = json.NewEncoder(w).Encode(&github.IssueComment{
-				ID:   github.Ptr(int64(1)),
-				Body: github.Ptr(comment.GetBody()),
+				ID:   new(int64(1)),
+				Body: new(comment.GetBody()),
 			})
 		}),
 	))
@@ -488,9 +488,9 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
+					ID:     new(int64(200)),
 					Events: []string{"pull_request", "push"},
-					Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
+					Config: &github.HookConfig{URL: new(webhookURL)},
 				})
 			}),
 		),

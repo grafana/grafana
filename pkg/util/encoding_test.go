@@ -140,7 +140,7 @@ func TestGetRandomString(t *testing.T) {
 
 	// Generate random strings and count the frequency of each character
 	m := make(map[string]int)
-	for i := 0; i < rounds; i++ {
+	for range rounds {
 		r, err := GetRandomString(length)
 		require.NoError(t, err)
 
@@ -183,7 +183,7 @@ func TestGetRandomDigits(t *testing.T) {
 
 	// Generate random strings and count the frequency of each character
 	m := make(map[string]int)
-	for i := 0; i < rounds; i++ {
+	for range rounds {
 		r, err := GetRandomString(length, []byte(charset)...)
 		require.NoError(t, err)
 

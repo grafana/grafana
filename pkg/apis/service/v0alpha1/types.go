@@ -10,9 +10,9 @@ const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.service.v0alpha1."
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ExternalName struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec ExternalNameSpec `json:"spec,omitempty"`
+	Spec ExternalNameSpec `json:"spec"`
 }
 
 func (ExternalName) OpenAPIModelName() string {
@@ -30,7 +30,7 @@ func (ExternalNameSpec) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ExternalNameList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []ExternalName `json:"items"`
 }

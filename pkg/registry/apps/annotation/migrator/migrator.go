@@ -77,10 +77,7 @@ func (c UpdateCursor) rewind(d time.Duration) UpdateCursor {
 	if d <= 0 {
 		return c
 	}
-	updated := c.Updated - d.Milliseconds()
-	if updated < 0 {
-		updated = 0
-	}
+	updated := max(c.Updated-d.Milliseconds(), 0)
 	return UpdateCursor{Updated: updated}
 }
 

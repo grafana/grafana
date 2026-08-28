@@ -144,7 +144,8 @@ func createAPIAdminSut(
 	}
 }
 
-func ptrTo[T any](v T) *T { return &v }
+//go:fix inline
+func ptrTo[T any](v T) *T { return new(v) }
 
 func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 	mimirDS := &datasources.DataSource{
@@ -188,11 +189,11 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+					ExternalAlertmanagerUID: new("mimir-ds-uid"),
 				},
 			},
 			wantStatus: http.StatusCreated,
-			wantUID:    ptrTo("mimir-ds-uid"),
+			wantUID:    new("mimir-ds-uid"),
 		},
 		{
 			name:        "POST with remote_alertmanager_uid empty clears it",
@@ -201,15 +202,15 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+					ExternalAlertmanagerUID: new("mimir-ds-uid"),
 				},
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo(""),
+					ExternalAlertmanagerUID: new(""),
 				},
 			},
 			wantStatus: http.StatusCreated,
-			wantUID:    ptrTo(""),
+			wantUID:    new(""),
 		},
 		{
 			name:        "POST with non-existent datasource returns 400",
@@ -218,7 +219,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("nonexistent-uid"),
+					ExternalAlertmanagerUID: new("nonexistent-uid"),
 				},
 			},
 			wantStatus: http.StatusBadRequest,
@@ -230,7 +231,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("prom-uid"),
+					ExternalAlertmanagerUID: new("prom-uid"),
 				},
 			},
 			wantStatus: http.StatusBadRequest,
@@ -242,7 +243,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("vanilla-am"),
+					ExternalAlertmanagerUID: new("vanilla-am"),
 				},
 			},
 			wantStatus: http.StatusBadRequest,
@@ -253,7 +254,7 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			posts: []definitions.PostableNGalertConfig{
 				{
 					AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-					ExternalAlertmanagerUID: ptrTo("any-uid"),
+					ExternalAlertmanagerUID: new("any-uid"),
 				},
 			},
 			wantStatus: http.StatusBadRequest,
@@ -325,7 +326,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 	// First POST stores the UID with a valid datasource present.
 	resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
 		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-		ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+		ExternalAlertmanagerUID: new("mimir-ds-uid"),
 	})
 	require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -336,7 +337,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 	// succeed because validation is skipped when the UID hasn't changed.
 	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
 		AlertmanagersChoice:     ptrTo(definitions.AllAlertmanagers),
-		ExternalAlertmanagerUID: ptrTo("mimir-ds-uid"),
+		ExternalAlertmanagerUID: new("mimir-ds-uid"),
 	})
 	require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -344,7 +345,7 @@ func TestExternalAlertmanagerUID_ValidateOnlyWhenChanged(t *testing.T) {
 	// validation as before.
 	resp = sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
 		AlertmanagersChoice:     ptrTo(definitions.InternalAlertmanager),
-		ExternalAlertmanagerUID: ptrTo("different-uid"),
+		ExternalAlertmanagerUID: new("different-uid"),
 	})
 	require.Equal(t, http.StatusBadRequest, resp.Status())
 }
@@ -429,11 +430,11 @@ func TestExternalAlertmanagerUID_PostRejectedWhenIniSet(t *testing.T) {
 	}{
 		{
 			name: "set non-empty UID with ini set",
-			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: ptrTo("user-uid")},
+			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: new("user-uid")},
 		},
 		{
 			name: "clear UID with ini set",
-			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: ptrTo("")},
+			body: definitions.PostableNGalertConfig{ExternalAlertmanagerUID: new("")},
 		},
 	}
 

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1058,10 +1059,8 @@ func TestGetFolderUIDsForFilterWithHistoricalFolders(t *testing.T) {
 	// Helper to create simple folder access override functions.
 	canReadRulesInFolders := func(folderUids ...string) func(folderUID string) (bool, error) {
 		return func(folderUID string) (bool, error) {
-			for _, f := range folderUids {
-				if folderUID == f {
-					return true, nil
-				}
+			if slices.Contains(folderUids, folderUID) {
+				return true, nil
 			}
 			return false, nil
 		}

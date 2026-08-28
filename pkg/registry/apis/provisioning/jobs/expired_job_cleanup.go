@@ -31,15 +31,11 @@ func NewJobCleanupController(
 ) *JobCleanupController {
 	// Calculate cleanup interval based on expiry duration
 	// Run cleanup every 3-4 expiry intervals to detect expired leases promptly but not too aggressively
-	cleanupInterval := expiry * 3
+	cleanupInterval := min(
+		// Enforce minimum and maximum bounds
+		max(
 
-	// Enforce minimum and maximum bounds
-	if cleanupInterval < 30*time.Second {
-		cleanupInterval = 30 * time.Second
-	}
-	if cleanupInterval > 5*time.Minute {
-		cleanupInterval = 5 * time.Minute
-	}
+			expiry*3, 30*time.Second), 5*time.Minute)
 
 	return &JobCleanupController{
 		store:           store,

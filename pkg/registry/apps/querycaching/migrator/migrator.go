@@ -121,7 +121,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 type objectMeta struct {
 	Name              string      `json:"name,omitempty"`
 	Namespace         string      `json:"namespace,omitempty"`
-	CreationTimestamp metav1.Time `json:"creationTimestamp,omitempty"`
+	CreationTimestamp metav1.Time `json:"creationTimestamp"`
 }
 
 // queryCacheConfigSpec mirrors querycaching/v1beta1.QueryCacheConfigSpec.

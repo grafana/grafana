@@ -38,7 +38,7 @@ type FSFrontendSettings struct {
 
 	AnalyticsConsoleReporting     bool                           `json:"analyticsConsoleReporting,omitempty"`
 	PluginImportTelemetryPackages []string                       `json:"pluginImportTelemetryPackages,omitempty"`
-	GrafanaJavascriptAgent        setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent,omitempty"`
+	GrafanaJavascriptAgent        setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
 
 	ApplicationInsightsConnectionString  string `json:"applicationInsightsConnectionString,omitempty"`
 	ApplicationInsightsEndpointUrl       string `json:"applicationInsightsEndpointUrl,omitempty"`

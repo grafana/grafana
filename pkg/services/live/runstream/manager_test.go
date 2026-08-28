@@ -250,8 +250,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		WithCheckConfig(10*time.Millisecond, 3),
 	)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go func() {
 		_ = manager.Run(ctx)
 	}()
@@ -291,8 +290,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 
 	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go func() {
 		_ = manager.Run(ctx)
 	}()
@@ -346,8 +344,7 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 
 	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go func() {
 		_ = manager.Run(ctx)
 	}()
@@ -379,8 +376,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 
 	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go func() {
 		_ = manager.Run(ctx)
 	}()
@@ -448,8 +444,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 
 	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	go func() {
 		_ = manager.Run(ctx)
 	}()

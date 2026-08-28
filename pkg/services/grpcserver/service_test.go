@@ -128,8 +128,7 @@ func TestGracefulShutdown(t *testing.T) {
 		healthClient := grpc_health_v1.NewHealthClient(conn)
 
 		// Start a watch that simulates a hanging connection
-		streamCtx, streamCancel := context.WithCancel(context.Background())
-		defer streamCancel()
+		streamCtx := t.Context()
 
 		stream, err := healthClient.Watch(streamCtx, &grpc_health_v1.HealthCheckRequest{})
 		require.NoError(t, err)
@@ -242,7 +241,7 @@ func TestGracefulShutdown(t *testing.T) {
 		<-service.startedChan
 
 		// Create multiple client connections
-		for i := 0; i < 5; i++ {
+		for range 5 {
 			conn, err := grpc.NewClient(
 				service.GetAddress(),
 				grpc.WithTransportCredentials(insecure.NewCredentials()),

@@ -703,7 +703,7 @@ func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventSt
 	testutil.SkipIntegrationTestInShortMode(t)
 	// Create multiple events (more than batch size to test batching)
 	eventKeys := make([]string, 75)
-	for i := 0; i < 75; i++ {
+	for i := range 75 {
 		event := Event{
 			Namespace:       "default",
 			Group:           "apps",
@@ -733,7 +733,7 @@ func testEventStoreBatchDelete(t *testing.T, ctx context.Context, store *eventSt
 	require.NoError(t, err)
 
 	// Verify all events were deleted
-	for i := 0; i < 75; i++ {
+	for i := range 75 {
 		_, err := store.Get(ctx, EventKey{
 			Namespace:       "default",
 			Group:           "apps",

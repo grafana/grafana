@@ -187,8 +187,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	userInfo, err := connector.UserInfo(ctx, connector.Client(clientCtx, token), token)
 	if err != nil {
-		var sErr *connectors.SocialError
-		if errors.As(err, &sErr) {
+		if sErr, ok := errors.AsType[*connectors.SocialError](err); ok {
 			return nil, fromSocialErr(sErr)
 		}
 		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)

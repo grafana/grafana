@@ -348,8 +348,8 @@ func (ks *keySetHTTP) getCacheExpiration(cacheControl string) time.Duration {
 		return cacheDuration
 	}
 
-	parts := strings.Split(cacheControl, ",")
-	for _, part := range parts {
+	parts := strings.SplitSeq(cacheControl, ",")
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if strings.HasPrefix(part, "max-age=") {
 			maxAge, err := strconv.Atoi(part[8:])

@@ -307,10 +307,7 @@ func contextualTupleChunks(contextuals *openfgav1.ContextualTupleKeys) []*openfg
 
 	chunks := make([]*openfgav1.ContextualTupleKeys, 0, (len(tuples)+maxContextualTuplesPerRequest-1)/maxContextualTuplesPerRequest)
 	for i := 0; i < len(tuples); i += maxContextualTuplesPerRequest {
-		end := i + maxContextualTuplesPerRequest
-		if end > len(tuples) {
-			end = len(tuples)
-		}
+		end := min(i+maxContextualTuplesPerRequest, len(tuples))
 		chunks = append(chunks, &openfgav1.ContextualTupleKeys{TupleKeys: tuples[i:end]})
 	}
 	return chunks

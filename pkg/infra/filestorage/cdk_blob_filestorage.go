@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
 	"strings"
 
 	"gocloud.dev/blob"
@@ -113,9 +115,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 
 		metadata = make(map[string]string)
 		if command.Properties != nil {
-			for k, v := range command.Properties {
-				metadata[k] = v
-			}
+			maps.Copy(metadata, command.Properties)
 		}
 		metadata[originalPathAttributeKey] = command.Path
 		return c.bucket.WriteAll(ctx, strings.ToLower(command.Path), contents, &blob.WriterOptions{
@@ -130,9 +130,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 
 	if command.Properties != nil {
 		metadata = make(map[string]string)
-		for k, v := range command.Properties {
-			metadata[k] = v
-		}
+		maps.Copy(metadata, command.Properties)
 	} else {
 		metadata = existing.Properties
 	}
@@ -183,8 +181,8 @@ func (c cdkBlobStorage) CreateFolder(ctx context.Context, path string) error {
 	folderToOriginalCasing := make(map[string]string)
 	foundFolderIndex := -1
 
-	for i := len(precedingFolders) - 1; i >= 0; i-- {
-		currentFolder := precedingFolders[i]
+	for i, currentFolder := range slices.Backward(precedingFolders) {
+
 		att, err := c.bucket.Attributes(ctx, strings.ToLower(currentFolder+Delimiter+directoryMarker))
 		if err != nil {
 			if gcerrors.Code(err) != gcerrors.NotFound {

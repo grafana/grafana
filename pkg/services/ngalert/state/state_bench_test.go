@@ -17,7 +17,7 @@ import (
 func BenchmarkCreateAndPatch(b *testing.B) {
 	cache := newCache()
 	rule := models.RuleGen.With(func(rule *models.AlertRule) {
-		for i := 0; i < 2; i++ {
+		for range 2 {
 			rule.Labels = data.Labels{
 				"label-1": "{{ $value }}",
 				"label-2": "{{ $values.A.Labels.instance }} has value {{ $values.A }}",

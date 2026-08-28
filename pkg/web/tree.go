@@ -246,11 +246,11 @@ func (t *Tree) addSubtree(segment, pattern string, handle Handle) *Leaf {
 func (t *Tree) addNextSegment(pattern string, handle Handle) *Leaf {
 	pattern = strings.TrimPrefix(pattern, "/")
 
-	i := strings.Index(pattern, "/")
-	if i == -1 {
+	before, after, ok := strings.Cut(pattern, "/")
+	if !ok {
 		return t.addLeaf(pattern, handle)
 	}
-	return t.addSubtree(pattern[:i], pattern[i+1:], handle)
+	return t.addSubtree(before, after, handle)
 }
 
 func (t *Tree) Add(pattern string, handle Handle) *Leaf {
@@ -367,11 +367,11 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 }
 
 func (t *Tree) matchNextSegment(globLevel int, url string, params map[string]string) (Handle, bool) {
-	i := strings.Index(url, "/")
-	if i == -1 {
+	before, after, ok := strings.Cut(url, "/")
+	if !ok {
 		return t.matchLeaf(globLevel, url, params)
 	}
-	return t.matchSubtree(globLevel, url[:i], url[i+1:], params)
+	return t.matchSubtree(globLevel, before, after, params)
 }
 
 func (t *Tree) Match(url string) (Handle, map[string]string, bool) {

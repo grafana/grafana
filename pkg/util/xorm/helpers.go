@@ -67,8 +67,7 @@ func isStructZero(v reflect.Value) bool {
 		return true
 	}
 
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Field(i)
+	for _, field := range v.Fields() {
 		switch field.Kind() {
 		case reflect.Pointer:
 			field = field.Elem()
@@ -175,7 +174,7 @@ func sliceEq(left, right []string) bool {
 	}
 	sort.Sort(sort.StringSlice(left))
 	sort.Sort(sort.StringSlice(right))
-	for i := 0; i < len(left); i++ {
+	for i := range left {
 		if left[i] != right[i] {
 			return false
 		}

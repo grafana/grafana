@@ -66,8 +66,7 @@ func TestBroadcaster(t *testing.T) {
 }
 
 func TestBroadcasterUnsubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -111,8 +110,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 }
 
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 
@@ -124,7 +122,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
-	for i := 0; i < numSubs; i++ {
+	for range numSubs {
 		_, err := b.Subscribe(ctx, "test", "test")
 		require.NoError(t, err)
 	}
@@ -134,7 +132,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// event. Use a timeout to detect deadlock.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+1; i++ {
+		for i := range subBuf + ovfCap + 1 {
 			ch <- i
 		}
 		close(done)
@@ -149,8 +147,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 }
 
 func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -166,13 +163,13 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 	// With overflow, the subscriber should NOT be disconnected.
 	const totalItems = subBuf + 20
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items — they should arrive in order.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case v, ok := <-sub:
 			require.True(t, ok, "subscriber channel closed prematurely at item %d", i)
@@ -184,8 +181,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 }
 
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -203,7 +199,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 	// The subscriber never reads, so it should be disconnected.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < subBuf+ovfCap+10; i++ {
+		for i := range subBuf + ovfCap + 10 {
 			ch <- i
 		}
 		close(done)
@@ -236,8 +232,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 }
 
 func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -254,13 +249,13 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	// Send more items than the channel buffer can hold, causing overflow.
 	const totalItems = subBuf + 15
 	go func() {
-		for i := 0; i < totalItems; i++ {
+		for i := range totalItems {
 			ch <- i
 		}
 	}()
 
 	// Read all items to catch up.
-	for i := 0; i < totalItems; i++ {
+	for i := range totalItems {
 		select {
 		case _, ok := <-sub:
 			require.True(t, ok)
@@ -336,8 +331,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 // or shutdown. After the fix the cancel path tears the subscription down, so no
 // subscribers remain regardless of how the cancel races registration.
 func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -348,10 +342,8 @@ func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
 
 	const n = 200
 	var wg sync.WaitGroup
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range n {
+		wg.Go(func() {
 			cctx, ccancel := context.WithCancel(ctx)
 			// Cancel concurrently to race the two-phase Subscribe so that some
 			// callers take the ctx.Done() path after the subscription is queued.
@@ -361,7 +353,7 @@ func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
 				// Registered before the cancel landed; a real caller would clean up.
 				b.Unsubscribe(sub)
 			}
-		}()
+		})
 	}
 	wg.Wait()
 

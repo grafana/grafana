@@ -19,12 +19,12 @@ type fakeClient struct {
 	dim       int
 	tokens    int
 	failAfter int32
-	callNum   int32
+	callNum   atomic.Int32
 	wantDim   int
 }
 
 func (f *fakeClient) EmbedTexts(_ context.Context, texts []string, dimensions int) (EmbedResult, error) {
-	n := atomic.AddInt32(&f.callNum, 1)
+	n := f.callNum.Add(1)
 	f.mu.Lock()
 	f.calls = append(f.calls, texts)
 	f.wantDim = dimensions

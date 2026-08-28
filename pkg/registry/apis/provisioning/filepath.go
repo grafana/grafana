@@ -7,10 +7,10 @@ import (
 )
 
 func pathAfterPrefix(urlPath, prefix string) (string, error) {
-	idx := strings.Index(urlPath, prefix)
-	if idx == -1 {
+	_, after, ok := strings.Cut(urlPath, prefix)
+	if !ok {
 		return "", apierrors.NewBadRequest("invalid request path")
 	}
 
-	return strings.TrimPrefix(urlPath[idx+len(prefix):], "/"), nil
+	return strings.TrimPrefix(after, "/"), nil
 }

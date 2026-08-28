@@ -225,7 +225,7 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	defer logger.Info("Shutting down RepositoryController")
 
 	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
+	for i := range workerCount {
 		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
 		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
 	}
@@ -431,12 +431,10 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
-	syncInterval := time.Duration(obj.Spec.Sync.IntervalSeconds) * time.Second
-	if syncInterval < rc.minSyncInterval {
+	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second,
 		// In case the sync interval is lower than the minimum sync interval set by the system
 		// we should default to the latter
-		syncInterval = rc.minSyncInterval
-	}
+		rc.minSyncInterval)
 	tolerance := time.Second
 
 	// Check for stale sync status - if sync status indicates a job is running but the job no longer exists

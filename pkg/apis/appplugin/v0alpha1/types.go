@@ -11,9 +11,9 @@ const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.appplugin.v0alpha1."
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Settings struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec SettingsSpec `json:"spec,omitempty"`
+	Spec SettingsSpec `json:"spec"`
 
 	// Secure values allows setting values that are never shown to users.
 	// The returned properties are only the names of the configured values.
@@ -27,7 +27,7 @@ func (Settings) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SettingsList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []Settings `json:"items"`
 }

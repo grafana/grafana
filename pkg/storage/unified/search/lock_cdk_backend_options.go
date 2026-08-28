@@ -149,8 +149,7 @@ func (o *s3Ops) Delete(ctx context.Context, key string, attrs *blob.Attributes) 
 		IfMatch: aws.String(attrs.ETag),
 	})
 	if err != nil {
-		var respErr *smithyhttp.ResponseError
-		if errors.As(err, &respErr) {
+		if respErr, ok := errors.AsType[*smithyhttp.ResponseError](err); ok {
 			return mapDeleteStatus(respErr.HTTPStatusCode(), err)
 		}
 	}
@@ -194,8 +193,7 @@ func (o *gcsOps) Delete(ctx context.Context, key string, attrs *blob.Attributes)
 	}).Delete(ctx)
 	if err != nil {
 		// GCS uses REST by default (*googleapi.Error), but may use gRPC. Check both.
-		var apiErr *googleapi.Error
-		if errors.As(err, &apiErr) {
+		if apiErr, ok := errors.AsType[*googleapi.Error](err); ok {
 			return mapDeleteStatus(apiErr.Code, err)
 		}
 		if s, ok := status.FromError(err); ok {
@@ -244,8 +242,7 @@ func (o *azureOps) Delete(ctx context.Context, key string, attrs *blob.Attribute
 		},
 	})
 	if err != nil {
-		var respErr *azcore.ResponseError
-		if errors.As(err, &respErr) {
+		if respErr, ok := errors.AsType[*azcore.ResponseError](err); ok {
 			return mapDeleteStatus(respErr.StatusCode, err)
 		}
 	}

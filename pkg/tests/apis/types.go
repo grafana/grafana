@@ -6,7 +6,7 @@ import (
 
 type AnyResource struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
 	// Generic object
 	Spec map[string]any `json:"spec,omitempty"`
@@ -14,7 +14,7 @@ type AnyResource struct {
 
 type AnyResourceList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []map[string]any `json:"items"`
 }

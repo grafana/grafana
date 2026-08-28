@@ -44,8 +44,7 @@ func (e *SyncError) Unwrap() error { return e.Cause }
 // reasonOf extracts the SyncReason via errors.As. Returns ReasonUnclassified
 // for un-tagged errors — keeps metric label cardinality bounded.
 func reasonOf(err error) SyncReason {
-	var se *SyncError
-	if errors.As(err, &se) {
+	if se, ok := errors.AsType[*SyncError](err); ok {
 		return se.Reason
 	}
 	return ReasonUnclassified

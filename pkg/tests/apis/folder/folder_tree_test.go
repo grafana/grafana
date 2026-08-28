@@ -529,7 +529,7 @@ func getFoldersFromAPIServerList(t *testing.T, client dynamic.ResourceInterface)
 
 func dotify(t treeprint.Tree) string {
 	buff := bytes.Buffer{}
-	for _, line := range strings.Split(t.String(), "\n") {
+	for line := range strings.SplitSeq(t.String(), "\n") {
 		if line == "." || line == " " || len(line) == 0 {
 			continue
 		}

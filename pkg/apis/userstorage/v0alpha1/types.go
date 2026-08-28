@@ -9,9 +9,9 @@ const OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.userstorage.v0alpha1.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type UserStorage struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec UserStorageSpec `json:"spec,omitempty"`
+	Spec UserStorageSpec `json:"spec"`
 }
 
 func (UserStorage) OpenAPIModelName() string {
@@ -30,7 +30,7 @@ func (UserStorageSpec) OpenAPIModelName() string {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type UserStorageList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata"`
 
 	Items []UserStorage `json:"items"`
 }

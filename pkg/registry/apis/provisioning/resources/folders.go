@@ -225,8 +225,7 @@ func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref str
 		return f, nil
 	}
 
-	var invalidErr *InvalidFolderMetadata
-	if !errors.As(err, &invalidErr) {
+	if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 		return Folder{}, err
 	}
 
@@ -514,8 +513,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
 	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
 	if err != nil {
-		var invalidErr *InvalidFolderMetadata
-		if !errors.As(err, &invalidErr) {
+		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse old folder: %w", err)
 		}
 
@@ -539,8 +537,7 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 
 	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
 	if err != nil {
-		var invalidErr *InvalidFolderMetadata
-		if !errors.As(err, &invalidErr) {
+		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse new folder: %w", err)
 		}
 

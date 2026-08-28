@@ -540,8 +540,7 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 	}
 
 	if err := registerer.Register(tokenRefreshDuration); err != nil {
-		var alreadyRegistered prometheus.AlreadyRegisteredError
-		if errors.As(err, &alreadyRegistered) {
+		if alreadyRegistered, ok := errors.AsType[prometheus.AlreadyRegisteredError](err); ok {
 			if existing, ok := alreadyRegistered.ExistingCollector.(*prometheus.HistogramVec); ok {
 				return existing
 			}

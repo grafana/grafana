@@ -53,7 +53,7 @@ func TestQueue(t *testing.T) {
 		var processed atomic.Int32
 
 		// Enqueue items
-		for i := 0; i < numItems; i++ {
+		for range numItems {
 			err := q.Enqueue(ctx, tenantID, func() {
 				processed.Add(1)
 			})
@@ -63,17 +63,15 @@ func TestQueue(t *testing.T) {
 		require.Equal(t, 1, q.ActiveTenantsLen(), "Active tenants after enqueue")
 
 		// Dequeue items
-		for i := 0; i < numItems; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+		for range numItems {
+			wg.Go(func() {
 				dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 				defer cancel()
 				runnable, err := q.Dequeue(dequeueCtx)
 				require.NoError(t, err, "Dequeue should succeed")
 				require.NotNil(t, runnable, "Dequeued runnable should not be nil")
 				runnable()
-			}()
+			})
 		}
 
 		wg.Wait()
@@ -85,14 +83,14 @@ func TestQueue(t *testing.T) {
 		qSimple := NewQueue(QueueOptionsWithDefaults(nil))
 		require.NoError(t, services.StartAndAwaitRunning(ctx, qSimple))
 
-		for i := 0; i < numItems; i++ {
+		for range numItems {
 			err := qSimple.Enqueue(ctx, tenantID, func() {})
 			require.NoError(t, err)
 		}
 		require.Equal(t, numItems, qSimple.Len(), "Queue length after enqueue (simple)")
 		require.Equal(t, 1, qSimple.ActiveTenantsLen(), "Active tenants after enqueue (simple)")
 
-		for i := 0; i < numItems; i++ {
+		for i := range numItems {
 			dequeueCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 			runnable, err := qSimple.Dequeue(dequeueCtx)
 			cancel() // Cancel context after use
@@ -152,7 +150,7 @@ func TestQueue(t *testing.T) {
 		dequeueTimeout := 3 * time.Second
 
 		// Dequeue and execute the four items
-		for i := 0; i < 4; i++ {
+		for i := range 4 {
 			// Use a more reliable context with longer timeout for CI environments
 			dequeueCtx, cancel := context.WithTimeout(ctx, dequeueTimeout)
 			runnable, err := q.Dequeue(dequeueCtx)
@@ -321,7 +319,7 @@ func TestQueue(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		// Start consumers first (they'll block until items are available)
-		for i := 0; i < numConsumers; i++ {
+		for i := range numConsumers {
 			wg.Add(1)
 			go func(consumerID int) {
 				defer wg.Done()
@@ -356,13 +354,13 @@ func TestQueue(t *testing.T) {
 		}
 
 		// Start producers
-		for i := 0; i < numProducers; i++ {
+		for i := range numProducers {
 			wg.Add(1)
 			go func(producerID int) {
 				defer wg.Done()
 				tenantID := fmt.Sprintf("tenant-%d", producerID%3) // Use 3 different tenants
 
-				for j := 0; j < itemsPerProducer; j++ {
+				for j := range itemsPerProducer {
 					itemID := fmt.Sprintf("p%d-item%d", producerID, j)
 
 					err := q.Enqueue(ctx, tenantID, func() {
@@ -428,7 +426,7 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, err)
 
 		// Enqueue regular items for other tenants
-		for i := 0; i < 2; i++ {
+		for i := range 2 {
 			wg.Add(1)
 			err := q.Enqueue(ctx, tenantB, func() {
 				defer wg.Done()
@@ -453,9 +451,9 @@ func TestQueue(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start multiple dequeuer goroutines
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			go func() {
-				for j := 0; j < 2; j++ { // Each will dequeue 2 items
+				for range 2 { // Each will dequeue 2 items
 					dequeueCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 					runnable, err := q.Dequeue(dequeueCtx)
 					cancel()
@@ -574,16 +572,14 @@ func TestQueue(t *testing.T) {
 
 		// Start a goroutine to dequeue and run the item
 		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			runnable, err := q.Dequeue(ctx)
 			require.NoError(t, err)
 			require.NotNil(t, runnable)
 			runnable()
-		}()
+		})
 
 		// Wait for the item to be processed
 		select {

@@ -170,10 +170,7 @@ func (c cleanUpRuleVersionsMigration) Exec(sess *xorm.Session, mg *migrator.Migr
 	mg.Logger.Info("Cleaning up table `alert_rule_version`", "batchSize", batchSize, "batches", batches, "keepVersions", toKeep)
 
 	for i := 0; i < batches; i++ {
-		end := i*batchSize + batchSize
-		if end > len(rules) {
-			end = len(rules)
-		}
+		end := min(i*batchSize+batchSize, len(rules))
 		bd := strings.Builder{}
 		for idx, r := range rules[i*batchSize : end] {
 			if idx == 0 {

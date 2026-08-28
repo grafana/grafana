@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -77,13 +78,7 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 
 	for key, values := range query.Dimensions {
 		dimensionNames = append(dimensionNames, key)
-		hasWildcard := false
-		for _, value := range values {
-			if value == "*" {
-				hasWildcard = true
-				break
-			}
-		}
+		hasWildcard := slices.Contains(values, "*")
 		if hasWildcard {
 			dimensionNamesWithoutKnownValues = append(dimensionNamesWithoutKnownValues, key)
 		} else {
@@ -161,15 +156,15 @@ func escapeQuotes(arr []string) []string {
 }
 
 func join(arr []string, delimiter string, valuePrefix string, valueSuffix string) string {
-	result := ""
+	var result strings.Builder
 	for index, value := range arr {
-		result += valuePrefix + value + valueSuffix
+		result.WriteString(valuePrefix + value + valueSuffix)
 		if index+1 != len(arr) {
-			result += delimiter
+			result.WriteString(delimiter)
 		}
 	}
 
-	return result
+	return result.String()
 }
 
 func appendSearch(target string, value string) string {

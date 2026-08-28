@@ -69,10 +69,7 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 		return fmt.Errorf("auth.login_maximum_lifetime_duration: %w", err)
 	}
 
-	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(defaultTokenRotationIntervalMinutes)
-	if cfg.TokenRotationIntervalMinutes < 2 {
-		cfg.TokenRotationIntervalMinutes = 2
-	}
+	cfg.TokenRotationIntervalMinutes = max(auth.Key("token_rotation_interval_minutes").MustInt(defaultTokenRotationIntervalMinutes), 2)
 	return nil
 }
 

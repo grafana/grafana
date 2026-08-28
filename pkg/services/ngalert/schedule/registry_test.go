@@ -97,7 +97,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		// generate random and then override rule key + version
 		randomNew := gen.GenerateManyRef(len(initialRules))
-		for i := 0; i < len(initialRules); i++ {
+		for i := range initialRules {
 			rule := randomNew[i]
 			oldRule := initialRules[i]
 			rule.UID = oldRule.UID
@@ -460,13 +460,13 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 
 		dif := r1.Diff(r2)
 		nonDiffFields = make([]string, 0)
-		for j := 0; j < tp.NumField(); j++ {
-			name := tp.Field(j).Name
+		for field := range tp.Fields() {
+			name := field.Name
 			if _, ok := excludedFields[name]; ok {
 				continue
 			}
-			if len(dif.GetDiffsForField(tp.Field(j).Name)) == 0 {
-				nonDiffFields = append(nonDiffFields, tp.Field(j).Name)
+			if len(dif.GetDiffsForField(field.Name)) == 0 {
+				nonDiffFields = append(nonDiffFields, field.Name)
 			}
 		}
 		require.Emptyf(t, nonDiffFields, "cannot generate completely unique alert rule. Some fields are not randomized")

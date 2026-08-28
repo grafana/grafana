@@ -122,8 +122,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			sub := &fakeEventSubscriber{enabled: true}
 			n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := t.Context()
 			out := n.Watch(ctx, WatchOptions{})
 			require.NotNil(t, sub.handler)
 			assert.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
@@ -157,8 +156,7 @@ func TestNatsNotifierWatch_EmitsInResourceVersionOrder(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
 	require.NotNil(t, sub.handler)
 
@@ -187,8 +185,7 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
 
 	sub.handler("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
@@ -207,8 +204,7 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	out := n.Watch(ctx, WatchOptions{})
 
 	sub.handler("some.subject", []byte("not a valid protobuf"))
@@ -311,8 +307,7 @@ func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	// Small backoff bounds keep the subscription retry loop fast for the test.
 	out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
 

@@ -503,10 +503,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 			require.NoError(t, err)
 			perPage := 2
 			startIndex := (page - 1) * perPage
-			endIndex := startIndex + perPage
-			if endIndex > len(groups) {
-				endIndex = len(groups)
-			}
+			endIndex := min(startIndex+perPage, len(groups))
 			groupsPage := groups[startIndex:endIndex]
 			jsonBytes, err := json.Marshal(groupsPage)
 			require.NoError(t, err)

@@ -720,7 +720,6 @@ func TestBackend_getHistory(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			b, ctx := setupBackendTest(t)

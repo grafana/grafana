@@ -392,7 +392,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 
 			var seen []string
 			var after []string
-			for page := 0; page < 20; page++ {
+			for range 20 {
 				q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
 					q.Limit = 3
 					q.SearchAfter = after

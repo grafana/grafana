@@ -165,7 +165,7 @@ func buildInsertSQL(recs []migrator.BackfillRecord) (string, []any) {
 		}
 		base := i * annotationColumnCount
 		sb.WriteString("(")
-		for c := 0; c < annotationColumnCount; c++ {
+		for c := range annotationColumnCount {
 			if c > 0 {
 				sb.WriteString(", ")
 			}

@@ -559,10 +559,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 
 		// Process keys in batches
 		for i := 0; i < len(keys); i += dataBatchSize {
-			end := i + dataBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
+			end := min(i+dataBatchSize, len(keys))
 			batch := keys[i:end]
 
 			// Convert DataKeys to string keys and create a mapping
@@ -1186,18 +1183,15 @@ func isRowAlreadyExistsError(err error) bool {
 		return true
 	}
 
-	var pg *pgconn.PgError
-	if errors.As(err, &pg) {
+	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pg.Code == "23505"
 	}
 
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
+	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqerr.Code == "23505"
 	}
 
-	var mysqlerr *mysql.MySQLError
-	if errors.As(err, &mysqlerr) {
+	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return mysqlerr.Number == 1062
 	}
 

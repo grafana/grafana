@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -401,10 +402,10 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	factory := repository.NewMockFactory(t)
 	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	repoClient := &mockRepoInterface{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				return nil, apierrors.NewConflict(
 					schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
@@ -432,7 +433,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.NoError(t, err)
-	require.Equal(t, int32(2), atomic.LoadInt32(&calls), "finalizer-removal patch should retry once after a conflict")
+	require.Equal(t, int32(2), calls.Load(), "finalizer-removal patch should retry once after a conflict")
 }
 
 func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *testing.T) {
@@ -445,10 +446,10 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	factory := repository.NewMockFactory(t)
 	factory.On("Build", mock.Anything, mock.Anything).Once().Return(nil, nil)
 
-	var calls int32
+	var calls atomic.Int32
 	repoClient := &mockRepoInterface{
 		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
-			atomic.AddInt32(&calls, 1)
+			calls.Add(1)
 			return nil, apierrors.NewConflict(
 				schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
 				name,
@@ -474,7 +475,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	err := c.handleDelete(context.Background(), repo)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "remove finalizers")
-	require.Greater(t, atomic.LoadInt32(&calls), int32(1), "should retry at least once before giving up")
+	require.Greater(t, calls.Load(), int32(1), "should retry at least once before giving up")
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {
@@ -939,9 +940,9 @@ func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, pa
 // findPatchOp returns the last captured op for path, matching JSON Patch's
 // sequential-apply semantics
 func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
-	for i := len(c.ops) - 1; i >= 0; i-- {
-		if c.ops[i]["path"] == path {
-			return c.ops[i], true
+	for _, v := range slices.Backward(c.ops) {
+		if v["path"] == path {
+			return v, true
 		}
 	}
 	return nil, false

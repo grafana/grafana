@@ -6,7 +6,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/registry/apps/annotation/migrator"
 )
@@ -128,7 +127,7 @@ func TestIntegrationBackfill(t *testing.T) {
 		at, moved := week(0), week(30)
 
 		_, err := store.InsertBatch(ctx, []migrator.BackfillRecord{{
-			Namespace: ns, Name: "legacy-1", Time: at, TimeEnd: ptr.To(at + 60_000),
+			Namespace: ns, Name: "legacy-1", Time: at, TimeEnd: new(at + 60_000),
 			Text: "deploy", CreatedAt: time.UnixMilli(at).UTC(), LegacyID: 1,
 		}})
 		require.NoError(t, err)

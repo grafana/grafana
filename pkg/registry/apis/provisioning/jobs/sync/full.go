@@ -66,8 +66,7 @@ func FullSync(
 			// the pull job output and stop cleanly: no children can be
 			// placed under an unclaimed root, but failing the whole job
 			// hides the actual cause.
-			var unmanagedErr *resources.ResourceUnmanagedConflictError
-			if errors.As(err, &unmanagedErr) {
+			if _, ok := errors.AsType[*resources.ResourceUnmanagedConflictError](err); ok {
 				progress.Record(ctx, jobs.NewFolderResult("").
 					WithName(rootFolder).
 					WithAction(repository.FileActionCreated).

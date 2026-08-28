@@ -88,7 +88,7 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 		parentWhereClause = fmt.Sprintf("| where (operation_ParentId != '' and operation_ParentId == '%s')", *parentSpanID)
 	}
 
-	filtersClause := ""
+	var filtersClause strings.Builder
 
 	if len(filters) > 0 {
 		for _, filter := range filters {
@@ -103,7 +103,7 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 			for _, val := range filter.Filters {
 				filterValues = append(filterValues, fmt.Sprintf(`"%s"`, val))
 			}
-			filtersClause += fmt.Sprintf("| where %s %s (%s)", filter.Property, operation, strings.Join(filterValues, ","))
+			filtersClause.WriteString(fmt.Sprintf("| where %s %s (%s)", filter.Property, operation, strings.Join(filterValues, ",")))
 		}
 	}
 
@@ -124,7 +124,7 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 	projectClause := `| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp, resource = _ResourceId` +
 		`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId, resource` +
 		`| order by startTime asc`
-	return baseQuery + whereClause + parentWhereClause + propertiesStaticQuery + errorProperty + propertiesQuery + filtersClause + projectClause
+	return baseQuery + whereClause + parentWhereClause + propertiesStaticQuery + errorProperty + propertiesQuery + filtersClause.String() + projectClause
 }
 
 func buildTracesLogsQuery(operationId string, resources []string) string {

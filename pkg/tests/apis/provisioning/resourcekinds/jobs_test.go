@@ -21,7 +21,6 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 	helper := sharedHelper(t)
 
 	for _, rk := range resourceKinds {
-		rk := rk
 		t.Run(rk.name, func(t *testing.T) {
 			client := rk.client(t, helper)
 
@@ -35,7 +34,7 @@ func TestIntegrationProvisioning_ResourceKinds_DeleteJob(t *testing.T) {
 			const count = 2
 			paths := make([]string, count)
 			names := make([]string, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				paths[i] = fmt.Sprintf("del-%s.json", name)
 				names[i] = name
@@ -70,7 +69,6 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 	helper := sharedHelper(t)
 
 	for _, rk := range resourceKinds {
-		rk := rk
 		t.Run(rk.name, func(t *testing.T) {
 			client := rk.client(t, helper)
 
@@ -84,7 +82,7 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			const count = 2
 			paths := make([]string, count)
 			names := make([]string, count)
-			for i := 0; i < count; i++ {
+			for i := range count {
 				name, title := rk.instance(i)
 				paths[i] = fmt.Sprintf("mv-%s.json", name)
 				names[i] = name

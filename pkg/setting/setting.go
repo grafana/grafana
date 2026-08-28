@@ -1700,7 +1700,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// parse reporting static context string of key=value, key=value pairs into an object
 	cfg.ReportingStaticContext = make(map[string]string)
-	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+	for pair := range strings.SplitSeq(analytics.Key("reporting_static_context").String(), ",") {
 		kv := strings.Split(pair, "=")
 		if len(kv) == 2 {
 			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
@@ -1900,7 +1900,7 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
 	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
-	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+	for authProvider := range strings.SplitSeq(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
 		if authProvider != "" {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
@@ -2078,7 +2078,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
+	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
@@ -2254,7 +2254,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.HiddenUsers = make(map[string]struct{})
 	hiddenUsers := users.Key("hidden_users").MustString("")
-	for _, user := range strings.Split(hiddenUsers, ",") {
+	for user := range strings.SplitSeq(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
 		if user != "" {
 			cfg.HiddenUsers[user] = struct{}{}
