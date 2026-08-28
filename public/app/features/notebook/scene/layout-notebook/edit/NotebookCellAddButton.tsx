@@ -24,6 +24,10 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   const styles = useStyles2(getStyles);
   const [pendingIndex, setPendingIndex] = useState(index + 1);
   const labelId = useId();
+  // Kept revealed while the menu is open: opening it moves focus into the menu's own Portal (see
+  // Dropdown's FloatingFocusManager), which lives outside this cell's frame — so the frame's own
+  // :hover/:focus-within reveal rule stops matching and would otherwise fade this back out mid-interaction.
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Keyboard activation (Enter/Space on the trigger) never fires mouseUp, so without this, a cell
   // that moved — something inserted, deleted, or reordered above it — since mount or since its last
@@ -37,13 +41,14 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
   };
 
   return (
-    <div className={cx(styles.wrapper, className)}>
+    <div className={cx(styles.wrapper, className, isMenuOpen && styles.revealed)}>
       <span id={labelId} className="sr-only">
         {t('notebook.add-block.label', 'Add block')}
       </span>
       <Dropdown
         overlay={<NotebookBlockTypeMenu onPick={(type) => onAdd?.(type, pendingIndex)} />}
         placement="bottom-start"
+        onVisibleChange={setIsMenuOpen}
       >
         <IconButton
           name="plus"
@@ -96,5 +101,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },
+  }),
+  revealed: css({
+    opacity: 1,
   }),
 });

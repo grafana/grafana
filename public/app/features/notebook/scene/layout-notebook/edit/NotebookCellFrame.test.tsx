@@ -141,6 +141,22 @@ describe('NotebookCellFrame', () => {
     expect(onAdd).toHaveBeenCalledWith('heading', 3);
   });
 
+  // Opening the menu moves focus into its own Portal (see Dropdown's FloatingFocusManager), which
+  // sits outside this cell's frame — breaking the frame's own :focus-within reveal and fading the
+  // trigger back out mid-interaction without this. jsdom doesn't evaluate :focus-within anyway, so
+  // this pins the explicit override the component applies instead of the collision itself.
+  it('stays revealed while its own menu is open', async () => {
+    const { user } = renderFrame({ isEditing: true });
+    // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
+    // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
+    const addButton = screen.getByRole('button', { name: 'Add block' });
+    const wrapper = addButton.closest('div');
+
+    await user.click(addButton);
+
+    expect(getComputedStyle(wrapper!).opacity).toBe('1');
+  });
+
   // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
   // hit-testable, it would still swallow clicks meant for this cell's own content, so the hidden
   // state has to be inert and not merely invisible. jsdom does no hit-testing, so this pins the
