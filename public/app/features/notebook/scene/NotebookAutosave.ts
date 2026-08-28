@@ -56,6 +56,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private editedByWriter = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
+  /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
+  private adoptingUid = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
   private inFlightSave?: Promise<void>;
   private saveAgainWhenIdle = false;
@@ -83,7 +85,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     this.changeSub = this.scene.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-      if (!this.scene.state.isEditing) {
+      if (!this.scene.state.isEditing || this.adoptingUid) {
         return;
       }
 
@@ -341,7 +343,12 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     return createNotebook(spec).then(({ uid: created, generation }) => {
-      this.scene.setState({ uid: created });
+      this.adoptingUid = true;
+      try {
+        this.scene.setState({ uid: created });
+      } finally {
+        this.adoptingUid = false;
+      }
       return { generation };
     });
   }

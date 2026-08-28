@@ -165,13 +165,15 @@ export class NotebookLayoutManager
    * only opened, and it would have created a notebook out of a blank page nobody typed in.
    *
    * Only the last one, and only when it is empty: an empty block anywhere else is one somebody left
-   * there on purpose.
+   * there on purpose. Unless nothing else is real either: clearing or undoing what was typed can
+   * leave two empty cells and no content at all, and a notebook in that state is still blank.
    */
   public contentCells(): NotebookCellItem[] {
     const { cells } = this.state;
     const last = cells[cells.length - 1];
+    const withoutTrailingSlot = last && isEmptyMarkdown(last.state.content) ? cells.slice(0, -1) : cells;
 
-    return last && isEmptyMarkdown(last.state.content) ? cells.slice(0, -1) : cells;
+    return withoutTrailingSlot.every((cell) => isEmptyMarkdown(cell.state.content)) ? [] : withoutTrailingSlot;
   }
 
   // Serialization lives here instead of in a helper file, so that this file never has to import the

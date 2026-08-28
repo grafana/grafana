@@ -559,6 +559,18 @@ describe('NotebookAutosave', () => {
       expect(jest.mocked(updateNotebook).mock.calls[0][0]).toBe('nb-new');
     });
 
+    // Waits for the debounce, not the ceiling the test below uses: the save an unguarded adoption
+    // schedules has cleared itself by then, so the longer wait hides this rather than catching it.
+    it('does not report unsaved changes when the uid it was just given lands on the scene', async () => {
+      const scene = activateBlankEditing();
+
+      typeIntoIt(scene, 'first thought');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(scene.autosave.state.status).toBe('saved');
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
     // Taking the uid onto the scene is itself a state change, so it schedules another save. That save has
     // nothing to write, and the notebook has to end up reported as saved rather than stuck on pending.
     it('settles as saved after the create, without writing a second time', async () => {

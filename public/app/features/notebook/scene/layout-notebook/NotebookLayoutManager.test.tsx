@@ -1400,6 +1400,12 @@ describe('NotebookLayoutManager', () => {
     it('serializes an empty layout when the block is the only cell', () => {
       expect(names(managerWith(empty))).toEqual([]);
     });
+
+    // Two in a row usually means the first was left there on purpose, but not when there is no real
+    // content anywhere: clearing or undoing what was typed leaves exactly that, and it is still blank.
+    it('serializes an empty layout when every block is empty, not just the trailing one', () => {
+      expect(names(managerWith(empty, empty))).toEqual([]);
+    });
   });
 
   it('serializes to the notebook layout kind, not a dashboard layout kind', () => {
