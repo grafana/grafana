@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { useCallback, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
-import { type GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 
+import { alertRuleApi } from '../../api/alertRuleApi';
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
 import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useGlobalSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
-import { useRuleLocation } from '../../hooks/useCombinedRule';
 
 interface SilenceRuleButtonProps {
   ruleUID: string;
@@ -22,21 +22,25 @@ interface SilenceRuleButtonProps {
 export function SilenceRuleButton({ ruleUID }: SilenceRuleButtonProps) {
   const [showDrawer, setShowDrawer] = useState(false);
 
-  const ruleIdentifier: GrafanaRuleIdentifier = useMemo(() => ({ uid: ruleUID, ruleSourceName: 'grafana' }), [ruleUID]);
+  // Silencing is granted either across the org or per folder. The org-wide half is a plain
+  // permission check that costs nothing, so for most people the button is there immediately and
+  // this row never talks to the server.
+  const canSilenceOrgWide = isGranted(useGlobalSilenceAbility({ action: SilenceAction.Create }));
 
-  // Silencing can be granted per folder, so we need to know which folder the rule lives in. This is
-  // the cheapest way to ask - one small request, which the details sidebar reuses anyway. Someone
-  // with the org-wide permission is granted before it even comes back.
-  const { result: location } = useRuleLocation(ruleIdentifier);
-  const silenceAbility = useGlobalSilenceAbility({
-    action: SilenceAction.Create,
-    folderUID: location?.namespace,
-  });
+  // Only when that isn't enough does it matter which folder the rule is in - and the rule is the
+  // only place to get that, since the list is built from metrics that carry the folder's name but
+  // not its UID. Skipped entirely for everyone else.
+  const { currentData: rulerRule } = alertRuleApi.endpoints.getAlertRule.useQuery(
+    canSilenceOrgWide ? skipToken : { uid: ruleUID }
+  );
+  const canSilenceInFolder = isGranted(
+    useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rulerRule?.grafana_alert.namespace_uid })
+  );
 
   const handleOpen = useCallback(() => setShowDrawer(true), []);
   const handleClose = useCallback(() => setShowDrawer(false), []);
 
-  if (!isGranted(silenceAbility)) {
+  if (!canSilenceOrgWide && !canSilenceInFolder) {
     return null;
   }
 

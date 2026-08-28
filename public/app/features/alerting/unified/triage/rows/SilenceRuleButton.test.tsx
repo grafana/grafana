@@ -24,7 +24,34 @@ function renderButton() {
   return render(<SilenceRuleButton ruleUID={ruleUID} />);
 }
 
+/** Records every request the rule endpoint receives, so we can assert we made none. */
+function watchRuleRequests() {
+  const urls: string[] = [];
+  server.events.on('request:start', ({ request }) => {
+    if (request.url.includes('/api/ruler/grafana/api/v1/rule/')) {
+      urls.push(request.url);
+    }
+  });
+  return urls;
+}
+
+afterEach(() => {
+  server.events.removeAllListeners();
+});
+
 describe('SilenceRuleButton', () => {
+  it('asks the server nothing for a user who can silence across the whole org', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceCreate]);
+    const ruleRequests = watchRuleRequests();
+
+    renderButton();
+
+    expect(await ui.silenceButton.find()).toBeInTheDocument();
+    // The org-wide permission already answers this, so looking the rule up couldn't change it -
+    // and a request per row is not something a list can afford.
+    expect(ruleRequests).toEqual([]);
+  });
+
   it('opens the silence editor without leaving the list', async () => {
     grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceCreate]);
     const { user } = renderButton();
