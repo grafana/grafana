@@ -64,7 +64,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
   private vizConfigsChangedWhileReading = new Set<string>();
   /** Each panel's normalized state immediately before its first reader-owned change. */
-  private vizConfigsBeforeReadingChange = new Map<string, { panel: VizPanel; config: PanelVizConfigState }>();
+  private vizConfigsBeforeReadingChange = new Map<
+    string,
+    { panel: VizPanel; config: PanelVizConfigState; wasEditedByWriter: boolean }
+  >();
   /** Set while `discardVizChanges` writes, so restoring a panel is not recorded as editing it. */
   private restoringVizConfigs = false;
   /**
@@ -122,6 +125,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
             this.vizConfigsBeforeReadingChange.set(revizzedPanel, {
               panel,
               config,
+              wasEditedByWriter: this.vizConfigsEdited.has(revizzedPanel),
             });
           }
         }
@@ -222,6 +226,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       const beforeChange = this.vizConfigsBeforeReadingChange.get(name);
       const currentPanel = currentPanels.get(name);
       const currentConfig = currentPanel && panelVizConfigState(currentPanel.state);
+      if (beforeChange && this.vizConfigsEdited.has(name)) {
+        beforeChange.wasEditedByWriter = true;
+      }
       if (
         !savedVizConfig ||
         !beforeChange ||
@@ -258,6 +265,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * because those also drop its cached processed data, which the old look would otherwise keep drawing.
    */
   public discardVizChanges(): void {
+    let restoredWriterEdit = false;
     this.restoringVizConfigs = true;
     try {
       for (const { elementName, panel } of this.restorablePanels()) {
@@ -268,6 +276,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
         panel.onOptionsChange(beforeChange.config.options, true);
         panel.onFieldConfigChange(beforeChange.config.fieldConfig, true);
+        if (beforeChange.wasEditedByWriter) {
+          restoredWriterEdit = true;
+          this.vizConfigsEdited.add(elementName);
+        }
       }
     } finally {
       this.restoringVizConfigs = false;
@@ -275,6 +287,11 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.vizConfigsChangedWhileReading.clear();
     this.vizConfigsBeforeReadingChange.clear();
+
+    if (restoredWriterEdit) {
+      this.editedByWriter = true;
+      this.schedule();
+    }
   }
 
   /**

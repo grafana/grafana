@@ -504,6 +504,13 @@ describe('NotebookAutosave', () => {
           fixedColor: 'red',
         });
 
+        await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+        expect(updateNotebook).toHaveBeenCalledTimes(2);
+        expect(savedVizConfigs()[1]?.spec.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'red',
+        });
+
         stopPanel();
       });
     });
