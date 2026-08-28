@@ -172,7 +172,7 @@ function NarrativeCell({
 
 /**
  * The markdown-only behaviors no other cell needs:
- * - Placeholder text and the "/" block-type menu (the same one NotebookAddBlockDivider uses) — keyed
+ * - Placeholder text and the "/" block-type menu (the same one NotebookCellAddButton uses) — keyed
  *   off whether *this cell's own content* is currently empty, not its position in the document. Any
  *   empty markdown cell gets these, and loses them again the moment it has real content — including a
  *   cell the reader typed into, then deleted everything from. The placeholder itself needs no extra

@@ -197,26 +197,24 @@ describe('NotebookLayoutManager', () => {
     expect(screen.getByText('hidden-panel')).toBeInTheDocument();
   });
 
-  describe('add block dividers', () => {
-    it('does not offer insertion points outside edit mode', () => {
+  describe('add cell affordances', () => {
+    it('does not offer them outside edit mode', () => {
       renderNotebook();
 
       expect(screen.queryByRole('button', { name: 'Add block' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
     });
 
-    // One insertion point per gap: above the first cell, between each pair, and below the last —
-    // three real cells by the time this renders (the trailing empty cell the invariant appends after
-    // renderNotebook's collapsed panel counts as a fourth gap), so four dividers, not three.
-    it('renders an insertion point above, between and below the cells in edit mode', async () => {
+    // One "+" per cell — two real cells plus the trailing empty one the invariant appends.
+    it('renders one add button per cell in edit mode', async () => {
       renderNotebook(true);
 
       await screen.findAllByRole('textbox', { name: 'Markdown' });
-      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(4);
+      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(3);
     });
 
-    // Each divider lives inside the frame of the cell above it, which is what makes it *that cell's*
-    // insertion point — revealed by hovering the cell, and carried along when the cell is reordered.
-    it('places each insertion point inside the frame of the cell above it', async () => {
+    // Revealed by hovering the cell, and carried along when the cell is reordered.
+    it("places the add button inside its own cell's frame", async () => {
       renderNotebook(true);
 
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
@@ -225,14 +223,12 @@ describe('NotebookLayoutManager', () => {
       expect(within(frame!).getByRole('button', { name: 'Add block' })).toBeInTheDocument();
     });
 
-    // A divider is a gap between things, so it would be invisible with no cell to hover — but a
-    // genuinely empty notebook in edit mode does not stay that way: the trailing-invariant bootstrap
-    // gives it a first cell immediately (see 'the trailing empty cell' describe), one cell meaning
-    // two gaps (leading, and below that one cell), not zero.
-    it('renders insertion points once an empty notebook gets its first cell', () => {
+    // The trailing-invariant bootstrap gives an empty notebook a first cell immediately (see 'the
+    // trailing empty cell' describe), so it never actually renders with zero add buttons.
+    it('renders an add button once an empty notebook gets its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: 'Add block' })).toHaveLength(1);
     });
 
     it('opens the block type menu', async () => {
@@ -245,6 +241,33 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Paragraph' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Code' })).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
+    });
+  });
+
+  describe('footer add row', () => {
+    it('does not render outside edit mode', () => {
+      renderNotebook();
+
+      expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
+    });
+
+    it('always renders its four labeled buttons in edit mode', () => {
+      renderNotebook(true);
+
+      expect(screen.getByRole('button', { name: 'Heading' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paragraph' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Code' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Visualization' })).toBeInTheDocument();
+    });
+
+    // No menu — each footer button is already a single fixed type, so it inserts directly.
+    it('appends the picked type at the end with no menu', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await user.click(screen.getByRole('button', { name: 'Code' }));
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(cellNames(manager)).toEqual(['a', 'b', 'code-1', 'paragraph-1']);
     });
   });
 
@@ -516,25 +539,30 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
     }
 
+    // Alt/option-click: read at the trigger's own click, not the later menu-item pick.
+    async function pickCodeAbove(user: ReturnType<typeof userEvent.setup>, trigger: HTMLElement) {
+      fireEvent.click(trigger, { altKey: true });
+      await user.click(screen.getByRole('menuitem', { name: 'Code' }));
+    }
+
     // The trailing empty cell every notebook always has is a markdown cell in its own right, not a
-    // button — typing "/" into it opens the same menu the dividers open by clicking "Add block", but
-    // picking a type from it converts *that* cell in place (see NotebookCellRenderer's handlePick)
-    // rather than inserting a fresh one alongside it the way a divider does. Always re-queries the
-    // *current* last "Markdown" textbox rather than caching one, since the trailing-invariant may have
-    // already appended a new one by the time this runs.
+    // button — typing "/" into it opens the same menu the add buttons open by clicking "Add block",
+    // but picking a type from it converts *that* cell in place (see NotebookCellRenderer's
+    // handlePick) rather than inserting a fresh one alongside it the way an add button does. Always
+    // re-queries the *current* last "Markdown" textbox rather than caching one, since the
+    // trailing-invariant may have already appended a new one by the time this runs.
     async function pickFromTrailingCellMenu(user: ReturnType<typeof userEvent.setup>, itemName: string) {
       const editors = await screen.findAllByRole('textbox', { name: 'Markdown' });
       await user.type(editors[editors.length - 1], '/');
       await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
 
-    // A divider belongs to the cell above it, so the one inside cell 'a' inserts between 'a' and 'b'.
-    // The leading divider comes first in the DOM, so index 1 is cell 'a' s own divider. 'paragraph-1'
-    // is the trailing-invariant cell the bootstrap effect appends after 'b' before any of this happens.
-    it('inserts an empty code cell where the divider offered it', async () => {
+    // Cell 'a' own add button, plain-clicked, inserts between 'a' and 'b'. 'paragraph-1' is the
+    // trailing-invariant cell the bootstrap effect appends after 'b' before any of this happens.
+    it('inserts an empty code cell where its own add button offered it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'code-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
@@ -542,7 +570,7 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.source).toBe('user');
     });
 
-    it('inserts a visualization panel cell where the divider offered it', () => {
+    it('inserts a visualization panel cell at the given index', () => {
       const manager = buildManager(buildNarrativeCells(['a', 'b']));
 
       manager.addCell('visualization', 1);
@@ -552,14 +580,14 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
     });
 
-    // The divider after the trailing empty cell is offering to insert *past* it. Inserting after
-    // that slot would leave it stranded mid-document once the invariant appends a replacement;
-    // inserting before it keeps the empty cell at the tail and still records an "Add block".
-    it('inserts before the trailing empty slot when the divider offers a position past it', async () => {
+    // The trailing empty cell's own add button, plain-clicked, is offering to insert *past* it.
+    // Inserting after that slot would leave it stranded mid-document once the invariant appends a
+    // replacement; inserting before it keeps the empty cell at the tail and still records "Add block".
+    it('inserts before the trailing empty slot when its add button offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const dividers = screen.getAllByRole('button', { name: 'Add block' });
+      const addButtons = screen.getAllByRole('button', { name: 'Add block' });
 
-      await pickCode(user, dividers[dividers.length - 1]);
+      await pickCode(user, addButtons[addButtons.length - 1]);
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'code-1', 'paragraph-1']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
@@ -569,21 +597,21 @@ describe('NotebookLayoutManager', () => {
     // Same insert-before-trailing path as Code above — Paragraph's starter content is already
     // empty markdown, identical to the trailing slot, so a convert-in-place used to be a no-op
     // on the undo stack. A fresh cell still has to land before the slot.
-    it('inserts a paragraph before the trailing empty slot when the divider offers a position past it', async () => {
+    it('inserts a paragraph before the trailing empty slot when its add button offers a position past it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const dividers = screen.getAllByRole('button', { name: 'Add block' });
+      const addButtons = screen.getAllByRole('button', { name: 'Add block' });
 
-      await pickParagraph(user, dividers[dividers.length - 1]);
+      await pickParagraph(user, addButtons[addButtons.length - 1]);
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-2', 'paragraph-1']);
       expect(manager.state.cells[2].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
       expect(manager.state.cells[3].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
-    it('inserts above the first cell from the leading divider', async () => {
+    it('inserts above the first cell on an alt/option-click of its own add button', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
+      await pickCodeAbove(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
 
       expect(cellNames(manager)).toEqual(['code-1', 'a', 'b', 'paragraph-1']);
     });
@@ -591,7 +619,7 @@ describe('NotebookLayoutManager', () => {
     // Typing the "/" is itself a real keystroke now (see the "trailing empty cell" describe above), so
     // it reveals a second trailing cell before the pick ever happens — the conversion lands on the
     // first one, which keeps the name ('paragraph-1') the invariant already gave it rather than a
-    // fresh 'code-1' a divider-triggered insert would use.
+    // fresh 'code-1' an add-button-triggered insert would use.
     it('converts the trailing cell in place from its own menu, rather than inserting a fresh one', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
@@ -723,7 +751,7 @@ describe('NotebookLayoutManager', () => {
     it('inserts a heading cell seeded with a heading marker', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickHeading(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+      await pickHeading(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
@@ -735,7 +763,7 @@ describe('NotebookLayoutManager', () => {
     it('inserts an empty paragraph cell', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickParagraph(user, screen.getAllByRole('button', { name: 'Add block' })[1]);
+      await pickParagraph(user, screen.getAllByRole('button', { name: 'Add block' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
       expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
@@ -1238,7 +1266,7 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1]).toBe(added);
     });
 
-    // The divider below the trailing empty slot offers index === cells.length. Converting that
+    // Inserting past the trailing empty slot offers index === cells.length. Converting that
     // slot in place (convertCell) used to skip executeEdit: Paragraph only called appendSystemCell
     // (off the stack, so Undo did nothing) and Heading/Code landed as an "Edit block" that restored
     // empty markdown instead of removing the added block.
