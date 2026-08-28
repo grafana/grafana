@@ -13,22 +13,30 @@ import {
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
-import { type DataSourceSrv, DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, type FetchResponse } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { type BackendSrv } from 'app/core/services/backend_srv';
-import {
-  EXTERNAL_VANILLA_ALERTMANAGER_UID,
-  mockDataSources,
-} from 'app/features/alerting/unified/components/settings/mocks/server';
+import { EXTERNAL_VANILLA_ALERTMANAGER_UID } from 'app/features/alerting/unified/components/settings/mocks/server';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { type AlertingQueryResponse, AlertingQueryRunner } from './AlertingQueryRunner';
 
+const getDataSourceInstanceMock = jest.fn();
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (...args: unknown[]) => getDataSourceInstanceMock(...args),
+}));
+
 setupMswServer();
+
+beforeEach(() => {
+  getDataSourceInstanceMock.mockReset();
+  // datasources filter nothing unless a test says otherwise
+  mockDataSourceInstance();
+});
 
 describe('AlertingQueryRunner', () => {
   it('should successfully map response and return panel data by refId', async () => {
@@ -38,8 +46,6 @@ describe('AlertingQueryRunner', () => {
         B: { frames: [createDataFrameJSON([5, 6])] },
       },
     });
-    setupDataSources(...Object.values(mockDataSources));
-
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response),
@@ -99,8 +105,7 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(response),
-      }),
-      mockDataSourceSrv()
+      })
     );
 
     const data = runner.get();
@@ -109,8 +114,7 @@ describe('AlertingQueryRunner', () => {
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
 
-      // these test are flakey since the absolute computed "timeRange" can differ from the relative "defaultRelativeTimeRange"
-      // so instead we will check if the size of the timeranges match
+      // comparing absolute timeRanges is flakey, so compare the size of the relative ranges instead
       const relativeA = rangeUtil.timeRangeToRelative(data.A.timeRange);
       const relativeB = rangeUtil.timeRangeToRelative(data.B.timeRange);
       const defaultRange = getDefaultRelativeTimeRange();
@@ -203,11 +207,12 @@ describe('AlertingQueryRunner', () => {
   });
 
   it('should not push any values if all queries fail filterQuery check', async () => {
+    mockDataSourceInstance({ filterQuery: () => false });
+
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => throwError(new Error("shouldn't happen")),
-      }),
-      mockDataSourceSrv({ filterQuery: () => false })
+      })
     );
 
     const data = runner.get();
@@ -217,6 +222,8 @@ describe('AlertingQueryRunner', () => {
   });
 
   it('should skip hidden queries and descendant nodes', async () => {
+    mockDataSourceInstance({ filterQuery: (model: AlertDataQuery) => model.hide !== true });
+
     const results = createFetchResponse<AlertingQueryResponse>({
       results: {
         C: { frames: [createDataFrameJSON([1, 2, 3])] },
@@ -226,8 +233,7 @@ describe('AlertingQueryRunner', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(results),
-      }),
-      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
+      })
     );
 
     const data = runner.get();
@@ -265,8 +271,6 @@ describe('AlertingQueryRunner', () => {
 
   describe('run() promise', () => {
     it('should not resolve while the request is still open after pushing a value', async () => {
-      setupDataSources(...Object.values(mockDataSources));
-
       const response = createFetchResponse<AlertingQueryResponse>({ results: {} });
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
@@ -287,8 +291,6 @@ describe('AlertingQueryRunner', () => {
     });
 
     it('should resolve when the request completes', async () => {
-      setupDataSources(...Object.values(mockDataSources));
-
       const response = createFetchResponse<AlertingQueryResponse>({ results: {} });
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
@@ -300,19 +302,18 @@ describe('AlertingQueryRunner', () => {
     });
 
     it('should resolve when there are no queries left to run', async () => {
+      mockDataSourceInstance({ filterQuery: () => false });
+
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
           fetch: () => throwError(new Error("shouldn't happen")),
-        }),
-        mockDataSourceSrv({ filterQuery: () => false })
+        })
       );
 
       await expect(runner.run([createQuery('A')], 'A')).resolves.toBeUndefined();
     });
 
     it('should resolve when the request fails', async () => {
-      setupDataSources(...Object.values(mockDataSources));
-
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
           fetch: () => throwError(new Error('could not query data')),
@@ -323,8 +324,6 @@ describe('AlertingQueryRunner', () => {
     });
 
     it('should resolve when the run is cancelled before any value is pushed', async () => {
-      setupDataSources(...Object.values(mockDataSources));
-
       const runner = new AlertingQueryRunner(
         mockBackendSrv({
           fetch: () => NEVER,
@@ -360,12 +359,10 @@ interface MockOpts {
   filterQuery?: (query: DataQuery) => boolean;
 }
 
-const mockDataSourceSrv = (opts?: MockOpts) => {
+const mockDataSourceInstance = (opts?: MockOpts) => {
   const ds = new DataSourceWithBackend({} as unknown as DataSourceInstanceSettings);
   ds.filterQuery = opts?.filterQuery;
-  return {
-    get: () => Promise.resolve(ds),
-  } as unknown as DataSourceSrv;
+  getDataSourceInstanceMock.mockResolvedValue(ds);
 };
 
 const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: number[] }): DataFrame => {
@@ -394,6 +391,8 @@ const expectDataFrameWithValues = ({ time, values }: { time: number[]; values: n
 
 describe('prepareQueries', () => {
   it('should skip node that fail to link', async () => {
+    mockDataSourceInstance({ filterQuery: (model: AlertDataQuery) => model.hide !== true });
+
     const queries = [
       createQuery('A', {
         model: {
@@ -425,7 +424,7 @@ describe('prepareQueries', () => {
         model: {
           refId: 'E',
           type: ExpressionQueryType.math,
-          expression: '$B', // this node will be omitted, ref does not exist
+          expression: '$B', // this node will _not_ be omitted, $B is valid
         },
       }),
       createExpression('F', {
@@ -440,8 +439,7 @@ describe('prepareQueries', () => {
     const runner = new AlertingQueryRunner(
       mockBackendSrv({
         fetch: () => of(),
-      }),
-      mockDataSourceSrv({ filterQuery: (model: AlertDataQuery) => model.hide !== true })
+      })
     );
 
     const queriesToRun = await runner.prepareQueries(queries);
@@ -449,6 +447,24 @@ describe('prepareQueries', () => {
     expect(queriesToRun).toHaveLength(2);
     expect(queriesToRun[0]).toStrictEqual(queries[1]);
     expect(queriesToRun[1]).toStrictEqual(queries[4]);
+  });
+
+  it('should resolve data queries by uid and not look up expression queries', async () => {
+    const runner = new AlertingQueryRunner(mockBackendSrv({ fetch: () => of() }));
+
+    await runner.prepareQueries([
+      createQuery('A'),
+      createExpression('B', {
+        model: {
+          refId: 'B',
+          type: ExpressionQueryType.math,
+          expression: '$A',
+        },
+      }),
+    ]);
+
+    expect(getDataSourceInstanceMock).toHaveBeenCalledTimes(1);
+    expect(getDataSourceInstanceMock).toHaveBeenCalledWith(EXTERNAL_VANILLA_ALERTMANAGER_UID);
   });
 });
 
