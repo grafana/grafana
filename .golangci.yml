@@ -264,6 +264,9 @@ linters:
         text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
       - linters:
           - staticcheck
+        text: 'SA1019: "github.com/aws/aws-sdk-go/'
+      - linters:
+          - staticcheck
         text: use fake service and real access control evaluator instead
       - linters:
           - gosec
