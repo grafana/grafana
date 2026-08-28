@@ -89,13 +89,20 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         return;
       }
 
-      this.editedByWriter = true;
-
       if (changesTimeSettings(payload, this.scene)) {
         this.timeSettingsEdited = true;
       }
 
-      this.schedule();
+      // Entering edit mode and the trailing empty block it keeps ready (see NotebookLayoutManager)
+      // both publish state changes of their own, with nothing yet different to write. Only latch a
+      // change that actually differs from `baseline` as one worth rescheduling for later. Answered
+      // once and handed to `schedule`, because working it out serializes the whole notebook.
+      const somethingToWrite = this.hasSomethingToWrite();
+      if (somethingToWrite) {
+        this.editedByWriter = true;
+      }
+
+      this.schedule(somethingToWrite);
     });
 
     // Not beforeunload: adding an unload listener stops the browser reusing the page when you navigate
@@ -190,8 +197,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
   private scheduleSave = debounce(() => this.saveNow(), IDLE_BEFORE_SAVE_MS, { maxWait: MAX_WAIT_MS });
 
-  private schedule(): void {
-    if (this.abandoned || !this.hasSomethingToWrite()) {
+  private schedule(somethingToWrite = this.hasSomethingToWrite()): void {
+    if (this.abandoned || !somethingToWrite) {
       return;
     }
 

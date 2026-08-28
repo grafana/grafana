@@ -258,6 +258,43 @@ describe('NotebookAutosave', () => {
     expect(updateNotebook).not.toHaveBeenCalled();
   });
 
+  // Entering edit mode is itself a state change, and without care the handler that watches for edits
+  // would mark it as one. Left set, a later reactivation reschedules a save on the strength of that
+  // stale flag alone, and picks up whatever changed outside edit mode in between as if it were the
+  // edit that justified it.
+  it('does not let a change outside edit mode ride in on a reactivation after an edit-less visit', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    scene.onEnterEditMode();
+    scene.onExitEditMode();
+    editFirstCell(scene, 'changed outside edit mode');
+    deactivate();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
+  // The renderer keeps a trailing empty block ready the moment edit mode opens (see
+  // NotebookLayoutManager), which appends a cell of its own: a second state change from entering edit
+  // mode, on top of the isEditing flag itself. Simulated directly, the same way the other
+  // trailing-block tests below do, because there is no renderer here.
+  it('does not let a change outside edit mode ride in on a reactivation after the trailing block was replenished', async () => {
+    const scene = buildScene();
+    deactivate = scene.activate();
+
+    scene.onEnterEditMode();
+    scene.state.body.appendSystemCell(scene.state.body.state.cells.length);
+    scene.onExitEditMode();
+    editFirstCell(scene, 'changed outside edit mode');
+    deactivate();
+    deactivate = scene.activate();
+    await jest.advanceTimersByTimeAsync(MAX_WAIT_MS);
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+  });
+
   it('reports nothing when edit mode is entered and nothing has been changed', async () => {
     const scene = activateEditing();
 
