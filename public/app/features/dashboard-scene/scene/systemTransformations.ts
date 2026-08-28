@@ -11,7 +11,7 @@ import {
 } from '@grafana/scenes';
 
 /**
- * Stable identity for "nothing to run"
+ * Stable identity for "nothing to run", so consumers using these arrays as effect deps do not churn.
  */
 export const NO_SYSTEM_TRANSFORMATIONS: Readonly<ResolvedSystemTransformations> = {
   prepend: [],
@@ -27,6 +27,9 @@ const unwrappedByResolved = new WeakMap<ResolvedSceneTransformations, ResolvedSy
 
 /**
  * The system transformations the panel's pipeline is currently running, in the shape the plugin registered them.
+ *
+ * Takes no frames: it reuses the key the pipeline already resolved against, which is what keeps this
+ * to one supplier call per pass and a stable identity across renders.
  */
 export function getResolvedSystemTransformations(transformer: SceneDataTransformer): ResolvedSystemTransformations {
   const resolved = transformer.getResolvedSystemTransformations();

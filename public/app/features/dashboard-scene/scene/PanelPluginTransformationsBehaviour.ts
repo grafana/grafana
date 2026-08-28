@@ -15,9 +15,14 @@ import { pluginTransformationsEnabled } from './systemTransformations';
  * System transformation behavior (panel plugin defined transformation)
  * Runs `PanelPlugin.setSystemTransformations` by handing the transformer a supplier that resolves from the frames
  * entering the pipeline. Nothing it contributes reaches `state.transformations`.
+ *
+ * Lives on the transformer `$behaviors` and not the panel:
+ *   `$data` brings its own `$behaviors` so this class never needs to re-register
+ *   `DashboardScene.unlinkLibraryPanel` sets panel `$behaviors` to `undefined`, deleting this class
  */
 export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneObjectState> {
-  // The plugin the pipeline last resolved against
+  // undefined = "never activated"
+  // {plugin: undefined} = "activated, resolved nothing"
   private _resolvedPlugin: { plugin: PanelPlugin | undefined } | undefined;
 
   public constructor(state: SceneObjectState = {}) {
@@ -55,6 +60,7 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
 
     this._loadPluginIfUnresolved(transformer, panel);
   }
+
   /**
    * One instance, not a closure per activation: the transformer re-runs its pipeline whenever the
    * supplier reference changes, so rebuilding this would re-transform on every re-activation.
@@ -74,13 +80,11 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
 
     const { prepend, append } = plugin.getSystemTransformations({ series });
 
-    // The contract supports the series topic only.
+    // The contract supports the series topic only. Scenes routes each entry by its own topic, so
+    // without this a config aimed at annotations would start transforming that stream.
     return { prepend: prepend.filter(appliesToSeriesTopic), append: append.filter(appliesToSeriesTopic) };
   };
 
-  /**
-   * Set _resolvedPlugin on loading and panel changes
-   */
   private _subscribeToPanel = (panel: VizPanel, transformer: SceneDataTransformer) => {
     return panel.subscribeToState(() => {
       const nextPlugin = this._plugin();
@@ -118,17 +122,16 @@ export class PanelPluginTransformationsBehaviour extends SceneObjectBase<SceneOb
     const { pluginId } = panel.state;
 
     importPanelPlugin(pluginId)
-      // Don't error the panel's data if pluginId is not resolved!
+      // An unresolvable id just leaves the panel untransformed, so never error its data over it.
+      // Caught first so it cannot also swallow a failed reprocess.
       .catch(() => undefined)
       .then(() => {
-        // Don't reprocess if not active
         if (!this.isActive || panel.state.pluginId !== pluginId) {
           return;
         }
 
         const plugin = this._plugin();
 
-        // Don't reprocess if plugin is already resolved
         if (plugin === this._resolvedPlugin?.plugin) {
           return;
         }
