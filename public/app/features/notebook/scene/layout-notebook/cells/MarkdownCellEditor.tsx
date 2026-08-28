@@ -10,6 +10,7 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';
+import { navigationKeymap, scrollMarginExtension } from './focusExtension';
 import {
   enclosingListKind,
   markdownLivePreview,
@@ -28,6 +29,8 @@ export interface MarkdownCellEditorProps {
   onChange: (content: CellContentKind) => void;
   placeholder?: string;
   onSubmit?: (remainder: string, marker?: string) => void;
+  /** ArrowUp/ArrowDown once the caret has nowhere further to go inside this cell. See navigationKeymap. */
+  onNavigate?: (direction: 'up' | 'down') => void;
   focusExtension?: Extension[];
 }
 
@@ -36,10 +39,12 @@ export function MarkdownCellEditor({
   onChange,
   placeholder,
   onSubmit,
+  onNavigate,
   focusExtension,
 }: MarkdownCellEditorProps) {
   const theme = useTheme2();
   const livePreview = useMemo(() => markdownLivePreview(theme), [theme]);
+  const scrollMargin = useMemo(() => scrollMarginExtension(theme), [theme]);
 
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -123,6 +128,18 @@ export function MarkdownCellEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onSubmit exists at all should rebuild this
   }, [Boolean(onSubmit)]);
 
+  // Same ref-backed pattern as onSubmitRef above: onNavigate's identity changes every render, but
+  // whether this cell has the behavior at all doesn't.
+  const onNavigateRef = useRef(onNavigate);
+  onNavigateRef.current = onNavigate;
+  const navigateExt = useMemo(() => {
+    if (!onNavigate) {
+      return [];
+    }
+    return navigationKeymap((direction) => onNavigateRef.current?.(direction));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
+  }, [Boolean(onNavigate)]);
+
   if (content.kind !== 'Markdown') {
     return null;
   }
@@ -135,7 +152,14 @@ export function MarkdownCellEditor({
         lineWrapping
         basicSetup={EDIT_SETUP}
         theme={livePreview.theme}
-        extensions={[livePreview.extensions, ...placeholderExt, ...enterExt, ...(focusExtension ?? [])]}
+        extensions={[
+          livePreview.extensions,
+          scrollMargin,
+          ...placeholderExt,
+          ...enterExt,
+          ...navigateExt,
+          ...(focusExtension ?? []),
+        ]}
         aria-label={t('notebook.cell.markdown.aria-label-editor', 'Markdown')}
         onChange={(value) => {
           setText(value);
