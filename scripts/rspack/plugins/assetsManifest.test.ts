@@ -5,7 +5,12 @@ import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { describe, expect, it } from 'vitest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
+import {
+  assetsManifestOptions,
+  generateAssetsManifest,
+  type ManifestAssets,
+  type ManifestEntrypoints,
+} from './assetsManifest.ts';
 import { compile, readAssets } from './testUtils.ts';
 
 const OUTPUT_PATH = '/dist';
@@ -172,6 +177,34 @@ describe('assets manifest', () => {
     expect(Object.keys(assets).some((name) => name.startsWith('lazy.'))).toBe(true);
     expect(Object.keys(entries).some((key) => key.includes('image'))).toBe(false);
     expect(Object.keys(entries).some((key) => key.startsWith('lazy'))).toBe(false);
+  });
+
+  // A hot update only exists partway through a watch session, which a single compilation
+  // cannot produce, so the generator is driven directly here. Without the filter the backend
+  // renders the patch into index.html as application code.
+  it('excludes hot module replacement patches from the entrypoint file lists', () => {
+    const entries = {
+      app: [
+        'runtime.js',
+        'app.js',
+        'app.1a2b3c4d.hot-update.js',
+        '1a2b3c4d.hot-update.json',
+        'grafana.app.css',
+        'app.hot-update.mjs',
+      ],
+    };
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const compilation = { outputOptions: { publicPath: PUBLIC_PATH } } as Parameters<
+      typeof generateAssetsManifest
+    >[3]['compilation'];
+
+    const { entrypoints } = generateAssetsManifest(undefined, [], entries, { compilation });
+
+    expect(entrypoints.app.assets).toEqual({
+      js: ['public/build/runtime.js', 'public/build/app.js'],
+      css: ['public/build/grafana.app.css'],
+    });
+    expect(Object.keys(entrypoints.app.assets)).not.toContain('json');
   });
 
   it('excludes sourcemaps from the entrypoint file lists', async () => {
