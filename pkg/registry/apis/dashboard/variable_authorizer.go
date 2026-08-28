@@ -15,16 +15,18 @@ import (
 // newVariableAuthorizer authorizes dashboard.grafana.app/variables requests.
 //
 // It first gates on FlagGrafanaDashboardGlobalVariables via OpenFeature (when
-// storage is registered, enablement is enforced here). When enabled, it maps
-// k8s verbs to variables:* RBAC actions. A nil accessControl denies cleanly
-// (standalone NewAPIService does not wire classic RBAC).
+// storage is registered, enablement is enforced here). Service identity may
+// get/list/watch/delete leftovers after a flag flip so folder cleanup still
+// works; create/update/patch stay denied. Users are denied while the flag is
+// off. When enabled, it maps k8s verbs to variables:* RBAC actions. A nil
+// accessControl denies cleanly (standalone NewAPIService does not wire
+// classic RBAC).
 //
 // Create/update/delete/list/watch use a coarse (any-scope) check. Admission
-// narrows mutations to the target folder (and allowMissingFolder orphan
-// cleanup). List/watch per-item filtering is the unified-storage checker
-// (variables is on rbacAllowlist; the RBAC mapper has folder support).
-// Named get evaluates against variables:uid:<name>, which the scope resolver
-// expands to folder scopes.
+// narrows mutations to the target folder. List/watch per-item filtering is
+// the unified-storage checker (variables is on rbacAllowlist; the RBAC mapper
+// has folder support). Named get evaluates against variables:uid:<name>,
+// which the scope resolver expands to folder scopes.
 func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -33,6 +35,16 @@ func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 			}
 
 			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(ctx)) {
+				if identity.IsServiceIdentity(ctx) {
+					// Folder cleanup must still list and delete leftovers after a flag
+					// flip. Do not allow create/update/patch — IsServiceIdentity also
+					// matches Git Sync provisioning, which must not write variables
+					// while the feature is off.
+					switch attr.GetVerb() {
+					case "get", "list", "watch", "delete", "deletecollection":
+						return authorizer.DecisionAllow, "", nil
+					}
+				}
 				return authorizer.DecisionDeny, "global dashboard variables feature is not enabled", nil
 			}
 
@@ -63,10 +75,8 @@ func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 
 			var eval ac.Evaluator
 			verb := attr.GetVerb()
-			// Named get stays scoped. Mutations must stay coarse: a scoped check
-			// resolves variables:uid:<name> via the parent folder, and when that
-			// folder is gone the resolver fails before admission's
-			// allowMissingFolder orphan-cleanup path can run.
+			// Named get stays scoped. Mutations stay coarse; admission applies
+			// the folder-scoped variables:* check.
 			if verb == "get" && attr.GetName() != "" {
 				eval = ac.EvalPermission(action, ScopeVariablesProvider.GetResourceScopeUID(attr.GetName()))
 			} else {

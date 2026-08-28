@@ -56,6 +56,7 @@ func TestSubCount_RequestIncludesRecordingRules(t *testing.T) {
 	require.NotNil(t, search.lastReq)
 	require.Contains(t, search.lastReq.Kinds, "rules.alerting.grafana.app/recordingrules")
 	require.Contains(t, search.lastReq.Kinds, "rules.alerting.grafana.app/alertrules")
+	require.Contains(t, search.lastReq.Kinds, "dashboard.grafana.app/variables")
 }
 
 func TestSubCount_SurfacesBothAlertAndRecordingRuleCounts(t *testing.T) {

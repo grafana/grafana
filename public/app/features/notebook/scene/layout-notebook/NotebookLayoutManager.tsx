@@ -783,19 +783,25 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   // handful of times per drag.
   const [drag, setDrag] = useState<NotebookDragState | null>(null);
 
-  const [focusRequest, setFocusRequest] = useState<{ key: string; id: number; caretOffset?: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{
+    key: string;
+    id: number;
+    caretOffset?: number;
+    scrollAlign?: ScrollLogicalPosition;
+  } | null>(null);
   const nextFocusId = useRef(0);
-  // `caretOffset` only matters for a split (see onAdvance below): the new cell's content there isn't
-  // just short starter text but carries the reader's own text along with it, so the default "end of
-  // document" would land the caret after that carried-over text instead of at the actual split point.
-  const requestFocus = useCallback((key: string | null | undefined, caretOffset?: number) => {
-    if (!key) {
-      setFocusRequest(null);
-      return;
-    }
-    nextFocusId.current += 1;
-    setFocusRequest({ key, id: nextFocusId.current, caretOffset });
-  }, []);
+
+  const requestFocus = useCallback(
+    (key: string | null | undefined, caretOffset?: number, scrollAlign?: ScrollLogicalPosition) => {
+      if (!key) {
+        setFocusRequest(null);
+        return;
+      }
+      nextFocusId.current += 1;
+      setFocusRequest({ key, id: nextFocusId.current, caretOffset, scrollAlign });
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isEditing) {
@@ -817,6 +823,20 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       requestFocus(model.addCell(type, index)?.state.key);
     },
     [model, requestFocus]
+  );
+
+  // ArrowUp/ArrowDown once the caret (or, for a Panel/Collapsed cell, the frame itself — see
+  // NotebookCellFrame) has nowhere further to go within the current cell. No wraparound at the
+  // first/last cell, matching every other block editor.
+  const onNavigate = useCallback(
+    (fromIndex: number, direction: 'up' | 'down') => {
+      const target = cells[direction === 'up' ? fromIndex - 1 : fromIndex + 1];
+      if (!target) {
+        return;
+      }
+      requestFocus(target.state.key, direction === 'down' ? 0 : undefined, direction === 'down' ? 'start' : 'end');
+    },
+    [cells, requestFocus]
   );
 
   const onDragStart = useCallback((start: DragStart) => {
@@ -884,6 +904,9 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     caretOffset={
                       focusRequest && cell.state.key === focusRequest.key ? focusRequest.caretOffset : undefined
                     }
+                    scrollAlign={
+                      focusRequest && cell.state.key === focusRequest.key ? focusRequest.scrollAlign : undefined
+                    }
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
@@ -904,6 +927,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                       requestFocus(created?.state.key, caretOffset);
                     }}
                     onFocusRequest={() => requestFocus(cell.state.key)}
+                    // Undefined outside edit mode, same as every other affordance here — a read-only
+                    // Code cell still mounts a (readOnly) CodeMirror instance, so without this its own
+                    // ArrowUp/Down keymap would happily fire while just reading the notebook.
+                    onNavigate={isEditing ? (direction) => onNavigate(index, direction) : undefined}
                   />
                 ))}
                 {dropProvided.placeholder}

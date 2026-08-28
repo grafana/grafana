@@ -2666,7 +2666,9 @@
       "view-in-explore": "View in Explore"
     },
     "query-options": {
+      "apply-button": "Apply",
       "button-options": "Options",
+      "invalid-interval-error": "Invalid interval format. Examples: 1s, 5m, 1h",
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -12987,6 +12989,10 @@
       "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
+      "frame": {
+        "aria-label-collapsed": "Collapsed block: {{name}}",
+        "aria-label-panel": "Visualization block: {{name}}"
+      },
       "markdown": {
         "aria-label-editor": "Markdown",
         "format-bold": "B",
@@ -13163,6 +13169,13 @@
     },
     "field-color": {
       "color-by-label": "Color series by"
+    },
+    "number-input": {
+      "error-out-of-range": "Out of range. {{range}}",
+      "error-out-of-range-generic": "Out of range",
+      "range-max": "Maximum: {{max}}",
+      "range-min": "Minimum: {{min}}",
+      "range-min-max": "Range: {{min}} to {{max}}"
     },
     "registry": {
       "get-all-option-editors": {
@@ -17900,7 +17913,7 @@
       "delete-modal-body": "Are you sure you want to delete \"{{name}}\"?",
       "delete-modal-confirm": "Delete",
       "delete-modal-title": "Delete variable",
-      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)",
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "moved": "Variable moved",
@@ -17915,8 +17928,8 @@
       "not-found": "Variable not found"
     },
     "move-modal": {
-      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
-      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available to all dashboards).",
+      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available to all dashboards).",
       "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
       "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
