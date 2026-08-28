@@ -2004,6 +2004,20 @@
     },
     {
       "metadata": {
+        "name": "datasourceConnectionsAPI",
+        "resourceVersion": "1787851878636",
+        "creationTimestamp": "2026-08-27T17:31:18Z"
+      },
+      "spec": {
+        "description": "Register a cross-type datasource connections route on /apis/datasource.grafana.app/",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceConnectionsTab",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-01-21T17:39:48Z"

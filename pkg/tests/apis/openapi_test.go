@@ -30,6 +30,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagQueryService,                         // Query Library
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourceConnectionsAPI,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			// featuremgmt.FlagDatasourcesQueryTypes,
@@ -110,6 +111,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "query.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "datasource.grafana.app",
 		Version: "v0alpha1",
 	}, {
 		Group:   "advisor.grafana.app",

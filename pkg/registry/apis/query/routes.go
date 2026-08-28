@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/connections"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -106,6 +107,14 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 				Handler: b.GetSQLSchemas,
 			},
 		},
+	}
+
+	// The SQL-backed connections route reads the legacy data_source table
+	// directly. It is wired in multi-tenant, where the feature-flagged route
+	// below is never enabled, so the two cannot both claim the same path.
+	if b.sqlConnections != nil {
+		routes.Namespace = append(routes.Namespace, connections.Routes(b.sqlConnections, defs)...)
+		return routes
 	}
 
 	// Get a list of all datasource instances

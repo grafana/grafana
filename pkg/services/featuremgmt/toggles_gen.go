@@ -179,6 +179,10 @@ const (
 	// Adds datasource connections to the query service
 	FlagQueryServiceWithConnections = "queryServiceWithConnections"
 
+	// FlagDatasourceConnectionsAPI
+	// Register a cross-type datasource connections route on /apis/datasource.grafana.app/
+	FlagDatasourceConnectionsAPI = "datasourceConnectionsAPI"
+
 	// FlagQueryServiceRewrite
 	// Rewrite requests targeting /ds/query to the query service
 	FlagQueryServiceRewrite = "queryServiceRewrite"

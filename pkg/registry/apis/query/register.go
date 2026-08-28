@@ -58,7 +58,10 @@ type QueryAPIBuilder struct {
 	queryTypes             *datasourceV0.QueryTypeDefinitionList
 	legacyDatasourceLookup service.LegacyDataSourceLookup
 	connections            datasourceV0.DataSourceConnectionProvider
-	reportStatus           func(context.Context, int)
+	// sqlConnections serves the cross-type connections route on
+	// datasource.grafana.app straight from SQL. Nil unless wired (multi-tenant).
+	sqlConnections datasourceV0.DataSourceConnectionProvider
+	reportStatus   func(context.Context, int)
 }
 
 func NewQueryAPIBuilder(
@@ -70,6 +73,7 @@ func NewQueryAPIBuilder(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	connections datasourceV0.DataSourceConnectionProvider,
+	sqlConnections datasourceV0.DataSourceConnectionProvider,
 	concurrentQueryLimit int,
 	reportStatus func(context.Context, int),
 ) (*QueryAPIBuilder, error) {
@@ -100,6 +104,7 @@ func NewQueryAPIBuilder(
 		features:             features,
 		queryTypes:           queryTypes,
 		connections:          connections,
+		sqlConnections:       sqlConnections,
 		converter: &expr.ResultConverter{
 			Features: features,
 			Tracer:   tracer,
@@ -164,6 +169,7 @@ func RegisterAPIService(
 		tracer,
 		legacyDatasourceLookup,
 		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
+		nil,                // sqlConnections: single tenant serves these from the root datasource builder
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
 	)
