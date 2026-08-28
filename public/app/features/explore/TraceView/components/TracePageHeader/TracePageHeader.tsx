@@ -168,8 +168,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const statusValue = status && status.length > 0 ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
   const showWarningIcon = statusClass === '4';
-  const showErrorIcon =
-    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === '5');
+  const showErrorIcon = !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === '5');
   const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === '2';
 
   // Convert date from micro to milli seconds
