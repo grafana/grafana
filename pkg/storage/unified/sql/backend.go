@@ -223,6 +223,7 @@ func NewStorageBackend(
 			Dialect:                 dialect,
 			DB:                      dbConn,
 			BatchTransactionTimeout: cfg.ResourceVersionBatchTransactionTimeout,
+			Reg:                     reg,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create resource version manager: %w", err)
@@ -519,6 +520,7 @@ func (b *backend) initLocked(ctx context.Context) error {
 		Dialect:                 b.dialect,
 		DB:                      b.db,
 		BatchTransactionTimeout: b.batchTxnTimeout,
+		Reg:                     b.reg,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create resource version manager: %w", err)
