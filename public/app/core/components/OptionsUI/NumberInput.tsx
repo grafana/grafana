@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { debounce, type DebouncedFunc } from 'lodash';
-import { useState, useRef, useEffect, useEffectEvent, useCallback, useId } from 'react';
+import { debounce } from 'lodash';
+import { memo, useState, useRef, useEffect, useLayoutEffect, useCallback, useId, useMemo } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -56,7 +56,7 @@ function getRangeText(min?: number, max?: number) {
  * @internal this is not exported to the `@grafana/ui` library, it is used
  * by options editor (number and slider), and direclty with in grafana core
  */
-export const NumberInput = ({
+export const NumberInput = memo(function NumberInput({
   id,
   value,
   placeholder,
@@ -68,11 +68,11 @@ export const NumberInput = ({
   width,
   fieldDisabled,
   suffix,
-}: Props) => {
+}: Props) {
   const [text, setText] = useState('');
   const [inputCorrected, setInputCorrected] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const emitInRangeValueDebouncedRef = useRef<DebouncedFunc<(raw: string) => void> | null>(null);
+  const latestPropsRef = useRef({ value, min, max, onChange });
   const rangeId = useId();
   const errorId = useId();
   const styles = useStyles2(getStyles);
@@ -88,20 +88,27 @@ export const NumberInput = ({
     });
   }, [value]);
 
-  const emitInRangeValue = useEffectEvent((txt: string) => {
-    if (txt === '' || isIncompleteNumericInput(txt)) {
-      return;
-    }
-    const parsed = Number(txt);
-    if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
-      return;
-    }
-    if (parsed !== value) {
-      onChange(parsed);
-    }
-  });
-  const emitInRangeValueRef = useRef(emitInRangeValue);
-  emitInRangeValueRef.current = emitInRangeValue;
+  useLayoutEffect(() => {
+    latestPropsRef.current = { value, min, max, onChange };
+  }, [value, min, max, onChange]);
+
+  const emitInRangeValueDebounced = useMemo(
+    () =>
+      debounce((txt: string) => {
+        if (txt === '' || isIncompleteNumericInput(txt)) {
+          return;
+        }
+        const parsed = Number(txt);
+        const { value, min, max, onChange } = latestPropsRef.current;
+        if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
+          return;
+        }
+        if (parsed !== value) {
+          onChange(parsed);
+        }
+      }, 500),
+    []
+  );
 
   const commitValue = useCallback(
     (raw?: string) => {
@@ -143,14 +150,8 @@ export const NumberInput = ({
   );
 
   useEffect(() => {
-    const debounced = debounce((raw: string) => emitInRangeValueRef.current(raw), 500);
-    emitInRangeValueDebouncedRef.current = debounced;
-
-    return () => {
-      emitInRangeValueDebouncedRef.current = null;
-      debounced.cancel();
-    };
-  }, []);
+    return () => emitInRangeValueDebounced.cancel();
+  }, [emitInRangeValueDebounced]);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,37 +160,37 @@ export const NumberInput = ({
       setInputCorrected(false);
 
       if (next === '' || isIncompleteNumericInput(next)) {
-        emitInRangeValueDebouncedRef.current?.cancel();
+        emitInRangeValueDebounced.cancel();
         return;
       }
 
       const parsed = Number(next);
       if (!Number.isFinite(parsed) || !isInRange(parsed, min, max)) {
-        emitInRangeValueDebouncedRef.current?.cancel();
+        emitInRangeValueDebounced.cancel();
         return;
       }
 
-      emitInRangeValueDebouncedRef.current?.(next);
+      emitInRangeValueDebounced(next);
     },
-    [min, max]
+    [min, max, emitInRangeValueDebounced]
   );
 
   const handleBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
-      emitInRangeValueDebouncedRef.current?.cancel();
+      emitInRangeValueDebounced.cancel();
       commitValue(e.currentTarget.value);
     },
-    [commitValue]
+    [commitValue, emitInRangeValueDebounced]
   );
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-        emitInRangeValueDebouncedRef.current?.cancel();
+        emitInRangeValueDebounced.cancel();
         commitValue(e.currentTarget.value);
       }
     },
-    [commitValue]
+    [commitValue, emitInRangeValueDebounced]
   );
 
   const localDescribedBy = inputCorrected ? errorId : rangeText ? rangeId : undefined;
@@ -227,7 +228,7 @@ export const NumberInput = ({
       {inputCorrected && <FieldValidationMessage id={errorId}>{errorMessage}</FieldValidationMessage>}
     </div>
   );
-};
+});
 
 NumberInput.displayName = 'NumberInput';
 
