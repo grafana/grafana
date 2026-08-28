@@ -13101,15 +13101,15 @@
     "color": {
       "clear-tooltip": "Clear settings"
     },
+    "field-color": {
+      "color-by-label": "Color series by"
+    },
     "number-input": {
       "error-out-of-range": "Out of range. {{range}}",
       "error-out-of-range-generic": "Out of range",
       "range-max": "Maximum: {{max}}",
       "range-min": "Minimum: {{min}}",
       "range-min-max": "Range: {{min}} to {{max}}"
-    },
-    "field-color": {
-      "color-by-label": "Color series by"
     },
     "registry": {
       "get-all-option-editors": {
