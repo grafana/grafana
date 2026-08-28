@@ -170,10 +170,25 @@ export function getMultiVariableValues(variable: MultiValueVariable | CustomVari
     };
   }
 
-  return {
-    values: Array.isArray(value) ? value : [value],
-    texts: Array.isArray(text) ? text : [text],
-  };
+  const values = Array.isArray(value) ? value : [value];
+  const stateTexts = Array.isArray(text) ? text : [text];
+
+  // When the variable is restored from a URL, scenes populates `value` from the
+  // query string but may leave `text` mirroring the raw value. Using `text` as-is
+  // would then make `${var:text}` render the raw value inside repeated rows
+  // (see issue #131682). Recover the human-readable label from the option list
+  // whenever the recorded text equals the value (the "no display text" signal),
+  // or whenever the recorded text array is too short to cover every value.
+  const optionByValue = new Map(options.map((o) => [o.value, o.label] as const));
+  const texts = values.map((v, i) => {
+    const recorded = stateTexts[i];
+    if (recorded != null && recorded !== v) {
+      return recorded;
+    }
+    return optionByValue.get(v) ?? v;
+  });
+
+  return { values, texts };
 }
 
 // used to transform old interval model to new interval model from scenes

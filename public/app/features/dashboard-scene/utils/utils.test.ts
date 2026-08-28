@@ -1,3 +1,4 @@
+import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -9,6 +10,7 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
+  TestVariable,
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
@@ -28,6 +30,7 @@ import {
   hasLibraryPanelsInV1Dashboard,
   getLayoutForObject,
   forceRenderChildren,
+  getMultiVariableValues,
 } from './utils';
 
 setPluginImportUtils({
@@ -570,3 +573,103 @@ const getAutoGrid = () => {
     panel,
   };
 };
+
+describe('getMultiVariableValues (#131682)', () => {
+  function buildVariable(state: {
+    value: string | string[];
+    text: string | string[];
+    options: Array<{ label: string; value: string }>;
+    isMulti: boolean;
+    includeAll: boolean;
+  }) {
+    const variable = new TestVariable({
+      name: 'eq',
+      query: 'A.*',
+      value: state.value,
+      text: state.text,
+      isMulti: state.isMulti,
+      includeAll: state.includeAll,
+      optionsToReturn: state.options,
+      delayMs: 0,
+      refresh: 0 as VariableRefresh,
+    });
+    // TestVariable is async; the options only land in `state.options` after
+    // `signalUpdateCompleted` runs. We don't need to subscribe — just settle
+    // the load and then mutate `state.options` to match the requested shape
+    // (the units under test read `state.options` directly, not the observable).
+    variable.signalUpdateCompleted();
+    variable.setState({ options: state.options });
+    return variable;
+  }
+
+  it('preserves the recorded text when it differs from the value (interactive selection)', () => {
+    const variable = buildVariable({
+      value: ['100202'],
+      text: ['HLB01 (15000014)'],
+      options: [{ label: 'HLB01 (15000014)', value: '100202' }],
+      isMulti: true,
+      includeAll: false,
+    });
+
+    expect(getMultiVariableValues(variable)).toEqual({
+      values: ['100202'],
+      texts: ['HLB01 (15000014)'],
+    });
+  });
+
+  it('recovers the display label from options when the recorded text mirrors the value (URL restore)', () => {
+    // Simulates the bug: a variable restored from a URL has `value` set from the
+    // query string and `text` left as the raw value because the URL only encodes
+    // the value, not the label. `${var:text}` should still resolve to the
+    // human-readable label.
+    const variable = buildVariable({
+      value: ['100202'],
+      text: ['100202'],
+      options: [{ label: 'HLB01 (15000014)', value: '100202' }],
+      isMulti: true,
+      includeAll: false,
+    });
+
+    expect(getMultiVariableValues(variable)).toEqual({
+      values: ['100202'],
+      texts: ['HLB01 (15000014)'],
+    });
+  });
+
+  it('recovers labels for every value when the recorded text array is too short', () => {
+    // Defensive: even if the recorded text array is shorter than the value
+    // array (shouldn't normally happen, but guards against partial URL
+    // restores), every value still gets a label.
+    const variable = buildVariable({
+      value: ['A1', 'B1', 'C1'],
+      text: ['A'],
+      options: [
+        { label: 'A', value: 'A1' },
+        { label: 'B', value: 'B1' },
+        { label: 'C', value: 'C1' },
+      ],
+      isMulti: true,
+      includeAll: false,
+    });
+
+    expect(getMultiVariableValues(variable)).toEqual({
+      values: ['A1', 'B1', 'C1'],
+      texts: ['A', 'B', 'C'],
+    });
+  });
+
+  it('falls back to the value itself when no matching option is found', () => {
+    const variable = buildVariable({
+      value: ['ghost'],
+      text: ['ghost'],
+      options: [{ label: 'Real', value: 'real' }],
+      isMulti: true,
+      includeAll: false,
+    });
+
+    expect(getMultiVariableValues(variable)).toEqual({
+      values: ['ghost'],
+      texts: ['ghost'],
+    });
+  });
+});
