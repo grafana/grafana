@@ -2,6 +2,7 @@
 // Since much of Grafana depends on it in includes side effects at import time,
 // we delay loading the rest of the app using import() until the boot data is ready.
 
+import 'css/preload.css';
 import 'vendor/css/font_awesome.css';
 
 import { loadLegacyMoment } from '@grafana/data/internal/legacyMoment';
