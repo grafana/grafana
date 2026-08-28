@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Registration struct{}
@@ -42,7 +43,7 @@ func ProvideRegistration(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP,
+	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
@@ -102,7 +103,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
 	}
 
-	registerOAuthClients(ctx, logger, authnSvc, cfgProvider, oauthTokenService, socialService, features, tracer)
+	registerOAuthClients(ctx, logger, authnSvc, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer)
 
 	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
@@ -147,7 +148,8 @@ func ProvideRegistration(
 func registerOAuthClients(
 	ctx context.Context, logger log.Logger, authnSvc authn.Service,
 	cfgProvider configprovider.ConfigProvider, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+	socialService social.Service, settingsProvider setting.Provider,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) {
 	oauthProviders, err := socialService.GetOAuthProviders(ctx)
 	if err != nil {
@@ -160,6 +162,6 @@ func registerOAuthClients(
 
 	for name := range oauthProviders {
 		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, features, tracer))
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer))
 	}
 }
