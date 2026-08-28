@@ -1,5 +1,7 @@
 import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
+import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
+import { ReactRefreshRspackPlugin } from '@rspack/plugin-react-refresh';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -9,8 +11,10 @@ import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
+import { getEnvConfig } from '../cli/env-util.ts';
+
 import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import common, { type Env } from './rspack.common.ts';
+import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -36,7 +40,75 @@ function scenesModule(): string {
 }
 const decoupledPlugins = getDecoupledPlugins();
 
+// The dev server and the backend both need to agree on one origin. `[frontend_dev] server_url`
+// in the ini is that single source of truth: the dev server listens on it, and the backend
+// renders it into index.html as the asset origin.
+function getDevServerOrigin(): { hostname: string; port: number } {
+  const grafanaRoot = path.resolve(import.meta.dirname, '../..');
+  const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
+
+  if (typeof raw !== 'string' || raw === '') {
+    throw new Error(
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini.'
+    );
+  }
+
+  const { hostname, port } = new URL(raw);
+  if (!/^\d+$/.test(port) || Number(port) <= 0) {
+    throw new Error(`Cannot start the dev server: \`[frontend_dev] server_url\` (${raw}) names no port.`);
+  }
+
+  return { hostname, port: Number(port) };
+}
+
+function getDevServer(): DevServerConfiguration {
+  const { hostname, port } = getDevServerOrigin();
+  const grafanaRoot = path.resolve(import.meta.dirname, '../..');
+
+  return {
+    port,
+    hot: true,
+
+    // Grafana points the browser here for everything under `public/`, the same way it points
+    // at a CDN in production. Only the build output lives in the compiler, so the rest of the
+    // tree - fonts, core plugin bundles, images - has to be served from disk.
+    static: {
+      directory: path.resolve(grafanaRoot, 'public'),
+      publicPath: '/public',
+      watch: false,
+    },
+
+    // Everything the page loads from here is cross-origin, and fonts, `fetch`ed JSON and hot
+    // update manifests are all CORS requests. The server only ever listens on loopback.
+    headers: { 'Access-Control-Allow-Origin': '*' },
+
+    // Nothing travels further than loopback, so gzipping megabytes of dev bundle is pure cost.
+    compress: false,
+
+    // Checked against the request Host, and against the Origin the HMR client connects with -
+    // whichever name the contributor opened Grafana under. Listing the loopback aliases beats
+    // disabling the check with 'all', which would leave the dev server open to DNS rebinding.
+    allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
+
+    client: {
+      // The page is served by Grafana on another port, so the client cannot infer where its
+      // socket lives. Point it back at this server.
+      webSocketURL: `ws://${hostname}:${port}/ws`,
+    },
+
+    devMiddleware: {
+      publicPath: `/${PUBLIC_PATH}`,
+
+      // Nothing is written to disk. The backend reads the manifest from this server over HTTP,
+      // and falls back to whatever `yarn build:rspack` last left in public/build/rspack.
+      writeToDisk: false,
+    },
+  };
+}
+
 export default (env: Env = {}) => {
+  const hmr = Boolean(Number(env.hmr));
+
   const devConfig: Configuration = {
     devtool: 'source-map',
     mode: 'development',
@@ -85,6 +157,17 @@ export default (env: Env = {}) => {
     stats: 'minimal',
   };
 
+  if (hmr) {
+    devConfig.devServer = getDevServer();
+    devConfig.plugins?.push(new ReactRefreshRspackPlugin());
+
+    // `rspack serve` turns lazy compilation on for web-only builds unless the config says
+    // otherwise, and its client posts to a root-relative /_rspack/lazy/trigger. The page is
+    // served by Grafana, so that lands there instead and every dynamic import fails.
+    // Compiling everything up front costs about two seconds.
+    devConfig.lazyCompilation = false;
+  }
+
   if (Number(env.liveReload)) {
     // Live reload has no rspack equivalent; the webpack plugin crashes rspack 2 at apply time.
     console.warn('[rspack.dev] --env liveReload=1 is not supported by the rspack build; ignoring.');
@@ -123,5 +206,5 @@ export default (env: Env = {}) => {
     );
   }
 
-  return merge(common(env), devConfig);
+  return merge(common({ ...env, hmr: hmr ? '1' : undefined }), devConfig);
 };

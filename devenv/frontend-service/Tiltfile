@@ -40,7 +40,9 @@ local_resource(
 local_resource(
   'yarn start',
   cmd='rm -rf %s' % manifest_path,
-  serve_cmd='yarn start:rspack:noLint' if use_rspack else 'yarn start:noLint',
+  # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
+  # files rather than hold them in a dev server.
+  serve_cmd='yarn start:rspack:noHmr -- --env noTsCheck=1 --env noLint=1' if use_rspack else 'yarn start:noLint',
   resource_deps=['yarn install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
