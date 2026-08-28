@@ -165,6 +165,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const rootSpan = getRootSpan(trace.spans);
   const serviceName = rootSpan ? getServiceDisplayName(rootSpan.process) : '';
   const operationName = rootSpan?.operationName ?? '';
+  const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
   const statusValue = status && status.length > 0 ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
   const showWarningIcon = statusClass === '4';
@@ -261,7 +262,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               aria-label={t('explore.trace-page-header.success-indicator', 'Trace succeeded')}
             />
           )}
-          <h1 className={styles.title} aria-label={[serviceName, operationName].filter(Boolean).join(' ')}>
+          <h1 className={styles.title} aria-label={traceTitle}>
             {serviceName && <span className={styles.serviceName}>{serviceName}</span>}
             {operationName && <span className={styles.operationName}>{operationName}</span>}
           </h1>
