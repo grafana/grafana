@@ -700,6 +700,57 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow wildcard datasource read with wildcard datasource grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:    "datasources:read",
+					Scope:     "datasources:*",
+					Kind:      "datasources",
+					Attribute: "*",
+				},
+			},
+			check: checkRequest{
+				Action:   "datasources:read",
+				Group:    "*.datasource.grafana.app",
+				Resource: "datasources",
+				Name:     "*",
+				Verb:     utils.VerbGet,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny wildcard datasource read with uid-scoped datasource grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "datasources:read",
+					Scope:      "datasources:uid:ds1",
+					Kind:       "datasources",
+					Attribute:  "uid",
+					Identifier: "ds1",
+				},
+			},
+			check: checkRequest{
+				Action:   "datasources:read",
+				Group:    "*.datasource.grafana.app",
+				Resource: "datasources",
+				Name:     "*",
+				Verb:     utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name:        "should deny wildcard datasource read without a datasource grant",
+			permissions: []accesscontrol.Permission{},
+			check: checkRequest{
+				Action:   "datasources:read",
+				Group:    "*.datasource.grafana.app",
+				Resource: "datasources",
+				Name:     "*",
+				Verb:     utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
 			name: "should allow creating a team (no scope needed)",
 			permissions: []accesscontrol.Permission{
 				{Action: "teams:create"},
