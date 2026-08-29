@@ -76,11 +76,11 @@ func TestIntegrationListConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	insertDataSource(t, sqlStore, "data_source", 1, "prom-uid", "Prometheus", "prometheus")
-	insertDataSource(t, sqlStore, "data_source", 1, "loki-uid", "Loki", "loki")
-	insertDataSource(t, sqlStore, "data_source", 1, "td-uid", "Testdata", "grafana-testdata-datasource")
+	insertDataSource(t, sqlStore, "data_source", 1001, 1, "prom-uid", "Prometheus", "prometheus")
+	insertDataSource(t, sqlStore, "data_source", 1002, 1, "loki-uid", "Loki", "loki")
+	insertDataSource(t, sqlStore, "data_source", 1003, 1, "td-uid", "Testdata", "grafana-testdata-datasource")
 	// Another org must never leak into the default namespace
-	insertDataSource(t, sqlStore, "data_source", 2, "other-uid", "Other org", "prometheus")
+	insertDataSource(t, sqlStore, "data_source", 1004, 2, "other-uid", "Other org", "prometheus")
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
 	store := NewLegacySQLStore(legacysql.NewDatabaseProvider(sqlStore), nil, nil)
@@ -138,8 +138,8 @@ func TestIntegrationTableIsResolvedThroughHelper(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	createDataSourceTableCopy(t, sqlStore, "hg_tenant_data_source")
-	insertDataSource(t, sqlStore, "data_source", 1, "unprefixed-uid", "Wrong table", "prometheus")
-	insertDataSource(t, sqlStore, "hg_tenant_data_source", 1, "prefixed-uid", "Right table", "prometheus")
+	insertDataSource(t, sqlStore, "data_source", 1005, 1, "unprefixed-uid", "Wrong table", "prometheus")
+	insertDataSource(t, sqlStore, "hg_tenant_data_source", 1006, 1, "prefixed-uid", "Right table", "prometheus")
 
 	prefixed := func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
@@ -174,10 +174,14 @@ func failingProvider(t *testing.T) legacysql.LegacyDatabaseProvider {
 	}
 }
 
-func insertDataSource(t *testing.T, sqlStore db.DB, table string, orgID int64, uid, name, dsType string) {
+// insertDataSource sets an explicit id: TestIntegrationTableIsResolvedThroughHelper
+// copies the table with CREATE TABLE ... AS SELECT, which carries the columns but
+// not the identity sequence, so Postgres has nothing to generate an id from.
+func insertDataSource(t *testing.T, sqlStore db.DB, table string, id, orgID int64, uid, name, dsType string) {
 	t.Helper()
 	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Table(table).Insert(&datasources.DataSource{
+			ID:      id,
 			OrgID:   orgID,
 			UID:     uid,
 			Name:    name,
@@ -193,11 +197,18 @@ func insertDataSource(t *testing.T, sqlStore db.DB, table string, orgID int64, u
 
 func createDataSourceTableCopy(t *testing.T, sqlStore db.DB, name string) {
 	t.Helper()
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("CREATE TABLE " + name + " AS SELECT * FROM data_source WHERE 1=0")
-		return err
-	})
-	require.NoError(t, err)
+	exec := func(query string) error {
+		return sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err := sess.Exec(query)
+			return err
+		})
+	}
+
+	// The Postgres test database outlives the test, so drop any copy a previous
+	// run left behind and clean up after this one.
+	require.NoError(t, exec("DROP TABLE IF EXISTS "+name))
+	require.NoError(t, exec("CREATE TABLE "+name+" AS SELECT * FROM data_source WHERE 1=0"))
+	t.Cleanup(func() { _ = exec("DROP TABLE IF EXISTS " + name) })
 }
 
 // allowOnly returns an access client whose compiled checker permits a single uid.
