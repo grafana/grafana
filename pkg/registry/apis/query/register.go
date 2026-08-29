@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	authlib "github.com/grafana/authlib/types"
 	"runtime"
 	"strconv"
 
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource/connections"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -38,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -130,8 +127,6 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
-	sql legacysql.LegacyDatabaseProvider,
-	accessClient authlib.AccessClient,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -165,14 +160,6 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
-	// The connections route reads the database directly. Same store the
-	// datasource root builder uses, so both groups answer identically.
-	var sqlConnections datasourceV0.DataSourceConnectionProvider
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceConnectionsAPI) {
-		sqlConnections = connections.NewStore(sql, accessClient, pluginStore)
-	}
-
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -182,7 +169,7 @@ func RegisterAPIService(
 		tracer,
 		legacyDatasourceLookup,
 		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
-		sqlConnections,
+		nil,                // sqlConnections: single tenant serves these from the root datasource builder
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
 	)
