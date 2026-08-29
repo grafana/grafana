@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
-import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';

@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Counter, useStyles2 } from '@grafana/ui';
-import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 interface DroppableCategoryProps {

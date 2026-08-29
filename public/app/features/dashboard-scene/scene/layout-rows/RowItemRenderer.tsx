@@ -14,7 +14,7 @@ import {
   usePointerDistance,
   useStyles2,
 } from '@grafana/ui';
-import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';

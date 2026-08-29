@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { edit } from '../../actions/utils/edit';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';

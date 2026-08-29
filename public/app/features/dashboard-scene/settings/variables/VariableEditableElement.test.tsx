@@ -150,7 +150,7 @@ describe('VariableEditableElement', () => {
 
     renderVariableSidebar(dashboard);
 
-    await user.click(await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
+    await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });

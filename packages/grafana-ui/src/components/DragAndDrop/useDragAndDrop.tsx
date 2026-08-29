@@ -1,9 +1,9 @@
 import {
+  type DraggableProps,
   type DraggableProvided,
   type DraggableRubric,
   type DraggableStateSnapshot,
   type DragDropContextProps,
-  type DraggableProps,
   type DroppableProps,
   type DroppableProvided,
   type DroppableStateSnapshot,
@@ -86,6 +86,8 @@ function loadDragAndDrop() {
  * Loads `@hello-pangea/dnd` on demand. Until the module arrives (or while `enabled` is false)
  * it returns inert passthrough components, so callers can render the same JSX unconditionally
  * without pulling the library into their initial chunk.
+ *
+ * @internal Exported through `@grafana/ui/unstable` for Grafana core only.
  */
 export function useDragAndDrop(enabled = true): DragAndDropComponents {
   const [module, setModule] = useState(enabled ? loadedModule : undefined);

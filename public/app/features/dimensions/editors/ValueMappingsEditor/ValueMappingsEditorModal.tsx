@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { type GrafanaTheme2, MappingType, type SelectableValue, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
-import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from '@grafana/ui/unstable';
 
 import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { buildEditRowModels, createRow, duplicateRow, editModelToSaveModel } from './editRowModels';

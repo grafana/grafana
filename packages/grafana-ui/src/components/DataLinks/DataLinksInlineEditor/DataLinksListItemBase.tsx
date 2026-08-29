@@ -8,7 +8,7 @@ import { Badge } from '../../Badge/Badge';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
-import { useDataLinksDragAndDrop } from './useDataLinksDragAndDrop';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 export interface DataLinksListItemBaseProps<T extends DataLink | Action> {
   index: number;
@@ -29,7 +29,7 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   index,
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
-  const { Draggable } = useDataLinksDragAndDrop();
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 

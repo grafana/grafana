@@ -11,7 +11,7 @@ import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
-import { useDataLinksDragAndDrop } from './useDataLinksDragAndDrop';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 
 export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
   type: 'link' | 'action';
@@ -36,7 +36,7 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   children,
   'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
-  const { DragDropContext, Droppable } = useDataLinksDragAndDrop();
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
 

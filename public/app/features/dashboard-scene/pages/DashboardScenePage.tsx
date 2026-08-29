@@ -40,11 +40,19 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 import { shouldHideDashboardKioskFooter } from './utils';
 
 // Loaded on demand so the dashboard-library UI stays out of the dashboard page chunk.
-const TemplateDashboardModal = lazy(() =>
+const LazyTemplateDashboardModal = lazy(() =>
   import(
     /* webpackChunkName: "dashboard-library" */ 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal'
   ).then((m) => ({ default: m.TemplateDashboardModal }))
 );
+
+function TemplateDashboardModal() {
+  return (
+    <Suspense fallback={null}>
+      <LazyTemplateDashboardModal />
+    </Suspense>
+  );
+}
 
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
@@ -173,11 +181,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
-      {showCustomTemplates && (
-        <Suspense fallback={null}>
-          <TemplateDashboardModal />
-        </Suspense>
-      )}
+      {showCustomTemplates && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}
