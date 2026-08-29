@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -47,6 +48,7 @@ type Service struct {
 	maxNestedFolderDepth   int
 	dashboardK8sClient     client.K8sHandler
 	publicDashboardService publicdashboards.ServiceWrapper
+	variableK8sClient      client.K8sHandler
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
@@ -102,6 +104,15 @@ func ProvideService(
 		resourceClient,
 	)
 	srv.dashboardK8sClient = dashHandler
+
+	variableHandler := client.NewK8sHandler(
+		request.GetNamespaceMapper(cfg),
+		dashboardv2beta1.VariableResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		userService,
+		resourceClient,
+	)
+	srv.variableK8sClient = variableHandler
 
 	return srv
 }

@@ -15,8 +15,6 @@ export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
  * The Config singleton is seeded by the external Alertmanager sync worker rather than by the UI, and
  * nothing the settings page can do invalidates it. Polling is what turns the pre-seed 404 — and any
  * change made outside this tab — into something a user who waits on the page eventually observes.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export const AUTO_SYNC_CONFIG_POLL_INTERVAL_MS = 30000;
 

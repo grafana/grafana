@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, act } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -13,9 +13,8 @@ import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list
 import { NotebooksListPage } from './NotebooksListPage';
 
 // Deliberately no jest.mock of the api-client modules here: the point of this suite is to exercise
-// the real RTK Query wiring, including the claim that creating a notebook invalidates the
-// 'Notebook' tag and refetches the search-backed list. The mocked suite next door covers the
-// rendering cases.
+// the real RTK Query wiring, and to hold the real endpoint still so the test can say whether it was
+// called at all. The mocked suite next door covers the rendering cases.
 
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
@@ -60,10 +59,11 @@ function hit(name: string, title: string) {
   };
 }
 
-/** Serves a search-backed list that grows once the create endpoint is hit, counting searches. */
+/** Serves a search-backed list, counting searches and any attempt to create a notebook. */
 function setupNotebooksApi() {
   const items = [hit('nb1', 'Checkout error spike')];
   let searchRequests = 0;
+  let createRequests = 0;
   const bodies: Array<Record<string, unknown>> = [];
 
   server.use(
@@ -76,14 +76,20 @@ function setupNotebooksApi() {
         items,
       });
     }),
+    // Still served, so a create would succeed rather than error. A test that only proved the request
+    // failed would pass for the wrong reason.
     http.post(NOTEBOOKS_URL, async () => {
-      const created = notebook('nb2', 'New notebook');
+      createRequests++;
       items.push(hit('nb2', 'New notebook'));
-      return HttpResponse.json(created);
+      return HttpResponse.json(notebook('nb2', 'New notebook'));
     })
   );
 
-  return { getSearchRequests: () => searchRequests, getBodies: () => bodies };
+  return {
+    getSearchRequests: () => searchRequests,
+    getCreateRequests: () => createRequests,
+    getBodies: () => bodies,
+  };
 }
 
 describe('NotebooksListPage (integration)', () => {
@@ -130,22 +136,24 @@ describe('NotebooksListPage (integration)', () => {
     });
   });
 
-  it('refetches the list after creating a notebook', async () => {
+  // The whole point of the blank route: a click that somebody thinks better of should leave nothing
+  // behind. This asserts against the real endpoint rather than a mocked hook, because "no notebook was
+  // written" is a claim about the wire.
+  it('writes no notebook when the create button is clicked', async () => {
     const api = setupNotebooksApi();
 
     const { user } = render(<NotebooksListPage />);
 
     expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
-    const searchRequestsBefore = api.getSearchRequests();
 
     await user.click(screen.getByRole('button', { name: 'New notebook' }));
 
-    // The create mutation invalidates the 'Notebook' tag. The search query tags itself into that
-    // same namespace rather than the 'Search' one, which is what makes this rerun.
     await waitFor(() => {
-      expect(api.getSearchRequests()).toBeGreaterThan(searchRequestsBefore);
+      expect(locationService.getLocation().pathname).toBe('/notebooks/new');
     });
-    expect(await screen.findByRole('link', { name: 'New notebook' })).toBeInTheDocument();
+    expect(api.getCreateRequests()).toBe(0);
+    // No new row either, so nothing was written that the list would have picked up.
+    expect(screen.queryByRole('link', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
   // The endpoint pages with an opaque cursor, and the list is only honest once the walk finishes:

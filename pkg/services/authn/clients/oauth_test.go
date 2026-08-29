@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -189,7 +190,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return identity for valid request - and lookup user by email",
+			desc: "should use the runtime settings override to look up the user by email",
 			req: &authn.Request{
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{},
@@ -325,8 +326,14 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			// Keep ConfigProvider at its false default. runtimeCfg models the
+			// database-backed override written through /api/admin/settings.
 			cfg := setting.NewCfg()
-			cfg.OAuthAllowInsecureEmailLookup = tt.allowInsecureTakeover
+			runtimeCfg := setting.NewCfg()
+			auth, err := runtimeCfg.Raw.NewSection("auth")
+			assert.NoError(t, err)
+			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
+			assert.NoError(t, err)
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -350,7 +357,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, setting.ProvideProvider(runtimeCfg), featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -431,7 +438,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, nil, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -544,7 +551,7 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, tt.cfg), mockService, fakeSocialSvc, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, tt.cfg), mockService, fakeSocialSvc, nil, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, &usertoken.UserToken{})
 
@@ -603,6 +610,7 @@ func TestIsEnabled(t *testing.T) {
 				testConfigProvider(t, cfg),
 				nil,
 				fakeSocialSvc,
+				nil,
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest())
 			assert.Equal(t, tt.expected, c.IsEnabled(t.Context()))
@@ -628,6 +636,7 @@ func TestOAuthProviderLookupUsesCallerContext(t *testing.T) {
 		testConfigProvider(t, setting.NewCfg()),
 		nil,
 		fakeSocialSvc,
+		nil,
 		featuremgmt.WithFeatures(),
 		tracing.InitializeTracerForTest(),
 	)

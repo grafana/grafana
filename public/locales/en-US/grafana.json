@@ -2666,7 +2666,9 @@
       "view-in-explore": "View in Explore"
     },
     "query-options": {
+      "apply-button": "Apply",
       "button-options": "Options",
+      "invalid-interval-error": "Invalid interval format. Examples: 1s, 5m, 1h",
       "label-time-range": "Time Range",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
         "disable-success": "Mimir Alertmanager auto-sync disabled",
         "not-ready-body": "Grafana has not finished setting up auto-sync for this organization. Try again in a moment.",
+        "not-ready-title": "Auto-sync is still initializing",
         "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
         "operator-managed-title": "Managed by operator",
         "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
+        "read-error-title": "Could not load the auto-sync configuration",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
         "save-disabled-staged-config": "Promote or revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
@@ -6018,11 +6022,14 @@
     "notebook-layout": {
       "description": "A vertical sequence of panels, text, and code cells",
       "name": "Notebook",
-      "pill": "Published Notebook",
       "tags": "Tags",
       "tags-custom-value": "Add as a new tag",
       "tags-placeholder": "Add a tag",
-      "time": "Time"
+      "time": "Time",
+      "title-edit": "Edit title",
+      "title-label": "Title",
+      "title-placeholder": "Add a title",
+      "title-required": "Please enter a title"
     },
     "on-create-new-row": {
       "new-row": {
@@ -9728,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "in a few seconds",
+        "fewSecondsPast": "a few seconds ago",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Day before yesterday",
           "previousFiscalQuarter": "Previous fiscal quarter",
@@ -12981,6 +12990,10 @@
       "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
+      "frame": {
+        "aria-label-collapsed": "Collapsed block: {{name}}",
+        "aria-label-panel": "Visualization block: {{name}}"
+      },
       "markdown": {
         "aria-label-editor": "Markdown",
         "format-bold": "B",
@@ -13004,6 +13017,13 @@
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
+    },
+    "panel-changes": {
+      "confirm-cancel": "Cancel",
+      "confirm-discard": "Discard",
+      "confirm-keep": "Keep",
+      "confirm-text": "Do you want to keep the changes you made while viewing this notebook?",
+      "confirm-title": "Unsaved panel changes"
     }
   },
   "notebooks": {
@@ -13090,7 +13110,6 @@
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
       "count-truncated_one": "First {{count}} notebook loaded",
       "count-truncated_other": "First {{count}} notebooks loaded",
-      "create-error": "Failed to create notebook",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -13098,7 +13117,6 @@
       "load-error": "Failed to load notebooks",
       "loading": "Loading notebooks",
       "new-notebook": "New notebook",
-      "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
       "partial-load-error": "Some notebooks could not be loaded",
       "search-placeholder": "Search notebooks by title...",
@@ -13114,6 +13132,9 @@
       },
       "unknown-author": "Anonymous"
     },
+    "new": {
+      "default-title": "Notebook #{{token}}"
+    },
     "save-status": {
       "failed": "Save failed",
       "pending": "Unsaved changes",
@@ -13122,6 +13143,7 @@
       "saving": "Saving…"
     },
     "view": {
+      "available-once-created": "Available once you write something",
       "copy-link": "Copy link",
       "mode-edit": "Edit",
       "mode-view": "View",
@@ -13157,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Color series by"
+    },
+    "number-input": {
+      "error-out-of-range": "Out of range. {{range}}",
+      "error-out-of-range-generic": "Out of range",
+      "range-max": "Maximum: {{max}}",
+      "range-min": "Minimum: {{min}}",
+      "range-min-max": "Range: {{min}} to {{max}}"
     },
     "registry": {
       "get-all-option-editors": {
@@ -17894,7 +17923,7 @@
       "delete-modal-body": "Are you sure you want to delete \"{{name}}\"?",
       "delete-modal-confirm": "Delete",
       "delete-modal-title": "Delete variable",
-      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)",
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "moved": "Variable moved",
@@ -17909,8 +17938,8 @@
       "not-found": "Variable not found"
     },
     "move-modal": {
-      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
-      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available to all dashboards).",
+      "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available to all dashboards).",
       "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
       "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
