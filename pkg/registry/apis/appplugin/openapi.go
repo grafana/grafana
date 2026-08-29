@@ -15,19 +15,19 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
 func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		base := apppluginV0.GetOpenAPIDefinitions(ref)
 		if b.manifest != nil {
-			maps.Copy(base, loadOpenAPIDefinitions(ref, b.group, b.manifest))
+			maps.Copy(base, kindstore.LoadOpenAPIDefinitions(ref, b.group, b.manifest))
 
 			// Server-side apply finds manifest GVKs through these generic route models.
 			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = b.unstructuredOpenAPIDefinition("")
@@ -35,11 +35,6 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 		}
 		return base
 	}
-}
-
-// kindOpenAPIName returns the definition and component name for a manifest kind.
-func kindOpenAPIName(gvk schema.GroupVersionKind) string {
-	return gvk.Group + "." + gvk.Version + "." + gvk.Kind
 }
 
 // unstructuredOpenAPIDefinition adds the GVK metadata required by server-side apply.
@@ -62,42 +57,6 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 		s.AddExtension("x-kubernetes-group-version-kind", gvks)
 	}
 	return common.OpenAPIDefinition{Schema: s}
-}
-
-// loadOpenAPIDefinitions loads schemas for all served kinds, keyed by the group
-// the plugin is served under. That is not always the manifest's own group: a
-// manifest that declares none is served under the plugin id, and a definition
-// keyed any other way is one no kind can find. See apiGroupForPlugin.
-func loadOpenAPIDefinitions(ref common.ReferenceCallback, group string, manifest *app.ManifestData) map[string]common.OpenAPIDefinition {
-	defs := map[string]common.OpenAPIDefinition{}
-	if manifest == nil {
-		return defs
-	}
-	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-
-		prefix := group + "." + version.Name
-		for _, kind := range version.Kinds {
-			if kind.Schema == nil {
-				continue
-			}
-			gvk := schema.GroupVersionKind{
-				Group:   group,
-				Version: version.Name,
-				Kind:    kind.Kind,
-			}
-			k, err := kind.Schema.AsKubeOpenAPI(gvk, ref, prefix)
-			if err != nil {
-				logging.DefaultLogger.Error("invalid manifest kind schema; the kind will be missing from the OpenAPI spec",
-					"gvk", gvk.String(), "error", err)
-				continue
-			}
-			maps.Copy(defs, k)
-		}
-	}
-	return defs
 }
 
 func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -191,7 +150,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 		return
 	}
 
-	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef("#/components/schemas/" + name)
 	}, b.group, b.manifest)
 	prefix := b.group + "." + version + "."
@@ -214,10 +173,10 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 				continue
 			}
 			gvk.Kind = kind.Kind
-			name := kindOpenAPIName(gvk)
+			name := kindstore.OpenAPIName(gvk)
 			ref := spec.MustCreateRef("#/components/schemas/" + name)
 			base := root + "namespaces/{namespace}/" + strings.ToLower(kind.Plural)
-			if kind.Scope == clusterScope {
+			if kind.Scope == kindstore.ClusterScope {
 				base = root + strings.ToLower(kind.Plural)
 			}
 
@@ -300,7 +259,7 @@ func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *
 				example.SetAPIVersion(info.gvk.GroupVersion().String())
 				example.SetKind(info.gvk.Kind)
 				example.SetGenerateName("x")
-				if info.kind != nil && isFolderScoped(*info.kind) {
+				if info.kind != nil && kindstore.IsFolderScoped(*info.kind) {
 					example.SetAnnotations(map[string]string{
 						utils.AnnoKeyFolder: "{folder-name}",
 					})

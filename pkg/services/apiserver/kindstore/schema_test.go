@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"testing"
@@ -16,21 +16,21 @@ func buildTestKindValidator(t *testing.T, version string) validation.SchemaValid
 
 	// Same construction as UpdateAPIGroupInfo: bare-name refs so the expander
 	// can resolve them directly against the definition map.
-	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+	defs := LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, manifest.Group, manifest)
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: version, Kind: "TestKind"}
-	obj, ok := defs[kindOpenAPIName(gvk)]
-	require.True(t, ok, "missing definition for %s", kindOpenAPIName(gvk))
-	return newKindSchemaValidator(obj.Schema, defs)
+	obj, ok := defs[OpenAPIName(gvk)]
+	require.True(t, ok, "missing definition for %s", OpenAPIName(gvk))
+	return newSchemaValidator(obj.Schema, defs)
 }
 
 // Guards the manifest-kind write path: kube-openapi's validator panics on any
-// schema containing a $ref, so newKindSchemaValidator must produce a fully
+// schema containing a $ref, so newSchemaValidator must produce a fully
 // self-contained schema that validates realistic bodies (which always carry
-// metadata by the time the kindStore strategy validates them).
-func TestKindSchemaValidator(t *testing.T) {
+// metadata by the time the Store strategy validates them).
+func TestSchemaValidator(t *testing.T) {
 	manifest := testManifest(t)
 	validator := buildTestKindValidator(t, "v0alpha1")
 
@@ -58,7 +58,7 @@ func TestKindSchemaValidator(t *testing.T) {
 
 // The v1alpha1 TestKind nests refs several levels deep (spec -> Foo -> Bar ->
 // Baz), exercising recursive expansion.
-func TestKindSchemaValidatorNestedRefs(t *testing.T) {
+func TestSchemaValidatorNestedRefs(t *testing.T) {
 	validator := buildTestKindValidator(t, "v1alpha1")
 
 	valid := map[string]interface{}{
@@ -180,7 +180,7 @@ func TestExpandSchemaRefsEverywhere(t *testing.T) {
 // The API server validates apiVersion, kind and metadata itself, and the
 // manifest's own descriptions of them are usually incomplete, so they are
 // dropped from the kind's schema -- without mutating the shared manifest schema.
-func TestKindSchemaValidatorDropsCommonFields(t *testing.T) {
+func TestSchemaValidatorDropsCommonFields(t *testing.T) {
 	kindSchema := spec.Schema{SchemaProps: spec.SchemaProps{
 		Type: []string{"object"},
 		Properties: map[string]spec.Schema{
@@ -192,7 +192,7 @@ func TestKindSchemaValidatorDropsCommonFields(t *testing.T) {
 		Required: []string{"apiVersion", "kind", "metadata", "spec"},
 	}}
 
-	validator := newKindSchemaValidator(kindSchema, nil)
+	validator := newSchemaValidator(kindSchema, nil)
 
 	// metadata is a ref the expander cannot resolve; if it survived, the object
 	// below would fail against a permissive empty schema's absent properties.

@@ -62,7 +62,7 @@ This is the part worth understanding before you rely on a validation rule. The o
 create is:
 
 1. **Mutating admission** — the plugin is called, and its returned object is applied
-2. `kindStore.Create` records **managedFields** for the request's field manager
+2. `kindstore.Store.Create` records **managedFields** for the request's field manager
 3. `Store.create` fills uid and creationTimestamp, and **generates the name** from `generateName`
 4. `rest.BeforeCreate` runs `PrepareForCreate` (**strips `status`**, sets `generation: 1`),
    then the OpenAPI **schema validation**, then ObjectMeta validation
@@ -71,7 +71,7 @@ create is:
 
 Step 2 belongs to the generic create handler everywhere else, but that handler diffs
 against an empty object it asks the scheme for, and for a kind served as unstructured the
-scheme returns one with no apiVersion or kind — see `newKindFieldManager`. A consequence
+scheme returns one with no apiVersion or kind — see `newFieldManager` in `kindstore`. A consequence
 of running it here instead: fields a mutation hook adds are owned by the request's field
 manager, where an in-tree mutation would leave them unowned.
 
@@ -94,7 +94,7 @@ That is a property of having one RPC, not of this wiring.
 
 Step 4 runs strictly **after** the mutation and strictly **before** validating admission.
 A plugin that mutates its object into a shape the kind's OpenAPI schema rejects is still
-caught, by `validateAgainstSchema` in the REST strategy. Dropping the plugin's second call
+caught, by `validateAgainstSchema` in the kind store's REST strategy. Dropping the plugin's second call
 costs visibility, never enforcement.
 
 The plugin is also on both sides of the exchange: it already knows what it is about to
@@ -113,7 +113,7 @@ second round trip.
   `Warning` headers.
 - **Failure is closed.** A kind that declares a hook cannot be written without it, so an
   unreachable plugin or an unparsable mutation response fails the request rather than
-  admitting silently. A missing plugin client is caught at startup by `newKindStore`, not
+  admitting silently. A missing plugin client is caught at startup by `kindstore.New`, not
   at request time.
 - **Identity is not mutable.** The mutated object's GVK, name, generateName, namespace,
   uid, and resourceVersion are restored from the incoming object. By the time admission
@@ -125,9 +125,10 @@ second round trip.
 
 ## Where the code lives
 
-`admission.go` holds all of it. `mutateAdmission`, `validateAdmission`, `admissionReview`,
-`applyMutation`, and `admissionDenied` are `*kindStore` methods; the kind's declared
-operations are read off the manifest in `newKindStore` (`kindstore.go`).
+The review itself lives in `pkg/services/apiserver/kindstore`, alongside the rest of a
+manifest kind's storage: `MutateAdmission`, `ValidateAdmission`, `admissionReview`,
+`applyMutation`, and `admissionDenied` are `*kindstore.Store` methods, and the kind's
+declared operations are read off the manifest in `kindstore.New`.
 
 `AppPluginAPIBuilder.Mutate` and `.Validate` are the entry points, implementing
 `builder.APIGroupMutation` and `builder.APIGroupValidation`. They are thin routers: the

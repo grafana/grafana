@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	pluginaccesscontrol "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
@@ -57,14 +58,14 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 		}
 		for _, kind := range version.Kinds {
 			if kind.Plural == "" {
-				continue // newKindStore refuses these, so they have no resource
+				continue // kindstore.New refuses these, so they have no resource
 			}
 			resource := strings.ToLower(kind.Plural)
 			if _, seen := policies[resource]; seen {
 				continue
 			}
 			policies[resource] = kindPolicy{
-				clusterScoped: kind.Scope == clusterScope,
+				clusterScoped: kind.Scope == kindstore.ClusterScope,
 				userReadable:  kind.UserReadable,
 			}
 		}

@@ -33,6 +33,7 @@ import (
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -105,7 +106,7 @@ type AppPluginAPIBuilder struct {
 	getter getter
 
 	// Manifest kind storage by resource, used to dispatch admission hooks.
-	kinds map[schema.GroupVersionResource]*kindStore
+	kinds map[schema.GroupVersionResource]*kindstore.Store
 
 	// How each manifest kind is authorized, by resource. Built from the
 	// manifest, so the authorizer can run before storage is installed.
@@ -343,9 +344,9 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			return err
 		}
 	}
-	kinds := make(map[schema.GroupVersionResource]*kindStore)
+	kinds := make(map[schema.GroupVersionResource]*kindstore.Store)
 
-	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, b.group, b.manifest)
 
@@ -378,7 +379,11 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 				}
 
 				for _, kind := range v.Kinds {
-					store, err := newKindStore(gv.WithKind(kind.Kind), kind, b.clientV3, &opts, defs)
+					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
+						Scheme:              opts.Scheme,
+						OptsGetter:          opts.OptsGetter,
+						StorageOptsRegister: opts.StorageOptsRegister,
+					}, defs)
 					if err != nil {
 						return err
 					}
@@ -393,8 +398,8 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 					storage[resource] = store
 					kinds[gv.WithResource(resource)] = store
 
-					if store.hasStatus {
-						storage[resource+"/status"] = newKindStatusStore(store)
+					if store.HasStatus() {
+						storage[resource+"/status"] = kindstore.NewStatusStore(store)
 					}
 				}
 			}

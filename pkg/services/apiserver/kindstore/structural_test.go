@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 )
 
 // structuralFor builds the structural schema for a kind declared inline, the way
-// newKindStore does from a manifest.
-func structuralFor(t *testing.T, schemas string) (*kindStore, error) {
+// New does from a manifest.
+func structuralFor(t *testing.T, schemas string) (*Store, error) {
 	t.Helper()
 
 	manifest := testManifest(t)
@@ -28,16 +28,16 @@ func structuralFor(t *testing.T, schemas string) (*kindStore, error) {
 			Schema: testVersionSchema(t, schemas),
 		}},
 	}}
-	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+	defs := LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, manifest.Group, manifest)
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind"}
-	def, ok := defs[kindOpenAPIName(gvk)]
+	def, ok := defs[OpenAPIName(gvk)]
 	require.True(t, ok)
 
-	structural, err := newKindStructuralSchema(def.Schema, defs)
-	s := testKindStore(false, false)
+	structural, err := newStructuralSchema(def.Schema, defs)
+	s := testStore(false, false)
 	s.structural = structural
 	return s, err
 }
@@ -45,7 +45,7 @@ func structuralFor(t *testing.T, schemas string) (*kindStore, error) {
 // A manifest kind is pruned and defaulted the way apiextensions prunes and
 // defaults a custom resource, so the object this path stores is the object a CRD
 // would have stored.
-func TestKindPruneAndDefault(t *testing.T) {
+func TestPruneAndDefault(t *testing.T) {
 	s, err := structuralFor(t, `{
 		"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},
 		"spec":{"type":"object","properties":{
@@ -84,7 +84,7 @@ func TestKindPruneAndDefault(t *testing.T) {
 
 // additionalProperties keeps what it allows, pruned or not -- the same rule
 // apiextensions applies, quirk included.
-func TestKindPruneKeepsAdditionalProperties(t *testing.T) {
+func TestPruneKeepsAdditionalProperties(t *testing.T) {
 	s, err := structuralFor(t, `{
 		"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},
 		"spec":{"type":"object","additionalProperties":false,"properties":{"declared":{"type":"string"}}}
@@ -103,7 +103,7 @@ func TestKindPruneKeepsAdditionalProperties(t *testing.T) {
 
 // A schema apiextensions would refuse costs the kind pruning and defaulting, not
 // the kind itself.
-func TestKindStructuralSchemaRejectsUnstructural(t *testing.T) {
+func TestStructuralSchemaRejectsUnstructural(t *testing.T) {
 	s, err := structuralFor(t, `{
 		"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},
 		"spec":{"type":"object","properties":{"declared":{}}}

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -96,7 +97,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		// Cluster kinds have no namespace segment to mount under.
 		dst := &routes.Namespace
 		params := []*spec3.Parameter{namespacePathParameter(), namePathParameter()}
-		if kind.Scope == clusterScope {
+		if kind.Scope == kindstore.ClusterScope {
 			dst = &routes.Root
 			params = []*spec3.Parameter{namePathParameter()}
 		}

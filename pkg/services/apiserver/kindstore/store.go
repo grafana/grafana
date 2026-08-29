@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"context"
@@ -26,23 +26,35 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-// clusterScope is the manifest value for kinds that live outside a namespace.
-const clusterScope = "Cluster"
+// ClusterScope is the manifest value for kinds that live outside a namespace.
+const ClusterScope = "Cluster"
 
-func isFolderScoped(kind app.ManifestVersionKind) bool {
-	if kind.Scope == clusterScope {
+// Options is what building a kind's storage needs from the API group installing
+// it. Named here rather than taking the installer's own options type, so this
+// package depends on nothing it does not use.
+type Options struct {
+	// Scheme the kind is registered in.
+	Scheme *runtime.Scheme
+	// OptsGetter resolves the backing storage.
+	OptsGetter generic.RESTOptionsGetter
+	// StorageOptsRegister declares a resource's storage options, and has to be
+	// called before OptsGetter resolves that resource.
+	StorageOptsRegister apistore.StorageOptionsRegister
+}
+
+func IsFolderScoped(kind app.ManifestVersionKind) bool {
+	if kind.Scope == ClusterScope {
 		return false
 	}
 	// namespaced resources are folder scoped by default
 	return kind.FolderScoped == nil || *kind.FolderScoped
 }
 
-// kindStore applies a manifest kind's storage and REST strategies.
-type kindStore struct {
+// Store applies a manifest kind's storage and REST strategies.
+type Store struct {
 	*registry.Store
 	names.NameGenerator
 
@@ -68,25 +80,25 @@ type kindStore struct {
 	structural *structuralschema.Structural
 
 	// fieldManager tracks managedFields on create, which the generic create
-	// handler cannot do for an unstructured kind. See newKindFieldManager.
+	// handler cannot do for an unstructured kind. See newFieldManager.
 	fieldManager *managedfields.FieldManager
 }
 
 var (
-	_ rest.RESTCreateStrategy  = (*kindStore)(nil)
-	_ rest.RESTUpdateStrategy  = (*kindStore)(nil)
-	_ rest.RESTDeleteStrategy  = (*kindStore)(nil)
-	_ rest.ResetFieldsStrategy = (*kindStore)(nil)
+	_ rest.RESTCreateStrategy  = (*Store)(nil)
+	_ rest.RESTUpdateStrategy  = (*Store)(nil)
+	_ rest.RESTDeleteStrategy  = (*Store)(nil)
+	_ rest.ResetFieldsStrategy = (*Store)(nil)
 )
 
-// newKindStore builds unified storage for one manifest kind.
-func newKindStore(
+// New builds unified storage for one manifest kind.
+func New(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
 	admission pluginv3.AdmissionServiceClient,
-	opts *builder.APIGroupOptions,
+	opts Options,
 	defs map[string]common.OpenAPIDefinition,
-) (*kindStore, error) {
+) (*Store, error) {
 	// The manifest loader defaults plural to kind+"s", but a manifest built in
 	// code can omit it, and an empty resource name registers an unreachable path.
 	if kind.Plural == "" {
@@ -95,14 +107,14 @@ func newKindStore(
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
 	listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
-	clusterScoped := kind.Scope == clusterScope
+	clusterScoped := kind.Scope == ClusterScope
 
 	keyFunc := grafanaregistry.NamespaceKeyFunc(gr)
 	if clusterScoped {
 		keyFunc = grafanaregistry.ClusterScopedKeyFunc(gr)
 	}
 
-	wrap := &kindStore{
+	wrap := &Store{
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
@@ -125,15 +137,15 @@ func newKindStore(
 
 	// A kind may legally omit its schema; serve it without body validation.
 	if kind.Schema != nil {
-		key := kindOpenAPIName(gvk)
+		key := OpenAPIName(gvk)
 		def, found := defs[key]
 		if !found {
 			return nil, fmt.Errorf("missing expected schema key %s", key)
 		}
-		wrap.validator = newKindSchemaValidator(def.Schema, defs)
+		wrap.validator = newSchemaValidator(def.Schema, defs)
 		_, wrap.hasStatus = def.Schema.Properties["status"]
 
-		structural, err := newKindStructuralSchema(def.Schema, defs)
+		structural, err := newStructuralSchema(def.Schema, defs)
 		if err != nil {
 			logging.DefaultLogger.Warn("manifest kind schema is not structural; the kind is served without pruning or defaulting",
 				"gvk", gvk.String(), "error", err)
@@ -143,14 +155,14 @@ func newKindStore(
 	}
 
 	// GetResetFields needs hasStatus, which the schema block above resolves.
-	fieldManager, err := newKindFieldManager(gvk, wrap.GetResetFields())
+	fieldManager, err := newFieldManager(gvk, wrap.GetResetFields())
 	if err != nil {
 		return nil, fmt.Errorf("kind %s: %w", gvk.Kind, err)
 	}
 	wrap.fieldManager = fieldManager
 
 	// Register before CompleteWithOptions resolves this resource.
-	folder := isFolderScoped(kind)
+	folder := IsFolderScoped(kind)
 	opts.StorageOptsRegister(gr, apistore.StorageOptions{
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
@@ -175,7 +187,7 @@ func newKindStore(
 		DefaultQualifiedResource: gr,
 		// Used by discovery and error messages.
 		SingularQualifiedResource: schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(gvk.Kind)},
-		TableConvertor:            newKindTableConvertor(gr, gvk, kind),
+		TableConvertor:            newTableConvertor(gr, gvk, kind),
 		CreateStrategy:            wrap,
 		UpdateStrategy:            wrap,
 		DeleteStrategy:            wrap,
@@ -191,8 +203,8 @@ func newKindStore(
 	return wrap, nil
 }
 
-// newKindTableConvertor adds the manifest's printer columns to table output.
-func newKindTableConvertor(gr schema.GroupResource, gvk schema.GroupVersionKind, kind app.ManifestVersionKind) rest.TableConvertor {
+// newTableConvertor adds the manifest's printer columns to table output.
+func newTableConvertor(gr schema.GroupResource, gvk schema.GroupVersionKind, kind app.ManifestVersionKind) rest.TableConvertor {
 	if len(kind.AdditionalPrinterColumns) == 0 {
 		return rest.NewDefaultTableConvertor(gr)
 	}
@@ -219,13 +231,19 @@ func newKindTableConvertor(gr schema.GroupResource, gvk schema.GroupVersionKind,
 	return convertor
 }
 
+// HasStatus reports whether the kind serves a status subresource, which is what
+// decides whether [NewStatusStore] has anything to serve.
+func (s *Store) HasStatus() bool {
+	return s.hasStatus
+}
+
 // NamespaceScoped avoids recursion through the embedded store's strategy.
-func (s *kindStore) NamespaceScoped() bool {
+func (s *Store) NamespaceScoped() bool {
 	return !s.clusterScoped
 }
 
 // GetResetFields excludes status from main-resource server-side apply.
-func (s *kindStore) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
+func (s *Store) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 	if !s.hasStatus {
 		return nil
 	}
@@ -237,27 +255,27 @@ func (s *kindStore) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 }
 
 // AllowCreateOnUpdate implements [rest.RESTUpdateStrategy].
-func (s *kindStore) AllowCreateOnUpdate() bool {
+func (s *Store) AllowCreateOnUpdate() bool {
 	return false
 }
 
 // AllowUnconditionalUpdate implements [rest.RESTUpdateStrategy].
-func (s *kindStore) AllowUnconditionalUpdate() bool {
+func (s *Store) AllowUnconditionalUpdate() bool {
 	return false
 }
 
 // Canonicalize implements [rest.RESTUpdateStrategy].
-func (s *kindStore) Canonicalize(obj runtime.Object) {
+func (s *Store) Canonicalize(obj runtime.Object) {
 	// noop
 }
 
 // ObjectKinds implements [runtime.ObjectTyper].
-func (s *kindStore) ObjectKinds(runtime.Object) ([]schema.GroupVersionKind, bool, error) {
+func (s *Store) ObjectKinds(runtime.Object) ([]schema.GroupVersionKind, bool, error) {
 	return []schema.GroupVersionKind{s.gvk}, false, nil
 }
 
 // Recognizes implements [runtime.ObjectTyper].
-func (s *kindStore) Recognizes(gvk schema.GroupVersionKind) bool {
+func (s *Store) Recognizes(gvk schema.GroupVersionKind) bool {
 	return gvk == s.gvk
 }
 
@@ -266,12 +284,12 @@ func (s *kindStore) Recognizes(gvk schema.GroupVersionKind) bool {
 // That handler diffs the submitted object against an empty live object it asks
 // the scheme for, which for an unstructured kind carries no GVK, so the diff
 // fails and it strips managedFields off the object it hands us. Redo the diff
-// here, against a live object that has its GVK. See newKindFieldManager.
-func (s *kindStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+// here, against a live object that has its GVK. See newFieldManager.
+func (s *Store) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	return s.Store.Create(ctx, s.trackManagedFields(obj, options), createValidation, options)
 }
 
-func (s *kindStore) trackManagedFields(obj runtime.Object, options *metav1.CreateOptions) runtime.Object {
+func (s *Store) trackManagedFields(obj runtime.Object, options *metav1.CreateOptions) runtime.Object {
 	if _, ok := obj.(*unstructured.Unstructured); !ok {
 		return obj
 	}
@@ -286,7 +304,7 @@ func (s *kindStore) trackManagedFields(obj runtime.Object, options *metav1.Creat
 }
 
 // PrepareForCreate removes status when it is a subresource.
-func (s *kindStore) PrepareForCreate(ctx context.Context, obj runtime.Object) {
+func (s *Store) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	u, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return
@@ -300,7 +318,7 @@ func (s *kindStore) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 }
 
 // PrepareForUpdate preserves status when it is a subresource.
-func (s *kindStore) PrepareForUpdate(ctx context.Context, obj runtime.Object, old runtime.Object) {
+func (s *Store) PrepareForUpdate(ctx context.Context, obj runtime.Object, old runtime.Object) {
 	u, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return
@@ -322,33 +340,33 @@ func (s *kindStore) PrepareForUpdate(ctx context.Context, obj runtime.Object, ol
 }
 
 // restoreGVK restores the GVK cleared by server-side apply's internal conversion.
-func (s *kindStore) restoreGVK(u *unstructured.Unstructured) {
+func (s *Store) restoreGVK(u *unstructured.Unstructured) {
 	if u.GroupVersionKind().Empty() {
 		u.SetGroupVersionKind(s.gvk)
 	}
 }
 
 // WarningsOnCreate implements [rest.RESTCreateStrategy].
-func (s *kindStore) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+func (s *Store) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
 	return nil
 }
 
 // WarningsOnUpdate implements [rest.RESTUpdateStrategy].
-func (s *kindStore) WarningsOnUpdate(ctx context.Context, obj runtime.Object, old runtime.Object) []string {
+func (s *Store) WarningsOnUpdate(ctx context.Context, obj runtime.Object, old runtime.Object) []string {
 	return nil
 }
 
 // Validate implements [rest.RESTCreateStrategy].
-func (s *kindStore) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+func (s *Store) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	return s.validateAgainstSchema(obj)
 }
 
 // ValidateUpdate implements [rest.RESTUpdateStrategy].
-func (s *kindStore) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+func (s *Store) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return s.validateAgainstSchema(obj)
 }
 
-func (s *kindStore) validateAgainstSchema(obj runtime.Object) field.ErrorList {
+func (s *Store) validateAgainstSchema(obj runtime.Object) field.ErrorList {
 	if s.validator == nil {
 		return nil
 	}
@@ -359,26 +377,26 @@ func (s *kindStore) validateAgainstSchema(obj runtime.Object) field.ErrorList {
 	return validation.ValidateCustomResource(nil, u.UnstructuredContent(), s.validator)
 }
 
-// newKindStatusStore serves a kind's status subresource.
+// NewStatusStore serves a kind's status subresource.
 //
 // It is not [grafanaregistry.NewRegistryStatusStore]: that store's strategy
 // writes whatever spec the request carried and validates nothing, so a caller
 // holding only status access could rewrite the spec through it, and could store
 // a spec the manifest schema rejects.
-func newKindStatusStore(s *kindStore) *grafanaregistry.StatusREST {
-	return grafanaregistry.NewStatusREST(s.Store, &kindStatusStrategy{kindStore: s})
+func NewStatusStore(s *Store) *grafanaregistry.StatusREST {
+	return grafanaregistry.NewStatusREST(s.Store, &statusStrategy{Store: s})
 }
 
-// kindStatusStrategy restricts a write to the status subresource to status.
+// statusStrategy restricts a write to the status subresource to status.
 // Everything else -- schema validation, scope, naming -- is the kind's own.
-type kindStatusStrategy struct {
-	*kindStore
+type statusStrategy struct {
+	*Store
 }
 
-var _ rest.UpdateResetFieldsStrategy = (*kindStatusStrategy)(nil)
+var _ rest.UpdateResetFieldsStrategy = (*statusStrategy)(nil)
 
 // GetResetFields keeps the status manager from owning fields it cannot write.
-func (s *kindStatusStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
+func (s *statusStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 	return map[fieldpath.APIVersion]*fieldpath.Set{
 		fieldpath.APIVersion(s.gvk.GroupVersion().String()): fieldpath.NewSet(
 			fieldpath.MakePathOrDie("spec"),
@@ -389,7 +407,7 @@ func (s *kindStatusStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpat
 
 // PrepareForUpdate restores everything a status write may not change, so only
 // the incoming status survives.
-func (s *kindStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (s *statusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	u, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return

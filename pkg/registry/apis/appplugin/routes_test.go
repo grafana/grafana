@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -131,7 +132,7 @@ func TestGetAPIRoutesWithoutManifest(t *testing.T) {
 // would mount routes under an empty resource segment. manifestRoutes does not
 // guard against that itself because it cannot be reached: storage is installed
 // before the custom routes are (builder.InstallAPIs, then
-// AugmentWebServicesWithCustomRoutes), and newKindStore refuses the kind. This
+// AugmentWebServicesWithCustomRoutes), and kindstore.New refuses the kind. This
 // pins that ordering -- if routes ever move ahead of storage, the guard has to
 // come back.
 func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
@@ -169,7 +170,7 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:   "ClusterKind",
 		Plural: "ClusterKinds",
-		Scope:  clusterScope,
+		Scope:  kindstore.ClusterScope,
 		Routes: map[string]spec3.PathProps{
 			"/rebuild": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
 				OperationId: "rebuildClusterKind",
@@ -532,7 +533,7 @@ func TestSearchRouteGates(t *testing.T) {
 
 	t.Run("a cluster scoped kind has no namespace to search", func(t *testing.T) {
 		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
-		b.manifest.Versions[1].Kinds[0].Scope = clusterScope
+		b.manifest.Versions[1].Kinds[0].Scope = kindstore.ClusterScope
 		require.Empty(t, searchPaths(b))
 	})
 

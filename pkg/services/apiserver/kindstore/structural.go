@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"encoding/json"
@@ -15,7 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-// newKindStructuralSchema builds the structural schema pruning and defaulting
+// newStructuralSchema builds the structural schema pruning and defaulting
 // need, from the same manifest schema the validator is built from.
 //
 // The same kind served as a custom resource definition is pruned and defaulted
@@ -26,10 +26,10 @@ import (
 // one apiextensions would refuse to serve as a CRD at all. Those return an error
 // and the kind is served without pruning, which is what it got before this
 // existed -- worse than a CRD, but better than dropping the kind.
-func newKindStructuralSchema(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) (*structuralschema.Structural, error) {
+func newStructuralSchema(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) (*structuralschema.Structural, error) {
 	// Refs are expanded because a structural schema cannot carry one; the
 	// validator resolves them the same way, from the same trimmed root.
-	expanded := expandSchemaRefs(kindSchemaRoot(kindSchema), defs, map[string]bool{})
+	expanded := expandSchemaRefs(schemaRoot(kindSchema), defs, map[string]bool{})
 
 	// Routed through JSON because the two schema types describe the same
 	// document and nothing converts between them directly.
@@ -64,7 +64,7 @@ func newKindStructuralSchema(kindSchema spec.Schema, defs map[string]common.Open
 // defaults it does, the two passes apiextensions runs before validating a custom
 // resource. A no-op for a kind with no schema, or one whose schema is not
 // structural.
-func (s *kindStore) pruneAndDefault(u *unstructured.Unstructured) {
+func (s *Store) pruneAndDefault(u *unstructured.Unstructured) {
 	if s.structural == nil {
 		return
 	}

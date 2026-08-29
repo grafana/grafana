@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"encoding/json"
@@ -27,8 +27,8 @@ func newTestResource() *unstructured.Unstructured {
 // The generic create handler cannot diff an unstructured kind against the
 // kindless empty object the scheme hands it, so it logs "[SHOULD NOT HAPPEN]
 // failed to update managedFields" and strips them. The store redoes that diff.
-func TestKindStoreTrackManagedFields(t *testing.T) {
-	obj := testKindStore(false, true).
+func TestStoreTrackManagedFields(t *testing.T) {
+	obj := testStore(false, true).
 		trackManagedFields(newTestResource(), &metav1.CreateOptions{FieldManager: "test-manager"})
 
 	entries := obj.(*unstructured.Unstructured).GetManagedFields()
@@ -44,8 +44,8 @@ func TestKindStoreTrackManagedFields(t *testing.T) {
 	require.NotContains(t, fields, "f:status", "the status subresource is not owned by a create")
 }
 
-func TestKindStoreTrackManagedFieldsWithoutStatusSubresource(t *testing.T) {
-	obj := testKindStore(false, false).
+func TestStoreTrackManagedFieldsWithoutStatusSubresource(t *testing.T) {
+	obj := testStore(false, false).
 		trackManagedFields(newTestResource(), &metav1.CreateOptions{FieldManager: "test-manager"})
 
 	var fields map[string]any
@@ -55,8 +55,8 @@ func TestKindStoreTrackManagedFieldsWithoutStatusSubresource(t *testing.T) {
 
 // Only requests made through a client that names itself carry a field manager;
 // the generic handler falls back to the user agent, which storage cannot see.
-func TestKindStoreTrackManagedFieldsUnnamedManager(t *testing.T) {
-	obj := testKindStore(false, true).trackManagedFields(newTestResource(), &metav1.CreateOptions{})
+func TestStoreTrackManagedFieldsUnnamedManager(t *testing.T) {
+	obj := testStore(false, true).trackManagedFields(newTestResource(), &metav1.CreateOptions{})
 	entries := obj.(*unstructured.Unstructured).GetManagedFields()
 	require.Len(t, entries, 1)
 	require.Equal(t, defaultFieldManager, entries[0].Manager)

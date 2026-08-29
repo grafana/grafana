@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -79,8 +80,8 @@ func TestGetAuthorizer(t *testing.T) {
 func TestGetAuthorizerManifestKinds(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
-		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: clusterScope},
-		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Scope: clusterScope, UserReadable: true},
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope},
+		app.ManifestVersionKind{Kind: "Setting", Plural: "Settings", Scope: kindstore.ClusterScope, UserReadable: true},
 	)
 
 	b := &AppPluginAPIBuilder{

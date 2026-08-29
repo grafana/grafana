@@ -13,11 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
 // The definition map, the validator lookup in UpdateAPIGroupInfo, and the
 // component injection + refs in postProcessManifestKinds all key kinds by
-// kindOpenAPIName. This test guards that shared name against drift.
+// kindstore.OpenAPIName. This test guards that shared name against drift.
 func TestManifestKindOpenAPINames(t *testing.T) {
 	manifest := testManifest(t)
 	b := &AppPluginAPIBuilder{
@@ -29,7 +30,7 @@ func TestManifestKindOpenAPINames(t *testing.T) {
 	})
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind"}
-	name := kindOpenAPIName(gvk)
+	name := kindstore.OpenAPIName(gvk)
 	require.Equal(t, "example.ext.grafana.com.v1alpha1.TestKind", name)
 
 	def, ok := defs[name]
@@ -295,10 +296,10 @@ func TestExampleValueTypes(t *testing.T) {
 // whose schema names no spec has no example to build.
 func TestSpecProperty(t *testing.T) {
 	manifest := testManifest(t)
-	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
 	}, manifest.Group, manifest)
-	name := kindOpenAPIName(schema.GroupVersionKind{
+	name := kindstore.OpenAPIName(schema.GroupVersionKind{
 		Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind",
 	})
 

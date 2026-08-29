@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 // cannot see.
 const defaultFieldManager = "grafana"
 
-// newKindFieldManager builds the field manager a manifest kind uses to track
+// newFieldManager builds the field manager a manifest kind uses to track
 // managedFields on create.
 //
 // The generic create handler already runs one, but it diffs the submitted object
@@ -25,7 +25,7 @@ const defaultFieldManager = "grafana"
 // logs "[SHOULD NOT HAPPEN] failed to update managedFields" and drops
 // managedFields instead. This one starts from a live object that carries the
 // GVK, the same fix-up apimachinery already applies on the apply path.
-func newKindFieldManager(gvk schema.GroupVersionKind, resetFields map[fieldpath.APIVersion]*fieldpath.Set) (*managedfields.FieldManager, error) {
+func newFieldManager(gvk schema.GroupVersionKind, resetFields map[fieldpath.APIVersion]*fieldpath.Set) (*managedfields.FieldManager, error) {
 	return managedfields.NewDefaultFieldManager(
 		// The OpenAPI model published for manifest kinds is an untyped object, so
 		// deducing the types from the object itself tracks the same fields the

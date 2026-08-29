@@ -265,7 +265,7 @@ func kindResourceNames(manifest *app.ManifestData) map[string]string {
 		}
 		for _, kind := range version.Kinds {
 			if kind.Plural == "" {
-				continue // newKindStore refuses these, so they have no resource
+				continue // kindstore.New refuses these, so they have no resource
 			}
 			resources[kind.Kind] = strings.ToLower(kind.Plural)
 		}

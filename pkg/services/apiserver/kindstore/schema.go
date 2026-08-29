@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"maps"
@@ -9,20 +9,20 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-// newKindSchemaValidator expands refs that kube-openapi's validator cannot resolve.
-func newKindSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) validation.SchemaValidator {
-	expanded := expandSchemaRefs(kindSchemaRoot(kindSchema), defs, map[string]bool{})
+// newSchemaValidator expands refs that kube-openapi's validator cannot resolve.
+func newSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) validation.SchemaValidator {
+	expanded := expandSchemaRefs(schemaRoot(kindSchema), defs, map[string]bool{})
 	return validation.NewSchemaValidatorFromOpenAPI(&expanded)
 }
 
-// kindSchemaRoot drops the fields the API server owns from a kind's schema.
+// schemaRoot drops the fields the API server owns from a kind's schema.
 //
 // A manifest kind's schema describes metadata as a ref to ObjectMeta, which no
 // caller here can resolve: the validator would reject every object against the
 // empty schema the ref expands to, and the structural schema would refuse a
 // property with no type at all. The API server validates these three itself, and
 // pruning leaves them alone at the resource root.
-func kindSchemaRoot(kindSchema spec.Schema) spec.Schema {
+func schemaRoot(kindSchema spec.Schema) spec.Schema {
 	root := kindSchema
 	root.Properties = maps.Clone(kindSchema.Properties)
 	root.Required = slices.Clone(kindSchema.Required)

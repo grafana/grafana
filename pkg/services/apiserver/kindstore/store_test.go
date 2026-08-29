@@ -1,4 +1,4 @@
-package appplugin
+package kindstore
 
 import (
 	"context"
@@ -20,20 +20,19 @@ import (
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func testKindStore(clusterScoped, hasStatus bool) *kindStore {
-	s := &kindStore{
+func testStore(clusterScoped, hasStatus bool) *Store {
+	s := &Store{
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           schema.GroupVersionKind{Group: "test-app", Version: "v0alpha1", Kind: "TestKind"},
 		clusterScoped: clusterScoped,
 		hasStatus:     hasStatus,
 	}
-	// mirror the newKindStore wiring so scope checks route through the store
+	// mirror the New wiring so scope checks route through the store
 	s.Store = &registry.Store{CreateStrategy: s, UpdateStrategy: s, DeleteStrategy: s}
-	fieldManager, err := newKindFieldManager(s.gvk, s.GetResetFields())
+	fieldManager, err := newFieldManager(s.gvk, s.GetResetFields())
 	if err != nil {
 		panic(err)
 	}
@@ -42,22 +41,22 @@ func testKindStore(clusterScoped, hasStatus bool) *kindStore {
 }
 
 // The embedded registry.Store delegates NamespaceScoped to its CreateStrategy
-// (the kindStore itself), so kindStore must provide an explicit
+// (the Store itself), so Store must provide an explicit
 // implementation or the promoted method recurses forever.
-func TestKindStoreScope(t *testing.T) {
-	require.True(t, testKindStore(false, false).NamespaceScoped())
-	require.False(t, testKindStore(true, false).NamespaceScoped())
+func TestStoreScope(t *testing.T) {
+	require.True(t, testStore(false, false).NamespaceScoped())
+	require.False(t, testStore(true, false).NamespaceScoped())
 
-	var scoper rest.Scoper = testKindStore(false, false).Store
+	var scoper rest.Scoper = testStore(false, false).Store
 	require.True(t, scoper.NamespaceScoped())
 }
 
-func TestKindStorePrepareForCreate(t *testing.T) {
+func TestStorePrepareForCreate(t *testing.T) {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"spec":   map[string]any{"testField": int64(1)},
 		"status": map[string]any{"state": "imported"},
 	}}
-	testKindStore(false, true).PrepareForCreate(context.Background(), obj)
+	testStore(false, true).PrepareForCreate(context.Background(), obj)
 	_, found, _ := unstructured.NestedFieldNoCopy(obj.Object, "status")
 	require.False(t, found, "the status subresource must not be writable through create")
 	require.Equal(t, int64(1), obj.GetGeneration())
@@ -65,13 +64,13 @@ func TestKindStorePrepareForCreate(t *testing.T) {
 	obj = &unstructured.Unstructured{Object: map[string]any{
 		"status": map[string]any{"state": "imported"},
 	}}
-	testKindStore(false, false).PrepareForCreate(context.Background(), obj)
+	testStore(false, false).PrepareForCreate(context.Background(), obj)
 	_, found, _ = unstructured.NestedFieldNoCopy(obj.Object, "status")
 	require.True(t, found, "without a status subresource the field is normal payload")
 }
 
-func TestKindStorePrepareForUpdate(t *testing.T) {
-	s := testKindStore(false, true)
+func TestStorePrepareForUpdate(t *testing.T) {
+	s := testStore(false, true)
 	old := &unstructured.Unstructured{Object: map[string]any{
 		"status": map[string]any{"state": "old"},
 	}}
@@ -96,8 +95,8 @@ func TestKindStorePrepareForUpdate(t *testing.T) {
 	require.False(t, found, "status cannot be introduced when the stored object has none")
 }
 
-func TestKindStoreValidate(t *testing.T) {
-	s := testKindStore(false, false)
+func TestStoreValidate(t *testing.T) {
+	s := testStore(false, false)
 	require.Empty(t, s.Validate(context.Background(), &unstructured.Unstructured{Object: map[string]any{}}),
 		"kinds without a schema are served without body validation")
 
@@ -117,16 +116,16 @@ func TestKindStoreValidate(t *testing.T) {
 	require.NotEmpty(t, s.ValidateUpdate(context.Background(), invalid, valid))
 }
 
-func TestKindStoreGetResetFields(t *testing.T) {
-	require.Nil(t, testKindStore(false, false).GetResetFields())
+func TestStoreGetResetFields(t *testing.T) {
+	require.Nil(t, testStore(false, false).GetResetFields())
 
-	fields := testKindStore(false, true).GetResetFields()
+	fields := testStore(false, true).GetResetFields()
 	set := fields[fieldpath.APIVersion("test-app/v0alpha1")]
 	require.NotNil(t, set)
 	require.True(t, set.Has(fieldpath.MakePathOrDie("status")))
 }
 
-func TestKindTableConvertor(t *testing.T) {
+func TestTableConvertor(t *testing.T) {
 	gr := schema.GroupResource{Group: "test-app", Resource: "testkinds"}
 	gvk := schema.GroupVersionKind{Group: "test-app", Version: "v0alpha1", Kind: "TestKind"}
 	obj := &unstructured.Unstructured{Object: map[string]any{
@@ -134,7 +133,7 @@ func TestKindTableConvertor(t *testing.T) {
 		"spec":     map[string]any{"testField": int64(42)},
 	}}
 
-	tc := newKindTableConvertor(gr, gvk, app.ManifestVersionKind{
+	tc := newTableConvertor(gr, gvk, app.ManifestVersionKind{
 		AdditionalPrinterColumns: []app.ManifestVersionKindAdditionalPrinterColumn{
 			{Name: "Test Field", Type: "integer", JSONPath: ".spec.testField"},
 		},
@@ -147,7 +146,7 @@ func TestKindTableConvertor(t *testing.T) {
 	require.Equal(t, int64(42), table.Rows[0].Cells[len(table.Rows[0].Cells)-1])
 
 	// an invalid JSONPath degrades to the default name+age table
-	tc = newKindTableConvertor(gr, gvk, app.ManifestVersionKind{
+	tc = newTableConvertor(gr, gvk, app.ManifestVersionKind{
 		AdditionalPrinterColumns: []app.ManifestVersionKindAdditionalPrinterColumn{
 			{Name: "Bad", Type: "string", JSONPath: "{{{"},
 		},
@@ -161,8 +160,8 @@ func TestKindTableConvertor(t *testing.T) {
 
 // The strategy answers these the same way for every manifest kind; they exist
 // because registry.Store requires the full strategy interfaces.
-func TestKindStoreStrategyDefaults(t *testing.T) {
-	s := testKindStore(false, false)
+func TestStoreStrategyDefaults(t *testing.T) {
+	s := testStore(false, false)
 
 	require.False(t, s.AllowCreateOnUpdate())
 	require.False(t, s.AllowUnconditionalUpdate())
@@ -185,8 +184,8 @@ func TestKindStoreStrategyDefaults(t *testing.T) {
 
 // Every strategy hook must survive an object it did not expect: registry.Store
 // hands them whatever the request decoded to.
-func TestKindStoreIgnoresNonUnstructured(t *testing.T) {
-	s := testKindStore(false, true)
+func TestStoreIgnoresNonUnstructured(t *testing.T) {
+	s := testStore(false, true)
 	s.validator = buildTestKindValidator(t, "v0alpha1")
 	other := &metav1.Status{}
 
@@ -209,25 +208,25 @@ func TestKindStoreIgnoresNonUnstructured(t *testing.T) {
 }
 
 // Without a status subresource, status is ordinary payload on update too.
-func TestKindStorePrepareForUpdateWithoutStatus(t *testing.T) {
+func TestStorePrepareForUpdateWithoutStatus(t *testing.T) {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"status": map[string]any{"state": "new"},
 	}}
 	old := &unstructured.Unstructured{Object: map[string]any{
 		"status": map[string]any{"state": "old"},
 	}}
-	testKindStore(false, false).PrepareForUpdate(context.Background(), obj, old)
+	testStore(false, false).PrepareForUpdate(context.Background(), obj, old)
 
 	state, _, _ := unstructured.NestedString(obj.Object, "status", "state")
 	require.Equal(t, "new", state)
 }
 
-func TestKindTableConvertorPriority(t *testing.T) {
+func TestTableConvertorPriority(t *testing.T) {
 	gr := schema.GroupResource{Group: "test-app", Resource: "testkinds"}
 	gvk := schema.GroupVersionKind{Group: "test-app", Version: "v0alpha1", Kind: "TestKind"}
 	priority := int32(1)
 
-	tc := newKindTableConvertor(gr, gvk, app.ManifestVersionKind{
+	tc := newTableConvertor(gr, gvk, app.ManifestVersionKind{
 		AdditionalPrinterColumns: []app.ManifestVersionKindAdditionalPrinterColumn{
 			{Name: "Test Field", Type: "integer", JSONPath: ".spec.testField", Priority: &priority},
 		},
@@ -243,9 +242,9 @@ func TestKindTableConvertorPriority(t *testing.T) {
 	require.Equal(t, priority, last.Priority, "the manifest priority reaches the table output")
 }
 
-// newKindStoreOpts builds the options UpdateAPIGroupInfo passes in, recording
+// newStoreOpts builds the options an API group installer passes in, recording
 // what the kind registers with unified storage.
-func newKindStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (*builder.APIGroupOptions, map[schema.GroupResource]apistore.StorageOptions) {
+func newStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (Options, map[schema.GroupResource]apistore.StorageOptions) {
 	t.Helper()
 
 	scheme := runtime.NewScheme()
@@ -253,7 +252,7 @@ func newKindStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (*builder.APIGr
 	scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
 
 	registered := map[schema.GroupResource]apistore.StorageOptions{}
-	return &builder.APIGroupOptions{
+	return Options{
 		Scheme:     scheme,
 		OptsGetter: apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
 		StorageOptsRegister: func(gr schema.GroupResource, opts apistore.StorageOptions) {
@@ -262,14 +261,14 @@ func newKindStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (*builder.APIGr
 	}, registered
 }
 
-func TestNewKindStore(t *testing.T) {
+func TestNew(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v1alpha1", Kind: "TestKind"}
 	falseValue := false
-	admission := &fakeRouteClient{}
+	admission := &reviewClient{}
 
 	t.Run("a namespaced kind is folder scoped by default", func(t *testing.T) {
-		opts, registered := newKindStoreOpts(t, gvk)
-		s, err := newKindStore(gvk, app.ManifestVersionKind{
+		opts, registered := newStoreOpts(t, gvk)
+		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
 		}, admission, opts, nil)
 		require.NoError(t, err)
@@ -297,8 +296,8 @@ func TestNewKindStore(t *testing.T) {
 	})
 
 	t.Run("folderScoped false opts out of folder support", func(t *testing.T) {
-		opts, registered := newKindStoreOpts(t, gvk)
-		_, err := newKindStore(gvk, app.ManifestVersionKind{
+		opts, registered := newStoreOpts(t, gvk)
+		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
 		}, admission, opts, nil)
 		require.NoError(t, err)
@@ -309,9 +308,9 @@ func TestNewKindStore(t *testing.T) {
 	})
 
 	t.Run("a cluster kind cannot use folders", func(t *testing.T) {
-		opts, registered := newKindStoreOpts(t, gvk)
-		s, err := newKindStore(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: clusterScope,
+		opts, registered := newStoreOpts(t, gvk)
+		s, err := New(gvk, app.ManifestVersionKind{
+			Kind: "TestKind", Plural: "testkinds", Scope: ClusterScope,
 		}, admission, opts, nil)
 		require.NoError(t, err)
 
@@ -325,13 +324,13 @@ func TestNewKindStore(t *testing.T) {
 		manifest := testManifest(t)
 		// NewAppPluginAPIBuilder serves manifest kinds under the plugin ID.
 		manifest.Group = gvk.Group
-		defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
+		defs := LoadOpenAPIDefinitions(func(name string) spec.Ref {
 			return spec.MustCreateRef(name)
 		}, gvk.Group, manifest)
 		kind := manifest.Versions[1].Kinds[0] // v1alpha1 TestKind declares status
 
-		opts, _ := newKindStoreOpts(t, gvk)
-		s, err := newKindStore(gvk, kind, admission, opts, defs)
+		opts, _ := newStoreOpts(t, gvk)
+		s, err := New(gvk, kind, admission, opts, defs)
 		require.NoError(t, err)
 
 		require.NotNil(t, s.validator)
@@ -339,32 +338,32 @@ func TestNewKindStore(t *testing.T) {
 
 		// v0alpha1 has the same kind without a status property.
 		v0 := schema.GroupVersionKind{Group: "example-app", Version: "v0alpha1", Kind: "TestKind"}
-		opts, _ = newKindStoreOpts(t, v0)
-		s, err = newKindStore(v0, manifest.Versions[0].Kinds[0], admission, opts, defs)
+		opts, _ = newStoreOpts(t, v0)
+		s, err = New(v0, manifest.Versions[0].Kinds[0], admission, opts, defs)
 		require.NoError(t, err)
 		require.NotNil(t, s.validator)
 		require.False(t, s.hasStatus)
 	})
 
 	t.Run("a schema missing from the definitions is an error", func(t *testing.T) {
-		opts, _ := newKindStoreOpts(t, gvk)
+		opts, _ := newStoreOpts(t, gvk)
 		kind := testManifest(t).Versions[1].Kinds[0]
-		_, err := newKindStore(gvk, kind, admission, opts, map[string]common.OpenAPIDefinition{})
+		_, err := New(gvk, kind, admission, opts, map[string]common.OpenAPIDefinition{})
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
 	// The plural names the REST path; an empty one silently registers an
-	// unreachable resource, so newKindStore rejects it up front.
+	// unreachable resource, so New rejects it up front.
 	t.Run("a kind without a plural is an error", func(t *testing.T) {
-		opts, _ := newKindStoreOpts(t, gvk)
-		_, err := newKindStore(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
+		opts, _ := newStoreOpts(t, gvk)
+		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
 		require.ErrorContains(t, err, "missing a plural name")
 	})
 
 	t.Run("storage that cannot be completed is an error", func(t *testing.T) {
-		opts, _ := newKindStoreOpts(t, gvk)
+		opts, _ := newStoreOpts(t, gvk)
 		opts.OptsGetter = failingRESTOptionsGetter{}
-		_, err := newKindStore(gvk, app.ManifestVersionKind{
+		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
 		}, admission, opts, nil)
 		require.ErrorContains(t, err, "no storage configured")
@@ -373,8 +372,8 @@ func TestNewKindStore(t *testing.T) {
 	// Objects are typed through these constructors, so both must stamp the GVK:
 	// unified storage returns unstructured values that carry no Go type.
 	t.Run("new objects carry the kind", func(t *testing.T) {
-		opts, _ := newKindStoreOpts(t, gvk)
-		s, err := newKindStore(gvk, app.ManifestVersionKind{
+		opts, _ := newStoreOpts(t, gvk)
+		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
 		}, admission, opts, nil)
 		require.NoError(t, err)
@@ -395,8 +394,8 @@ func (failingRESTOptionsGetter) GetRESTOptions(schema.GroupResource, runtime.Obj
 // A write to the status subresource may only change status. Without this the
 // generic status strategy persists whatever spec the request carried, so status
 // access is spec access -- and the spec it stores is never schema checked.
-func TestKindStatusStrategyPrepareForUpdate(t *testing.T) {
-	s := &kindStatusStrategy{kindStore: testKindStore(false, true)}
+func TestStatusStrategyPrepareForUpdate(t *testing.T) {
+	s := &statusStrategy{Store: testStore(false, true)}
 
 	old := &unstructured.Unstructured{Object: map[string]any{
 		"spec":   map[string]any{"testField": int64(1)},
@@ -433,9 +432,9 @@ func TestKindStatusStrategyPrepareForUpdate(t *testing.T) {
 }
 
 // The status manager must not own the fields the status endpoint cannot write.
-func TestKindStatusStrategyResetFields(t *testing.T) {
-	base := testKindStore(false, true)
-	s := &kindStatusStrategy{kindStore: base}
+func TestStatusStrategyResetFields(t *testing.T) {
+	base := testStore(false, true)
+	s := &statusStrategy{Store: base}
 	fields := s.GetResetFields()
 	require.Len(t, fields, 1)
 	set := fields[fieldpath.APIVersion(s.gvk.GroupVersion().String())]
