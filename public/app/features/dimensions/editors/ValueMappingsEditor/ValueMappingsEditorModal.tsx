@@ -1,14 +1,11 @@
 import { css } from '@emotion/css';
-import { type DroppableProvided, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, MappingType, type SelectableValue, type ValueMapping } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
-import {
-  DragAndDropProvider,
-  useDragAndDrop,
-} from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { ValueMappingEditRow, type ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { buildEditRowModels, createRow, duplicateRow, editModelToSaveModel } from './editRowModels';
@@ -21,8 +18,8 @@ export interface Props {
 }
 
 export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPicker }: Props) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDrop(true);
   const [rows, updateRows] = useState<ValueMappingEditRowModel[]>([]);
 
   useEffect(() => {
@@ -117,41 +114,8 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const renderRows = (provided?: DroppableProvided) => (
-    <tbody ref={provided?.innerRef} {...provided?.droppableProps}>
-      {rows.map((row, index) => (
-        <ValueMappingEditRow
-          key={row.id}
-          mapping={row}
-          index={index}
-          onChange={onChangeMapping}
-          onRemove={onRemoveRow}
-          onDuplicate={onDuplicateMapping}
-          showIconPicker={showIconPicker}
-        />
-      ))}
-      {provided?.placeholder}
-    </tbody>
-  );
-
-  const renderDraggableRows = () => {
-    if (!dragAndDrop) {
-      return renderRows();
-    }
-
-    const { DragDropContext, Droppable } = dragAndDrop;
-
-    return (
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="sortable-field-mappings" direction="vertical">
-          {(provided) => renderRows(provided)}
-        </Droppable>
-      </DragDropContext>
-    );
-  };
-
   return (
-    <DragAndDropProvider value={dragAndDrop}>
+    <>
       <div className={styles.tableWrap}>
         <table className={styles.editTable}>
           <thead>
@@ -174,7 +138,26 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
-          {renderDraggableRows()}
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="sortable-field-mappings" direction="vertical">
+              {(provided) => (
+                <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                  {rows.map((row, index) => (
+                    <ValueMappingEditRow
+                      key={row.id}
+                      mapping={row}
+                      index={index}
+                      onChange={onChangeMapping}
+                      onRemove={onRemoveRow}
+                      onDuplicate={onDuplicateMapping}
+                      showIconPicker={showIconPicker}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </tbody>
+              )}
+            </Droppable>
+          </DragDropContext>
         </table>
       </div>
 
@@ -199,7 +182,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
           <Trans i18nKey="dimensions.value-mappings-editor-modal.update">Update</Trans>
         </Button>
       </Modal.ButtonRow>
-    </DragAndDropProvider>
+    </>
   );
 }
 
@@ -225,5 +208,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-export { buildEditRowModels, editModelToSaveModel } from './editRowModels';

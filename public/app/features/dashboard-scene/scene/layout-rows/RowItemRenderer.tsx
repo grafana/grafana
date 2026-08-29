@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { type DraggableProvided, type DraggableStateSnapshot } from '@hello-pangea/dnd';
 import { useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -15,6 +14,7 @@ import {
   usePointerDistance,
   useStyles2,
 } from '@grafana/ui';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -23,7 +23,6 @@ import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
-import { useDashboardDndContext } from '../layouts-shared/useDashboardDnd';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -70,7 +69,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
-  const dashboardDnd = useDashboardDndContext();
+  const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {
     return null;
@@ -104,107 +103,99 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     </span>
   );
 
-  const renderRow = (dragProvided?: DraggableProvided, dragSnapshot?: DraggableStateSnapshot) => (
-    <div
-      ref={(ref) => {
-        dragProvided?.innerRef(ref);
-        model.containerRef.current = ref;
-      }}
-      {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
-      className={cx(
-        styles.wrapper,
-        'dashboard-row-wrapper',
-        !isCollapsed && styles.wrapperNotCollapsed,
-        dragSnapshot?.isDragging && styles.dragging,
-        isCollapsed && styles.wrapperCollapsed,
-        shouldGrow && styles.wrapperGrow,
-        conditionalRenderingClass,
-        !isSelected && !isSourceSelected && selectableHighlight && 'dashboard-selectable-element',
-        (isSelected || isSourceSelected) && 'dashboard-selected-element',
-        isDropTarget && 'dashboard-drop-target'
-      )}
-      onPointerDown={(evt) => {
-        evt.stopPropagation();
-        pointerDistance.set(evt);
-      }}
-      onPointerUp={(evt) => {
-        // If we selected and are clicking a button inside row header then don't de-select row
-        if (evt.target instanceof Element && evt.target.closest('button')) {
-          // Stop propagation otherwise dashboaed level onPointerDown will de-select row
-          evt.stopPropagation();
-          return;
-        }
-
-        if (pointerDistance.check(evt)) {
-          return;
-        }
-
-        setTimeout(() => onSelect?.(evt));
-      }}
-      data-testid={selectors.components.DashboardRow.wrapper(title!)}
-      {...dragProvided?.draggableProps}
-    >
-      {(!isHeaderHidden || isEditing) && (
-        <div
-          className={cx(styles.rowHeader, 'dashboard-row-header')}
-          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
-          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-          {...dragProvided?.dragHandleProps}
-        >
-          <button
-            onClick={(evt) => {
-              model.onCollapseToggle();
-              onClearSelection?.();
-            }}
-            className={cx(clearStyles, styles.rowTitleButton)}
-            aria-expanded={!isCollapsed}
-            aria-controls={contentId}
-            aria-label={
-              isCollapsed
-                ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
-                : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
-            }
-            data-testid={selectors.components.DashboardRow.toggle(title)}
-          >
-            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            {!isEditing && titleElement}
-          </button>
-          {isEditing && titleElement}
-          {!isEditing && (
-            <ClipboardButton
-              icon="link"
-              size="sm"
-              fill="text"
-              variant="secondary"
-              className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
-              aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-              tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-              getText={() => model.getUrl()}
-            />
-          )}
-          {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
-          {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
-        </div>
-      )}
-      {!isCollapsed && (
-        <div className={styles.rowLayoutWrapper} id={contentId}>
-          {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
-          <layout.Component model={layout} />
-        </div>
-      )}
-      {conditionalRenderingOverlay}
-    </div>
-  );
-
-  if (!dashboardDnd || !isDraggable) {
-    return renderRow();
-  }
-
-  const { Draggable } = dashboardDnd;
-
   return (
-    <Draggable key={key!} draggableId={key!} index={myIndex}>
-      {renderRow}
+    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
+      {(dragProvided, dragSnapshot) => (
+        <div
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+            model.containerRef.current = ref;
+          }}
+          {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
+          className={cx(
+            styles.wrapper,
+            'dashboard-row-wrapper',
+            !isCollapsed && styles.wrapperNotCollapsed,
+            dragSnapshot.isDragging && styles.dragging,
+            isCollapsed && styles.wrapperCollapsed,
+            shouldGrow && styles.wrapperGrow,
+            conditionalRenderingClass,
+            !isSelected && !isSourceSelected && selectableHighlight && 'dashboard-selectable-element',
+            (isSelected || isSourceSelected) && 'dashboard-selected-element',
+            isDropTarget && 'dashboard-drop-target'
+          )}
+          onPointerDown={(evt) => {
+            evt.stopPropagation();
+            pointerDistance.set(evt);
+          }}
+          onPointerUp={(evt) => {
+            // If we selected and are clicking a button inside row header then don't de-select row
+            if (evt.target instanceof Element && evt.target.closest('button')) {
+              // Stop propagation otherwise dashboaed level onPointerDown will de-select row
+              evt.stopPropagation();
+              return;
+            }
+
+            if (pointerDistance.check(evt)) {
+              return;
+            }
+
+            setTimeout(() => onSelect?.(evt));
+          }}
+          data-testid={selectors.components.DashboardRow.wrapper(title!)}
+          {...dragProvided.draggableProps}
+        >
+          {(!isHeaderHidden || isEditing) && (
+            <div
+              className={cx(styles.rowHeader, 'dashboard-row-header')}
+              onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+              onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              {...dragProvided.dragHandleProps}
+            >
+              <button
+                onClick={(evt) => {
+                  model.onCollapseToggle();
+                  onClearSelection?.();
+                }}
+                className={cx(clearStyles, styles.rowTitleButton)}
+                aria-expanded={!isCollapsed}
+                aria-controls={contentId}
+                aria-label={
+                  isCollapsed
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
+                }
+                data-testid={selectors.components.DashboardRow.toggle(title)}
+              >
+                <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
+                {!isEditing && titleElement}
+              </button>
+              {isEditing && titleElement}
+              {!isEditing && (
+                <ClipboardButton
+                  icon="link"
+                  size="sm"
+                  fill="text"
+                  variant="secondary"
+                  className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
+                  aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  getText={() => model.getUrl()}
+                />
+              )}
+              {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
+            </div>
+          )}
+          {!isCollapsed && (
+            <div className={styles.rowLayoutWrapper} id={contentId}>
+              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              <layout.Component model={layout} />
+            </div>
+          )}
+          {conditionalRenderingOverlay}
+        </div>
+      )}
     </Draggable>
   );
 }

@@ -56,10 +56,7 @@ export const MegaMenu = memo(
       onReorderSection,
       isSaving,
     } = useNavCustomization();
-    const dragAndDrop = useDragAndDrop(editMode);
-    const DragDropContext = dragAndDrop?.DragDropContext;
-    const Draggable = dragAndDrop?.Draggable;
-    const Droppable = dragAndDrop?.Droppable;
+    const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -165,7 +162,7 @@ export const MegaMenu = memo(
               </Text>
               <div className={styles.pinnedHeadingLine} />
             </div>
-            {editMode && DragDropContext && Draggable && Droppable ? (
+            {editMode ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
                 <Droppable droppableId="megamenu-pinned">
                   {(dropProvided) => (
@@ -202,7 +199,7 @@ export const MegaMenu = memo(
 
     // Top-level nav sections, drag-reorderable while editing.
     const renderSectionList = () =>
-      editMode && DragDropContext && Draggable && Droppable ? (
+      editMode ? (
         <DragDropContext onDragEnd={onSectionDragEnd}>
           <Droppable droppableId="megamenu-sections">
             {(dropProvided) => (

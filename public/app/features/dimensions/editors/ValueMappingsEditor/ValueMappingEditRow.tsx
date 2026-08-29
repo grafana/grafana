@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { type DraggableProvided } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef } from 'react';
 import * as React from 'react';
 
@@ -12,7 +11,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
-import { useDragAndDropContext } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -39,9 +38,9 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
+  const { Draggable } = useDragAndDrop();
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDropContext();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const update = useCallback(
@@ -183,157 +182,152 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
     },
   ];
 
-  const renderRow = (provided?: DraggableProvided) => (
-    <tr className={styles.dragRow} ref={provided?.innerRef} {...provided?.draggableProps}>
-      <td>
-        <div className={styles.dragHandle} {...provided?.dragHandleProps}>
-          <Icon
-            name="draggabledots"
-            size="lg"
-            title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
-          />
-        </div>
-      </td>
-      <td className={styles.typeColumn}>{mapping.type}</td>
-      <td>
-        {mapping.type === MappingType.ValueToText && (
-          <Input
-            ref={inputRef}
-            type="text"
-            value={key ?? ''}
-            onChange={onUpdateMatchValue}
-            placeholder={t('dimensions.value-mapping-edit-row.placeholder-exact-value-to-match', 'Exact value to match')}
-          />
-        )}
-        {mapping.type === MappingType.RangeToText && (
-          <div className={styles.rangeInputWrapper}>
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={mapping.from ?? ''}
-              placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
-              onChange={onChangeFrom}
-            />
-            <Input
-              type="text"
-              inputMode="decimal"
-              value={mapping.to ?? ''}
-              placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
-              onChange={onChangeTo}
-            />
-          </div>
-        )}
-        {mapping.type === MappingType.RegexToText && (
-          <Input
-            type="text"
-            value={mapping.pattern ?? ''}
-            placeholder={t(
-              'dimensions.value-mapping-edit-row.placeholder-regular-expression',
-              'Regular expression'
-            )}
-            onChange={onChangePattern}
-          />
-        )}
-        {mapping.type === MappingType.SpecialValue && (
-          <Select
-            value={specialMatchOptions.find((v) => v.value === mapping.specialMatch)}
-            options={specialMatchOptions}
-            onChange={onChangeSpecialMatch}
-          />
-        )}
-      </td>
-      <td>
-        <Input
-          type="text"
-          value={result.text ?? ''}
-          onChange={onChangeText}
-          placeholder={t(
-            'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
-            'Optional display text'
-          )}
-        />
-      </td>
-      <td className={styles.textAlignCenter}>
-        {result.color && (
-          <Stack gap={1} justifyContent="center">
-            <ColorPicker color={result.color} onChange={onChangeColor} enableNamedColors={true} />
-            <IconButton
-              name="times"
-              onClick={onClearColor}
-              tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-color', 'Remove color')}
-              tooltipPlacement="top"
-            />
-          </Stack>
-        )}
-        {!result.color && (
-          <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
-            {(props) => (
-              <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
-                <Trans i18nKey="dimensions.value-mapping-edit-row.set-color">Set color</Trans>
-              </Button>
-            )}
-          </ColorPicker>
-        )}
-      </td>
-      {showIconPicker && (
-        <td className={styles.textAlignCenter}>
-          <Stack gap={1} justifyContent="center">
-            <ResourcePicker
-              onChange={onChangeIcon}
-              onClear={onClearIcon}
-              value={result.icon}
-              size={ResourcePickerSize.SMALL}
-              folderName={ResourceFolderName.Icon}
-              mediaType={MediaType.Icon}
-              color={result.color}
-            />
-            {result.icon && (
-              <IconButton
-                name="times"
-                onClick={onClearIcon}
-                tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-icon', 'Remove icon')}
-                tooltipPlacement="top"
-              />
-            )}
-          </Stack>
-        </td>
-      )}
-      <td className={styles.textAlignCenter}>
-        <Stack gap={1}>
-          <IconButton
-            name="copy"
-            onClick={() => onDuplicate(index)}
-            data-testid="duplicate-value-mapping"
-            aria-label={t(
-              'dimensions.value-mapping-edit-row.duplicate-value-mapping-aria-label-duplicate-value-mapping',
-              'Duplicate value mapping'
-            )}
-            tooltip={t('dimensions.value-mapping-edit-row.duplicate-value-mapping-tooltip-duplicate', 'Duplicate')}
-          />
-          <IconButton
-            name="trash-alt"
-            onClick={() => onRemove(index)}
-            data-testid="remove-value-mapping"
-            aria-label={t(
-              'dimensions.value-mapping-edit-row.remove-value-mapping-aria-label-delete-value-mapping',
-              'Delete value mapping'
-            )}
-            tooltip={t('dimensions.value-mapping-edit-row.remove-value-mapping-tooltip-delete', 'Delete')}
-          />
-        </Stack>
-      </td>
-    </tr>
-  );
-
-  if (!dragAndDrop) {
-    return renderRow();
-  }
-
-  const { Draggable } = dragAndDrop;
-
   return (
     <Draggable key={id} draggableId={id} index={index}>
-      {(provided) => renderRow(provided)}
+      {(provided) => (
+        <tr className={styles.dragRow} ref={provided.innerRef} {...provided.draggableProps}>
+          <td>
+            <div className={styles.dragHandle} {...provided.dragHandleProps}>
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
+              />
+            </div>
+          </td>
+          <td className={styles.typeColumn}>{mapping.type}</td>
+          <td>
+            {mapping.type === MappingType.ValueToText && (
+              <Input
+                ref={inputRef}
+                type="text"
+                value={key ?? ''}
+                onChange={onUpdateMatchValue}
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-exact-value-to-match',
+                  'Exact value to match'
+                )}
+              />
+            )}
+            {mapping.type === MappingType.RangeToText && (
+              <div className={styles.rangeInputWrapper}>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={mapping.from ?? ''}
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
+                  onChange={onChangeFrom}
+                />
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  value={mapping.to ?? ''}
+                  placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
+                  onChange={onChangeTo}
+                />
+              </div>
+            )}
+            {mapping.type === MappingType.RegexToText && (
+              <Input
+                type="text"
+                value={mapping.pattern ?? ''}
+                placeholder={t(
+                  'dimensions.value-mapping-edit-row.placeholder-regular-expression',
+                  'Regular expression'
+                )}
+                onChange={onChangePattern}
+              />
+            )}
+            {mapping.type === MappingType.SpecialValue && (
+              <Select
+                value={specialMatchOptions.find((v) => v.value === mapping.specialMatch)}
+                options={specialMatchOptions}
+                onChange={onChangeSpecialMatch}
+              />
+            )}
+          </td>
+          <td>
+            <Input
+              type="text"
+              value={result.text ?? ''}
+              onChange={onChangeText}
+              placeholder={t(
+                'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
+                'Optional display text'
+              )}
+            />
+          </td>
+          <td className={styles.textAlignCenter}>
+            {result.color && (
+              <Stack gap={1} justifyContent="center">
+                <ColorPicker color={result.color} onChange={onChangeColor} enableNamedColors={true} />
+                <IconButton
+                  name="times"
+                  onClick={onClearColor}
+                  tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-color', 'Remove color')}
+                  tooltipPlacement="top"
+                />
+              </Stack>
+            )}
+            {!result.color && (
+              <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
+                {(props) => (
+                  <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
+                    <Trans i18nKey="dimensions.value-mapping-edit-row.set-color">Set color</Trans>
+                  </Button>
+                )}
+              </ColorPicker>
+            )}
+          </td>
+          {showIconPicker && (
+            <td className={styles.textAlignCenter}>
+              <Stack gap={1} justifyContent="center">
+                <ResourcePicker
+                  onChange={onChangeIcon}
+                  onClear={onClearIcon}
+                  value={result.icon}
+                  size={ResourcePickerSize.SMALL}
+                  folderName={ResourceFolderName.Icon}
+                  mediaType={MediaType.Icon}
+                  color={result.color}
+                />
+                {result.icon && (
+                  <IconButton
+                    name="times"
+                    onClick={onClearIcon}
+                    tooltip={t('dimensions.value-mapping-edit-row.tooltip-remove-icon', 'Remove icon')}
+                    tooltipPlacement="top"
+                  />
+                )}
+              </Stack>
+            </td>
+          )}
+          <td className={styles.textAlignCenter}>
+            <Stack gap={1}>
+              <IconButton
+                name="copy"
+                onClick={() => onDuplicate(index)}
+                data-testid="duplicate-value-mapping"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.duplicate-value-mapping-aria-label-duplicate-value-mapping',
+                  'Duplicate value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.duplicate-value-mapping-tooltip-duplicate', 'Duplicate')}
+              />
+              <IconButton
+                name="trash-alt"
+                onClick={() => onRemove(index)}
+                data-testid="remove-value-mapping"
+                aria-label={t(
+                  'dimensions.value-mapping-edit-row.remove-value-mapping-aria-label-delete-value-mapping',
+                  'Delete value mapping'
+                )}
+                tooltip={t('dimensions.value-mapping-edit-row.remove-value-mapping-tooltip-delete', 'Delete')}
+              />
+            </Stack>
+          </td>
+        </tr>
+      )}
     </Draggable>
   );
 }

@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { type DroppableProvided } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Counter, useStyles2 } from '@grafana/ui';
-import { useDragAndDropContext } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 interface DroppableCategoryProps {
@@ -15,42 +14,34 @@ interface DroppableCategoryProps {
 }
 
 export function DroppableCategory({ droppableId, title, children, itemsCount }: DroppableCategoryProps) {
+  const { Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDropContext();
-
-  const renderCategory = (provided?: DroppableProvided) => (
-    <div ref={provided?.innerRef} {...provided?.droppableProps} className={styles.container}>
-      <OptionsPaneCategory
-        id={droppableId}
-        title={title}
-        itemsCount={itemsCount}
-        headerActionPlacement="left"
-        compactIcons
-        isNested
-        isDashboardSidebar
-        className={styles.category}
-        renderTitle={() => (
-          <span className={styles.title}>
-            {title}
-            {itemsCount !== undefined && <Counter value={itemsCount} />}
-          </span>
-        )}
-      >
-        {children}
-        {provided?.placeholder}
-      </OptionsPaneCategory>
-    </div>
-  );
-
-  if (!dragAndDrop) {
-    return renderCategory();
-  }
-
-  const { Droppable } = dragAndDrop;
 
   return (
     <Droppable droppableId={droppableId} direction="vertical">
-      {(provided) => renderCategory(provided)}
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.droppableProps} className={styles.container}>
+          <OptionsPaneCategory
+            id={droppableId}
+            title={title}
+            itemsCount={itemsCount}
+            headerActionPlacement="left"
+            compactIcons
+            isNested
+            isDashboardSidebar
+            className={styles.category}
+            renderTitle={() => (
+              <span className={styles.title}>
+                {title}
+                {itemsCount !== undefined && <Counter value={itemsCount} />}
+              </span>
+            )}
+          >
+            {children}
+            {provided.placeholder}
+          </OptionsPaneCategory>
+        </div>
+      )}
     </Droppable>
   );
 }

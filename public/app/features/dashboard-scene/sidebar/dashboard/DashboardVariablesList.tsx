@@ -5,18 +5,15 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
-import {
-  DragAndDropProvider,
-  useDragAndDrop,
-} from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import {
   partitionVariablesByDisplay,
   partitionVariablesByEditability,
 } from '../../settings/variables/partitionVariables';
-import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { getDefaultTopPlacementLabel } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 
@@ -50,7 +47,7 @@ export function DashboardVariablesList({
   hideControlsMenuList = false,
   includeAdHoc = false,
 }: DashboardVariablesListProps) {
-  const dragAndDrop = useDragAndDrop(true);
+  const { DragDropContext } = useDragAndDrop();
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
@@ -82,10 +79,9 @@ export function DashboardVariablesList({
       ),
     [sourceVariableSet, visible, controlsMenu, hidden]
   );
-  const DragDropContext = dragAndDrop?.DragDropContext;
 
-  const lists = (
-    <>
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
@@ -109,13 +105,7 @@ export function DashboardVariablesList({
         renderItemLabel={renderItemLabel}
         {...variableActions}
       />
-    </>
-  );
-
-  return (
-    <DragAndDropProvider value={dragAndDrop}>
-      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
-    </DragAndDropProvider>
+    </DragDropContext>
   );
 }
 

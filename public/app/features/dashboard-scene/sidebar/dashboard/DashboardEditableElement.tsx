@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense, useId, useMemo } from 'react';
+import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -21,36 +21,11 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 import { SidebarCategoryType } from '../types';
 
+import { AddAnnotationButton, DashboardAnnotationsList } from './DashboardAnnotationsList';
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
-
-const AddAnnotationButton = lazy(() =>
-  import('./DashboardAnnotationsList').then((module) => ({ default: module.AddAnnotationButton }))
-);
-const DashboardAnnotationsList = lazy(() =>
-  import('./DashboardAnnotationsList').then((module) => ({ default: module.DashboardAnnotationsList }))
-);
-const AddFilterIconButton = lazy(() =>
-  import('./DashboardFiltersList').then((module) => ({ default: module.AddFilterIconButton }))
-);
-const DashboardFiltersList = lazy(() =>
-  import('./DashboardFiltersList').then((module) => ({ default: module.DashboardFiltersList }))
-);
-const AddLinkButton = lazy(() =>
-  import('./DashboardLinksList').then((module) => ({ default: module.AddLinkButton }))
-);
-const DashboardLinksList = lazy(() =>
-  import('./DashboardLinksList').then((module) => ({ default: module.DashboardLinksList }))
-);
-const AddVariableButton = lazy(() =>
-  import('./DashboardVariablesList').then((module) => ({ default: module.AddVariableButton }))
-);
-const DashboardVariablesList = lazy(() =>
-  import('./DashboardVariablesList').then((module) => ({ default: module.DashboardVariablesList }))
-);
-
-function renderLazyComponent(component: ReactNode) {
-  return <Suspense fallback={null}>{component}</Suspense>;
-}
+import { AddFilterIconButton, DashboardFiltersList } from './DashboardFiltersList';
+import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
+import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
 function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { body } = dashboard.useState();
@@ -168,7 +143,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.dashboard-options.filters', 'Filters'),
       id: SidebarCategoryType.DashboardFilters,
-      headerActions: renderLazyComponent(<AddFilterIconButton dashboard={dashboard} />),
+      headerActions: <AddFilterIconButton dashboard={dashboard} />,
       itemsCount: filterCount,
       isDashboardSidebar: true,
       renderTitle: () => title,
@@ -180,7 +155,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
           title: '',
           id: filterListId,
           skipField: true,
-          render: () => renderLazyComponent(<DashboardFiltersList variableSet={$variables} />),
+          render: () => <DashboardFiltersList variableSet={$variables} />,
         })
       );
     }
@@ -205,7 +180,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.dashboard-options.variables', 'Variables'),
       id: SidebarCategoryType.DashboardVariables,
-      headerActions: renderLazyComponent(<AddVariableButton dashboard={dashboard} />),
+      headerActions: <AddVariableButton dashboard={dashboard} />,
       itemsCount: variableCount,
       renderTitle: () => title,
       isDashboardSidebar: true,
@@ -217,7 +192,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
           title: '',
           id: variableListId,
           skipField: true,
-          render: () => renderLazyComponent(<DashboardVariablesList sourceVariableSet={$variables} />),
+          render: () => <DashboardVariablesList sourceVariableSet={$variables} />,
         })
       );
     }
@@ -248,7 +223,7 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.dashboard-options.annotations', 'Annotations'),
       id: SidebarCategoryType.DashboardAnnotations,
-      headerActions: renderLazyComponent(<AddAnnotationButton dataLayerSet={dataLayerSet} />),
+      headerActions: <AddAnnotationButton dataLayerSet={dataLayerSet} />,
       itemsCount: annotationCount,
       renderTitle: () => title,
       isDashboardSidebar: true,
@@ -259,7 +234,7 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
         title: '',
         id: annotationsListId,
         skipField: true,
-        render: () => renderLazyComponent(<DashboardAnnotationsList dataLayerSet={dataLayerSet} />),
+        render: () => <DashboardAnnotationsList dataLayerSet={dataLayerSet} />,
       })
     );
 
@@ -276,7 +251,7 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.dashboard-options.links', 'Links'),
       id: SidebarCategoryType.DashboardLinks,
-      headerActions: renderLazyComponent(<AddLinkButton dashboard={dashboard} />),
+      headerActions: <AddLinkButton dashboard={dashboard} />,
       itemsCount: links.length,
       renderTitle: () => title,
       isDashboardSidebar: true,
@@ -288,7 +263,7 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
           title: '',
           id: linksListId,
           skipField: true,
-          render: () => renderLazyComponent(<DashboardLinksList dashboard={dashboard} />),
+          render: () => <DashboardLinksList dashboard={dashboard} />,
         })
       );
     }

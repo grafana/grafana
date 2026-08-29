@@ -1,10 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  type DraggableProvided,
-  type DraggableProvidedDragHandleProps,
-  type DroppableProvided,
-  type DropResult,
-} from '@hello-pangea/dnd';
+import { type DraggableProvidedDragHandleProps, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,11 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Button, Icon, IconButton, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import {
-  DragAndDropProvider,
-  useDragAndDrop,
-  useDragAndDropContext,
-} from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,
@@ -239,8 +230,8 @@ function useVariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
 }
 
 export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProps) {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDrop(true);
   const {
     properties,
     rows,
@@ -259,105 +250,89 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
     clipboardFormat,
   } = useVariableOptionsSpreadsheet(props);
 
-  const renderRows = (droppableProvided?: DroppableProvided) => (
-    <tbody ref={droppableProvided?.innerRef} {...droppableProvided?.droppableProps}>
-      {rows.map((option, index) => (
-        <SpreadsheetRow
-          key={option.id}
-          option={option}
-          index={index}
-          rowIndex={index}
-          properties={properties}
-          onRemove={() => handleRemove(option)}
-          onValueChange={(key, val) => handleValueChange(option, key, val)}
-          onCellKeyDown={handleCellKeyDown}
-          autoFocusFirst={option.id === autoFocusId}
-        />
-      ))}
-      {droppableProvided?.placeholder}
-    </tbody>
-  );
-
-  const renderDraggableRows = () => {
-    if (!dragAndDrop) {
-      return renderRows();
-    }
-
-    const { DragDropContext, Droppable } = dragAndDrop;
-
-    return (
-      <DragDropContext onDragEnd={handleReorder}>
-        <Droppable
-          droppableId="spreadsheet-options"
-          direction="vertical"
-          renderClone={(provided, _snapshot, rubric) => (
-            <table
-              className={styles.table}
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-            >
-              <tbody>
-                <tr className={styles.draggingRow}>
-                  <SpreadsheetRowCells
-                    option={rows[rubric.source.index]}
-                    properties={properties}
-                    onRemove={() => {}}
-                    onValueChange={() => {}}
-                  />
-                </tr>
-              </tbody>
-            </table>
-          )}
-        >
-          {(droppableProvided) => renderRows(droppableProvided)}
-        </Droppable>
-      </DragDropContext>
-    );
-  };
-
   return (
-    <DragAndDropProvider value={dragAndDrop}>
-      <Stack direction="column" gap={3}>
-        <SortSelector value={staticOptionsOrder} onChange={onStaticOptionsOrderChange} />
-        <div>
-          <table className={styles.table} ref={gridRef}>
-            <thead>
-              <tr>
-                <th className={styles.headerIconCell} />
-                {properties.map((p) => (
-                  <th key={p} className={styles.headerCell}>
-                    {p}
-                  </th>
-                ))}
-                <th className={styles.headerIconCell} />
-              </tr>
-            </thead>
-            {renderDraggableRows()}
-          </table>
-          <div className={styles.addButton}>
-            <Stack direction="row" gap={1}>
-              <Button
-                icon="plus"
-                variant="primary"
-                fill="text"
-                onClick={handleAdd}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
-                aria-label={t('dashboard-scene.query-variable-editor.spreadsheet.add-option', 'Add new option')}
-              >
-                <Trans i18nKey="dashboard-scene.query-variable-editor.spreadsheet.add-option">Add new option</Trans>
-              </Button>
-              <PasteButton
-                canPaste={canPasteFromClipboard}
-                onClick={handlePasteFromClipboard}
-                clipboardAccess={clipboardAccess}
-                textFormat={clipboardFormat}
-              />
-            </Stack>
-          </div>
+    <Stack direction="column" gap={3}>
+      <SortSelector value={staticOptionsOrder} onChange={onStaticOptionsOrderChange} />
+      <div>
+        <table className={styles.table} ref={gridRef}>
+          <thead>
+            <tr>
+              <th className={styles.headerIconCell} />
+              {properties.map((p) => (
+                <th key={p} className={styles.headerCell}>
+                  {p}
+                </th>
+              ))}
+              <th className={styles.headerIconCell} />
+            </tr>
+          </thead>
+          <DragDropContext onDragEnd={handleReorder}>
+            <Droppable
+              droppableId="spreadsheet-options"
+              direction="vertical"
+              renderClone={(provided, _snapshot, rubric) => (
+                <table
+                  className={styles.table}
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                >
+                  <tbody>
+                    <tr className={styles.draggingRow}>
+                      <SpreadsheetRowCells
+                        option={rows[rubric.source.index]}
+                        properties={properties}
+                        onRemove={() => {}}
+                        onValueChange={() => {}}
+                      />
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            >
+              {(droppableProvided) => (
+                <tbody ref={droppableProvided.innerRef} {...droppableProvided.droppableProps}>
+                  {rows.map((option, index) => (
+                    <SpreadsheetRow
+                      key={option.id}
+                      option={option}
+                      index={index}
+                      rowIndex={index}
+                      properties={properties}
+                      onRemove={() => handleRemove(option)}
+                      onValueChange={(key, val) => handleValueChange(option, key, val)}
+                      onCellKeyDown={handleCellKeyDown}
+                      autoFocusFirst={option.id === autoFocusId}
+                    />
+                  ))}
+                  {droppableProvided.placeholder}
+                </tbody>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </table>
+        <div className={styles.addButton}>
+          <Stack direction="row" gap={1}>
+            <Button
+              icon="plus"
+              variant="primary"
+              fill="text"
+              onClick={handleAdd}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
+              aria-label={t('dashboard-scene.query-variable-editor.spreadsheet.add-option', 'Add new option')}
+            >
+              <Trans i18nKey="dashboard-scene.query-variable-editor.spreadsheet.add-option">Add new option</Trans>
+            </Button>
+            <PasteButton
+              canPaste={canPasteFromClipboard}
+              onClick={handlePasteFromClipboard}
+              clipboardAccess={clipboardAccess}
+              textFormat={clipboardFormat}
+            />
+          </Stack>
         </div>
-      </Stack>
-    </DragAndDropProvider>
+      </div>
+    </Stack>
   );
 }
 
@@ -434,25 +409,17 @@ function SpreadsheetRowCells({
 }
 
 function SpreadsheetRow(props: SpreadsheetRowProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDropContext();
   const { option, index } = props;
-
-  const renderRow = (draggableProvided?: DraggableProvided) => (
-    <tr className={styles.row} ref={draggableProvided?.innerRef} {...draggableProvided?.draggableProps}>
-      <SpreadsheetRowCells {...props} dragHandleProps={draggableProvided?.dragHandleProps} />
-    </tr>
-  );
-
-  if (!dragAndDrop) {
-    return renderRow();
-  }
-
-  const { Draggable } = dragAndDrop;
 
   return (
     <Draggable draggableId={option.id} index={index}>
-      {(draggableProvided) => renderRow(draggableProvided)}
+      {(draggableProvided) => (
+        <tr className={styles.row} ref={draggableProvided.innerRef} {...draggableProvided.draggableProps}>
+          <SpreadsheetRowCells {...props} dragHandleProps={draggableProvided.dragHandleProps} />
+        </tr>
+      )}
     </Draggable>
   );
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type DroppableProvided, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { cloneDeep } from 'lodash';
 import { useEffect, useState } from 'react';
 
@@ -11,7 +11,7 @@ import { Button } from '../../Button/Button';
 import { Modal } from '../../Modal/Modal';
 
 import { DataLinksListItemBase } from './DataLinksListItemBase';
-import { DataLinksDragAndDropProvider, useDataLinksDragAndDrop } from './useDataLinksDragAndDrop';
+import { useDataLinksDragAndDrop } from './useDataLinksDragAndDrop';
 
 export interface DataLinksInlineEditorBaseProps<T extends DataLink | Action> {
   type: 'link' | 'action';
@@ -36,9 +36,9 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
   children,
   'data-testid': testId,
 }: DataLinksInlineEditorBaseProps<T>) {
+  const { DragDropContext, Droppable } = useDataLinksDragAndDrop();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
-  const dragAndDrop = useDataLinksDragAndDrop();
 
   const [itemsSafe, setItemsSafe] = useState<T[]>([]);
 
@@ -133,66 +133,50 @@ export function DataLinksInlineEditorBase<T extends DataLink | Action>({
     return text;
   };
 
-  const renderItems = (provided?: DroppableProvided) => (
-    <div className={styles.wrapper} ref={provided?.innerRef} {...provided?.droppableProps}>
-      {itemsSafe.map((item, idx) => {
-        const key = `${item.title}/${idx}`;
-        return (
-          <DataLinksListItemBase<T>
-            key={key}
-            index={idx}
-            item={item}
-            onChange={_onChange}
-            onEdit={() => setEditIndex(idx)}
-            onRemove={() => onDataLinkRemove(idx)}
-            data={data}
-            itemKey={key}
-          />
-        );
-      })}
-      {provided?.placeholder}
-    </div>
-  );
-
-  const renderDraggableItems = () => {
-    if (!dragAndDrop) {
-      return renderItems();
-    }
-
-    const { DragDropContext, Droppable } = dragAndDrop;
-
-    return (
+  return (
+    <div className={styles.container} data-testid={testId}>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="sortable-links" direction="vertical">
-          {(provided) => renderItems(provided)}
+          {(provided) => (
+            <div className={styles.wrapper} ref={provided.innerRef} {...provided.droppableProps}>
+              {itemsSafe.map((item, idx) => {
+                const key = `${item.title}/${idx}`;
+                return (
+                  <DataLinksListItemBase<T>
+                    key={key}
+                    index={idx}
+                    item={item}
+                    onChange={_onChange}
+                    onEdit={() => setEditIndex(idx)}
+                    onRemove={() => onDataLinkRemove(idx)}
+                    data={data}
+                    itemKey={key}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
         </Droppable>
       </DragDropContext>
-    );
-  };
 
-  return (
-    <DataLinksDragAndDropProvider value={dragAndDrop}>
-      <div className={styles.container} data-testid={testId}>
-        {renderDraggableItems()}
+      {isEditing && editIndex !== null && (
+        <Modal
+          title={getItemText(isNew ? 'add' : 'edit')}
+          isOpen={true}
+          closeOnBackdropClick={false}
+          onDismiss={() => {
+            _onCancel(editIndex);
+          }}
+        >
+          {children(itemsSafe[editIndex], editIndex, _onChange, _onCancel)}
+        </Modal>
+      )}
 
-        {isEditing && editIndex !== null && (
-          <Modal
-            title={getItemText(isNew ? 'add' : 'edit')}
-            isOpen={true}
-            closeOnBackdropClick={false}
-            onDismiss={() => {
-              _onCancel(editIndex);
-            }}
-          >
-            {children(itemsSafe[editIndex], editIndex, _onChange, _onCancel)}
-          </Modal>
-        )}
-
-        <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
-          {getItemText('add')}
-        </Button>
-      </div>
-    </DataLinksDragAndDropProvider>
+      <Button size="sm" icon="plus" onClick={onDataLinkAdd} variant="secondary" className={styles.button}>
+        {getItemText('add')}
+      </Button>
+    </div>
   );
 }
 

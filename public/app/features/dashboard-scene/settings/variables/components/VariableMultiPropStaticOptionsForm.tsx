@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type DraggableProvided, type DroppableProvided, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, generateUUID } from '@grafana/data';
@@ -7,11 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Icon, IconButton, Input, Stack, useStyles2 } from '@grafana/ui';
-import {
-  DragAndDropProvider,
-  useDragAndDrop,
-  useDragAndDropContext,
-} from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { VariableStaticOptionsFormAddButton } from './VariableStaticOptionsFormAddButton';
 
@@ -116,76 +112,60 @@ const useVariableMultiPropStaticOptionsForm = ({
 };
 
 export const VariableMultiPropStaticOptionsForm = (props: VariableMultiPropStaticOptionsFormProps) => {
+  const { DragDropContext, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles, props.properties.length);
-  const dragAndDrop = useDragAndDrop(true);
   const { properties, options, autoFocusId, onAddNewOption, onRemoveOption, onOptionsReordered, onValueChange } =
     useVariableMultiPropStaticOptionsForm(props);
 
-  const renderOptions = (droppableProvided?: DroppableProvided) => (
-    <div
-      className={styles.body}
-      ref={droppableProvided?.innerRef}
-      {...droppableProvided?.droppableProps}
-      role="rowgroup"
-    >
-      {options.map((o, i) => (
-        <OptionRow
-          key={o.id}
-          index={i}
-          option={o}
-          properties={properties}
-          autoFocusFirstInput={o.id === autoFocusId}
-          onRemoveOption={onRemoveOption}
-          onValueChange={onValueChange}
-          onAddNewOption={i === options.length - 1 ? onAddNewOption : undefined}
-        />
-      ))}
-      {droppableProvided?.placeholder}
-    </div>
-  );
-
-  const renderDraggableOptions = () => {
-    if (!dragAndDrop) {
-      return renderOptions();
-    }
-
-    const { DragDropContext, Droppable } = dragAndDrop;
-
-    return (
-      <DragDropContext onDragEnd={onOptionsReordered}>
-        <Droppable droppableId="static-options-list" direction="vertical">
-          {(droppableProvided) => renderOptions(droppableProvided)}
-        </Droppable>
-      </DragDropContext>
-    );
-  };
-
   return (
-    <DragAndDropProvider value={dragAndDrop}>
-      <div className={styles.wrapper}>
-        <div
-          className={styles.grid}
-          role="grid"
-          aria-label={t(
-            'dashboard-scene.variable-multi-prop-static-options-form.aria-label-static-options',
-            'Static options'
-          )}
-        >
-          <div className={styles.headerRow} role="row">
-            <div className={styles.headerCell} role="columnheader" />
-            {properties.map((p) => (
-              <div key={p} className={styles.headerCell} role="columnheader">
-                {p}
+    <div className={styles.wrapper}>
+      <div
+        className={styles.grid}
+        role="grid"
+        aria-label={t(
+          'dashboard-scene.variable-multi-prop-static-options-form.aria-label-static-options',
+          'Static options'
+        )}
+      >
+        <div className={styles.headerRow} role="row">
+          <div className={styles.headerCell} role="columnheader" />
+          {properties.map((p) => (
+            <div key={p} className={styles.headerCell} role="columnheader">
+              {p}
+            </div>
+          ))}
+        </div>
+        <DragDropContext onDragEnd={onOptionsReordered}>
+          <Droppable droppableId="static-options-list" direction="vertical">
+            {(droppableProvided) => (
+              <div
+                className={styles.body}
+                ref={droppableProvided.innerRef}
+                {...droppableProvided.droppableProps}
+                role="rowgroup"
+              >
+                {options.map((o, i) => (
+                  <OptionRow
+                    key={o.id}
+                    index={i}
+                    option={o}
+                    properties={properties}
+                    autoFocusFirstInput={o.id === autoFocusId}
+                    onRemoveOption={onRemoveOption}
+                    onValueChange={onValueChange}
+                    onAddNewOption={i === options.length - 1 ? onAddNewOption : undefined}
+                  />
+                ))}
+                {droppableProvided.placeholder}
               </div>
-            ))}
-          </div>
-          {renderDraggableOptions()}
-        </div>
-        <div className={styles.addNewOptionButton}>
-          <VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
-    </DragAndDropProvider>
+      <div className={styles.addNewOptionButton}>
+        <VariableStaticOptionsFormAddButton onAdd={onAddNewOption} />
+      </div>
+    </div>
   );
 };
 
@@ -208,8 +188,8 @@ function OptionRow({
   onRemoveOption,
   onValueChange,
 }: OptionRowProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles, properties.length);
-  const dragAndDrop = useDragAndDropContext();
 
   const onKeyDown = onAddNewOption
     ? (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -219,63 +199,55 @@ function OptionRow({
       }
     : undefined;
 
-  const renderRow = (draggableProvided?: DraggableProvided) => (
-    <div
-      className={styles.row}
-      ref={draggableProvided?.innerRef}
-      {...draggableProvided?.draggableProps}
-      data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row}
-      role="row"
-      style={{ ...draggableProvided?.draggableProps.style }}
-    >
-      <div className={styles.cell} role="gridcell">
-        <Stack direction="row" alignItems="center" {...draggableProvided?.dragHandleProps}>
-          <Icon
-            title={t('dashboard-scene.option-row.title-drag-and-drop-to-reorder', 'Drag and drop to reorder')}
-            name="draggabledots"
-            size="lg"
-            className={styles.dragIcon}
-          />
-        </Stack>
-      </div>
-      {properties.map((p, i) => (
-        <div key={`r1-${p}`} className={styles.cell} role="gridcell">
-          <Input
-            autoFocus={autoFocusFirstInput && !i}
-            tabIndex={0}
-            placeholder={p}
-            value={option.properties[p] ?? ''}
-            onChange={(e) => {
-              if (option.properties[p] !== e.currentTarget.value) {
-                onValueChange(option, p, e.currentTarget.value);
-              }
-            }}
-            onKeyDown={i === properties.length - 1 ? onKeyDown : undefined}
-          />
-        </div>
-      ))}
-      <div className={styles.cell} role="gridcell">
-        <IconButton
-          name="trash-alt"
-          variant="destructive"
-          onClick={() => onRemoveOption(option)}
-          aria-label={t('dashboard-scene.option-row.aria-label-remove-option', 'Remove option')}
-          tooltip={t('dashboard-scene.option-row.tooltip-remove-option', 'Remove option')}
-          tooltipPlacement="top"
-        />
-      </div>
-    </div>
-  );
-
-  if (!dragAndDrop) {
-    return renderRow();
-  }
-
-  const { Draggable } = dragAndDrop;
-
   return (
     <Draggable draggableId={option.id} index={index}>
-      {(provided) => renderRow(provided)}
+      {(draggableProvided) => (
+        <div
+          className={styles.row}
+          ref={draggableProvided.innerRef}
+          {...draggableProvided.draggableProps}
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.row}
+          role="row"
+          style={{ ...draggableProvided.draggableProps.style }}
+        >
+          <div className={styles.cell} role="gridcell">
+            <Stack direction="row" alignItems="center" {...draggableProvided.dragHandleProps}>
+              <Icon
+                title={t('dashboard-scene.option-row.title-drag-and-drop-to-reorder', 'Drag and drop to reorder')}
+                name="draggabledots"
+                size="lg"
+                className={styles.dragIcon}
+              />
+            </Stack>
+          </div>
+          {properties.map((p, i) => (
+            <div key={`r1-${p}`} className={styles.cell} role="gridcell">
+              <Input
+                autoFocus={autoFocusFirstInput && !i}
+                tabIndex={0}
+                placeholder={p}
+                value={option.properties[p] ?? ''}
+                onChange={(e) => {
+                  if (option.properties[p] !== e.currentTarget.value) {
+                    onValueChange(option, p, e.currentTarget.value);
+                  }
+                }}
+                onKeyDown={i === properties.length - 1 ? onKeyDown : undefined}
+              />
+            </div>
+          ))}
+          <div className={styles.cell} role="gridcell">
+            <IconButton
+              name="trash-alt"
+              variant="destructive"
+              onClick={() => onRemoveOption(option)}
+              aria-label={t('dashboard-scene.option-row.aria-label-remove-option', 'Remove option')}
+              tooltip={t('dashboard-scene.option-row.tooltip-remove-option', 'Remove option')}
+              tooltipPlacement="top"
+            />
+          </div>
+        </div>
+      )}
     </Draggable>
   );
 }

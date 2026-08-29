@@ -4,15 +4,17 @@ import { useCallback, useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
-import {
-  DragAndDropProvider,
-  useDragAndDrop,
-} from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 import { edit } from '../../actions/utils/edit';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
-import { LinkEdit, linkSelectionId, openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkEdit';
+import {
+  LinkEdit,
+  LinkEditEditableElement,
+  linkSelectionId,
+  openAddLinkPane,
+  openEditLinkPane,
+} from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { DraggableList } from './DraggableList';
@@ -28,7 +30,7 @@ const DROPPABLE_TO_PLACEMENT: Record<string, DashboardLinkPlacement | undefined>
 };
 
 export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene }) {
-  const dragAndDrop = useDragAndDrop(true);
+  const { DragDropContext } = useDragAndDrop();
   const { links } = dashboard.useState();
   const { visible, controlsMenu } = useMemo(() => partitionLinksByPlacement(links), [links]);
 
@@ -108,10 +110,9 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
     },
     [dashboard, visible, controlsMenu]
   );
-  const DragDropContext = dragAndDrop?.DragDropContext;
 
-  const lists = (
-    <>
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
@@ -126,13 +127,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
         renderItemLabel={renderItemLabel}
         {...linkActions}
       />
-    </>
-  );
-
-  return (
-    <DragAndDropProvider value={dragAndDrop}>
-      {DragDropContext ? <DragDropContext onDragEnd={onDragEnd}>{lists}</DragDropContext> : lists}
-    </DragAndDropProvider>
+    </DragDropContext>
   );
 }
 

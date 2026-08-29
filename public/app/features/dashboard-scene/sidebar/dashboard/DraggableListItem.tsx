@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { type DraggableProvided } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { useDragAndDropContext } from 'app/core/components/DragAndDrop/useDragAndDrop';
+import { useDragAndDrop } from 'app/core/components/DragAndDrop/useDragAndDrop';
 
 interface DraggableListItemProps {
   draggableId: string;
@@ -14,27 +13,19 @@ interface DraggableListItemProps {
 }
 
 export function DraggableListItem({ draggableId, index, children, actions }: DraggableListItemProps) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
-  const dragAndDrop = useDragAndDropContext();
-
-  const renderItem = (provided?: DraggableProvided) => (
-    <li ref={provided?.innerRef} {...provided?.draggableProps} className={styles.listItem}>
-      <div className={styles.dragHandle} {...provided?.dragHandleProps}>
-        {children}
-      </div>
-      {actions}
-    </li>
-  );
-
-  if (!dragAndDrop) {
-    return renderItem();
-  }
-
-  const { Draggable } = dragAndDrop;
 
   return (
     <Draggable draggableId={draggableId} index={index}>
-      {(provided) => renderItem(provided)}
+      {(provided) => (
+        <li ref={provided.innerRef} {...provided.draggableProps} className={styles.listItem}>
+          <div className={styles.dragHandle} {...provided.dragHandleProps}>
+            {children}
+          </div>
+          {actions}
+        </li>
+      )}
     </Draggable>
   );
 }
