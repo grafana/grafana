@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1046,6 +1047,204 @@ func TestValidateQueries(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, delta.Update[0].New.UID)
+	})
+}
+
+// TestValidateEmptyLabelKeyInDelta covers the regression test for #130220:
+// a legacy rule with an empty label key in storage must not block a write to
+// a different rule in the same group. The empty-key check is scoped to the
+// change delta (New + Update, with shouldValidate skipping ignored fields).
+func TestValidateEmptyLabelKeyInDelta(t *testing.T) {
+	gen := models.RuleGen
+	existingWithEmptyKey := gen.With(gen.WithLabels(data.Labels{"": "legacy"})).GenerateRef()
+	existingWithEmptyKey.UID = "legacy-uid"
+	existingWithEmptyKey.Title = "Legacy rule"
+
+	existingWithEmptyKeyIgnoredOnly := gen.With(gen.WithLabels(data.Labels{"": "legacy"})).GenerateRef()
+	existingWithEmptyKeyIgnoredOnly.UID = "legacy-ignored"
+	existingWithEmptyKeyIgnoredOnly.Title = "Legacy rule (ignored-only update)"
+
+	cleanExisting := gen.With(gen.WithLabels(data.Labels{"team": "platform"})).GenerateRef()
+	cleanExisting.UID = "clean-uid"
+	cleanExisting.Title = "Clean rule"
+
+	delta := store.GroupDelta{
+		New: []*models.AlertRule{
+			// Brand new rule with empty key — should be rejected.
+			gen.With(gen.WithLabels(data.Labels{"": "bad"})).GenerateRef(),
+		},
+		Update: []store.RuleDelta{
+			// Untouched legacy rule — should be allowed.
+			{
+				Existing: existingWithEmptyKey,
+				New:      existingWithEmptyKey,
+				Diff:     cmputil.DiffReport{}, // empty diff → shouldValidate returns false
+			},
+			// Legacy rule whose update only touches ignored fields — should be allowed.
+			{
+				Existing: existingWithEmptyKeyIgnoredOnly,
+				New:      existingWithEmptyKeyIgnoredOnly,
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{Path: "RuleGroupIndex"},
+				},
+			},
+			// Clean rule being modified with a meaningful diff — should be allowed.
+			{
+				Existing: cleanExisting,
+				New:      cleanExisting,
+				Diff: cmputil.DiffReport{
+					cmputil.Diff{Path: "Title"},
+				},
+			},
+		},
+		Delete: gen.With(gen.WithLabels(data.Labels{"": "bad"})).GenerateManyRef(1),
+	}
+
+	t.Run("rejects empty label key on new rule", func(t *testing.T) {
+		err := validateEmptyLabelKeyInDelta(&delta)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+	})
+
+	t.Run("leaves deleted rules and unchanged legacy rules alone", func(t *testing.T) {
+		// The Delete rules in this delta carry empty keys, and two of the
+		// Update entries are legacy rules with empty keys but no meaningful
+		// diff. validateEmptyLabelKeyInDelta should still pass for those; only
+		// the New rule with the empty key fails.
+		err := validateEmptyLabelKeyInDelta(&delta)
+		require.Error(t, err) // fails on New rule
+		// The error references the New rule, not the legacy UIDs.
+		require.NotContains(t, err.Error(), "legacy-uid")
+		require.NotContains(t, err.Error(), "legacy-ignored")
+	})
+
+	t.Run("passes when only legacy and clean rules are updated with no empty keys in delta", func(t *testing.T) {
+		cleanDelta := store.GroupDelta{
+			Update: []store.RuleDelta{
+				{
+					Existing: existingWithEmptyKey, // has empty key
+					New:      existingWithEmptyKey,
+					Diff:     cmputil.DiffReport{}, // empty diff → shouldValidate returns false
+				},
+				{
+					Existing: cleanExisting,
+					New:      cleanExisting,
+					Diff: cmputil.DiffReport{
+						cmputil.Diff{Path: "Title"},
+					},
+				},
+			},
+			Delete: []*models.AlertRule{existingWithEmptyKey}, // deleting a legacy rule
+		}
+		err := validateEmptyLabelKeyInDelta(&cleanDelta)
+		require.NoError(t, err, "empty-key rule in Update diff with no meaningful change should be skipped, and Delete rules are not validated")
+	})
+
+	t.Run("rejects when an updated rule introduces a new empty label key", func(t *testing.T) {
+		updated := gen.With(gen.WithLabels(data.Labels{"team": "platform", "": "newly empty"})).GenerateRef()
+		updated.UID = "uid-updated"
+		updated.Title = "Updated Rule"
+		modifiedDelta := store.GroupDelta{
+			Update: []store.RuleDelta{
+				{
+					Existing: cleanExisting, // was clean
+					New:      updated,       // now has empty key
+					Diff: cmputil.DiffReport{
+						cmputil.Diff{Path: "Labels"},
+					},
+				},
+			},
+		}
+		err := validateEmptyLabelKeyInDelta(&modifiedDelta)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "uid-updated")
+	})
+
+	// Regression test for the Bugbot finding on 2026-08-29: when a single
+	// label entry is added or changed, AlertRule.Diff reports the change with
+	// cmp's MapIndex path syntax ("Labels[<key>]"), not "Labels" or
+	// "Labels.<field>". The empty-key check must still fire on that shape
+	// so a user can't sneak a new empty key in by adding it to an existing
+	// rule. The earlier labelsChanged matched only "Labels" and "Labels.",
+	// which would have silently accepted the change.
+	t.Run("rejects when a single label edit introduces a new empty key (Labels[<key>] path)", func(t *testing.T) {
+		// Existing rule is clean. Updated rule adds an empty-key entry.
+		// In real life AlertRule.Diff would produce a Labels[<key>] diff
+		// for the new map entry, alongside any pre-existing unchanged
+		// labels, but for the unit test we only need the path that the
+		// helper actually inspects.
+		updated := gen.With(gen.WithLabels(data.Labels{"team": "platform", "": "newly empty"})).GenerateRef()
+		updated.UID = "uid-mapedit"
+		updated.Title = "Map-edit rule"
+		mapEditDelta := store.GroupDelta{
+			Update: []store.RuleDelta{
+				{
+					Existing: cleanExisting, // was clean
+					New:      updated,       // now has empty key
+					Diff: cmputil.DiffReport{
+						cmputil.Diff{Path: "Labels[]"}, // synthetic: an empty-key map insertion
+					},
+				},
+			},
+		}
+		err := validateEmptyLabelKeyInDelta(&mapEditDelta)
+		require.Error(t, err, "an empty-key insertion under Labels[<key>] must trip the validator")
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "uid-mapedit")
+	})
+
+	// Cursor Bugbot flagged this on 2026-08-28T12:51Z (run12 follow-up):
+	// the old implementation reused shouldValidate, which fires on any
+	// non-ignored field change. That meant a folder pause/unpause (which
+	// flips IsPaused on every rule in the namespace) would trip the
+	// empty-key validator on a legacy rule whose labels were untouched —
+	// exactly the regression the original PR was trying to remove. The
+	// fix scopes the check to a true Labels change.
+	t.Run("does not reject a legacy empty-key rule when only IsPaused changed", func(t *testing.T) {
+		pausedExisting := existingWithEmptyKey
+		pausedNew := gen.With(gen.WithLabels(data.Labels{"": "legacy"})).GenerateRef()
+		pausedNew.UID = "legacy-uid"
+		pausedNew.Title = "Legacy rule"
+		pausedNew.IsPaused = !pausedExisting.IsPaused
+
+		pauseDelta := store.GroupDelta{
+			Update: []store.RuleDelta{
+				{
+					Existing: pausedExisting,
+					New:      pausedNew,
+					Diff: cmputil.DiffReport{
+						cmputil.Diff{Path: "IsPaused"},
+					},
+				},
+			},
+		}
+		require.NoError(t, validateEmptyLabelKeyInDelta(&pauseDelta),
+			"flipping IsPaused on a legacy empty-key rule (folder pause) must not fail")
+	})
+
+	t.Run("does not reject a legacy empty-key rule when notification settings change", func(t *testing.T) {
+		notifExisting := existingWithEmptyKey
+		notifNew := gen.With(gen.WithLabels(data.Labels{"": "legacy"})).GenerateRef()
+		notifNew.UID = "legacy-uid"
+		notifNew.Title = "Legacy rule"
+		// NoLabelsForQuery is a non-ignored, non-Labels field; mimics the
+		// namespace-pause / notification-settings bulk-update path.
+		notifNew.NoDataState = "OK"
+
+		notifDelta := store.GroupDelta{
+			Update: []store.RuleDelta{
+				{
+					Existing: notifExisting,
+					New:      notifNew,
+					Diff: cmputil.DiffReport{
+						cmputil.Diff{Path: "NoDataState"},
+					},
+				},
+			},
+		}
+		require.NoError(t, validateEmptyLabelKeyInDelta(&notifDelta),
+			"changing notification settings on a legacy empty-key rule must not fail")
 	})
 }
 
