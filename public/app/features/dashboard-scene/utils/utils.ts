@@ -42,7 +42,7 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 
 import { findVizPanelByKey } from './findVizPanel';
 
-export { findVizPanelByKey, getVizPanelKeyForPanelId } from './findVizPanel';
+export { findVizPanelByKey } from './findVizPanel';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -57,10 +57,6 @@ const V1_PANEL_PROPERTIES = {
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
-}
-
-export function getPanelIdForVizPanel(panel: SceneObject): number {
-  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
@@ -354,10 +350,6 @@ export function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivat
  * Useful when rendering a scene object out of context of it's parent
  */
 export const activateInActiveParents = activateSceneObjectAndParentTree;
-
-export function getGridItemKeyForPanelId(panelId: number): string {
-  return `grid-item-${panelId}`;
-}
 
 export function useDashboard(scene: SceneObject): DashboardScene {
   return getDashboardSceneFor(scene);

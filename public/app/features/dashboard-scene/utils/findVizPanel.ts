@@ -1,8 +1,6 @@
 import { type SceneObject, sceneGraph, VizPanel } from '@grafana/scenes';
 
-export function getVizPanelKeyForPanelId(panelId: number) {
-  return `panel-${panelId}`;
-}
+import { getVizPanelKeyForPanelId } from './utils-panels';
 
 export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
   if (!key) {

@@ -21,7 +21,8 @@ import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/s
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isDashboardSceneLike, type DashboardSceneLike } from 'app/features/dashboard-scene/scene/types/dashboard';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/findVizPanel';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { useDispatch } from 'app/types/store';
 
 import { changePanelPlugin } from '../state/actions';

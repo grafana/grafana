@@ -138,6 +138,22 @@ If label values originate from user input they should be validated. Use `metricu
 
 To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
 
+### Registering metrics
+
+Register collectors on the `prometheus.Registerer` your service is given, using `promauto.With(reg)`. A nil registerer leaves the collectors unregistered, which is what tests usually want.
+
+Do not declare collectors as package-level variables with `promauto.NewCounter` and friends. Those register on the global default registry at init, so they ignore the registry your service was wired with and they leak between tests.
+
+### Duplicate registration
+
+Registering two collectors with the same name on one registry fails. With `promauto` or `MustRegister` that means a panic, usually at startup; plain `Register` returns an `AlreadyRegisteredError` instead. Note that the registry compares label _names_, not label values: two collectors named `foo_total` with a `resource` label conflict even when one is only ever used with `resource="a"` and the other with `resource="b"`.
+
+A duplicate registration means something is wired twice. Do not catch it and reuse the collector already registered — that hides the mistake and, if the two callers then observe different things, produces one series fed from two places. Pick whichever of these fits instead:
+
+- **Build the collectors once and pass them down.** If several components report on the same metric, construct the collectors in one place and hand them to each component.
+- **Use a const label per component.** `ConstLabels: prometheus.Labels{"resource": name}` gives each component its own collector and descriptor, so each registers cleanly. The scrape still shows one metric family with a `resource` dimension. Registering the same component twice now fails, which is what you want.
+- **Wrap the registry.** `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` and `prometheus.WrapRegistererWith(prometheus.Labels{...}, reg)` add a prefix or labels to everything registered through them, so identical collectors built by separate instances no longer collide.
+
 ### How to collect and visualize metrics locally
 
 1. Ensure you have Docker installed and running on your machine.

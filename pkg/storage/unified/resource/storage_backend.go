@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"slices"
@@ -743,17 +744,24 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"group", gr.Group,
 				"resource", gr.Resource,
 				"error", err)
-			break
+
+			// A cancelled context means the process is shutting down, so give up on the whole
+			// cycle. Any other failure only affects this group, and stopping here would leave
+			// the groups after it uncollected for good.
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}
 }
 
-// garbageCollectGroupResource scans batches of entries in the datastore for a given group+resource,
-// in descending order of resource version, looking for deleted entries with resource versions
-// older than the cutoff timestamp.
-// Once it finds a deleted entry, it looks for all previous versions of the same resource
-// up to the deleted version and deletes them in batch.
-// This ensures that we are not going to delete any keys that were created if the resource was recreated after deletion.
+// garbageCollectGroupResource scans batches of entries in the datastore for a given
+// group+resource, in ascending order of resource version. For each object it finds the
+// newest deletion marker older than the cutoff timestamp and hard-deletes that marker plus
+// every older revision of the same object.
+// Revisions newer than that marker are retained, so trash left behind by an object that was
+// deleted and later recreated with the same name is collected, while the recreated revisions
+// (and any deletion still within the retention window) are kept.
 func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) error {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.garbageCollectGroupResource")
 	batchSize := b.garbageCollection.BatchSize
@@ -766,9 +774,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
 	totalDeleted := int64(0)
-	totalDryRun := int64(0)
 	deletedPerNamespace := map[string]int64{}
-	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -781,27 +787,32 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
-	// track keys that have been processed to avoid processing the same key twice
-	seenKeys := map[ListRequestKey]struct{}{}
+	var currentObject ListRequestKey
+	var buffer []DataKey
 
-	// Data keys are group/resource/namespace/name/{rv}~…, so lexicographic order (asc or
-	// desc) keeps all revisions for one resource contiguous. While iterating in descending
-	// RV order, only the first key per ListRequestKey is the head revision; older rows for
-	// the same resource are skipped. State persists across paginated batches.
-	var currentResource ListRequestKey
+	deleteBuffered := func() error {
+		if len(buffer) == 0 {
+			return nil
+		}
+		if !b.garbageCollection.DryRun {
+			if err := b.dataStore.batchDelete(ctx, buffer); err != nil {
+				return fmt.Errorf("failed to batch delete keys: %s", err)
+			}
+		}
+		totalDeleted += int64(len(buffer))
+		deletedPerNamespace[currentObject.Namespace] += int64(len(buffer))
+		buffer = buffer[:0]
+		return nil
+	}
 
 	for {
 		keysProcessed := int64(0)
-		keysDeleted := int64(0)
 
-		// traverse all keys in descending order of resource version,
-		// for deleted keys with resource version older than the cutoff,
-		// we will scan a fixed number of keys (batchSize) each time
 		it := b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
 			Limit:    int64(batchSize),
-			Sort:     kv.SortOrderDesc,
+			Sort:     kv.SortOrderAsc,
 		})
 
 		for dataKey, err := range it {
@@ -811,90 +822,45 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 			keysProcessed++
 
-			// parse the datakey to get the action and resource version
 			dk, err := ParseKey(dataKey)
 			if err != nil {
 				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
-			// get the request key for the current datakey, which will be used to calculate the next start and end key
-			k := ListRequestKey{
+			objectKey := ListRequestKey{
 				Group:     dk.Group,
 				Resource:  dk.Resource,
 				Namespace: dk.Namespace,
 				Name:      dk.Name,
 			}
 
-			// update the next end key for pagination. We will use this to continue scanning in the next batch
-			// the next end key is the immediate previous key for the current key
-			endKey = previousKey(dataKey)
+			// advance the start key so the next batch resumes strictly after this key
+			startKey = PrefixRangeEnd(dataKey)
 
-			if k == currentResource {
-				// Older revision for a resource we already handled at its head key.
+			if objectKey != currentObject {
+				// The previous object's leftover buffer does not have a delete past its retention period.
+				buffer = buffer[:0]
+				currentObject = objectKey
+			}
+
+			// ascending scan, skip anything that's too new to be considered
+			if dk.ResourceVersion >= cutoffTimestamp {
 				continue
 			}
-			currentResource = k
 
-			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
-			// of the same resource and delete them in batch
-			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
-				// ensure we don't process/count the same resource twice
-				if _, seen := seenKeys[k]; seen {
-					continue
+			buffer = append(buffer, dk)
+			if dk.Action == DataActionDeleted {
+				// Every buffered revision is <= this expired marker's RV, so it is all trash.
+				if err := deleteBuffered(); err != nil {
+					return err
 				}
-				// mark the key as seen
-				seenKeys[k] = struct{}{}
-
-				// Collect all revisions of this resource, oldest-first, via the datastore.
-				keysToDelete := []DataKey{}
-				for deleteKey, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
-					if err != nil {
-						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
-					}
-					keysToDelete = append(keysToDelete, deleteKey)
-				}
-
-				// check if the resource still exists
-				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-					Group:     dk.Group,
-					Resource:  dk.Resource,
-					Namespace: dk.Namespace,
-					Name:      dk.Name,
-				})
-				if err == nil {
-					// resource still exists, no need to delete anything
-					continue
-				}
-				if !errors.Is(err, ErrNotFound) {
-					return fmt.Errorf("garbage collection: latest resource key lookup for %s: %w", dk, err)
-				}
-
-				if b.garbageCollection.DryRun {
-					// if in dry run mode, just count the keys to delete
-					totalDryRun += int64(len(keysToDelete))
-					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
-					continue
-				}
-
-				// Oldest-first (SortOrderAsc), so a partial delete leaves the deletion marker
-				// behind and the next GC pass finishes.
-				err = b.dataStore.batchDelete(ctx, keysToDelete)
-				if err != nil {
-					return fmt.Errorf("failed to batch delete keys: %s", err)
-				}
-
-				// update the total number of keys deleted
-				keysDeleted = keysDeleted + int64(len(keysToDelete))
-				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
-		// if there are no more entries to process, break the loop
+		// an empty page means we have scanned every key, so stop
 		if keysProcessed == 0 {
 			break
 		}
-
-		totalDeleted += keysDeleted
 
 		select {
 		case <-ctx.Done():
@@ -904,31 +870,21 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	}
 
 	if totalDeleted > 0 {
-		b.log.Info("garbage collection deleted history",
+		msg := "garbage collection deleted history"
+		perNamespaceMsg := "garbage collection deleted history per namespace"
+		if b.garbageCollection.DryRun {
+			msg = "garbage collection dry run"
+			perNamespaceMsg = "garbage collection dry run per namespace"
+		}
+
+		b.log.Info(msg,
 			"group", group,
 			"resource", resourceName,
 			"rows", totalDeleted,
 			"seconds", time.Since(start).Seconds(),
 		)
 		for ns, count := range deletedPerNamespace {
-			b.log.Info("garbage collection deleted history per namespace",
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
-	}
-
-	if totalDryRun > 0 {
-		b.log.Info("garbage collection dry run",
-			"group", group,
-			"resource", resourceName,
-			"rows", totalDryRun,
-			"seconds", time.Since(start).Seconds(),
-		)
-		for ns, count := range dryRunPerNamespace {
-			b.log.Info("garbage collection dry run per namespace",
+			b.log.Info(perNamespaceMsg,
 				"group", group,
 				"resource", resourceName,
 				"namespace", ns,
@@ -938,23 +894,6 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	}
 
 	return nil
-}
-
-// previousKey returns the immediate previous key for the given key
-// for example, if the key is "unified/data/dashboard.grafana.app/dashboards/123-bbb",
-// the previous key will be "unified/data/dashboard.grafana.app/dashboards/123-bba"
-func previousKey(key string) string {
-	keyBuf := []byte(key)
-	buf := make([]byte, len(keyBuf))
-	copy(buf, keyBuf)
-	for i := len(buf) - 1; i >= 0; i-- {
-		if buf[i] > 0x00 {
-			buf[i] = buf[i] - 1
-			buf = buf[:i+1]
-			return string(buf)
-		}
-	}
-	return string(buf)
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
@@ -2866,9 +2805,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
 			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
-			for key, value := range lastMicroRV {
-				batchLastMicroRV[key] = value
-			}
+			maps.Copy(batchLastMicroRV, lastMicroRV)
 		}
 
 		for _, req := range batch {

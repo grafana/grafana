@@ -3,6 +3,7 @@ package migrations_test
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"testing"
 	"time"
@@ -378,12 +379,8 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 	expectedMigrationIDs := []string{createTableMigrationID}
 
 	allMigrationIDs := make(map[string]bool)
-	for id, enabled := range migrationIDsToDefault {
-		allMigrationIDs[id] = enabled
-	}
-	for id, enabled := range extraMigrationIDs {
-		allMigrationIDs[id] = enabled
-	}
+	maps.Copy(allMigrationIDs, migrationIDsToDefault)
+	maps.Copy(allMigrationIDs, extraMigrationIDs)
 
 	for id, enabled := range allMigrationIDs {
 		if onlyDefault && !enabled {
