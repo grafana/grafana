@@ -20,6 +20,7 @@ const (
 	NATS                    string = "nats"
 	FrontendServer          string = "frontend-server"
 	OperatorServer          string = "operator"
+	PluginRouter            string = "plugin-router"
 )
 
 var dependencyMap = map[string][]string{
@@ -45,4 +46,7 @@ var dependencyMap = map[string][]string{
 	All:                     {Core},
 	FrontendServer:          {},
 	OperatorServer:          {InstrumentationServer},
+	// The plugin router reads and writes its groups' objects through unified
+	// storage; in a monolith target that is the backend unified-backend builds.
+	PluginRouter: {InstrumentationServer, UnifiedBackend},
 }

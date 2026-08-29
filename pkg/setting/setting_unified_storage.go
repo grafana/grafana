@@ -436,9 +436,18 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 // otherwise every replica would delete data on its own. A process with no
 // module targets, or with the "all" target, does everything itself.
 func (cfg *Cfg) StorageServicesEnabled() bool {
-	return len(cfg.Target) == 0 ||
+	if len(cfg.Target) == 0 ||
 		slices.Contains(cfg.Target, "all") ||
-		slices.Contains(cfg.Target, "storage-server")
+		slices.Contains(cfg.Target, "storage-server") {
+		return true
+	}
+
+	// The plugin router serves its groups' objects through a resource server it
+	// builds over this process's own backend, unless it is pointed at a storage
+	// server instead. That server cannot start against a backend with the jobs
+	// switched off -- the same flag gates the write watcher it initializes on --
+	// so a process serving through its own backend has to own it.
+	return slices.Contains(cfg.Target, "plugin-router") && cfg.UnifiedStorageType() == "unified"
 }
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.

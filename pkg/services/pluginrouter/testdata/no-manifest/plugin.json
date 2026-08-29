@@ -1,0 +1,6 @@
+{
+  "id": "grafana-plain-app",
+  "type": "app",
+  "name": "Plain",
+  "info": { "description": "An app plugin with no manifest", "version": "0.1.0" }
+}

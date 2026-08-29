@@ -1,0 +1,9 @@
+{
+  "id": "grafana-routerexample-app",
+  "type": "app",
+  "name": "Router Example",
+  "info": {
+    "description": "An app plugin the router serves",
+    "version": "1.2.3"
+  }
+}

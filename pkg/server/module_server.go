@@ -14,10 +14,9 @@ import (
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/storage/unified"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/authz"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -33,9 +33,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginrouter"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcekv "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -43,7 +46,6 @@ import (
 	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"go.opentelemetry.io/otel"
 )
 
 // SearchSupport bundles the document builder supplier with the dashboard
@@ -312,12 +314,62 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.OperatorServer, s.initOperatorServer)
 
+	m.RegisterModule(modules.PluginRouter, s.initPluginRouter)
+
 	m.RegisterModule(modules.All, nil)
 
 	// Register modules provided by other builds (e.g. enterprise).
 	s.moduleRegisterer.RegisterModules(m)
 
 	return m.Run(s.context)
+}
+
+func (s *ModuleServer) initPluginRouter() (services.Service, error) {
+	client, err := s.pluginRouterStorage()
+	if err != nil {
+		return nil, fmt.Errorf("connecting to unified storage: %w", err)
+	}
+	// The instrumentation server owns this target's only HTTP listener and
+	// its health endpoints, so the router mounts onto its router and reports
+	// through its notifier rather than opening a second port.
+	return pluginrouter.ProvideService(s.cfg, s.features, s.tracer, s.registerer, client,
+		s.httpServerRouter, s.healthNotifier, s.license)
+}
+
+// pluginRouterStorage returns the unified storage client the plugin router
+// serves its groups' objects through, the same way every other reader of
+// unified storage picks one: a remote storage server when the config names an
+// address, and otherwise the backend this process already built.
+//
+// The in-process case reuses s.storageBackend rather than building a second
+// one -- the plugin router module depends on unified-backend for exactly that
+// reason -- so a monolith target runs the router against the same storage the
+// rest of it uses, with no extra configuration.
+func (s *ModuleServer) pluginRouterStorage() (resource.ResourceClient, error) {
+	apiserverCfg := s.cfg.SectionWithEnvOverrides("grafana-apiserver")
+	storageType := options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified)))
+	if storageType != options.StorageTypeUnified {
+		return nil, fmt.Errorf("only unified is supported right now")
+	}
+
+	server, err := sql.NewResourceServer(sql.ServerOptions{
+		Backend:        s.storageBackend,
+		VectorBackend:  s.vectorBackend,
+		Embedder:       s.embedder,
+		Reranker:       s.reranker,
+		Cfg:            s.cfg,
+		Tracer:         otel.Tracer("plugin-router"),
+		Reg:            s.registerer,
+		Features:       s.features,
+		SearchClient:   s.searchClient,
+		StorageMetrics: s.storageMetrics,
+		IndexMetrics:   s.indexMetrics,
+		VectorMetrics:  s.vectorMetrics,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resource.NewLocalResourceClient(server), nil
 }
 
 func (s *ModuleServer) initNATSModule() (services.Service, error) {
