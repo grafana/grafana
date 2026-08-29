@@ -92,6 +92,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
 
 	b.postProcessManifestKinds(oas, root, version)
+	b.dropUnstructuredModels(oas, version)
 
 	// Hide the resource+proxy routes -- explicit ones will be added if defined below
 	for _, v := range []string{"resources", "proxy"} {
@@ -202,6 +203,41 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 					spec.MustCreateRef("#/components/schemas/"+listName))
 			}
 		}
+	}
+}
+
+// dropUnstructuredModels removes the generic models a manifest kind's own schema
+// replaced.
+//
+// A manifest kind is stored as an unstructured object, so the route builder
+// describes its bodies with that Go type's model, published under a name like
+// "k8s.io~1apimachinery~1pkg~1apis~1meta~1v1~1unstructured.Unstructured".
+// postProcessManifestKinds points every one of those bodies at the kind's own
+// schema, which leaves the models in the spec with nothing referring to them.
+//
+// They stay in GetOpenAPIDefinitions, which is a different consumer: server-side
+// apply resolves a manifest GVK through the group-version-kind extension on
+// them. That is the server's own bookkeeping, and a client reading this spec has
+// the kind's real schema instead.
+func (b *AppPluginAPIBuilder) dropUnstructuredModels(oas *spec3.OpenAPI, version string) {
+	if b.manifest == nil || oas.Components == nil || oas.Components.Schemas == nil {
+		return
+	}
+	for _, v := range b.manifest.Versions {
+		if v.Name != version || !v.Served {
+			continue
+		}
+		for _, kind := range v.Kinds {
+			// A kind with no schema had nothing to be replaced by, so its bodies
+			// still refer to the generic model and it has to stay.
+			if kind.Schema == nil {
+				return
+			}
+		}
+	}
+	for _, model := range []any{unstructured.Unstructured{}, unstructured.UnstructuredList{}} {
+		delete(oas.Components.Schemas,
+			common.EscapeJsonPointer(openapiutil.GetCanonicalTypeName(model)))
 	}
 }
 

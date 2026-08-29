@@ -502,9 +502,9 @@ func TestSearchRouteGates(t *testing.T) {
 		t.Helper()
 		handlers, err := b.searchRoutes(gv)
 		require.NoError(t, err)
-		out := []string{}
-		for _, h := range handlers {
-			out = append(out, h.Path)
+		out := make([]string, len(handlers))
+		for i, h := range handlers {
+			out[i] = h.Path
 		}
 		return out
 	}

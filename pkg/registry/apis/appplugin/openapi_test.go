@@ -8,8 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	openapiutil "k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -313,4 +315,64 @@ func TestSpecProperty(t *testing.T) {
 		name: {Schema: spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}},
 	}
 	require.Nil(t, (&operationInfo{defs: noSpec, name: name}).specProperty())
+}
+
+// The generic unstructured models are how the route builder describes a manifest
+// kind's bodies before postProcessManifestKinds points them at the kind's own
+// schema. Once it has, nothing refers to them and they are noise in a published
+// spec -- but they still have to reach GetOpenAPIDefinitions, where server-side
+// apply resolves a manifest GVK through them.
+func TestDropUnstructuredModels(t *testing.T) {
+	unstructuredModels := []string{
+		common.EscapeJsonPointer(openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})),
+		common.EscapeJsonPointer(openapiutil.GetCanonicalTypeName(unstructured.UnstructuredList{})),
+	}
+
+	newSpec := func() *spec3.OpenAPI {
+		schemas := map[string]*spec.Schema{}
+		for _, name := range unstructuredModels {
+			schemas[name] = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+		}
+		return &spec3.OpenAPI{Components: &spec3.Components{Schemas: schemas}}
+	}
+
+	t.Run("dropped once every kind has its own schema", func(t *testing.T) {
+		manifest := testManifest(t)
+		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+
+		oas := newSpec()
+		b.dropUnstructuredModels(oas, "v1alpha1")
+		for _, name := range unstructuredModels {
+			require.NotContains(t, oas.Components.Schemas, name)
+		}
+	})
+
+	t.Run("kept for a kind that declares no schema", func(t *testing.T) {
+		manifest := testManifest(t)
+		manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
+			Kind: "Schemaless", Plural: "schemaless", Scope: "Namespaced",
+		})
+		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+
+		oas := newSpec()
+		b.dropUnstructuredModels(oas, "v1alpha1")
+		for _, name := range unstructuredModels {
+			require.Contains(t, oas.Components.Schemas, name,
+				"that kind's bodies still refer to the generic model")
+		}
+	})
+
+	// GetOpenAPIDefinitions is the server's own view, and server-side apply needs
+	// the group-version-kind extension these carry.
+	t.Run("still declared for the field manager", func(t *testing.T) {
+		manifest := testManifest(t)
+		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+
+		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref {
+			return spec.MustCreateRef("#/definitions/" + path)
+		})
+		def, ok := defs[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})]
+		require.True(t, ok)
+		require.Contains(t, def.Schema.Extensions, "x-kubernetes-group-version-kind")
+	})
 }
