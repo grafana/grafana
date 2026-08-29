@@ -18,6 +18,7 @@ import (
 
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -154,4 +155,24 @@ func asConnection(row connectionRow) (datasourceV0.DataSourceConnection, error) 
 		APIVersion: datasourceV0.VERSION,
 		Plugin:     row.Type,
 	}, nil
+}
+
+// PluginAliasLookup resolves a plugin id to its registered aliases.
+type PluginAliasLookup interface {
+	Plugin(ctx context.Context, pluginID string) (pluginstore.Plugin, bool)
+}
+
+// NewStore builds a connection provider that resolves plugin aliases through the
+// plugin store. Shared by every API group that serves the connections route.
+func NewStore(sql legacysql.LegacyDatabaseProvider, accessClient authlib.AccessClient, plugins PluginAliasLookup) datasourceV0.DataSourceConnectionProvider {
+	if plugins == nil {
+		return NewLegacySQLStore(sql, accessClient, nil)
+	}
+	return NewLegacySQLStore(sql, accessClient, func(ctx context.Context, pluginID string) []string {
+		p, found := plugins.Plugin(ctx, pluginID)
+		if !found {
+			return nil
+		}
+		return p.AliasIDs
+	})
 }
