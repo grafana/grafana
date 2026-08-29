@@ -100,14 +100,15 @@ func TestGetGroupVersions(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "unused", Served: false})
 	b := &AppPluginAPIBuilder{
+		group:      manifest.Group,
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 	}
 
 	require.Equal(t, []schema.GroupVersion{
-		{Group: "example-app", Version: "v1alpha1"},
-		{Group: "example-app", Version: "v0alpha1"},
-		{Group: "example-app", Version: "v2alpha1"},
+		{Group: "example.ext.grafana.com", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.com", Version: "v0alpha1"},
+		{Group: "example.ext.grafana.com", Version: "v2alpha1"},
 	}, b.GetGroupVersions())
 }
 
@@ -119,20 +120,21 @@ func TestGetGroupVersionsAlwaysServesSettingsVersion(t *testing.T) {
 		return v.Name == apppluginV0.VERSION
 	})
 	b := &AppPluginAPIBuilder{
+		group:      manifest.Group,
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 	}
 
 	require.Equal(t, []schema.GroupVersion{
-		{Group: "example-app", Version: "v1alpha1"},
-		{Group: "example-app", Version: "v2alpha1"},
-		{Group: "example-app", Version: apppluginV0.VERSION},
+		{Group: "example.ext.grafana.com", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.com", Version: "v2alpha1"},
+		{Group: "example.ext.grafana.com", Version: apppluginV0.VERSION},
 	}, b.GetGroupVersions(), "the settings version is appended last so it stays non-preferred")
 }
 
 func TestGetGroupVersionsFallback(t *testing.T) {
 	t.Run("no manifest serves the built-in settings version", func(t *testing.T) {
-		b := &AppPluginAPIBuilder{pluginJSON: plugins.JSONData{ID: "example-app"}}
+		b := &AppPluginAPIBuilder{group: "example-app", pluginJSON: plugins.JSONData{ID: "example-app"}}
 		require.Equal(t, []schema.GroupVersion{
 			{Group: "example-app", Version: apppluginV0.VERSION},
 		}, b.GetGroupVersions())
@@ -146,11 +148,12 @@ func TestGetGroupVersionsFallback(t *testing.T) {
 			manifest.Versions[i].Served = false
 		}
 		b := &AppPluginAPIBuilder{
+			group:      manifest.Group,
 			manifest:   manifest,
 			pluginJSON: plugins.JSONData{ID: "example-app"},
 		}
 		require.Equal(t, []schema.GroupVersion{
-			{Group: "example-app", Version: apppluginV0.VERSION},
+			{Group: "example.ext.grafana.com", Version: apppluginV0.VERSION},
 		}, b.GetGroupVersions())
 	})
 }

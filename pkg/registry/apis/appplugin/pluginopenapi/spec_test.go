@@ -28,11 +28,11 @@ func TestBuildManifestVersion(t *testing.T) {
 	oas, err := Build(testPlugin(t), "v1alpha1", Options{BuildVersion: "12.3.4"})
 	require.NoError(t, err)
 
-	require.Equal(t, "example-app/v1alpha1", oas.Info.Title)
+	require.Equal(t, "example.ext.grafana.com/v1alpha1", oas.Info.Title)
 	require.Equal(t, "12.3.4", oas.Info.Version)
 	require.Equal(t, "An example", oas.Info.Description)
 
-	root := "/apis/example-app/v1alpha1/"
+	root := "/apis/example.ext.grafana.com/v1alpha1/"
 	paths := slices.Sorted(maps.Keys(oas.Paths.Paths))
 	require.Equal(t, []string{
 		root,
@@ -48,7 +48,7 @@ func TestBuildManifestVersion(t *testing.T) {
 	}, paths, "paths should not include the watch or all-namespace routes the server hides")
 
 	// The kind's schema, and the list wrapper around it, are the response types.
-	kind := "example-app.v1alpha1.TestKind"
+	kind := "example.ext.grafana.com.v1alpha1.TestKind"
 	require.Contains(t, oas.Components.Schemas, kind)
 	require.Contains(t, oas.Components.Schemas, kind+"List")
 	require.Equal(t, "#/components/schemas/"+kind+"List",
@@ -63,8 +63,8 @@ func TestBuildSettingsVersion(t *testing.T) {
 	oas, err := Build(testPlugin(t), "v0alpha1", Options{BuildVersion: "12.3.4"})
 	require.NoError(t, err)
 
-	require.Equal(t, "example-app/v0alpha1", oas.Info.Title)
-	root := "/apis/example-app/v0alpha1/"
+	require.Equal(t, "example.ext.grafana.com/v0alpha1", oas.Info.Title)
+	root := "/apis/example.ext.grafana.com/v0alpha1/"
 	require.Equal(t, []string{
 		root,
 		root + "namespaces/{namespace}/app/instance",
@@ -77,7 +77,7 @@ func TestBuildVersionSelection(t *testing.T) {
 	t.Run("no version renders the preferred one", func(t *testing.T) {
 		oas, err := Build(testPlugin(t), "", Options{})
 		require.NoError(t, err)
-		require.Equal(t, "example-app/v1alpha1", oas.Info.Title)
+		require.Equal(t, "example.ext.grafana.com/v1alpha1", oas.Info.Title)
 	})
 
 	t.Run("an unserved version is refused", func(t *testing.T) {
@@ -96,7 +96,7 @@ func TestBuildVersionSelection(t *testing.T) {
 
 // The proxy subresource is only served when the toggle for it is on.
 func TestBuildProxyRoute(t *testing.T) {
-	proxy := "/apis/example-app/v1alpha1/namespaces/{namespace}/app/instance/proxy"
+	proxy := "/apis/example.ext.grafana.com/v1alpha1/namespaces/{namespace}/app/instance/proxy"
 
 	oas, err := Build(testPlugin(t), "v1alpha1", Options{})
 	require.NoError(t, err)
@@ -136,7 +136,7 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 		},
 		Manifest: &app.ManifestData{
 			AppName:          "example",
-			Group:            "example.ext.grafana.com", // replaced by the plugin id
+			Group:            "example.ext.grafana.com",
 			PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{{
 				Name:   "v1alpha1",

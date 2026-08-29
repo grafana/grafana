@@ -83,22 +83,22 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 
 // Build returns the OpenAPI v3 spec for one app plugin group version.
 func Build(plugin definition.PluginDefinition, version string, opts Options) (*spec3.OpenAPI, error) {
-	group := plugin.JSONData.ID
-
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	// The served versions, preferred version first.
+	// The served versions, preferred version first. They all share the group the
+	// plugin is served under, which is the manifest group when it declares one.
 	gvs := b.GetGroupVersions()
+	group := gvs[0].Group
 	if version == "" {
 		version = gvs[0].Version
 	}
 	gv := schema.GroupVersion{Group: group, Version: version}
 	if !slices.Contains(gvs, gv) {
 		return nil, fmt.Errorf("plugin %s does not serve version %q (available: %s)",
-			group, version, strings.Join(servedVersions(gvs), ", "))
+			plugin.JSONData.ID, version, strings.Join(servedVersions(gvs), ", "))
 	}
 
 	scheme := builder.ProvideScheme()

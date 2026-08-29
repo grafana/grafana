@@ -15,24 +15,25 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-// testBuilder is a builder over the manifest, with the group rewritten to the
-// plugin id the way NewAppPluginAPIBuilder does.
+// testBuilder is a builder over the manifest, served under the group
+// NewAppPluginAPIBuilder would pick for it.
 func testBuilder(t *testing.T, manifest *app.ManifestData) *AppPluginAPIBuilder {
 	t.Helper()
 
-	if manifest != nil {
-		copied := *manifest
-		copied.Group = "example-app"
-		manifest = &copied
+	plugin := definition.PluginDefinition{
+		JSONData: plugins.JSONData{ID: "example-app"},
+		Manifest: manifest,
 	}
 	return &AppPluginAPIBuilder{
+		group:      apiGroupForPlugin(plugin),
 		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		pluginJSON: plugin.JSONData,
 		clientV3:   &fakeRouteClient{},
 	}
 }
@@ -46,7 +47,7 @@ func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserve
 	require.NoError(t, b.InstallSchema(scheme))
 
 	codecs := builder.ProvideCodecFactory(scheme)
-	info := genericapiserver.NewDefaultAPIGroupInfo(b.pluginJSON.ID, scheme, metav1.ParameterCodec, codecs)
+	info := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
 	return &info, builder.APIGroupOptions{
 		Scheme:              scheme,
 		OptsGetter:          appinstaller.NewNoopRESTOptionsGetter(),
@@ -64,14 +65,14 @@ func TestInstallSchema(t *testing.T) {
 	require.NoError(t, b.InstallSchema(scheme))
 
 	for _, version := range []string{"v0alpha1", "v1alpha1", "v2alpha1"} {
-		gv := schema.GroupVersion{Group: "example-app", Version: version}
+		gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: version}
 		_, err := scheme.New(gv.WithKind("Settings"))
 		require.NoError(t, err, "settings are served in every version")
 	}
 
 	// v2alpha1 declares no kinds, so only the two versions that do are registered.
 	for _, version := range []string{"v0alpha1", "v1alpha1", runtime.APIVersionInternal} {
-		gv := schema.GroupVersion{Group: "example-app", Version: version}
+		gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: version}
 		obj, err := scheme.New(gv.WithKind("TestKind"))
 		require.NoError(t, err, "version %s", version)
 		require.IsType(t, &unstructured.Unstructured{}, obj)
@@ -83,7 +84,7 @@ func TestInstallSchema(t *testing.T) {
 
 	// The preferred version has to come first, or discovery points clients at
 	// the wrong one.
-	require.Equal(t, "v1alpha1", scheme.PrioritizedVersionsForGroup("example-app")[0].Version)
+	require.Equal(t, "v1alpha1", scheme.PrioritizedVersionsForGroup("example.ext.grafana.com")[0].Version)
 }
 
 func TestUpdateAPIGroupInfo(t *testing.T) {
@@ -116,10 +117,10 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		// Admission dispatch resolves the kind through this map, so a missing
 		// entry silently skips every hook the kind declared.
 		require.Contains(t, b.kinds, schema.GroupVersionResource{
-			Group: "example-app", Version: "v1alpha1", Resource: "testkinds",
+			Group: "example.ext.grafana.com", Version: "v1alpha1", Resource: "testkinds",
 		})
 		require.NotContains(t, b.kinds, schema.GroupVersionResource{
-			Group: "example-app", Version: "v2alpha1", Resource: "testkinds",
+			Group: "example.ext.grafana.com", Version: "v2alpha1", Resource: "testkinds",
 		})
 	})
 
@@ -169,7 +170,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		require.NotNil(t, b.getter)
 
 		_, err := b.getter(context.Background(), schema.GroupVersionResource{
-			Group: "example-app", Version: "v1alpha1", Resource: "nope",
+			Group: "example.ext.grafana.com", Version: "v1alpha1", Resource: "nope",
 		}, "x")
 		require.ErrorContains(t, err, "no storage registered for")
 	})

@@ -127,7 +127,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	oas.Info.AddExtension("x-grafana-plugin", info)
 
 	// The root api URL
-	root := fmt.Sprintf("/apis/%s/%s/", b.pluginJSON.ID, version)
+	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
 
 	b.postProcessManifestKinds(oas, root, version)
 
@@ -152,7 +152,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 	if !ok {
 		return nil, fmt.Errorf("missing settings type")
 	}
-	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.pluginJSON.ID, version))
+	ps.Properties["apiVersion"] = *spec.StringProperty().WithEnum(fmt.Sprintf("%s/%s", b.group, version))
 	ps.Properties["kind"] = *spec.StringProperty().WithEnum("Settings")
 
 	// Always transform results
@@ -175,7 +175,7 @@ func (b *AppPluginAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Ope
 // specVersion reads the group version from the title set by the API builder.
 func (b *AppPluginAPIBuilder) specVersion(oas *spec3.OpenAPI) string {
 	if oas.Info != nil {
-		if version, ok := strings.CutPrefix(oas.Info.Title, b.pluginJSON.ID+"/"); ok && version != "" {
+		if version, ok := strings.CutPrefix(oas.Info.Title, b.group+"/"); ok && version != "" {
 			return version
 		}
 	}

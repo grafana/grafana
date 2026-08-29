@@ -17,12 +17,12 @@ const pluginJSONFile = "plugin.json"
 // LoadManifest reads an app-sdk manifest file into the definition the spec is
 // rendered from.
 //
-// A plugin's APIs are served under its plugin id rather than the manifest's own
-// group, and the settings API is described by the plugin's own metadata and
-// schema. So when a plugin.json sits in the same directory -- which is what a
-// built plugin looks like -- it is loaded too, and the spec then matches what a
-// server serving that plugin would return. Without it the manifest's app name
-// stands in for the plugin id, and the settings API falls back to its defaults.
+// A plugin's APIs are served under the group its manifest declares, but the
+// settings API is described by the plugin's own metadata and schema. So when a
+// plugin.json sits in the same directory -- which is what a built plugin looks
+// like -- it is loaded too, and the spec then matches what a server serving that
+// plugin would return. Without it the manifest's app name stands in for the
+// plugin id, and the settings API falls back to its defaults.
 func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition, error) {
 	var plugin definition.PluginDefinition
 

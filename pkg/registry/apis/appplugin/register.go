@@ -77,6 +77,9 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
+	// the API group -- the group defined in manifest data when it exists,
+	// otherwise the pluginID
+	group           string
 	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
@@ -111,15 +114,9 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
-	var manifest *app.ManifestData
-	if plugin.Manifest != nil {
-		// Plugin APIs are always served under the plugin ID.
-		manifestCopy := *plugin.Manifest
-		manifestCopy.Group = plugin.JSONData.ID
-		manifest = &manifestCopy
-	}
 	return &AppPluginAPIBuilder{
-		manifest:        manifest,
+		group:           apiGroupForPlugin(plugin),
+		manifest:        plugin.Manifest,
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3:        clientV3,
@@ -132,6 +129,15 @@ func NewAppPluginAPIBuilder(
 		features:        features,
 		tracer:          tracer,
 	}, nil
+}
+
+// apiGroupForPlugin returns the API group the plugin is served under: the group
+// declared in the manifest when it has one, otherwise the plugin id.
+func apiGroupForPlugin(plugin definition.PluginDefinition) string {
+	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
+		return plugin.Manifest.Group
+	}
+	return plugin.JSONData.ID
 }
 
 // Called in ST Grafana to register
@@ -189,7 +195,7 @@ func RegisterAPIService(
 			unified, // search support
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
-				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, pluginSettings),
+				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
 
 				DataProxyLogging:         cfg.DataProxyLogging,
@@ -213,7 +219,7 @@ func RegisterAPIService(
 // The settings kind is registered in every version so it is always reachable.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	settingsGV := schema.GroupVersion{
-		Group:   b.pluginJSON.ID,
+		Group:   b.group,
 		Version: apppluginV0.VERSION,
 	}
 	if b.manifest == nil {
@@ -226,7 +232,7 @@ func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 			continue
 		}
 		gv := schema.GroupVersion{
-			Group:   b.pluginJSON.ID,
+			Group:   b.group,
 			Version: v.Name,
 		}
 		if b.manifest.PreferredVersion == v.Name {
@@ -266,12 +272,12 @@ func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		}
 
 		// Server-side apply uses the internal version to track managed fields.
-		internalGV := schema.GroupVersion{Group: b.manifest.Group, Version: runtime.APIVersionInternal}
+		internalGV := schema.GroupVersion{Group: b.group, Version: runtime.APIVersionInternal}
 		for _, version := range b.manifest.Versions {
 			if !version.Served {
 				continue
 			}
-			gv := schema.GroupVersion{Group: b.manifest.Group, Version: version.Name}
+			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
 			for _, r := range version.Kinds {
 				addKind(gv.WithKind(r.Kind))
 				addKind(internalGV.WithKind(r.Kind))
@@ -286,7 +292,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	registerSubresourceMetrics(opts.MetricsRegister)
 
 	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
-		b.pluginJSON.ID, b.pluginJSON.ID,
+		b.group, b.pluginJSON.ID,
 	)
 
 	if opts.StorageOptsRegister == nil {

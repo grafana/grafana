@@ -10,7 +10,7 @@ import (
 )
 
 // A manifest on its own is enough to render from: the app name stands in for
-// the plugin id, which is the group the APIs are served under.
+// the plugin id, and the manifest group is what the APIs are served under.
 func TestLoadManifestStandalone(t *testing.T) {
 	plugin, err := LoadManifest(context.Background(), "testdata/standalone/app-sdk-manifest.json")
 	require.NoError(t, err)
@@ -27,12 +27,12 @@ func TestLoadManifestStandalone(t *testing.T) {
 
 	oas, err := Build(plugin, "v1alpha1", Options{})
 	require.NoError(t, err)
-	require.Equal(t, "example-app/v1alpha1", oas.Info.Title)
-	require.Contains(t, oas.Paths.Paths, "/apis/example-app/v1alpha1/namespaces/{namespace}/testkinds")
+	require.Equal(t, "example.ext.grafana.app/v1alpha1", oas.Info.Title)
+	require.Contains(t, oas.Paths.Paths, "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds")
 }
 
-// A built plugin has its plugin.json beside the manifest, and that is what the
-// server serves the APIs under, so it wins over the manifest's own app name.
+// A built plugin has its plugin.json beside the manifest, and that is where the
+// plugin id comes from, but the APIs are still served under the manifest group.
 func TestLoadManifestBesidePluginJSON(t *testing.T) {
 	plugin, err := LoadManifest(context.Background(), "testdata/plugin/app-sdk-manifest.json")
 	require.NoError(t, err)
@@ -43,9 +43,9 @@ func TestLoadManifestBesidePluginJSON(t *testing.T) {
 
 	oas, err := Build(plugin, "v1alpha1", Options{})
 	require.NoError(t, err)
-	require.Equal(t, "grafana-example-app/v1alpha1", oas.Info.Title)
+	require.Equal(t, "example.ext.grafana.app/v1alpha1", oas.Info.Title)
 	require.Equal(t, "An example app plugin", oas.Info.Description)
-	require.Contains(t, oas.Paths.Paths, "/apis/grafana-example-app/v1alpha1/namespaces/{namespace}/testkinds")
+	require.Contains(t, oas.Paths.Paths, "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds")
 }
 
 // The file the caller named is the one that is read, even when the directory

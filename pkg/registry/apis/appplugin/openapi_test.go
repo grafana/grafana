@@ -196,10 +196,10 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &AppPluginAPIBuilder{pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &AppPluginAPIBuilder{group: "example.ext.grafana.com", pluginJSON: plugins.JSONData{ID: "example-app"}}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
-	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example-app/v1alpha1"}}}
+	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.com/v1alpha1"}}}
 	require.Equal(t, "v1alpha1", b.specVersion(oas))
 
 	// Falls back to the settings version when the title is missing or foreign

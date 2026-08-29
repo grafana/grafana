@@ -8,7 +8,7 @@ grafana cli write-openapi ./dist/app-sdk-manifest.json -o ./specs
 ```
 
 writes one `<version>.json` per served version into `./specs`, each identical to what a
-running Grafana serves at `/openapi/v3/apis/<pluginID>/<version>` — without starting the
+running Grafana serves at `/openapi/v3/apis/<group>/<version>` — without starting the
 server, opening a database, or launching the plugin backend.
 
 ## What you can point it at
@@ -16,9 +16,9 @@ server, opening a database, or launching the plugin backend.
 **A manifest file.** No Grafana config is read and no plugin needs to be installed, so this
 works inside a plugin's own build. When a `plugin.json` sits in the same directory — what a
 built plugin looks like — it is loaded too, and the spec matches the server exactly. Without
-it, the manifest's `appName` stands in for the plugin id (the group the APIs are served
-under) and the plugin version is absent from `info.x-grafana-plugin`. Everything else is the
-same document.
+it, the manifest's `appName` stands in for the plugin id and the plugin version is absent
+from `info.x-grafana-plugin`. Everything else is the same document — the APIs are served
+under the group the manifest declares either way.
 
 **An installed plugin's id**, optionally with a version:
 
