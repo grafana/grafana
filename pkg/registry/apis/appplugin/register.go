@@ -77,8 +77,7 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
-	// the API group -- the group defined in manifest data when it exists,
-	// otherwise the pluginID
+	// the API group -- the group defined in manifest data or the pluginID
 	group           string
 	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
@@ -136,15 +135,6 @@ func NewAppPluginAPIBuilder(
 	}, nil
 }
 
-// apiGroupForPlugin returns the API group the plugin is served under: the group
-// declared in the manifest when it has one, otherwise the plugin id.
-func apiGroupForPlugin(plugin definition.PluginDefinition) string {
-	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
-		return plugin.Manifest.Group
-	}
-	return plugin.JSONData.ID
-}
-
 // Called in ST Grafana to register
 func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
@@ -153,8 +143,8 @@ func RegisterAPIService(
 	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
+	acService ac.Service, // Required to declare roles from a manifest
 	accessControl ac.AccessControl,
-	acService ac.Service,
 	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
@@ -225,6 +215,15 @@ func RegisterAPIService(
 		last = b
 	}
 	return last, nil
+}
+
+// apiGroupForPlugin returns the API group the plugin is served under: the group
+// declared in the manifest when it has one, otherwise the plugin id.
+func apiGroupForPlugin(plugin definition.PluginDefinition) string {
+	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
+		return plugin.Manifest.Group
+	}
+	return plugin.JSONData.ID
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
