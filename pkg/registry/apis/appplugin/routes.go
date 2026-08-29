@@ -117,12 +117,9 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 				})
 			}
 
-			if true { // this should be driven by manifest properties
-				register(searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind))
-			}
-			if false { // trash is not *yet* wired up to search
-				register(searcher.TrashRoute(gv.Group, gv.Version, plural, kind.Kind))
-			}
+			// TODO: drive this from manifest properties, and serve
+			// searcher.TrashRoute once trash is wired up to search.
+			register(searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind))
 		}
 
 		for path, props := range kind.Routes {

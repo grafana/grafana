@@ -22,13 +22,31 @@
                 "properties": {
                   "spec": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ],
+                    "additionalProperties": false
                   },
                   "status": {
                     "type": "object",
-                    "properties": {}
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
                   }
-                }
+                },
+                "required": [
+                  "spec"
+                ]
               }
             },
             "routes": {
@@ -41,6 +59,44 @@
                     }
                   }
                 }
+              }
+            }
+          },
+          {
+            "kind": "Widget",
+            "plural": "widgets",
+            "scope": "Namespaced",
+            "schemas": {
+              "Widget": {
+                "type": "object",
+                "properties": {
+                  "spec": {
+                    "type": "object",
+                    "properties": {
+                      "foo": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "foo"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "object",
+                    "properties": {
+                      "state": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
               }
             }
           }

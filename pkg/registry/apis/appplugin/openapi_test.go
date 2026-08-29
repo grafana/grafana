@@ -21,6 +21,7 @@ import (
 func TestManifestKindOpenAPINames(t *testing.T) {
 	manifest := testManifest(t)
 	b := &AppPluginAPIBuilder{
+		group:    manifest.Group,
 		manifest: manifest,
 	}
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref {
@@ -46,6 +47,7 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	version := "v1alpha1"
 
 	b := &AppPluginAPIBuilder{
+		group:    manifest.Group,
 		manifest: manifest,
 	}
 
@@ -149,7 +151,7 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 func TestPostProcessManifestKindPostExample(t *testing.T) {
 	manifest := testManifest(t)
 	version := "v1alpha1"
-	b := &AppPluginAPIBuilder{manifest: manifest}
+	b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
 
 	root := "/apis/" + manifest.Group + "/" + version + "/"
 	base := root + "namespaces/{namespace}/testkinds"
@@ -295,7 +297,7 @@ func TestSpecProperty(t *testing.T) {
 	manifest := testManifest(t)
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
-	}, manifest)
+	}, manifest.Group, manifest)
 	name := kindOpenAPIName(schema.GroupVersionKind{
 		Group: manifest.Group, Version: "v1alpha1", Kind: "TestKind",
 	})

@@ -327,7 +327,7 @@ func TestNewKindStore(t *testing.T) {
 		manifest.Group = gvk.Group
 		defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 			return spec.MustCreateRef(name)
-		}, manifest)
+		}, gvk.Group, manifest)
 		kind := manifest.Versions[1].Kinds[0] // v1alpha1 TestKind declares status
 
 		opts, _ := newKindStoreOpts(t, gvk)
@@ -390,4 +390,58 @@ type failingRESTOptionsGetter struct{}
 
 func (failingRESTOptionsGetter) GetRESTOptions(schema.GroupResource, runtime.Object) (generic.RESTOptions, error) {
 	return generic.RESTOptions{}, errors.New("no storage configured")
+}
+
+// A write to the status subresource may only change status. Without this the
+// generic status strategy persists whatever spec the request carried, so status
+// access is spec access -- and the spec it stores is never schema checked.
+func TestKindStatusStrategyPrepareForUpdate(t *testing.T) {
+	s := &kindStatusStrategy{kindStore: testKindStore(false, true)}
+
+	old := &unstructured.Unstructured{Object: map[string]any{
+		"spec":   map[string]any{"testField": int64(1)},
+		"status": map[string]any{"state": "old"},
+	}}
+	old.SetLabels(map[string]string{"keep": "me"})
+	old.SetAnnotations(map[string]string{"grafana.app/folder": "fold"})
+	old.SetFinalizers([]string{"a-finalizer"})
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"spec":   map[string]any{"testField": int64(999)},
+		"status": map[string]any{"state": "new"},
+	}}
+	obj.SetLabels(map[string]string{"sneaky": "label"})
+	obj.SetAnnotations(map[string]string{"grafana.app/folder": "elsewhere"})
+	obj.SetFinalizers(nil)
+
+	s.PrepareForUpdate(context.Background(), obj, old)
+
+	require.Equal(t, map[string]any{"state": "new"}, obj.Object["status"], "the status is the write")
+	require.Equal(t, map[string]any{"testField": int64(1)}, obj.Object["spec"])
+	require.Equal(t, map[string]string{"keep": "me"}, obj.GetLabels())
+	require.Equal(t, map[string]string{"grafana.app/folder": "fold"}, obj.GetAnnotations())
+	require.Equal(t, []string{"a-finalizer"}, obj.GetFinalizers())
+	require.Equal(t, s.gvk, obj.GroupVersionKind())
+
+	// An object stored before it had a spec must not gain one from the request.
+	obj = &unstructured.Unstructured{Object: map[string]any{
+		"spec":   map[string]any{"testField": int64(999)},
+		"status": map[string]any{"state": "new"},
+	}}
+	s.PrepareForUpdate(context.Background(), obj, &unstructured.Unstructured{Object: map[string]any{}})
+	require.NotContains(t, obj.Object, "spec")
+}
+
+// The status manager must not own the fields the status endpoint cannot write.
+func TestKindStatusStrategyResetFields(t *testing.T) {
+	s := &kindStatusStrategy{kindStore: testKindStore(false, true)}
+	fields := s.GetResetFields()
+	require.Len(t, fields, 1)
+	set := fields[fieldpath.APIVersion(s.gvk.GroupVersion().String())]
+	require.True(t, set.Has(fieldpath.MakePathOrDie("spec")))
+	require.True(t, set.Has(fieldpath.MakePathOrDie("metadata")))
+	require.False(t, set.Has(fieldpath.MakePathOrDie("status")))
+
+	// Inherited from the kind, so a status write is schema checked like any other.
+	require.Equal(t, s.kindStore.NamespaceScoped(), s.NamespaceScoped())
 }

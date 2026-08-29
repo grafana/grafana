@@ -27,7 +27,7 @@ func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		base := apppluginV0.GetOpenAPIDefinitions(ref)
 		if b.manifest != nil {
-			maps.Copy(base, loadOpenAPIDefinitions(ref, b.manifest))
+			maps.Copy(base, loadOpenAPIDefinitions(ref, b.group, b.manifest))
 
 			// Server-side apply finds manifest GVKs through these generic route models.
 			base[openapiutil.GetCanonicalTypeName(unstructured.Unstructured{})] = b.unstructuredOpenAPIDefinition("")
@@ -52,7 +52,7 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 		}
 		for _, kind := range version.Kinds {
 			gvks = append(gvks, map[string]any{
-				"group":   b.manifest.Group,
+				"group":   b.group,
 				"version": version.Name,
 				"kind":    kind.Kind + kindSuffix,
 			})
@@ -64,8 +64,11 @@ func (b *AppPluginAPIBuilder) unstructuredOpenAPIDefinition(kindSuffix string) c
 	return common.OpenAPIDefinition{Schema: s}
 }
 
-// loadOpenAPIDefinitions loads schemas for all served kinds.
-func loadOpenAPIDefinitions(ref common.ReferenceCallback, manifest *app.ManifestData) map[string]common.OpenAPIDefinition {
+// loadOpenAPIDefinitions loads schemas for all served kinds, keyed by the group
+// the plugin is served under. That is not always the manifest's own group: a
+// manifest that declares none is served under the plugin id, and a definition
+// keyed any other way is one no kind can find. See apiGroupForPlugin.
+func loadOpenAPIDefinitions(ref common.ReferenceCallback, group string, manifest *app.ManifestData) map[string]common.OpenAPIDefinition {
 	defs := map[string]common.OpenAPIDefinition{}
 	if manifest == nil {
 		return defs
@@ -75,13 +78,13 @@ func loadOpenAPIDefinitions(ref common.ReferenceCallback, manifest *app.Manifest
 			continue
 		}
 
-		prefix := manifest.Group + "." + version.Name
+		prefix := group + "." + version.Name
 		for _, kind := range version.Kinds {
 			if kind.Schema == nil {
 				continue
 			}
 			gvk := schema.GroupVersionKind{
-				Group:   manifest.Group,
+				Group:   group,
 				Version: version.Name,
 				Kind:    kind.Kind,
 			}
@@ -190,8 +193,8 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef("#/components/schemas/" + name)
-	}, b.manifest)
-	prefix := b.manifest.Group + "." + version + "."
+	}, b.group, b.manifest)
+	prefix := b.group + "." + version + "."
 	for name, def := range defs {
 		if strings.HasPrefix(name, prefix) {
 			s := def.Schema
@@ -200,7 +203,7 @@ func (b *AppPluginAPIBuilder) postProcessManifestKinds(oas *spec3.OpenAPI, root 
 	}
 
 	info := &operationInfo{defs: defs}
-	gvk := schema.GroupVersionKind{Group: b.manifest.Group}
+	gvk := schema.GroupVersionKind{Group: b.group}
 	for _, v := range b.manifest.Versions {
 		if v.Name != version || !v.Served {
 			continue

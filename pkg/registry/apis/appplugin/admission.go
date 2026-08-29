@@ -63,8 +63,11 @@ func (b *AppPluginAPIBuilder) kindStoreFor(a admission.Attributes) *kindStore {
 type admissionOps map[admission.Operation]bool
 
 // newAdmissionOps expands a manifest capability's operations. CONNECT is dropped:
-// the v3 admission request cannot express it, and connect requests reach the plugin
-// through custom routes instead.
+// the v3 admission request cannot express it, connect requests reach the plugin
+// through custom routes instead, and admission never sees one anyway -- those
+// requests name a subresource, which [AppPluginAPIBuilder.kindStoreFor] skips.
+// Recording it would only fail a kind that declares nothing else at startup, for
+// a hook that could never be called.
 func newAdmissionOps(ops []app.AdmissionOperation) admissionOps {
 	out := admissionOps{}
 	for _, op := range ops {
@@ -80,7 +83,7 @@ func newAdmissionOps(ops []app.AdmissionOperation) admissionOps {
 		case app.AdmissionOperationDelete:
 			out[admission.Delete] = true
 		case app.AdmissionOperationConnect:
-			out[admission.Connect] = true
+			// Dropped: see above.
 		}
 	}
 	if len(out) == 0 {

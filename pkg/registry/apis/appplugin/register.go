@@ -333,7 +333,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
-	}, b.manifest)
+	}, b.group, b.manifest)
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
@@ -380,7 +380,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 					kinds[gv.WithResource(resource)] = store
 
 					if store.hasStatus {
-						storage[resource+"/status"] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, store.Store)
+						storage[resource+"/status"] = newKindStatusStore(store)
 					}
 				}
 			}

@@ -88,8 +88,8 @@ func attributes(obj, old *unstructured.Unstructured, op admission.Operation, sub
 func TestNewAdmissionOps(t *testing.T) {
 	require.Nil(t, newAdmissionOps(nil))
 
-	require.Equal(t, admissionOps{admission.Connect: true},
-		newAdmissionOps([]app.AdmissionOperation{app.AdmissionOperationConnect}))
+	// CONNECT cannot be reviewed, so a kind declaring only it declares nothing.
+	require.Nil(t, newAdmissionOps([]app.AdmissionOperation{app.AdmissionOperationConnect}))
 
 	// ANY is the three operations the v3 request can express; CONNECT has to be
 	// declared on its own.

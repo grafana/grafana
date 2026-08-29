@@ -343,3 +343,56 @@ func (s *kindStore) validateAgainstSchema(obj runtime.Object) field.ErrorList {
 	}
 	return validation.ValidateCustomResource(nil, u.UnstructuredContent(), s.validator)
 }
+
+// newKindStatusStore serves a kind's status subresource.
+//
+// It is not [grafanaregistry.NewRegistryStatusStore]: that store's strategy
+// writes whatever spec the request carried and validates nothing, so a caller
+// holding only status access could rewrite the spec through it, and could store
+// a spec the manifest schema rejects.
+func newKindStatusStore(s *kindStore) *grafanaregistry.StatusREST {
+	return grafanaregistry.NewStatusREST(s.Store, &kindStatusStrategy{kindStore: s})
+}
+
+// kindStatusStrategy restricts a write to the status subresource to status.
+// Everything else -- schema validation, scope, naming -- is the kind's own.
+type kindStatusStrategy struct {
+	*kindStore
+}
+
+var _ rest.UpdateResetFieldsStrategy = (*kindStatusStrategy)(nil)
+
+// GetResetFields keeps the status manager from owning fields it cannot write.
+func (s *kindStatusStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
+	return map[fieldpath.APIVersion]*fieldpath.Set{
+		fieldpath.APIVersion(s.gvk.GroupVersion().String()): fieldpath.NewSet(
+			fieldpath.MakePathOrDie("spec"),
+			fieldpath.MakePathOrDie("metadata"),
+		),
+	}
+}
+
+// PrepareForUpdate restores everything a status write may not change, so only
+// the incoming status survives.
+func (s *kindStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+	u, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return
+	}
+	s.restoreGVK(u)
+	oldU, ok := old.(*unstructured.Unstructured)
+	if !ok {
+		return
+	}
+	if spec, found, _ := unstructured.NestedFieldNoCopy(oldU.Object, "spec"); found {
+		u.Object["spec"] = runtime.DeepCopyJSONValue(spec)
+	} else {
+		unstructured.RemoveNestedField(u.Object, "spec")
+	}
+	// Mirrors the generic status strategy: the metadata a status write carries
+	// is whatever the caller read, not an edit it is entitled to make.
+	u.SetLabels(oldU.GetLabels())
+	u.SetAnnotations(oldU.GetAnnotations())
+	u.SetFinalizers(oldU.GetFinalizers())
+	u.SetOwnerReferences(oldU.GetOwnerReferences())
+}

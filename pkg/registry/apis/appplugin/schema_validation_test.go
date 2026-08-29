@@ -18,7 +18,7 @@ func buildTestKindValidator(t *testing.T, version string) validation.SchemaValid
 	// can resolve them directly against the definition map.
 	defs := loadOpenAPIDefinitions(func(name string) spec.Ref {
 		return spec.MustCreateRef(name)
-	}, manifest)
+	}, manifest.Group, manifest)
 
 	gvk := schema.GroupVersionKind{Group: manifest.Group, Version: version, Kind: "TestKind"}
 	obj, ok := defs[kindOpenAPIName(gvk)]
