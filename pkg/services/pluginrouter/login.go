@@ -131,10 +131,11 @@ func (g *loginGate) submit(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// #nosec G124 -- HttpOnly and SameSite are set below; Secure follows the
-	// protocol the server is actually serving, because this target listens on
-	// plain HTTP by default and a Secure cookie would never come back over it.
-	http.SetCookie(w, &http.Cookie{
+	// HttpOnly and SameSite are set below. Secure follows the protocol the
+	// server is actually serving: this target listens on plain HTTP by default,
+	// and a Secure cookie would never be sent back over it, so no one could
+	// sign in. An HTTPS deployment sets it, through the same field.
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure
 		Name:  sessionCookie,
 		Value: token,
 		Path:  "/",
@@ -154,9 +155,9 @@ func (g *loginGate) logout(w http.ResponseWriter, req *http.Request) {
 		delete(g.sessions, cookie.Value)
 		g.mu.Unlock()
 	}
-	// #nosec G124 -- as above, and this one carries no value at all: it is the
-	// expiry that clears the session cookie.
-	http.SetCookie(w, &http.Cookie{
+	// As above -- and this one carries no token at all: a negative MaxAge is
+	// what clears the session cookie.
+	http.SetCookie(w, &http.Cookie{ // #nosec G124 nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure
 		Name: sessionCookie, Value: "", Path: "/",
 		HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: g.secure, MaxAge: -1,
 	})
