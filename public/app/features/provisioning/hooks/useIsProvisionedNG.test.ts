@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { config, locationService } from '@grafana/runtime';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
@@ -32,8 +33,13 @@ function createDashboard({
   k8sName,
   uid,
   folderUid,
-}: { managed?: boolean; k8sName?: string; uid?: string; folderUid?: string } = {}) {
-  const state = { uid, meta: { folderUid, k8s: k8sName ? { name: k8sName } : undefined } };
+  managerName,
+}: { managed?: boolean; k8sName?: string; uid?: string; folderUid?: string; managerName?: string } = {}) {
+  const annotations = managerName
+    ? { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: managerName }
+    : undefined;
+  const k8s = k8sName || annotations ? { name: k8sName, annotations } : undefined;
+  const state = { uid, meta: { folderUid, k8s } };
   return {
     isManagedRepository: jest.fn().mockReturnValue(managed),
     state,
@@ -64,14 +70,56 @@ describe('useIsProvisionedNG', () => {
     expect(result.current).toEqual({ isProvisioned: false, isLoading: false });
   });
 
-  it('returns true when the dashboard is already a managed repository', () => {
-    const { result } = renderHook(() => useIsProvisionedNG(createDashboard({ managed: true })));
+  it('returns true when the stored dashboard is already a managed repository', () => {
+    const { result } = renderHook(() =>
+      useIsProvisionedNG(createDashboard({ managed: true, k8sName: 'existing-uid' }))
+    );
 
     expect(result.current).toEqual({ isProvisioned: true, isLoading: false });
   });
 
-  it('does not report loading for a dashboard that is already managed', () => {
+  it('does not report loading for a stored dashboard that is already managed', () => {
     mockRepositoryView({ isLoading: true });
+
+    const { result } = renderHook(() =>
+      useIsProvisionedNG(createDashboard({ managed: true, k8sName: 'existing-uid' }))
+    );
+
+    expect(result.current).toEqual({ isProvisioned: true, isLoading: false });
+  });
+
+  it('does not claim a new save is provisioned off an annotation the lookup cannot resolve', () => {
+    // The form's own lookup would report this repo orphaned, so answering "provisioned" from the
+    // annotation alone is what left the drawer rendering a provisioned branch around that dead end
+    const { result } = renderHook(() => useIsProvisionedNG(createDashboard({ managed: true })));
+
+    expect(result.current).toEqual({ isProvisioned: false, isLoading: false });
+  });
+
+  it('resolves a new save annotation as a hint so the form and this hook agree', () => {
+    renderHook(() => useIsProvisionedNG(createDashboard({ managed: true, managerName: 'deleted-repo' })));
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: 'deleted-repo',
+      folderName: undefined,
+      includeFolderless: true,
+      nameIsHint: true,
+    });
+  });
+
+  it('keeps a stored dashboard annotation authoritative, so a missing repository still reports orphaned', () => {
+    renderHook(() => useIsProvisionedNG(createDashboard({ k8sName: 'existing-uid', managerName: 'deleted-repo' })));
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
+      folderName: undefined,
+      includeFolderless: false,
+      nameIsHint: false,
+    });
+  });
+
+  it('still reports a new save as provisioned when its annotation resolves to a repository', () => {
+    mockRepositoryView({ repository: { name: 'my-repo' } });
 
     const { result } = renderHook(() => useIsProvisionedNG(createDashboard({ managed: true })));
 
@@ -99,8 +147,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard()));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: true,
+      nameIsHint: true,
     });
   });
 
@@ -108,8 +158,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ k8sName: 'existing-dashboard-uid' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: false,
+      nameIsHint: false,
     });
   });
 
@@ -119,8 +171,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ k8sName: 'existing-dashboard-uid' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: false,
+      nameIsHint: false,
     });
   });
 
@@ -130,8 +184,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ folderUid: 'picked-folder' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: 'picked-folder',
       includeFolderless: false,
+      nameIsHint: true,
     });
   });
 
@@ -139,8 +195,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ uid: 'existing-uid' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: false,
+      nameIsHint: false,
     });
   });
 
@@ -150,8 +208,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ uid: 'existing-uid', k8sName: 'existing-uid' }), true));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: true,
+      nameIsHint: true,
     });
   });
 
@@ -164,8 +224,10 @@ describe('useIsProvisionedNG', () => {
     );
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: 'picked-folder',
       includeFolderless: false,
+      nameIsHint: true,
     });
   });
 
@@ -175,8 +237,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(dashboard));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenLastCalledWith({
+      name: undefined,
       folderName: 'first-folder',
       includeFolderless: false,
+      nameIsHint: true,
     });
 
     act(() => {
@@ -184,8 +248,10 @@ describe('useIsProvisionedNG', () => {
     });
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenLastCalledWith({
+      name: undefined,
       folderName: 'second-folder',
       includeFolderless: false,
+      nameIsHint: true,
     });
   });
 
@@ -193,8 +259,10 @@ describe('useIsProvisionedNG', () => {
     renderHook(() => useIsProvisionedNG(createDashboard({ folderUid: '' })));
 
     expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      name: undefined,
       folderName: undefined,
       includeFolderless: true,
+      nameIsHint: true,
     });
   });
 });

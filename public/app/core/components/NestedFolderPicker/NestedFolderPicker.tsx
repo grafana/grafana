@@ -95,11 +95,14 @@ export function NestedFolderPicker({
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
+  // RTK keeps the last fetched folder in `data` (and its `error`) after the query is skipped, so
+  // when the selection is cleared the previous folder must not keep being reported as selected
+  const selectedFolder = value ? getSelectedFolderResult.data : undefined;
 
   // user might not have access to the folder, but they have access to the dashboard
   // in this case we disable the folder picker - this is an edge case when user has edit access to a dashboard
   // but doesn't have access to the folder
-  const isForbidden = getStatusFromError(getSelectedFolderResult.error) === 403;
+  const isForbidden = Boolean(value) && getStatusFromError(getSelectedFolderResult.error) === 403;
 
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
@@ -300,7 +303,7 @@ export function NestedFolderPicker({
     visible: overlayOpen,
   });
 
-  let label = getSelectedFolderResult.data?.title;
+  let label = selectedFolder?.title;
   if (value === '') {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   }
@@ -309,7 +312,7 @@ export function NestedFolderPicker({
   const labelComponent = label ? (
     <Stack alignItems={'center'}>
       <Text truncate>{label}</Text>
-      <FolderRepo folder={getSelectedFolderResult.data} />
+      <FolderRepo folder={selectedFolder} />
     </Stack>
   ) : (
     ''

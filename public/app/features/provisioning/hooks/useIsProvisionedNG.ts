@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind } from '../../apiserver/types';
 import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
@@ -25,10 +26,18 @@ export function useIsProvisionedNG(dashboard: DashboardScene, saveAsCopy?: boole
   // meta.folderUid is seeded from the URL for new dashboards and then tracks the folder picked in
   // the save form, so this resolves the same folder useDefaultValues does
   const folderName = isNewSave ? meta.folderUid || undefined : undefined;
+  // For a new save the annotation identity is resolved as the same hint useDefaultValues resolves,
+  // so both hooks reach the same answer. Passing it here is what stops this hook from reporting
+  // "provisioned" off an annotation the form's own lookup then rejects as an orphan
+  const annotations = meta.k8s?.annotations;
+  const managerName =
+    isNewSave && annotations?.[AnnoKeyManagerKind] === 'repo' ? annotations[AnnoKeyManagerIdentity] : undefined;
 
   const { repository, isInstanceManaged, isLoading } = useGetResourceRepositoryView({
+    name: managerName,
     folderName,
     includeFolderless: !folderName && isNewSave,
+    nameIsHint: isNewSave,
   });
 
   // The config flag wins over everything, even repo-managed annotations on the dashboard itself
@@ -36,8 +45,10 @@ export function useIsProvisionedNG(dashboard: DashboardScene, saveAsCopy?: boole
     return { isProvisioned: false, isLoading: false };
   }
 
-  // The dashboard's own annotations settle this without waiting on the repository lookup
-  if (dashboard.isManagedRepository()) {
+  // A stored dashboard's own annotations settle this without waiting on the repository lookup. A new
+  // save has no file to be managed yet, so its annotations are only the hint resolved above: trusting
+  // them here is what rendered the provisioned branch around a form that could not resolve a repo
+  if (!isNewSave && dashboard.isManagedRepository()) {
     return { isProvisioned: true, isLoading: false };
   }
 

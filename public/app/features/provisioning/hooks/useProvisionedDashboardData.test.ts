@@ -154,9 +154,12 @@ describe('useDefaultValues', () => {
       http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
     );
 
+    // A stored dashboard: its manager annotation records where the file lives, so a repository
+    // that no longer exists really does leave it orphaned
     const meta = {
       folderUid: 'test-folder',
       k8s: {
+        name: 'stored-dash',
         annotations: {
           [AnnoKeyManagerKind]: ManagerKind.Repo,
           [AnnoKeyManagerIdentity]: 'unknown-repo',
@@ -172,6 +175,45 @@ describe('useDefaultValues', () => {
     await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Orphaned));
     expect(result.current.values).toBeNull();
     expect(result.current.error).toBeUndefined();
+  });
+
+  it('falls back to the folder repository when a new save carries a stale manager annotation', async () => {
+    server.use(
+      http.get(`${BASE}/settings`, () => HttpResponse.json(settingsWithRepo)),
+      http.get(`${FOLDER_BASE}/folders/:name`, () =>
+        HttpResponse.json({
+          ...folderResponse,
+          metadata: {
+            ...folderResponse.metadata,
+            annotations: {
+              ...folderResponse.metadata.annotations,
+              [AnnoKeyManagerKind]: ManagerKind.Repo,
+              [AnnoKeyManagerIdentity]: 'my-repo',
+            },
+          },
+        })
+      )
+    );
+
+    // A new dashboard picked into a folder keeps the annotation of whatever repo it saw first. It
+    // owns no file yet, so a name that no longer resolves must not dead-end the form as orphaned
+    const meta = {
+      folderUid: 'test-folder',
+      k8s: {
+        annotations: {
+          [AnnoKeyManagerKind]: ManagerKind.Repo,
+          [AnnoKeyManagerIdentity]: 'deleted-repo',
+        },
+      },
+    };
+
+    const { result } = renderHook(() => useDefaultValues({ meta, defaultTitle: 'New Dashboard' }), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Ready));
+    // The save targets the repository that actually resolved, not the name the annotation still holds
+    expect(result.current.values?.repo).toBe('my-repo');
   });
 
   it('returns Ready with form values when repository is resolved', async () => {

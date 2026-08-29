@@ -416,7 +416,8 @@ describe('SaveProvisionedDashboard', () => {
 
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
 
-    // Picking an unmanaged database folder in the git form collapses it into the error gate
+    // Picking an unmanaged database folder in the git form dead-ends the lookup; the form is held
+    // with the error next to it, and the escape link stays available
     dashboard.state.meta.folderUid = 'db-folder-uid';
     mockUseProvisionedDashboardData.mockReturnValue({
       isNew: false,
@@ -428,7 +429,7 @@ describe('SaveProvisionedDashboard', () => {
     } as unknown as ReturnType<typeof useProvisionedDashboardData>);
     rerender(<SaveProvisionedDashboard {...props} />);
 
-    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
     expect(screen.getByTestId('database-form')).toBeInTheDocument();
@@ -438,10 +439,11 @@ describe('SaveProvisionedDashboard', () => {
     expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
   });
 
-  it('shows a spinner rather than the settled error when a later lookup goes back into loading', () => {
+  it('keeps a new save form mounted through a dead-end folder pick and clears the inline error on the next pick', () => {
     const { rerender, props } = setup();
 
-    // Picking an unmanaged folder in the git form dead-ends the lookup
+    // Picking an unmanaged folder in the git form dead-ends the lookup, but the picker inside the
+    // form is the only control that can undo the pick, so the form must survive with the error
     mockUseProvisionedDashboardData.mockReturnValue({
       isNew: false,
       defaultValues: null,
@@ -451,6 +453,7 @@ describe('SaveProvisionedDashboard', () => {
       repoDataStatus: RepoViewStatus.Error,
     } as unknown as ReturnType<typeof useProvisionedDashboardData>);
     rerender(<SaveProvisionedDashboard {...props} />);
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
     expect(screen.getByText(/error loading form/i)).toBeInTheDocument();
 
     // Picking again puts the lookup back in flight, and the dead end the user just left is not the answer to it
@@ -464,8 +467,49 @@ describe('SaveProvisionedDashboard', () => {
     } as unknown as ReturnType<typeof useProvisionedDashboardData>);
     rerender(<SaveProvisionedDashboard {...props} />);
 
-    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
     expect(screen.queryByText(/error loading form/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps a new save form mounted when a folder pick lands on an orphaned repository', () => {
+    const { rerender, props } = setup();
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+
+    // The picked folder's manager annotations point at a repository that no longer exists
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Orphaned,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    // The orphan is reported next to the form, not in place of it: unmounting would take the
+    // folder picker with it, leaving no way to undo the pick that caused the dead end
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+    expect(screen.getByText(/cannot be saved to/i)).toBeInTheDocument();
+  });
+
+  it('still gates an existing dashboard on the orphaned notice', () => {
+    const dashboard = createDashboard({ k8s: { name: 'existing-uid' } });
+    const { rerender, props } = setup({ isNew: false }, { dashboard });
+    expect(screen.getByTestId('provisioned-form')).toBeInTheDocument();
+
+    // An update form has no folder picker to protect, so the orphaned repository is terminal here
+    mockUseProvisionedDashboardData.mockReturnValue({
+      isNew: false,
+      defaultValues: null,
+      canPushToConfiguredBranch: false,
+      readOnly: true,
+      repository: undefined,
+      repoDataStatus: RepoViewStatus.Orphaned,
+    } as unknown as ReturnType<typeof useProvisionedDashboardData>);
+    rerender(<SaveProvisionedDashboard {...props} />);
+
+    expect(screen.queryByTestId('provisioned-form')).not.toBeInTheDocument();
+    expect(screen.getByText(/repository no longer exists/i)).toBeInTheDocument();
   });
 
   it('shows a spinner rather than the orphaned notice when switching back to git re-resolves the repository', async () => {

@@ -14,6 +14,13 @@ interface GetResourceRepositoryArgs {
   skipQuery?: boolean;
   includeInstance?: boolean;
   includeFolderless?: boolean;
+  /**
+   * The resource is not stored in a repository yet, so `name` only hints at where it is headed
+   * (the folder it was picked into, the file it was previewed from) rather than recording where it
+   * lives. A hint that no longer resolves falls back to the folder/folderless lookup instead of
+   * reporting an orphaned resource: nothing is written yet, so there is nothing to be orphaned.
+   */
+  nameIsHint?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -60,6 +67,7 @@ const useResourceRepositoryViewData = ({
   skipQuery,
   includeInstance,
   includeFolderless,
+  nameIsHint,
 }: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo' | 'repoType'> => {
   const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
@@ -149,13 +157,16 @@ const useResourceRepositoryViewData = ({
     }
 
     // When name specified but no matching repository found = orphaned resource
-    return {
-      folder,
-      isInstanceManaged: Boolean(instanceRepo),
-      isReadOnlyRepo: false,
-      status: RepoViewStatus.Orphaned,
-      orphanedRepoName: name,
-    };
+    if (!nameIsHint) {
+      return {
+        folder,
+        isInstanceManaged: Boolean(instanceRepo),
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: name,
+      };
+    }
+    // A hint that missed falls through to the folder/folderless lookup below
   }
 
   if (!items.length) {

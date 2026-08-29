@@ -5,6 +5,7 @@ import {
   AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
+  AnnoKeySourcePath,
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
@@ -90,6 +91,30 @@ describe('nextMetaAfterSaveAsFolderChange', () => {
       [AnnoKeyIgnorePredefinedVariables]: 'global',
       [AnnoKeyManagerIdentity]: 'my-repo',
       [AnnoKeyManagerKind]: ManagerKind.Repo,
+    });
+  });
+
+  it('drops the source path so the recomputed default path follows the new folder', () => {
+    const next = nextMetaAfterSaveAsFolderChange(
+      {
+        folderUid: 'repo-folder',
+        k8s: {
+          name: 'dash-uid',
+          annotations: {
+            [AnnoKeyManagerIdentity]: 'my-repo',
+            [AnnoKeyManagerKind]: ManagerKind.Repo,
+            [AnnoKeySourcePath]: 'team-a/dash.json',
+            [AnnoKeyIgnorePredefinedVariables]: 'global',
+          },
+        },
+      },
+      undefined,
+      {}
+    );
+
+    expect(next.k8s?.annotations?.[AnnoKeySourcePath]).toBeUndefined();
+    expect(next.k8s?.annotations).toEqual({
+      [AnnoKeyIgnorePredefinedVariables]: 'global',
     });
   });
 

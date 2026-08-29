@@ -93,6 +93,22 @@ describe('NestedFolderPicker', () => {
     ).toBeInTheDocument();
   });
 
+  it('stops showing the previous folder once the selection is cleared', async () => {
+    const { rerender } = render(<NestedFolderPicker onChange={mockOnChange} value={folderA.item.uid} />);
+    expect(
+      await screen.findByRole('button', { name: `Select folder: ${folderA.item.title} currently selected` })
+    ).toBeInTheDocument();
+
+    // The folder query is skipped for an undefined value, but RTK keeps the folder it last fetched,
+    // so reading the label off that data would leave the cleared folder on screen for good
+    rerender(<NestedFolderPicker onChange={mockOnChange} value={undefined} />);
+
+    expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: `Select folder: ${folderA.item.title} currently selected` })
+    ).not.toBeInTheDocument();
+  });
+
   it('clicking the button opens the folder picker', async () => {
     const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
 

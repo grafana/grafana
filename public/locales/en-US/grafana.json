@@ -7681,6 +7681,8 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard": {
+      "folder-repo-missing-body": "The provisioning repository managing this folder no longer exists. Choose a different folder or save at the repository root.",
+      "folder-repo-missing-title": "The selected folder cannot be saved to",
       "save-to-database": "Save to Grafana database instead",
       "save-to-git": "Save to Git repository instead"
     },

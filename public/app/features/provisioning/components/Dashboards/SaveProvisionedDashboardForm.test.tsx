@@ -1607,8 +1607,8 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await user.click(await screen.findByRole('button', { name: /no folder/i }));
 
-    // The dashboard still resolves as an update; only the old folder's manager annotation goes,
-    // or the recomputed defaults would keep pointing at the old repository
+    // The dashboard still resolves as an update; the old folder's manager annotation goes, and the
+    // source path with it, or the recomputed defaults would keep pointing at the old repository path
     await waitFor(() =>
       expect(dashboard.setState).toHaveBeenCalledWith({
         meta: {
@@ -1618,7 +1618,7 @@ describe('SaveProvisionedDashboardForm', () => {
           k8s: {
             name: 'existing-uid',
             resourceVersion: '42',
-            annotations: { [AnnoKeySourcePath]: 'My Team/test-dashboard.json' },
+            annotations: {},
           },
         },
       })

@@ -9,6 +9,7 @@ import {
   AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
+  AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
@@ -50,9 +51,12 @@ export function nextMetaAfterSaveAsFolderChange(
   const currentAnnotations = currentMeta.k8s?.annotations ?? {};
   const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
 
-  // Drop previous folder's manager annotations; keep everything else (including denylist).
+  // Drop the previous folder's manager annotations, and the source path with them: it records where
+  // the file currently lives, so keeping it would pin generatePath() to the old folder and revert the
+  // pick. Everything else is kept (including denylist).
+  const droppedAnnotations = new Set<string>([AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath]);
   const preservedAnnotations = Object.fromEntries(
-    Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
+    Object.entries(currentAnnotations).filter(([key]) => !droppedAnnotations.has(key))
   );
 
   return {
