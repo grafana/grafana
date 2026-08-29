@@ -100,6 +100,10 @@ type AppPluginAPIBuilder struct {
 
 	// Manifest kind storage by resource, used to dispatch admission hooks.
 	kinds map[schema.GroupVersionResource]*kindStore
+
+	// How each manifest kind is authorized, by resource. Built from the
+	// manifest, so the authorizer can run before storage is installed.
+	kindPolicies map[string]kindPolicy
 }
 
 func NewAppPluginAPIBuilder(
@@ -117,6 +121,7 @@ func NewAppPluginAPIBuilder(
 	return &AppPluginAPIBuilder{
 		group:           apiGroupForPlugin(plugin),
 		manifest:        plugin.Manifest,
+		kindPolicies:    kindPolicies(plugin.Manifest),
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3:        clientV3,
@@ -149,6 +154,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	accessControl ac.AccessControl,
+	acService ac.Service,
 	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
@@ -207,6 +213,12 @@ func RegisterAPIService(
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		// Unified storage checks every *.ext.grafana.app group, and nothing else
+		// grants the actions a manifest kind is checked against.
+		if err := declareManifestRoles(acService, b.group, plugin.JSONData.Name, plugin.Manifest); err != nil {
+			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
 		}
 
 		apiRegistrar.RegisterAPI(b)
