@@ -23,7 +23,7 @@ import (
 // run anywhere else rather than trusting a setting to be in the right place.
 func TestProvideServiceOnlyRunsInDev(t *testing.T) {
 	_, err := ProvideService(&setting.Cfg{Raw: ini.Empty(), Env: setting.Prod},
-		nil, nil, nil, nil, mux.NewRouter(), nil, nil)
+		nil, nil, nil, nil, mux.NewRouter(), nil, nil, PluginDeps{})
 	require.ErrorContains(t, err, "only runs when app_mode is")
 }
 

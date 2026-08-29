@@ -5,12 +5,14 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/pluginrouter"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,6 +42,7 @@ type (
 	initializeForCLIFn           func(context.Context, *setting.Cfg) (Runner, error)
 	initializeAPIServerFactoryFn func() (standalone.APIServerFactory, error)
 	initializeRouterFactoryFn    func() (router.RouterFactory, error)
+	initializePluginRouterDepsFn func(context.Context, *setting.Cfg) (pluginrouter.PluginDeps, error)
 )
 
 var (
@@ -48,6 +51,7 @@ var (
 	initializeForCLIServer         initializeForCLIFn
 	initializeAPIServerFactoryFunc initializeAPIServerFactoryFn
 	initializeRouterFactoryFunc    initializeRouterFactoryFn
+	initializePluginRouterDepsFunc initializePluginRouterDepsFn
 )
 
 // RegisterInitializers wires OSS dependency-injection entrypoints implemented in
@@ -58,12 +62,14 @@ func RegisterInitializers(
 	initializeForCLI initializeForCLIFn,
 	initializeAPIServerFactory initializeAPIServerFactoryFn,
 	initializeRouterFactory initializeRouterFactoryFn,
+	initializePluginRouterDeps initializePluginRouterDepsFn,
 ) {
 	initializeServer = initialize
 	initializeForTestServer = initializeForTest
 	initializeForCLIServer = initializeForCLI
 	initializeAPIServerFactoryFunc = initializeAPIServerFactory
 	initializeRouterFactoryFunc = initializeRouterFactory
+	initializePluginRouterDepsFunc = initializePluginRouterDeps
 }
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -88,4 +94,14 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 
 func InitializeRouterFactory() (router.RouterFactory, error) {
 	return initializeRouterFactoryFunc()
+}
+
+// InitializePluginRouterDeps builds the plugin stack the plugin-router module serves
+// through. It is only wired in OSS builds; an edition that has not registered
+// it says so rather than starting a module that cannot reach a plugin.
+func InitializePluginRouterDeps(ctx context.Context, cfg *setting.Cfg) (pluginrouter.PluginDeps, error) {
+	if initializePluginRouterDepsFunc == nil {
+		return pluginrouter.PluginDeps{}, errors.New("the plugin router's dependencies are not wired in this build")
+	}
+	return initializePluginRouterDepsFunc(ctx, cfg)
 }

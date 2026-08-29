@@ -30,14 +30,22 @@ The router itself is generic and knows nothing about plugins — it is a reconci
 behind a `RoutesLoader`, and owns no listener (`pkg/router/AGENTS.md`). This module is
 everything it leaves to its caller:
 
+- **[`PluginDeps`](deps.go)** — the plugin stack, built by
+  `server.InitializePluginRouterDeps` from the CLI wire set. It is the same set of components a
+  Grafana server builds, because a plugin backend cannot be started without most of them:
+  the database the plugin stack keeps its state in, access control for the roles a plugin
+  declares, external service accounts, the core plugin registry the backend factory comes
+  from. What this target leaves out is the HTTP server in front of all of it.
 - **[`Loader`](loader.go)** — the `RoutesLoader`. Rescans the plugin sources on every
   `Load` and returns one
   [`pluginroute.Backend`](../../registry/apis/appplugin/pluginroute) per app plugin that
   carries a manifest. A plugin it cannot build is logged and dropped, never returned as an
   error: `Load` reports one desired state, so failing it would take down every other group
   along with the bad one.
-- **[`Service`](service.go)** — the dskit service. Builds the loader, runs the router's
-  reconcile loop, and mounts `HandleFunc` under `/apis` and `/openapi/v3`.
+- **[`Service`](service.go)** — the dskit service. Runs the plugin store as a subservice
+  (so plugin backends come up before their groups are served, and stop with the module),
+  builds the loader, runs the router's reconcile loop, and mounts `HandleFunc` under
+  `/apis` and `/openapi/v3`.
 - **[`loginGate`](login.go)** — `/login`, `/logout`, and the session that turns a signed-in
   request into one the groups will serve. Every request to a group goes through it.
 - **[`swaggerUI`](swagger.go)** — `/swagger` and the assets it loads under `/public/`. The
@@ -92,14 +100,28 @@ in the wrong place, and a refusal cannot. See `loginGate` in [login.go](login.go
 Real authentication in front of this listener is the work that has to happen before any of
 this stops being development-only.
 
+## Reaching the plugin
+
+A group's admission hooks, conversion and custom routes all dispatch to the plugin's
+protocol v3 backend. The client is lazy (`v3.NewLazyClient`), resolved on the request that
+needs it rather than when the group is built: the store starts backends on its own
+schedule and the router may well build a group first, so resolving early would write a
+plugin off for the life of the process.
+
+With no loader wired there is no backend to reach, and `unavailableClient` reports that
+rather than being nil — a kind that declares admission is refused a nil client when its
+storage is built, which would cost the plugin its entire API group over one hook.
+
 ## What does not work yet
 
-- **No plugin backend is running.** This process finds plugins on disk; it does not start
-  them, so there is no gRPC client to one. The group is still served — reads and writes of
-  its kinds work — but anything that needs the plugin itself (admission, conversion, the
-  manifest's custom routes) fails closed with `503 the plugin backend is not running in
-  this process`. See `unavailableClient` in [loader.go](loader.go) for why that is a
-  client that refuses rather than a nil one.
+- **OSS only.** `server.InitializePluginRouterDeps` is registered from
+  `pkg/server/bootstrap/wire`, which is an OSS-only package; an enterprise build has no
+  equivalent yet and the module fails at startup saying so, rather than running without a
+  way to reach a plugin.
+- **Bundled datasources do not start.** The store loads every plugin, including the
+  datasources shipped with Grafana, and a backend-only checkout has no binaries built for
+  them. Each logs `Could not start plugin backend` and is skipped. None of them is an app
+  plugin, so nothing this target serves is affected.
 - **No secure values.** Decrypting them needs a service this process does not have, so a
   kind with inline secure values cannot be read.
 - **No folders.** A kind with folder support can be written into a folder by name, but

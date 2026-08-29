@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,7 +44,17 @@ type pluginSources interface {
 // with. They are the same for all of them: one process, one storage backend,
 // one set of feature toggles.
 type LoaderOptions struct {
-	Sources         pluginSources
+	Sources pluginSources
+
+	// ClientV3Loader hands out a plugin's protocol v3 client. Each group gets a
+	// lazy one, resolved per request, because the store may still be loading
+	// the plugin when the router first builds its backend.
+	ClientV3Loader v3.ClientV3Loader
+
+	// PluginClient and ContextProvider serve the settings subresources.
+	PluginClient    appplugin.PluginClient
+	ContextProvider appplugin.PluginContextWrapper
+
 	Storage         pluginroute.StorageProvider
 	Search          resourcepb.ResourceIndexClient
 	Tracer          tracing.Tracer
@@ -132,10 +143,12 @@ func (l *Loader) Load(ctx context.Context) ([]router.Backend, error) {
 			ExternalAddress:  l.opts.ExternalAddress,
 			Authorizer:       l.opts.Authorizer,
 
-			// This process discovers plugins on disk; it does not start them,
-			// so there is no plugin backend to reach -- see unavailableClient
-			// for what stands in and why it is not simply nil.
-			ClientV3: unavailableClient{},
+			// Lazy, like the in-process API builder's: the client is resolved
+			// on the request that needs it, not when the group is built, so a
+			// plugin whose backend is still starting is not written off.
+			ClientV3:        l.clientV3(plugin.JSONData.ID),
+			PluginClient:    l.opts.PluginClient,
+			ContextProvider: l.opts.ContextProvider,
 		})
 		if err != nil {
 			l.log.Error("skipping app plugin", "pluginId", plugin.JSONData.ID, "error", err)
@@ -157,21 +170,26 @@ func (l *Loader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return make(chan struct{}), nil
 }
 
-// unavailableClient stands in for the plugin backend this process does not run.
+// clientV3 is how a group reaches its plugin's backend.
 //
-// It is not nil, and the difference matters. A kind that declares admission is
-// refused a nil client when its storage is built -- deliberately, because a
-// declared hook that cannot be reached would reject every write, and that is
-// better found at startup than per request. But here it is startup for the
-// whole group: a nil client means the plugin's entire API group fails to load
-// and the router serves nothing for it, when everything in that group other
-// than the hook is perfectly servable.
+// It resolves per request rather than at build time (see v3.NewLazyClient): the
+// plugin store loads plugins and starts their backends on its own schedule, and
+// the router may well build a group's backend first. Resolving early would
+// write the plugin off for the life of the process.
 //
-// So the check is answered honestly rather than bypassed: there is a client,
-// and it reports what is actually true -- the plugin backend is not running.
-// Reads and writes of the group's kinds work, and the operations that need the
-// plugin (admission, conversion, the manifest's custom routes) fail closed with
-// 503 rather than taking the group down with them.
+// Without a loader there is no backend to reach, and the stand-in reports that
+// rather than being nil -- a kind that declares admission is refused a nil
+// client when its storage is built, which would cost the plugin its whole API
+// group over a hook, when everything else in the group is servable.
+func (l *Loader) clientV3(pluginID string) v3.ClientV3 {
+	if l.opts.ClientV3Loader == nil {
+		return unavailableClient{}
+	}
+	return v3.NewLazyClient(l.opts.ClientV3Loader, pluginID)
+}
+
+// unavailableClient stands in when no plugin backend is reachable. See
+// clientV3.
 type unavailableClient struct{}
 
 var _ v3.ClientV3 = unavailableClient{}

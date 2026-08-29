@@ -171,6 +171,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ofrep"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	service8 "github.com/grafana/grafana/pkg/services/plugindashboards/service"
+	"github.com/grafana/grafana/pkg/services/pluginrouter"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
@@ -1930,6 +1931,224 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.Modul
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	moduleRunner := server.NewModuleRunner(cfg, ossImpl, featureToggles)
 	return moduleRunner, nil
+}
+
+// InitializePluginRouterDeps builds the plugin stack the plugin-router module serves
+// through: the plugin store that loads plugins and starts their backends, the
+// clients that talk to them, and the sources they were discovered in.
+//
+// It is built from the CLI set rather than a set of its own because a plugin
+// backend cannot be started without most of what a Grafana server is made of --
+// the database the plugin stack keeps its state in, access control for the
+// roles a plugin declares, external service accounts, the core plugin registry
+// the backend factory is built from. What the module leaves out is the HTTP
+// server in front of all of it.
+func InitializePluginRouterDeps(ctx context.Context, cfg *setting.Cfg) (pluginrouter.PluginDeps, error) {
+	inMemory := registry.ProvideService()
+	ossImpl := setting.ProvideProvider(cfg)
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
+	pluginManagementCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, ossImpl, featureToggles)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	pluginsourcesService := pluginsources.ProvideService(cfg, pluginManagementCfg)
+	discovery := pipeline.ProvideDiscoveryStage(pluginManagementCfg, inMemory)
+	ossMigrations := migrations.ProvideOSSMigrations(featureToggles)
+	configProvider, err := configprovider.ProvideService(cfg)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	tracingService, err := tracing.ProvideService(tracingConfig)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	inProcBus := bus.ProvideBus(tracingService)
+	sqlStore, err := sqlstore.ProvideService(cfg, featureToggles, ossMigrations, inProcBus, tracingService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	kvStore := kvstore.ProvideService(sqlStore)
+	keystoreService := keystore.ProvideService(kvStore)
+	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
+	keyretrieverService := keyretriever.ProvideService(keyRetriever)
+	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
+	localProvider := pluginassets.NewLocalProvider()
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, localProvider, pluginscdnService)
+	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
+	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
+	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
+	angulardetectorsproviderDynamic, err := angulardetectorsprovider.ProvideDynamic(cfg, angularpatternsstoreService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	angularinspectorService, err := angularinspector.ProvideService(angulardetectorsproviderDynamic)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	validate := pipeline.ProvideValidationStage(pluginManagementCfg, validation, angularinspectorService)
+	tracer := server.OtelTracer()
+	ossDataSourceRequestURLValidator := validations.ProvideURLValidator()
+	httpclientProvider := httpclientprovider.New(cfg, ossDataSourceRequestURLValidator, tracingService)
+	azuremonitorService := azuremonitor.ProvideService(httpclientProvider)
+	cloudwatchService := cloudwatch.ProvideService()
+	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
+	testdatasourceService := testdatasource.ProvideService()
+	systemUsers := store.ProvideSystemUsersService()
+	storageService, err := store.ProvideService(sqlStore, cfg, systemUsers)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, testdatasourceService, grafanadsService)
+	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
+	processService := process.ProvideService()
+	routeRegisterImpl := routing.ProvideRegister()
+	cacheService := localcache.ProvideService()
+	accessControl := acimpl.ProvideAccessControl(featureToggles)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
+	orgService, err := orgimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	eventualRestConfigProvider := apiserver.ProvideEventualRestConfigProvider()
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	bundleregistryService := bundleregistry.ProvideService()
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	actionSetService := resourcepermissions.NewActionSetService()
+	permissionRegistry := permreg.ProvidePermissionRegistry()
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
+	registerer := metrics.ProvideRegisterer()
+	storeProvider := store2.ProvideDefaultStoreProvider()
+	v := authz.ProvideReconcileCRDs()
+	defaultElector := leaderelection.NewDefaultElector()
+	zanzanaServer, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider, v, defaultElector)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userimplService, actionSetService, featureToggles, tracingService, permissionRegistry, serverLockService, zanzanaClient, eventualRestConfigProvider)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	apikeyService, err := apikeyimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	hooksService := hooks.ProvideService()
+	ossLicensingService := licensing.ProvideService(cfg, hooksService)
+	retrieverService := retriever.ProvideService(sqlStore, apikeyService, kvStore, userimplService, orgService)
+	serviceAccountPermissionsService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, accessControl, ossLicensingService, retrieverService, acimplService, teamimplService, userimplService, actionSetService, eventualRestConfigProvider)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	serviceAccountsService, err := manager2.ProvideServiceAccountsService(cfg, usageStats, sqlStore, apikeyService, kvStore, userimplService, orgService, acimplService, serviceAccountPermissionsService, serverLockService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	providerProvider := provider.ProvideEncryptionProvider()
+	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
+	secretsService, err := manager.ProvideSecretsService(tracingService, secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	extSvcAccountsService := extsvcaccounts.ProvideExtSvcAccountsService(acimplService, cfg, inProcBus, sqlStore, featureToggles, registerer, serviceAccountsService, secretsService, tracingService)
+	registryRegistry := registry2.ProvideExtSvcRegistry(cfg, extSvcAccountsService, serverLockService, featureToggles)
+	service12 := service3.ProvideService(sqlStore, secretsService)
+	serviceregistrationService := serviceregistration.ProvideService(cfg, featureToggles, registryRegistry, service12)
+	pluginInstanceCfg, err := pluginconfig.ProvidePluginInstanceConfig(cfg, ossImpl, featureToggles)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	licensingService := licensing2.ProvideLicensing(cfg, ossLicensingService)
+	ssosettingsimplService := ssosettingsimpl.ProvideService(cfg, configProvider, legacyDatabaseProvider, accessControl, routeRegisterImpl, featureToggles, secretsService, usageStats, registerer, ossImpl, ossLicensingService)
+	defaultSettingsProvider := pluginsso.ProvideDefaultSettingsProvider(ssosettingsimplService)
+	marketplacelicensingLicensing := marketplacelicensing.Provide(cfg)
+	envVarsProvider := pluginconfig.NewEnvVarsProvider(pluginInstanceCfg, licensingService, defaultSettingsProvider, marketplacelicensingLicensing)
+	noop := provisionedplugins.NewNoop()
+	initialize := pipeline.ProvideInitializationStage(pluginManagementCfg, inMemory, backendFactoryProvider, processService, serviceregistrationService, acimplService, actionSetService, envVarsProvider, tracingService, noop)
+	terminate, err := pipeline.ProvideTerminationStage(pluginManagementCfg, inMemory, processService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	errorRegistry := pluginerrs.ProvideErrorTracker()
+	loaderLoader := loader.ProvideService(pluginManagementCfg, discovery, bootstrap, validate, initialize, terminate, errorRegistry)
+	pluginstoreService, err := pluginstore.ProvideService(inMemory, pluginsourcesService, loaderLoader, featureToggles)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	remoteCache, err := remotecache.ProvideService(cfg, sqlStore, usageStats, secretsService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
+	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, configProvider, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
+	ossCachingService := caching.ProvideCachingService()
+	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	ossProvider := guardian.ProvideGuardian()
+	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
+	secretsKVStore, err := kvstore2.ProvideService(sqlStore, secretsService)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
+	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
+	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever)
+	if err != nil {
+		return pluginrouter.PluginDeps{}, err
+	}
+	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
+	pluginDeps := pluginrouter.PluginDeps{
+		Store:           pluginstoreService,
+		Client:          middlewareHandler,
+		ClientV3Loader:  pluginstoreService,
+		ContextProvider: plugincontextProvider,
+		Sources:         pluginsourcesService,
+	}
+	return pluginDeps, nil
 }
 
 // Initialize the standalone APIServer factory

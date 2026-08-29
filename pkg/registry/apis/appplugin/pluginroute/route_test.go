@@ -3,6 +3,7 @@ package pluginroute
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,8 +24,10 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
+	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -82,12 +86,18 @@ func TestManifestDescribesWhatIsServed(t *testing.T) {
 	// v1alpha1 from the manifest, then the settings version every app plugin
 	// serves whether or not its manifest mentions one. The unserved v2alpha1 is
 	// gone: advertising it would route requests to a version with no storage.
-	require.Equal(t, []app.ManifestVersion{
-		{Name: "v1alpha1", Served: true, Kinds: m.Versions[0].Kinds},
-		{Name: "v0alpha1", Served: true},
-	}, m.Versions)
+	names := make([]string, 0, len(m.Versions))
+	for _, v := range m.Versions {
+		require.True(t, v.Served, "an unserved version must not be advertised: %s", v.Name)
+		names = append(names, v.Name)
+	}
+	require.Equal(t, []string{"v1alpha1", "v0alpha1"}, names)
 	require.Equal(t, "v1alpha1", m.PreferredVersion)
+
+	// The declared version keeps what it declared; the synthesized one has
+	// nothing of its own to carry.
 	require.Len(t, m.Versions[0].Kinds, 1)
+	require.Empty(t, m.Versions[1].Kinds)
 }
 
 // A manifest that declares no group is still served, under the plugin id. The
@@ -142,6 +152,37 @@ func TestLoadServesOpenAPIV3(t *testing.T) {
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	// A custom route from the manifest, which only this backend can serve.
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
+}
+
+// A manifest's custom routes are not resource storage, so they are mounted
+// separately from the group. Missing that step costs every declared route with
+// no error anywhere -- an unmatched path is just a not-found.
+func TestLoadServesManifestRoutes(t *testing.T) {
+	handler := withRequester(loadHandler(t, testPlugin(), allowAll(testOptions())))
+	root := "/apis/example.ext.grafana.com/v1alpha1"
+
+	// A version's routes go straight to the plugin, so reaching the client is
+	// the whole of what they do -- and proves the route is mounted rather than
+	// merely absent in a different way.
+	for _, path := range []string{
+		root + "/things",                     // cluster
+		root + "/namespaces/default/widgets", // namespaced
+	} {
+		t.Run(path, func(t *testing.T) {
+			res := get(t, handler, path)
+			require.Contains(t, res.Body.String(), errStubRoute.Error(),
+				"the route did not reach the plugin (%d)", res.Code)
+		})
+	}
+
+	// A kind's route looks its parent object up first, which needs storage this
+	// test does not have, so it stops short of the plugin. Mounted is all that
+	// can be checked here.
+	t.Run(root+"/namespaces/default/testkinds/{name}/reload", func(t *testing.T) {
+		res := get(t, handler, root+"/namespaces/default/testkinds/some-name/reload")
+		require.NotEqual(t, http.StatusNotFound, res.Code,
+			"the route is not mounted: %s", res.Body.String())
+	})
 }
 
 // The router's port runs outside the Kubernetes handler chain, so a request
@@ -259,6 +300,9 @@ func testOptions() Options {
 	return Options{
 		ResourceVersion: "rv-1",
 		BuildVersion:    "12.3.4",
+		// The manifest's routes dispatch to this, so it has to exist for them
+		// to be reachable at all.
+		ClientV3: stubClientV3{},
 		// Storage is installed but never read: these tests reach discovery and
 		// authorization, neither of which touches a stored object.
 		Storage: func(_ *runtime.Scheme, codecs serializer.CodecFactory, gvs []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
@@ -266,6 +310,28 @@ func testOptions() Options {
 				storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, nil, nil), nil
 		},
 	}
+}
+
+// errStubRoute is what a manifest route's dispatch returns here, so a test can
+// tell "reached the plugin" from "never got there".
+var errStubRoute = errors.New("the stub plugin client was called")
+
+// stubClientV3 stands in for the plugin backend. Nothing in these tests is
+// answered by a plugin; they check that requests arrive at one.
+type stubClientV3 struct{}
+
+var _ v3.ClientV3 = stubClientV3{}
+
+func (stubClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+	return nil, errStubRoute
+}
+
+func (stubClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	return nil, errStubRoute
+}
+
+func (stubClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest, ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
+	return nil, errStubRoute
 }
 
 func testPlugin() definition.PluginDefinition {
@@ -283,18 +349,17 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
+					Routes: app.ManifestVersionRoutes{
+						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
+						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
+					},
 					Kinds: []app.ManifestVersionKind{{
 						Kind:   "TestKind",
 						Plural: "TestKinds",
 						Scope:  "Namespaced",
 						Schema: testSchema(),
 						Routes: map[string]spec3.PathProps{
-							"/reload": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
-								OperationId: "reloadTestKind",
-								Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-									Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-								}},
-							}}},
+							"/reload": {Get: testOperation("reloadTestKind")},
 						},
 					}},
 				},
@@ -302,6 +367,17 @@ func testPlugin() definition.PluginDefinition {
 			},
 		},
 	}
+}
+
+// testOperation is the smallest declaration a route needs to be mounted and
+// described.
+func testOperation(id string) *spec3.Operation {
+	return &spec3.Operation{OperationProps: spec3.OperationProps{
+		OperationId: id,
+		Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
+			Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
+		}},
+	}}
 }
 
 func testSchema() *app.VersionSchema {

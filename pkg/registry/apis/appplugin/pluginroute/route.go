@@ -302,6 +302,23 @@ func (b *Backend) Load(ctx context.Context) (http.Handler, error) {
 		return nil, fmt.Errorf("%s: install group: %w", b.group, err)
 	}
 
+	// The manifest's custom routes are not resource storage, so InstallAPIGroup
+	// does not mount them: they are added to the web services it just
+	// registered. Without this the group serves its kinds and answers 404 for
+	// every route the manifest declares -- and says nothing about why, because
+	// an unmatched path is a not-found, not an error.
+	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		if err := builder.AugmentWebServicesWithCustomRoutes(
+			server.Handler.GoRestfulContainer,
+			[]builder.APIGroupBuilder{b.builder},
+			reg,
+			apiResourceConfig,
+		); err != nil {
+			server.Destroy()
+			return nil, fmt.Errorf("%s: install custom routes: %w", b.group, err)
+		}
+	}
+
 	// Installs the OpenAPI v3 endpoints -- which the router proxies to this
 	// backend -- and the health endpoints, on the handler. It starts nothing;
 	// Run does that, and is never called here. Post start hooks are not run

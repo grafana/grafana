@@ -14,6 +14,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/router"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -55,6 +58,11 @@ type Service struct {
 	// login is the sign-in gate in front of the identity. Every request that
 	// reaches a group goes through it.
 	login *loginGate
+
+	// plugins loads the plugins and starts their backends. It is run as a
+	// subservice so the backends come up before the router serves their groups
+	// and are torn down with this module.
+	plugins *pluginstore.Service
 }
 
 // readyNotifier is the part of the module server's health notifier this
@@ -80,6 +88,7 @@ func ProvideService(
 	httpRouter *mux.Router,
 	ready readyNotifier,
 	license licensing.Licensing,
+	deps PluginDeps,
 ) (*Service, error) {
 	logger := log.New("plugin-router")
 
@@ -105,7 +114,13 @@ func ProvideService(
 
 	apiserverCfg := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	loader, err := NewLoader(LoaderOptions{
-		Sources: pluginsources.ProvideService(cfg, pluginCfg),
+		// The sources the plugin store loaded from, so the groups served are
+		// the plugins that are actually running -- not a second, independent
+		// reading of the same directories.
+		Sources:         sourcesOr(deps.Sources, cfg, pluginCfg),
+		ClientV3Loader:  deps.ClientV3Loader,
+		PluginClient:    deps.Client,
+		ContextProvider: deps.ContextProvider,
 		// Secure values are decrypted by a service this process does not have,
 		// so a kind with inline secure values cannot be read yet.
 		Storage:          pluginroute.UnifiedStorage(client, nil),
@@ -129,10 +144,11 @@ func ProvideService(
 	gate.register(httpRouter)
 
 	s := &Service{
-		log:    logger,
-		router: router.NewGrafanaRouter(loader),
-		ready:  ready,
-		login:  gate,
+		log:     logger,
+		router:  router.NewGrafanaRouter(loader),
+		ready:   ready,
+		login:   gate,
+		plugins: deps.Store,
 	}
 	s.registerRoutes(httpRouter)
 	newSwaggerUI(cfg, license).register(httpRouter)
@@ -175,6 +191,15 @@ func (s *Service) redirectRoot(w http.ResponseWriter, req *http.Request) {
 // start runs the reconcile loop, then reports readiness once the router has a
 // routing table to serve from.
 func (s *Service) start(ctx context.Context) error {
+	// Before the router, so the groups it builds have backends to reach. The
+	// store loads eagerly in its constructor unless the store-service feature
+	// is on, in which case this is what loads them.
+	if s.plugins != nil {
+		if err := services.StartAndAwaitRunning(ctx, s.plugins); err != nil {
+			return fmt.Errorf("starting the plugin store: %w", err)
+		}
+	}
+
 	if err := s.router.Run(ctx); err != nil {
 		return fmt.Errorf("starting router: %w", err)
 	}
@@ -216,7 +241,21 @@ func (s *Service) stop(failureReason error) error {
 	if s.ready != nil {
 		s.ready.SetNotReady()
 	}
-	return nil
+	if s.plugins == nil {
+		return nil
+	}
+	// Stopping the store terminates the plugin backends it started.
+	return services.StopAndAwaitTerminated(context.Background(), s.plugins)
+}
+
+// sourcesOr prefers the registry the plugin store loaded from, and falls back
+// to reading the configured plugin paths when there is no store -- the module
+// still serves what it can find, it just cannot reach any of it.
+func sourcesOr(registry sources.Registry, cfg *setting.Cfg, pluginCfg *config.PluginManagementCfg) sources.Registry {
+	if registry != nil {
+		return registry
+	}
+	return pluginsources.ProvideService(cfg, pluginCfg)
 }
 
 // serviceIdentityAuthorizer is how the groups this process serves authorize a

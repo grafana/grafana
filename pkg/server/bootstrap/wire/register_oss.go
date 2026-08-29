@@ -12,5 +12,6 @@ func init() {
 		InitializeForCLI,
 		InitializeAPIServerFactory,
 		InitializeRouterFactory,
+		InitializePluginRouterDeps,
 	)
 }

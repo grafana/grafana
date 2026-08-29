@@ -29,7 +29,11 @@ The same pipeline a Grafana server runs for this plugin, over one group:
    admission and authorizer, all read off the manifest.
 2. `builder.SetupConfig` — the OpenAPI definitions and post-processors, the admission
    chain, and the Grafana handler chain.
-3. `GenericAPIServer` with the getter `Options.Storage` builds, then `InstallAPIGroup`.
+3. `GenericAPIServer` with the getter `Options.Storage` builds, then `InstallAPIGroup`,
+   then `AugmentWebServicesWithCustomRoutes`. The second step is easy to miss and says
+   nothing when it is: the manifest's own routes are not resource storage, so
+   `InstallAPIGroup` does not mount them, and a path nobody mounted is a plain 404 with no
+   error behind it.
 4. `PrepareRun`, which installs the `/openapi/v3` endpoints. **The router proxies
    `/openapi/v3/apis/<group>/<version>` to this handler**, so skipping this step does not
    cost a document nobody reads — it 404s an endpoint the router advertises.

@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
@@ -129,6 +130,40 @@ func TestLoadServesKindsThatDeclareAdmission(t *testing.T) {
 	handler, err := backends[0].Load(context.Background())
 	require.NoError(t, err)
 	require.NotNil(t, handler)
+}
+
+// A group reaches its plugin through a lazy client, resolved on the request
+// that needs it. Resolving when the group is built would write off a plugin
+// whose backend the store has not finished starting.
+func TestClientV3IsLazyWhenALoaderIsWired(t *testing.T) {
+	loader := testLoader(t, "testdata/with-manifest")
+
+	// With nothing to resolve through, the stand-in reports the truth.
+	require.IsType(t, unavailableClient{}, loader.clientV3("grafana-example-app"))
+
+	resolver := &countingLoader{}
+	loader.opts.ClientV3Loader = resolver
+	client := loader.clientV3("grafana-example-app")
+	require.NotNil(t, client)
+	require.Zero(t, resolver.calls, "the client must not be resolved before it is used")
+
+	_, err := client.CallRoute(context.Background(), nil)
+	require.Error(t, err)
+	require.Equal(t, 1, resolver.calls, "and must be resolved when it is")
+	require.Equal(t, "grafana-example-app", resolver.lastID)
+}
+
+// countingLoader records what the lazy client asks it for, and never has an
+// answer -- these tests are about when it is asked, not what comes back.
+type countingLoader struct {
+	calls  int
+	lastID string
+}
+
+func (l *countingLoader) ClientV3(_ context.Context, pluginID string) (v3.ClientV3, bool) {
+	l.calls++
+	l.lastID = pluginID
+	return nil, false
 }
 
 // The client that stands in for the plugin backend reports it is unreachable,

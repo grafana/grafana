@@ -329,11 +329,19 @@ func (s *ModuleServer) initPluginRouter() (services.Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connecting to unified storage: %w", err)
 	}
+
+	// The plugin stack, built by its own pass over the wire graph: a plugin
+	// backend cannot be started without most of what a Grafana server is made
+	// of, and this module is not built from that graph.
+	deps, err := InitializePluginRouterDeps(s.context, s.cfg)
+	if err != nil {
+		return nil, fmt.Errorf("building the plugin stack: %w", err)
+	}
 	// The instrumentation server owns this target's only HTTP listener and
 	// its health endpoints, so the router mounts onto its router and reports
 	// through its notifier rather than opening a second port.
 	return pluginrouter.ProvideService(s.cfg, s.features, s.tracer, s.registerer, client,
-		s.httpServerRouter, s.healthNotifier, s.license)
+		s.httpServerRouter, s.healthNotifier, s.license, deps)
 }
 
 // pluginRouterStorage returns the unified storage client the plugin router
