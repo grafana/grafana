@@ -30,6 +30,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,6 +68,12 @@ type AppPluginRunnerOptions struct {
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
+
+	// Whether the generic search endpoints are served, read from the same
+	// settings the rest of the apiserver reads them from -- a manifest kind is
+	// searchable on the terms every other kind is.
+	SearchAPIEnabled bool
+	TrashAPIEnabled  bool
 
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
@@ -159,6 +166,10 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
+	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+
 	// Find all local plugins
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
@@ -197,6 +208,9 @@ func RegisterAPIService(
 				DataProxyLogging:         cfg.DataProxyLogging,
 				SendUserHeader:           cfg.SendUserHeader,
 				PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
+
+				SearchAPIEnabled: searchAPIEnabled,
+				TrashAPIEnabled:  trashAPIEnabled,
 			},
 			tracer,
 			features,

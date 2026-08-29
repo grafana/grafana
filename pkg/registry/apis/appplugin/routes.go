@@ -20,9 +20,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -82,18 +81,14 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
 	}
 
-	// A manifest whose searchFields cannot be read cannot be searched, but the
-	// rest of its API still works, so this drops search rather than the group.
-	var searcher *search.Handler
-	if b.search != nil {
-		fields, err := resource.ManifestBackedProvider(b.manifest)
-		if err != nil {
-			logging.DefaultLogger.Error("invalid manifest search fields; search and trash routes are not served",
-				"group", gv.Group, "version", gv.Version, "error", err)
-		} else {
-			searcher = search.NewHandler(b.search, fields, b.tracer)
-		}
+	// A manifest whose search declarations cannot be read cannot be searched, but
+	// the rest of its API still works, so this drops search rather than the group.
+	searchHandlers, err := b.searchRoutes(gv)
+	if err != nil {
+		logging.DefaultLogger.Error("invalid manifest search declarations; search and trash routes are not served",
+			"group", gv.Group, "version", gv.Version, "error", err)
 	}
+	routes.Namespace = append(routes.Namespace, searchHandlers...)
 
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
@@ -104,22 +99,6 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 		if kind.Scope == clusterScope {
 			dst = &routes.Root
 			params = []*spec3.Parameter{namePathParameter()}
-		}
-
-		// Cluster scoped kinds are not indexed, so they have nothing to search.
-		if searcher != nil && kind.Scope != clusterScope {
-			register := func(route search.Route) {
-				*dst = append(*dst, builder.APIRouteHandler{
-					Path:    route.Path,
-					Spec:    route.Spec,
-					Schemas: route.Schemas,
-					Handler: route.Handler,
-				})
-			}
-
-			// TODO: drive this from manifest properties, and serve
-			// searcher.TrashRoute once trash is wired up to search.
-			register(searcher.SearchRoute(gv.Group, gv.Version, plural, kind.Kind))
 		}
 
 		for path, props := range kind.Routes {
@@ -139,6 +118,48 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	}
 
 	return routes
+}
+
+// searchRoutes builds the generic search and trash endpoints for the kinds this
+// version serves.
+//
+// Delegated to searchroutes rather than mounted per kind here, because which
+// kinds get these endpoints is not a decision this builder should be making on
+// its own: the same manifest served as a custom resource definition goes through
+// the same package, and a kind that is searchable one way must be searchable the
+// other. That is where the config toggles, the enrolment rule and each kind's
+// own opt-out are applied.
+func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.APIRouteHandler, error) {
+	if b.search == nil {
+		return nil, nil
+	}
+
+	// searchroutes matches manifests to served versions by the manifest's own
+	// group, which is not always the group the plugin is served under. See
+	// apiGroupForPlugin.
+	manifest := *b.manifest
+	manifest.Group = b.group
+
+	built, err := searchroutes.BuildForServedGroupVersions(
+		[]*app.ManifestData{&manifest},
+		map[schema.GroupVersion]bool{gv: true},
+		b.opts.SearchAPIEnabled,
+		b.opts.TrashAPIEnabled,
+		b.tracer,
+		b.search,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var handlers []builder.APIRouteHandler
+	for _, gvRoutes := range built {
+		if gvRoutes.GroupVersion != gv || gvRoutes.Routes == nil {
+			continue
+		}
+		handlers = append(handlers, gvRoutes.Routes.Namespace...)
+	}
+	return handlers, nil
 }
 
 // routeHandler forwards a manifest route to the plugin's v3 route service.

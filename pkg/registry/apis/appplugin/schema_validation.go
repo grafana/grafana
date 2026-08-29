@@ -11,7 +11,18 @@ import (
 
 // newKindSchemaValidator expands refs that kube-openapi's validator cannot resolve.
 func newKindSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenAPIDefinition) validation.SchemaValidator {
-	// The API server validates these common fields.
+	expanded := expandSchemaRefs(kindSchemaRoot(kindSchema), defs, map[string]bool{})
+	return validation.NewSchemaValidatorFromOpenAPI(&expanded)
+}
+
+// kindSchemaRoot drops the fields the API server owns from a kind's schema.
+//
+// A manifest kind's schema describes metadata as a ref to ObjectMeta, which no
+// caller here can resolve: the validator would reject every object against the
+// empty schema the ref expands to, and the structural schema would refuse a
+// property with no type at all. The API server validates these three itself, and
+// pruning leaves them alone at the resource root.
+func kindSchemaRoot(kindSchema spec.Schema) spec.Schema {
 	root := kindSchema
 	root.Properties = maps.Clone(kindSchema.Properties)
 	root.Required = slices.Clone(kindSchema.Required)
@@ -19,8 +30,7 @@ func newKindSchemaValidator(kindSchema spec.Schema, defs map[string]common.OpenA
 		delete(root.Properties, name)
 		root.Required = slices.DeleteFunc(root.Required, func(r string) bool { return r == name })
 	}
-	expanded := expandSchemaRefs(root, defs, map[string]bool{})
-	return validation.NewSchemaValidatorFromOpenAPI(&expanded)
+	return root
 }
 
 // expandSchemaRefs replaces refs with definitions. Cycles become permissive schemas.

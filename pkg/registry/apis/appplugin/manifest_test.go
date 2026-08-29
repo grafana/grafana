@@ -61,6 +61,11 @@ func testManifest(t *testing.T) *app.ManifestData {
 					Kind:   "TestKind",
 					Plural: "TestKinds",
 					Scope:  "Namespaced",
+					// Declared search fields are what enrol a kind in the search
+					// endpoints; the v0alpha1 kind above declares none.
+					SearchFields: []app.ManifestVersionKindSearchField{{
+						Name: "testField", Path: "spec.testField", Type: "string",
+					}},
 					Routes: map[string]spec3.PathProps{
 						"/reload": {Post: operation("reloadTestKind")},
 					},

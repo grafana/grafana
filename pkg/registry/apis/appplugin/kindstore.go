@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -61,6 +62,10 @@ type kindStore struct {
 
 	// validator is nil when the kind has no schema.
 	validator validation.SchemaValidator
+
+	// structural drives pruning and defaulting. Nil when the kind has no schema,
+	// or declares one apiextensions could not serve as a CRD either.
+	structural *structuralschema.Structural
 
 	// fieldManager tracks managedFields on create, which the generic create
 	// handler cannot do for an unstructured kind. See newKindFieldManager.
@@ -127,6 +132,14 @@ func newKindStore(
 		}
 		wrap.validator = newKindSchemaValidator(def.Schema, defs)
 		_, wrap.hasStatus = def.Schema.Properties["status"]
+
+		structural, err := newKindStructuralSchema(def.Schema, defs)
+		if err != nil {
+			logging.DefaultLogger.Warn("manifest kind schema is not structural; the kind is served without pruning or defaulting",
+				"gvk", gvk.String(), "error", err)
+		} else {
+			wrap.structural = structural
+		}
 	}
 
 	// GetResetFields needs hasStatus, which the schema block above resolves.
@@ -279,6 +292,7 @@ func (s *kindStore) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		return
 	}
 	s.restoreGVK(u)
+	s.pruneAndDefault(u)
 	if s.hasStatus {
 		unstructured.RemoveNestedField(u.Object, "status")
 	}
@@ -292,6 +306,7 @@ func (s *kindStore) PrepareForUpdate(ctx context.Context, obj runtime.Object, ol
 		return
 	}
 	s.restoreGVK(u)
+	s.pruneAndDefault(u)
 	if !s.hasStatus {
 		return
 	}
@@ -380,6 +395,7 @@ func (s *kindStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runt
 		return
 	}
 	s.restoreGVK(u)
+	s.pruneAndDefault(u)
 	oldU, ok := old.(*unstructured.Unstructured)
 	if !ok {
 		return

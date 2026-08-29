@@ -146,6 +146,11 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 					Plural: "TestKinds",
 					Scope:  "Namespaced",
 					Schema: &schema,
+					// Declared search fields are what enrol a kind in the
+					// generic search endpoint.
+					SearchFields: []app.ManifestVersionKindSearchField{{
+						Name: "testField", Path: "spec.testField", Type: "string",
+					}},
 					Routes: map[string]spec3.PathProps{
 						"/reload": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
 							OperationId: "reloadTestKind",

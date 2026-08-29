@@ -60,7 +60,17 @@
                   }
                 }
               }
-            }
+            },
+            "searchFields": [
+              {
+                "name": "foo",
+                "path": "spec.foo",
+                "type": "string",
+                "capabilities": [
+                  "filter"
+                ]
+              }
+            ]
           },
           {
             "kind": "Widget",
@@ -78,12 +88,15 @@
                       },
                       "count": {
                         "type": "integer"
+                      },
+                      "tier": {
+                        "type": "string",
+                        "default": "standard"
                       }
                     },
                     "required": [
                       "foo"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   "status": {
                     "type": "object",

@@ -51,6 +51,7 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 		search:     stubIndexClient{},
+		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
 	}
 
 	container := restful.NewContainer()
@@ -94,6 +95,7 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 		group:      manifest.Group,
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
+		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
 	}
 
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
@@ -249,6 +251,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 		search:     stubIndexClient{},
+		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -475,3 +478,74 @@ type unencodableObject struct {
 
 func (*unencodableObject) GetObjectKind() schema.ObjectKind { return schema.EmptyObjectKind }
 func (o *unencodableObject) DeepCopyObject() runtime.Object { return o }
+
+// Which kinds get the generic search endpoints is decided by searchroutes, so a
+// manifest kind is enrolled on the same terms whether this builder serves it or
+// a custom resource definition does. These are that package's rules, asserted
+// here because mounting them is this builder's job.
+func TestSearchRouteGates(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.ext.grafana.com", Version: "v1alpha1"}
+
+	newBuilder := func(opts AppPluginRunnerOptions) *AppPluginAPIBuilder {
+		manifest := testManifest(t)
+		return &AppPluginAPIBuilder{
+			group:      manifest.Group,
+			manifest:   manifest,
+			pluginJSON: plugins.JSONData{ID: "example-app"},
+			search:     stubIndexClient{},
+			opts:       opts,
+		}
+	}
+
+	searchPaths := func(b *AppPluginAPIBuilder) []string {
+		t.Helper()
+		handlers, err := b.searchRoutes(gv)
+		require.NoError(t, err)
+		out := []string{}
+		for _, h := range handlers {
+			out = append(out, h.Path)
+		}
+		return out
+	}
+
+	t.Run("enabled, an enrolled kind is served", func(t *testing.T) {
+		require.Equal(t, []string{"testkinds/search"},
+			searchPaths(newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})))
+	})
+
+	t.Run("the config toggle turns it off", func(t *testing.T) {
+		require.Empty(t, searchPaths(newBuilder(AppPluginRunnerOptions{})))
+	})
+
+	t.Run("a kind declaring no search fields is not enrolled", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
+		b.manifest.Versions[1].Kinds[0].SearchFields = nil
+		require.Empty(t, searchPaths(b))
+	})
+
+	t.Run("a kind can opt out of the endpoint it declared fields for", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
+		off := false
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &off}
+		require.Empty(t, searchPaths(b))
+	})
+
+	t.Run("a cluster scoped kind has no namespace to search", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
+		b.manifest.Versions[1].Kinds[0].Scope = clusterScope
+		require.Empty(t, searchPaths(b))
+	})
+
+	// Trash grants access to whoever deleted the object, so searchroutes holds
+	// an allowlist that no plugin kind is on.
+	t.Run("trash is not served for a plugin kind", func(t *testing.T) {
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(newBuilder(
+			AppPluginRunnerOptions{SearchAPIEnabled: true, TrashAPIEnabled: true})))
+	})
+
+	t.Run("no index client, nothing to serve", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true})
+		b.search = nil
+		require.Empty(t, searchPaths(b))
+	})
+}

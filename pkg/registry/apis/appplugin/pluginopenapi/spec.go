@@ -75,6 +75,11 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		offlineSearchClient{},
 		appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
+			// A rendered spec should describe what a default server serves, and
+			// both endpoints are on unless an operator turns them off. Which
+			// kinds actually get them is still the manifest's decision.
+			SearchAPIEnabled: true,
+			TrashAPIEnabled:  true,
 		},
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),

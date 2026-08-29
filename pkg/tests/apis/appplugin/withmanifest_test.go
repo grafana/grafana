@@ -515,6 +515,25 @@ func TestIntegrationPluginManifestFolderScopedKind(t *testing.T) {
 		require.Contains(t, err.Error(), "no-such-folder")
 	})
 
+	t.Run("the manifest schema prunes and defaults the spec", func(t *testing.T) {
+		const folderUID = "appplugin-widgets-schema"
+		createFolder(t, ctx, helper, folderUID, "App plugin widget schema")
+
+		w := newWidget("widget-schema")
+		w.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+		w.Object["spec"] = map[string]any{"foo": "bar", "notInTheSchema": "dropped"}
+
+		created, err := client.Create(ctx, w, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = client.Delete(ctx, "widget-schema", metav1.DeleteOptions{})
+		})
+
+		// What the same schema would have stored as a custom resource: the
+		// undeclared field pruned, the declared default filled in.
+		require.Equal(t, map[string]any{"foo": "bar", "tier": "standard"}, created.Object["spec"])
+	})
+
 	t.Run("create in a folder round trips", func(t *testing.T) {
 		const folderUID = "appplugin-widgets"
 		createFolder(t, ctx, helper, folderUID, "App plugin widgets")
@@ -589,11 +608,19 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
-	// Every namespaced manifest kind gets the generic search endpoint. It names
-	// its own path, so it can never collide with a kind route, which is always
-	// mounted under an object name.
+	// Search is mounted on the terms every other Grafana kind gets it on: Thing
+	// declares search fields, so it is enrolled, and its endpoint names its own
+	// path so it can never collide with a kind route, which is always mounted
+	// under an object name.
 	require.Contains(t, doc.Paths, prefix+"/search")
-	require.NotContains(t, doc.Paths, prefix+"/trash", "trash is not wired up to search yet")
+	// Trash grants access to whoever deleted the object; no plugin kind is on
+	// the allowlist for it.
+	require.NotContains(t, doc.Paths, prefix+"/trash")
+
+	// Widget declares no search fields, so it is not enrolled -- declaring them
+	// is what marks a kind as reviewed for search.
+	require.NotContains(t, doc.Paths,
+		"/apis/"+testAppID+"/v1/namespaces/{namespace}/widgets/search")
 
 	route := "/apis/" + testAppID + "/v1/namespaces/default/things/thing-route/reload"
 
