@@ -1,11 +1,15 @@
 package pluginrouter
 
 import (
+	"bytes"
+	"context"
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
+	"mime"
 	"net/http"
 	"sync"
 	"time"
@@ -14,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,40 +32,51 @@ const (
 	sessionTTL = 12 * time.Hour
 )
 
-// loginGate is username and password in front of the service identity.
-//
-// What it is: the credentials from the security section -- the same admin_user
-// and admin_password a fresh Grafana starts with -- checked against a form, and
-// a session cookie for the callers that pass. A request carrying a live session
-// runs as Grafana's service identity, which is what the groups served here
-// authorize against.
-//
-// What it is not: Grafana's authentication. There is no user database in this
-// process to look anyone up in, so there is one credential, it is the same for
-// everyone, and everyone who has it gets the same full access. There is no
-// lockout, no rate limit and no second factor. It exists so this target can be
-// exercised without granting the port to anyone who reaches it, which is why
-// the target it belongs to only runs in a development environment.
-type loginGate struct {
-	user     string
-	password string
-	secure   bool
-	log      log.Logger
-
-	mu       sync.Mutex
-	sessions map[string]time.Time
+// passwordLogin is the part of authn.Service this gate uses: Grafana's own
+// form login, against Grafana's own users.
+type passwordLogin interface {
+	Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error)
 }
 
-func newLoginGate(cfg *setting.Cfg, logger log.Logger) (*loginGate, error) {
-	if cfg.AdminUser == "" || cfg.AdminPassword == "" {
-		return nil, fmt.Errorf("the plugin router signs callers in against security.admin_user and security.admin_password, and both must be set")
+// session is a signed-in caller: who they are, and until when.
+type session struct {
+	requester identity.Requester
+	expires   time.Time
+}
+
+// loginGate is Grafana's own sign-in, in front of the groups this target
+// serves.
+//
+// Authentication is the real thing: the form is handed to authn.Service's form
+// client, the same one Grafana's own login page posts to, so callers are real
+// Grafana users with real passwords, and everything that hangs off that --
+// hashing, login attempt limiting, whatever else is configured -- applies here
+// too. A caller that passes gets a session cookie.
+//
+// Authorization is not. A signed-in caller runs as Grafana's service identity,
+// with full access to every group served, because the groups' own authorizer
+// asks about permissions this target's callers are unlikely to hold. Proving
+// who you are and being granted everything is a development posture, which is
+// why the target only runs in a development environment. Serving each caller
+// their own permissions is the next step, not this one.
+type loginGate struct {
+	authn  passwordLogin
+	secure bool
+	log    log.Logger
+
+	mu       sync.Mutex
+	sessions map[string]session
+}
+
+func newLoginGate(cfg *setting.Cfg, authn passwordLogin, logger log.Logger) (*loginGate, error) {
+	if authn == nil {
+		return nil, fmt.Errorf("the plugin router signs callers in through Grafana's authentication, and it is not wired")
 	}
 	return &loginGate{
-		user:     cfg.AdminUser,
-		password: cfg.AdminPassword,
+		authn:    authn,
 		secure:   cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme,
 		log:      logger,
-		sessions: map[string]time.Time{},
+		sessions: map[string]session{},
 	}, nil
 }
 
@@ -75,7 +91,7 @@ func (g *loginGate) register(httpRouter *mux.Router) {
 // the group behind it answers 401 rather than serving anonymously.
 func (g *loginGate) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if !g.authenticated(req) {
+		if g.authenticated(req) == nil {
 			next.ServeHTTP(w, req)
 			return
 		}
@@ -84,23 +100,27 @@ func (g *loginGate) middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (g *loginGate) authenticated(req *http.Request) bool {
+// authenticated returns the caller a request carries a live session for, or
+// nil. The caller is kept even though authorization does not use it yet -- it
+// is who signed in, which is worth saying in a log line, and is what serving
+// real permissions would read.
+func (g *loginGate) authenticated(req *http.Request) identity.Requester {
 	cookie, err := req.Cookie(sessionCookie)
 	if err != nil || cookie.Value == "" {
-		return false
+		return nil
 	}
 
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	expires, ok := g.sessions[cookie.Value]
+	live, ok := g.sessions[cookie.Value]
 	if !ok {
-		return false
+		return nil
 	}
-	if time.Now().After(expires) {
+	if time.Now().After(live.expires) {
 		delete(g.sessions, cookie.Value)
-		return false
+		return nil
 	}
-	return true
+	return live.requester
 }
 
 func (g *loginGate) form(w http.ResponseWriter, _ *http.Request) {
@@ -108,23 +128,26 @@ func (g *loginGate) form(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (g *loginGate) submit(w http.ResponseWriter, req *http.Request) {
-	if err := req.ParseForm(); err != nil {
+	// The form client reads the credentials off the request itself, so it is
+	// handed the request rather than fields parsed out of it -- which is also
+	// why the form posts "user", the field name that client binds.
+	loginReq, err := asJSONLogin(req)
+	if err != nil {
 		g.renderForm(w, http.StatusBadRequest, "That form could not be read.")
 		return
 	}
 
-	// Both halves are compared in constant time, and both are compared even
-	// when the first has already failed, so neither the username nor the
-	// password can be recovered from how long the answer took.
-	userOK := subtle.ConstantTimeCompare([]byte(req.PostFormValue("username")), []byte(g.user)) == 1
-	passOK := subtle.ConstantTimeCompare([]byte(req.PostFormValue("password")), []byte(g.password)) == 1
-	if !userOK || !passOK {
-		g.log.Warn("failed login attempt", "remote", req.RemoteAddr)
+	requester, err := g.authn.Login(req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: loginReq})
+	if err != nil {
+		// Whatever went wrong -- unknown user, wrong password, too many
+		// attempts -- the form says the same thing, so it cannot be used to
+		// find out which usernames exist. The reason is logged, not shown.
+		g.log.Warn("failed login attempt", "remote", req.RemoteAddr, "error", err)
 		g.renderForm(w, http.StatusUnauthorized, "Wrong username or password.")
 		return
 	}
 
-	token, err := g.newSession()
+	token, err := g.newSession(requester)
 	if err != nil {
 		g.log.Error("could not start a session", "error", err)
 		g.renderForm(w, http.StatusInternalServerError, "Could not start a session.")
@@ -146,6 +169,7 @@ func (g *loginGate) submit(w http.ResponseWriter, req *http.Request) {
 		Secure:   g.secure,
 		Expires:  time.Now().Add(sessionTTL),
 	})
+	g.log.Info("signed in", "user", requester.GetLogin(), "uid", requester.GetUID())
 	http.Redirect(w, req, "/swagger", http.StatusFound)
 }
 
@@ -164,9 +188,40 @@ func (g *loginGate) logout(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/login", http.StatusFound)
 }
 
-// newSession mints a token and drops any that have expired, so a long-running
-// process does not accumulate them.
-func (g *loginGate) newSession() (string, error) {
+// asJSONLogin gives the form client the request shape it reads.
+//
+// It binds JSON and nothing else (web.Bind), and Grafana's own login page posts
+// JSON from script. This page is plain HTML, so a browser posts it
+// form-encoded, and the translation happens here rather than by putting script
+// on a page that otherwise needs none. A caller that already posts JSON -- curl,
+// mostly -- is passed through untouched.
+func asJSONLogin(req *http.Request) (*http.Request, error) {
+	if mediaType, _, err := mime.ParseMediaType(req.Header.Get("Content-Type")); err == nil && mediaType == "application/json" {
+		return req, nil
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, err
+	}
+	body, err := json.Marshal(map[string]string{
+		"user":     req.PostFormValue("user"),
+		"password": req.PostFormValue("password"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	out := req.Clone(req.Context())
+	out.Header = req.Header.Clone()
+	out.Header.Set("Content-Type", "application/json")
+	out.Body = io.NopCloser(bytes.NewReader(body))
+	out.ContentLength = int64(len(body))
+	return out, nil
+}
+
+// newSession mints a token for a caller and drops any that have expired, so a
+// long-running process does not accumulate them.
+func (g *loginGate) newSession(requester identity.Requester) (string, error) {
 	raw := make([]byte, 32)
 	if _, err := rand.Read(raw); err != nil {
 		return "", err
@@ -176,12 +231,12 @@ func (g *loginGate) newSession() (string, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	now := time.Now()
-	for existing, expires := range g.sessions {
-		if now.After(expires) {
+	for existing, live := range g.sessions {
+		if now.After(live.expires) {
 			delete(g.sessions, existing)
 		}
 	}
-	g.sessions[token] = now.Add(sessionTTL)
+	g.sessions[token] = session{requester: requester, expires: now.Add(sessionTTL)}
 	return token, nil
 }
 
@@ -222,8 +277,8 @@ var loginPage = template.Must(template.New("login").Parse(`<!doctype html>
   <h1>Grafana plugin router</h1>
   <p class="sub">Sign in to browse the app plugin APIs.</p>
   {{if .Message}}<div class="error">{{.Message}}</div>{{end}}
-  <label for="username">Username</label>
-  <input id="username" name="username" autocomplete="username" autofocus>
+  <label for="user">Username</label>
+  <input id="user" name="user" autocomplete="username" autofocus>
   <label for="password">Password</label>
   <input id="password" name="password" type="password" autocomplete="current-password">
   <button type="submit">Sign in</button>

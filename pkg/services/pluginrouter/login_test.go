@@ -1,6 +1,9 @@
 package pluginrouter
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,10 +14,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func testRequester() identity.Requester {
+	return &authn.Identity{ID: "1", Type: claims.TypeUser, Login: "admin", OrgID: 1}
+}
 
 func TestLoginGate(t *testing.T) {
 	gate := testGate(t)
@@ -25,6 +35,12 @@ func TestLoginGate(t *testing.T) {
 		res := serve(httpRouter, "/login")
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Contains(t, res.Body.String(), `name="password"`)
+	})
+
+	t.Run("the form posts the field Grafana's form client binds", func(t *testing.T) {
+		res := serve(httpRouter, "/login")
+		require.Contains(t, res.Body.String(), `name="user"`,
+			"the form client reads \"user\", so a form posting anything else never authenticates")
 	})
 
 	t.Run("wrong credentials mint no session", func(t *testing.T) {
@@ -57,7 +73,7 @@ func TestLoginGate(t *testing.T) {
 
 		require.Equal(t, http.StatusFound, out.Code)
 		require.Equal(t, "/login", out.Header().Get("Location"))
-		require.False(t, gate.authenticated(withCookie(cookie)), "the token must not still work")
+		require.Nil(t, gate.authenticated(withCookie(cookie)), "the token must not still work")
 	})
 }
 
@@ -77,7 +93,7 @@ func TestLoginGateMiddleware(t *testing.T) {
 	})
 
 	t.Run("a session carries the service identity", func(t *testing.T) {
-		token, err := gate.newSession()
+		token, err := gate.newSession(testRequester())
 		require.NoError(t, err)
 
 		req := httptest.NewRequest(http.MethodGet, "/apis", nil)
@@ -99,38 +115,48 @@ func TestLoginGateMiddleware(t *testing.T) {
 func TestLoginGateSessionExpiry(t *testing.T) {
 	gate := testGate(t)
 
-	token, err := gate.newSession()
+	token, err := gate.newSession(testRequester())
 	require.NoError(t, err)
-	gate.sessions[token] = time.Now().Add(-time.Minute)
+	gate.sessions[token] = session{requester: testRequester(), expires: time.Now().Add(-time.Minute)}
 
-	require.False(t, gate.authenticated(withCookie(&http.Cookie{Name: sessionCookie, Value: token})))
+	require.Nil(t, gate.authenticated(withCookie(&http.Cookie{Name: sessionCookie, Value: token})))
 	require.NotContains(t, gate.sessions, token)
 }
 
-// Without credentials to check against there is nothing to sign in with, and a
+// Without Grafana's authentication there is nothing to sign in against, and a
 // form that accepted anything would be worse than no form.
-func TestNewLoginGateNeedsCredentials(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.AdminUser = "admin"
-
-	_, err := newLoginGate(cfg, log.New("test"))
-	require.ErrorContains(t, err, "admin_password")
+func TestNewLoginGateNeedsAuthentication(t *testing.T) {
+	_, err := newLoginGate(setting.NewCfg(), nil, log.New("test"))
+	require.ErrorContains(t, err, "not wired")
 }
 
 func testGate(t *testing.T) *loginGate {
 	t.Helper()
 
-	cfg := setting.NewCfg()
-	cfg.AdminUser = "admin"
-	cfg.AdminPassword = "s3cret"
-
-	gate, err := newLoginGate(cfg, log.New("test"))
+	gate, err := newLoginGate(setting.NewCfg(), stubAuthn{}, log.New("test"))
 	require.NoError(t, err)
 	return gate
 }
 
+// stubAuthn stands in for Grafana's authentication: it accepts one caller, so
+// these tests exercise the gate rather than the password check behind it.
+type stubAuthn struct{}
+
+func (stubAuthn) Login(_ context.Context, client string, r *authn.Request) (*authn.Identity, error) {
+	if client != authn.ClientForm {
+		return nil, fmt.Errorf("unexpected client %q", client)
+	}
+	if err := r.HTTPRequest.ParseForm(); err != nil {
+		return nil, err
+	}
+	if r.HTTPRequest.PostFormValue("user") != "admin" || r.HTTPRequest.PostFormValue("password") != "s3cret" {
+		return nil, errors.New("invalid username or password")
+	}
+	return &authn.Identity{ID: "1", Type: claims.TypeUser, Login: "admin", OrgID: 1}, nil
+}
+
 func postLogin(handler http.Handler, user, password string) *httptest.ResponseRecorder {
-	form := url.Values{"username": {user}, "password": {password}}
+	form := url.Values{"user": {user}, "password": {password}}
 	req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(form.Encode()))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 

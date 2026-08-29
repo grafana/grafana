@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"slices"
 
@@ -44,7 +45,10 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -66,6 +70,31 @@ type Options struct {
 	// Storage builds where this group's manifest kinds and plugin settings are
 	// stored. Required: without it the resource handlers cannot be installed.
 	Storage StorageProvider
+
+	// LegacySettingsStore is the plugin_setting table this plugin's settings
+	// were served from before unified storage. With it and DualWrite set, the
+	// settings resource is served through the same dual writer a Grafana server
+	// serves it through, at whatever mode the deployment has configured; the
+	// manifest kinds are unified-only either way, having never lived anywhere
+	// else. Optional: without it settings come from unified storage alone.
+	LegacySettingsStore grafanarest.Storage
+
+	// DualWrite decides which storage a resource is actually served from, given
+	// the static config and how far its migration has got. Optional, but a
+	// LegacySettingsStore without it is ignored -- there would be nothing to
+	// decide between the two.
+	DualWrite dualwrite.Service
+
+	// StorageOpts carries the deployment's per-resource unified storage config,
+	// which is what says the mode each resource dual writes at. Optional; an
+	// empty one means every resource takes the default.
+	StorageOpts *options.StorageOptions
+
+	// BuilderMetrics records the mode each resource dual writes at. It is
+	// passed in rather than built here because building it registers
+	// collectors, and every group in a process would register the same ones.
+	// Optional; nil records nothing.
+	BuilderMetrics *builder.BuilderMetrics
 
 	// ClientV3 is the plugin's protocol v3 client, reached for custom routes,
 	// admission and conversion. Required: a manifest kind that declares
@@ -171,11 +200,7 @@ func New(plugin definition.PluginDefinition, opts Options) (*Backend, error) {
 			AccessControl:    opts.AccessControl,
 			SearchAPIEnabled: opts.SearchAPIEnabled,
 			TrashAPIEnabled:  opts.TrashAPIEnabled,
-
-			// Legacy settings storage is a single-tenant Grafana concern: it
-			// reads the plugin_setting table through the SQL store this process
-			// does not have. The router serves settings from unified storage.
-			LegacyStore: nil,
+			LegacyStore:      opts.LegacySettingsStore,
 		},
 		tracerOrNoop(opts.Tracer),
 		featuresOrEmpty(opts.Features),
@@ -284,11 +309,17 @@ func (b *Backend) Load(ctx context.Context) (http.Handler, error) {
 	}
 
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
+	// One instance, shared by the two things that read it, and private to this
+	// group -- installing the settings resource writes this plugin's default
+	// mode into it, which is nobody else's business.
+	storageOpts := b.storageOpts()
 	if err := b.builder.UpdateAPIGroupInfo(&apiGroupInfo, builder.APIGroupOptions{
 		Scheme:              scheme,
 		OptsGetter:          serverConfig.RESTOptionsGetter,
 		MetricsRegister:     reg,
 		StorageOptsRegister: storageOptsRegister(serverConfig.RESTOptionsGetter),
+		StorageOpts:         storageOpts,
+		DualWriteBuilder:    b.dualWriteBuilder(scheme, storageOpts),
 	}); err != nil {
 		server.Destroy()
 		return nil, fmt.Errorf("%s: build group: %w", b.group, err)
@@ -343,6 +374,42 @@ func (b *Backend) Destroy() {
 		b.destroy()
 		b.destroy = nil
 	}
+}
+
+// dualWriteBuilder is how the settings resource decides between the legacy
+// table and unified storage. Nil when there is nothing to decide -- no dual
+// write service, or no legacy store to weigh against -- which leaves the
+// builder serving settings from unified storage alone.
+func (b *Backend) dualWriteBuilder(scheme *runtime.Scheme, storageOpts *options.StorageOptions) grafanarest.DualWriteBuilder {
+	if b.opts.DualWrite == nil || b.opts.LegacySettingsStore == nil {
+		return nil
+	}
+	return builder.NewDualWriteBuilder(scheme, storageOpts, b.opts.DualWrite, b.opts.BuilderMetrics)
+}
+
+// storageOpts is this group's own copy of the deployment's unified storage
+// config.
+//
+// A copy, because installing the settings resource writes the wildcard default
+// into the map for this plugin's resource, and every group in the process is
+// handed the same configured options -- one group recording its default in a
+// map the others read is a surprise waiting to happen, and a data race if
+// groups are ever loaded concurrently. The map is always non-nil for the same
+// reason: it is written to, not just read.
+func (b *Backend) storageOpts() *options.StorageOptions {
+	out := &options.StorageOptions{
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{},
+	}
+	if b.opts.StorageOpts == nil {
+		return out
+	}
+
+	*out = *b.opts.StorageOpts
+	out.UnifiedStorageConfig = maps.Clone(b.opts.StorageOpts.UnifiedStorageConfig)
+	if out.UnifiedStorageConfig == nil {
+		out.UnifiedStorageConfig = map[string]setting.UnifiedStorageConfig{}
+	}
+	return out
 }
 
 // authorizer is the group's own authorizer -- plugin app access, then the

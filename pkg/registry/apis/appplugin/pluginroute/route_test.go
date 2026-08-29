@@ -26,10 +26,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/router"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -153,6 +157,71 @@ func TestLoadServesOpenAPIV3(t *testing.T) {
 	// A custom route from the manifest, which only this backend can serve.
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
 }
+
+// The settings resource predates unified storage, so a deployment part way
+// through the migration still serves it from the legacy table. That decision is
+// the dual writer's, and it is only made when there is something to decide
+// between.
+func TestDualWriteBuilder(t *testing.T) {
+	scheme := runtime.NewScheme()
+
+	t.Run("no legacy store, nothing to decide", func(t *testing.T) {
+		b, err := New(testPlugin(), withDualWrite(testOptions(), nil, stubDualWrite{}))
+		require.NoError(t, err)
+		require.Nil(t, b.dualWriteBuilder(scheme, b.storageOpts()))
+	})
+
+	t.Run("no dual write service, nothing to decide with", func(t *testing.T) {
+		b, err := New(testPlugin(), withDualWrite(testOptions(), stubLegacyStore{}, nil))
+		require.NoError(t, err)
+		require.Nil(t, b.dualWriteBuilder(scheme, b.storageOpts()))
+	})
+
+	t.Run("both, and the settings resource is served through it", func(t *testing.T) {
+		b, err := New(testPlugin(), withDualWrite(testOptions(), stubLegacyStore{}, stubDualWrite{}))
+		require.NoError(t, err)
+		require.NotNil(t, b.dualWriteBuilder(scheme, b.storageOpts()))
+	})
+}
+
+// Installing the settings resource writes this plugin's default mode into the
+// config map, and every group is handed the same configured options -- so each
+// gets its own copy, and the map is always there to be written to.
+func TestStorageOptsIsPrivateToTheGroup(t *testing.T) {
+	t.Run("nothing configured still gives a writable map", func(t *testing.T) {
+		b, err := New(testPlugin(), testOptions())
+		require.NoError(t, err)
+		require.NotNil(t, b.storageOpts().UnifiedStorageConfig)
+	})
+
+	t.Run("what is configured is carried, but not shared", func(t *testing.T) {
+		shared := &options.StorageOptions{UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"app.*-app": {DualWriterMode: grafanarest.Mode2},
+		}}
+		opts := testOptions()
+		opts.StorageOpts = shared
+
+		b, err := New(testPlugin(), opts)
+		require.NoError(t, err)
+
+		mine := b.storageOpts()
+		require.Equal(t, grafanarest.Mode2, mine.UnifiedStorageConfig["app.*-app"].DualWriterMode)
+
+		mine.UnifiedStorageConfig["example.ext.grafana.com-app"] = setting.UnifiedStorageConfig{}
+		require.NotContains(t, shared.UnifiedStorageConfig, "example.ext.grafana.com-app",
+			"a group recording its own default must not change what the others read")
+	})
+}
+
+func withDualWrite(opts Options, legacy grafanarest.Storage, svc dualwrite.Service) Options {
+	opts.LegacySettingsStore = legacy
+	opts.DualWrite = svc
+	return opts
+}
+
+type stubLegacyStore struct{ grafanarest.Storage }
+
+type stubDualWrite struct{ dualwrite.Service }
 
 // A manifest's custom routes are not resource storage, so they are mounted
 // separately from the group. Missing that step costs every declared route with

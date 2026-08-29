@@ -14,15 +14,12 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/router"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -107,20 +104,20 @@ func ProvideService(
 		return nil, fmt.Errorf("an http router is required to serve the plugin groups on")
 	}
 
-	pluginCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), features)
-	if err != nil {
-		return nil, fmt.Errorf("reading plugin config: %w", err)
-	}
-
 	apiserverCfg := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	loader, err := NewLoader(LoaderOptions{
 		// The sources the plugin store loaded from, so the groups served are
 		// the plugins that are actually running -- not a second, independent
-		// reading of the same directories.
-		Sources:         sourcesOr(deps.Sources, cfg, pluginCfg),
+		// reading of the same directories. NewLoader refuses a nil registry.
+		Sources:         deps.Sources,
 		ClientV3Loader:  deps.ClientV3Loader,
 		PluginClient:    deps.Client,
 		ContextProvider: deps.ContextProvider,
+		PluginSettings:  deps.PluginSettings,
+		DualWrite:       deps.DualWrite,
+		// The same per-resource config a Grafana server reads its dual write
+		// modes from, straight off the ini.
+		StorageOpts: &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
 		// Secure values are decrypted by a service this process does not have,
 		// so a kind with inline secure values cannot be read yet.
 		Storage:          pluginroute.UnifiedStorage(client, nil),
@@ -137,7 +134,7 @@ func ProvideService(
 		return nil, err
 	}
 
-	gate, err := newLoginGate(cfg, logger)
+	gate, err := newLoginGate(cfg, deps.Authn, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +179,7 @@ func (s *Service) registerRoutes(httpRouter *mux.Router) {
 // own, not a thing to protect.
 func (s *Service) redirectRoot(w http.ResponseWriter, req *http.Request) {
 	target := "/swagger"
-	if !s.login.authenticated(req) {
+	if s.login.authenticated(req) == nil {
 		target = "/login"
 	}
 	http.Redirect(w, req, target, http.StatusFound)
@@ -246,16 +243,6 @@ func (s *Service) stop(failureReason error) error {
 	}
 	// Stopping the store terminates the plugin backends it started.
 	return services.StopAndAwaitTerminated(context.Background(), s.plugins)
-}
-
-// sourcesOr prefers the registry the plugin store loaded from, and falls back
-// to reading the configured plugin paths when there is no store -- the module
-// still serves what it can find, it just cannot reach any of it.
-func sourcesOr(registry sources.Registry, cfg *setting.Cfg, pluginCfg *config.PluginManagementCfg) sources.Registry {
-	if registry != nil {
-		return registry
-	}
-	return pluginsources.ProvideService(cfg, pluginCfg)
 }
 
 // serviceIdentityAuthorizer is how the groups this process serves authorize a

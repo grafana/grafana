@@ -70,10 +70,16 @@ There is none. `target` is a root-level ini key, so `target = plugin-router` in 
 file starts it the same way the command line does, and nothing else about this module is
 configurable.
 
-Storage needs no configuration either: with the default `storage_type = unified` the module
-runs the embedded backend, the same one a plain `grafana server` uses, and reads and writes
-through it directly. Set `storage_type = unified-grpc` with an `address` and it dials that
-storage server instead, leaving the backend it would have built unused.
+Storage needs no configuration either: the module serves through this process's own
+backend, the same embedded one a plain `grafana server` uses, so the default
+`storage_type = unified` is all it needs. Any other storage type is refused at startup --
+there is no remote mode yet.
+
+The settings resource is dual written exactly as it is on a Grafana server: the module has
+the `plugin_setting` table and the dual write service, so `[unified_storage.*]` modes are
+honoured here too, and a deployment part way through that migration reads and writes the
+same storage it would otherwise. Manifest kinds are unified-only, having never lived
+anywhere else.
 
 ## Security: read this before pointing anything at it
 
@@ -82,23 +88,27 @@ authorization, audit or priority-and-fairness runs in front of it. A group serve
 reads its caller from the request context, which in Grafana is put there by middleware that
 has already authenticated the request. There is no such middleware in front of this port.
 
-What stands in is `/login`: the credentials from the security section — the same
-`admin_user` and `admin_password` a fresh Grafana starts with — checked against a form, and
-a session cookie for the callers that pass. A request carrying a live session runs as
-Grafana's **service identity**, which is what the groups authorize against. Without one,
-`/apis` and `/openapi/v3` still answer (the router synthesizes those) but every group behind
-them answers `401`.
+What stands in is `/login`. **Authentication there is the real thing**: the form is handed
+to `authn.Service`'s form client — the same one Grafana's own login page posts to — so
+callers are real Grafana users with real passwords, and everything that hangs off that
+(hashing, login attempt limiting, whatever else is configured) applies here too. A caller
+that passes gets a session cookie. Without one, `/apis` and `/openapi/v3` still answer (the
+router synthesizes those) but every group behind them answers `401`.
 
-`/login` is **not** Grafana's authentication, and the difference is the reason this target
-is development-only. There is no user database in this process to look anyone up in, so
-there is one credential, it is the same for everyone, and everyone who has it gets the same
-full access to every group served. There is no lockout, no rate limit and no second factor.
-That is a posture worth having while developing a plugin and worth nowhere else, so
+**Authorization is not.** A signed-in caller runs as Grafana's *service identity*, with full
+access to every group served, rather than as themselves. The groups' own authorizer asks
+access control whether the caller may reach that plugin, which a real user is unlikely to
+have been granted, so serving each caller their own permissions is a change with its own
+consequences — it is the next step, not this one. The session already carries the real
+caller, so it is a small one.
+
+Proving who you are and then being granted everything is a development posture, so
 `ProvideService` refuses to start unless `app_mode = development` — a setting could be put
-in the wrong place, and a refusal cannot. See `loginGate` in [login.go](login.go).
-
-Real authentication in front of this listener is the work that has to happen before any of
-this stops being development-only.
+in the wrong place, and a refusal cannot. Two things are still missing before that could be
+revisited: this port runs outside the Kubernetes handler chain (no audit, no
+priority-and-fairness), and the session cookie is this package's own, not Grafana's session
+token, so it has no rotation or server-side revocation. See `loginGate` in
+[login.go](login.go).
 
 ## Reaching the plugin
 

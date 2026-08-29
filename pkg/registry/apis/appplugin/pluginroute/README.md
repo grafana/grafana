@@ -87,6 +87,22 @@ a process serves, the way it is in a Grafana server where every group shares one
 `UnifiedStorage` is the provider for the ordinary case: one storage client, one getter per
 group.
 
+## Dual writing the settings resource
+
+A plugin's settings predate unified storage — they lived in the `plugin_setting` table —
+so a deployment part way through that migration still serves them from there. Give
+`Options` a `LegacySettingsStore` and a `DualWrite` service and the settings resource is
+served through the same dual writer a Grafana server serves it through, at whatever mode
+`[unified_storage.<resource>.<group>]` configures (or the `app.*-app` wildcard). With
+either missing there is nothing to decide between, and settings come from unified storage
+alone.
+
+The manifest kinds are never dual written: they have only ever lived in unified storage,
+so there is no legacy table to weigh against.
+
+`builder.NewDualWriteBuilder` is the shared decision — the same one `InstallAPIs` uses, so
+a resource is served from the same storage whichever server it is reached through.
+
 ## Known gaps
 
 - **Storage is not torn down by the router.** `Destroy` releases what the last `Load`

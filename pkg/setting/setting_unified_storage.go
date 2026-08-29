@@ -443,10 +443,12 @@ func (cfg *Cfg) StorageServicesEnabled() bool {
 	}
 
 	// The plugin router serves its groups' objects through a resource server it
-	// builds over this process's own backend, unless it is pointed at a storage
-	// server instead. That server cannot start against a backend with the jobs
-	// switched off -- the same flag gates the write watcher it initializes on --
-	// so a process serving through its own backend has to own it.
+	// builds over this process's own backend, and that server cannot start
+	// against a backend with the jobs switched off -- the same flag gates the
+	// write watcher it initializes on. So the target owns the backend it serves
+	// through. The storage type is checked because owning it is only true of
+	// the embedded one; the target refuses to start against any other today,
+	// and this stays correct if that changes.
 	return slices.Contains(cfg.Target, "plugin-router") && cfg.UnifiedStorageType() == "unified"
 }
 

@@ -50,14 +50,14 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.Modul
 // through: the plugin store that loads plugins and starts their backends, the
 // clients that talk to them, and the sources they were discovered in.
 //
-// It is built from the CLI set rather than a set of its own because a plugin
-// backend cannot be started without most of what a Grafana server is made of --
+// It is built from a set close to the CLI one because a plugin backend cannot
+// be started without most of what a Grafana server is made of --
 // the database the plugin stack keeps its state in, access control for the
 // roles a plugin declares, external service accounts, the core plugin registry
 // the backend factory is built from. What the module leaves out is the HTTP
 // server in front of all of it.
 func InitializePluginRouterDeps(ctx context.Context, cfg *setting.Cfg) (pluginrouter.PluginDeps, error) {
-	wire.Build(CLI, wireext.BasicSet, wire.Struct(new(pluginrouter.PluginDeps), "*"))
+	wire.Build(PluginRouterDepsSet, wireext.BasicSet, wire.Struct(new(pluginrouter.PluginDeps), "*"))
 	return pluginrouter.PluginDeps{}, nil
 }
 

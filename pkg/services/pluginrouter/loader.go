@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,7 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginroute"
 	"github.com/grafana/grafana/pkg/router"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -54,6 +59,18 @@ type LoaderOptions struct {
 	// PluginClient and ContextProvider serve the settings subresources.
 	PluginClient    appplugin.PluginClient
 	ContextProvider appplugin.PluginContextWrapper
+
+	// PluginSettings is the plugin_setting table a plugin's settings were
+	// served from before unified storage, and DualWrite is what decides
+	// between the two. With both, the settings resource is served through the
+	// same dual writer a Grafana server serves it through. Without them it is
+	// served from unified storage alone.
+	PluginSettings pluginsettings.Service
+	DualWrite      dualwrite.Service
+
+	// StorageOpts carries the deployment's per-resource unified storage config,
+	// which is what says the mode each resource dual writes at.
+	StorageOpts *options.StorageOptions
 
 	Storage         pluginroute.StorageProvider
 	Search          resourcepb.ResourceIndexClient
@@ -80,6 +97,10 @@ type LoaderOptions struct {
 type Loader struct {
 	opts LoaderOptions
 	log  log.Logger
+
+	// builderMetrics is built once and shared by every group: building it
+	// registers collectors, and every group would register the same ones.
+	builderMetrics *builder.BuilderMetrics
 }
 
 var _ router.RoutesLoader = (*Loader)(nil)
@@ -91,7 +112,11 @@ func NewLoader(opts LoaderOptions) (*Loader, error) {
 	if opts.Storage == nil {
 		return nil, fmt.Errorf("a StorageProvider is required to serve plugin kinds")
 	}
-	return &Loader{opts: opts, log: log.New("plugin-router.loader")}, nil
+	return &Loader{
+		opts:           opts,
+		log:            log.New("plugin-router.loader"),
+		builderMetrics: builder.ProvideBuilderMetrics(opts.MetricsRegister),
+	}, nil
 }
 
 // Load rescans the plugin sources and returns one backend per app plugin that
@@ -149,6 +174,13 @@ func (l *Loader) Load(ctx context.Context) ([]router.Backend, error) {
 			ClientV3:        l.clientV3(plugin.JSONData.ID),
 			PluginClient:    l.opts.PluginClient,
 			ContextProvider: l.opts.ContextProvider,
+
+			// Keyed by the group the plugin is served under, the same as the
+			// resource the settings are stored against.
+			LegacySettingsStore: l.legacySettingsStore(backendGroup(plugin), plugin.JSONData.ID),
+			DualWrite:           l.opts.DualWrite,
+			StorageOpts:         l.opts.StorageOpts,
+			BuilderMetrics:      l.builderMetrics,
 		})
 		if err != nil {
 			l.log.Error("skipping app plugin", "pluginId", plugin.JSONData.ID, "error", err)
@@ -168,6 +200,27 @@ func (l *Loader) Load(ctx context.Context) ([]router.Backend, error) {
 // reconcile, and there is no reason to spend that reconcile.
 func (l *Loader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return make(chan struct{}), nil
+}
+
+// legacySettingsStore is the plugin_setting table this plugin's settings were
+// served from before unified storage, or nil when this process has no plugin
+// settings service to read it through -- in which case settings come from
+// unified storage alone.
+func (l *Loader) legacySettingsStore(group, pluginID string) grafanarest.Storage {
+	if l.opts.PluginSettings == nil {
+		return nil
+	}
+	return appplugin.NewLegacySettingsStore(group, pluginID, l.opts.PluginSettings)
+}
+
+// backendGroup is the group a plugin is served under: the one its manifest
+// declares, or its id when it declares none. It has to match what the backend
+// resolves, because the settings resource is stored against it.
+func backendGroup(plugin definition.PluginDefinition) string {
+	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
+		return plugin.Manifest.Group
+	}
+	return plugin.JSONData.ID
 }
 
 // clientV3 is how a group reaches its plugin's backend.
