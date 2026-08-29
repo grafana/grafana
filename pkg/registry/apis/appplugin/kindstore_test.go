@@ -434,7 +434,8 @@ func TestKindStatusStrategyPrepareForUpdate(t *testing.T) {
 
 // The status manager must not own the fields the status endpoint cannot write.
 func TestKindStatusStrategyResetFields(t *testing.T) {
-	s := &kindStatusStrategy{kindStore: testKindStore(false, true)}
+	base := testKindStore(false, true)
+	s := &kindStatusStrategy{kindStore: base}
 	fields := s.GetResetFields()
 	require.Len(t, fields, 1)
 	set := fields[fieldpath.APIVersion(s.gvk.GroupVersion().String())]
@@ -443,5 +444,5 @@ func TestKindStatusStrategyResetFields(t *testing.T) {
 	require.False(t, set.Has(fieldpath.MakePathOrDie("status")))
 
 	// Inherited from the kind, so a status write is schema checked like any other.
-	require.Equal(t, s.kindStore.NamespaceScoped(), s.NamespaceScoped())
+	require.Equal(t, base.NamespaceScoped(), s.NamespaceScoped())
 }
