@@ -70,13 +70,12 @@ func writeGrafDirIn(t *testing.T, home string, paths map[string]string) string {
 
 func TestPluginDirectory_ExplicitFlagBeatsConfig(t *testing.T) {
 	flagDir := t.TempDir()
-	configDir := t.TempDir()
 	home := writeGrafDir(t, map[string]string{"plugins": "data/plugins"})
 
 	c, err := newTestFlagContext(map[string]string{
 		"pluginsDir":      flagDir,
 		"homepath":        home,
-		"configOverrides": "cfg:default.paths.plugins=" + configDir,
+		"configOverrides": "cfg:default.paths.plugins=override/plugins",
 	})
 	require.NoError(t, err)
 
@@ -84,12 +83,12 @@ func TestPluginDirectory_ExplicitFlagBeatsConfig(t *testing.T) {
 }
 
 func TestPluginDirectory_HonorsConfigOverride(t *testing.T) {
-	configDir := t.TempDir()
 	home := writeGrafDir(t, map[string]string{"plugins": "data/plugins"})
+	configDir := filepath.Join(home, "override", "plugins")
 
 	c, err := newTestFlagContext(map[string]string{
 		"homepath":        home,
-		"configOverrides": "cfg:default.paths.plugins=" + configDir,
+		"configOverrides": "cfg:default.paths.plugins=override/plugins",
 	})
 	require.NoError(t, err)
 
@@ -125,20 +124,35 @@ func TestPluginDirectory_HonorsEnvVar(t *testing.T) {
 
 func TestPluginDirectory_PluginDirEnvVarBeatsConfig(t *testing.T) {
 	flagEnvDir := t.TempDir()
-	configDir := t.TempDir()
 	home := writeGrafDir(t, map[string]string{"plugins": "data/plugins"})
 
-	c, err := newTestFlagContext(map[string]string{
-		"pluginsDir":      flagEnvDir,
-		"homepath":        home,
-		"configOverrides": "cfg:paths.plugins=" + configDir,
+	t.Setenv("GF_PLUGIN_DIR", flagEnvDir)
+
+	var pluginDir string
+	app := cli.App{
+		Name: "Test",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "homepath"},
+			&cli.StringFlag{Name: "configOverrides"},
+			&cli.StringFlag{
+				Name:    "pluginsDir",
+				Value:   GetGrafanaPluginDir(runtime.GOOS),
+				EnvVars: []string{"GF_PLUGIN_DIR"},
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			pluginDir = (&ContextCommandLine{Context: ctx}).PluginDirectory()
+			return nil
+		},
+	}
+
+	err := app.Run([]string{
+		"Test",
+		"--homepath", home,
+		"--configOverrides", "cfg:default.paths.plugins=override/plugins",
 	})
 	require.NoError(t, err)
-
-	// GF_PLUGIN_DIR binds to the --pluginsDir flag (urfave marks env-set flags
-	// as explicitly set), so it must win over any configuration value.
-	t.Setenv("GF_PLUGIN_DIR", flagEnvDir)
-	require.Equal(t, flagEnvDir, c.PluginDirectory())
+	require.Equal(t, flagEnvDir, pluginDir)
 }
 
 func TestPluginDirectory_FallsBackWhenNoConfigSources(t *testing.T) {
@@ -177,12 +191,12 @@ func TestPluginDirectory_ExplicitHomepathDoesNotWalkUp(t *testing.T) {
 }
 
 func TestPluginDirectory_MemoizesConfig(t *testing.T) {
-	configDir := t.TempDir()
 	home := writeGrafDir(t, map[string]string{"plugins": "data/plugins"})
+	configDir := filepath.Join(home, "override", "plugins")
 
 	c, err := newTestFlagContext(map[string]string{
 		"homepath":        home,
-		"configOverrides": "cfg:default.paths.plugins=" + configDir,
+		"configOverrides": "cfg:default.paths.plugins=override/plugins",
 	})
 	require.NoError(t, err)
 
