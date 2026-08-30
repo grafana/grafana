@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -546,4 +548,27 @@ func assertNoTypeSpansMultipleGVKs(t *testing.T, scheme *runtime.Scheme) {
 				"order-fallback, so preferred_api_version would now silently pick the persisted version "+
 				"for this type instead of only ordering API discovery", typ, gvks)
 	}
+}
+func TestValidateDashboardTagsUnicodeLength(t *testing.T) {
+	tag50 := strings.Repeat("á", 50)
+	tag51 := strings.Repeat("á", 51)
+
+	dashboard50 := &dashv1.Dashboard{
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"tags": []interface{}{tag50},
+			},
+		},
+	}
+
+	dashboard51 := &dashv1.Dashboard{
+		Spec: common.Unstructured{
+			Object: map[string]interface{}{
+				"tags": []interface{}{tag51},
+			},
+		},
+	}
+
+	require.NoError(t, validateDashboardTags(dashboard50))
+	require.ErrorIs(t, validateDashboardTags(dashboard51), dashboards.ErrDashboardTagTooLong)
 }
