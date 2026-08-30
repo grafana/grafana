@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
@@ -11,6 +13,14 @@ import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
+
+beforeAll(() => {
+  setTestFlags({ [FlagKeys.TextNewFeatures]: true });
+});
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -530,5 +540,88 @@ describe('TextNGPanel', () => {
       }
       expect(ancestor).not.toBeNull();
     });
+  });
+
+  describe('refresh lifecycle', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    const viewing = (props: Props) => (
+      <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
+        <TextNGPanel {...props} />
+      </PanelContextProvider>
+    );
+
+    const settle = () => act(() => jest.advanceTimersByTime(200));
+
+    const html = () => screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+
+    it('re-renders the content when new query data arrives', () => {
+      const props = createProps((target) => target, {
+        data: createData([toDataFrame({ fields: [{ name: 'host', values: ['web-1'] }] })]),
+        options: { content: '{{#each data}}{{host}}{{/each}}', mode: TextMode.Markdown },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      expect(html()).toContain('web-1');
+
+      const refreshed = Object.assign({}, props, {
+        data: createData([toDataFrame({ fields: [{ name: 'host', values: ['web-2'] }] })]),
+      });
+      rerender(viewing(refreshed));
+      settle();
+
+      expect(html()).toContain('web-2');
+      expect(html()).not.toContain('web-1');
+    });
+
+    it('re-renders the content when a referenced variable changes', () => {
+      let value = 'first';
+      const props = createProps((target) => target.replace('${host}', value), {
+        options: { content: '${host}', mode: TextMode.Markdown },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      expect(html()).toContain('first');
+
+      value = 'second';
+      rerender(viewing(Object.assign({}, props, { renderCounter: props.renderCounter + 1 })));
+      settle();
+
+      expect(html()).toContain('second');
+      expect(html()).not.toContain('first');
+    });
+  });
+
+  it('evaluates handlebars expressions against the query data', () => {
+    const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
+    const props = createProps((target) => target, {
+      data: createData(series),
+      options: { content: '{{#each data}}- {{host}}\n{{/each}}', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    expect(html).toContain('web-1');
+    expect(html).toContain('web-2');
+  });
+
+  it('shows an alert instead of the content when the handlebars template is broken', () => {
+    const props = createProps((target) => target, {
+      options: { content: '{{#each data}}', mode: TextMode.Markdown },
+    });
+
+    setup(props, CoreApp.Dashboard);
+
+    expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
+    expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 });

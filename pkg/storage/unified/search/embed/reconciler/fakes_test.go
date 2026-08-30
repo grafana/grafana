@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"iter"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeStorage stubs the bits of resource.StorageBackend the reconciler uses.
@@ -28,6 +30,10 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// onYield, if set, fires once per resource the ListModifiedSince
+	// iterator yields — lets tests observe iterator progress at each flush.
+	onYield func()
 
 	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
 	// -> title. An unset entry reads as NotFound.
@@ -174,6 +180,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
+	onYield := f.onYield
 	return latestRv, func(yield func(*resource.ModifiedResource, error) bool) {
 		for i, c := range matches {
 			if itemErr != nil && i == itemErrI {
@@ -181,6 +188,9 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 					return
 				}
 				continue
+			}
+			if onYield != nil {
+				onYield()
 			}
 			if !yield(c, nil) {
 				return
@@ -202,6 +212,10 @@ type fakeVector struct {
 	upsertErr    error
 	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
 	deleteErr    error
+
+	// onUpsert, if set, fires at the start of each upsert. Paired with
+	// fakeStorage.onYield to snapshot iterator progress at each flush.
+	onUpsert func()
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -293,6 +307,9 @@ func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
+	if f.onUpsert != nil {
+		f.onUpsert()
+	}
 	if f.upsertErrFn != nil {
 		if err := f.upsertErrFn(vs); err != nil {
 			return err
@@ -335,6 +352,10 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
+func (f *fakeVector) UpdateMetadata(_ context.Context, _, _ string, _ *filter.Filter, _ json.RawMessage, _ []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }
@@ -343,9 +364,7 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 	defer f.mu.Unlock()
 	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[key] {
-		out[k] = v
-	}
+	maps.Copy(out, f.storedSubs[key])
 	if len(out) == 0 {
 		return nil, "", nil
 	}

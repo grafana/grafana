@@ -35,10 +35,12 @@ const (
 	MaxFacetLimit     = 1000
 )
 
-// Trash-specific field names. title and folder reuse the standard field names.
+// Trash-specific field names. title, folder and tags reuse the standard field
+// names.
 const (
 	trashFieldTitle        = resource.SEARCH_FIELD_TITLE
 	trashFieldFolder       = resource.SEARCH_FIELD_FOLDER
+	trashFieldTags         = resource.SEARCH_FIELD_TAGS
 	trashFieldDeletedBy    = "deleted_by"
 	trashFieldDeletionTime = "deletion_time"
 	trashFieldDeletedRV    = "deleted_rv"
@@ -147,6 +149,11 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 // fieldSet so the shared validators enforce the trash rules. Capabilities
 // mirror the design: text on title; filter on folder/deleted_by; sort on
 // title/folder/deleted_by/deletion_time; all retrievable.
+//
+// tags is filterable and retrievable, as it is for live search, so a caller can
+// show the tags a deleted object had and narrow the list to one. Faceting is left
+// out because trash rejects facets outright, and sorting because ordering by a
+// list of values has no defined meaning.
 func trashFieldSet() *fieldSet {
 	def := func(name string, caps ...resource.SearchCapability) resource.SearchFieldDefinition {
 		return resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString, Capabilities: caps}
@@ -157,9 +164,21 @@ func trashFieldSet() *fieldSet {
 	for _, d := range resource.TrashSearchFieldDefinitions() {
 		trash[d.Name] = d
 	}
+	// tags is taken from the standard declarations for the same reason, so trash and
+	// live search agree it holds a list of strings, with faceting dropped.
+	var tags resource.SearchFieldDefinition
+	for _, d := range resource.StandardSearchFieldDefinitions() {
+		if d.Name == trashFieldTags {
+			tags = d
+			tags.Capabilities = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+			break
+		}
+	}
+
 	return &fieldSet{byName: map[string]resource.SearchFieldDefinition{
 		trashFieldTitle:        def(trashFieldTitle, resource.SearchCapabilityText, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
 		trashFieldFolder:       def(trashFieldFolder, resource.SearchCapabilityFilter, resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve),
+		trashFieldTags:         tags,
 		trashFieldDeletedBy:    trash[trashFieldDeletedBy],
 		trashFieldDeletionTime: trash[trashFieldDeletionTime],
 		trashFieldDeletedRV:    trash[trashFieldDeletedRV],
@@ -308,10 +327,17 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 						errs = append(errs, field.Invalid(fp.Child("values").Index(i), v, err.Error()))
 					}
 				}
+				// A field holding one value cannot hold two, so this would always come
+				// back empty and the caller would have no way to tell that apart from
+				// nothing matching.
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
+						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
+				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" {
-			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn"}))
+		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
 			errs = append(errs, field.Required(fp.Child("values"), "at least one value is required"))
@@ -590,8 +616,16 @@ func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate)
 
 func filterRequirement(f *searchv0.FilterPredicate) *resourcepb.Requirement {
 	op := "in"
-	if f.Operator == "NotIn" {
+	switch f.Operator {
+	case "NotIn":
 		op = "notin"
+	case "All":
+		// The backend combines several values of "=" with AND, which is what All
+		// asks for. A single value stays on the "in" path so All and In agree on it,
+		// including on title, where only "in" matches exactly.
+		if len(f.Values) > 1 {
+			op = string(selection.Equals)
+		}
 	}
 	return &resourcepb.Requirement{Key: f.Field, Operator: op, Values: f.Values}
 }
@@ -682,7 +716,7 @@ func trashReturnFields(fields []string) []string {
 	if len(fields) == 0 {
 		fields = []string{trashFieldTitle, trashFieldFolder, trashFieldDeletedBy, trashFieldDeletionTime}
 	}
-	// deleted_rv is mandatory in the response; it drives restore.
+	// Always returned, so a client can restore from a trash hit without a second read.
 	if !slices.Contains(fields, trashFieldDeletedRV) {
 		fields = append(fields, trashFieldDeletedRV)
 	}

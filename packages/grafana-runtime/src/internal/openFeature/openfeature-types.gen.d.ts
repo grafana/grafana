@@ -21,6 +21,7 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "snapshots.kubernetesSnapshots"
+    | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
@@ -32,6 +33,7 @@ declare module "@openfeature/core" {
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
     | "grafana.savedQueriesPage"
+    | "playlistsRBAC"
     | "newSavedQueriesExperience"
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
@@ -49,7 +51,9 @@ declare module "@openfeature/core" {
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
+    | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
+    | "dashboard.recentlyDeletedViaTrash"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -96,8 +100,8 @@ declare module "@openfeature/core" {
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
-    | "tracesDrilldown.useValueTypeFiltering"
-    | "grafana.dashboardsAutoHeightPanels";
+    | "grafana.dashboardsAutoHeightPanels"
+    | "grafana.dashboardAutoGridDefault";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

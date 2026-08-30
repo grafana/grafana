@@ -242,6 +242,131 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
   });
 
+  describe('newNotebook', () => {
+    /** Nobody is asked for a name, so the notebook arrives with one it made up. */
+    const TITLE_PATTERN = /^Notebook #[a-z0-9]{12}$/;
+
+    it('builds an empty notebook with no resource behind it and nothing fetched', () => {
+      const fetch = jest.fn();
+      setBackendSrv({ fetch } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.scene?.state.uid).toBeUndefined();
+      expect(manager.state.scene?.state.title).toMatch(TITLE_PATTERN);
+      expect(manager.state.scene?.state.body.state.cells).toEqual([]);
+      expect(manager.state.isLoading).toBe(false);
+      expect(manager.state.loadError).toBeUndefined();
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    // The reason for the token at all: autosave creates these without asking for a name, so two
+    // notebooks made one after the other have to be tellable apart in the list.
+    it('gives each new notebook a title of its own', () => {
+      setBackendSrv({ fetch: jest.fn() } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const first = manager.state.scene?.state.title;
+      manager.newNotebook();
+      const second = manager.state.scene?.state.title;
+
+      expect(first).toMatch(TITLE_PATTERN);
+      expect(second).toMatch(TITLE_PATTERN);
+      expect(second).not.toBe(first);
+    });
+
+    // The scene cache is keyed by uid and a blank notebook has none, so caching it would mean every
+    // blank page after the first reopened whatever the previous one was left holding.
+    it('does not keep the blank notebook, so a second one starts empty again', () => {
+      setBackendSrv({ fetch: jest.fn() } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const first = manager.state.scene;
+      manager.newNotebook();
+
+      expect(manager.state.scene).not.toBe(first);
+    });
+
+    // Clicking New notebook while a notebook is still loading. `await` does not cancel, so without
+    // the sequence bump the load would resolve on top of the blank page the user is now looking at.
+    it('is not replaced by a load that was already in flight', async () => {
+      setBackendSrv({
+        fetch: jest.fn(() => of(createFetchResponse(notebookResource('nb-slow'))).pipe(delay(50))),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const slow = manager.loadNotebook('nb-slow');
+      manager.newNotebook();
+      await slow;
+
+      expect(manager.state.scene?.state.uid).toBeUndefined();
+      expect(manager.state.loadError).toBeUndefined();
+    });
+  });
+
+  /**
+   * Once a blank notebook's first save creates it, the page navigates to the real url and loads that uid.
+   * The scene being typed into has to survive that, or the caret and the undo history go with it.
+   */
+  describe('the blank notebook once it has been created', () => {
+    it('takes up the scene already on screen instead of fetching it', async () => {
+      const fetch = jest.fn();
+      setBackendSrv({ fetch } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const blank = manager.state.scene!;
+      // What autosave does when the create comes back.
+      blank.setState({ uid: 'nb-new' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(manager.state.scene?.state.key).toBe(blank.state.key);
+      expect(fetch).not.toHaveBeenCalled();
+      expect(manager.state.isLoading).toBe(false);
+      expect(manager.state.loadError).toBeUndefined();
+    });
+
+    it('caches it, so coming back to it later does not rebuild it either', async () => {
+      setBackendSrv({
+        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-new')))),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+      // Both of these are what a real create produces: the uid on the scene, and the generation the
+      // response reported. Without the generation a later load cannot tell this scene from a stale one.
+      blank.autosave.setState({ savedGeneration: 1 });
+      await manager.loadNotebook('nb-new');
+
+      manager.clearState();
+      await manager.loadNotebook('nb-new');
+
+      expect(manager.state.scene?.state.key).toBe(blank.state.key);
+    });
+
+    // Only the notebook it actually became. Anything else is a real load.
+    it('still fetches a different notebook while a blank one is held', async () => {
+      setBackendSrv({
+        fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource('nb-other')))),
+      } as unknown as BackendSrv);
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const blank = manager.state.scene!;
+
+      await manager.loadNotebook('nb-other');
+
+      expect(manager.state.scene?.state.key).not.toBe(blank.state.key);
+      expect(manager.state.scene?.state.uid).toBe('nb-other');
+    });
+  });
+
   it('surfaces a fetch failure as loadError instead of a scene', async () => {
     setBackendSrv({
       fetch: jest.fn().mockReturnValue(throwError(() => new Error('nope'))),

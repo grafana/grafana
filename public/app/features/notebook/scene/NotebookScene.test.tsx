@@ -21,7 +21,13 @@ import {
   ScopesVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
+import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/utils';
+import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
+
+import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -32,6 +38,25 @@ setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
 });
+
+// See CodeCell.test.tsx — the real editor does not run in jsdom, and is a lazily loaded chunk that
+// would otherwise resolve outside of this file's act() calls.
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({
+    value,
+    readOnly,
+    onChange,
+    'aria-label': ariaLabel,
+  }: {
+    value: string;
+    readOnly?: boolean;
+    onChange: (value: string) => void;
+    'aria-label'?: string;
+  }) => (
+    <textarea aria-label={ariaLabel} value={value} readOnly={readOnly} onChange={(e) => onChange(e.target.value)} />
+  ),
+}));
 
 function buildScene(hideTimeControls: boolean) {
   return new NotebookScene({
@@ -165,6 +190,34 @@ describe('NotebookScene', () => {
       expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
     });
 
+    it('commits an active query edit before leaving edit mode, so a later edit is a separate undo step', () => {
+      const panel = new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1));
+      const runner = getQueryRunnerFor(panel)!;
+      const before = runner.state.queries;
+      const midway = [{ ...before[0], expr: 'up' } as DataQuery];
+      const after = [{ ...before[0], expr: 'up | limit 10' } as DataQuery];
+      const cell = new NotebookCellItem({ elementName: 'query1', source: 'user', body: panel });
+      const scene = new NotebookScene({
+        title: 'My notebook',
+        body: new NotebookLayoutManager({ cells: [cell] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, midway);
+
+      scene.onExitEditMode();
+      scene.onEnterEditMode();
+      scene.state.body.setCellQueries(cell, after);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(midway);
+
+      scene.editHistory.undo();
+      expect(runner.state.queries).toEqual(before);
+    });
+
     it('clears history when the notebook body is replaced', () => {
       const scene = buildScene(false);
       activate(scene);
@@ -178,7 +231,10 @@ describe('NotebookScene', () => {
       expect(scene.editHistory.state.canUndo).toBe(true);
     });
 
-    it('offers the history controls only in edit mode', () => {
+    // Awaited because entering edit mode also mounts the header's tag picker, whose dropdown measures
+    // itself once mounted. That lands after the act above, so a synchronous assertion here leaves an
+    // unwrapped update behind and the console guard fails the test.
+    it('offers the history controls only in edit mode', async () => {
       const scene = buildScene(false);
       activate(scene);
       render(<scene.Component model={scene} />);
@@ -187,7 +243,7 @@ describe('NotebookScene', () => {
 
       act(() => scene.onEnterEditMode());
 
-      expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Undo' })).toBeInTheDocument();
     });
 
     // The assistant writes without entering edit mode, so gating the status on `isEditing` would hide a
@@ -361,6 +417,84 @@ describe('NotebookScene', () => {
       );
 
       expect(context.setEnabled).toHaveBeenCalledWith(true);
+    });
+  });
+
+  describe('tags', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['latency', 'slo']));
+
+      // Both, deliberately: the scene's copy is what the save model reads, the layout manager's is
+      // what the document header renders, and the whole point of pushing is that they cannot drift.
+      expect(scene.state.tags).toEqual(['latency', 'slo']);
+      expect(scene.state.body.state.tags).toEqual(['latency', 'slo']);
+    });
+
+    it('reaches the save model, so an export or a future save sees the edit', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTagsChange(['incident']));
+
+      expect(transformNotebookSceneToSaveModel(scene).tags).toEqual(['incident']);
+    });
+
+    // The mirror is pushed from a state subscription rather than from onTagsChange, so a whole-state
+    // swap (what APPLY_NOTEBOOK_SPEC does) reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          tags: ['rebuilt'],
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.tags).toEqual(['rebuilt']);
+    });
+  });
+
+  describe('title', () => {
+    it('is the single writer, and refreshes the copy the header renders', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      // Both, for the same reason as tags: the scene's copy is what the save model reads, the layout
+      // manager's is what the header renders, and pushing is what stops the two drifting.
+      expect(scene.state.title).toBe('Q3 latency regression');
+      expect(scene.state.body.state.title).toBe('Q3 latency regression');
+    });
+
+    it('reaches the save model, so autosave writes the rename', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(transformNotebookSceneToSaveModel(scene).title).toBe('Q3 latency regression');
+    });
+
+    // Pushed from the state subscription rather than from onTitleChange, so an APPLY_NOTEBOOK_SPEC
+    // swap reaches the header too.
+    it('survives the body being replaced wholesale', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() =>
+        scene.setState({
+          title: 'Rebuilt',
+          body: new NotebookLayoutManager({ cells: [] }),
+        })
+      );
+
+      expect(scene.state.body.state.title).toBe('Rebuilt');
     });
   });
 });

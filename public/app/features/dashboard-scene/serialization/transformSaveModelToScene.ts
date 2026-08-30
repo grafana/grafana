@@ -62,7 +62,8 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
@@ -420,6 +421,11 @@ export function createDashboardSceneFromDashboardModel(
       version: oldModel.version,
       scopeMeta,
       body,
+      // Dashboards migrated from the old schema get the classic grid persisted as their default
+      // layout for new containers, regardless of the auto grid feature flag. The backend v1-to-v2
+      // conversion writes the same preference; both conversions must produce identical output.
+      preferences:
+        targetVersion === 'v2' ? { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() } : undefined,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,
         to: oldModel.time.to,

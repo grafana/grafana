@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -7,7 +7,13 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
-import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
+import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { ImportWizardGate } from './ImportToGMA';
 
@@ -63,17 +69,31 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
     useStep1Validation: () => true,
   };
 });
-// Rules step is skipped in these flows, so its body never renders a network call.
-jest.mock('./steps/Step2AlertRules', () => ({
-  Step2Content: () => null,
-  useStep2Validation: () => true,
-}));
+// Most flows skip Rules, so this rarely matters. When a test completes the step instead,
+// handleConfirmImport needs rulesDatasourceUID set to fire the import — seeding it here is
+// harmless for the skip flows.
+jest.mock('./steps/Step2AlertRules', () => {
+  const { useEffect } = require('react');
+  const { useFormContext } = require('react-hook-form');
+  return {
+    Step2Content: function Step2Content() {
+      const { setValue } = useFormContext();
+      useEffect(() => {
+        setValue('rulesDatasourceUID', 'prometheus-uid');
+      }, [setValue]);
+      return null;
+    },
+    useStep2Validation: () => true,
+  };
+});
 
 const CONVERT_URL = '/api/convert/api/v1/alerts';
 
 const server = setupMswServer();
 
 const mockReportInteraction = jest.mocked(reportInteraction);
+
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 beforeEach(() => {
   mockReportInteraction.mockClear();
@@ -83,7 +103,12 @@ beforeEach(() => {
     AccessControlAction.AlertingNotificationsWrite,
     AccessControlAction.AlertingRuleCreate,
     AccessControlAction.AlertingProvisioningSetStatus,
+    // useAutoSyncConfiguration (saveAutoSync) gates its Config query on this permission.
+    AccessControlAction.ActionAlertingNotificationsConfigRead,
   ]);
+  // useAutoSyncConfiguration (called directly by the wizard for saveAutoSync) fires this
+  // unconditionally, independent of the mocked Step1Content above.
+  setupDatasourcesEndpoint(server, []);
   locationService.push('/');
 });
 
@@ -116,6 +141,17 @@ async function importWith(user: ReturnType<typeof render>['user']) {
   const dialog = await screen.findByRole('dialog');
   await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 }
+
+describe('ImportWizardGate — gating on mount', () => {
+  it('blocks the wizard when auto-sync is already active, even before the Config query resolves', async () => {
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+
+    render(<ImportWizardGate />);
+
+    expect(await screen.findByText(/auto-sync is enabled/i)).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /import notification resources/i })).not.toBeInTheDocument();
+  });
+});
 
 describe('ImportToGMA wizard — stage analytics', () => {
   it('tracks success and lands on the Import settings tab', async () => {
@@ -220,8 +256,8 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     mockScenario = 'yaml';
   });
 
-  /** Notifications -> Review, skipping Rules (force-skipped while Auto-sync is checked). */
-  async function advanceToReview(user: ReturnType<typeof render>['user']) {
+  /** Notifications -> Rules (now always reachable, even with Auto-sync checked). */
+  async function advanceToRules(user: ReturnType<typeof render>['user']) {
     await screen.findByRole('group', { name: /import notification resources/i });
     await waitFor(() =>
       expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
@@ -230,21 +266,58 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
       )
     );
     await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
-    await screen.findByText(/review import/i);
+    await screen.findByRole('group', { name: /import alert rules/i });
   }
 
-  it('skips the Rules step entirely and lands on Review', async () => {
+  it('still shows the Rules step when Auto-sync is checked, and lets it be skipped', async () => {
     const { user } = render(<ImportWizardGate />);
 
-    await advanceToReview(user);
+    await advanceToRules(user);
 
-    expect(screen.queryByRole('group', { name: /import alert rules/i })).not.toBeInTheDocument();
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
     expect(screen.getByText(/will sync continuously/i)).toBeInTheDocument();
   });
 
-  it('calls saveAutoSync (not the staging import) and tracks success on confirm', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 200);
+  it('does not enable Auto-sync when Notifications is skipped, even though Auto-sync was selected', async () => {
+    const { patchSpy } = setupStatefulAutoSyncConfig(server);
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json({})));
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    // Wait for the seeded Auto-sync selection to make the step valid, then Skip instead of
+    // Next — the selection must be discarded, not carried through to the confirm step.
+    await waitFor(() =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      )
+    );
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+
+    // Complete Rules so there's something to import — same shape as the bug report.
+    await screen.findByRole('group', { name: /import alert rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    expect(screen.queryByText(/will sync continuously/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/skipped/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start import/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /enable auto-sync/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything())
+    );
+    expect(patchSpy).not.toHaveBeenCalled();
+  });
+
+  it('calls saveAutoSync (not the staging import) and tracks success when Rules is skipped', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     let stagingImportCalled = false;
     server.use(
       http.post(CONVERT_URL, () => {
@@ -254,13 +327,15 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     );
 
     const { user } = render(<ImportWizardGate />);
-    await advanceToReview(user);
+    await advanceToRules(user);
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
 
     await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: 'mimir-uid' }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
     expect(stagingImportCalled).toBe(false);
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith(
@@ -273,12 +348,90 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     });
   });
 
-  it('tracks an error and does not fall through to the staging import path when saveAutoSync fails', async () => {
-    const postState: AdminConfigPostState = { lastPayload: null };
-    setupAdminConfigPost(server, postState, 500);
+  it('enables auto-sync and imports rules together when Rules is completed instead of skipped', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server);
+    let rulesImportCalled = false;
+    server.use(
+      // Confirmed via convertToGMAApi.ts: useConvertToGMAMutation (rules import) posts here,
+      // a different endpoint from CONVERT_URL (notifications/dry-run only).
+      http.post('/api/convert/prometheus/config/v1/rules', () => {
+        rulesImportCalled = true;
+        return HttpResponse.json({});
+      })
+    );
 
     const { user } = render(<ImportWizardGate />);
-    await advanceToReview(user);
+    await advanceToRules(user);
+    // Step2Content renders null and useStep2Validation is stubbed true (see the mock above), so
+    // Next is enabled immediately without needing the real rules-picking UI.
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
+    expect(rulesImportCalled).toBe(true);
+    await waitFor(() => expect(within(dialog).getByText(/alert rules were also imported/i)).toBeInTheDocument());
+  });
+
+  it('reports a Rules-specific failure — not an Auto-sync failure — when Rules import fails after Auto-sync already succeeded', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server);
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => new HttpResponse(null, { status: 500 })));
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    // Auto-sync's own save call succeeded even though the overall submit errors out below.
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'mimir-uid' }));
+    await waitFor(() => expect(within(dialog).getByText(/rules import failed/i)).toBeInTheDocument());
+    expect(within(dialog).queryByText(/failed to enable auto-sync/i)).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_import_to_gma_error',
+        expect.objectContaining({ notificationsSource: 'datasource' })
+      )
+    );
+  });
+
+  it('tracks an error and does not fall through to the staging import path when saveAutoSync fails', async () => {
+    setupStatefulAutoSyncConfig(server);
+    setupAutoSyncConfigWriteError(server, { code: 500, message: 'failed to save the configuration' });
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
+
+    await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'grafana_alerting_import_to_gma_error',
+        expect.objectContaining({ notificationsSource: 'datasource' })
+      )
+    );
+    expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
+    expect(within(dialog).getByText(/failed to enable auto-sync/i)).toBeInTheDocument();
+  });
+
+  it('reports an error and does not fall through to the staging import path when the Config singleton has not been seeded yet', async () => {
+    // Humans can't create the Config singleton — this is the pre-seed state, not a write failure.
+    setupAutoSyncConfigAbsent(server);
+
+    const { user } = render(<ImportWizardGate />);
+    await advanceToRules(user);
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
+    await screen.findByText(/review import/i);
 
     await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
     const dialog = await screen.findByRole('dialog');

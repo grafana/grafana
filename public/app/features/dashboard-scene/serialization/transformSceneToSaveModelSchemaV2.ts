@@ -63,7 +63,8 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
@@ -366,7 +367,7 @@ export function vizPanelToSchemaV2(
         kind: 'QueryGroup',
         spec: {
           queries: getVizPanelQueries(vizPanel, dsReferencesMapping, isSnapshot),
-          transformations: getVizPanelTransformations(vizPanel),
+          transformations: getVizPanelTransformations(vizPanel, bakeRepeatValues),
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
       },
@@ -559,7 +560,8 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   return defaultDS?.type || '';
 }
 
-function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
+// bakeRepeatValues is true only when saving a snapshot of a panel that sits inside a repeat.
+function getVizPanelTransformations(vizPanel: VizPanel, bakeRepeatValues = false): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
@@ -577,7 +579,9 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
-          options: transformation.options,
+          options: bakeRepeatValues
+            ? interpolateRepeatValues(dataProvider, transformation.options)
+            : transformation.options,
         };
 
         transformations.push({
@@ -591,6 +595,33 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
     }
   }
   return transformations;
+}
+
+// A repeat gives each copy a private value for its variable. That value only exists while the
+// dashboard is running, so it is not part of what gets saved. Any transformation using $var has to be
+// handed the value at save time. Without this the snapshot interpolates against the dashboard
+// variable, and a multi-value one gives back the whole array instead of this copy's value.
+// Keys too, not just values: organize transformation keeps field names in excludeByName.
+// Copies rather than mutates, because the dashboard stays open after saving.
+function interpolateRepeatValues(sceneObject: SceneObject, value: unknown): unknown {
+  if (typeof value === 'string') {
+    return sceneGraph.interpolate(sceneObject, value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => interpolateRepeatValues(sceneObject, item));
+  }
+
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        sceneGraph.interpolate(sceneObject, key),
+        interpolateRepeatValues(sceneObject, item),
+      ])
+    );
+  }
+
+  return value;
 }
 
 function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {

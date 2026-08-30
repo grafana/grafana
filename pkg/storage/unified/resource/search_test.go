@@ -2114,7 +2114,6 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	// nothing.
 	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
 	require.NoError(t, err)
-	require.NotEmpty(t, live.Tags)
 	require.NotEmpty(t, live.Fields)
 
 	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
@@ -2128,12 +2127,52 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	require.True(t, *doc.IsDeleted)
 
 	require.Nil(t, doc.IsProvisioned, "the object was not provisioned")
-	require.Empty(t, doc.Tags)
 	require.Empty(t, doc.Fields)
 	require.Empty(t, doc.Labels)
 	require.Empty(t, doc.References)
 	require.Empty(t, doc.Description)
 	require.Nil(t, doc.Manager)
+}
+
+// Tags survive a delete, so trash can show them. They are read from the marker's
+// spec, the same place live search reads them, and the marker is the whole object
+// as it was, so this costs no extra read.
+func TestBuildDeletedDocumentKeepsTags(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+
+	// Trash and live search must report the same tags for the same object.
+	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.NotEmpty(t, live.Tags)
+
+	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.Equal(t, live.Tags, doc.Tags)
+
+	// An object with no usable tags is indexed without the field rather than with an
+	// empty list, so trash documents are shaped like live ones.
+	for name, body := range map[string]string{
+		"no tags":            `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone"}}`,
+		"empty list":         `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":[]}}`,
+		"tags not a list":    `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"tags":"prod"}}`,
+		"no spec at all":     `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"}}`,
+		"spec not an object": `{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":"just a string"}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			doc, err := buildDeletedDocument(key, 10, []byte(body))
+			require.NoError(t, err)
+			require.Nil(t, doc.Tags)
+		})
+	}
+
+	// A malformed entry is skipped rather than failing the document, so one bad tag
+	// cannot keep a deleted object out of trash.
+	t.Run("non-string entries are skipped", func(t *testing.T) {
+		body := []byte(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":"gone"},"spec":{"title":"Gone","tags":["a",1,null,"b"]}}`)
+		doc, err := buildDeletedDocument(key, 10, body)
+		require.NoError(t, err)
+		require.Equal(t, []string{"a", "b"}, doc.Tags)
+	})
 }
 
 // The three fields /trash serves beyond title and folder. All of them come from

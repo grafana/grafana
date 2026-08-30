@@ -1,5 +1,4 @@
 import rspack, { type Configuration, type RuleSetRule } from '@rspack/core';
-import browserslist from 'browserslist';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,12 +23,8 @@ export const swcRule: RuleSetRule = {
     options: {
       jsc: {
         parser: { syntax: 'typescript', tsx: true },
-        // `development` defaults to the compiler mode. Leaving it on routes JSX through
-        // jsxDEV, which embeds the absolute source path of every call site and makes the
-        // bundle hash differently per checkout directory.
-        transform: { react: { runtime: 'automatic', development: false } },
+        transform: { react: { runtime: 'automatic' } },
       },
-      env: { targets: browserslist().join(', ') },
     },
   },
   type: 'javascript/auto',
@@ -76,12 +71,10 @@ export const sassRule: RuleSetRule = {
 };
 
 export default (env: Env = {}): Configuration => ({
-  target: 'web',
+  target: 'browserslist',
 
-  // Rspack only parses AMD `define` branches when this is set. Without it, UMD wrappers in
-  // node_modules keep their runtime `define.amd` check, which passes because systemjs
-  // installs a global `define`. Those modules register as AMD, export nothing, and Grafana
-  // crashes at boot with a green build.
+  // We need this so Rspack processes AMD modules that live in our npm dependencies otherwise the SystemJS define
+  // function will be used and the module will end up in the SystemJS registry instead of Rspack's module registry.
   amd: {},
 
   entry: {
@@ -98,8 +91,8 @@ export default (env: Env = {}): Configuration => ({
     asyncWebAssembly: true,
   },
   output: {
-    // `path` and `publicPath` must agree: disk layout, URL and CDN path are one string.
     clean: true,
+    // keep `path` and `publicPath` aligned otherwise 404s will occur.
     path: path.resolve(import.meta.dirname, '../../public/build/rspack'),
     filename: (pathData) => {
       if (pathData.chunk?.name === 'boot') {
@@ -150,8 +143,7 @@ export default (env: Env = {}): Configuration => ({
   },
   ignoreWarnings: [
     /export .* was not found in/,
-    // Function form because rspack's warning message carries extra formatting, which an
-    // anchored message regex never matches.
+    // Has to be a function, not a regex - rspack's warning text has extra formatting that an anchored regex won't match.
     (warning) =>
       warning.message.includes('Critical dependency: the request of a dependency is an expression') &&
       warning.module != null &&
@@ -177,8 +169,7 @@ export default (env: Env = {}): Configuration => ({
   module: {
     parser: {
       javascript: {
-        // Rspack raises missing ESM exports as hard errors. Downgraded so ignoreWarnings
-        // above can swallow them, as it does under webpack.
+        // Rspack raises missing ESM exports as errors which fail builds - treat them as warnings instead.
         exportsPresence: 'warn',
       },
     },
