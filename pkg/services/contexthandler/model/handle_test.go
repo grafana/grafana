@@ -212,4 +212,98 @@ func TestReqContext_Handle(t *testing.T) {
 		require.Contains(t, body, `<body class="theme-dark">`)
 		require.NotContains(t, body, "Error rendering template")
 	})
+
+	t.Run("resolves system default theme to dark theme type", func(t *testing.T) {
+		tempDir := t.TempDir()
+		buildDir := filepath.Join(tempDir, "build")
+		require.NoError(t, os.MkdirAll(buildDir, 0755))
+
+		manifestJSON := `{
+			"entrypoints": {
+				"app": { "assets": { "css": ["public/build/grafana.app.12345.css"] } },
+				"dark": { "assets": { "css": ["public/build/grafana.dark.12345.css"] } },
+				"light": { "assets": { "css": ["public/build/grafana.light.12345.css"] } }
+			}
+		}`
+		require.NoError(t, os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifestJSON), 0600))
+
+		cfg := setting.NewCfg()
+		cfg.ErrTemplateName = "error"
+		cfg.DefaultTheme = "system"
+		cfg.StaticRootPath = tempDir
+
+		rec := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/render/test", nil)
+		require.NoError(t, err)
+
+		handler := web.EmptyMacaronMiddleware(
+			web.Renderer(viewsPath, "[[", "]]")(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					webCtx := web.FromContext(r.Context())
+					reqCtx := &contextmodel.ReqContext{
+						Context: webCtx,
+						Logger:  log.New("test"),
+					}
+					reqCtx.Handle(cfg, http.StatusBadRequest, "Render parameters error", errors.New("timeout is invalid"))
+				}),
+			),
+		)
+
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+		body := rec.Body.String()
+		require.Contains(t, body, "<title>Grafana - Error</title>")
+		require.Contains(t, body, `<body class="theme-dark">`)
+		require.Contains(t, body, `<link rel="stylesheet" href="public/build/grafana.dark.12345.css" />`)
+		require.NotContains(t, body, "public/build/grafana.light.12345.css")
+		require.NotContains(t, body, "Error rendering template")
+	})
+
+	t.Run("resolves extra light theme ID (desertbloom) to light theme type", func(t *testing.T) {
+		tempDir := t.TempDir()
+		buildDir := filepath.Join(tempDir, "build")
+		require.NoError(t, os.MkdirAll(buildDir, 0755))
+
+		manifestJSON := `{
+			"entrypoints": {
+				"app": { "assets": { "css": ["public/build/grafana.app.12345.css"] } },
+				"dark": { "assets": { "css": ["public/build/grafana.dark.12345.css"] } },
+				"light": { "assets": { "css": ["public/build/grafana.light.12345.css"] } }
+			}
+		}`
+		require.NoError(t, os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifestJSON), 0600))
+
+		cfg := setting.NewCfg()
+		cfg.ErrTemplateName = "error"
+		cfg.DefaultTheme = "desertbloom"
+		cfg.StaticRootPath = tempDir
+
+		rec := httptest.NewRecorder()
+		req, err := http.NewRequest("GET", "/render/test", nil)
+		require.NoError(t, err)
+
+		handler := web.EmptyMacaronMiddleware(
+			web.Renderer(viewsPath, "[[", "]]")(
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					webCtx := web.FromContext(r.Context())
+					reqCtx := &contextmodel.ReqContext{
+						Context: webCtx,
+						Logger:  log.New("test"),
+					}
+					reqCtx.Handle(cfg, http.StatusBadRequest, "Render parameters error", errors.New("timeout is invalid"))
+				}),
+			),
+		)
+
+		handler.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+		body := rec.Body.String()
+		require.Contains(t, body, "<title>Grafana - Error</title>")
+		require.Contains(t, body, `<body class="theme-light">`)
+		require.Contains(t, body, `<link rel="stylesheet" href="public/build/grafana.light.12345.css" />`)
+		require.NotContains(t, body, "public/build/grafana.dark.12345.css")
+		require.NotContains(t, body, "Error rendering template")
+	})
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -50,8 +51,8 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 	appSubURL := ""
 	errTemplateName := "error"
 	if cfg != nil {
-		if cfg.DefaultTheme != "" {
-			themeType = cfg.DefaultTheme
+		if theme := pref.GetThemeByID(cfg.DefaultTheme); theme != nil && theme.Type == "light" {
+			themeType = "light"
 		}
 		appSubURL = cfg.AppSubURL
 		if cfg.ErrTemplateName != "" {
