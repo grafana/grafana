@@ -95,7 +95,11 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 		result, err = ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, AssetsManifestFile))
 		if err == nil {
 			result.PublicPath = PublicPathFor(buildDir)
-			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
+			var prefix string
+			if license != nil {
+				prefix = license.ContentDeliveryPrefix()
+			}
+			cdn, _ = cfg.GetContentDeliveryURL(prefix)
 			if cdn != "" {
 				result.SetContentDeliveryURL(cdn)
 			}
