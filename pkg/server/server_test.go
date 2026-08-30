@@ -225,14 +225,23 @@ func TestServer_Run_NotifiesSystemdOnlyAfterServicesAreRunning(t *testing.T) {
 		runErr := make(chan error, 1)
 		go func() { runErr <- s.Run() }()
 
+		stopPolling := make(chan struct{})
+		defer close(stopPolling)
+
 		waitMsg := make(chan string, 1)
 		go func() {
 			for {
+				select {
+				case <-stopPolling:
+					return
+				default:
+				}
 				msgs := received()
 				if len(msgs) > 0 {
 					waitMsg <- msgs[len(msgs)-1]
 					return
 				}
+				time.Sleep(10 * time.Millisecond)
 			}
 		}()
 
