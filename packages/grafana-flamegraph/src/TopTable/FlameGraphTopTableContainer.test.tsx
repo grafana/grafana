@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -12,8 +12,8 @@ import { ColorScheme } from '../types';
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
-  const setup = () => {
-    const flameGraphData = createDataFrame(data);
+  const setup = (flameGraphInput = data) => {
+    const flameGraphData = createDataFrame(flameGraphInput);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
     const onSandwich = jest.fn();
@@ -81,6 +81,32 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+
+  it('renders the other aggregate below the table with its actions', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const flameGraphWithOther = {
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10, 4, 3, 3] },
+        { name: 'self', values: [0, 4, 3, 3] },
+        { name: 'label', values: ['total', 'foo', 'bar', 'other'] },
+      ],
+    };
+
+    const { mocks } = setup(flameGraphWithOther);
+    const summary = screen.getByTestId('topTableOtherSummary');
+
+    expect(screen.queryByRole('cell', { name: 'other' })).not.toBeInTheDocument();
+    expect(summary).toHaveTextContent(
+      'A total of 3 was truncated and is represented by other in the flame graph. The smallest included stack trace has a total resource consumption of 3.'
+    );
+
+    await userEvents.click(within(summary).getByLabelText('Search for symbol'));
+    expect(mocks.onSearch).toHaveBeenCalledWith('other');
+
+    await userEvents.click(within(summary).getByLabelText('Show in sandwich view'));
+    expect(mocks.onSandwich).toHaveBeenCalledWith('other');
   });
 });
 
