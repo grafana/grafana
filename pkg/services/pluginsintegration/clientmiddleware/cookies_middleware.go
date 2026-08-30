@@ -5,9 +5,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
@@ -39,20 +39,20 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 	}
 
 	if pCtx.DataSourceInstanceSettings != nil {
+		// NOTE: something is structurally awkward if we have to decode the settings JSON again here
 		settings := pCtx.DataSourceInstanceSettings
 		jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
 			return err
 		}
 
-		ds := &datasources.DataSource{
-			ID:       settings.ID,
-			OrgID:    pCtx.OrgID,
-			JsonData: jsonDataBytes,
-			Updated:  settings.Updated,
+		ds := datasourcesV0.DataSource{
+			Spec: datasourcesV0.UnstructuredSpec{
+				Object: map[string]any{"jsonData": jsonDataBytes.MustMap()},
+			},
 		}
 
-		allowedCookies = ds.AllowedCookies()
+		allowedCookies = ds.Spec.KeepCookies()
 	}
 
 	proxyutil.ClearCookieHeader(reqCtx.Req, allowedCookies, m.skipCookiesNames)
@@ -60,6 +60,12 @@ func (m *CookiesMiddleware) applyCookies(ctx context.Context, pCtx backend.Plugi
 	cookieStr := reqCtx.Req.Header.Get(cookieHeaderName)
 	switch t := req.(type) {
 	case *backend.QueryDataRequest:
+		if cookieStr == "" {
+			delete(t.Headers, cookieHeaderName)
+		} else {
+			t.Headers[cookieHeaderName] = cookieStr
+		}
+	case *backend.QueryChunkedDataRequest:
 		if cookieStr == "" {
 			delete(t.Headers, cookieHeaderName)
 		} else {
@@ -93,6 +99,19 @@ func (m *CookiesMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	}
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *CookiesMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.applyCookies(ctx, req.PluginContext, req)
+	if err != nil {
+		return err
+	}
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *CookiesMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

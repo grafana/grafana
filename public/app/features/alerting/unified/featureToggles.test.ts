@@ -24,21 +24,17 @@ describe('featureToggles', () => {
         config.featureToggles.alertingListViewV2 = false;
       });
 
-      it('should return false when preview toggle is disabled', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = false;
-
+      it('should return false when no localStorage preference is set', () => {
         expect(shouldUseAlertingListViewV2()).toBe(false);
       });
 
-      it('should return true when preview toggle is enabled and preview value is true', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = true;
+      it('should return true when localStorage preference is true', () => {
         setPreviewToggle('alertingListViewV2', true);
 
         expect(shouldUseAlertingListViewV2()).toBe(true);
       });
 
-      it('should return false when preview toggle is enabled but preview value is false', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = true;
+      it('should return false when localStorage preference is false', () => {
         setPreviewToggle('alertingListViewV2', false);
 
         expect(shouldUseAlertingListViewV2()).toBe(false);
@@ -50,31 +46,20 @@ describe('featureToggles', () => {
         config.featureToggles.alertingListViewV2 = true;
       });
 
-      it('should return true when preview toggle is disabled', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = false;
-
+      it('should return true when no localStorage preference is set', () => {
         expect(shouldUseAlertingListViewV2()).toBe(true);
       });
 
-      it('should return true when preview toggle is disabled even if preview value is true', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = false;
+      it('should return true when localStorage preference is true', () => {
         setPreviewToggle('alertingListViewV2', true);
 
         expect(shouldUseAlertingListViewV2()).toBe(true);
       });
 
-      it('should return false when preview toggle is enabled and preview value is false', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = true;
+      it('should return false when localStorage preference is false', () => {
         setPreviewToggle('alertingListViewV2', false);
 
         expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
-
-      it('should return true when preview toggle is enabled and preview value is true', () => {
-        config.featureToggles.alertingListViewV2PreviewToggle = true;
-        setPreviewToggle('alertingListViewV2', true);
-
-        expect(shouldUseAlertingListViewV2()).toBe(true);
       });
     });
   });

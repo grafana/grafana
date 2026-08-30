@@ -4,7 +4,6 @@
       "label-advanced": "Lanjutan"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Tambahkan",
       "aria-label-remove": "Hapus",
       "button-add-resource": "Tambahkan sumber daya",
       "button-add-resource-uri": "Tambahkan URI sumber daya",
@@ -34,22 +33,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "Sertifikat Klien",
       "aria-label-client-id": "ID Klien",
       "aria-label-client-secret": "Rahasia Klien",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
+      "aria-label-private-key": "Kunci Pribadi",
+      "aria-label-private-key-password": "Kata Sandi Sertifikat",
       "aria-label-symbol-client-secret": "Rahasia Klien",
       "aria-label-tenant-id": "ID Tenant",
-      "description-certificate-format": "",
+      "description-certificate-format": "Pilih format sertifikat (sertifikat PEM harus dalam format PEM teks biasa, sertifikat PFX harus dalam format PFX yang dikodekan base64)",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "Format",
+      "label-client-certificate": "Sertifikat Klien",
       "label-client-id": "ID Aplikasi (klien)",
       "label-client-secret": "Rahasia Klien",
-      "label-private-key": "",
+      "label-private-key": "Kunci Pribadi",
       "label-symbol-client-secret": "Rahasia Klien",
-      "label-symbol-private-key-password": "",
+      "label-symbol-private-key-password": "Kata Sandi Sertifikat",
       "label-tenant-id": "ID Direktori (tenant)",
       "placeholder-symbol-client-secret": "dikonfigurasi",
       "reset-symbol-client-secret": "Atur ulang"
@@ -70,14 +69,19 @@
       "title-kick-start": "Mulai kueri Anda"
     },
     "azure-credentials-form": {
-      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
-      "label-authentication": "",
+      "description-authentication": "Pilih jenis autentikasi ke service Azure",
+      "label-authentication": "Jenis autentikasi",
       "title-authentication": "Autentikasi"
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Log Dasar",
       "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
       "label-enable-basic-logs": "Aktifkan Log Dasar"
+    },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "API Batch",
+      "description-batch-api": "Menjalankan kueri pada beberapa sumber daya dalam satu permintaan, meningkatkan kinerja untuk dasbor besar. Memerlukan peran <2>Monitoring Reader</2> pada lingkup langganan di <6>metrics.monitor.azure.com</6>. <9>Biaya tambahan mungkin berlaku</9> di luar tier gratis.",
+      "label-enable-batch-api": "Aktifkan API Batch"
     },
     "config-editor": {
       "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini termasuk Secure Socks Proxy, batas waktu permintaan, dan cookie yang diteruskan.",
@@ -86,14 +90,14 @@
     "current-user-fallback-credentials": {
       "alert-fallback-credentials-disabled": "Kredensial fallback telah dinonaktifkan. Karena autentikasi berbasis pengguna hanya mendukung permintaan dengan pengguna dalam cakupannya, fitur seperti peringatan, kueri yang direkam, atau pelaporan tidak akan berfungsi seperti yang diharapkan. Silakan tinjau <2>dokumentasi</2> untuk detail selengkapnya.",
       "body-service-credentials": "Autentikasi berbasis pengguna pada dasarnya tidak mendukung fitur Grafana yang membuat permintaan ke sumber data tanpa detail pengguna yang tersedia untuk permintaan tersebut. Contohnya adalah peringatan. Jika Anda ingin memastikan bahwa fitur yang tidak memiliki pengguna dalam konteks permintaan masih berfungsi, harap berikan kredensial fallback (cadangan) di bawah ini.",
-      "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
-      "description-service-credentials": "Pilih apakah kredensial layanan fallback diaktifkan atau dinonaktifkan untuk sumber data ini",
+      "description-authentication": "Pilih jenis autentikasi ke service Azure",
+      "description-service-credentials": "Pilih apakah kredensial service fallback diaktifkan atau dinonaktifkan untuk sumber data ini",
       "label-authentication": "Autentikasi",
-      "label-service-credentials": "Kredensial Layanan",
+      "label-service-credentials": "Kredensial Service",
       "note-service-credentials": "Catatan: Fitur seperti peringatan akan dibatasi pada tingkat akses kredensial fallback, bukan pengguna. Ini dapat menimbulkan kebingungan bagi pengguna dan harus diklarifikasi.",
       "title-fallback-credentials-disabled": "Kredensial Fallback Dinonaktifkan",
-      "title-fallback-service-credentials": "Kredensial Layanan Fallback",
-      "title-service-credentials": "Kredensial Layanan"
+      "title-fallback-service-credentials": "Kredensial Service Fallback",
+      "title-service-credentials": "Kredensial Service"
     },
     "default-subscription": {
       "aria-label-default-subscription": "Langganan Default",
@@ -101,7 +105,11 @@
       "load-subscriptions": "Muat Langganan"
     },
     "dimension-fields": {
-      "aria-label-remove": "Hapus",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensi",
       "placeholder-field": "Bidang",
       "placeholder-operation": "Pengoperasian",
@@ -194,6 +202,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Namespace metrik"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Anda dapat memilih item dengan jenis sumber daya yang sama di berbagai langganan dan wilayah. Sumber daya di langganan atau wilayah yang berbeda akan dikueri melalui request terpisah, sehingga kegagalan pada satu request tidak memengaruhi request lainnya. Untuk memilih sumber daya dari jenis yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu.",
+      "selection-notice-standard": "Anda dapat memilih item dengan jenis sumber daya dan lokasi yang sama. Untuk memilih sumber daya dari jenis atau lokasi yang berbeda, hapus centang pada pilihan saat ini terlebih dahulu."
+    },
+    "monitor-config": {
+      "title-features": "Fitur"
+    },
     "nested-row": {
       "text-loading": "Memuat..."
     },
@@ -205,6 +220,10 @@
       "label-by": "BERDASARKAN",
       "label-order-by": "Urutkan Berdasarkan",
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
+    },
+    "pagination": {
+      "results-truncated-message": "Berhenti memuat setelah {{maxPages}} halaman; beberapa hasil mungkin dihilangkan.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"
@@ -219,7 +238,7 @@
         "label-builder": "Pembangun",
         "label-kql": "KQL"
       },
-      "label-service": "Layanan",
+      "label-service": "Service",
       "placeholder-service": "Melayani...",
       "title-switch-mode": "Beralih ke mode editor?"
     },
@@ -285,7 +304,7 @@
       "tooltip-time-range": "<0>Menentukan rentang waktu yang digunakan untuk kueri. Opsi <1>Kueri</1> hanya akan menggunakan rentang waktu yang ditentukan dalam kueri. <3>Dasbor</3> hanya akan menggunakan rentang waktu Grafana.</0>"
     },
     "top-field": {
-      "label-top": "Top"
+      "label-top": "Atas"
     },
     "trace-type-field": {
       "label-event-type": "Jenis Peristiwa",
@@ -299,7 +318,7 @@
       "title-unsupported-auth": "Penyedia autentikasi tidak didukung"
     },
     "user-auth-fallback-alert": {
-      "body-no-fallback-credentials": "Fitur backend sumber data (seperti peringatan) memerlukan kredensial layanan agar dapat berfungsi dengan baik. Sumber data ini dikonfigurasi tanpa fallback kredensial layanan, atau fungsi fallback dinonaktifkan. Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
+      "body-no-fallback-credentials": "Fitur backend sumber data (seperti peringatan) memerlukan kredensial service agar dapat berfungsi dengan baik. Sumber data ini dikonfigurasi tanpa fallback kredensial service, atau fungsi fallback dinonaktifkan. Silakan tinjau <2>dokumentasi</2> untuk informasi selengkapnya.",
       "title-no-fallback-credentials": "Tidak ada kredensial fallback yang tersedia"
     },
     "variable-editor": {

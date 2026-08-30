@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Legend, useStyles2 } from '@grafana/ui';
 
 export function VariableLegend({ className, ...rest }: Parameters<typeof Legend>['0']) {

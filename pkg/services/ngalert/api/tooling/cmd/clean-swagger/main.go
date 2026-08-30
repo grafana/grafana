@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("no file specified, input", input, ", output", output)
 	}
 
-	//nolint
+	// nolint
 	b, err := os.ReadFile(input)
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	if info["title"] == nil {
-		info["title"] = "Unified Alerting API"
+		info["title"] = "Grafana Alerting API."
 	}
 
 	definitions, ok := data["definitions"]

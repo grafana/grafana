@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"runtime"
 	"slices"
@@ -41,6 +42,7 @@ const (
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
+	HeaderCallerID       = "X-Grafana-Caller-Id" // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
 )
 
 func ProvideService(
@@ -197,9 +199,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	resp := backend.NewQueryDataResponse()
 	reqCtx := contexthandler.FromContext(ctx)
 	for result := range rchan {
-		for refId, dataResponse := range result.responses {
-			resp.Responses[refId] = dataResponse
-		}
+		maps.Copy(resp.Responses, result.responses)
 		if reqCtx != nil {
 			for k, v := range result.header {
 				for _, val := range v {
@@ -291,7 +291,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.dataSourceRequestValidator.Validate(ds.URL, ds.JsonData, nil); err != nil {
+	if err := s.dataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
@@ -456,8 +456,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),
 			"interval", pq.query.Interval.Milliseconds(),
-			"max_data_points", pq.query.MaxDataPoints,
-			"query", string(modelJSON))
+			"max_data_points", pq.query.MaxDataPoints)
 	}
 
 	return req, req.validateRequest(ctx)

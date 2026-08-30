@@ -1,18 +1,18 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 
 import { t } from '@grafana/i18n';
 import {
-  DataSourceRuleGroupIdentifier,
-  GrafanaRuleGroupIdentifier,
-  RuleGroupIdentifier,
-  RuleGroupIdentifierV2,
+  type DataSourceRuleGroupIdentifier,
+  type GrafanaRuleGroupIdentifier,
+  type RuleGroupIdentifier,
+  type RuleGroupIdentifierV2,
 } from 'app/types/unified-alerting';
 
 import { logError } from '../../Analytics';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { notFoundToNullOrThrow } from '../../api/util';
 import {
-  SwapOperation,
+  type SwapOperation,
   moveRuleGroupAction,
   renameRuleGroupAction,
   reorderRulesInRuleGroupAction,

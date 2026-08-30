@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getK8sV2DashboardApiConfig } from 'app/features/dashboard/api/v2';
 
 interface OpenAPISchema {
@@ -28,8 +29,8 @@ function getOpenAPIEndpoint(group: string, version: string): string {
   return `/openapi/v3/apis/${group}/${version}`;
 }
 
-function getDashboardSpecSchemaKey(version: string): string {
-  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.DashboardSpec`;
+function getDashboardSchemaKey(version: string): string {
+  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.Dashboard`;
 }
 
 let cachedSchema: JSONSchema | null = null;
@@ -52,9 +53,10 @@ export async function fetchDashboardSchema(): Promise<JSONSchema> {
 }
 
 async function doFetchSchema(): Promise<JSONSchema> {
+  await dashboardAPIVersionResolver.resolve();
   const { group, version } = getK8sV2DashboardApiConfig();
   const endpoint = getOpenAPIEndpoint(group, version);
-  const schemaKey = getDashboardSpecSchemaKey(version);
+  const schemaKey = getDashboardSchemaKey(version);
 
   const openApiSchema = await getBackendSrv().get<OpenAPISchema>(endpoint);
 
@@ -63,9 +65,12 @@ async function doFetchSchema(): Promise<JSONSchema> {
   }
 
   const schemas = openApiSchema.components.schemas;
-  const specSchema = schemas[schemaKey];
-  if (!specSchema) {
-    throw new Error(`Dashboard spec schema not found: ${schemaKey}`);
+  const theSchema = schemas[schemaKey];
+  if (!theSchema) {
+    throw new Error(`Dashboard schema not found: ${schemaKey}`);
+  }
+  if (theSchema.required) {
+    theSchema.required = theSchema.required.filter((prop) => prop !== 'status'); // ignore status
   }
 
   const definitions: Record<string, JSONSchema> = {};
@@ -75,7 +80,7 @@ async function doFetchSchema(): Promise<JSONSchema> {
 
   const jsonSchema: JSONSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    ...flattenSingleRefAllOf(specSchema),
+    ...flattenSingleRefAllOf(theSchema),
     definitions,
   };
 
@@ -114,6 +119,7 @@ function fixOpenAPIMismatches(definitions: Record<string, JSONSchema>): void {
   fixKindConstraints(definitions);
   fixScalarUnions(definitions);
   fixOpaqueMaps(definitions);
+  fixAnyValueProperties(definitions);
   fixDiscriminatedUnions(definitions);
 }
 
@@ -186,6 +192,30 @@ function fixOpaqueMaps(definitions: Record<string, JSONSchema>): void {
         for (const p of props) {
           if (schema.properties?.[p]) {
             schema.properties[p] = { type: 'object', additionalProperties: true };
+          }
+        }
+      }
+    }
+  }
+}
+
+// interface{} properties that accept any JSON type (string, number, boolean, array, object, null).
+// The generator emits { type: "object" } which incorrectly rejects non-object values.
+// Unlike opaque maps (which are always objects with arbitrary keys), these can be any type.
+const ANY_VALUE_PROPERTIES: Record<string, string[]> = {
+  DashboardDynamicConfigValue: ['value'],
+  DashboardMatcherConfig: ['options'],
+  DashboardDataTransformerConfig: ['options'],
+};
+
+function fixAnyValueProperties(definitions: Record<string, JSONSchema>): void {
+  for (const [key, schema] of Object.entries(definitions)) {
+    for (const [suffix, props] of Object.entries(ANY_VALUE_PROPERTIES)) {
+      if (key.endsWith(`_${suffix}`)) {
+        for (const p of props) {
+          if (schema.properties?.[p]) {
+            // Remove type constraint entirely — accept any JSON value
+            schema.properties[p] = {};
           }
         }
       }

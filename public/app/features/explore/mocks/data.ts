@@ -1,7 +1,7 @@
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
-import { getDefaultTimeRange, LoadingState, LogsModel } from '@grafana/data';
-import { ExplorePanelData } from 'app/types/explore';
+import { getDefaultTimeRange, LoadingState, type LogsModel } from '@grafana/data';
+import { type ExplorePanelData } from 'app/types/explore';
 
 type MockProps = {
   logsResult?: Partial<LogsModel>;

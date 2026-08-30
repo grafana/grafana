@@ -5,15 +5,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
+	"k8s.io/apimachinery/pkg/types"
 
-	authlib "github.com/grafana/authlib/types"
 	correlationsV0 "github.com/grafana/grafana/apps/correlations/pkg/apis/correlation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestConversion(t *testing.T) {
-	namespacer := authlib.OrgNamespaceFormatter
-
 	tests := []struct {
 		name   string
 		input  Correlation
@@ -29,9 +27,9 @@ func TestConversion(t *testing.T) {
 				Label:       "Test Label",
 				Type:        query,
 				SourceUID:   "source",
-				SourceType:  ptr.To("source-type"),
-				TargetUID:   ptr.To("target"),
-				TargetType:  ptr.To("target-type"),
+				SourceType:  new("source-type"),
+				TargetUID:   new("target"),
+				TargetType:  new("target-type"),
 				Description: "A test correlation",
 				Provisioned: true,
 				Config: CorrelationConfig{
@@ -41,13 +39,18 @@ func TestConversion(t *testing.T) {
 			expect: correlationsV0.Correlation{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "uid",
+					UID:       types.UID(""),
 					Namespace: "org-2",
 					Annotations: map[string]string{
 						"grafana.app/managedBy": "classic-file-provisioning",
 					},
+					Labels: map[string]string{
+						"correlations.grafana.app/sourceDS-ref":     "source-type.source",
+						"correlations.grafana.app/sourceDSProv-ref": "source-type.source.true",
+					},
 				},
 				Spec: correlationsV0.CorrelationSpec{
-					Description: ptr.To("A test correlation"),
+					Description: new("A test correlation"),
 					Label:       "Test Label",
 					Type:        correlationsV0.CorrelationCorrelationTypeQuery,
 					Source: correlationsV0.CorrelationDataSourceRef{
@@ -68,7 +71,7 @@ func TestConversion(t *testing.T) {
 				Label:       "Test Label",
 				Type:        query,
 				SourceUID:   "source",
-				TargetUID:   ptr.To("target"),
+				TargetUID:   new("target"),
 				Description: "A test correlation",
 				Provisioned: true,
 				Config: CorrelationConfig{
@@ -78,12 +81,12 @@ func TestConversion(t *testing.T) {
 			update: UpdateCorrelationCommand{
 				UID:         "uid",
 				OrgId:       2,
-				Label:       ptr.To("Test Label"),
-				Type:        ptr.To(query),
+				Label:       new("Test Label"),
+				Type:        new(query),
 				SourceUID:   "source",
-				Description: ptr.To("A test correlation"),
+				Description: new("A test correlation"),
 				Config: &CorrelationConfigUpdateDTO{
-					Field:  ptr.To("test-field"),
+					Field:  new("test-field"),
 					Target: &map[string]any{},
 				},
 			},
@@ -92,7 +95,7 @@ func TestConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := ToResource(tt.input, namespacer)
+			res, err := ToResource(tt.input)
 			require.NoError(t, err)
 			require.Equal(t, &tt.expect, res, "conversion")
 
@@ -109,4 +112,25 @@ func TestConversion(t *testing.T) {
 			require.Equal(t, &tt.update, update, "update")
 		})
 	}
+}
+
+// TestProvisionedCorrelationIsManaged locks in the behavior that a provisioned
+// correlation is converted with the classic file-provisioning manager kind but no
+// manager identity, and must still be reported as managed. Classic kinds are exempt
+// from the "no identity => not managed" guard so this provisioning origin is not lost.
+func TestProvisionedCorrelationIsManaged(t *testing.T) {
+	res, err := ToResource(Correlation{
+		UID:         "uid",
+		OrgID:       2,
+		Provisioned: true,
+	})
+	require.NoError(t, err)
+
+	meta, err := utils.MetaAccessor(res)
+	require.NoError(t, err)
+
+	mgr, ok := meta.GetManagerProperties()
+	require.True(t, ok, "provisioned correlation should be reported as managed")
+	require.Equal(t, utils.ManagerKindClassicFP, mgr.Kind) //nolint:staticcheck
+	require.Empty(t, mgr.Identity, "classic file-provisioning correlation has no manager identity")
 }

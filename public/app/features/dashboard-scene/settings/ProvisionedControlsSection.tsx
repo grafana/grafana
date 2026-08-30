@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import classNames from 'classnames';
-import { ReactNode, useMemo, useState } from 'react';
+import classNames from 'clsx';
+import { type ReactNode, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { useDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
 
 type Column = {
   i18nKey: string;
@@ -16,15 +18,16 @@ type Column = {
 type Props = {
   columns: Column[];
   children: ReactNode;
+  label?: ReactNode;
 };
 
-export function ProvisionedControlsSection({ columns, children }: Props) {
+export function ProvisionedControlsSection({ columns, children, label }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
-      <CollapsableSection label={<ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
+      <CollapsableSection label={label ?? <ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
         <table className={classNames('filter-table', 'filter-table--hover', styles.table)} role="grid">
           <thead>
             <tr>
@@ -60,6 +63,26 @@ export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined })
   const styles = useStyles2(getStyles);
   const pluginName = usePluginName(origin);
 
+  const predefinedOrigin = getPredefinedOrigin(origin);
+  if (predefinedOrigin) {
+    const isGlobal = predefinedOrigin.type === 'global';
+    const content = isGlobal
+      ? t(
+          'dashboard-scene.provisioned-controls-section.tooltip-global',
+          'Global variable, shared across all dashboards'
+        )
+      : t(
+          'dashboard-scene.provisioned-controls-section.tooltip-folder',
+          "Folder variable, inherited from this dashboard's folder"
+        );
+
+    return (
+      <Tooltip content={content}>
+        <Icon name={isGlobal ? 'globe' : 'folder'} className={styles.iconMuted} aria-label={content} />
+      </Tooltip>
+    );
+  }
+
   return (
     <Tooltip content={getSourceTooltip(pluginName)}>
       <Icon name="database" className={styles.iconMuted} aria-hidden />
@@ -77,15 +100,14 @@ function getSourceTooltip(pluginName: string | undefined): string {
 }
 
 function usePluginName(origin: ControlSourceRef | undefined): string | undefined {
-  return useMemo(() => {
-    if (!origin?.group) {
-      return undefined;
-    }
+  const pluginId = origin?.group ?? '';
+  const { value: meta } = useDatasourcePluginMeta(pluginId);
 
-    const list = getDataSourceSrv().getList({});
-    const ds = list.find((d) => d.meta.id === origin.group);
-    return ds?.meta.name ?? origin.group;
-  }, [origin?.group]);
+  if (!pluginId) {
+    return undefined;
+  }
+
+  return meta?.name ?? pluginId;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

@@ -2,12 +2,13 @@ import { createDataFrame, toDataFrame } from '../dataframe/processDataFrame';
 import { relativeToTimeRange } from '../datetime/rangeutil';
 import { createTheme } from '../themes/createTheme';
 import { FieldMatcherID } from '../transformations/matchers/ids';
-import { ScopedVars } from '../types/ScopedVars';
-import { GrafanaConfig } from '../types/config';
-import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
+import { type ScopedVars } from '../types/ScopedVars';
+import { type GrafanaConfig } from '../types/config';
+import { NullValueMode } from '../types/data';
+import { FieldType, type DataFrame, type Field, type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
-import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
-import { InterpolateFunction } from '../types/panel';
+import { type FieldConfigPropertyItem, type FieldConfigSource } from '../types/fieldOverrides';
+import { type InterpolateFunction } from '../types/panel';
 import { ThresholdsMode } from '../types/thresholds';
 import { MappingType } from '../types/valueMapping';
 import { Registry } from '../utils/Registry';
@@ -19,7 +20,7 @@ import { getDisplayProcessor } from './displayProcessor';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  FieldOverrideEnv,
+  type FieldOverrideEnv,
   findNumericFieldMinMax,
   getLinksSupplier,
   setDynamicConfigValue,
@@ -117,6 +118,34 @@ describe('Global MinMax', () => {
 
       expect(min).toBe(null);
       expect(max).toBe(null);
+    });
+
+    it('should treat null as zero when field.config.nullValueMode: NullValueMode.AsZero', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [null], config: { nullValueMode: NullValueMode.AsZero } },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBe(0);
+      expect(max).toBe(0);
+    });
+  });
+
+  describe('when value is NaN', () => {
+    it('should ignore', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [1, NaN, 5] },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBe(1);
+      expect(max).toBe(5);
     });
   });
 
@@ -416,6 +445,85 @@ describe('applyFieldOverrides', () => {
 
     // The override applied
     expect(config.decimals).toEqual(1);
+  });
+
+  it('resolves threshold valueExpr steps from defaults into a sorted numeric config', () => {
+    const variables: Record<string, unknown> = { warn: '25', multi: ['1', '2'] };
+    // mimics the function-format convention of sceneGraph.interpolate/templateSrv.replace:
+    // the custom format function receives the raw variable value (an array when multi-value)
+    const replaceVariables: InterpolateFunction = (value, _scopedVars, format) => {
+      return value.replace(/\$(\w+)/g, (match, name) => {
+        if (!(name in variables)) {
+          return match;
+        }
+        if (typeof format === 'function') {
+          return format(variables[name]);
+        }
+        return String(variables[name]);
+      });
+    };
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 80, color: 'red' },
+              { value: 50, valueExpr: '$warn', color: 'orange' },
+              { value: 90, valueExpr: '$multi', color: 'blue' },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      replaceVariables,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    // resolved ($warn -> 25), fallen back ($multi has 2 values selected -> 90),
+    // sorted ascending with the base step first, and no valueExpr left anywhere
+    expect(data.fields[1].config.thresholds).toEqual({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 25, color: 'orange' },
+        { value: 80, color: 'red' },
+        { value: 90, color: 'blue' },
+      ],
+    });
+  });
+
+  it('should skip overrides with unknown matcher ids', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byReg' as FieldMatcherID, options: '.*' },
+            properties: [{ id: 'decimals', value: 5 }],
+          },
+          {
+            matcher: { id: FieldMatcherID.numeric },
+            properties: [{ id: 'decimals', value: 1 }],
+          },
+        ],
+      },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    });
+
+    expect(data).toHaveLength(1);
+    expect(data[0].fields[1].config.decimals).toEqual(1);
+
+    warnSpy.mockRestore();
   });
 
   it('displayName should be able to reference itself', () => {
@@ -865,6 +973,41 @@ describe('setFieldConfigDefaults', () => {
     setFieldConfigDefaults(config, defaultConfig, context);
 
     expect(config.thresholds).toMatchSnapshot();
+  });
+
+  it('normalizes a datasource base threshold serialized as null', () => {
+    const defaultConfig: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [{ value: -Infinity, color: 'blue' }],
+      },
+    };
+
+    const config: FieldConfig = {
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: null as unknown as number, color: 'red' },
+          { value: 9, color: 'green' },
+          { value: 15, color: 'red' },
+        ],
+      },
+    };
+
+    const context: FieldOverrideEnv = {
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+      fieldConfigRegistry: customFieldRegistry,
+    };
+
+    setFieldConfigDefaults(config, defaultConfig, context);
+
+    expect(config.thresholds?.steps).toEqual([
+      { value: -Infinity, color: 'red' },
+      { value: 9, color: 'green' },
+      { value: 15, color: 'red' },
+    ]);
   });
 });
 

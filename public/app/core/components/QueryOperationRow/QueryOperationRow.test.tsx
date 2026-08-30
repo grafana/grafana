@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { QueryOperationRow, QueryOperationRowProps } from './QueryOperationRow';
+import { QueryOperationRow, type QueryOperationRowProps } from './QueryOperationRow';
 
 const setup = (propOverrides?: Partial<QueryOperationRowProps>) => {
   const props: QueryOperationRowProps = {

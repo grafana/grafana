@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 import { Button } from '../Button/Button';
 
 import { ConfirmButton } from './ConfirmButton';
@@ -29,8 +29,8 @@ export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabe
     >
       <Button
         aria-label={ariaLabel ?? t('grafana-ui.confirm-button.aria-label-delete', 'Delete')}
-        variant="destructive"
-        icon="times"
+        variant="secondary"
+        icon="trash-alt"
         size={size || 'sm'}
       />
     </ConfirmButton>

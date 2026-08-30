@@ -5,7 +5,7 @@ import { useDeleteCorrelationMutation } from '@grafana/api-clients/rtkq/correlat
 import { config } from '@grafana/runtime';
 
 import CorrelationsPage from './CorrelationsPage';
-import { GetCorrelationsParams, RemoveCorrelationParams } from './types';
+import { type GetCorrelationsParams, type RemoveCorrelationParams } from './types';
 import { useCorrelations } from './useCorrelations';
 import { useCorrelationsK8s } from './useCorrelationsK8s';
 
@@ -30,7 +30,7 @@ export function CorrelationsPageAppPlatform() {
 
   // we cant do a straight refetch, we have to pass in new pages if necessary
   const enhRefetch = (params: GetCorrelationsParams) => {
-    return { correlations: currentData, page: params.page, limit, totalCount: 0 };
+    return { correlations: currentData, page: params.page, limit, totalCount: 0, doesContinue };
   };
 
   const fmtedError = error ? handleRequestError(error) : undefined;
@@ -46,6 +46,7 @@ export function CorrelationsPageAppPlatform() {
         page: 0,
         limit: limit,
         totalCount: 0,
+        doesContinue: doesContinue,
       }}
       isLoading={isLoading}
       error={fmtedError?.error}
@@ -53,7 +54,6 @@ export function CorrelationsPageAppPlatform() {
         const deleteData = deleteCorrelation({ name: params.uid });
         return deleteData.unwrap();
       }}
-      hasNextPage={doesContinue}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { findMatchingRoutes } from '@grafana/alerting';
-import { AlertmanagerGroup, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerGroup, type Route, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { normalizeMatchers, unquoteWithUnescape } from './matchers';
 import { routeAdapter } from './routeAdapter';

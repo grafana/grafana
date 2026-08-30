@@ -44,7 +44,7 @@ func (e *WriteEvent) Validate() error {
 		return fmt.Errorf("watch event type is unknown")
 	}
 
-	if (e.Type == resourcepb.WatchEvent_MODIFIED || e.Type == resourcepb.WatchEvent_DELETED) && e.PreviousRV == 0 {
+	if (e.Type == resourcepb.WatchEvent_MODIFIED || e.Type == resourcepb.WatchEvent_DELETED) && e.PreviousRV <= 0 {
 		return fmt.Errorf("previous RV is required for update and delete events")
 	}
 
@@ -57,7 +57,9 @@ type WrittenEvent struct {
 	Key        *resourcepb.ResourceKey
 	PreviousRV int64
 
-	// The json payload (without resourceVersion)
+	// The json payload (without resourceVersion). May be nil on events produced
+	// by watch replay (see ListEventsSince): the resource server materialises the
+	// value lazily for those. Live events always carry it.
 	Value []byte
 
 	// Metadata

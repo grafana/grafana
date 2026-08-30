@@ -1,7 +1,7 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 )
 
 type AlertmanagersChoice int
@@ -24,7 +24,11 @@ type AdminConfiguration struct {
 	OrgID int64 `xorm:"org_id"`
 
 	// SendAlertsTo indicates which set of alertmanagers will handle the alert.
-	SendAlertsTo AlertmanagersChoice `xorm:"send_alerts_to"`
+	SendAlertsTo *AlertmanagersChoice `xorm:"send_alerts_to"`
+
+	// ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource whose
+	// configuration should be synced into Grafana for this org. Empty means no sync.
+	ExternalAlertmanagerUID *string `xorm:"external_alertmanager_uid"`
 
 	CreatedAt int64 `xorm:"created"`
 	UpdatedAt int64 `xorm:"updated"`
@@ -45,5 +49,5 @@ func StringToAlertmanagersChoice(str string) (AlertmanagersChoice, error) {
 			return k, nil
 		}
 	}
-	return 0, errors.New("invalid alertmanager choice")
+	return 0, fmt.Errorf("invalid alertmanager choice: %q", str)
 }

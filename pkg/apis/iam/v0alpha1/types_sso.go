@@ -17,10 +17,18 @@ type SSOSetting struct {
 	Spec SSOSettingSpec `json:"spec,omitempty"`
 }
 
+func (SSOSetting) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SSOSetting"
+}
+
 // SSOSettingSpec defines model for SSOSettingSpec.
 type SSOSettingSpec struct {
 	Source   Source              `json:"source"`
 	Settings common.Unstructured `json:"settings"`
+}
+
+func (SSOSettingSpec) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SSOSettingSpec"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -29,6 +37,10 @@ type SSOSettingList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []SSOSetting `json:"items"`
+}
+
+func (SSOSettingList) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SSOSettingList"
 }
 
 // Source for settings.

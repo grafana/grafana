@@ -1,5 +1,5 @@
-import { SelectableValue } from '@grafana/data';
-import { AdHocFilterWithLabels } from '@grafana/scenes';
+import { type SelectableValue } from '@grafana/data';
+import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState } from './utils';
 

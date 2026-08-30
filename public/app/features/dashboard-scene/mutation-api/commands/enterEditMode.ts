@@ -23,7 +23,7 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
       const wasEditing = scene.state.isEditing ?? false;
 
       if (!wasEditing) {
-        scene.onEnterEditMode();
+        scene.onEnterEditMode('assistant');
       }
 
       return {

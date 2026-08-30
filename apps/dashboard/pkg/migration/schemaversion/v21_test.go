@@ -152,6 +152,75 @@ func TestV21(t *testing.T) {
 			},
 		},
 		{
+			name: "migrates series-to-field data links for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V21 Nested Panels Migration Test Dashboard",
+				"schemaVersion": 20,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type":  "graph",
+								"title": "Panel with both link types",
+								"id":    3,
+								"options": map[string]interface{}{
+									"dataLinks": []interface{}{
+										map[string]interface{}{
+											"url": "http://mylink.com?series=${__series.labels}",
+										},
+									},
+									"fieldOptions": map[string]interface{}{
+										"defaults": map[string]interface{}{
+											"links": []interface{}{
+												map[string]interface{}{
+													"url": "http://mylink.com?field=${__series.labels}",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V21 Nested Panels Migration Test Dashboard",
+				"schemaVersion": 21,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"type":  "graph",
+								"title": "Panel with both link types",
+								"id":    3,
+								"options": map[string]interface{}{
+									"dataLinks": []interface{}{
+										map[string]interface{}{
+											"url": "http://mylink.com?series=${__field.labels}",
+										},
+									},
+									"fieldOptions": map[string]interface{}{
+										"defaults": map[string]interface{}{
+											"links": []interface{}{
+												map[string]interface{}{
+													"url": "http://mylink.com?field=${__field.labels}",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "panel without __series.labels is unchanged",
 			input: map[string]interface{}{
 				"title":         "V21 No Series Labels Test Dashboard",

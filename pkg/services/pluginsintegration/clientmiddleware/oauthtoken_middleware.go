@@ -6,9 +6,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	datasourcesV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
@@ -36,20 +36,20 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 		return nil
 	}
 
+	// NOTE: something is structurally awkward if we have to decode the settings JSON again here
 	settings := pCtx.DataSourceInstanceSettings
 	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 	if err != nil {
 		return err
 	}
 
-	ds := &datasources.DataSource{
-		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
-		JsonData: jsonDataBytes,
-		Updated:  settings.Updated,
+	ds := datasourcesV0.DataSource{
+		Spec: datasourcesV0.UnstructuredSpec{
+			Object: map[string]any{"jsonData": jsonDataBytes.MustMap()},
+		},
 	}
 
-	if m.oAuthTokenService.IsOAuthPassThruEnabled(ds) {
+	if ds.Spec.IsOAuthPassThruEnabled() {
 		if token := m.oAuthTokenService.GetCurrentOAuthToken(ctx, reqCtx.SignedInUser, reqCtx.UserToken); token != nil {
 			authorizationHeader := fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
 			idTokenHeader := ""
@@ -61,6 +61,11 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
+				if idTokenHeader != "" {
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
+				}
+			case *backend.QueryChunkedDataRequest:
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
@@ -93,6 +98,19 @@ func (m *OAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.Query
 	}
 
 	return m.BaseHandler.QueryData(ctx, req)
+}
+
+func (m *OAuthTokenMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.applyToken(ctx, req.PluginContext, req)
+	if err != nil {
+		return err
+	}
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
 func (m *OAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

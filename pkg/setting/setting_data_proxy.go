@@ -23,6 +23,7 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ResponseLimit = dataproxy.Key("response_limit").MustInt64(0)
 	cfg.DataProxyRowLimit = dataproxy.Key("row_limit").MustInt64(defaultDataProxyRowLimit)
 	cfg.DataProxyUserAgent = dataproxy.Key("user_agent").String()
+	cfg.DataProxyForwardUserAgent = dataproxy.Key("forward_user_agent").MustBool(false)
 
 	if cfg.DataProxyUserAgent == "" {
 		cfg.DataProxyUserAgent = fmt.Sprintf("Grafana/%s", BuildVersion)

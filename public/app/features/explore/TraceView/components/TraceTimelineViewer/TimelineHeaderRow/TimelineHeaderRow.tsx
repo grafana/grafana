@@ -14,14 +14,14 @@
 
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import Ticks from '../Ticks';
 import TimelineRow from '../TimelineRow';
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
+import { type TUpdateViewRangeTimeFunction, type ViewRangeTime, type ViewRangeTimeUpdate } from '../types';
 
 import { TimelineCollapser } from './TimelineCollapser';
 import TimelineColumnResizer from './TimelineColumnResizer';

@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -69,14 +70,15 @@ func TestOrgService(t *testing.T) {
 }
 
 type FakeOrgStore struct {
-	ExpectedOrg                       *org.Org
-	ExpectedOrgID                     int64
-	ExpectedUserID                    int64
-	ExpectedError                     error
-	ExpectedUserOrgs                  []*org.UserOrgDTO
-	ExpectedOrgs                      []*org.OrgDTO
-	ExpectedOrgUsers                  []*org.OrgUserDTO
-	ExpectedSearchOrgUsersQueryResult *org.SearchOrgUsersQueryResult
+	ExpectedOrg                          *org.Org
+	ExpectedOrgID                        int64
+	ExpectedUserID                       int64
+	ExpectedError                        error
+	ExpectedUserOrgs                     []*org.UserOrgDTO
+	ExpectedOrgs                         []*org.OrgDTO
+	ExpectedOrgUsers                     []*org.OrgUserDTO
+	ExpectedSearchOrgUsersQueryResult    *org.SearchOrgUsersQueryResult
+	ExpectedSearchOrgUsersByEmailsResult []*org.OrgUserDTO
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -147,6 +149,10 @@ func (f *FakeOrgStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgU
 	return f.ExpectedSearchOrgUsersQueryResult, f.ExpectedError
 }
 
+func (f *FakeOrgStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	return f.ExpectedSearchOrgUsersByEmailsResult, f.ExpectedError
+}
+
 func (f *FakeOrgStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	return f.ExpectedError
 }
@@ -155,5 +161,5 @@ func (f *FakeOrgStore) Count(ctx context.Context, _ *quota.ScopeParameters) (*qu
 	return nil, nil
 }
 
-func (f *FakeOrgStore) RegisterDelete(query string) {
+func (f *FakeOrgStore) RegisterDelete(renderer orgdelete.Renderer) {
 }

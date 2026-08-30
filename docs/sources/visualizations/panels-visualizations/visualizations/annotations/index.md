@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../../features/panels/annotations/ # /docs/grafana/next/features/panels/annotations/
-  - ../../../panels/visualizations/annotations/ # /docs/grafana/next/panels/visualizations/annotations/
   - ../../annotations/ # /docs/grafana/next/visualizations/annotations/
   - ../../../panels-visualizations/visualizations/annotations/ # /docs/grafana/next/panels-visualizations/visualizations/annotations/
 description: Configure options for Grafana's annotations list visualization
@@ -42,9 +41,9 @@ The following options control the source query for the list of annotations:
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | [Query filter](#query-filter) | Specify which annotations are included in the list.  |
-| [Time Range](#time-range) | Specify whether the list should be limited to the current time range. |
+| [Time range](#time-range) | Specify whether the list should be limited to the current time range. |
 | Tags | Filter the annotations by tags. You can add multiple tags to refine the list. Optionally, leave the tag list empty and filter in view mode by selecting tags that are listed as part of the results on the panel itself. |
-| Limit | Limit the number of results returned. |
+| Limit | Limit the number of results returned. The default is `10`. |
 
 <!-- prettier-ignore-end -->
 
@@ -56,7 +55,7 @@ Choose from:
 - **All dashboards** - List annotations from all dashboards in the current organization.
 - **This dashboard** - Limit the list to the annotations on the current dashboard.
 
-#### Time Range
+#### Time range
 
 Specify whether the list should be limited to the current time range.
 Choose from:
@@ -86,8 +85,8 @@ Use the following options to control the behavior of annotation links in the lis
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
-| Link target | Set how to view the annotated data. Choose from:<ul><li>**Panel** - The link takes you directly to a full-screen view of the panel with the corresponding annotation.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul> |
-| Time before | Set the time range before the annotation. Use duration string values like `1h` for one hour and `10m` for 10 minutes. |
-| Time after | Set the time range after the annotation. |
+| Link target | Set how to view the annotated data. The default is **Panel**. Choose from:<ul><li>**Panel** - The link takes you directly to a full-screen view of the panel with the corresponding annotation.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul> |
+| Time before | Set the time range before the annotation. Use duration string values like `1h` for one hour and `10m` for 10 minutes. The default is `10m`. |
+| Time after | Set the time range after the annotation. The default is `10m`. |
 
 <!-- prettier-ignore-end -->

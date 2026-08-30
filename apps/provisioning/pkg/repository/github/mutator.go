@@ -19,14 +19,19 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 		return nil
 	}
 
-	// Trim trailing ".git" and any trailing slash from the GitHub URL, if present, using the strings package.
-	if repo.Spec.GitHub.URL != "" {
-		url := repo.Spec.GitHub.URL
-		url = strings.TrimRight(url, "/")
-		url = strings.TrimSuffix(url, ".git")
-		url = strings.TrimRight(url, "/")
-		repo.Spec.GitHub.URL = url
-	}
+	repo.Spec.GitHub.URL = NormalizeGitHubURL(repo.Spec.GitHub.URL)
 
 	return nil
+}
+
+// NormalizeGitHubURL trims any trailing ".git" and surrounding slashes from a GitHub URL.
+// Shared with the GitHub Enterprise Server mutator since both target a repository URL of the same shape.
+func NormalizeGitHubURL(url string) string {
+	if url == "" {
+		return url
+	}
+	url = strings.TrimRight(url, "/")
+	url = strings.TrimSuffix(url, ".git")
+	url = strings.TrimRight(url, "/")
+	return url
 }

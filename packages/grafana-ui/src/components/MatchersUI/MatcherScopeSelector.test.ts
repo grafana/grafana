@@ -1,4 +1,4 @@
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 
 import { buildScopeOptions } from './MatcherScopeSelector';
 

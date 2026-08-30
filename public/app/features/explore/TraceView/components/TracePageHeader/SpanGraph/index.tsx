@@ -16,13 +16,18 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import { memo } from 'react';
 
-import { ViewRange, TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate } from '../../TraceTimelineViewer/types';
-import { Trace, TraceSpan } from '../../types/trace';
+import {
+  type ViewRange,
+  type TUpdateViewRangeTimeFunction,
+  type ViewRangeTimeUpdate,
+} from '../../TraceTimelineViewer/types';
+import { type Trace, type TraceSpan } from '../../types/trace';
 import { getServiceColorKey } from '../../utils/service-name';
 
 import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
 import ViewingLayer from './ViewingLayer';
+import { type SpanGraphItem } from './render-into-canvas';
 
 const getStyles = () => {
   return {
@@ -43,21 +48,18 @@ export type SpanGraphProps = {
   updateNextViewRangeTime: (nextUpdate: ViewRangeTimeUpdate) => void;
 };
 
-type SpanItem = {
-  valueOffset: number;
-  valueWidth: number;
-  serviceName: string;
-};
-
-function getItem(span: TraceSpan): SpanItem {
+// exported for tests
+export function getItem(span: TraceSpan): SpanGraphItem {
   return {
     valueOffset: span.relativeStartTime,
     valueWidth: span.duration,
     serviceName: getServiceColorKey(span.process),
+    isSummary: span.aggregation?.isSummary === true,
+    spanCount: span.aggregation?.spanCount ?? 0,
   };
 }
 
-function getItems(trace: Trace): SpanItem[] {
+function getItems(trace: Trace): SpanGraphItem[] {
   return trace.spans.map(getItem);
 }
 

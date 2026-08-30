@@ -1,6 +1,6 @@
-import { ElementState } from '../../../features/canvas/runtime/element';
+import { type ElementState } from '../../../features/canvas/runtime/element';
 
-import { CanvasConnection, ConnectionCoordinates } from './panelcfg.gen';
+import { type CanvasConnection, type ConnectionCoordinates } from './panelcfg.gen';
 
 export enum LayerActionID {
   Delete = 'delete',
@@ -55,4 +55,14 @@ export enum StrokeDasharray {
   Solid = '0',
   Dashed = '8 8',
   Dotted = '3',
+}
+
+export interface ElementTransformAndDimensions {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  rotation: number;
 }

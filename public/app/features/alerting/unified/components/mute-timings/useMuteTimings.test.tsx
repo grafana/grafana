@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';

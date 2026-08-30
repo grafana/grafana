@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourceVariableModel,
+  type DataSourceInstanceListItem,
+  type DataSourceVariableModel,
   matchPluginId,
-  VariableOption,
+  type VariableOption,
   VariableRefresh,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/getInstanceState';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
@@ -26,13 +26,13 @@ export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   refresh: VariableRefresh.onDashboardLoad,
 };
 
-export const dataSourceVariableSlice = createSlice({
+const dataSourceVariableSlice = createSlice({
   name: 'templating/datasource',
   initialState: initialVariablesState,
   reducers: {
     createDataSourceOptions: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceSettings[]; regex: RegExp | undefined }>>
+      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceListItem[]; regex: RegExp | undefined }>>
     ) => {
       const { sources, regex } = action.payload.data;
       const options: VariableOption[] = [];
@@ -78,7 +78,7 @@ export const dataSourceVariableSlice = createSlice({
   },
 });
 
-function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isValid(source: DataSourceInstanceListItem, regex?: RegExp) {
   if (!regex) {
     return true;
   }
@@ -86,7 +86,7 @@ function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
   return regex.exec(source.name);
 }
 
-function isDefault(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isDefault(source: DataSourceInstanceListItem, regex?: RegExp) {
   if (!source.isDefault) {
     return false;
   }

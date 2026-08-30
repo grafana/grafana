@@ -2,39 +2,40 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import { useMemo, useState } from 'react';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, PanelProps, useDataLinksContext } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
-  UPlotConfigBuilder,
+  type UPlotConfigBuilder,
   usePanelContext,
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { AxisProps, ScaleProps, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type AxisProps, type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
-import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { defaultCandlestickColors, type Options, VizDisplayMode } from './panelcfg.gen';
-import { drawMarkers, FieldIndices } from './utils';
+import { drawMarkers, type FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}
 
 export const CandlestickPanel = ({
   data,
   id,
+  title,
   timeRange,
   timeZone,
   width,
@@ -44,16 +45,7 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const {
-    sync,
-    eventsScope,
-    canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
-    eventBus,
-    canExecuteActions,
-  } = usePanelContext();
+  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -126,7 +118,7 @@ export const CandlestickPanel = ({
           volumeField.config.unit = 'short';
           volumeField.display = getDisplayProcessor({
             field: volumeField,
-            theme: config.theme2,
+            theme,
           });
 
           tweakAxis = (opts: AxisProps, forField: Field) => {
@@ -205,9 +197,9 @@ export const CandlestickPanel = ({
               drawMarkers({
                 mode,
                 fields: fieldIndices,
-                upColor: config.theme2.visualization.getColorByName(colors.up),
-                downColor: config.theme2.visualization.getColorByName(colors.down),
-                flatColor: config.theme2.visualization.getColorByName(colors.flat),
+                upColor: theme.visualization.getColorByName(colors.up),
+                downColor: theme.visualization.getColorByName(colors.down),
+                flatColor: theme.visualization.getColorByName(colors.flat),
                 volumeAlpha,
                 colorStrategy,
                 candleStyle,
@@ -221,7 +213,7 @@ export const CandlestickPanel = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev, data.series.length]);
+  }, [options, data.structureRev, data.series.length, theme]);
 
   if (!info) {
     return (
@@ -317,6 +309,7 @@ export const CandlestickPanel = ({
                       replaceVariables={replaceVariables}
                       dataLinks={dataLinks}
                       canExecuteActions={userCanExecuteActions}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, [info.frame])}
                     />
                   );
                 }}
@@ -326,7 +319,7 @@ export const CandlestickPanel = ({
             <AnnotationsPlugin
               replaceVariables={replaceVariables}
               options={options.annotations}
-              annotations={data.annotations ?? []}
+              annotations={data.annotations}
               config={uplotConfig}
               timeZone={timeZone}
               newRange={newAnnotationRange}
@@ -340,13 +333,6 @@ export const CandlestickPanel = ({
                 timeZone={timeZone}
                 maxHeight={options.tooltip.maxHeight}
                 maxWidth={options.tooltip.maxWidth}
-              />
-            )}
-            {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-              <ThresholdControlsPlugin
-                config={uplotConfig}
-                fieldConfig={fieldConfig}
-                onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
               />
             )}
           </>

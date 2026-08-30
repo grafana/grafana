@@ -1,8 +1,8 @@
 import { useContext } from 'react';
 
-import { KeyValue } from '../../types/data';
+import { type KeyValue } from '../../types/data';
 
-import { PluginContext, PluginContextType } from './PluginContext';
+import { PluginContext, type PluginContextType } from './PluginContext';
 
 export function usePluginContext<T extends KeyValue = KeyValue>(): PluginContextType<T> | null {
   const context = useContext(PluginContext);

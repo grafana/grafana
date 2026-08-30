@@ -6,6 +6,26 @@ export enum FieldColorModeId {
   PaletteClassic = 'palette-classic',
   PaletteClassicByName = 'palette-classic-by-name',
   PaletteSaturated = 'palette-saturated',
+  /**
+   * @alpha - the color blind safe palette is experimental and may be removed or changed
+   * as we work towards a GA of improved color blind support.
+   */
+  PaletteColorblind = 'palette-colorblind',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext = 'palette-categorical-next',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext2 = 'palette-categorical-next-2',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext3 = 'palette-categorical-next-3',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   ContinuousRdYlGr = 'continuous-RdYlGr',
   ContinuousBlYlRd = 'continuous-BlYlRd',
@@ -23,6 +43,7 @@ export enum FieldColorModeId {
   ContinuousCividis = 'continuous-cividis',
   Fixed = 'fixed',
   Shades = 'shades',
+  Gradient = 'gradient',
 }
 
 /**
@@ -31,8 +52,10 @@ export enum FieldColorModeId {
 export interface FieldColor {
   /** The main color scheme mode */
   mode: FieldColorModeId | string;
-  /** Stores the fixed color value if mode is fixed */
+  /** Stores the fixed color value if mode is fixed, shades, or gradient (start color) */
   fixedColor?: string;
+  /** End color for gradient mode (smallest value). Only used when mode is "gradient". */
+  gradientColorTo?: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes */
   seriesBy?: FieldColorSeriesByMode;
 }

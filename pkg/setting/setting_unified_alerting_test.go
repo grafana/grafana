@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -416,6 +417,100 @@ func TestHARedisSentinelModeSettings(t *testing.T) {
 			require.Equal(t, tc.haRedisSentinelMasterName, cfg.UnifiedAlerting.HARedisSentinelMasterName)
 			require.Equal(t, tc.haRedisSentinelUsername, cfg.UnifiedAlerting.HARedisSentinelUsername)
 			require.Equal(t, tc.haRedisSentinelPassword, cfg.UnifiedAlerting.HARedisSentinelPassword)
+		})
+	}
+}
+
+func TestReadAllowedIntegrations(t *testing.T) {
+	testCases := []struct {
+		name    string
+		value   string
+		want    map[schema.IntegrationType]struct{}
+		wantErr bool
+	}{
+		{
+			name:  "blank leaves allowlist nil",
+			value: "",
+			want:  nil,
+		},
+		{
+			name:  "valid list builds canonical map",
+			value: "slack,email,pagerduty",
+			want: map[schema.IntegrationType]struct{}{
+				schema.SlackType:     {},
+				schema.EmailType:     {},
+				schema.PagerDutyType: {},
+			},
+		},
+		{
+			name:    "unknown type returns error",
+			value:   "slack,bogus",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := ini.Empty()
+			sec, err := f.NewSection("unified_alerting")
+			require.NoError(t, err)
+			_, err = sec.NewKey("allowed_integrations", tc.value)
+			require.NoError(t, err)
+
+			cfg := NewCfg()
+			cfg.IsFeatureToggleEnabled = func(string) bool { return false }
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.UnifiedAlerting.AllowedIntegrations)
+		})
+	}
+}
+
+func TestQueriesServedByLoki(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "loki"},
+			want:         false,
+		},
+		{
+			name:         "loki backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki"},
+			want:         true,
+		},
+		{
+			name:         "non-loki backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations"},
+			want:         false,
+		},
+		{
+			name:         "primary is ignored unless the backend is multiple",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations", MultiPrimary: "loki"},
+			want:         false,
+		},
+		{
+			name:         "multiple backend with loki primary, with padding and mixed casing",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: " Multiple ", MultiPrimary: " Loki "},
+			want:         true,
+		},
+		{
+			name:         "multiple backend with loki as a secondary only",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "annotations", MultiSecondaries: []string{"loki"}},
+			want:         false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.QueriesServedByLoki())
 		})
 	}
 }

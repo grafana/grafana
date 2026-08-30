@@ -1,6 +1,6 @@
 import { createDataFrame, FieldType } from '@grafana/data';
 
-import { HeatmapData } from '../fields';
+import { type HeatmapData } from '../fields';
 
 import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './utils';
 

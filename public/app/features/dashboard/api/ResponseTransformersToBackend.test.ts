@@ -1,14 +1,14 @@
 import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getSceneCreationOptions } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { normalizeBackendOutputForFrontendComparison } from 'app/features/dashboard-scene/serialization/serialization-test-utils';
 import { transformSaveModelSchemaV2ToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { transformSceneToSaveModelSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 
-import { DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo } from './types';
 
 // Mock the config to provide datasource information
 jest.mock('@grafana/runtime', () => {
@@ -97,7 +97,6 @@ jest.mock('@grafana/runtime', () => {
     },
     featureToggles: {
       dashboardNewLayouts: true,
-      kubernetesDashboards: true,
     },
   };
 
@@ -160,13 +159,13 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
   );
 
   const jsonInputs = readdirSync(inputDir);
-  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
+  const LATEST_API_VERSION = 'dashboard.grafana.app/v2';
 
   // Filter to only process v1beta1 input files
   const v1beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v1beta1.'));
 
   v1beta1Inputs.forEach((inputFile) => {
-    it(`compare ${inputFile} from v1beta1 to v2beta1 backend and frontend conversions`, async () => {
+    it(`compare ${inputFile} from v1beta1 to ${LATEST_API_VERSION.split('/')[1]} backend and frontend conversions`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
       // Find the corresponding v2beta1 output file

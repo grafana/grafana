@@ -1,43 +1,23 @@
-import { skipToken } from '@reduxjs/toolkit/query';
+import { Stack } from '@grafana/ui';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Badge } from '@grafana/ui';
-import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { ManagerKind } from 'app/features/apiserver/types';
-import { getManagedByRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
-
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: DashboardScene }) => {
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();
 
-  const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
-  const { data: repoData } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
-
   if (!kind) {
     return null;
   }
 
-  let text;
-
-  switch (kind) {
-    case ManagerKind.Terraform:
-      text = t('dashboard-scene.managed-badge.terraform', 'Managed by: Terraform');
-      break;
-    case ManagerKind.Kubectl:
-      text = t('dashboard-scene.managed-badge.kubectl', 'Managed by: Kubectl');
-      break;
-    case ManagerKind.Plugin:
-      text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
-      break;
-    case ManagerKind.Repo:
-      text = getManagedByRepositoryTooltip(repoData?.spec?.title || id);
-      break;
-    default:
-      text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
-  }
-
-  return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
+  // Repository lookup, orphaned detection and permission-gated actions (source file /
+  // repository admin links) are handled inside ManagedBadge. On provisioning previews the
+  // source path carries the loaded ref as a `#fragment` (see loadProvisioningDashboard),
+  // which the badge resolves to the right branch/commit.
+  return (
+    <Stack direction="row" alignItems="stretch">
+      <ManagedBadge managerKind={kind} name={id} repositoryName={id} sourcePath={dashboard.getPath()} />
+    </Stack>
+  );
 };

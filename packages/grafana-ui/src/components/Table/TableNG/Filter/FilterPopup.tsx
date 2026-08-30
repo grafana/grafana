@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { Dispatch, memo, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Dispatch, memo, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -12,7 +12,7 @@ import { ButtonSelect } from '../../../Dropdown/ButtonSelect';
 import { FilterInput } from '../../../FilterInput/FilterInput';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
-import { FilterOperator, FilterType, TableRow } from '../types';
+import { type FilterOperator, type FilterType, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterList } from './FilterList';
@@ -210,7 +210,7 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     backgroundColor: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(2),
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
   }),
   label: css({

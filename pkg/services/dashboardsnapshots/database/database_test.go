@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	dashStore := ProvideStore(sqlstore, cfg)
 
@@ -159,10 +159,60 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	})
 }
 
+func TestIntegrationDashboardSnapshotDuplicateKey(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	dashStore := NewStore(sqlstore)
+
+	t.Run("inserting a snapshot with a duplicate key returns ErrDashboardSnapshotAlreadyExists", func(t *testing.T) {
+		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "dupkey", DeleteKey: "del-a", UserID: 1000, OrgID: 1,
+		}
+		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
+		require.NoError(t, err)
+
+		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "dupkey", DeleteKey: "del-b", UserID: 1000, OrgID: 1,
+		}
+		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
+		require.ErrorIs(t, err, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists)
+	})
+
+	t.Run("inserting a snapshot with a duplicate delete_key returns ErrDashboardSnapshotAlreadyExists", func(t *testing.T) {
+		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "key-a", DeleteKey: "dupdelete", UserID: 1000, OrgID: 1,
+		}
+
+		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
+		require.NoError(t, err)
+
+		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "key-b", DeleteKey: "dupdelete", UserID: 1000, OrgID: 1,
+		}
+		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
+		require.ErrorIs(t, err, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists)
+	})
+
+	t.Run("inserting snapshots with unique keys succeeds", func(t *testing.T) {
+		first := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "unique-a", DeleteKey: "unique-del-a", UserID: 1000, OrgID: 1,
+		}
+		_, err := dashStore.CreateDashboardSnapshot(context.Background(), &first)
+		require.NoError(t, err)
+
+		second := dashboardsnapshots.CreateDashboardSnapshotCommand{
+			Key: "unique-b", DeleteKey: "unique-del-b", UserID: 1000, OrgID: 1,
+		}
+		_, err = dashStore.CreateDashboardSnapshot(context.Background(), &second)
+		require.NoError(t, err)
+	})
+}
+
 func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	dashStore := NewStore(sqlstore)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {

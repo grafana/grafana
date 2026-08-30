@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
-import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
+import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
-import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
@@ -12,6 +12,7 @@ import { FilterInput } from '../../FilterInput/FilterInput';
 import { Checkbox } from '../../Forms/Checkbox';
 import { Label } from '../../Forms/Label';
 import { Stack } from '../../Layout/Stack/Stack';
+import { comparableValue, parseExpression } from '../filterExpression';
 
 interface Props {
   values: SelectableValue[];
@@ -47,31 +48,6 @@ const OPERATORS = Object.values(operatorSelectableValues);
 export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
 const XPR_OPERATOR = operatorSelectableValues['Expression'];
 
-const comparableValue = (value: string): string | number | Date | boolean => {
-  value = value.trim().replace(/\\/g, '');
-
-  // Does it look like a Date (Starting with pattern YYYY-MM-DD* or YYYY/MM/DD*)?
-  if (/^(\d{4}-\d{2}-\d{2}|\d{4}\/\d{2}\/\d{2})/.test(value)) {
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
-      const fmt = getValueFormat('dateTimeAsIso');
-      return formattedValueToString(fmt(date.getTime()));
-    }
-  }
-  // Does it look like a Number?
-  const num = parseFloat(value);
-  if (!isNaN(num)) {
-    return num;
-  }
-  // Does it look like a Bool?
-  const lvalue = value.toLowerCase();
-  if (lvalue === 'true' || lvalue === 'false') {
-    return lvalue === 'true';
-  }
-  // Anything else
-  return value;
-};
-
 export const FilterList = ({
   options,
   values,
@@ -85,51 +61,28 @@ export const FilterList = ({
   referenceElement,
 }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
+  const predicate = useMemo(() => {
+    if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
+      return null;
+    }
+    if (operator.value === XPR_OPERATOR.value) {
+      return parseExpression(searchFilter) ?? (() => false);
+    }
+    return parseExpression(`$ ${operator.value} ${searchFilter}`) ?? (() => false);
+  }, [showOperators, searchFilter, operator]);
+
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
-          if (option.label === undefined) {
-            return false;
-          }
-          return regex.test(option.label);
-        } else if (operator.value === XPR_OPERATOR.value) {
-          if (option.value === undefined) {
-            return false;
-          }
-          try {
-            const xpr = searchFilter.replace(/\\/g, '');
-            const fnc = new Function('$', `'use strict'; return ${xpr};`);
-            const val = comparableValue(option.value);
-            return fnc(val);
-          } catch (_) {}
-          return false;
-        } else {
-          if (option.value === undefined) {
-            return false;
-          }
-
-          const value1 = comparableValue(option.value);
-          const value2 = comparableValue(searchFilter);
-
-          switch (operator.value) {
-            case '=':
-              return value1 === value2;
-            case '!=':
-              return value1 !== value2;
-            case '>':
-              return value1 > value2;
-            case '>=':
-              return value1 >= value2;
-            case '<':
-              return value1 < value2;
-            case '<=':
-              return value1 <= value2;
-          }
+        if (predicate === null) {
+          return option.label !== undefined && regex.test(option.label);
+        }
+        if (option.value === undefined) {
           return false;
         }
+        return predicate(comparableValue(option.value));
       }),
-    [options, regex, showOperators, operator, searchFilter]
+    [options, regex, predicate]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 

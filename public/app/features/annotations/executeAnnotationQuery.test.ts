@@ -1,11 +1,11 @@
-import { DataSourceApi, dateTime, DataQuery } from '@grafana/data';
+import { type DataSourceApi, dateTime, type DataQuery } from '@grafana/data';
 
-import { PanelModel } from '../dashboard/state/PanelModel';
+import { type PanelModel } from '../dashboard/state/PanelModel';
 import { createDashboardModelFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
-import { TestQuery, getMockDataSource } from '../query/state/mocks/mockDataSource';
+import { type TestQuery, getMockDataSource } from '../query/state/mocks/mockDataSource';
 
 import { executeAnnotationQuery } from './executeAnnotationQuery';
-import { AnnotationQueryOptions } from './types';
+import { type AnnotationQueryOptions } from './types';
 
 describe('executeAnnotationQuery', () => {
   let filterQuerySpy: jest.SpyInstance;

@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../../core/navigation/types';
+import { type RouteDescriptor } from '../../core/navigation/types';
 
 export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
   if (!config.publicDashboardsEnabled) {

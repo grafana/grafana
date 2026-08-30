@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -467,7 +469,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql, cfg := setupTestEnv(t)
-			orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+			orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 			require.NoError(t, err)
 
 			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -525,7 +527,7 @@ func seedResourcePermissions(
 	require.NoError(t, err)
 
 	usrSvc, err := userimpl.ProvideService(
-		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(sql), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
@@ -558,7 +560,7 @@ func seedResourcePermissions(
 }
 
 func setupTestEnv(t testing.TB) (*store, db.DB, *setting.Cfg) {
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return NewStore(cfg, sql, featuremgmt.WithFeatures()), sql, cfg
 }
 
@@ -583,7 +585,7 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "specific folder scope for dashboards is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
 			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
@@ -601,10 +603,10 @@ func TestStore_IsInherited(t *testing.T) {
 		{
 			description: "parent folder scope for nested folders is inherited",
 			permission: &flatResourcePermission{
-				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				Scope:    folder.ScopeFoldersProvider.GetResourceScopeUID("parent"),
 				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
 			},
-			requiredScope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			requiredScope: folder.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
 			expected:      true,
 		},
 	}
@@ -964,10 +966,14 @@ func TestStore_StoreActionSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			opts := Options{
+				Resource:        tt.resource,
+				K8sActionFormat: false,
+			}
 			asService := NewInMemoryActionSetStore()
-			asService.StoreActionSet(GetActionSetName(tt.resource, tt.action), tt.actions)
+			asService.StoreActionSet(opts.GetActionSetName(tt.action), tt.actions)
 
-			actionSetName := GetActionSetName(tt.resource, tt.action)
+			actionSetName := opts.GetActionSetName(tt.action)
 			actionSet := asService.ResolveActionSet(actionSetName)
 			require.Equal(t, tt.actions, actionSet)
 		})
@@ -979,6 +985,8 @@ func TestStore_ResolveActionSet(t *testing.T) {
 	actionSetService.StoreActionSet("folders:edit", []string{"folders:read", "folders:write", "dashboards:read", "dashboards:write"})
 	actionSetService.StoreActionSet("folders:view", []string{"folders:read", "dashboards:read"})
 	actionSetService.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":view", []string{accesscontrol.ActionAlertingManagedRoutesRead})
+	actionSetService.StoreActionSet(accesscontrol.AlertingRoutesKind+":edit", []string{accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite})
 
 	type actionSetTest struct {
 		desc               string
@@ -1006,6 +1014,14 @@ func TestStore_ResolveActionSet(t *testing.T) {
 			desc:               "should be able to resolve multiple action sets for the resource of a different type",
 			action:             "dashboards:read",
 			expectedActionSets: []string{"folders:view", "folders:edit", "dashboards:view"},
+		},
+		{
+			desc:   "should support routes",
+			action: accesscontrol.ActionAlertingManagedRoutesRead,
+			expectedActionSets: []string{
+				accesscontrol.AlertingRoutesKind + ":view",
+				accesscontrol.AlertingRoutesKind + ":edit",
+			},
 		},
 	}
 

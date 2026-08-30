@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
@@ -20,10 +21,19 @@ export function WizardButtonBar({
 }: WizardButtonBarProps) {
   return (
     <Stack gap={2} justifyContent="flex-end">
-      <Button variant="secondary" onClick={onPrevious} disabled={isPreviousDisabled}>
+      <Button
+        variant="secondary"
+        onClick={onPrevious}
+        disabled={isPreviousDisabled}
+        data-testid={selectors.pages.Provisioning.Wizard.previousButton}
+      >
         {previousText}
       </Button>
-      <Button type="submit" disabled={isNextDisabled || isSubmitting}>
+      <Button
+        type="submit"
+        disabled={isNextDisabled || isSubmitting}
+        data-testid={selectors.pages.Provisioning.Wizard.nextButton}
+      >
         {isSubmitting ? t('provisioning.wizard-content.button-submitting', 'Submitting...') : nextText}
       </Button>
     </Stack>

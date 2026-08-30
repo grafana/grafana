@@ -5,40 +5,41 @@ import { lastValueFrom } from 'rxjs';
 import {
   urlUtil,
   applyFieldOverrides,
-  CustomTransformOperator,
-  DataFrame,
+  type CustomTransformOperator,
+  type DataFrame,
   DataFrameType,
-  DataTransformerConfig,
-  Field,
+  type DataTransformerConfig,
+  type Field,
   FieldType,
   guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
-  SplitOpen,
-  TimeRange,
+  type SplitOpen,
+  type TimeRange,
   transformDataFrame,
-  ValueLinkConfig,
-  ExploreLogsPanelState,
-  AbsoluteTimeRange,
-  LogRowModel,
-  GrafanaTheme2,
+  type ValueLinkConfig,
+  type ExploreLogsPanelState,
+  type AbsoluteTimeRange,
+  type LogRowModel,
+  type GrafanaTheme2,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
-  AdHocFilterItem,
-  CustomCellRendererProps,
-  TableSortByFieldState,
+  type AdHocFilterItem,
+  type CustomCellRendererProps,
+  type TableSortByFieldState,
   Table,
   TableCellDisplayMode,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { DATAPLANE_ID_NAME, LogsFrame } from 'app/features/logs/logsFrame';
+import { DATAPLANE_ID_NAME, type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { LogsTableActionButtons } from './LogsTableActionButtons';
-import { FieldNameMeta } from './LogsTableWrap';
+import { type FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
   dataFrame: DataFrame;
@@ -80,6 +81,7 @@ export function LogsTable(props: Props) {
   const [columnWidthMap, setColumnWidthMap] = useState<Record<string, number>>({});
   const timeIndex = logsFrame?.timeField.index;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   // Extract selected log ID from URL parameter
   const selectedLogInfo = useMemo(() => {
@@ -144,7 +146,7 @@ export function LogsTable(props: Props) {
       const [frameWithOverrides] = applyFieldOverrides({
         data: [sortedFrame],
         timeZone,
-        theme: config.theme2,
+        theme,
         replaceVariables: (v: string) => v,
         fieldConfig: {
           defaults: {
@@ -236,6 +238,7 @@ export function LogsTable(props: Props) {
       timeIndex,
       styles.firstColumnCell,
       styles.firstColumnHeader,
+      theme,
       props.displayedFields,
       props.exploreId,
       props.panelState,

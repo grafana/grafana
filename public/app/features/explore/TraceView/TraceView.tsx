@@ -1,48 +1,53 @@
 import { css } from '@emotion/css';
-import { RefObject, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
   CoreApp,
-  DataFrame,
-  DataLink,
-  DataSourceApi,
-  DataSourceJsonData,
-  Field,
-  GrafanaTheme2,
-  LinkModel,
+  type DataFrame,
+  type DataLink,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type Field,
+  type GrafanaTheme2,
+  type LinkModel,
   mapInternalLinkToExplore,
-  SplitOpen,
-  TimeRange,
-  TraceSearchProps,
+  type SplitOpen,
+  type TimeRange,
+  type TraceSearchProps,
   useDataLinksContext,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getTraceToLogsOptions, TraceToMetricsData, TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { getTemplateSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
-import { TempoQuery } from '@grafana-plugins/tempo/types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
+import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type DataQuery } from '@grafana/schema';
+import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { changePanelState } from '../state/explorePane';
 
 import memoizedTraceCriticalPath from './components/CriticalPath';
+import { AdaptiveTracesRestoredBanner } from './components/TracePageHeader/AdaptiveTracesRestoredBanner';
 import { TracePageHeader } from './components/TracePageHeader/TracePageHeader';
 import TraceTimelineViewer from './components/TraceTimelineViewer';
-import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
-import { SpanBarOptionsData } from './components/settings/SpanBarSettings';
-import TTraceTimeline from './components/types/TTraceTimeline';
-import { SpanLinkFunc } from './components/types/links';
-import { Trace } from './components/types/trace';
+import { spanHasAdaptiveTraceRestoredTag } from './components/TraceTimelineViewer/SpanBarRow';
+import { type TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
+import { type SpanBarOptionsData } from './components/settings/SpanBarSettings';
+import type TTraceTimeline from './components/types/TTraceTimeline';
+import { type SpanLinkFunc } from './components/types/links';
+import { type Trace } from './components/types/trace';
+import { isSummarySpan } from './components/utils/summary-span';
 import { createSpanLinkFactory } from './createSpanLink';
+import { createTraceLogsLink } from './createTraceLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
+
+const ADAPTIVE_TRACES_APP_PLUGIN_ID = 'grafana-adaptivetraces-app' as const;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   noDataMsg: css({
@@ -94,6 +99,7 @@ export function TraceView(props: Props) {
     detailReferencesToggle,
     detailReferenceItemToggle,
     detailTagsToggle,
+    detailSummaryAttributesToggle,
     detailWarningsToggle,
     detailStackTracesToggle,
   } = useDetailState(props.dataFrames[0]);
@@ -101,8 +107,18 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
+  const { app = CoreApp.Unknown } = usePanelContext();
 
   const criticalPath = useMemo(() => memoizedTraceCriticalPath(traceProp), [traceProp]);
+  const { value: isAdaptiveTracesAppInstalled } = useAppPluginInstalled(ADAPTIVE_TRACES_APP_PLUGIN_ID);
+
+  const isRestoredByAdaptiveTraces = useMemo(() => {
+    if (!isAdaptiveTracesAppInstalled) {
+      return false;
+    }
+
+    return traceProp?.spans?.some((span) => spanHasAdaptiveTraceRestoredTag(span.tags ?? []));
+  }, [isAdaptiveTracesAppInstalled, traceProp]);
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -139,13 +155,25 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, props.traceProp?.traceID]
   );
 
-  const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
+  const datasourceRef = datasource?.uid ?? datasource?.name;
+  const { settings: loadedInstanceSettings, isLoading } = useDataSourceInstanceSettings(datasourceRef);
+  const instanceSettings = datasourceRef && !isLoading ? loadedInstanceSettings : undefined;
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
   const traceToProfilesData: TraceToProfilesData | undefined = instanceSettings?.jsonData;
   const traceToProfilesOptions = traceToProfilesData?.tracesToProfiles;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
+
+  const logsUid = traceToLogsOptions?.datasourceUid;
+  const metricsUid = traceToMetricsOptions?.datasourceUid;
+  const profilesUid = traceToProfilesOptions?.datasourceUid;
+  const { settings: loadedLogsSettings } = useDataSourceInstanceSettings(logsUid);
+  const { settings: loadedMetricsSettings } = useDataSourceInstanceSettings(metricsUid);
+  const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
+  const logsDataSourceSettings = logsUid ? loadedLogsSettings : undefined;
+  const metricsDataSourceSettings = metricsUid ? loadedMetricsSettings : undefined;
+  const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
 
   const dataLinksContext = useDataLinksContext();
 
@@ -161,6 +189,9 @@ export function TraceView(props: Props) {
         createFocusSpanLink,
         trace: traceProp,
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
+        logsDataSourceSettings,
+        metricsDataSourceSettings,
+        profilesDataSourceSettings,
       }),
     [
       props.splitOpenFn,
@@ -172,6 +203,31 @@ export function TraceView(props: Props) {
       traceProp,
       createSpanLinkFromProps,
       dataLinksContext?.dataLinkPostProcessor,
+      logsDataSourceSettings,
+      metricsDataSourceSettings,
+      profilesDataSourceSettings,
+    ]
+  );
+
+  const logsLinkModel = useMemo(
+    () =>
+      createTraceLogsLink({
+        splitOpenFn: props.splitOpenFn,
+        traceToLogsOptions,
+        trace: traceProp,
+        dataFrame: props.dataFrames[0],
+        dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
+        logsDataSourceSettings,
+        traceDataSourceSettings: instanceSettings,
+      }),
+    [
+      props.splitOpenFn,
+      props.dataFrames,
+      traceToLogsOptions,
+      traceProp,
+      dataLinksContext?.dataLinkPostProcessor,
+      logsDataSourceSettings,
+      instanceSettings,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));
@@ -182,10 +238,47 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
+  // Opening the detail of a pruned summary span is otherwise untracked; report it (only on open,
+  // only for summary spans) so summary-span engagement is observable.
+  const handleDetailToggle = useCallback(
+    (spanID: string) => {
+      const isOpening = !detailStates.has(spanID);
+      if (isOpening) {
+        const span = traceProp?.spans.find((s) => s.spanID === spanID);
+        if (span && isSummarySpan(span)) {
+          reportInteraction('grafana_traces_summary_span_detail_opened', {
+            datasourceType,
+            grafana_version: config.buildInfo.version,
+            spanCount: span.aggregation?.spanCount,
+          });
+        }
+      }
+      toggleDetail(spanID);
+    },
+    [detailStates, toggleDetail, traceProp, datasourceType]
+  );
+
+  // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
+  // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
+  const handleSummaryAttributesToggle = useCallback(
+    (spanID: string) => {
+      reportInteraction('grafana_traces_summary_attributes_toggled', {
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        isOpen: !detailStates.get(spanID)?.isSummaryAttributesOpen,
+      });
+      detailSummaryAttributesToggle(spanID);
+    },
+    [detailStates, detailSummaryAttributesToggle, datasourceType]
+  );
+
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
+          {/* Key by trace ID so the dismissed state resets when navigating directly between restored traces. */}
+          {isRestoredByAdaptiveTraces && <AdaptiveTracesRestoredBanner key={traceProp.traceID} />}
+
           <TracePageHeader
             trace={traceProp}
             data={props.dataFrames[0]}
@@ -200,11 +293,12 @@ export function TraceView(props: Props) {
             datasourceName={datasourceName}
             datasourceUid={datasourceUid}
             setHeaderHeight={setHeaderHeight}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
             viewRange={viewRange}
             hideHeaderDetails={hideHeaderDetails}
+            logsLinkModel={logsLinkModel}
           />
 
           <TraceTimelineViewer
@@ -233,7 +327,8 @@ export function TraceView(props: Props) {
             detailReferenceItemToggle={detailReferenceItemToggle}
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
-            detailToggle={toggleDetail}
+            detailSummaryAttributesToggle={handleSummaryAttributesToggle}
+            detailToggle={handleDetailToggle}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             createSpanLink={createSpanLink}
@@ -250,7 +345,7 @@ export function TraceView(props: Props) {
             redrawListView={redrawListView}
             setRedrawListView={setRedrawListView}
             timeRange={props.timeRange}
-            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            app={exploreId ? CoreApp.Explore : app}
           />
         </>
       ) : (
@@ -315,7 +410,7 @@ function useFocusSpanLink(options: {
     // If it's the same trace, only update panel state with setFocusedSpanId (no navigation).
     // If it's a different trace, use splitOpenFn to open a new explore panel
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const sameTrace = query?.queryType === 'traceql' && (query as TempoQuery).query === traceId;
+    const sameTrace = query?.queryType === 'traceql' && (query as { query?: string }).query === traceId;
 
     return mapInternalLinkToExplore({
       link,

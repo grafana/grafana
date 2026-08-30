@@ -1,11 +1,11 @@
 import {
   DataFrameType,
-  PanelData,
-  PanelDataSummary,
-  VisualizationSuggestion,
+  type PanelData,
+  type PanelDataSummary,
+  type VisualizationSuggestion,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { LegendDisplayMode, ReduceDataOptions, VizLegendOptions } from '@grafana/schema';
+import { type ReduceDataOptions, type VizLegendOptions } from '@grafana/schema';
 
 /**
  * @internal
@@ -70,7 +70,6 @@ export function hasData(data?: PanelData): boolean {
  */
 export const SUGGESTIONS_LEGEND_OPTIONS: VizLegendOptions = {
   calcs: [],
-  displayMode: LegendDisplayMode.Hidden,
   placement: 'right',
   showLegend: false,
 };

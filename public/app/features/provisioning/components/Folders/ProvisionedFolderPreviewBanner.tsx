@@ -1,14 +1,14 @@
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { CommonBannerProps } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
+import { type CommonBannerProps } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { PROVISIONING_URL } from '../../constants';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const { prURL, newPrURL, repoURL, resourcePushedTo } = usePullRequestParam();
 
   if (!provisioningEnabled || 'kiosk' in queryParams) {

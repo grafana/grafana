@@ -1,13 +1,9 @@
-import { Correlation, CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type Correlation, type CorrelationSpec } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 
 export const generateCorrMetadata = (uid: string, correlation: CorrelationSpec) => {
   let labels: Record<string, string> = {
     'correlations.grafana.app/sourceDS-ref': `${correlation.source.group}.${correlation.source.name}`,
   };
-
-  if (correlation.target?.group !== undefined && correlation.target?.name !== undefined) {
-    labels['correlations.grafana.app/targetDS-ref'] = `${correlation.target?.group}.${correlation.target?.name}`;
-  }
 
   return {
     kind: 'Correlation',

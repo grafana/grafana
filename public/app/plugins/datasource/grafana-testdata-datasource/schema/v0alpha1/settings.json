@@ -1,0 +1,18 @@
+{
+  "spec": {
+    "description": "Test data does not require any explicit configuration",
+    "required": ["title"],
+    "properties": {
+      "title": {
+        "description": "display name",
+        "type": "string"
+      },
+      "url": {
+        "description": "not used",
+        "type": "string",
+        "example": "http://xxxx"
+      }
+    },
+    "additionalProperties": false
+  }
+}

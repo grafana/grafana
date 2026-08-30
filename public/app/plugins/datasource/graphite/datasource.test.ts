@@ -1,33 +1,34 @@
 import { isArray } from 'lodash';
-import moment from 'moment';
-import { Observable, of } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 
 import {
-  AbstractLabelMatcher,
+  type AbstractLabelMatcher,
   AbstractLabelOperator,
   CoreApp,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataQueryRequest,
+  type DataQueryResponse,
   dateMath,
   dateTime,
+  dateTimeAsMoment,
   FieldType,
   getFrameDisplayName,
-  MetricFindValue,
+  type MetricFindValue,
   PluginType,
-  ScopedVars,
+  type ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import {
-  BackendSrvRequest,
+  type BackendSrvRequest,
   config,
-  FetchResponse,
+  type FetchResponse,
   getTemplateSrv,
-  TemplateSrv,
-  VariableInterpolation,
+  type TemplateSrv,
+  type VariableInterpolation,
 } from '@grafana/runtime';
 
 import { fromString } from './configuration/parseLokiLabelMappings';
 import { GraphiteDatasource } from './datasource';
-import { GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
+import { type GraphiteQuery, GraphiteQueryType, GraphiteType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 const fetchMock = jest.fn();
@@ -226,6 +227,62 @@ describe('graphiteDatasource', () => {
       expect(result.data[0].length).toBe(2);
       expect(result.data[0].refId).toBe('A');
       expect(result.data[1].refId).toBe('B');
+    });
+    it('strips refID suffix and full tagged path from tags.name (Metrictank aliasSub regression)', () => {
+      // Metrictank sets tags['name'] to the full internal series key when aliasSub
+      // is applied (e.g. "BytesReceived;host=web01;cluster=md1b;... A"). The
+      // joinByLabels(value:'name') transformation breaks because every series has a
+      // unique full path. Restore tags['name'] to the base metric name only.
+      const refIDMap = {
+        refIDA: 'A',
+        refIDB: 'B',
+      };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              // target has the refID suffix; tags.name has the full Metrictank path without suffix
+              target: 'BytesReceived;host=web01;cluster=md1b refIDA',
+              tags: { name: 'BytesReceived;host=web01;cluster=md1b', host: 'web01', cluster: 'md1b' },
+              datapoints: [[100, 200]],
+            },
+            {
+              target: 'BytesReceived;host=web02;cluster=md1b refIDB',
+              tags: { name: 'BytesReceived;host=web02;cluster=md1b', host: 'web02', cluster: 'md1b' },
+              datapoints: [[200, 300]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      expect(result.data.length).toBe(2);
+      // tags['name'] must be just the base metric name — no semicolons, no refID suffix
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('BytesReceived');
+      const frame1Labels = result.data[1].fields[1]?.labels ?? {};
+      expect(frame1Labels['name']).toBe('BytesReceived');
+    });
+
+    it('leaves tags.name unchanged for standard graphite-web responses', () => {
+      // Standard graphite-web returns tags['name'] as the plain metric name with no
+      // semicolons, so the normalization should be a no-op.
+      const refIDMap = { refIDA: 'A' };
+      const result = ctx.ds.convertResponseToDataFrames(
+        createFetchResponse({
+          series: [
+            {
+              target: 'cpu.usage refIDA',
+              tags: { name: 'cpu.usage', host: 'web01' },
+              datapoints: [[100, 200]],
+            },
+          ],
+        }),
+        refIDMap
+      );
+
+      const frame0Labels = result.data[0].fields[1]?.labels ?? {};
+      expect(frame0Labels['name']).toBe('cpu.usage');
     });
   });
 
@@ -541,6 +598,76 @@ describe('graphiteDatasource', () => {
       });
       expect(results).toEqual([]);
       expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/Unable to get annotations/));
+    });
+  });
+
+  describe('when fetching a Graphite query as annotations', () => {
+    const range = {
+      from: dateTime('2026-07-06T12:59:45.000Z'),
+      to: dateTime('2026-07-07T18:52:17.000Z'),
+      raw: {
+        from: '2026-07-06T12:59:45.000Z',
+        to: '2026-07-07T18:52:17.000Z',
+      },
+    };
+
+    const target = {
+      fromAnnotations: true,
+      target: "seriesByTag('event=deploy', 'status=success')",
+      textEditor: true,
+      refId: 'Anno',
+    };
+
+    const seriesName = 'dash.metrics.count;event=deploy;status=success';
+
+    // the backend builds frames with data.NewFrame("", ...) and carries the series name only in
+    // the value field's displayNameFromDS, so the frame itself has no name
+    const backendFrame = () =>
+      toDataFrame({
+        refId: 'Anno',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1783398240000, 1783399800000] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [1, 1],
+            config: { displayNameFromDS: seriesName },
+          },
+        ],
+      });
+
+    it('should title events from the value field display name when the frame has no name', async () => {
+      const frame = backendFrame();
+      expect(frame.name).toBeUndefined();
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      expect(results.length).toEqual(2);
+      expect(results[0].title).toEqual(seriesName);
+      expect(results[1].title).toEqual(seriesName);
+    });
+
+    it('should produce a string-typed title field so text can be auto-resolved', async () => {
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [backendFrame()] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      // standardAnnotationSupport resolves `text` to the first string field; without one it
+      // discards every event and the editor reports "No events found"
+      const annotationFrame = toDataFrame(results);
+      const stringField = annotationFrame.fields.find((f) => f.type === FieldType.string);
+      expect(stringField?.name).toEqual('title');
+    });
+
+    it('should keep the frame name as the title when one is present', async () => {
+      const frame = backendFrame();
+      frame.name = seriesName;
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      expect(results[0].title).toEqual(seriesName);
     });
   });
 
@@ -1707,7 +1834,7 @@ describe('graphiteDatasource', () => {
   describe('translateTime', () => {
     it('does not mutate passed in date', async () => {
       const date = new Date('2025-06-30T00:00:59.000Z');
-      const functionDate = moment(date);
+      const functionDate = dateTimeAsMoment(date);
       const updatedDate = ctx.ds.translateTime(
         dateMath.toDateTime(functionDate.toDate(), { roundUp: undefined, timezone: undefined })!,
         true

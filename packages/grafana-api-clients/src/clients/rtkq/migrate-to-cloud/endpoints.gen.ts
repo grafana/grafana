@@ -334,7 +334,6 @@ export type AnnotationActions = {
 };
 export type AnnotationPermission = {
   dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
 };
 export type DashboardMeta = {
   annotationsPermissions?: AnnotationPermission;
@@ -355,7 +354,6 @@ export type DashboardMeta = {
   hasAcl?: boolean;
   isFolder?: boolean;
   isSnapshot?: boolean;
-  isStarred?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   publicDashboardEnabled?: boolean;
@@ -392,7 +390,7 @@ export type LibraryElementDtoIsTheFrontendDtoForEntities = {
   id?: number;
   kind?: number;
   meta?: LibraryElementDtoMetaIsTheMetaInformationForLibraryElementDto;
-  model?: object;
+  model?: any;
   name?: string;
   orgId?: number;
   schemaVersion?: number;

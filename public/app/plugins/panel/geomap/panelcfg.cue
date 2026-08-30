@@ -34,20 +34,20 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				MapViewConfig: {
-				id:                     string | *"zero"
-				lat?:                   int64 | *0
-				lon?:                   int64 | *0
-				zoom?:                  int64 | *1
-				minZoom?:               int64
-				maxZoom?:               int64
-				padding?:               int64
-				allLayers?:             bool | *true
-				lastOnly?:              bool
-				layer?:                 string
-				shared?:                bool
-				noRepeat?:              bool | *false
-				dashboardVariable?:     bool
-				dashboardVariableName?: string
+					id:                     string | *"zero"
+					lat?:                   int64 | *0
+					lon?:                   int64 | *0
+					zoom?:                  int64 | *1
+					minZoom?:               int64
+					maxZoom?:               int64
+					padding?:               int64
+					allLayers?:             bool | *true
+					lastOnly?:              bool
+					layer?:                 string
+					shared?:                bool
+					noRepeat?:              bool | *false
+					dashboardVariable?:     bool
+					dashboardVariableName?: string
 				} @cuetsy(kind="interface")
 
 				ControlsOptions: {
@@ -55,7 +55,7 @@ composableKinds: PanelCfg: {
 					showZoom?: bool
 					// let the mouse wheel zoom
 					mouseWheelZoom?: bool
-					// Lower right
+					// Show attribution of layer sources that do not require it (lower right)
 					showAttribution?: bool
 					// Scale options
 					showScale?: bool

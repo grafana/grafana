@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 
@@ -32,8 +32,6 @@ const defaultSettings = {
 };
 
 describe('FixFolderMetadataDrawer', () => {
-  testWithFeatureToggles({ enable: ['provisioning'] });
-
   beforeEach(() => {
     server.use(
       http.get(`${BASE}/settings`, () => HttpResponse.json(defaultSettings)),
@@ -82,16 +80,50 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await waitFor(() => {
+      expect(capturedBody).toEqual(
+        expect.objectContaining({
+          action: 'fixFolderMetadata',
+          message: expect.stringContaining('Fix folder metadata'),
+          fixFolderMetadata: expect.objectContaining({
+            ref: 'main',
+          }),
+        })
+      );
+    });
+  });
+
+  it('defaults to a generated branch name when write workflow is not available', async () => {
+    server.use(
+      http.get(`${BASE}/settings`, () =>
+        HttpResponse.json({
+          ...defaultSettings,
+          items: [{ ...defaultSettings.items[0], workflows: ['branch'] }],
+        })
+      )
+    );
+
+    let capturedBody: unknown;
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(jobResponse);
+      }),
+      http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [jobResponse] }))
+    );
+
+    const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
+
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     await waitFor(() => {
       expect(capturedBody).toEqual(
         expect.objectContaining({
           action: 'fixFolderMetadata',
           fixFolderMetadata: expect.objectContaining({
-            ref: 'main',
+            ref: expect.stringMatching(/^fix-folder-ids\//),
           }),
         })
       );
@@ -141,8 +173,7 @@ describe('FixFolderMetadataDrawer', () => {
 
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByText(/error fixing folder metadata/i)).toBeInTheDocument();
@@ -157,8 +188,7 @@ describe('FixFolderMetadataDrawer', () => {
     const onDismiss = jest.fn();
     const { user } = render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={onDismiss} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
-    await user.click(screen.getByRole('button', { name: /fix folder ids/i }));
+    await user.click(await screen.findByRole('button', { name: /fix folder ids/i }));
 
     // The drawer should remain open showing job status, not auto-dismiss
     expect(onDismiss).not.toHaveBeenCalled();
@@ -204,7 +234,6 @@ describe('FixFolderMetadataDrawer', () => {
 
     render(<FixFolderMetadataDrawer repositoryName={REPO_NAME} onDismiss={jest.fn()} />);
 
-    await screen.findByRole('button', { name: /fix folder ids/i });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /fix folder ids/i })).toBeDisabled();
     });

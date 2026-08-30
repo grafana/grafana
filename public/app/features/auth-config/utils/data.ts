@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
 import { fieldMap, getSectionFields } from '../fields';
-import { FieldData, SSOProvider, SSOProviderDTO } from '../types';
+import { type FieldData, type SSOProvider, type SSOProviderDTO } from '../types';
 
 import { isSelectableValueArray } from './guards';
 
@@ -132,7 +132,7 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
   return settings;
 }
 
-export function getArrayFields(obj: Record<string, FieldData>, providerFields: string[]): Array<keyof SSOProviderDTO> {
+function getArrayFields(obj: Record<string, FieldData>, providerFields: string[]): Array<keyof SSOProviderDTO> {
   return Object.entries(obj)
     .filter(([key, value]) => providerFields.includes(key) && value.type === 'select')
     .map(([key]) => key as keyof SSOProviderDTO); // TODO: replace this with a type guard

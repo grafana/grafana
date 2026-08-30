@@ -1,7 +1,7 @@
-import { DataQueryRequest } from '@grafana/data';
+import { type DataQueryRequest } from '@grafana/data';
 
-import { CloudWatchLogsQuery } from '../dataquery.gen';
-import { CloudWatchQuery } from '../types';
+import { type CloudWatchLogsQuery } from '../dataquery.gen';
+import { type CloudWatchQuery } from '../types';
 
 import { TimeRangeMock } from './timeRange';
 

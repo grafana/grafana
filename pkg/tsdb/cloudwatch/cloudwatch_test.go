@@ -10,19 +10,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	cloudwatchlogstypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
-
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewInstanceSettings(t *testing.T) {
@@ -51,7 +51,7 @@ func TestNewInstanceSettings(t *testing.T) {
 					"secretKey": "secret",
 				},
 			},
-			settingCtx: backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+			settingCtx: config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
 				awsds.AllowedAuthProvidersEnvVarKeyName:  "foo , bar,baz",
 				awsds.AssumeRoleEnabledEnvVarKeyName:     "false",
 				awsds.SessionDurationEnvVarKeyName:       "10m",
@@ -223,6 +223,33 @@ func TestGetAWSConfig_passes_authSettings(t *testing.T) {
 	require.NoError(t, err)
 }
 
+type spyConfigProvider struct {
+	captured awsauth.Settings
+}
+
+func (s *spyConfigProvider) GetConfig(_ context.Context, settings awsauth.Settings) (aws.Config, error) {
+	s.captured = settings
+	return aws.Config{}, nil
+}
+
+func TestNewAWSConfig_passesGrafanaExternalIDFields(t *testing.T) {
+	spy := &spyConfigProvider{}
+	usePerDS := true
+	ds := newTestDatasource(func(ds *DataSource) {
+		ds.AWSConfigProvider = spy
+		ds.Settings.AuthType = awsds.AuthTypeGrafanaAssumeRole
+		ds.Settings.AssumeRoleARN = "arn:aws:iam::123456789012:role/test"
+		ds.Settings.GrafanaExternalID = "stackABC-dsUid1"
+		ds.Settings.UsePerDatasourceExternalID = &usePerDS
+	})
+
+	_, err := ds.newAWSConfig(context.Background(), "us-east-1")
+	require.NoError(t, err)
+	assert.Equal(t, "stackABC-dsUid1", spy.captured.GrafanaExternalID)
+	require.NotNil(t, spy.captured.UsePerDatasourceExternalID)
+	assert.True(t, *spy.captured.UsePerDatasourceExternalID)
+}
+
 func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *testing.T) {
 	sender := &mockedCallResourceResponseSenderForOauth{}
 	origNewMetricsAPI := NewCWClient
@@ -278,9 +305,9 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		logsApi.AssertCalled(t, "DescribeLogGroups",
 			&cloudwatchlogs.DescribeLogGroupsInput{
 				AccountIdentifiers:    []string{"some-account-id"},
-				IncludeLinkedAccounts: utils.Pointer(true),
+				IncludeLinkedAccounts: new(true),
 				Limit:                 aws.Int32(50),
-				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
+				LogGroupNamePrefix:    new("some-pattern"),
 			})
 	})
 }

@@ -1,15 +1,17 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeSizing } from '@grafana/schema';
-import { GraphFieldConfig } from '@grafana/ui';
+import { type GraphFieldConfig } from '@grafana/ui';
 
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
+import { GAUGE_CARD_OPTIONS } from './suggestions';
 
 /**
  * Standard preset - gauge shape with thresholds
@@ -17,7 +19,7 @@ import { defaultOptions, Options } from './panelcfg.gen';
 const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.standard', 'Standard'),
-    // description: t('gauge.presets.standard_desc', 'plain, from thresholds'),
+    description: t('gauge.presets.standard_desc', 'Arc gauge, threshold color, with sparkline'),
     options: {
       ...defaultOptions,
       shape: 'gauge',
@@ -55,7 +57,7 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -65,7 +67,7 @@ const defaultPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => 
 const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.segmented', 'Segmented'),
-    // description: t('gauge.presets.segmented_desc', 'segmented thresholds'),
+    description: t('gauge.presets.segmented_desc', 'Dashed arc, threshold color, with sparkline'),
     options: {
       ...defaultOptions,
       shape: 'gauge',
@@ -103,7 +105,7 @@ const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -113,7 +115,7 @@ const segmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =
 const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.gradient', 'Gradient'),
-    // description: t('gauge.presets.gradient_desc', 'gradient color scale'),
+    description: t('gauge.presets.gradient_desc', 'Arc gauge, green-yellow-red gradient fill'),
     options: {
       ...defaultOptions,
       shape: 'gauge',
@@ -142,7 +144,7 @@ const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -152,7 +154,7 @@ const gradientPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
 const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.circle', 'Circle'),
-    // description: t('gauge.presets.circle_desc', 'plain round, from thresholds'),
+    description: t('gauge.presets.circle_desc', 'Full circle, threshold color, with sparkline'),
     options: {
       ...defaultOptions,
       shape: 'circle',
@@ -190,7 +192,7 @@ const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -200,7 +202,7 @@ const circlePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
 const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.neon', 'Neon'),
-    // description: t('gauge.presets.neon_desc', 'round, single color endpoint glow'),
+    description: t('gauge.presets.neon_desc', 'Circle, rounded bar, glow effects, fixed red'),
     options: {
       ...defaultOptions,
       shape: 'circle',
@@ -229,7 +231,7 @@ const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
@@ -239,7 +241,7 @@ const neonPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
 const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('gauge.presets.neonSegmented', 'Neon segmented'),
-    // description: t('gauge.presets.neonSegmented_desc', 'round, few segments'),
+    description: t('gauge.presets.neonSegmented_desc', 'Circle, 10 rounded segments, glow effects, fixed blue'),
     options: {
       ...defaultOptions,
       shape: 'circle',
@@ -268,10 +270,14 @@ const neonSegmentedPreset = (): VisualizationSuggestion<Options, GraphFieldConfi
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: GAUGE_CARD_OPTIONS,
   };
 };
 
-export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = () => {
+export const gaugePresetsSupplier: VisualizationPresetsSupplier<Options, GraphFieldConfig> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [defaultPreset(), segmentedPreset(), gradientPreset(), circlePreset(), neonPreset(), neonSegmentedPreset()];
 };

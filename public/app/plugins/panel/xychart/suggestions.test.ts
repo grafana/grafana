@@ -2,7 +2,7 @@ import {
   createDataFrame,
   FieldType,
   getPanelDataSummary,
-  PanelDataSummary,
+  type PanelDataSummary,
   VisualizationSuggestionScore,
 } from '@grafana/data';
 

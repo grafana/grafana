@@ -1,4 +1,4 @@
-import { MatcherOperator, ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { findRoutesByMatchers } from './Filters';
 

@@ -1,7 +1,11 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
-import { DataTransformerInfo, FieldMatcher, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
+import {
+  type DataTransformerInfo,
+  type FieldMatcher,
+  TransformationApplicabilityLevels,
+} from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -38,6 +42,11 @@ const splitToCapitalWords = (input: string) => {
 export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
   return (field: Field) =>
     field.values.map((value: string) => {
+      // String fields can hold null/undefined; calling string methods on them throws and blanks the whole panel.
+      if (value == null) {
+        return value;
+      }
+
       switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();

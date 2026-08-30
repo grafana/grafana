@@ -82,6 +82,8 @@ refs:
 
 # Transform data
 
+> **Note:** The screenshots and steps on this page reflect the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
@@ -95,7 +97,7 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
-> Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
+> **Note:** Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
 
@@ -317,6 +319,7 @@ This transformation has the following options:
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
       You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
     - Will show a table to manage the enums
@@ -744,6 +747,13 @@ After choosing the field by which you want to group your data, you can add vario
 | server 2  | 88.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table>  |
 | server 3  | 59.6                   | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
 
+#### Display options
+
+| Option                            | Description                                                                                                                |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                    |
+| Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
+
 ### Create heatmap
 
 Use this transformation to prepare histogram data for visualizing trends over time. Similar to the heatmap visualization, this transformation converts histogram metrics into temporal buckets.
@@ -889,6 +899,8 @@ The result after applying the inner join transformation looks like the following
 | 3         | Michael | Physics          | PHYS101  | B     |
 
 The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
+
+If a query returns data that doesn't contain the join field, then no row can match in every query, so the result is empty. To join only some of your queries, add a [Filter data by query refId](#filter-data-by-query-refid) transformation before the join.
 
 #### Outer join (for Time Series data)
 
@@ -1464,8 +1476,6 @@ Use this transformation to convert time series results into a table, transformin
 For each generated **Trend** field value, a calculation function can be selected. This value is displayed next to the sparkline and will be used for sorting table rows.
 
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
-
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
 
 ### Transpose
 

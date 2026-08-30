@@ -202,7 +202,7 @@ func (g *Group[T]) Add(value T) error {
 }
 
 func (g *Group[T]) Start(ctx context.Context) {
-	g.ctx, g.cancel = context.WithCancel(ctx)
+	g.ctx, g.cancel = context.WithCancel(ctx) // #nosec G118 -- cancel is invoked in Stop
 	g.wg.Add(1)
 	go func() {
 		defer g.wg.Done()

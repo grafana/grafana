@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
@@ -37,9 +37,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     body: {
       height: '100%',
       width: '100%',
-      position: 'unset',
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.background.canvas,
+      margin: 0,
       paddingRight: '0 !important',
       '@media print': {
         overflow: 'visible',
@@ -457,7 +457,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
   });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
+function getVariantStyles(variant: ThemeTypographyVariant) {
   return {
     margin: 0,
     fontSize: variant.fontSize,

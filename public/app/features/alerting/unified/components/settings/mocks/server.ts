@@ -1,12 +1,12 @@
 import { HttpResponse, delay, http } from 'msw';
-import { SetupServerApi } from 'msw/node';
+import { type SetupServerApi } from 'msw/node';
 
 import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
+  type AlertManagerCortexConfig,
+  type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
-  AlertmanagerReceiver,
-  Receiver,
+  type AlertmanagerReceiver,
+  type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource } from '../../../mocks';
@@ -15,7 +15,7 @@ import { DataSourceType } from '../../../utils/datasource';
 import internalAlertmanagerConfig from './api/alertmanager/grafana/config/api/v1/alerts.json';
 import history from './api/alertmanager/grafana/config/history.json';
 import cloudAlertmanagerConfig from './api/alertmanager/provisioned/config/api/v1/alerts.json';
-import vanillaAlertmanagerConfig from './api/alertmanager/vanilla prometheus/api/v2/status.json';
+import vanillaAlertmanagerConfig from './api/alertmanager/vanilla-prometheus/api/v2/status.json';
 import datasources from './api/datasources.json';
 import admin_config from './api/v1/ngalert/admin_config.json';
 import alertmanagers from './api/v1/ngalert/alertmanagers.json';

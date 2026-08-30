@@ -3,7 +3,11 @@ import { useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { DataLinkTransformationConfig, ExploreCorrelationHelperData, GrafanaTheme2 } from '@grafana/data';
+import {
+  type DataLinkTransformationConfig,
+  type ExploreCorrelationHelperData,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -239,7 +243,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               ) : undefined,
             ].filter((val) => val);
             return (
-              <Card noMargin key={`trans-${i}`}>
+              <Card className={styles.transformationCard} noMargin key={`trans-${i}`}>
                 <Card.Heading>
                   {field}: {type}
                 </Card.Heading>
@@ -286,6 +290,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     transformationMeta: css({
       alignItems: 'baseline',
+    }),
+    transformationCard: css({
+      background: theme.colors.background.secondary,
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
     }),
   };
 };

@@ -29,7 +29,6 @@ const (
 	ClientForm         = "auth.client.form"
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
-	ClientPasswordless = "auth.client.passwordless"
 	ClientLDAP         = "ldap"
 	ClientProvisioning = "auth.client.apiserver.provisioning"
 )
@@ -140,10 +139,10 @@ type Service interface {
 	// Example:
 	// - "saml" = "auth.client.saml"
 	// - "github" = "auth.client.github"
-	IsClientEnabled(client string) bool
+	IsClientEnabled(ctx context.Context, client string) bool
 
 	// GetClientConfig returns the client configuration for the given client and a boolean indicating if the config was present.
-	GetClientConfig(client string) (SSOClientConfig, bool)
+	GetClientConfig(ctx context.Context, client string) (SSOClientConfig, bool)
 }
 
 type IdentitySynchronizer interface {
@@ -155,7 +154,7 @@ type Client interface {
 	// Name returns the name of a client
 	Name() string
 	// IsEnabled returns the enabled status of the client
-	IsEnabled() bool
+	IsEnabled(ctx context.Context) bool
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.
@@ -194,7 +193,7 @@ type LogoutClient interface {
 
 type SSOSettingsAwareClient interface {
 	Client
-	GetConfig() SSOClientConfig
+	GetConfig(ctx context.Context) SSOClientConfig
 }
 
 type PasswordClient interface {
@@ -272,7 +271,7 @@ func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cf
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
 func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
 	redirectURL := handleLogin(r, w, cfg, identity, validator, features, "redirectTo")
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	http.Redirect(w, r, redirectURL, http.StatusFound) // #nosec G710 -- redirectURL validated by RedirectValidator in handleLogin
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse

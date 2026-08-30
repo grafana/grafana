@@ -48,7 +48,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 
@@ -56,7 +56,7 @@ import { PopupCard } from '../HoverCard';
 
 import { InlineSaveInput } from './InlineSaveInput';
 import { SavedSearchItem } from './SavedSearchItem';
-import { SavedSearch } from './savedSearchesSchema';
+import { type SavedSearch } from './savedSearchesSchema';
 
 // ============================================================================
 // Types
@@ -394,7 +394,7 @@ interface ListModeProps {
   hasSearches: boolean;
   canSave: boolean;
   activeAction: ActiveAction;
-  saveButtonRef: React.RefObject<HTMLButtonElement>;
+  saveButtonRef: React.RefObject<HTMLButtonElement | null>;
   isLoading: boolean;
   onStartSave: () => void;
   /** Callback to complete save. Throws ValidationError on validation failure. */

@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -48,6 +49,12 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	meta, _ := utils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
 		return nil
+	}
+
+	// Block creations of pending-deleted resources and mutations on resources whose namespace is pending deletion.
+	// Allows for updates that remove the pending-delete label (explicit unlock).
+	if err := provisioningadmission.ValidatePendingDeletion(a, meta); err != nil {
+		return err
 	}
 
 	c, ok := obj.(*provisioning.Connection)
@@ -96,6 +103,14 @@ func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisio
 				),
 			},
 		)
+	}
+
+	// An OAuth connection's token comes from the authorization flow, not the
+	// spec: there is no token until the user authorizes, and a stale token must
+	// not block the updates needed to recover from it (e.g. new credentials or
+	// reauthorization). Health checks report token validity instead.
+	if _, ok := connection.(OAuthConnection); ok {
+		return nil
 	}
 
 	// Run runtime validation via Test() method

@@ -1,13 +1,13 @@
 import { createDataFrame } from '../dataframe/processDataFrame';
 import { identityOverrideProcessor } from '../field/overrides/processors';
 import {
-  StandardEditorsRegistryItem,
+  type StandardEditorsRegistryItem,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
 } from '../field/standardFieldConfigEditorRegistry';
 import { FieldType } from '../types/dataFrame';
-import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
-import { PanelMigrationModel } from '../types/panel';
+import { FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { type PanelMigrationModel } from '../types/panel';
 import { VisualizationSuggestionsBuilder, VisualizationSuggestionScore } from '../types/suggestions';
 import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 

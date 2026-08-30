@@ -1,8 +1,8 @@
 import { Chance } from 'chance';
 
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeItem } from '../types';
+import { type DashboardsTreeItem } from '../types';
 
 /**
  * @deprecated Use wellFormedTree from @grafana/test-utils/unstable instead (or re-evaluate test approach in general)

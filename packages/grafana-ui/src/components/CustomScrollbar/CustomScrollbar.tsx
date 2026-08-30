@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { RefCallback, useCallback, useEffect, useRef, type JSX } from 'react';
+import { type RefCallback, useCallback, useEffect, useRef, type JSX } from 'react';
 import * as React from 'react';
-import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
+import Scrollbars, { type positionValues } from 'react-custom-scrollbars-2';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -153,8 +153,6 @@ export const CustomScrollbar = ({
     </Scrollbars>
   );
 };
-
-export default CustomScrollbar;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

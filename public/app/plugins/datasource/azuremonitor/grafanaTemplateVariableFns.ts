@@ -1,18 +1,18 @@
 import { isGUIDish } from './components/ResourcePicker/utils';
 import {
-  AppInsightsGroupByQuery,
-  AppInsightsMetricNameQuery,
+  type AppInsightsGroupByQuery,
+  type AppInsightsMetricNameQuery,
   AzureQueryType,
-  GrafanaTemplateVariableQuery,
-  MetricNamespaceQuery,
-  MetricNamesQuery,
-  ResourceGroupsQuery,
-  ResourceNamesQuery,
-  SubscriptionsQuery,
-  WorkspacesQuery,
+  type GrafanaTemplateVariableQuery,
+  type MetricNamespaceQuery,
+  type MetricNamesQuery,
+  type ResourceGroupsQuery,
+  type ResourceNamesQuery,
+  type SubscriptionsQuery,
+  type WorkspacesQuery,
 } from './dataquery.gen';
-import DataSource from './datasource';
-import { AzureMonitorQuery } from './types/query';
+import type DataSource from './datasource';
+import { type AzureMonitorQuery } from './types/query';
 
 /* 
   Grafana Template Variable Functions
@@ -23,7 +23,7 @@ import { AzureMonitorQuery } from './types/query';
   or if it's a KQL-type query
 */
 
-export const grafanaTemplateVariableFnMatches = (query: string) => {
+const grafanaTemplateVariableFnMatches = (query: string) => {
   return {
     subscriptions: query.match(/^Subscriptions\(\)/i),
     resourceGroups: query.match(/^ResourceGroups\(\)/i),

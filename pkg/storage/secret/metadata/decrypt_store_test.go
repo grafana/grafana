@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	grpcmetadata "google.golang.org/grpc/metadata"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -85,7 +85,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -120,7 +120,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -154,7 +154,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -186,7 +186,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -219,7 +219,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -251,7 +251,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -284,7 +284,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = svName
@@ -322,7 +322,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		spec := secretv1beta1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{tokenSvcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       new(secretv1beta1.NewExposedSecureValue("value")),
 		}
 		sv := &secretv1beta1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
@@ -406,7 +406,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{tokenSvcIdentity},
-				Ref:         ptr.To("ref1"),
+				Ref:         new("ref1"),
 			}}
 
 		_, err = sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
@@ -419,6 +419,57 @@ func TestIntegrationDecrypt(t *testing.T) {
 		exposed, err := sut.DecryptStorage.Decrypt(loggerCtx, "default", "sv-test")
 		require.NoError(t, err)
 		require.Equal(t, "value", exposed.DangerouslyExposeAndConsumeValue())
+	})
+
+	t.Run("happy path, inline secure value uses the system keeper and can be decrypted even when a 3rd party keeper is active", func(t *testing.T) {
+		t.Parallel()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		svcIdentity := "svc"
+		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, svcIdentity, types.TypeUser)
+
+		sut := testutils.Setup(t)
+
+		// Activate a 3rd party keeper
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// Inline secure values are identified by having OwnerReferences
+		sv := &secretv1beta1.SecureValue{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Name:      "sv-inline",
+				OwnerReferences: []v1.OwnerReference{{
+					APIVersion: "prometheus.datasource.grafana.app/v0alpha1",
+					Kind:       "DataSource",
+					Name:       "test-ds",
+				}},
+			},
+			Spec: secretv1beta1.SecureValueSpec{
+				Description: "description",
+				Decrypters:  []string{svcIdentity},
+				Value:       new(secretv1beta1.NewExposedSecureValue("inline-value")),
+			},
+		}
+		created, err := sut.CreateSv(authCtx, testutils.CreateSvWithSv(sv))
+		require.NoError(t, err)
+		require.Equal(t, contracts.SystemKeeperName, created.Status.Keeper)
+
+		// Can still decrypt it
+		exposed, err := sut.DecryptStorage.Decrypt(authCtx, "default", "sv-inline")
+		require.NoError(t, err)
+		require.Equal(t, "inline-value", exposed.DangerouslyExposeAndConsumeValue())
 	})
 }
 

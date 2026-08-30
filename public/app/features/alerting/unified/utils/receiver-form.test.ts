@@ -1,10 +1,10 @@
-import { GrafanaManagedContactPoint, Receiver } from '../../../../plugins/datasource/alertmanager/types';
+import { type GrafanaManagedContactPoint, type Receiver } from '../../../../plugins/datasource/alertmanager/types';
 import { grafanaAlertNotifiers } from '../mockGrafanaNotifiers';
 import {
-  CloudChannelValues,
-  GrafanaChannelMap,
-  GrafanaChannelValues,
-  ReceiverFormValues,
+  type CloudChannelValues,
+  type GrafanaChannelMap,
+  type GrafanaChannelValues,
+  type ReceiverFormValues,
 } from '../types/receiver-form';
 
 import {

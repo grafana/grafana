@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { Property } from 'csstype';
+import { type Property } from 'csstype';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { getResponsiveStyle, ResponsiveProp } from './responsiveness';
+import { getResponsiveStyle, type ResponsiveProp } from './responsiveness';
 
 export interface SizeProps {
   minWidth?: ResponsiveProp<Property.MinWidth<number>>;

@@ -10,19 +10,19 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { Placement } from '@popperjs/core';
+import { type Placement } from '@popperjs/core';
 import { memo, cloneElement, isValidElement, useRef, useState, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
 import { getPortalContainer, Portal } from '../Portal/Portal';
 
-import { ToggletipContent } from './types';
+import { type ToggletipContent } from './types';
 
 export interface ToggletipProps {
   /** The theme used to display the toggletip */
@@ -72,7 +72,6 @@ export const Toggletip = memo(
     dismissOnScroll = false,
   }: ToggletipProps) => {
     const arrowRef = useRef(null);
-    const grafanaTheme = useTheme2();
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const [controlledVisible, setControlledVisible] = useState(show);
@@ -87,6 +86,7 @@ export const Toggletip = memo(
       ...getPositioningMiddleware(floatingUIPlacement),
       arrow({
         element: arrowRef,
+        padding: 12,
       }),
     ];
 
@@ -135,7 +135,10 @@ export const Toggletip = memo(
               >
                 <FloatingArrow
                   strokeWidth={0.3}
-                  stroke={grafanaTheme.colors.border.weak}
+                  stroke={style.borderColor}
+                  width={8}
+                  height={4}
+                  tipRadius={2}
                   className={style.arrow}
                   ref={arrowRef}
                   context={context}
@@ -170,7 +173,8 @@ export const Toggletip = memo(
 
 Toggletip.displayName = 'Toggletip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const info = buildTooltipTheme(
     theme,
     theme.colors.background.primary,
@@ -180,9 +184,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   );
   const error = buildTooltipTheme(
     theme,
-    theme.colors.error.main,
-    theme.colors.error.main,
-    theme.colors.error.contrastText,
+    theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
+    theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
+    theme.colors.error[visualRefreshEnabled ? 'text' : 'contrastText'],
     { topBottom: 2, rightLeft: 2 }
   );
 

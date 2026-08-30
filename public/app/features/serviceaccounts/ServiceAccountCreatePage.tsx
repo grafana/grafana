@@ -11,8 +11,8 @@ import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { RolePickerSelect } from 'app/core/components/RolePickerDrawer/RolePickerSelect';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountDTO, ServiceAccountCreateApiResponse } from 'app/types/serviceaccount';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO, type ServiceAccountCreateApiResponse } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 

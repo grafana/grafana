@@ -1,12 +1,12 @@
 import { memo } from 'react';
 
-import { FALLBACK_COLOR, FieldDisplay } from '@grafana/data';
+import { FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { RadialArcPath } from './RadialArcPath';
-import { RadialShape, RadialGaugeDimensions, GradientStop } from './types';
+import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 import {
   getAngleBetweenSegments,
   getFieldConfigMinMax,

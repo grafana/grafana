@@ -1,19 +1,19 @@
 import { of } from 'rxjs';
+import { testWithFeatureToggles } from 'test/test-utils';
 
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PluginExtensionPanelContext,
+  type PanelData,
+  type PluginExtensionPanelContext,
   PluginExtensionTypes,
   getDefaultTimeRange,
   store,
   toDataFrame,
-  urlUtil,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, locationService } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { FlagKeys, setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import {
   LocalValueVariable,
   SceneQueryRunner,
@@ -22,9 +22,10 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { GetExploreUrlArguments } from 'app/core/utils/explore';
+import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import * as storeModule from 'app/store/store';
@@ -34,6 +35,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
+import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -333,6 +335,7 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
+        panelPathId: expect.any(String) as unknown as string,
       };
 
       expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
@@ -390,6 +393,7 @@ describe('panelMenuBehavior', () => {
           },
         },
         data,
+        panelPathId: expect.any(String) as unknown as string,
       };
 
       expect(getObservablePluginLinksMock).toBeCalledWith(expect.objectContaining({ context }));
@@ -783,53 +787,117 @@ describe('panelMenuBehavior', () => {
     beforeEach(() => {
       jest.spyOn(storeModule, 'dispatch').mockImplementation(() => {});
       jest.spyOn(locationService, 'push').mockImplementation(() => {});
-      jest.spyOn(urlUtil, 'renderUrl').mockImplementation((url, params) => `${url}?${JSON.stringify(params)}`);
     });
 
-    it('should navigate to alert creation page on success', async () => {
-      const { menu, panel } = await buildTestScene({});
-      const mockFormValues = { someKey: 'someValue' };
+    describe('when createAlertRuleFromPanel is enabled', () => {
+      testWithFeatureToggles({ enable: ['createAlertRuleFromPanel'] });
 
-      config.unifiedAlertingEnabled = true;
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+      it('should open the new alert rule drawer with prefilled values on success', async () => {
+        const { menu, panel, scene } = await buildTestScene({});
+        const mockFormValues = { someKey: 'someValue' };
 
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockResolvedValue(mockFormValues);
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-      // activate the menu
-      menu.activate();
-      // wait for the menu to be activated
-      await new Promise((r) => setTimeout(r, 1));
-      // use userEvent mechanism to click the menu item
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-      expect(alertMenuItem).toBeDefined();
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(mockFormValues);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
 
-      alertMenuItem?.({} as React.MouseEvent);
-      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        expect(alertMenuItem).toBeDefined();
+
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        expect(locationService.push).not.toHaveBeenCalled();
+        expect(showModalSpy).toHaveBeenCalledTimes(1);
+        const drawer = showModalSpy.mock.calls[0][0];
+        expect(drawer).toBeInstanceOf(NewAlertRuleDrawer);
+        expect((drawer as NewAlertRuleDrawer).state.prefill).toEqual(mockFormValues);
+      });
+
+      it('should show error notification and not open the drawer when no alerting-capable query is found', async () => {
+        const { menu, scene } = await buildTestScene({});
+
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
+
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(undefined);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
+
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(showModalSpy).not.toHaveBeenCalled();
+        expect(storeModule.dispatch).toHaveBeenCalled();
+      });
+
+      it('should show error notification and not open the drawer on failure', async () => {
+        const { menu, panel, scene } = await buildTestScene({});
+        const mockError = new Error('Test error');
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockRejectedValue(mockError);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
+
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
+
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+        expect(alertMenuItem).toBeDefined();
+
+        await alertMenuItem?.({} as React.MouseEvent);
+
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        expect(showModalSpy).not.toHaveBeenCalled();
+      });
     });
 
-    it('should show error notification on failure', async () => {
-      const { menu, panel } = await buildTestScene({});
-      const mockError = new Error('Test error');
-      jest
-        .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
-        .mockRejectedValue(mockError);
-      // Don't make notifyApp throw an error, just mock it
+    describe('when createAlertRuleFromPanel is disabled', () => {
+      testWithFeatureToggles({ disable: ['createAlertRuleFromPanel'] });
 
-      menu.activate();
-      await new Promise((r) => setTimeout(r, 1));
+      it('should navigate to /alerting/new and not open the drawer', async () => {
+        const { menu, scene } = await buildTestScene({});
+        const mockFormValues = { someKey: 'someValue' };
 
-      const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
-      const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
-      expect(alertMenuItem).toBeDefined();
+        config.unifiedAlertingEnabled = true;
+        grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleUpdate]);
 
-      await alertMenuItem?.({} as React.MouseEvent);
+        jest
+          .spyOn(require('app/features/alerting/unified/utils/rule-form'), 'scenesPanelToRuleFormValues')
+          .mockResolvedValue(mockFormValues);
+        const showModalSpy = jest.spyOn(scene, 'showModal');
 
-      await new Promise((r) => setTimeout(r, 0));
+        menu.activate();
+        await new Promise((r) => setTimeout(r, 1));
 
-      expect(scenesPanelToRuleFormValues).toHaveBeenCalledWith(panel);
+        const moreMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+        const alertMenuItem = moreMenu?.find((i) => i.text === 'New alert rule')?.onClick;
+
+        await alertMenuItem?.({} as React.MouseEvent);
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(showModalSpy).not.toHaveBeenCalled();
+        expect(locationService.push).toHaveBeenCalledTimes(1);
+        expect(locationService.push).toHaveBeenCalledWith(expect.stringContaining('/alerting/new'));
+      });
     });
 
     it('should render "New alert rule" menu item when user has permissions to read and update alerts', async () => {
@@ -911,12 +979,7 @@ describe('panelMenuBehavior', () => {
       return { menu, panel };
     }
 
-    beforeEach(() => {
-      config.featureToggles.panelStyleActions = true;
-    });
-
     afterEach(() => {
-      config.featureToggles.panelStyleActions = false;
       store.delete(LS_STYLES_COPY_KEY);
     });
 
@@ -941,14 +1004,7 @@ describe('panelMenuBehavior', () => {
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
     });
 
-    it('should not show styles menu when feature flag is disabled', async () => {
-      config.featureToggles.panelStyleActions = false;
-      const { menu } = await buildTimeseriesTestScene();
-
-      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
-    });
-
-    it('should not show styles menu for non-timeseries panels', async () => {
+    it('should not show styles menu for unsupported panel types', async () => {
       const { menu } = await buildTestScene({});
 
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
@@ -964,6 +1020,168 @@ describe('panelMenuBehavior', () => {
       const { menu } = await buildTimeseriesTestScene(false);
 
       expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeUndefined();
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should show styles menu for %s panel', async (pluginId) => {
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((i) => i.text === 'Styles')).toBeDefined();
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should show paste option for %s panel when matching styles are copied', async (pluginId) => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: pluginId, styles: {} }));
+
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
+      expect(stylesMenu).toHaveLength(2);
+      expect(stylesMenu?.[1].text).toBe('Paste styles');
+    });
+
+    it.each([
+      'trend',
+      'candlestick',
+      'stat',
+      'gauge',
+      'bargauge',
+      'barchart',
+      'piechart',
+      'histogram',
+      'heatmap',
+      'state-timeline',
+      'status-history',
+      'xychart',
+    ])('should not show paste option for %s panel when timeseries styles are copied', async (pluginId) => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({ title: `${pluginId} Panel`, pluginId, key: `panel-${pluginId}`, menu });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        isEditing: true,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const stylesMenu = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu;
+      expect(stylesMenu).toHaveLength(1);
+      expect(stylesMenu?.[0].text).toBe('Copy styles');
+    });
+  });
+
+  describe('choose notebook', () => {
+    afterEach(() => {
+      setTestFlags({});
+      mocks.contextSrv.hasPermission.mockReset();
+    });
+
+    async function itemsWith({ notebooks, permission }: { notebooks: boolean; permission: boolean }) {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: notebooks });
+      mocks.contextSrv.hasPermission.mockReturnValue(permission);
+
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      return menu.state.items ?? [];
+    }
+
+    it('is hidden when notebooks are disabled', async () => {
+      const items = await itemsWith({ notebooks: false, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    it('is hidden without permission to write or create', async () => {
+      const items = await itemsWith({ notebooks: true, permission: false });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toBeUndefined();
+    });
+
+    // Adding a panel to a notebook writes to the notebook, so it must not be gated on dashboard
+    // edit mode the way Remove is.
+    it('is offered while reading the dashboard, not only while editing it', async () => {
+      const items = await itemsWith({ notebooks: true, permission: true });
+
+      expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
+        expect.objectContaining({ iconClassName: 'search' })
+      );
+      expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
+    });
+
+    it('sits in its own section immediately above Remove while editing', async () => {
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      scene.setState({ isEditing: true });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const texts = (menu.state.items ?? []).map((item) => (item.type === 'divider' ? '---' : item.text));
+      expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
 });

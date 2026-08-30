@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';

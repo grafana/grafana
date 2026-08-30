@@ -19,7 +19,9 @@ export const defaultDataSourceRef = (): DataSourceRef => ({
 	name: "",
 });
 
-// there was a deprecated field here called type, we will need to move that for conversion and provisioning
+/**
+ * there was a deprecated field here called type, we will need to move that for conversion and provisioning
+ */
 export interface ConfigSpec {
 	field: string;
 	target: TargetSpec;
@@ -49,7 +51,8 @@ export const defaultTransformationSpec = (): TransformationSpec => ({
 export interface Spec {
 	type: CorrelationType;
 	source: DataSourceRef;
-	target?: DataSourceRef;
+	// null is for PATCH/edit when we want to clear the value
+	target?: DataSourceRef | null;
 	description?: string;
 	label: string;
 	config: ConfigSpec;

@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -60,7 +62,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:               1,
 				OrgID:            1,
 				Key:              hash,
-				ServiceAccountId: intPtr(1),
+				ServiceAccountId: new(int64(1)),
 			},
 			expectedIdentity: &authn.Identity{
 				ID:    "1",
@@ -78,7 +80,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 			req:  &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{"Authorization": {"Bearer " + secret}}}},
 			expectedKey: &apikey.APIKey{
 				Key:     hash,
-				Expires: intPtr(0),
+				Expires: new(int64),
 			},
 			expectedErr: errAPIKeyExpired,
 		},
@@ -98,7 +100,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:               1,
 				OrgID:            2,
 				Key:              hash,
-				ServiceAccountId: intPtr(1),
+				ServiceAccountId: new(int64(1)),
 			},
 			expectedErr: errAPIKeyOrgMismatch,
 		},
@@ -179,12 +181,55 @@ func TestAPIKey_Test(t *testing.T) {
 	}
 }
 
-func intPtr(n int64) *int64 {
-	return &n
+type capturingAPIKeyService struct {
+	apikeytest.Service
+	calls chan context.Context
 }
 
-func boolPtr(b bool) *bool {
-	return &b
+func (s *capturingAPIKeyService) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	s.calls <- ctx
+	return nil
+}
+
+func TestAPIKey_Hook(t *testing.T) {
+	t.Run("last used update should survive request cancellation but keep context values", func(t *testing.T) {
+		service := &capturingAPIKeyService{calls: make(chan context.Context, 1)}
+		c := ProvideAPIKey(service, tracing.InitializeTracerForTest())
+
+		ctx, cancel := context.WithCancel(request.WithNamespace(context.Background(), "stacks-11"))
+		req := &authn.Request{}
+		req.SetMeta(metaKeyID, "7")
+
+		assert.NoError(t, c.Hook(ctx, &authn.Identity{}, req))
+		cancel() // the request ends before the detached write runs
+
+		select {
+		case got := <-service.calls:
+			ns, ok := request.NamespaceFrom(got)
+			assert.True(t, ok)
+			assert.Equal(t, "stacks-11", ns)
+			assert.NoError(t, got.Err())
+		case <-time.After(time.Second):
+			t.Fatal("expected UpdateAPIKeyLastUsedDate to be called")
+		}
+	})
+
+	t.Run("should skip last used update when the skip meta is set", func(t *testing.T) {
+		service := &capturingAPIKeyService{calls: make(chan context.Context, 1)}
+		c := ProvideAPIKey(service, tracing.InitializeTracerForTest())
+
+		req := &authn.Request{}
+		req.SetMeta(metaKeyID, "7")
+		req.SetMeta(metaKeySkipLastUsed, "true")
+
+		assert.NoError(t, c.Hook(context.Background(), &authn.Identity{}, req))
+
+		select {
+		case <-service.calls:
+			t.Fatal("expected UpdateAPIKeyLastUsedDate not to be called")
+		default:
+		}
+	})
 }
 
 func genApiKey() (string, string) {
@@ -193,5 +238,5 @@ func genApiKey() (string, string) {
 }
 
 func encodeBasicAuth(username, password string) string {
-	return "Basic " + base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	return "Basic " + base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%s:%s", username, password))
 }

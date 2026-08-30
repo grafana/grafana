@@ -1,7 +1,7 @@
 import { ComparisonOperation } from '@grafana/schema';
 
-import { Field, DataFrame } from '../../types/dataFrame';
-import { FieldMatcherInfo } from '../../types/transformations';
+import { type Field, type DataFrame } from '../../types/dataFrame';
+import { type FieldMatcherInfo } from '../../types/transformations';
 import { reduceField, ReducerID } from '../fieldReducer';
 
 import { compareValues } from './compareValues';

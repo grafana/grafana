@@ -1,0 +1,29 @@
+{
+  "examples": {
+    "": {
+      "summary": "Empty testdata",
+      "value": {
+        "kind": "DataSource",
+        "metadata": {
+          "name": "my-testdata-datasource"
+        },
+        "spec": {
+          "title": "My TestData Datasource"
+        }
+      }
+    },
+    "with-url": {
+      "summary": "Testdata with URL (not used)",
+      "value": {
+        "kind": "DataSource",
+        "metadata": {
+          "name": "testdata-with-url"
+        },
+        "spec": {
+          "title": "TestData with URL",
+          "url": "http://example.com"
+        }
+      }
+    }
+  }
+}

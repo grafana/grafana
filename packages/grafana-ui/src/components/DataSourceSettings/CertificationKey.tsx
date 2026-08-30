@@ -1,4 +1,4 @@
-import { ChangeEvent, MouseEvent } from 'react';
+import { type ChangeEvent, type MouseEvent } from 'react';
 
 import { Trans } from '@grafana/i18n';
 

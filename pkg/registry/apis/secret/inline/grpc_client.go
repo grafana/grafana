@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -48,6 +49,8 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if clientLoadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available replicas.
@@ -126,7 +129,7 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 	return err
 }
 
-func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue) (string, error) {
+func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
 	client, err := g.getClient(owner.Namespace)
 	if err != nil {
 		return "", err
@@ -144,7 +147,8 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 			Namespace:  owner.Namespace,
 			Name:       owner.Name,
 		},
-		Value: value.DangerouslyExposeAndConsumeValue(),
+		Value:       value.DangerouslyExposeAndConsumeValue(),
+		Description: desc,
 	}
 
 	resp, err := client.CreateInline(ctx, req)

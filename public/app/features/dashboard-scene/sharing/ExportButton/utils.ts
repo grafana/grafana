@@ -4,7 +4,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { contextSrv } from '../../../../core/services/context_srv';
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 /**
  * Options for generating a dashboard image
@@ -44,7 +44,6 @@ export async function generateDashboardImage({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       render: true,
-      absolute: true,
       updateQuery: {
         height: -1, // image renderer will scroll through the dashboard and set the appropriate height
         width: window.innerWidth || config.rendererDefaultImageWidth || 1000,

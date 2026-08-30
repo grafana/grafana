@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Button,
@@ -19,7 +19,7 @@ import { closePopover } from '@grafana/ui/internal';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
-import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
+import { type MediaType, type ResourceFolderName, ResourcePickerSize } from '../types';
 
 import { ResourcePickerPopover } from './ResourcePickerPopover';
 
@@ -35,10 +35,11 @@ interface Props {
   placeholder?: string;
   color?: string;
   maxFiles?: number;
+  id?: string;
 }
 
 export const ResourcePicker = (props: Props) => {
-  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles } = props;
+  const { value, src, name, placeholder, onChange, onClear, mediaType, folderName, size, color, maxFiles, id } = props;
 
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -82,6 +83,7 @@ export const ResourcePicker = (props: Props) => {
     <InlineFieldRow>
       <InlineField label={null} grow>
         <Input
+          id={id}
           value={getDisplayName(src, name)}
           placeholder={placeholder}
           readOnly={true}
@@ -142,7 +144,9 @@ export const ResourcePicker = (props: Props) => {
 
 // strip the SVG off icons in the icons folder
 function getDisplayName(src?: string, name?: string): string | undefined {
-  if (src?.startsWith('public/build/img/icons')) {
+  // `src` is a resolved URL, so match on the folder rather than on a build directory that
+  // varies by bundler and CDN.
+  if (src?.includes('img/icons/')) {
     const idx = name?.lastIndexOf('.svg') ?? 0;
     if (idx > 0) {
       return name!.substring(0, idx);
@@ -162,6 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     verticalAlign: 'middle',
     display: 'inline-block',
     fill: 'currentColor',
-    width: '25px',
+    width: '20px',
   }),
 });

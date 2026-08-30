@@ -2,8 +2,8 @@ import { map } from 'rxjs/operators';
 
 import { sortDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame } from '../../types/dataFrame';
-import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
+import { type DataFrame } from '../../types/dataFrame';
+import { type DataTransformContext, type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 

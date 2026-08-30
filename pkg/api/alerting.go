@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) response.Response {
@@ -18,6 +19,7 @@ func (hs *HTTPServer) GetAlertNotifiers() func(*contextmodel.ReqContext) respons
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
 			return strings.Compare(string(a.Type), string(b.Type))
 		})
+		v2 = notifier.ApplyAllowedIntegrations(v2, hs.Cfg.UnifiedAlerting.AllowedIntegrations)
 		if r.Query("version") == "2" {
 			return response.JSON(http.StatusOK, v2)
 		}

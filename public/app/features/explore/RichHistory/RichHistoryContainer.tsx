@@ -1,12 +1,12 @@
 // Libraries
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import { Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 // Types
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 // Components, enums
 import { useQueriesDrawerContext } from '../QueriesDrawer/QueriesDrawerContext';
@@ -109,7 +109,9 @@ export function RichHistoryContainer(props: Props) {
       richHistorySearchFilters={richHistorySearchFilters}
       updateHistorySettings={updateHistorySettings}
       updateHistorySearchFilters={updateHistorySearchFilters}
-      loadRichHistory={loadRichHistory}
+      loadRichHistory={async () => {
+        await loadRichHistory();
+      }}
       loadMoreRichHistory={loadMoreRichHistory}
       clearRichHistoryResults={clearRichHistoryResults}
     />

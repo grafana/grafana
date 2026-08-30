@@ -10,6 +10,7 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -217,7 +218,7 @@ func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
 	}
 	var errs []error
 	for _, path := range secretFieldPaths {
-		unencryptedSecureValue, ok, err := extractField(integration.Settings, path)
+		unencryptedSecureValue, ok, err := extractFieldCaseInsensitive(integration.Settings, path)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("failed to extract secret field by path '%s': %w", path, err))
 		}
@@ -236,8 +237,21 @@ func (integration *Integration) Encrypt(encryptFn EncryptFn) error {
 	return errors.Join(errs...)
 }
 
-func extractField(settings map[string]any, path schema.IntegrationFieldPath) (string, bool, error) {
-	val, ok := settings[path.Head()]
+func MapGetCaseInsensitive(settings map[string]any, key string) (string, any, bool) {
+	if val, ok := settings[key]; ok {
+		return key, val, true
+	}
+
+	for k := range settings {
+		if strings.EqualFold(k, key) {
+			return k, settings[k], true
+		}
+	}
+	return "", nil, false
+}
+
+func extractFieldCaseInsensitive(settings map[string]any, path schema.IntegrationFieldPath) (string, bool, error) {
+	key, val, ok := MapGetCaseInsensitive(settings, path.Head())
 	if !ok {
 		return "", false, nil
 	}
@@ -246,14 +260,14 @@ func extractField(settings map[string]any, path schema.IntegrationFieldPath) (st
 		if !ok {
 			return "", false, fmt.Errorf("expected string but got %T", val)
 		}
-		delete(settings, path.Head())
+		delete(settings, key)
 		return secret, true, nil
 	}
 	sub, ok := val.(map[string]any)
 	if !ok {
 		return "", false, fmt.Errorf("expected nested object but got %T", val)
 	}
-	return extractField(sub, path.Tail())
+	return extractFieldCaseInsensitive(sub, path.Tail())
 }
 
 func getFieldValue(settings map[string]any, path schema.IntegrationFieldPath) (any, bool) {
@@ -396,7 +410,8 @@ func (integration *Integration) Validate(decryptFn DecryptFn) error {
 	return ValidateIntegration(context.Background(), models.IntegrationConfig{
 		UID:                   decrypted.UID,
 		Name:                  decrypted.Name,
-		Type:                  string(decrypted.Config.Type()),
+		Type:                  decrypted.Config.Type(),
+		Version:               decrypted.Config.Version,
 		DisableResolveMessage: decrypted.DisableResolveMessage,
 		Settings:              jsonBytes,
 		SecureSettings:        decrypted.SecureSettings,
@@ -410,16 +425,7 @@ func ValidateIntegration(ctx context.Context, integration models.IntegrationConf
 	if integration.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-
-	_, err := alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		ReceiverConfig: models.ReceiverConfig{
-			Integrations: []*models.IntegrationConfig{&integration},
-		},
-	}, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return alertingNotify.ValidateIntegrationConfig(ctx, &integration, alertingNotify.DecodeSecretsFromBase64, decryptFunc)
 }
 
 type EncryptFn = func(string) (string, error)

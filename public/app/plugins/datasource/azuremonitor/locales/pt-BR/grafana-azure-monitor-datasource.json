@@ -4,7 +4,6 @@
       "label-advanced": "Avançado"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Adicionar",
       "aria-label-remove": "Remover",
       "button-add-resource": "Adicionar recurso",
       "button-add-resource-uri": "Adicionar URI de recurso",
@@ -34,22 +33,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "Certificado do cliente",
       "aria-label-client-id": "ID do cliente",
       "aria-label-client-secret": "Segredo do cliente",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
+      "aria-label-private-key": "Chave privada",
+      "aria-label-private-key-password": "Senha do certificado",
       "aria-label-symbol-client-secret": "Segredo do cliente",
       "aria-label-tenant-id": "ID de locatário",
-      "description-certificate-format": "",
+      "description-certificate-format": "Escolha o formato do certificado (os certificados PEM devem estar no formato PEM de texto sem formatação; os certificados PFX devem estar no formato PFX codificado em Base64)",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "Formato",
+      "label-client-certificate": "Certificado do cliente",
       "label-client-id": "ID do aplicativo (cliente)",
       "label-client-secret": "Segredo do cliente",
-      "label-private-key": "",
+      "label-private-key": "Chave privada",
       "label-symbol-client-secret": "Segredo do cliente",
-      "label-symbol-private-key-password": "",
+      "label-symbol-private-key-password": "Senha do certificado",
       "label-tenant-id": "ID do diretório (locatário)",
       "placeholder-symbol-client-secret": "configurados",
       "reset-symbol-client-secret": "Redefinir"
@@ -71,13 +70,18 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Escolha o tipo de autenticação para os serviços do Azure",
-      "label-authentication": "",
+      "label-authentication": "Tipo de autenticação",
       "title-authentication": "Autenticação"
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Logs básicos",
       "description-basic-logs": "A ativação deste recurso incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>logs básicos</2>.",
       "label-enable-basic-logs": "Ativar logs básicos"
+    },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "API em lote",
+      "description-batch-api": "Consulta vários recursos em uma única solicitação, melhorando o desempenho para painéis grandes. Requer a função <2>Monitoring Reader</2> no escopo da assinatura em <6>metrics.monitor.azure.com</6>. <9>Podem ser aplicados custos</9> adicionais além da modalidade gratuita.",
+      "label-enable-batch-api": "Ativar API em lote"
     },
     "config-editor": {
       "description-additional-settings": "As configurações adicionais são opcionais, e você pode defini-las para ter mais controle sobre sua fonte de dados. Isso inclui o Secure Socks Proxy, o tempo limite de solicitação e os cookies encaminhados.",
@@ -101,7 +105,11 @@
       "load-subscriptions": "Carregar assinaturas"
     },
     "dimension-fields": {
-      "aria-label-remove": "Remover",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Dimensões",
       "placeholder-field": "Campo",
       "placeholder-operation": "Operação",
@@ -139,12 +147,12 @@
       "label-format-as": "Formatar como"
     },
     "fuzzy-search": {
-      "aria-label-add-fuzzy-search": "Adicionar pesquisa difusa",
-      "aria-label-remove-fuzzy-search": "Remover pesquisa difusa",
+      "aria-label-add-fuzzy-search": "Adicionar busca difusa",
+      "aria-label-remove-fuzzy-search": "Remover busca difusa",
       "aria-label-select-column": "Selecionar a coluna",
       "label-fuzzy-search": "Pesquisa difusa",
-      "placeholder-search-team": "Digite o termo de pesquisa",
-      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a pesquisa difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
+      "placeholder-search-team": "Digite o termo de busca",
+      "tooltip-fuzzy-search": "Encontre correspondências de texto aproximadas com tolerância para variações ortográficas. Por padrão, a busca difusa verifica todas as colunas (*) em toda a tabela, não apenas campos específicos."
     },
     "grafana-template-variable-fn-input": {
       "label-grafana-template-variable": "Função de variável de modelo do Grafana",
@@ -194,6 +202,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Namespace métrico"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Você pode selecionar itens do mesmo tipo de recurso em todas as assinaturas e regiões. Os recursos em diferentes assinaturas ou regiões são consultados em solicitações separadas e podem apresentar erro de forma independente. Para selecionar recursos de outro tipo de recurso, desmarque sua seleção atual primeiro.",
+      "selection-notice-standard": "Você pode selecionar itens do mesmo tipo de recurso e localização. Para selecionar recursos de outro tipo de recurso ou local, desmarque sua seleção atual primeiro."
+    },
+    "monitor-config": {
+      "title-features": "Recursos"
+    },
     "nested-row": {
       "text-loading": "Carregando..."
     },
@@ -205,6 +220,10 @@
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Classifique os resultados com base em uma ou mais colunas em ordem crescente ou decrescente."
+    },
+    "pagination": {
+      "results-truncated-message": "Parou de carregar após {{maxPages}} páginas. Alguns resultados podem ser omitidos.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ocorreu um erro ao solicitar metadados do Azure Monitor"
@@ -220,7 +239,7 @@
         "label-kql": "KQL"
       },
       "label-service": "Serviço",
-      "placeholder-service": "Serviço...",
+      "placeholder-service": "Serviço…",
       "title-switch-mode": "Deseja trocar para o modo de edição?"
     },
     "raw-query": {
@@ -260,7 +279,7 @@
     },
     "search": {
       "aria-label-resource-search": "Pesquisa de recursos",
-      "placeholder-resource-search": "Pesquisar um recurso"
+      "placeholder-resource-search": "Buscar um recurso"
     },
     "subscription-field": {
       "label-subscriptions": "Assinaturas",

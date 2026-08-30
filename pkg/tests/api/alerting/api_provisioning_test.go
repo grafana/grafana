@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -660,7 +659,7 @@ func TestIntegrationProvisioningRules(t *testing.T) {
 							Model:         json.RawMessage([]byte(`{"type":"math","expression":"2 + 3 \u003e 1"}`)),
 						},
 					},
-					MissingSeriesEvalsToResolve: util.Pointer[int64](3),
+					MissingSeriesEvalsToResolve: new(int64(3)),
 				},
 			},
 		}
@@ -1312,6 +1311,6 @@ func TestIntegrationFullpath(t *testing.T) {
 		var export definitions.AlertingFileExport
 		require.NoError(t, json.Unmarshal([]byte(response), &export))
 		require.Len(t, export.Groups, 1)
-		assert.Equal(t, "my-namespace/my-other-namespace containing multiple //", export.Groups[0].Folder)
+		assert.Equal(t, "my-namespace/my-other-namespace containing multiple \\/\\/", export.Groups[0].Folder)
 	})
 }

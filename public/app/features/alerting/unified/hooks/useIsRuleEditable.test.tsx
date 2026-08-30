@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { setupMswServer } from '../mockApi';
 import { mockDataSource, mockFolder, mockRulerAlertingRule, mockRulerGrafanaRule } from '../mocks';
@@ -34,10 +34,12 @@ describe('useIsRuleEditable', () => {
   describe('RBAC enabled', () => {
     describe('Grafana rules', () => {
       // When RBAC is enabled we require appropriate alerting permissions in the folder scope
-      it('Should allow editing when the user has the alert rule update permission in the folder', async () => {
+      it('Should allow editing when the user has alert rule update, read, and folder read permissions', async () => {
         mockUseFolder({
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         });
 
@@ -49,10 +51,12 @@ describe('useIsRuleEditable', () => {
         expect(result.current.isEditable).toBe(true);
       });
 
-      it('Should allow deleting when the user has the alert rule delete permission', async () => {
+      it('Should allow deleting when the user has alert rule delete, read, and folder read permissions', async () => {
         mockUseFolder({
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleDelete]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         });
 
@@ -64,6 +68,74 @@ describe('useIsRuleEditable', () => {
 
         await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(true);
+      });
+
+      it('Should forbid editing when the user has write permission but is missing alert.rules:read', async () => {
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
+            // alert.rules:read deliberately absent — this is the reported bug scenario
+          },
+        });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isEditable).toBe(false);
+      });
+
+      it('Should forbid editing when the user has write and rule read permissions but is missing folders:read', async () => {
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
+            [AccessControlAction.AlertingRuleUpdate]: true,
+            // folders:read deliberately absent
+          },
+        });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isEditable).toBe(false);
+      });
+
+      it('Should forbid deleting when the user has delete permission but is missing alert.rules:read', async () => {
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleDelete]: true,
+            [AccessControlAction.FoldersRead]: true,
+            // alert.rules:read deliberately absent
+          },
+        });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isRemovable).toBe(false);
+      });
+
+      it('Should forbid deleting when the user has delete and rule read permissions but is missing folders:read', async () => {
+        mockUseFolder({
+          accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
+            [AccessControlAction.AlertingRuleDelete]: true,
+            // folders:read deliberately absent
+          },
+        });
+
+        const wrapper = getProviderWrapper();
+
+        const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
+
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        expect(result.current.isRemovable).toBe(false);
       });
 
       it('Should forbid editing when the user has no alert rule update permission', async () => {
@@ -92,8 +164,10 @@ describe('useIsRuleEditable', () => {
         mockUseFolder({
           canSave: false,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
             [AccessControlAction.AlertingRuleDelete]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         });
 

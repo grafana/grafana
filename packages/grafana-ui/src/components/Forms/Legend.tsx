@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -11,7 +11,7 @@ export interface LabelProps extends React.HTMLAttributes<HTMLLegendElement> {
   description?: string;
 }
 
-export const getLegendStyles = (theme: GrafanaTheme2) => {
+const getLegendStyles = (theme: GrafanaTheme2) => {
   return {
     legend: css({
       fontSize: theme.typography.h3.fontSize,

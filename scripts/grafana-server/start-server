@@ -18,10 +18,6 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [[ ! -f bin/"$ARCH"grafana-server ]]; then
-  echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
-fi
-
 echo starting server
 
 # air now deletes the binary, so we check if we need to build it before trying to start the server

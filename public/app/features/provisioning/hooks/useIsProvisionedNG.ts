@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
@@ -10,7 +10,7 @@ export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
 
   const { repository, isInstanceManaged } = useGetResourceRepositoryView({ folderName });
 
-  if (!config.featureToggles.provisioning) {
+  if (!config.provisioningEnabled) {
     return false;
   }
   return dashboard.isManagedRepository() || Boolean(repository) || isInstanceManaged;

@@ -68,8 +68,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 				// WriteResourceFromFile fails with PathCreationError for folder1/
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file.json", "ref").
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				// File will be recorded with error, triggering automatic tracking of folder1/ failure
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -89,8 +89,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// First file triggers folder creation failure
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "ref").
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/file1.json" && r.Error() != nil
@@ -168,8 +168,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// Creation fails
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "folder1/file1.json", "ref").
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "folder1/file1.json" && r.Error() != nil
@@ -204,8 +204,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// First file triggers level1/ failure
 				progress.On("HasDirPathFailedCreation", "level1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("WriteResourceFromFile", mock.Anything, "level1/file1.json", "").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "level1/file1.json", "ref").
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "level1/file1.json" && r.Error() != nil
@@ -231,8 +231,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				// Success path works
 				progress.On("HasDirPathFailedCreation", "success/file1.json").Return(false).Once()
-				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "").
-					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, nil).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "success/file1.json", "ref").
+					Return("resource1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "success/file1.json" && r.Error() == nil
 				})).Return().Once()
@@ -240,8 +240,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				// Failure path fails
 				progress.On("HasDirPathFailedCreation", "failure/file2.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
-				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "").
-					Return("", schema.GroupVersionKind{}, folderErr).Once()
+				repoResources.On("WriteResourceFromFile", mock.Anything, "failure/file2.json", "ref").
+					Return("", schema.GroupVersionKind{}, 0, folderErr).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "failure/file2.json" && r.Error() != nil
 				})).Return().Once()
@@ -265,7 +265,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, _ *dynamicfake.FakeDynamicClient) {
 				progress.On("HasDirPathFailedCreation", "folder1/").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/").Return("", folderErr).Once()
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder1/", "ref").Return("", folderErr).Once()
 
 				progress.On("HasDirPathFailedCreation", "folder1/subfolder/").Return(true).Once()
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(true).Once()
@@ -411,15 +411,16 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 			tt.setupMocks(repo, repoResources, clients, progress, dynamicClient)
 
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			progress.On("TooManyErrors").Return(nil).Maybe()
 
 			quotaTracker := quotas.NewMockQuotaTracker(t)
 			quotaTracker.EXPECT().TryAcquire().Return(true).Maybe()
 			quotaTracker.EXPECT().Release().Maybe()
+			quotaTracker.EXPECT().AllowOverLimit(mock.Anything).Maybe()
 
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false)
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, false, 0)
 
 			if tt.expectError {
 				require.Error(t, err)

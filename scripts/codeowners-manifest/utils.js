@@ -1,4 +1,5 @@
 const { readFile } = require('node:fs/promises');
+const path = require('node:path');
 
 const { CODEOWNERS_JSON_PATH: CODEOWNERS_MANIFEST_CODEOWNERS_PATH } = require('./constants.js');
 
@@ -61,10 +62,29 @@ function createCodeownerSlug(codeowner) {
   }
 }
 
+/**
+ * Creates a directory path for coverage reports grouped by codeowner kind
+ * @param {string} codeowner - CODEOWNERS codeowner
+ * @returns {string} Directory path relative to coverage/by-team/
+ */
+function buildCodeownerDirectoryPath(codeowner) {
+  const kind = getCodeownerKind(codeowner);
+
+  if (kind === CODEOWNER_KIND.UNKNOWN) {
+    throw new Error(
+      `Invalid codeowner format: "${codeowner}". Must be a GitHub team (@org/team), user (@username), or email (email@domain.tld)`
+    );
+  }
+
+  const slug = createCodeownerSlug(codeowner);
+  return path.join(`${kind}s`, slug);
+}
+
 module.exports = {
   CODEOWNER_KIND,
   getCodeownerKind,
   createCodeownerSlug,
+  buildCodeownerDirectoryPath,
 
   /**
    * Imports codeowners manifest with caching

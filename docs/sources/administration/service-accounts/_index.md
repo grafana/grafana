@@ -183,9 +183,13 @@ Ensure you have permission to update service accounts roles. By default, the org
 1. Click the service account to which you want to assign a role. As an alternative, find the service account in the list view.
 1. Assign a role using the role picker to update.
 
-## Manage users and teams permissions for a service account in Grafana
+## Manage users and team permissions for a service account in Grafana
 
 To control what and who can do with the service account you can assign permissions directly to users and teams. You can assign permissions using the Grafana UI.
+
+{{< admonition type="note" >}}
+Assigning team management permissions to a service account does not make the account part of the team.
+{{< /admonition >}}
 
 ### Before you begin
 

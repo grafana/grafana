@@ -32,6 +32,7 @@ type ItemQuery struct {
 type TagsQuery struct {
 	OrgID int64  `json:"orgId"`
 	Tag   string `json:"tag"`
+	Type  string `json:"type"` // filter based on annotation type: "alert" or "annotation"
 
 	Limit int64 `json:"limit"`
 }

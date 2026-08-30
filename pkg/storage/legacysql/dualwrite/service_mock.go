@@ -84,6 +84,54 @@ func (_c *MockService_NewStorage_Call) RunAndReturn(run func(schema.GroupResourc
 	return _c
 }
 
+// ValidateServedVersions provides a mock function with given fields: ctx, gr, served
+func (_m *MockService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	ret := _m.Called(ctx, gr, served)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidateServedVersions")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource, []schema.GroupVersion) error); ok {
+		r0 = rf(ctx, gr, served)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockService_ValidateServedVersions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateServedVersions'
+type MockService_ValidateServedVersions_Call struct {
+	*mock.Call
+}
+
+// ValidateServedVersions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gr schema.GroupResource
+//   - served []schema.GroupVersion
+func (_e *MockService_Expecter) ValidateServedVersions(ctx interface{}, gr interface{}, served interface{}) *MockService_ValidateServedVersions_Call {
+	return &MockService_ValidateServedVersions_Call{Call: _e.mock.On("ValidateServedVersions", ctx, gr, served)}
+}
+
+func (_c *MockService_ValidateServedVersions_Call) Run(run func(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion)) *MockService_ValidateServedVersions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(schema.GroupResource), args[2].([]schema.GroupVersion))
+	})
+	return _c
+}
+
+func (_c *MockService_ValidateServedVersions_Call) Return(_a0 error) *MockService_ValidateServedVersions_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockService_ValidateServedVersions_Call) RunAndReturn(run func(context.Context, schema.GroupResource, []schema.GroupVersion) error) *MockService_ValidateServedVersions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadFromUnified provides a mock function with given fields: ctx, gr
 func (_m *MockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	ret := _m.Called(ctx, gr)
@@ -137,110 +185,6 @@ func (_c *MockService_ReadFromUnified_Call) Return(_a0 bool, _a1 error) *MockSer
 }
 
 func (_c *MockService_ReadFromUnified_Call) RunAndReturn(run func(context.Context, schema.GroupResource) (bool, error)) *MockService_ReadFromUnified_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ShouldManage provides a mock function with given fields: gr
-func (_m *MockService) ShouldManage(gr schema.GroupResource) bool {
-	ret := _m.Called(gr)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ShouldManage")
-	}
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(schema.GroupResource) bool); ok {
-		r0 = rf(gr)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	return r0
-}
-
-// MockService_ShouldManage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ShouldManage'
-type MockService_ShouldManage_Call struct {
-	*mock.Call
-}
-
-// ShouldManage is a helper method to define mock.On call
-//   - gr schema.GroupResource
-func (_e *MockService_Expecter) ShouldManage(gr interface{}) *MockService_ShouldManage_Call {
-	return &MockService_ShouldManage_Call{Call: _e.mock.On("ShouldManage", gr)}
-}
-
-func (_c *MockService_ShouldManage_Call) Run(run func(gr schema.GroupResource)) *MockService_ShouldManage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(schema.GroupResource))
-	})
-	return _c
-}
-
-func (_c *MockService_ShouldManage_Call) Return(_a0 bool) *MockService_ShouldManage_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockService_ShouldManage_Call) RunAndReturn(run func(schema.GroupResource) bool) *MockService_ShouldManage_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// StartMigration provides a mock function with given fields: ctx, gr, key
-func (_m *MockService) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
-	ret := _m.Called(ctx, gr, key)
-
-	if len(ret) == 0 {
-		panic("no return value specified for StartMigration")
-	}
-
-	var r0 StorageStatus
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource, int64) (StorageStatus, error)); ok {
-		return rf(ctx, gr, key)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource, int64) StorageStatus); ok {
-		r0 = rf(ctx, gr, key)
-	} else {
-		r0 = ret.Get(0).(StorageStatus)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, schema.GroupResource, int64) error); ok {
-		r1 = rf(ctx, gr, key)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockService_StartMigration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartMigration'
-type MockService_StartMigration_Call struct {
-	*mock.Call
-}
-
-// StartMigration is a helper method to define mock.On call
-//   - ctx context.Context
-//   - gr schema.GroupResource
-//   - key int64
-func (_e *MockService_Expecter) StartMigration(ctx interface{}, gr interface{}, key interface{}) *MockService_StartMigration_Call {
-	return &MockService_StartMigration_Call{Call: _e.mock.On("StartMigration", ctx, gr, key)}
-}
-
-func (_c *MockService_StartMigration_Call) Run(run func(ctx context.Context, gr schema.GroupResource, key int64)) *MockService_StartMigration_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(schema.GroupResource), args[2].(int64))
-	})
-	return _c
-}
-
-func (_c *MockService_StartMigration_Call) Return(_a0 StorageStatus, _a1 error) *MockService_StartMigration_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockService_StartMigration_Call) RunAndReturn(run func(context.Context, schema.GroupResource, int64) (StorageStatus, error)) *MockService_StartMigration_Call {
 	_c.Call.Return(run)
 	return _c
 }

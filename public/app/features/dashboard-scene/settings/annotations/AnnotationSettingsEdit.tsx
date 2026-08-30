@@ -1,21 +1,20 @@
 import { css } from '@emotion/css';
 import { useId, useMemo } from 'react';
 import * as React from 'react';
-import { useAsync } from 'react-use';
 
 import {
-  AnnotationQuery,
-  DataSourceInstanceSettings,
+  type AnnotationQuery,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  GrafanaTheme2,
-  SelectableValue,
+  type GrafanaTheme2,
+  type SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { VizPanel } from '@grafana/scenes';
-import { AnnotationPanelFilter } from '@grafana/schema';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type VizPanel } from '@grafana/scenes';
+import { type AnnotationPanelFilter } from '@grafana/schema';
 import {
   Button,
   Checkbox,
@@ -27,7 +26,7 @@ import {
   useStyles2,
   Stack,
   Alert,
-  ComboboxOption,
+  type ComboboxOption,
   Combobox,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
@@ -35,7 +34,7 @@ import StandardAnnotationQueryEditor from 'app/features/annotations/components/S
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
-import { getPanelIdForVizPanel } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 type Props = {
   annotation: AnnotationQuery;
@@ -65,11 +64,8 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
     return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
   }, [annotation.filter]);
 
-  const { value: ds } = useAsync(() => {
-    return getDataSourceSrv().get(annotation.datasource);
-  }, [annotation.datasource]);
-
-  const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
+  const { isLoading: isDsLoading, dataSource: ds } = useDataSourceInstance(annotation.datasource);
+  const { settings: dsi } = useDataSourceInstanceSettings(annotation.datasource);
 
   const AnnotationControlsDisplayOptions = useMemo(
     () => [
@@ -271,7 +267,7 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           >
             <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
           </Field>
-          {!ds?.meta.annotations && (
+          {!isDsLoading && !ds?.meta.annotations && (
             <Alert
               title={t(
                 'dashboard-scene.annotation-settings-edit.title-annotation-support-source',
@@ -307,13 +303,23 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           <Field
             noMargin
             label={t('dashboard-scene.annotation-settings-edit.label-color', 'Color')}
-            description={t(
-              'dashboard-scene.annotation-settings-edit.description-color-annotation-event-markers',
-              'Color to use for the annotation event markers'
-            )}
+            description={
+              <span id="color-picker-description">
+                {t(
+                  'dashboard-scene.annotation-settings-edit.description-color-annotation-event-markers',
+                  'Color to use for the annotation event markers'
+                )}
+              </span>
+            }
+            htmlFor="color-picker"
           >
             <Stack>
-              <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
+              <ColorValueEditor
+                value={annotation?.iconColor}
+                onChange={onColorChange}
+                id="color-picker"
+                aria-describedby="color-picker-description"
+              />
             </Stack>
           </Field>
 
@@ -386,9 +392,9 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
         </Stack>
       </FieldSet>
       <FieldSet>
-        <h3 className="page-heading">
+        <h2 className="page-heading">
           <Trans i18nKey="dashboard-scene.annotation-settings-edit.query">Query</Trans>
-        </h3>
+        </h2>
         {ds?.annotations && dsi && (
           <StandardAnnotationQueryEditor
             datasource={ds}

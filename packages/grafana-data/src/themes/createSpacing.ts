@@ -1,7 +1,7 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import * as z from 'zod';
 
 /** @internal */
 export const ThemeSpacingOptionsSchema = z.object({
@@ -12,7 +12,7 @@ export const ThemeSpacingOptionsSchema = z.object({
 export type ThemeSpacingOptions = z.infer<typeof ThemeSpacingOptionsSchema>;
 
 /** @internal */
-export type ThemeSpacingArgument = number | string;
+type ThemeSpacingArgument = number | string;
 
 /**
  * @beta

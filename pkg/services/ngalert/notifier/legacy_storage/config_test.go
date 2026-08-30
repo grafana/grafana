@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,8 +37,11 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 			OrgID:                     orgID,
 		}
 
-		expectedCfg := definitions.PostableUserConfig{}
-		require.NoError(t, json.Unmarshal([]byte(defaultConfig), &expectedCfg))
+		expectedCfg := func() v1.AMConfigV1 {
+			dbmodel, err := DeserializeAlertmanagerConfig([]byte(defaultConfig))
+			require.NoError(t, err)
+			return *v1.ToModel(dbmodel)
+		}()
 
 		storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&expected, nil)
 
@@ -95,7 +98,7 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 			store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 			expectedErr := errors.New("test-err")
-			cryptoMock.DecryptExtraConfigsFunc = func(ctx context.Context, config *definitions.PostableUserConfig) error {
+			cryptoMock.DecryptExtraConfigsFunc = func(ctx context.Context, config *v1.AMConfigV1) error {
 				return expectedErr
 			}
 			storeMock.EXPECT().GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(&models.AlertConfiguration{
@@ -111,8 +114,9 @@ func TestAlertmanagerConfigStoreGet(t *testing.T) {
 func TestAlertmanagerConfigStoreSave(t *testing.T) {
 	orgID := int64(1)
 
-	cfg := definitions.PostableUserConfig{}
-	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &cfg))
+	dbCfg := v1.AMConfigDB{}
+	require.NoError(t, json.Unmarshal([]byte(defaultConfig), &dbCfg))
+	cfg := *v1.ToModel(&dbCfg)
 	expectedCfg, err := SerializeAlertmanagerConfig(cfg)
 	require.NoError(t, err)
 
@@ -167,7 +171,7 @@ func TestAlertmanagerConfigStoreSave(t *testing.T) {
 			store := NewAlertmanagerConfigStore(storeMock, cryptoMock, featuremgmt.WithFeatures())
 
 			expectedErr := errors.New("test-err")
-			cryptoMock.EncryptExtraConfigsFunc = func(ctx context.Context, config *definitions.PostableUserConfig) error {
+			cryptoMock.EncryptExtraConfigsFunc = func(ctx context.Context, config *v1.AMConfigV1) error {
 				return expectedErr
 			}
 

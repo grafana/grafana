@@ -137,6 +137,7 @@ type Licensing interface {
 	Path() string
 	AppURL() string
 	ContentDeliveryPrefix() string
+	HasValidLicense() bool
 }
 
 type SignatureCalculator interface {

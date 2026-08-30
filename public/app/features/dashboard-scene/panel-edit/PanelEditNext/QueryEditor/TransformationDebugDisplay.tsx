@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Drawer, Icon, JSONFormatter, Stack, useStyles2 } from '@grafana/ui';
 
@@ -73,8 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     debugTitle: css({
       padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
-      fontFamily: theme.typography.fontFamilyMonospace,
-      fontSize: theme.typography.bodySmall.fontSize,
+      ...theme.typography.bodySmall,
       color: theme.colors.text.primary,
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       flexGrow: 0,

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { getPrometheusTime } from '@grafana/prometheus';
+import { type DateTime } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useTimeRange } from '@grafana/scenes-react';
 
@@ -16,6 +16,16 @@ import { isPrometheusDatasource, useQueryFilter } from './utils';
  * has an extremely high cardinality (e.g. 230 MB of JSON ≈ 1.1 M series).
  */
 const MAX_SERIES = 100_000;
+
+/**
+ * Unix timestamp (seconds) for the Prometheus HTTP API.
+ * Inlined equivalent of `getPrometheusTime` from `@grafana/prometheus` for
+ * `DateTime` inputs — a runtime import of that package would pull the whole
+ * query editor into this chunk.
+ */
+function getPrometheusTime(date: DateTime): number {
+  return Math.ceil(date.valueOf() / 1000);
+}
 
 export interface LabelValueCount {
   value: string;
@@ -57,8 +67,8 @@ export function useLabelsBreakdown(): {
       ? `${METRIC_NAME}{alertstate=~"firing|pending",${filter}}`
       : `${METRIC_NAME}{alertstate=~"firing|pending"}`;
 
-    const start = getPrometheusTime(timeRange.from, false).toString();
-    const end = getPrometheusTime(timeRange.to, true).toString();
+    const start = getPrometheusTime(timeRange.from).toString();
+    const end = getPrometheusTime(timeRange.to).toString();
 
     execute(matchSelector, start, end);
   }, [execute, filter, timeRange]);

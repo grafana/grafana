@@ -1,5 +1,5 @@
-import { HttpHandler, matchRequestUrl } from 'msw';
-import { JsonValue } from 'type-fest';
+import { type HttpHandler, matchRequestUrl } from 'msw';
+import { type JsonValue } from 'type-fest';
 
 import server from '@grafana/test-utils/server';
 
@@ -57,7 +57,7 @@ export async function captureRequests(predicateFn: PredicateFn = () => true): Pr
 
 const DEVICE_ID_HEADER = 'x-grafana-device-id';
 
-export async function serializeRequest(originalRequest: Request): Promise<SerializedRequest> {
+async function serializeRequest(originalRequest: Request): Promise<SerializedRequest> {
   const request = originalRequest;
   const { method, url, headers } = request;
 

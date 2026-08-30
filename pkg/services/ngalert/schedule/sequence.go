@@ -8,8 +8,8 @@ import (
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// sequence represents a chain of rules that should be evaluated in order.
-// It is a convience type that wraps readyToRunItem as an indicator of what
+// sequence represents a group of rules that should be evaluated in order.
+// It is a convenience type that wraps readyToRunItem as an indicator of what
 // is being represented.
 type sequence readyToRunItem
 
@@ -20,7 +20,7 @@ type groupKey struct {
 }
 
 // buildSequences organizes rules into evaluation sequences where rules in the same group
-// are chained together. The first rule in each group will trigger the evaluation of subsequent
+// are linked together. The first rule in each group will trigger the evaluation of subsequent
 // rules in that group through the afterEval callback.
 //
 // For example, if we have rules A, B, C in group G1 and rules D, E in group G2:
@@ -28,10 +28,8 @@ type groupKey struct {
 // - B will have afterEval set to evaluate C
 // - D will have afterEval set to evaluate E
 //
-// The function returns a slice of sequences, where each sequence represents a chain of rules
+// The function returns a slice of sequences, where each sequence represents a group of rules
 // that should be evaluated in order.
-//
-// NOTE: This currently only chains rules in imported groups.
 func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) []sequence {
 	// Step 1: Group rules by their folder and group name
 	groups := map[groupKey][]readyToRunItem{}
@@ -105,19 +103,18 @@ func (sch *schedule) buildSequence(groupKey groupKey, groupItems []readyToRunIte
 }
 
 func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) bool {
-	// the no group group shouldn't be evaluated sequentially
-	if len(groupItems) > 0 && models.IsNoGroupRuleGroup(groupItems[0].rule.RuleGroup) {
-		return false
-	}
-
 	// if jitter by rule is enabled, we can't evaluate rules sequentially
 	if sch.jitterEvaluations == JitterByRule {
 		return false
 	}
 
-	// if there is only one rule, there are no rules to chain
+	// if there is only one rule, there are no rules to sequence
 	if len(groupItems) == 1 {
 		return false
+	}
+
+	if len(groupItems) > 0 && models.IsRuleSequenceGroup(groupItems[0].rule.RuleGroup) {
+		return true
 	}
 
 	// only evaluate rules in imported groups sequentially

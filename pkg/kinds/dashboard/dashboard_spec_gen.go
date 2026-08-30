@@ -625,6 +625,8 @@ type Threshold struct {
 	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 	// Nulls currently appear here when serializing -Infinity to JSON.
 	Value *float64 `json:"value"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
 	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 }
@@ -857,6 +859,8 @@ type VariableModel struct {
 	Multi *bool `json:"multi,omitempty"`
 	// Allow custom values to be entered in the variable
 	AllowCustomValue *bool `json:"allowCustomValue,omitempty"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool `json:"enableGroupBy,omitempty"`
 	// Options that can be selected for a variable.
 	Options []VariableOption `json:"options,omitempty"`
 	// Options to config when to refresh a variable
@@ -886,6 +890,7 @@ func NewVariableModel() *VariableModel {
 		SkipUrlSync:      (func(input bool) *bool { return &input })(false),
 		Multi:            (func(input bool) *bool { return &input })(false),
 		AllowCustomValue: (func(input bool) *bool { return &input })(true),
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 		IncludeAll:       (func(input bool) *bool { return &input })(false),
 		ValuesFormat:     (func(input VariableModelValuesFormat) *VariableModelValuesFormat { return &input })(VariableModelValuesFormatCsv),
 	}

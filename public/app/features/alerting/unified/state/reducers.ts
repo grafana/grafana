@@ -1,28 +1,25 @@
 import { combineReducers } from 'redux';
 
+import { type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 
-import {
-  deleteAlertManagerConfigAction,
-  fetchAlertGroupsAction,
-  fetchGrafanaAnnotationsAction,
-  fetchPromRulesAction,
-  fetchRulerRulesAction,
-  updateAlertManagerConfigAction,
-} from './actions';
+import { alertingActionTypePrefix } from './actionTypes';
 
-export const reducer = combineReducers({
-  promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, ({ rulesSourceName }) => rulesSourceName).reducer,
-  rulerRules: createAsyncMapSlice('rulerRules', fetchRulerRulesAction, ({ rulesSourceName }) => rulesSourceName)
+const createRulesSlice = <T>(name: string, typePrefix: string) =>
+  createAsyncMapSlice<T, { rulesSourceName: string }>(name, typePrefix, ({ rulesSourceName }) => rulesSourceName);
+
+const reducer = combineReducers({
+  promRules: createRulesSlice<RuleNamespace[]>('promRules', alertingActionTypePrefix.fetchPromRules).reducer,
+  rulerRules: createRulesSlice<RulerRulesConfigDTO | null>('rulerRules', alertingActionTypePrefix.fetchRulerRules)
     .reducer,
-  saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,
-  deleteAMConfig: createAsyncSlice('deleteAMConfig', deleteAlertManagerConfigAction).reducer,
-  amAlertGroups: createAsyncMapSlice(
-    'amAlertGroups',
-    fetchAlertGroupsAction,
-    (alertManagerSourceName) => alertManagerSourceName
+  saveAMConfig: createAsyncSlice<void>('saveAMConfig', alertingActionTypePrefix.updateAlertManagerConfig).reducer,
+  deleteAMConfig: createAsyncSlice<void>('deleteAMConfig', alertingActionTypePrefix.deleteAlertManagerConfig).reducer,
+  managedAlertStateHistory: createAsyncSlice<StateHistoryItem[]>(
+    'managedAlertStateHistory',
+    alertingActionTypePrefix.fetchGrafanaAnnotations
   ).reducer,
-  managedAlertStateHistory: createAsyncSlice('managedAlertStateHistory', fetchGrafanaAnnotationsAction).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;

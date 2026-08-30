@@ -1,41 +1,45 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
+import { usePrevious } from 'react-use';
 
-import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
+import { createAssistantContextItem, type OpenAssistantProps, useAssistant } from '@grafana/assistant';
 import {
   CoreApp,
-  DataFrame,
-  LogLevel,
-  LogRowModel,
+  type DataFrame,
+  type LogLevel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
+  type LogsMetaItem,
   LogsSortOrder,
   shallowCompare,
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { PopoverContent } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type PopoverContent } from '@grafana/ui';
 
-import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
+import { checkLogsError, checkLogsSampled, downloadLogs as download, type DownloadFormat } from '../../utils';
 import { getFieldSelectorState } from '../fieldSelector/fieldSelectorUtils';
 import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
-import { LogLineTimestampResolution } from './LogLine';
-import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListOptions, LogListFontSize } from './LogList';
+import { type LogLineTimestampResolution } from './LogLine';
+import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
-import { LogListModel } from './processing';
+import { logsSupportHighlighting } from './grammar';
+import { type LogListModel } from './processing';
 
 export interface LogListContextData
   extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
@@ -68,10 +72,14 @@ export interface LogListContextData
   isAssistantAvailable: boolean;
   openAssistantByLog: ((log: LogListModel) => void) | undefined;
   unwrappedColumns: boolean;
+  // Big log payloads can freeze or OOM the browser when highlighted. In those
+  // situations highlighting is unavailable to protect the user experience.
+  syntaxHighlightingUnavailable: boolean;
 }
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  allowDownload: true,
   controlsExpanded: false,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
@@ -101,6 +109,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  syntaxHighlightingUnavailable: false,
   timestampResolution: 'ns',
   wrapLogMessage: false,
   isAssistantAvailable: false,
@@ -143,8 +152,9 @@ export type LogListState = Pick<
 
 export interface Props {
   app: CoreApp;
+  allowDownload?: boolean;
   children?: ReactNode;
-  // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+  // Optional. Table-only consumers omit this; LogList passes its scroll container.
   containerElement?: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
@@ -190,6 +200,7 @@ export interface Props {
 
 export const LogListContextProvider = ({
   app,
+  allowDownload,
   children,
   containerElement,
   logOptionsStorageKey,
@@ -253,6 +264,7 @@ export const LogListContextProvider = ({
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -280,18 +292,18 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!otelLogsFormattingEnabled || !setDisplayedFields || showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, otelLogsFormattingEnabled, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+    if (otelLogsFormattingEnabled && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, otelDisplayedFields, otelLogsFormattingEnabled, showLogAttributes]);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {
@@ -377,11 +389,15 @@ export const LogListContextProvider = ({
   }, [timestampResolution]);
 
   // Sync showLogAttributes
+  const prevShowLogAttributes = usePrevious(showLogAttributes);
   useEffect(() => {
-    if (showLogAttributes === false && setDisplayedFields) {
+    if (prevShowLogAttributes === undefined) {
+      return;
+    }
+    if (prevShowLogAttributes === true && showLogAttributes === false && setDisplayedFields) {
       setDisplayedFields([]);
     }
-  }, [setDisplayedFields, showLogAttributes]);
+  }, [prevShowLogAttributes, setDisplayedFields, showLogAttributes]);
 
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
@@ -588,10 +604,13 @@ export const LogListContextProvider = ({
     [onClickHideField]
   );
 
+  const syntaxHighlightingUnavailable = useMemo(() => !logsSupportHighlighting(logs), [logs]);
+
   return (
     <LogListContext.Provider
       value={{
         app,
+        allowDownload,
         controlsExpanded,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields,
@@ -645,7 +664,8 @@ export const LogListContextProvider = ({
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
-        syntaxHighlighting: logListState.syntaxHighlighting,
+        syntaxHighlighting: logListState.syntaxHighlighting && !syntaxHighlightingUnavailable,
+        syntaxHighlightingUnavailable: syntaxHighlightingUnavailable,
         timestampResolution: logListState.timestampResolution,
         unwrappedColumns,
         wrapLogMessage,
@@ -672,7 +692,7 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 async function handleOpenAssistant(openAssistant: (props: OpenAssistantProps) => void, log: LogListModel) {
-  const datasource = await getDataSourceSrv().get(log.datasourceUid);
+  const datasource = await getDataSourceInstance(log.datasourceUid);
   const context = [];
   if (datasource) {
     context.push(
@@ -705,5 +725,5 @@ ${log.entry.replaceAll('`', '\\`')}
 
 export function getDefaultControlsExpandedMode(container: HTMLDivElement | null): boolean {
   const width = container?.clientWidth ?? window.innerWidth;
-  return width > 1200;
+  return width >= 1920;
 }

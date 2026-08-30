@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
 import { dateTime } from '@grafana/data';
 
-import { AITriageButtonComponent, GenAITriageButtonProps, addAITriageButton } from './addAITriageButton';
+import { AITriageButtonComponent, type GenAITriageButtonProps, addAITriageButton } from './addAITriageButton';
 
 // Component that throws an error for testing
 const ThrowingComponent: ComponentType<GenAITriageButtonProps> = () => {

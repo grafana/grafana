@@ -317,7 +317,7 @@ export enum ScaleDirection {
  */
 export interface LineStyle {
   dash?: Array<number>;
-  fill?: ('solid' | 'dash' | 'dot' | 'square');
+  fill?: ('solid' | 'dash' | 'dot' | 'square' | 'accessible');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {
@@ -655,6 +655,8 @@ export enum SortOrder {
   None = 'none',
 }
 
+export type LegendOverflow = ('ellipsis' | 'wrap');
+
 /**
  * TODO docs
  */
@@ -671,16 +673,20 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
  * TODO docs
  */
 export interface VizLegendOptions {
+  /**
+   * @deprecated Use LegendDisplayMode.Table
+   */
   asTable?: boolean;
   calcs: Array<string>;
-  displayMode: LegendDisplayMode;
+  displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
+  overflow?: LegendOverflow;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
-  width?: number;
+  width?: (number | string);
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
@@ -876,6 +882,10 @@ export type TimeZoneBrowser = 'browser';
  */
 export interface TimeCompareOptions {
   /**
+   * How the tooltip delta between the current and comparison values is colored
+   */
+  colorMode?: TimeCompareColorMode;
+  /**
    * Enable time comparison control
    */
   timeCompare?: boolean;
@@ -1046,6 +1056,10 @@ export interface TableOptions {
    */
   maxRowHeight?: number;
   /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
@@ -1090,6 +1104,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
+   */
+  sortable?: boolean;
+  /**
    * The name of the field which contains styling overrides for this cell
    */
   styleField?: string;
@@ -1128,3 +1146,13 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
+
+/**
+ * Colors the tooltip delta between the current and comparison values. "standard" colors an increase
+ * green, "inverted" colors an increase red, and "same_as_value" reuses the series color.
+ */
+export enum TimeCompareColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}

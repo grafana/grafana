@@ -1,7 +1,12 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import {
+  type DataFrame,
+  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '../types/dataFrame';
 
-import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -53,6 +58,76 @@ describe('getFieldDisplayName', () => {
     expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (comparison)');
     expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (comparison)');
     expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (comparison)');
+  });
+
+  // #126189 acceptance criteria — the legend/tooltip should name a compare series
+  // "{series name} (comparison)". These guard the label-derived and no-suffix paths.
+  it('Should add the (comparison) suffix to label-derived names', () => {
+    // A single label across the frame renders as just the label value (e.g. "a"), matching how the
+    // non-comparison legend would name it — the compare series only differs by the suffix.
+    const frame = toDataFrame({
+      meta: { timeCompare: { diffMs: -86400000, isTimeShiftQuery: true } },
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        { name: TIME_SERIES_VALUE_FIELD_NAME, values: [1, 2, 3], type: FieldType.number, labels: { pod: 'a' } },
+      ],
+    });
+
+    expect(getFieldDisplayName(frame.fields[1], frame, [frame])).toBe('a (comparison)');
+  });
+
+  it('Should add the (comparison) suffix to multi-label names', () => {
+    const frame = toDataFrame({
+      meta: { timeCompare: { diffMs: -86400000, isTimeShiftQuery: true } },
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: TIME_SERIES_VALUE_FIELD_NAME,
+          values: [1, 2, 3],
+          type: FieldType.number,
+          labels: { pod: 'a', container: 'x' },
+        },
+      ],
+    });
+
+    expect(getFieldDisplayName(frame.fields[1], frame, [frame])).toBe('{container="x", pod="a"} (comparison)');
+  });
+
+  it('Should not add the (comparison) suffix for non-comparison frames', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        { name: 'Value 1', values: [1, 2, 3], type: FieldType.number, config: { displayName: 'ServerA' } },
+        { name: TIME_SERIES_VALUE_FIELD_NAME, values: [1, 2, 3], type: FieldType.number, labels: { pod: 'a' } },
+      ],
+    });
+
+    expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA');
+    expect(getFieldDisplayName(frame.fields[2], frame, [frame])).not.toContain('(comparison)');
+  });
+
+  it('Should pair a current series and its compare series by name plus a suffix', () => {
+    const currentFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        { name: 'Value', values: [1, 2, 3], type: FieldType.number, config: { displayName: 'ServerA' } },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { diffMs: -86400000, isTimeShiftQuery: true } },
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        { name: 'Value', values: [1, 2, 3], type: FieldType.number, config: { displayName: 'ServerA' } },
+      ],
+    });
+
+    const currentName = getFieldDisplayName(currentFrame.fields[1], currentFrame);
+    const compareName = getFieldDisplayName(compareFrame.fields[1], compareFrame);
+
+    expect(currentName).toBe('ServerA');
+    expect(compareName).toBe(`${currentName} (comparison)`);
   });
 
   it('Should remove common labels', () => {
@@ -291,22 +366,5 @@ describe('Check field state calculations (displayName and id)', () => {
       fieldIndex: 1,
     });
     expect(title).toEqual('line {host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
-  });
-});
-
-describe('decoupleHideFromState', () => {
-  it('should not throw an error for fields with no "custom" in config', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'Field 1', config: {} }],
-    });
-
-    expect(frame.fields[0].state?.hideFrom).toBeUndefined();
-
-    decoupleHideFromState([frame], {
-      defaults: {},
-      overrides: [],
-    });
-
-    expect(frame.fields[0].state?.hideFrom).not.toBeUndefined();
   });
 });

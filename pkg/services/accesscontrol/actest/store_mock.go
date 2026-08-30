@@ -237,6 +237,24 @@ func (_m *MockStore) SearchUsersPermissions(ctx context.Context, orgID int64, op
 	return r0, r1
 }
 
+// CleanupPluginRBAC provides a mock function with given fields: ctx, pluginIDs
+func (_m *MockStore) CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error {
+	ret := _m.Called(ctx, pluginIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanupPluginRBAC")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = rf(ctx, pluginIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewMockStore creates a new instance of MockStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockStore(t interface {

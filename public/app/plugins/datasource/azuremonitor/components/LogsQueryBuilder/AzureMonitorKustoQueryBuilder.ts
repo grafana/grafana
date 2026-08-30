@@ -1,8 +1,8 @@
 import {
-  BuilderQueryEditorWhereExpression,
-  BuilderQueryEditorWhereExpressionArray,
-  BuilderQueryEditorWhereExpressionItems,
-  BuilderQueryExpression,
+  type BuilderQueryEditorWhereExpression,
+  type BuilderQueryEditorWhereExpressionArray,
+  type BuilderQueryEditorWhereExpressionItems,
+  type BuilderQueryExpression,
 } from '../../dataquery.gen';
 
 const isNestedExpression = (
@@ -41,7 +41,7 @@ const buildCondition = (
   return;
 };
 
-export const appendWhere = (
+const appendWhere = (
   phrases: string[],
   timeFilter?: BuilderQueryEditorWhereExpressionArray,
   fuzzySearch?: BuilderQueryEditorWhereExpressionArray,

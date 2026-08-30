@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {
   BuilderQueryEditorExpressionType,
   BuilderQueryEditorPropertyType,
-  BuilderQueryEditorReduceExpression,
+  type BuilderQueryEditorReduceExpression,
   BuilderQueryEditorReduceParameterTypes,
 } from '../../dataquery.gen';
 

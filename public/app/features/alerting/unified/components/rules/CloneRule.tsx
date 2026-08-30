@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, ConfirmModal } from '@grafana/ui';
-import { RuleIdentifier } from 'app/types/unified-alerting';
+import { type RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
 
@@ -70,7 +70,7 @@ interface CloneRuleButtonProps {
   className?: string;
 }
 
-export const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
+const CloneRuleButton = forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
 

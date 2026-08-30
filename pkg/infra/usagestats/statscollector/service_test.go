@@ -166,7 +166,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 15, metrics["stats.total_auth_token.count"])
 	assert.EqualValues(t, 2, metrics["stats.api_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.avg_auth_token_per_user.count"])
-	assert.EqualValues(t, 16, metrics["stats.dashboard_versions.count"])
 	assert.EqualValues(t, 17, metrics["stats.annotations.count"])
 	assert.EqualValues(t, 18, metrics["stats.alert_rules.count"])
 	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
@@ -327,7 +326,6 @@ func mockSystemStats(statsService *statstest.FakeService) {
 		Snapshots:                 13,
 		Teams:                     14,
 		AuthTokens:                15,
-		DashboardVersions:         16,
 		Annotations:               17,
 		AlertRules:                18,
 		LibraryPanels:             19,
@@ -350,8 +348,8 @@ type mockSocial struct {
 	OAuthProviders map[string]bool
 }
 
-func (m *mockSocial) GetOAuthProviders() map[string]bool {
-	return m.OAuthProviders
+func (m *mockSocial) GetOAuthProviders(context.Context) (map[string]bool, error) {
+	return m.OAuthProviders, nil
 }
 
 type mockAdvisor struct {

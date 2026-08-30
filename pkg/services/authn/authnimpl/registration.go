@@ -3,6 +3,7 @@ package authnimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -33,7 +34,7 @@ import (
 type Registration struct{}
 
 func ProvideRegistration(
-	cfg *setting.Cfg, authnSvc authn.Service,
+	ctx context.Context, cfgProvider configprovider.ConfigProvider, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
@@ -42,16 +43,21 @@ func ProvideRegistration(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP, settingsProviderService setting.Provider,
+	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
-) Registration {
+) (Registration, error) {
 	logger := log.New("authn.registration")
+
+	cfg, err := cfgProvider.Get(ctx)
+	if err != nil {
+		return Registration{}, err
+	}
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
 
 	if cfg.LoginCookieName != "" {
-		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService, tracer))
+		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -79,27 +85,6 @@ func ProvideRegistration(
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
-		if !hasEnabledProviders {
-			oauthInfos := socialService.GetOAuthInfoProviders()
-			for _, provider := range oauthInfos {
-				if provider.Enabled {
-					hasEnabledProviders = true
-					break
-				}
-			}
-		}
-
-		if hasEnabledProviders {
-			logger.Error("Failed to configure passwordless magic link auth: cannot enable both passwordless magic link auth & SSO")
-		} else {
-			passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
-			authnSvc.RegisterClient(passwordless)
-		}
-	}
-
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
 		proxy, err := clients.ProvideProxy(cfg, cache, tracer, proxyClients...)
 		if err != nil {
@@ -110,7 +95,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfgProvider, orgService)
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
 	}
 
@@ -118,13 +103,9 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
 	}
 
-	for name := range socialService.GetOAuthProviders() {
-		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
-	}
+	registerOAuthClients(ctx, logger, authnSvc, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer)
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 
@@ -139,17 +120,18 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
+	// Surface external groups as the identity's groups under the flag (see hook doc).
+	// After FetchSyncedUserHook (100) so it overrides stored team memberships.
+	authnSvc.RegisterPostAuthHook(sync.ProvideGroupsClaimSync(cfg).SyncGroupsClaimHook, 115)
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
-	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
-		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
-	}
+	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry)
+	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
+	authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
@@ -160,5 +142,26 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
 	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
 
-	return Registration{}
+	return Registration{}, nil
+}
+
+func registerOAuthClients(
+	ctx context.Context, logger log.Logger, authnSvc authn.Service,
+	cfgProvider configprovider.ConfigProvider, oauthTokenService oauthtoken.OAuthTokenService,
+	socialService social.Service, settingsProvider setting.Provider,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+) {
+	oauthProviders, err := socialService.GetOAuthProviders(ctx)
+	if err != nil {
+		// OAuth provider settings can be loaded dynamically. Preserve startup
+		// availability if that lookup is temporarily unavailable; no OAuth clients
+		// are registered, and later process restarts can retry the lookup.
+		logger.Error("Failed to get OAuth providers; OAuth clients will not be registered", "err", err)
+		return
+	}
+
+	for name := range oauthProviders {
+		clientName := authn.ClientWithPrefix(name)
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer))
+	}
 }

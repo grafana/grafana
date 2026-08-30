@@ -2,20 +2,21 @@ import { isArray } from 'lodash';
 
 import {
   anyToNumber,
-  DataFrame,
+  type DataFrame,
   FieldColorModeId,
-  FieldConfig,
+  type FieldConfig,
   getFieldDisplayName,
   MappingType,
   ReducerID,
+  sortThresholds,
   ThresholdsMode,
-  ValueMapping,
-  ValueMap,
-  Field,
+  type ValueMapping,
+  type ValueMap,
+  type Field,
   FieldType,
 } from '@grafana/data';
 
-export interface ThresholdArguments {
+interface ThresholdArguments {
   color: string;
 }
 
@@ -76,6 +77,14 @@ export function getFieldConfigFromFrame(
 
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
+  }
+
+  // Threshold steps are pushed in the order their fields appear in the frame.
+  // Downstream consumers (getActiveThreshold, the filled-region gradient, ...)
+  // assume steps are sorted ascending by value, so mapping more than one field
+  // to a threshold could otherwise emit out-of-order steps and break rendering.
+  if (config.thresholds) {
+    config.thresholds.steps = sortThresholds(config.thresholds.steps);
   }
 
   return config;
@@ -251,7 +260,7 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
 
 let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
 
-export function getConfigMapHandlersIndex() {
+function getConfigMapHandlersIndex() {
   if (configMapHandlersIndex === null) {
     configMapHandlersIndex = {};
     for (const def of configMapHandlers) {
@@ -272,16 +281,6 @@ function toNumericOrUndefined(value: unknown) {
   return numeric;
 }
 
-export function getConfigHandlerKeyForField(fieldName: string, mappings: FieldToConfigMapping[]) {
-  for (const map of mappings) {
-    if (fieldName === map.fieldName) {
-      return map.handlerKey;
-    }
-  }
-
-  return fieldName.toLowerCase();
-}
-
 export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler | null {
   if (!key) {
     return null;
@@ -290,7 +289,7 @@ export function lookUpConfigHandler(key: string | null): FieldToConfigMapHandler
   return getConfigMapHandlersIndex()[key];
 }
 
-export interface EvaluatedMapping {
+interface EvaluatedMapping {
   automatic: boolean;
   handler: FieldToConfigMapHandler | null;
   handlerArguments: HandlerArguments;

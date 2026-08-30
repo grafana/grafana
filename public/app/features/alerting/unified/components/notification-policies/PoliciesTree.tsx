@@ -1,25 +1,27 @@
 import { defaults } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { computeInheritedTree } from '@grafana/alerting';
+import { computeInheritedTree, isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
+import { AlertGroupAction, ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { type FormAmRoute } from 'app/features/alerting/unified/types/amroutes';
 import { addUniqueIdentifierToRoute } from 'app/features/alerting/unified/utils/amroutes';
 import { getErrorCode, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import {
-  AlertmanagerGroup,
-  ObjectMatcher,
+  type AlertmanagerGroup,
+  type ObjectMatcher,
   ROUTES_META_SYMBOL,
-  RouteWithID,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { anyOfRequestState, isError } from '../../hooks/useAsync';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { ContactPointsState } from '../../types/alerting';
+import { type ContactPointsState } from '../../types/alerting';
 import { CONTACT_POINTS_STATE_INTERVAL_MS } from '../../utils/constants';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
@@ -27,7 +29,7 @@ import { routeAdapter } from '../../utils/routeAdapter';
 
 import { alertmanagerApi } from './../../api/alertmanagerApi';
 import { contactPointsStateDtoToModel } from './../../api/grafana';
-import { InsertPosition } from './../../utils/routeTree';
+import { type InsertPosition } from './../../utils/routeTree';
 import { findRoutesByMatchers, findRoutesMatchingPredicate } from './Filters';
 import { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal } from './Modals';
 import { Policy } from './Policy';
@@ -44,7 +46,7 @@ import {
 import { getAlertGroupsKey } from './utils';
 
 /** Async function that computes route-to-alert-group mapping off the main thread. */
-export type GetRouteGroupsMapFn = (
+type GetRouteGroupsMapFn = (
   rootRoute: RouteWithID,
   alertGroups: AlertmanagerGroup[],
   options?: { unquoteMatchers?: boolean }
@@ -80,12 +82,11 @@ export const PoliciesTree = ({
   getRouteGroupsMap,
 }: PoliciesTreeProps) => {
   const appNotification = useAppNotification();
-  const [contactPointsSupported, canSeeContactPoints] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: shouldFetchContactPoints } = useContactPointAbility({ action: ContactPointAction.View });
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   const { selectedAlertmanager, isGrafanaAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
-  const shouldFetchContactPoints = contactPointsSupported && canSeeContactPoints;
   const { currentData: contactPointsStatusData } = alertmanagerApi.useGetContactPointsStatusQuery(undefined, {
     skip: !shouldFetchContactPoints,
     pollingInterval: CONTACT_POINTS_STATE_INTERVAL_MS,
@@ -199,12 +200,12 @@ export const PoliciesTree = ({
 
   async function handleUpdate(partialRoute: Partial<FormAmRoute>) {
     await updateExistingNotificationPolicy.execute(partialRoute);
-    handleActionResult({ error: updateExistingNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   async function handleDelete(route: RouteWithID) {
     await deleteNotificationPolicy.execute(route);
-    handleActionResult({ error: deleteNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   async function handleAdd(
@@ -217,7 +218,7 @@ export const PoliciesTree = ({
       referenceRoute: referenceRoute,
       insertPosition,
     });
-    handleActionResult({ error: addNotificationPolicyState.error });
+    handleActionSuccess();
   }
 
   function handleResetPolicy(route: RouteWithID) {
@@ -225,18 +226,16 @@ export const PoliciesTree = ({
     setIsResetModalOpen(true);
   }
 
-  function handleActionResult({ error }: { error?: Error }) {
-    if (!error) {
+  function handleActionSuccess() {
+    try {
       appNotification.success('Updated notification policies');
+      refetchAlertGroups?.();
+    } finally {
+      // close all modals
+      closeEditModal();
+      closeAddModal();
+      closeDeleteModal();
     }
-    if (selectedAlertmanager && refetchAlertGroups) {
-      refetchAlertGroups();
-    }
-
-    // close all modals
-    closeEditModal();
-    closeAddModal();
-    closeDeleteModal();
   }
 
   const updatingTree = anyOfRequestState(
@@ -322,7 +321,7 @@ export const PoliciesTree = ({
                 }}
                 isAutoGenerated={false}
                 isDefaultPolicy
-                isActualDefaultPolicy={!routeName || routeName === ROOT_ROUTE_NAME}
+                isActualDefaultPolicy={isDefaultRoutingTreeName(routeName)}
                 defaultExpanded={defaultExpanded}
                 expandedOverrides={expandedOverrides}
                 onTogglePolicyExpanded={onTogglePolicyExpanded}
@@ -339,7 +338,7 @@ export const PoliciesTree = ({
         isOpen={isResetModalOpen}
         onConfirm={async () => {
           await deleteRoutingTree.execute({
-            name: resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ROOT_ROUTE_NAME,
+            name: resetRoute?.name ?? ROOT_ROUTE_NAME,
             resourceVersion: resetRoute?.[ROUTES_META_SYMBOL]?.resourceVersion,
           });
           refetchPolicies();
@@ -349,7 +348,8 @@ export const PoliciesTree = ({
           setResetRoute(null);
         }}
         routeName={resetRoute?.[ROUTES_META_SYMBOL]?.name ?? resetRoute?.name ?? ''}
-        isActualDefaultPolicy={!routeName || routeName === ROOT_ROUTE_NAME}
+        route={resetRoute}
+        isActualDefaultPolicy={isDefaultRoutingTreeName(routeName)}
       />
     </>
   );

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { SVGProps } from 'react';
+import { type SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 

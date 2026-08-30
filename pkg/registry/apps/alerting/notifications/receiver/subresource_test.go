@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
@@ -27,7 +26,7 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 			receiverUID: "",
 			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
 				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:      utils.Pointer("integration-uid"),
+					Uid:      new("integration-uid"),
 					Type:     "slack",
 					Settings: map[string]any{},
 				},
@@ -63,7 +62,7 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 			receiverUID: "receiver-uid",
 			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
 				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:          utils.Pointer(""),
+					Uid:          new(""),
 					Type:         "slack",
 					Settings:     map[string]any{},
 					SecureFields: map[string]bool{"token": true},
@@ -98,7 +97,7 @@ func TestValidateCreateReceiverIntegrationTestRequestBody(t *testing.T) {
 			receiverUID: "receiver-uid",
 			body: v1beta1.CreateReceiverIntegrationTestRequestBody{
 				Integration: v1beta1.CreateReceiverIntegrationTestRequestIntegration{
-					Uid:          utils.Pointer("integration-uid"),
+					Uid:          new("integration-uid"),
 					Type:         "slack",
 					Settings:     map[string]any{"url": "https://slack.com/webhook"},
 					SecureFields: map[string]bool{"token": true},

@@ -2,7 +2,8 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQueryType, ThresholdExpressionQuery } from '../types';
+import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQuery } from '../types';
+import { isRangeEvaluator } from '../utils/expressionTypes';
 
 export const updateRefId = createAction<string | undefined>('thresold/updateRefId');
 export const updateThresholdType = createAction<{
@@ -30,31 +31,30 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
       const typeInPayload = action.payload.evalFunction;
       const onError = action.payload.onError;
 
+      // Determine arity change before overwriting the type.
+      // Only reset params when crossing the single ↔ range boundary:
+      //   single → range : reset to [0, 0]  (need two params)
+      //   range  → single: reset to [0]     (drop second param; fixes stale [from, to] array)
+      //   single → single: preserve existing value (fixes value silently resetting to 0)
+      //   range  → range : preserve existing values
+      const previouslyRange = isRangeEvaluator(state.conditions[0].evaluator.type);
+      const nowRange = isRangeEvaluator(typeInPayload);
+      if (previouslyRange !== nowRange) {
+        state.conditions[0].evaluator.params = nowRange ? [0, 0] : [0];
+      } else if (!nowRange) {
+        // Ensure single-value types always carry exactly one param element.
+        // Older rules may have been saved with a 2-element array from a prior range type.
+        state.conditions[0].evaluator.params = [state.conditions[0].evaluator.params[0] ?? 0];
+      }
+
       //set new type in evaluator
       state.conditions[0].evaluator.type = typeInPayload;
-
-      //reset params
-      state.conditions[0].evaluator.params = [0];
 
       // check if hysteresis is checked
       const hsyteresisIsChecked = Boolean(state.conditions[0].unloadEvaluator);
 
       if (hsyteresisIsChecked) {
-        // when type whas changed and hsyteresIsChecked, we need to update the type for the unload evaluator with the opposite type
-        const updatedUnloadType = getUnloadEvaluatorTypeFromEvaluatorType(state.conditions[0].evaluator.type);
-
-        // set error to undefined when type is changed as we default to the new type that is valid
-        if (onError) {
-          onError(undefined); //clear error
-        }
-        // set newtype in evaluator
-        state.conditions[0].evaluator.type = typeInPayload;
-        // set new type and params in unload evaluator
-        const defaultUnloadEvaluator = {
-          type: updatedUnloadType,
-          params: state.conditions[0].evaluator?.params ?? [0, 0],
-        };
-        state.conditions[0].unloadEvaluator = defaultUnloadEvaluator;
+        applyDefaultUnloadEvaluator(state.conditions[0], onError);
       }
     });
     builder.addCase(updateThresholdParams, (state, action) => {
@@ -69,35 +69,46 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
           onError(undefined); // clear error
         }
       } else {
-        state.conditions[0].unloadEvaluator = {
-          type: getUnloadEvaluatorTypeFromEvaluatorType(state.conditions[0].evaluator.type),
-          params: state.conditions[0].evaluator?.params ?? [0, 0],
-        };
+        applyDefaultUnloadEvaluator(state.conditions[0], onError);
       }
     });
     builder.addCase(updateUnloadParams, (state, action) => {
       const { param, index, onError } = action.payload;
       // if there is no unload evaluator, we use the default evaluator params
       if (!state.conditions[0].unloadEvaluator) {
-        state.conditions[0].unloadEvaluator = {
-          type: getUnloadEvaluatorTypeFromEvaluatorType(state.conditions[0].evaluator.type),
-          params: state.conditions[0].evaluator?.params ?? [0, 0],
-        };
+        applyDefaultUnloadEvaluator(state.conditions[0], onError);
       } else {
         // only update the param
-        state.conditions[0].unloadEvaluator!.params[index] = param;
-      }
-      // check if is valid for the new unload evaluator params
-      const error = isInvalid(state.conditions[0]);
-      const { errorMsg: invalidErrorMsg, errorMsgFrom, errorMsgTo } = error ?? {};
-      const errorMsg = invalidErrorMsg || errorMsgFrom || errorMsgTo;
-      // set error in form manually as we don't have a field for the unload evaluator
-      if (onError) {
-        onError(errorMsg);
+        state.conditions[0].unloadEvaluator.params[index] = param;
+        reportValidation(state.conditions[0], onError);
       }
     });
   }
 );
+
+type OnError = ((error: string | undefined) => void) | undefined;
+
+// The recovery threshold has no field of its own, so its validation errors have to be pushed into
+// the form manually.
+function reportValidation(condition: ClassicCondition, onError: OnError) {
+  if (!onError) {
+    return;
+  }
+  const { errorMsg, errorMsgFrom, errorMsgTo } = isInvalid(condition) ?? {};
+  onError(errorMsg || errorMsgFrom || errorMsgTo);
+}
+
+// The recovery value defaults to the threshold value, which is not valid for every operator: for
+// "is equal to" an identical value makes the rule flap between Alerting and Normal on every
+// evaluation. So the default has to be validated, not assumed to be valid.
+function applyDefaultUnloadEvaluator(condition: ClassicCondition, onError: OnError) {
+  condition.unloadEvaluator = {
+    type: getUnloadEvaluatorTypeFromEvaluatorType(condition.evaluator.type),
+    // Copied, so that later edits to the threshold don't mutate the recovery value through a shared array.
+    params: [...(condition.evaluator?.params ?? [0, 0])],
+  };
+  reportValidation(condition, onError);
+}
 
 function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   // we don't let the user change the unload evaluator type. We just change it to the opposite of the evaluator type
@@ -107,8 +118,10 @@ function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
   if (type === EvalFunction.IsBelow) {
     return EvalFunction.IsAbove;
   }
+  // Equality has no directional opposite. Both equal/not-equal thresholds recover when the
+  // value equals the recovery value, so the unload evaluator is IsEqual in both cases.
   if (type === EvalFunction.IsEqual) {
-    return EvalFunction.IsNotEqual;
+    return EvalFunction.IsEqual;
   }
   if (type === EvalFunction.IsNotEqual) {
     return EvalFunction.IsEqual;

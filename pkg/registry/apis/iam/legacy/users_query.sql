@@ -7,6 +7,9 @@ SELECT o.org_id, u.id, u.uid, u.login, u.email, u.name,
 {{ if .Query.UID }}
    AND u.uid = {{ .Arg .Query.UID }}
 {{ end }}
+{{ if .Query.ID }}
+   AND u.id = {{ .Arg .Query.ID }}
+{{ end }}
 {{ if .Query.Email }}
    AND u.email = {{ .Arg .Query.Email }}
 {{ end }}

@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 /**
  * Finds the next available refId for a query

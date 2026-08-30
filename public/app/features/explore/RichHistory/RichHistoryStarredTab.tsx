@@ -2,29 +2,36 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceApi, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
-import { createDatasourcesList } from 'app/core/utils/richHistory';
-import { SortOrder, RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
-import { RichHistoryQuery } from 'app/types/explore';
-import { useSelector } from 'app/types/store';
-
-import { selectExploreDSMaps } from '../state/selectors';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { Alert, useStyles2, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
+import {
+  type SortOrder,
+  type RichHistorySearchFilters,
+  type RichHistorySettings,
+} from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
+import { useSeedRichHistoryFilters } from './useSeedRichHistoryFilters';
 
 export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
-  updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
+  loadError: boolean;
+  updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
   loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
+  activeDatasources: string[];
+  listOfDatasources: Array<{ name: string; uid: string }>;
+  isLoadingDatasources: boolean;
+  dsListError: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -74,30 +81,26 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     queries,
     totalQueries,
     loading,
+    loadError,
     richHistorySearchFilters,
+    activeDatasources,
+    listOfDatasources,
+    isLoadingDatasources,
+    dsListError,
   } = props;
 
   const styles = useStyles2(getStyles);
-  const exploreActiveDS = useSelector(selectExploreDSMaps);
 
-  const listOfDatasources = createDatasourcesList();
+  useSeedRichHistoryFilters({
+    starred: true,
+    isLoadingDatasources,
+    dsListError,
+    activeDatasources,
+    richHistorySettings,
+    updateFilters,
+  });
 
   useEffect(() => {
-    const datasourceFilters =
-      richHistorySettings.activeDatasourcesOnly && richHistorySettings.lastUsedDatasourceFilters
-        ? richHistorySettings.lastUsedDatasourceFilters
-        : exploreActiveDS.dsToExplore
-            .map((eDs) => listOfDatasources.find((ds) => ds.uid === eDs.datasource?.uid)?.name)
-            .filter((name): name is string => !!name);
-    const filters: RichHistorySearchFilters = {
-      search: '',
-      sortOrder: SortOrder.Descending,
-      datasourceFilters,
-      from: 0,
-      to: richHistorySettings.retentionPeriod,
-      starred: true,
-    };
-    updateFilters(filters);
     return () => {
       clearRichHistoryResults();
     };
@@ -109,10 +112,9 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
       richHistorySearchFilters?.datasourceFilters && richHistorySearchFilters?.datasourceFilters.length > 0
         ? richHistorySearchFilters?.datasourceFilters
         : listOfDatasources.map((ds) => ds.uid);
-    const dsGetProm = await datasourcesToGet.map(async (dsf) => {
+    const dsGetProm = datasourcesToGet.map(async (dsf) => {
       try {
-        // this get works off datasource names
-        return getDataSourceSrv().get(dsf);
+        return await getDataSourceInstance(dsf);
       } catch (e) {
         return Promise.resolve();
       }
@@ -125,12 +127,21 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
     } else {
       return [];
     }
-  }, [richHistorySearchFilters?.datasourceFilters]);
+  }, [richHistorySearchFilters?.datasourceFilters, listOfDatasources]);
+
+  if (dsListError && richHistorySettings.activeDatasourcesOnly) {
+    return (
+      <Alert
+        severity="error"
+        title={t('explore.rich-history-starred-tab.datasource-list-error', 'Unable to load data sources')}
+      />
+    );
+  }
 
   if (!richHistorySearchFilters) {
     return (
       <span>
-        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>;
+        <Trans i18nKey="explore.rich-history-starred-tab.loading">Loading...</Trans>
       </span>
     );
   }
@@ -181,16 +192,21 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
             />
           </div>
         </div>
-        {loading && loadingDs && (
+        {loadError ? (
+          <Alert
+            severity="error"
+            title={t('explore.rich-history-starred-tab.load-error', 'Unable to load query history')}
+          />
+        ) : loading || loadingDs ? (
           <span>
             <Trans i18nKey="explore.rich-history-starred-tab.loading-results">Loading results...</Trans>
           </span>
-        )}
-        {!(loading && loadingDs) &&
+        ) : (
           queries.map((q) => {
             return <RichHistoryCard queryHistoryItem={q} key={q.id} datasourceInstances={datasourceFilterApis} />;
-          })}
-        {queries.length && queries.length !== totalQueries ? (
+          })
+        )}
+        {!loadError && queries.length && queries.length !== totalQueries ? (
           <div>
             <Trans
               i18nKey="explore.rich-history-starred-tab.showing-queries"

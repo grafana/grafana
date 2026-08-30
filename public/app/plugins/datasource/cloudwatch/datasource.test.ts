@@ -1,11 +1,11 @@
 import { lastValueFrom } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { CoreApp, Field } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 
 import {
-  CloudWatchLogsQuery,
-  CloudWatchMetricsQuery,
+  type CloudWatchLogsQuery,
+  type CloudWatchMetricsQuery,
   LogsQueryLanguage,
   MetricEditorMode,
   MetricQueryType,
@@ -18,11 +18,15 @@ import {
   setupMockedDataSource,
   accountIdVariable,
 } from './mocks/CloudWatchDataSource';
-import { setupForLogs } from './mocks/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './mocks/queries';
 import { TimeRangeMock } from './mocks/timeRange';
-import { CloudWatchQuery, CloudWatchLogsRequest, CloudWatchDefaultQuery } from './types';
+import { type CloudWatchQuery, type CloudWatchLogsRequest, type CloudWatchDefaultQuery } from './types';
 import * as templateUtils from './utils/templateVariableUtils';
+
+jest.mock('./utils/templateVariableUtils', () => ({
+  ...jest.requireActual('./utils/templateVariableUtils'),
+  getVariableName: jest.fn((name: string) => name.replace('$', '')),
+}));
 
 describe('datasource', () => {
   beforeEach(() => {
@@ -304,52 +308,6 @@ describe('datasource', () => {
         region: 'templatedRegion',
       });
     });
-
-    it('should add links to log insights queries', async () => {
-      const { datasource } = setupForLogs();
-
-      const observable = datasource.query({
-        targets: [
-          {
-            id: '',
-            region: '',
-            queryMode: 'Logs',
-            logGroupNames: ['test'],
-            expression: 'some query',
-            refId: 'a',
-          },
-        ],
-        requestId: '',
-        interval: '',
-        intervalMs: 0,
-        range: TimeRangeMock,
-        scopedVars: {},
-        timezone: '',
-        app: '',
-        startTime: 0,
-      });
-
-      const emits = await lastValueFrom(observable.pipe(toArray()));
-      expect(emits).toHaveLength(1);
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '@xrayTraceId').config.links).toMatchObject([
-        {
-          title: 'Xray',
-          url: '',
-          internal: {
-            query: { query: '${__value.raw}', region: 'us-west-1', queryType: 'getTrace' },
-            datasourceUid: 'xray',
-            datasourceName: 'Xray',
-          },
-        },
-      ]);
-
-      expect(emits[0].data[0].fields.find((f: Field) => f.name === '').config.links).toMatchObject([
-        {
-          title: 'View in CloudWatch console',
-          url: "https://us-west-1.console.aws.amazon.com/cloudwatch/home?region=us-west-1#logs-insights:queryDetail=~(end~'2016-12-31T16*3a00*3a00.000Z~start~'2016-12-31T15*3a00*3a00.000Z~timeType~'ABSOLUTE~tz~'UTC~editorString~'some*20query~isLiveTail~false~source~(~'test))",
-        },
-      ]);
-    });
   });
 
   describe('resource requests', () => {
@@ -401,9 +359,7 @@ describe('datasource', () => {
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
       const { datasource, templateService } = setupMockedDataSource();
       templateService.replace = jest.fn();
-      const mockGetVariableName = jest
-        .spyOn(templateUtils, 'getVariableName')
-        .mockImplementation((name: string) => name.replace('$', ''));
+      const mockGetVariableName = jest.mocked(templateUtils.getVariableName);
       const variableName = 'someVar';
       const metricsQuery: CloudWatchMetricsQuery = {
         queryMode: 'Metrics',

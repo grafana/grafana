@@ -5,7 +5,7 @@ import { PluginErrorCode, PluginSignatureStatus, PluginSignatureType } from '@gr
 import * as helpers from '../helpers';
 import * as hooks from '../state/hooks';
 import { initialState } from '../state/reducer';
-import { CatalogPlugin, PluginStatus, ReducerState, Version } from '../types';
+import { type CatalogPlugin, PluginStatus, type ReducerState, type Version } from '../types';
 
 import { getInstallControlsDisabled, getPluginStatus, PluginActions } from './PluginActions';
 

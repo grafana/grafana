@@ -21,10 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apivalidation "github.com/grafana/grafana/pkg/services/ngalert/api/validation"
@@ -37,7 +36,7 @@ import (
 )
 
 type folderService interface {
-	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*foldermodel.Folder, error)
 }
 
 type TestingApiSrv struct {
@@ -60,7 +59,7 @@ type TestingApiSrv struct {
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.PostableExtendedRuleNodeExtended) response.Response {
 	folder, err := srv.folderService.GetNamespaceByUID(c.Req.Context(), body.NamespaceUID, c.OrgID, c.SignedInUser)
 	if err != nil {
-		return toNamespaceErrorResponse(dashboards.ErrFolderAccessDenied)
+		return toNamespaceErrorResponse(foldermodel.ErrAccessDenied)
 	}
 	rule, err := apivalidation.ValidateRuleNode(
 		&body.Rule,
@@ -108,7 +107,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	}
 	manager := state.NewManager(cfg, state.NewNoopPersister())
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
-	transitions := manager.ProcessEvalResults(
+	transitions, err := manager.ProcessEvalResults(
 		c.Req.Context(),
 		now,
 		rule,
@@ -116,10 +115,13 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder, srv.featureManager),
 		nil,
 	)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to process evaluation results")
+	}
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
 	for _, alertState := range transitions {
-		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl, srv.featureManager))
+		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl))
 	}
 
 	return response.JSON(http.StatusOK, alerts)

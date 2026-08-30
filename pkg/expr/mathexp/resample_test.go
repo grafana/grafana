@@ -1,6 +1,7 @@
 package mathexp
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ func TestResampleSeries(t *testing.T) {
 		timeRange        backend.TimeRange
 		seriesToResample Series
 		series           Series
+		expectedError    string
 	}{
 		{
 			name:        "resample series: time range shorter than the rule interval",
@@ -29,9 +31,9 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(4, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}),
 		},
 		{
@@ -44,9 +46,9 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(0, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}),
 		},
 		{
@@ -59,22 +61,22 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(16, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(2),
+				time.Unix(9, 0), new(2.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(5, 0), float64Pointer(2.5),
+				time.Unix(5, 0), new(2.5),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(1.5),
+				time.Unix(10, 0), new(1.5),
 			}, tp{
-				time.Unix(15, 0), float64Pointer(2),
+				time.Unix(15, 0), new(2.0),
 			}),
 		},
 		{
@@ -87,20 +89,20 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(16, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(2),
+				time.Unix(9, 0), new(2.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(5, 0), float64Pointer(3),
+				time.Unix(5, 0), new(3.0),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(2),
+				time.Unix(10, 0), new(2.0),
 			}, tp{
 				time.Unix(15, 0), nil,
 			}),
@@ -115,20 +117,20 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(16, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(2),
+				time.Unix(9, 0), new(2.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(5, 0), float64Pointer(2),
+				time.Unix(5, 0), new(2.0),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(1),
+				time.Unix(10, 0), new(1.0),
 			}, tp{
 				time.Unix(15, 0), nil,
 			}),
@@ -143,20 +145,20 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(16, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(2),
+				time.Unix(9, 0), new(2.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(5, 0), float64Pointer(5),
+				time.Unix(5, 0), new(5.0),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(3),
+				time.Unix(10, 0), new(3.0),
 			}, tp{
 				time.Unix(15, 0), nil,
 			}),
@@ -171,20 +173,20 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(16, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(2),
+				time.Unix(9, 0), new(2.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(5, 0), float64Pointer(2.5),
+				time.Unix(5, 0), new(2.5),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(1.5),
+				time.Unix(10, 0), new(1.5),
 			}, tp{
 				time.Unix(15, 0), nil,
 			}),
@@ -199,22 +201,22 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(11, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}),
 			series: makeSeries("", nil, tp{
 				time.Unix(0, 0), nil,
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(2),
+				time.Unix(4, 0), new(2.0),
 			}, tp{
-				time.Unix(6, 0), float64Pointer(2),
+				time.Unix(6, 0), new(2.0),
 			}, tp{
-				time.Unix(8, 0), float64Pointer(1),
+				time.Unix(8, 0), new(1.0),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(1),
+				time.Unix(10, 0), new(1.0),
 			}),
 		},
 		{
@@ -227,20 +229,20 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(11, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(7, 0), float64Pointer(1),
+				time.Unix(7, 0), new(1.0),
 			}),
 			series: makeSeries("", nil, tp{
-				time.Unix(0, 0), float64Pointer(2),
+				time.Unix(0, 0), new(2.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(1),
+				time.Unix(4, 0), new(1.0),
 			}, tp{
-				time.Unix(6, 0), float64Pointer(1),
+				time.Unix(6, 0), new(1.0),
 			}, tp{
-				time.Unix(8, 0), float64Pointer(1),
+				time.Unix(8, 0), new(1.0),
 			}, tp{
 				time.Unix(10, 0), nil,
 			}),
@@ -255,27 +257,44 @@ func TestResampleSeries(t *testing.T) {
 				To:   time.Unix(11, 0),
 			},
 			seriesToResample: makeSeries("", nil, tp{
-				time.Unix(0, 0), float64Pointer(0),
+				time.Unix(0, 0), new(0.0),
 			}, tp{
-				time.Unix(2, 0), float64Pointer(2),
+				time.Unix(2, 0), new(2.0),
 			}, tp{
-				time.Unix(4, 0), float64Pointer(3),
+				time.Unix(4, 0), new(3.0),
 			}, tp{
-				time.Unix(6, 0), float64Pointer(4),
+				time.Unix(6, 0), new(4.0),
 			}, tp{
-				time.Unix(8, 0), float64Pointer(0),
+				time.Unix(8, 0), new(0.0),
 			}, tp{
-				time.Unix(10, 0), float64Pointer(1),
+				time.Unix(10, 0), new(1.0),
 			}),
 			series: makeSeries("", nil, tp{
-				time.Unix(0, 0), float64Pointer(0),
+				time.Unix(0, 0), new(0.0),
 			}, tp{
-				time.Unix(3, 0), float64Pointer(2),
+				time.Unix(3, 0), new(2.0),
 			}, tp{
-				time.Unix(6, 0), float64Pointer(4),
+				time.Unix(6, 0), new(4.0),
 			}, tp{
-				time.Unix(9, 0), float64Pointer(0),
+				time.Unix(9, 0), new(0.0),
 			}),
+		},
+		{
+			name:        "resample series: upsampling, result too big",
+			interval:    time.Microsecond,
+			downsampler: "mean",
+			upsampler:   "backfilling",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(11, 0),
+			},
+			seriesToResample: makeSeries("", nil, tp{
+				time.Unix(2, 0), new(2.0),
+			}, tp{
+				time.Unix(7, 0), new(1.0),
+			}),
+			series:        Series{},
+			expectedError: fmt.Sprintf("Resample series length to large, max allowed %d, wanted 11000000", MaxNewSeriesLength),
 		},
 	}
 	for _, tt := range tests {
@@ -283,6 +302,9 @@ func TestResampleSeries(t *testing.T) {
 			series, err := tt.seriesToResample.Resample("", tt.interval, tt.downsampler, tt.upsampler, tt.timeRange.From, tt.timeRange.To)
 			if tt.series.Frame == nil {
 				require.Error(t, err)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError)
+				}
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.series, series)

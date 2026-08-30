@@ -5,20 +5,20 @@ import { useMeasure } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryMatcher,
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryMatcher,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, TimeRange, dateTimeFormat } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   VariableDependencyConfig,
   sceneGraph,
 } from '@grafana/scenes';
@@ -35,7 +35,6 @@ import {
   TextLink,
   Tooltip,
   useStyles2,
-  withErrorBoundary,
 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 
@@ -68,7 +67,7 @@ interface NotificationsListProps {
   onLabelClick: ([value, key]: [string | undefined, string | undefined]) => void;
 }
 
-export const NotificationsList = React.memo(function NotificationsList({
+const NotificationsList = React.memo(function NotificationsList({
   timeRange,
   labelFilter,
   statusFilter,
@@ -489,9 +488,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-export default withErrorBoundary(NotificationsList, { style: 'page' });
-
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
@@ -594,7 +591,7 @@ export class NotificationsListObject extends SceneObjectBase<NotificationsListOb
   });
 }
 
-export function NotificationsListObjectRenderer({ model }: SceneComponentProps<NotificationsListObject>) {
+function NotificationsListObjectRenderer({ model }: SceneComponentProps<NotificationsListObject>) {
   const { ruleUID } = model.useState();
 
   const timeRangeObj = sceneGraph.getTimeRange(model);

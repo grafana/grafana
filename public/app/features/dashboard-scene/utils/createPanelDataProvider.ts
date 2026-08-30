@@ -1,7 +1,7 @@
-import { getPanelPluginMetasMapSync, PanelPluginMetas } from '@grafana/runtime/internal';
-import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
+import { type SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 

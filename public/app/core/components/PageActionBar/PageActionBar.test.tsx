@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import PageActionBar, { Props } from './PageActionBar';
+import PageActionBar, { type Props } from './PageActionBar';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

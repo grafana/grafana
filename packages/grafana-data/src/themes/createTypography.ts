@@ -1,9 +1,9 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import * as z from 'zod';
 
-import { ThemeColors } from './createColors';
+import { type ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeTypography extends ThemeTypographyVariantTypes {

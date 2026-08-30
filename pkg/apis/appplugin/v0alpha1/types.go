@@ -14,6 +14,10 @@ type Settings struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec SettingsSpec `json:"spec,omitempty"`
+
+	// Secure values allows setting values that are never shown to users.
+	// The returned properties are only the names of the configured values.
+	Secure common.InlineSecureValues `json:"secure,omitzero,omitempty"`
 }
 
 func (Settings) OpenAPIModelName() string {
@@ -33,12 +37,34 @@ func (SettingsList) OpenAPIModelName() string {
 }
 
 type SettingsSpec struct {
-	Enabled          bool                `json:"enabled"`
-	Pinned           bool                `json:"pinned"`
-	JsonData         common.Unstructured `json:"jsonData"`
-	SecureJsonFields map[string]bool     `json:"secureJsonFields"`
+	Enabled  bool                `json:"enabled"`
+	Pinned   bool                `json:"pinned"`
+	JsonData common.Unstructured `json:"jsonData,omitzero"`
 }
 
 func (SettingsSpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SettingsSpec"
+}
+
+// +k8s:deepcopy-gen=true
+// +k8s:openapi-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HealthCheckResult struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// The string description
+	Status string `json:"status,omitempty"`
+
+	// Explicit status code
+	Code int `json:"code,omitempty"`
+
+	// Optional description for the data source
+	Message string `json:"message,omitempty"`
+
+	// Spec depends on the plugin
+	Details *common.Unstructured `json:"details,omitempty"`
+}
+
+func (HealthCheckResult) OpenAPIModelName() string {
+	return OpenAPIPrefix + "HealthCheckResult"
 }

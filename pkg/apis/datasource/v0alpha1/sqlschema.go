@@ -180,7 +180,7 @@ func deepCopyRV(rv reflect.Value) reflect.Value {
 		}
 		n := rv.Len()
 		newSlice := reflect.MakeSlice(rv.Type(), n, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			newSlice.Index(i).Set(deepCopyRV(rv.Index(i)))
 		}
 		return newSlice

@@ -11,14 +11,14 @@
  *
  * Additionally, `RowsLayoutManager.addPanel()` silently drops panels when
  * its rows array is empty, and both container layout managers delegate
- * through `dashboardEditActions` which may not behave correctly outside
+ * through the undo/redo edit actions which may not behave correctly outside
  * the interactive editing flow.
  *
  * This helper resolves the target to a leaf grid layout and directly
  * appends children to the grid state, bypassing all of the above.
  */
 
-import { VizPanel } from '@grafana/scenes';
+import { type VizPanel } from '@grafana/scenes';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -27,7 +27,7 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 import { findSpaceForNewPanel } from '../../scene/layout-default/findSpaceForNewPanel';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 
 /**
  * Walk a layout tree downward until we reach a leaf layout that can directly

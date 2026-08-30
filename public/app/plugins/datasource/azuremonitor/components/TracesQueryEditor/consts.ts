@@ -20,32 +20,8 @@ export const Tables = {
   },
 };
 
-// Resource centric tables mapped to legacy tables
-export const tables = {
-  AppAvailabilityResults: 'availabilityResults',
-  AppDependencies: 'dependencies',
-  AppEvents: 'events',
-  AppExceptions: 'exceptions',
-  AppPageViews: 'pageViews',
-  AppRequests: 'requests',
-  AppTraces: 'traces',
-};
-
-// Properties to omit when generating the attributes bag
-export const attributesOmit = [
-  'operationId',
-  'duration',
-  'id',
-  'name',
-  'problemId',
-  'operation_ParentId',
-  'timestamp',
-  'customDimensions',
-  'operation_Name',
-];
-
 // Common resource centric properties mapped to legacy property names
-export const common = {
+const common = {
   appId: 'ResourceGUID',
   application_Version: 'AppVersion',
   appName: '_ResourceId',
@@ -83,7 +59,7 @@ export const common = {
 };
 
 // Additional properties for availabilityResults
-export const availabilityResultsSchema = {
+const availabilityResultsSchema = {
   ...common,
   location: 'Location',
   message: 'Message',
@@ -91,7 +67,7 @@ export const availabilityResultsSchema = {
 };
 
 // Additional properties for dependencies
-export const dependenciesSchema = {
+const dependenciesSchema = {
   ...common,
   data: 'Data',
   resultCode: 'ResultCode',
@@ -100,10 +76,10 @@ export const dependenciesSchema = {
 };
 
 // Additional properties for events
-export const eventsSchema = omit(common, ['duration', 'id', 'success', 'performanceBucket']);
+const eventsSchema = omit(common, ['duration', 'id', 'success', 'performanceBucket']);
 
 // Additional properties for pageVies
-export const pageViewsSchema = omit(
+const pageViewsSchema = omit(
   {
     ...common,
     url: 'Url',
@@ -112,14 +88,14 @@ export const pageViewsSchema = omit(
 );
 
 // Additional properties for requests
-export const requestsSchema = {
+const requestsSchema = {
   resultCode: 'ResultCode',
   source: 'Source',
   url: 'Url',
 };
 
 // Additional properties for exceptions
-export const exceptionsSchema = omit(
+const exceptionsSchema = omit(
   {
     ...common,
     assembly: 'Assembly',
@@ -143,7 +119,7 @@ export const exceptionsSchema = omit(
 );
 
 // Additional properties for traces
-export const tracesSchema = omit(
+const tracesSchema = omit(
   {
     message: 'Message',
     severityLevel: 'SeverityLevel',
@@ -160,8 +136,3 @@ export const tablesSchema: { [key: string]: { [key: string]: string } } = {
   requests: requestsSchema,
   traces: tracesSchema,
 };
-
-export const tableTags = Object.entries(tablesSchema).reduce(
-  (val, [k, v]) => ({ ...val, [k]: Object.keys(omit(v, attributesOmit)).join(',') }),
-  {}
-);

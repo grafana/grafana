@@ -1,6 +1,7 @@
-import { DecimalCount } from '../types/displayValue';
+import { type DecimalCount } from '../types/displayValue';
+import { type FormattedValue } from '../types/valueFormats';
 
-import { toFixed, FormattedValue } from './valueFormats';
+import { toFixed } from './baseFormatters';
 
 export function toPercent(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {

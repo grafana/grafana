@@ -1,19 +1,20 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
-import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/environment';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
-import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -21,12 +22,28 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
-import { RouteDescriptor } from '../core/navigation/types';
+import { type RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
-import { isDashboardSceneEnabled } from '../features/dashboard-scene/utils/utils';
 import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 
 const isDevEnv = config.buildInfo.env === 'development';
+const LazyConfigureIRM = lazy(() =>
+  import(/* webpackChunkName: "ConfigureIRM" */ 'app/features/gops/configuration-tracker/components/ConfigureIRM').then(
+    (module) => ({ default: module.ConfigureIRM })
+  )
+);
+
+/**
+ * One component shared by both notebook page routes, rather than a SafeDynamicImport call in each.
+ *
+ * Two separate calls make two different components, and React unmounts one and mounts the other when
+ * you move between routes. That happened for real: `/notebooks/new` becomes `/notebooks/<uid>` the
+ * moment you create a notebook by typing, and the remount wiped out every cell's editor mid-sentence.
+ * One shared component means React treats this as the same page with a new url, so nothing unmounts.
+ */
+const NotebookPageComponent = SafeDynamicImport(
+  () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+);
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
@@ -38,9 +55,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "HomeRoute" */ '../features/home/HomeRoute')),
     },
     {
       path: '/d/:uid/:slug?',
@@ -60,6 +75,33 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // A notebook that does not exist yet. Sits beside the route below for readability, not for
+      // precedence: routes are rendered by a v6 `<Routes>` (see AppWrapper), which ranks a static
+      // segment above a dynamic one, so this wins over `:uid` wherever it is in the list.
+      path: NOTEBOOK_NEW_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: NotebookPageComponent,
+    },
+    {
+      path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: NotebookPageComponent,
+    },
+    {
+      // Notebooks reuse dashboard RBAC actions: dashboards:read to read one, and dashboards:create
+      // for the blank route above. The feature flag is enforced inside the pages instead, since
+      // getAppRoutes cannot use hooks.
+      path: NOTEBOOKS_BASE_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
+      ),
+    },
+    {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -76,7 +118,9 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardWithDS')
       ),
     },
-    (config.featureToggles.suggestedDashboards || config.featureToggles.dashboardLibrary) && {
+    (config.featureToggles.suggestedDashboards ||
+      config.featureToggles.dashboardLibrary ||
+      config.featureToggles.dashboardTemplates) && {
       path: DASHBOARD_LIBRARY_ROUTES.Template,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -108,10 +152,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/d-solo/:uid/:slug?',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        isDashboardSceneEnabled()
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels
@@ -119,10 +161,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboard-solo/:type/:slug',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
-      component: SafeDynamicImport(() =>
-        isDashboardSceneEnabled()
-          ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
       ),
     },
     {
@@ -161,6 +201,39 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/variables',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesRead]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/variables/new',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesCreate]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    {
+      // Nested under a static /edit segment so a variable whose derived
+      // metadata.name is literally "new" can never collide with the create route.
+      path: '/dashboards/variables/edit/:name',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.VariablesWrite, AccessControlAction.VariablesCreate]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    {
       path: '/dashboards/f/:uid/:slug',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
@@ -196,7 +269,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         return (
           <NavLandingPage
             navId="alerts-and-incidents"
-            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
+            header={
+              (!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? (
+                <Suspense fallback={null}>
+                  <LazyConfigureIRM />
+                </Suspense>
+              ) : undefined
+            }
           />
         );
       },
@@ -306,7 +385,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/teams/new',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CreateTeam" */ '../features/teams/create-team/CreateTeam')
+      ),
     },
     {
       path: '/org/teams/edit/:uid/:page?',
@@ -328,6 +409,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.LDAPStatusRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
       ),
@@ -341,6 +423,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -351,36 +434,42 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
       path: '/admin/users/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
     {
       path: '/admin/users/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
       ),
     },
     {
       path: '/admin/orgs',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
     },
     {
       path: '/admin/stats',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionServerStatsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
@@ -459,6 +548,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/playlists',
+      roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
+        ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])
+        : undefined,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistPage"*/ 'app/features/playlist/PlaylistPage')
       ),
@@ -511,6 +603,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/f/:uid/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
@@ -542,7 +652,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ThemePlayground"*/ 'app/features/theme-playground/ThemePlayground')
       ),
     },
-    config.featureToggles.restoreDashboards && {
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
@@ -574,7 +684,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return routes.filter(isTruthy);
 }
 
-export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
   if (!cfg.supportBundlesEnabled) {
     return [];
   }

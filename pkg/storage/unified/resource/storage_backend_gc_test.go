@@ -1,8 +1,12 @@
 package resource
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"iter"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,10 +15,53 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
+
+// partialDeleteKV simulates a partial chunked delete: the first data-section BatchDelete
+// deletes only its first key and then returns an error; later calls delegate fully. GC
+// deletes oldest-first, so the deletion marker (highest RV) is last and survives the
+// partial failure — the next GC pass must re-find it and finish.
+type partialDeleteKV struct {
+	KV
+	failedOnce bool
+}
+
+func (p *partialDeleteKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+	if !p.failedOnce && section == dataSection && len(keys) > 1 {
+		p.failedOnce = true
+		if err := p.KV.BatchDelete(ctx, section, keys[:1]); err != nil {
+			return err
+		}
+		return errors.New("simulated partial batch delete failure")
+	}
+	return p.KV.BatchDelete(ctx, section, keys)
+}
+
+// scanFailureKV makes the garbage collection scan of one group fail. getGroupResources
+// probes the data section one key at a time, so only larger reads are treated as a scan.
+// onScan runs before the failure, which lets a test cancel the context at that point.
+type scanFailureKV struct {
+	KV
+	failPrefix string
+	err        error
+	onScan     func()
+}
+
+func (f *scanFailureKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if section == dataSection && opt.Limit > 1 && strings.HasPrefix(opt.StartKey, f.failPrefix) {
+		if f.onScan != nil {
+			f.onScan()
+		}
+		return func(yield func(string, error) bool) {
+			yield("", f.err)
+		}
+	}
+	return f.KV.Keys(ctx, section, opt)
+}
 
 // writeEventOption is a function that modifies writeEventOptions
 type writeEventOption func(*writeEventOptions)
@@ -129,6 +176,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -184,6 +236,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -250,6 +307,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -306,7 +368,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Len(t, trashResp.Items, 1)
 	})
 
-	t.Run("will limit candidate batch size", func(t *testing.T) {
+	t.Run("will delete resources in multiple batches", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
@@ -320,6 +382,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -349,8 +416,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 2)
+		require.Len(t, trashResp.Items, 2)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		b.garbageCollection.BatchSize = 1
@@ -369,8 +435,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Empty(t, trashResp.Items)
 	})
 
 	t.Run("will delete rows from before the resource gets deleted, but it will keep rows from after the resource gets recreated with same name", func(t *testing.T) {
@@ -387,6 +452,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -458,7 +528,11 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
-		// Both resources should be fully GC'd; no history keys left
+		// other-dash was deleted and not recreated: all of its history is removed.
+		// my-dash was recreated after delete; GC collects its trash (created, updated,
+		// deleted) but retains the two revisions from the recreation (created, updated).
+		// BatchSize=3 exercises pagination across both resources without dropping the
+		// recreated my-dash revisions.
 		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: "group/resource/namespace/",
 			EndKey:   "group/resource/namespace0",
@@ -466,10 +540,68 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		count := 0
 		historyResp(func(k string, err error) bool {
 			require.NoError(t, err)
+			require.Contains(t, k, "/my-dash/")
+			require.NotContains(t, k, "/other-dash/")
 			count++
 			return true
 		})
 		require.Equal(t, 2, count)
+	})
+
+	t.Run("garbage collects the trash of a resource recreated with the same name", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+		})
+		b := storageBackend
+
+		// replicates an object being deleted then recreated with the same name
+		revisions := []kv.DataAction{
+			DataActionCreated,
+			DataActionUpdated,
+			DataActionDeleted,
+			DataActionDeleted,
+			DataActionDeleted,
+			DataActionCreated,
+			DataActionUpdated,
+		}
+		for _, action := range revisions {
+			err := storageBackend.dataStore.Save(ctx, DataKey{
+				Namespace:       "namespace",
+				Group:           "group",
+				Resource:        "resource",
+				Name:            "resource1",
+				Folder:          "folderuid",
+				ResourceVersion: storageBackend.snowflake.Generate().Int64(),
+				Action:          action,
+			}, bytes.NewReader([]byte("{}")))
+			require.NoError(t, err)
+		}
+
+		countKeys := func() int {
+			it := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
+				StartKey: "group/resource/namespace/",
+				EndKey:   "group/resource/namespace0",
+			})
+			count := 0
+			it(func(_ string, err error) bool {
+				require.NoError(t, err)
+				count++
+				return true
+			})
+			return count
+		}
+
+		require.Equal(t, 7, countKeys(), "expected 7 revisions before GC")
+
+		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
+		err := b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		require.NoError(t, err)
+
+		require.Equal(t, 2, countKeys(), "expected only the recreated revisions to remain")
 	})
 }
 
@@ -491,10 +623,15 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		b := storageBackend
 
-		_, err := NewResourceServer(ResourceServerOptions{
+		server, err := NewResourceServer(ResourceServerOptions{
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -534,7 +671,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Equal(t, 0, count)
 	})
 
-	t.Run("nothing is eligble to delete", func(t *testing.T) {
+	t.Run("nothing is eligible to delete", func(t *testing.T) {
 		testutil.SkipIntegrationTestInShortMode(t)
 
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
@@ -544,10 +681,15 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		b := storageBackend
 
-		_, err := NewResourceServer(ResourceServerOptions{
+		server, err := NewResourceServer(ResourceServerOptions{
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "resource1", resourcepb.WatchEvent_ADDED)
 		require.NoError(t, err)
@@ -601,6 +743,11 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 			Backend: storageBackend,
 		})
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = server.Stop(ctx)
+		})
 
 		rv1, err := writeEvent(t, ctx, storageBackend, "dashboard1", resourcepb.WatchEvent_ADDED,
 			func(o *writeEventOptions) {
@@ -666,7 +813,155 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Nil(t, trashResp.Error)
-		// FIX THIS: server.List with TRASH source without setting Name should return both deleted resources, but currently only returns one - needs investigation
-		// require.Len(t, trashResp.Items, 1)
+		require.Len(t, trashResp.Items, 1)
+	})
+}
+
+func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+	wrapped := &partialDeleteKV{KV: setupBadgerKV(t)}
+	b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.GarbageCollection = GarbageCollectionConfig{
+			Enabled: true, DryRun: false, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 24 * time.Hour,
+		}
+		opts.KvStore = wrapped
+	})
+
+	// One resource, several revisions ending in a deletion.
+	rv1, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	rv2, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_MODIFIED,
+		func(o *writeEventOptions) { o.PreviousRV = rv1 })
+	require.NoError(t, err)
+	_, err = writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_DELETED,
+		func(o *writeEventOptions) { o.PreviousRV = rv2 })
+	require.NoError(t, err)
+
+	countHistory := func() int {
+		it := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count := 0
+		it(func(_ string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	cutoff := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro())
+
+	initial := countHistory()
+	require.Equal(t, 3, initial, "expected 3 history revisions before GC")
+
+	// First pass fails mid-delete. It must delete something (partial progress) yet leave
+	// the deletion marker (deleted last) behind.
+	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	require.Error(t, err)
+	require.True(t, wrapped.failedOnce, "partial delete was not exercised")
+	afterPartial := countHistory()
+	require.Less(t, afterPartial, initial, "partial delete should have removed at least one revision")
+	require.Greater(t, afterPartial, 0, "partial failure should leave the deletion marker behind")
+
+	// Second pass (no injected failure) re-finds the marker and finishes.
+	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	require.NoError(t, err)
+	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
+}
+
+func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
+	gcConfig := GarbageCollectionConfig{
+		Enabled:          true,
+		Interval:         time.Minute,
+		BatchSize:        100,
+		DashboardsMaxAge: 24 * time.Hour,
+	}
+
+	// writes a created and a deleted revision, both old enough to be collected
+	writeDeletedResource := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) {
+		t.Helper()
+		for _, action := range []kv.DataAction{DataActionCreated, DataActionDeleted} {
+			err := b.dataStore.Save(ctx, DataKey{
+				Namespace:       "namespace",
+				Group:           group,
+				Resource:        "resource",
+				Name:            "resource1",
+				Folder:          "folderuid",
+				ResourceVersion: b.snowflake.Generate().Int64(),
+				Action:          action,
+			}, bytes.NewReader([]byte("{}")))
+			require.NoError(t, err)
+		}
+	}
+
+	countKeys := func(t *testing.T, ctx context.Context, b *kvStorageBackend, group string) int {
+		t.Helper()
+		it := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: group + "/resource/",
+			EndKey:   PrefixRangeEnd(group + "/resource/"),
+		})
+		count := 0
+		it(func(_ string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	t.Run("a failing group does not stop the groups after it", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+		wrapped := &scanFailureKV{
+			KV:         setupBadgerKV(t),
+			failPrefix: "agroup/resource/",
+			err:        errors.New("simulated scan failure"),
+		}
+		b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+			opts.KvStore = wrapped
+		})
+
+		writeDeletedResource(t, ctx, b, "agroup")
+		writeDeletedResource(t, ctx, b, "bgroup")
+		require.Equal(t, 2, countKeys(t, ctx, b, "agroup"))
+		require.Equal(t, 2, countKeys(t, ctx, b, "bgroup"))
+
+		b.runGarbageCollection(ctx, time.Now().Add(time.Hour).UnixMicro())
+
+		require.Equal(t, 2, countKeys(t, ctx, b, "agroup"), "the failing group should be left alone")
+		require.Equal(t, 0, countKeys(t, ctx, b, "bgroup"), "the later group should still be collected")
+	})
+
+	t.Run("a cancelled context stops the cycle", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
+
+		ctx, cancel := context.WithCancel(testutil.NewTestContext(t, time.Now().Add(30*time.Second)))
+		defer cancel()
+
+		wrapped := &scanFailureKV{
+			KV:         setupBadgerKV(t),
+			failPrefix: "agroup/resource/",
+			err:        context.Canceled,
+			onScan:     func() { cancel() },
+		}
+		b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+			opts.GarbageCollection = gcConfig
+			opts.KvStore = wrapped
+		})
+
+		writeDeletedResource(t, ctx, b, "agroup")
+		writeDeletedResource(t, ctx, b, "bgroup")
+
+		b.runGarbageCollection(ctx, time.Now().Add(time.Hour).UnixMicro())
+
+		require.Equal(t, 2, countKeys(t, context.Background(), b, "bgroup"), "shutdown should stop the cycle")
 	})
 }

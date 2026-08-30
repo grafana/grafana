@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { CoreApp, LoadingState, PanelData, SelectableValue } from '@grafana/data';
+import { CoreApp, LoadingState, type PanelData, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -8,7 +8,7 @@ import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;

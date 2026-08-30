@@ -3,12 +3,12 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { TemplateSrv } from '../../templating/template_srv';
+import { getTimeSrv, setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
+import { type TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { intervalBuilder } from '../shared/testing/builders';
 import { updateOptions } from '../state/actions';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import {
   addVariable,
@@ -19,7 +19,7 @@ import {
 import { variablesInitTransaction } from '../state/transactionReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
+import { updateAutoValue, type UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
 import { createIntervalVariableAdapter } from './adapter';
 import { createIntervalOptions } from './reducer';
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.tooltip,
     position: 'fixed',
     bottom: theme.spacing.x4,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });
 

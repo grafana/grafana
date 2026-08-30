@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"time"
 
@@ -17,6 +18,10 @@ type ModelSecureValue struct {
 	created      time.Time
 	updated      time.Time
 	leaseCreated time.Time
+	// Database column: secret_secure_value.lease_duration
+	leaseDuration time.Duration
+	// Database column: secret_secure_value.gc_attempts
+	gcAttempts int
 }
 
 type ModelKeeper struct {
@@ -277,8 +282,12 @@ func (m *ModelGsm) LeaseInactiveSecureValues(now time.Time, minAge, leaseTTL tim
 		if len(out) >= int(maxBatchSize) {
 			break
 		}
-		if !sv.active && now.Sub(sv.updated) > minAge && now.Sub(sv.leaseCreated) > leaseTTL {
+
+		if !sv.active &&
+			now.Sub(sv.updated) > minAge &&
+			now.Sub(sv.leaseCreated) > sv.leaseDuration {
 			sv.leaseCreated = now
+			sv.leaseDuration = time.Duration(leaseTTL.Seconds()*math.Pow(2, float64(sv.gcAttempts))) * time.Second
 			out = append(out, sv)
 		}
 	}

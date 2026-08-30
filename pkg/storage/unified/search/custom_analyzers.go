@@ -10,20 +10,20 @@ import (
 )
 
 const TITLE_ANALYZER = "title_analyzer"
-const EDGE_NGRAM_MIN_TOKEN = 3.0
+const NGRAM_MIN_TOKEN = 3.0
 const tokenFilterName = "ngram_filter"
 
 func RegisterCustomAnalyzers(mapper *mapping.IndexMappingImpl) error {
 	return registerTitleAnalyzer(mapper)
 }
 
-// The registerTitleAnalyzer function defines a custom analyzer using edge n-gram or full n-gram
+// The registerTitleAnalyzer function defines a custom analyzer using full n-gram tokenization
 func registerTitleAnalyzer(mapper *mapping.IndexMappingImpl) error {
 	// The ngram tokenFilter will create additional grams in the middle of each token.
 	// For example, the token "hello" will be tokenized into "hel", "hell", "hello", "ell", "ello", "llo".
 	tokenFilter := map[string]interface{}{
 		"type": ngram.Name,
-		"min":  EDGE_NGRAM_MIN_TOKEN,
+		"min":  NGRAM_MIN_TOKEN,
 		"max":  10.0,
 	}
 	err := mapper.AddCustomTokenFilter(tokenFilterName, tokenFilter)

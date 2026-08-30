@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { TreeNode } from './types';
+import { type TreeNode } from './types';
 
 // Uses enum to enable extension in the future
 export enum KeyboardAction {

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, QueryEditorProps, SelectableValue, toOption } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorProps, type SelectableValue, toOption } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { TextLink, useStyles2 } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchDatasource } from '../../datasource';
 import {
   useAccountOptions,
   useDimensionKeys,
@@ -15,7 +15,7 @@ import {
   useEnsureVariableHasSingleSelection,
 } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
-import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
+import { type CloudWatchJsonData, type CloudWatchQuery, type VariableQuery, VariableQueryType } from '../../types';
 import { ALL_ACCOUNTS_OPTION } from '../shared/Account';
 import { Dimensions } from '../shared/Dimensions/Dimensions';
 

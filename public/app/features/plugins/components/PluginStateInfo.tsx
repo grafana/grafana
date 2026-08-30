@@ -1,6 +1,6 @@
 import { PluginState } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, BadgeProps } from '@grafana/ui';
+import { Badge, type BadgeProps } from '@grafana/ui';
 
 interface Props {
   state?: PluginState;

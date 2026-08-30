@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
+import { Input, InlineField, Button, useStyles2, FieldSet, Legend } from '@grafana/ui';
 
-import { AzureMonitorResource } from '../../dataquery.gen';
+import { type AzureMonitorResource } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 
-export interface ResourcePickerProps<T> {
+interface ResourcePickerProps<T> {
   resources: T[];
   onChange: (resources: T[]) => void;
 }
@@ -17,7 +17,13 @@ export interface ResourcePickerProps<T> {
 const getStyles = (theme: GrafanaTheme2) => ({
   resourceList: css({ display: 'flex', columnGap: theme.spacing(1), flexWrap: 'wrap', marginBottom: theme.spacing(1) }),
   resource: css({ flex: '0 0 auto' }),
-  resourceLabel: css({ padding: theme.spacing(1) }),
+  resourceLabel: css({
+    ...theme.typography.bodySmall,
+    fontWeight: theme.typography.fontWeightMedium,
+    lineHeight: theme.spacing(theme.components.height.md),
+    marginBottom: theme.spacing(0.5),
+    paddingLeft: theme.spacing(1),
+  }),
   resourceGroupAndName: css({ display: 'flex', columnGap: theme.spacing(0.5) }),
 });
 
@@ -117,68 +123,66 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
       <div className={styles.resourceList}>
         {resources.map((resource, index) => (
           <div key={`resource-${index + 1}`} className={styles.resource}>
-            {resources.length !== 1 && (
-              <Label className={styles.resourceLabel}>
-                <Trans
-                  i18nKey="components.advanced-resource-picker.label-resource-number"
-                  values={{ resourceNum: index + 1 }}
-                >
-                  Resource {'{{resourceNum}}'}
-                </Trans>
-              </Label>
-            )}
-            <InlineField
-              label={t('components.advanced-resource-picker.label-resource-group', 'Resource Group')}
-              transparent
-              htmlFor={`input-advanced-resource-picker-resourceGroup-${index + 1}`}
-              labelWidth={15}
-              data-testid={selectors.components.queryEditor.resourcePicker.advanced.resourceGroup.input}
-            >
-              <div className={styles.resourceGroupAndName}>
-                <Input
-                  id={`input-advanced-resource-picker-resourceGroup-${index + 1}`}
-                  value={resource?.resourceGroup ?? ''}
-                  onChange={(event) =>
-                    onResourceChange(index, { ...resource, resourceGroup: event.currentTarget.value })
-                  }
-                  // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                  placeholder="resource-group"
-                />
-                <AccessoryButton
-                  aria-label={t('components.advanced-resource-picker.aria-label-remove', 'Remove')}
-                  icon="times"
-                  variant="secondary"
-                  onClick={() => removeResource(index)}
-                  hidden={resources.length === 1}
-                  data-testid={'remove-resource'}
-                />
-              </div>
-            </InlineField>
+            <FieldSet>
+              {resources.length !== 1 && (
+                <Legend className={styles.resourceLabel}>
+                  <Trans
+                    i18nKey="components.advanced-resource-picker.label-resource-number"
+                    values={{ resourceNum: index + 1 }}
+                  >
+                    Resource {'{{resourceNum}}'}
+                  </Trans>
+                </Legend>
+              )}
+              <InlineField
+                label={t('components.advanced-resource-picker.label-resource-group', 'Resource Group')}
+                transparent
+                htmlFor={`input-advanced-resource-picker-resourceGroup-${index + 1}`}
+                labelWidth={15}
+                data-testid={selectors.components.queryEditor.resourcePicker.advanced.resourceGroup.input}
+              >
+                <div className={styles.resourceGroupAndName}>
+                  <Input
+                    id={`input-advanced-resource-picker-resourceGroup-${index + 1}`}
+                    value={resource?.resourceGroup ?? ''}
+                    onChange={(event) =>
+                      onResourceChange(index, { ...resource, resourceGroup: event.currentTarget.value })
+                    }
+                    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                    placeholder="resource-group"
+                  />
+                  <AccessoryButton
+                    aria-label={t('components.advanced-resource-picker.aria-label-remove', 'Remove')}
+                    icon="times"
+                    variant="secondary"
+                    onClick={() => removeResource(index)}
+                    hidden={resources.length === 1}
+                    data-testid={'remove-resource'}
+                  />
+                </div>
+              </InlineField>
 
-            <InlineField
-              label={t('components.advanced-resource-picker.label-resource-name', 'Resource Name')}
-              transparent
-              htmlFor={`input-advanced-resource-picker-resourceName-${index + 1}`}
-              labelWidth={15}
-              data-testid={selectors.components.queryEditor.resourcePicker.advanced.resource.input}
-            >
-              <Input
-                id={`input-advanced-resource-picker-resourceName-${index + 1}`}
-                value={resource?.resourceName ?? ''}
-                onChange={(event) => onResourceChange(index, { ...resource, resourceName: event.currentTarget.value })}
-                placeholder={t('components.advanced-resource-picker.placeholder-resource-name', 'name')}
-              />
-            </InlineField>
+              <InlineField
+                label={t('components.advanced-resource-picker.label-resource-name', 'Resource Name')}
+                transparent
+                htmlFor={`input-advanced-resource-picker-resourceName-${index + 1}`}
+                labelWidth={15}
+                data-testid={selectors.components.queryEditor.resourcePicker.advanced.resource.input}
+              >
+                <Input
+                  id={`input-advanced-resource-picker-resourceName-${index + 1}`}
+                  value={resource?.resourceName ?? ''}
+                  onChange={(event) =>
+                    onResourceChange(index, { ...resource, resourceName: event.currentTarget.value })
+                  }
+                  placeholder={t('components.advanced-resource-picker.placeholder-resource-name', 'name')}
+                />
+              </InlineField>
+            </FieldSet>
           </div>
         ))}
       </div>
-      <Button
-        aria-label={t('components.advanced-resource-picker.aria-label-add', 'Add')}
-        icon="plus"
-        variant="secondary"
-        onClick={addResource}
-        type="button"
-      >
+      <Button icon="plus" variant="secondary" onClick={addResource} type="button">
         <Trans i18nKey="components.advanced-resource-picker.button-add-resource">Add resource</Trans>
       </Button>
     </>

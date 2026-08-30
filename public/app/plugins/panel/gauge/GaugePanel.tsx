@@ -2,19 +2,26 @@ import { css } from '@emotion/css';
 import { useMemo, type JSX } from 'react';
 
 import {
-  DisplayValueAlignmentFactors,
-  FieldDisplay,
+  type DisplayValueAlignmentFactors,
+  type FieldDisplay,
   getDisplayProcessor,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, PanelDataErrorView } from '@grafana/runtime';
-import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
+import { PanelDataErrorView } from '@grafana/runtime';
+import {
+  DataLinksContextMenu,
+  Stack,
+  useStyles2,
+  useTheme2,
+  VizRepeater,
+  type VizRepeaterRenderValueProps,
+} from '@grafana/ui';
+import { type DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 export function GaugePanel({
   id,
@@ -27,6 +34,7 @@ export function GaugePanel({
   fieldConfig,
   timeZone,
 }: PanelProps<Options>) {
+  const theme = useTheme2();
   const values: FieldDisplay[] = useMemo(() => {
     // TODO: this is carried over from v1, but it really ought to live somewhere inside of the data processing pipeline.
     // Without this, gauges which have percentage units and percentage thresholds will not automatically select a 0-100% min max
@@ -39,7 +47,7 @@ export function GaugePanel({
           const max = field.config.max ?? (field.config.unit === 'percent' ? 100 : 1);
           field.state = field.state ?? {};
           field.state.range = { min, max, delta: max - min };
-          field.display = getDisplayProcessor({ field, theme: config.theme2 });
+          field.display = getDisplayProcessor({ field, theme });
         }
       }
     }
@@ -48,12 +56,12 @@ export function GaugePanel({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme2,
+      theme,
       data: data.series,
       sparkline: options.sparkline,
       timeZone,
     });
-  }, [data, fieldConfig, options.reduceOptions, options.sparkline, replaceVariables, timeZone]);
+  }, [data, fieldConfig, options.reduceOptions, options.sparkline, replaceVariables, timeZone, theme]);
 
   const renderValue = useMemo(() => renderValueFactory(options), [options]);
 

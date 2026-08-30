@@ -1,6 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -10,7 +9,7 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
-import { OptionPaneRenderProps } from './types';
+import { type OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { dashboard, panel, onPanelConfigChange } = props;
@@ -56,7 +55,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && (
+        addon: (
           <GenAIPanelTitleButton
             onGenerate={setPanelTitle}
             panel={panel.getSaveModel()}
@@ -81,9 +80,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />
-        ),
+        addon: <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel.getSaveModel()} />,
       })
     )
     .addItem(

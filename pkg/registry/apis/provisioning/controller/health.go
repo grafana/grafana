@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -74,13 +75,24 @@ func (hc *RepositoryHealthChecker) ShouldCheckHealth(repo *provisioning.Reposito
 		return true
 	}
 
-	// If the repository has a hook error, don't run the health check
-	if repo.Status.Health.Error == provisioning.HealthFailureHook {
+	// While the hook-failure cooldown is still active, skip the health check so health status is not overwritten.
+	if hc.inHookFailureCooldown(repo) {
 		return false
 	}
 
 	// Check general timing for health checks
 	return !hc.hasRecentHealthCheck(repo.Status.Health)
+}
+
+// inHookFailureCooldown reports whether hook-failure cooldown suppression
+// should currently apply to this repository.
+// No workflows implies no webhook is expected, thus no cooldown
+// (e.g. when deleting an existing webhook).
+func (hc *RepositoryHealthChecker) inHookFailureCooldown(repo *provisioning.Repository) bool {
+	if repo == nil || len(repo.Spec.Workflows) == 0 {
+		return false
+	}
+	return hc.HasRecentFailure(repo.Status.Health, provisioning.HealthFailureHook)
 }
 
 // hasRecentHealthCheck checks if a health check was performed recently (for timing purposes)
@@ -190,8 +202,25 @@ func (hc *RepositoryHealthChecker) RefreshHealth(ctx context.Context, repo repos
 // and returns the health result and patch operations to apply.
 // This method does NOT apply the patch itself, allowing the caller to batch
 // multiple status updates together to avoid race conditions.
+//
+// When the hook-failure cooldown is active, the refresh is skipped to avoid
+// overwriting the recorded hook failure.
 func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context, repo repository.Repository) (HealthResultWithPatchOps, error) {
 	cfg := repo.Config()
+
+	if hc.inHookFailureCooldown(cfg) {
+		logging.FromContext(ctx).Info("skipping health refresh while hook failure cooldown is active")
+		// No fresh test result to classify here, so keep whatever reason the
+		// Ready condition already carries rather than overwriting it.
+		reason := provisioning.ReasonInvalidSpec
+		if existing := meta.FindStatusCondition(cfg.Status.Conditions, provisioning.ConditionTypeReady); existing != nil {
+			reason = existing.Reason
+		}
+		return HealthResultWithPatchOps{
+			HealthStatus:   cfg.Status.Health,
+			ReadyCondition: buildReadyConditionWithReason(cfg.Status.Health, reason),
+		}, nil
+	}
 
 	// Use health checker to perform comprehensive health check with existing status
 	testResults, newHealthStatus, err := hc.refreshHealth(ctx, repo, cfg.Status.Health)
@@ -211,7 +240,7 @@ func (hc *RepositoryHealthChecker) RefreshHealthWithPatchOps(ctx context.Context
 	return HealthResultWithPatchOps{
 		TestResults:    testResults,
 		HealthStatus:   newHealthStatus,
-		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, provisioning.ReasonInvalidSpec),
+		ReadyCondition: buildReadyConditionWithReason(newHealthStatus, classifyTestResultReason(testResults)),
 		PatchOps:       patchOps,
 	}, nil
 }
@@ -265,6 +294,10 @@ func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repos
 			Checked: time.Now().UnixMilli(),
 			Message: errorMsgs,
 		}
+
+		// Log why the repository is now considered unhealthy so the reason is
+		// captured at detection time, not only when a later sync is skipped.
+		logger.Warn("repository health check failed, marking repository unhealthy", "messages", errorMsgs)
 
 		return res, healthStatus, nil
 	}

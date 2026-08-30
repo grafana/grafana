@@ -4,13 +4,13 @@ import { useAsync } from 'react-use';
 
 import { isGrafanaRulesSource } from 'app/features/alerting/unified/utils/datasource';
 import {
-  CombinedRule,
-  RuleGroupIdentifierV2,
-  RuleIdentifier,
-  RuleWithLocation,
-  RulesSource,
+  type CombinedRule,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
+  type RuleWithLocation,
+  type RulesSource,
 } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -129,10 +129,18 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
       refetchOnMountOrArgChange: true,
     }
   );
-  // in case of Grafana folder, we need to use the folder name instead of uid, as in promrules we don't use uid
   const isGrafanaRule = isGrafanaRulesSource(ruleSourceName);
   const folder = useFolder(isGrafanaRule ? ruleLocation?.namespace : undefined);
-  const namespaceName = isGrafanaRule && folder.folder ? stringifyFolder(folder.folder) : ruleLocation?.namespace;
+  // Use Prometheus's fullpath instead of deriving it in the client to avoid escaping mismatches.
+  let namespaceName = ruleLocation?.namespace;
+  if (isGrafanaRule) {
+    const promNamespaceName = promRuleNs.at(0)?.name;
+    if (promNamespaceName !== undefined) {
+      namespaceName = promNamespaceName;
+    } else if (folder.folder) {
+      namespaceName = stringifyFolder(folder.folder);
+    }
+  }
 
   const [
     fetchRulerRuleGroup,
@@ -304,6 +312,9 @@ export function useRuleWithLocation({
       rulerConfig: dsFeatures.rulerConfig,
       namespace: ruleLocation.namespace,
       group: ruleLocation.group,
+      // Suppress error notifications for 404s - the group may not exist yet (new group)
+      // or may have been deleted (last rule removed)
+      notificationOptions: { showErrorAlert: false },
     });
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 

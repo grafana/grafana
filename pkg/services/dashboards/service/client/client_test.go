@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -25,7 +26,7 @@ type testSetup struct {
 	mockMetrics        *k8sClientMetrics
 	mockFactoryCalls   map[string]int
 	mockClientV0Alpha1 *client.MockK8sHandler
-	mockClientV1Beta1  *client.MockK8sHandler
+	mockClientV1       *client.MockK8sHandler
 	mockClientV2Alpha1 *client.MockK8sHandler
 	mockClientV2Beta1  *client.MockK8sHandler
 }
@@ -33,7 +34,7 @@ type testSetup struct {
 func setupTest(t *testing.T) *testSetup {
 	var (
 		mockClientV0Alpha1 = &client.MockK8sHandler{}
-		mockClientV1Beta1  = &client.MockK8sHandler{}
+		mockClientV1       = &client.MockK8sHandler{}
 		mockClientV2Alpha1 = &client.MockK8sHandler{}
 		mockClientV2Beta1  = &client.MockK8sHandler{}
 	)
@@ -42,7 +43,7 @@ func setupTest(t *testing.T) *testSetup {
 	mockFactoryCalls := make(map[string]int)
 
 	handler := &K8sClientWithFallback{
-		K8sHandler: mockClientV1Beta1,
+		K8sHandler: mockClientV1,
 		newClientFunc: func(_ context.Context, version string) client.K8sHandler {
 			mockFactoryCalls[version]++
 
@@ -50,13 +51,13 @@ func setupTest(t *testing.T) *testSetup {
 			case v0alpha1.VERSION:
 				return mockClientV0Alpha1
 			case v1beta1.VERSION:
-				return mockClientV1Beta1
+				return mockClientV1
 			case v2alpha1.VERSION:
 				return mockClientV2Alpha1
 			case v2beta1.VERSION:
 				return mockClientV2Beta1
-			case "v1":
-				return mockClientV1Beta1
+			case v1.VERSION:
+				return mockClientV1
 			default:
 				t.Fatalf("Unexpected call to newClientFunc with version %s", version)
 				return nil
@@ -72,7 +73,7 @@ func setupTest(t *testing.T) *testSetup {
 		mockMetrics:        mockMetrics,
 		mockFactoryCalls:   mockFactoryCalls,
 		mockClientV0Alpha1: mockClientV0Alpha1,
-		mockClientV1Beta1:  mockClientV1Beta1,
+		mockClientV1:       mockClientV1,
 		mockClientV2Alpha1: mockClientV2Alpha1,
 		mockClientV2Beta1:  mockClientV2Beta1,
 	}
@@ -98,14 +99,14 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 			},
 		}
 
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expectedResult, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expectedResult, nil).Once()
 
 		result, err := setup.handler.Get(ctx, name, orgID, options)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 		require.Equal(t, 0, len(setup.mockFactoryCalls), "Factory should not be called for non-fallback case")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -144,7 +145,7 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 			},
 		}
 
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(v1alpha1Result, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(v1alpha1Result, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expectedResultFallback, nil).Once()
 
 		result, err := setup.handler.Get(ctx, name, orgID, options)
@@ -152,7 +153,7 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		require.Equal(t, expectedResultFallback, result)
 		require.Equal(t, 1, setup.mockFactoryCalls[v2alpha1.VERSION], "Factory should be called once with v2alpha1")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -165,14 +166,14 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		options := metav1.GetOptions{}
 		expectedErr := errors.New("initial get failed")
 
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, expectedErr).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, expectedErr).Once()
 
 		_, err := setup.handler.Get(ctx, name, orgID, options)
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err)
 		require.Equal(t, 0, len(setup.mockFactoryCalls), "Factory should not be called for error case")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -202,7 +203,7 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 			},
 		}
 
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(v1alpha1Result, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(v1alpha1Result, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, fallbackErr).Once()
 
 		_, err := setup.handler.Get(ctx, name, orgID, options)
@@ -210,7 +211,7 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 		require.Equal(t, fallbackErr, err)
 		require.Equal(t, 1, setup.mockFactoryCalls[v2alpha1.VERSION], "Factory should be called once with v2alpha1")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 }
@@ -223,12 +224,12 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		orgID := int64(1)
 		options := metav1.GetOptions{}
 		expected := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
 
 		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, "")
 		require.NoError(t, err)
 		require.Equal(t, expected, result)
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 	})
 
 	t.Run("uses requested version", func(t *testing.T) {
@@ -255,13 +256,13 @@ func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
 		options := metav1.GetOptions{}
 		fallbackResult := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
 		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, errors.New("preferred get failed")).Once()
-		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(fallbackResult, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(fallbackResult, nil).Once()
 
 		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
 		require.NoError(t, err)
 		require.Equal(t, fallbackResult, result)
 		setup.mockClientV2Beta1.AssertExpectations(t)
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 	})
 
 	t.Run("fallback on conversion failure", func(t *testing.T) {
@@ -342,13 +343,13 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 			},
 		}
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(1), metav1.ListOptions{}).Return(expectedResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(1), metav1.ListOptions{}).Return(expectedResult, nil).Once()
 
 		result, err := setup.handler.List(context.Background(), 1, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -363,7 +364,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 
 		fallbackResult := createFallbackDashboard("dashboard-fallback", "456", "dashboard/"+v2alpha1.VERSION)
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(2), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(2), metav1.ListOptions{}).Return(initialResult, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-fallback", int64(2), metav1.GetOptions{ResourceVersion: "456"}, mock.Anything).Return(&fallbackResult, nil).Once()
 
 		result, err := setup.handler.List(context.Background(), 2, metav1.ListOptions{})
@@ -376,7 +377,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		}
 		require.ElementsMatch(t, expectedItems, result.Items)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -392,7 +393,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		fallbackResult1 := createFallbackDashboard("dashboard-1-fallback", "111", "dashboard/"+v2alpha1.VERSION)
 		fallbackResult2 := createFallbackDashboard("dashboard-2-fallback", "222", "dashboard/"+v2alpha1.VERSION)
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(3), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(3), metav1.ListOptions{}).Return(initialResult, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-1-fallback", int64(3), metav1.GetOptions{ResourceVersion: "111"}, mock.Anything).Return(&fallbackResult1, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-2-fallback", int64(3), metav1.GetOptions{ResourceVersion: "222"}, mock.Anything).Return(&fallbackResult2, nil).Once()
 
@@ -403,7 +404,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		expectedItems := []unstructured.Unstructured{fallbackResult1, fallbackResult2}
 		require.ElementsMatch(t, expectedItems, result.Items)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -419,9 +420,9 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		fallbackResultV2Alpha1 := createFallbackDashboard("dashboard-v2alpha1", "333", "dashboard/"+v2alpha1.VERSION)
 		fallbackResultV1Beta1 := createFallbackDashboard("dashboard-v1beta1", "444", "dashboard/"+v1beta1.VERSION)
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(4), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(4), metav1.ListOptions{}).Return(initialResult, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-v2alpha1", int64(4), metav1.GetOptions{ResourceVersion: "333"}, mock.Anything).Return(&fallbackResultV2Alpha1, nil).Once()
-		setup.mockClientV1Beta1.On("Get", mock.Anything, "dashboard-v1beta1", int64(4), metav1.GetOptions{ResourceVersion: "444"}, mock.Anything).Return(&fallbackResultV1Beta1, nil).Once()
+		setup.mockClientV1.On("Get", mock.Anything, "dashboard-v1beta1", int64(4), metav1.GetOptions{ResourceVersion: "444"}, mock.Anything).Return(&fallbackResultV1Beta1, nil).Once()
 
 		result, err := setup.handler.List(context.Background(), 4, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -430,7 +431,7 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		expectedItems := []unstructured.Unstructured{fallbackResultV2Alpha1, fallbackResultV1Beta1}
 		require.ElementsMatch(t, expectedItems, result.Items)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -438,13 +439,13 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		setup := setupTest(t)
 		expectedErr := errors.New("initial list failed")
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(5), metav1.ListOptions{}).Return(nil, expectedErr).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(5), metav1.ListOptions{}).Return(nil, expectedErr).Once()
 
 		_, err := setup.handler.List(context.Background(), 5, metav1.ListOptions{})
 		require.Error(t, err)
 		require.Equal(t, expectedErr, err)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -458,14 +459,14 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 
 		fallbackErr := errors.New("fallback get failed")
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(6), metav1.ListOptions{}).Return(initialResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(6), metav1.ListOptions{}).Return(initialResult, nil).Once()
 		setup.mockClientV2Alpha1.On("Get", mock.Anything, "dashboard-fallback-error", int64(6), metav1.GetOptions{ResourceVersion: "555"}, mock.Anything).Return(nil, fallbackErr).Once()
 
 		_, err := setup.handler.List(context.Background(), 6, metav1.ListOptions{})
 		require.Error(t, err)
 		require.Equal(t, fallbackErr, err)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -473,13 +474,13 @@ func TestK8sHandlerWithFallback_List(t *testing.T) {
 		setup := setupTest(t)
 		emptyResult := &unstructured.UnstructuredList{Items: []unstructured.Unstructured{}}
 
-		setup.mockClientV1Beta1.On("List", mock.Anything, int64(7), metav1.ListOptions{}).Return(emptyResult, nil).Once()
+		setup.mockClientV1.On("List", mock.Anything, int64(7), metav1.ListOptions{}).Return(emptyResult, nil).Once()
 
 		result, err := setup.handler.List(context.Background(), 7, metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Len(t, result.Items, 0)
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 }
@@ -565,7 +566,7 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		require.Equal(t, expectedResult, result)
 		require.Equal(t, 1, setup.mockFactoryCalls[v2alpha1.VERSION], "Factory should be called once with v2alpha1")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -627,7 +628,7 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 		require.Equal(t, expectedErr, err)
 		require.Equal(t, 1, setup.mockFactoryCalls[v2alpha1.VERSION], "Factory should be called once with v2alpha1")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 
@@ -662,14 +663,14 @@ func TestK8sHandlerWithFallback_Update(t *testing.T) {
 			},
 		}
 
-		setup.mockClientV1Beta1.On("Update", mock.Anything, obj, orgID, options).Return(expectedResult, nil).Once()
+		setup.mockClientV1.On("Update", mock.Anything, obj, orgID, options).Return(expectedResult, nil).Once()
 
 		result, err := setup.handler.Update(ctx, obj, orgID, options)
 		require.NoError(t, err)
 		require.Equal(t, expectedResult, result)
 		require.Equal(t, 1, setup.mockFactoryCalls["v1"], "Factory should be called once with v1")
 
-		setup.mockClientV1Beta1.AssertExpectations(t)
+		setup.mockClientV1.AssertExpectations(t)
 		setup.mockClientV2Alpha1.AssertExpectations(t)
 	})
 }

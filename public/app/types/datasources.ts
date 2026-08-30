@@ -1,6 +1,6 @@
-import { DataSourcePluginMeta, DataSourceSettings, LayoutMode } from '@grafana/data';
-import { TestingStatus } from '@grafana/runtime';
-import { GenericDataSourcePlugin } from 'app/features/datasources/types';
+import { type DataSourcePluginMeta, type DataSourceSettings, type LayoutMode } from '@grafana/data';
+import { type TestingStatus } from '@grafana/runtime';
+import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface DataSourcesState {
   dataSources: DataSourceSettings[];

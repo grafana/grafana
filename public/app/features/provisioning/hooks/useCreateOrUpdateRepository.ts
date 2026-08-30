@@ -1,11 +1,15 @@
 import { useCallback } from 'react';
 
+import { generateUUID } from '@grafana/data';
 import {
-  RepositorySpec,
+  type RepositorySpec,
+  type SecureValues,
   useCreateRepositoryMutation,
   useCreateRepositoryTestMutation,
   useReplaceRepositoryMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
+
+export type RepositorySecureChanges = Pick<SecureValues, 'token' | 'commitSigningKey'>;
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
@@ -13,8 +17,15 @@ export function useCreateOrUpdateRepository(name?: string) {
   const [testConfig, testRequest] = useCreateRepositoryTestMutation();
 
   const updateOrCreate = useCallback(
-    async (data: RepositorySpec, token?: string) => {
-      const secure = token?.length ? { token: { create: token } } : undefined;
+    async (data: RepositorySpec, secureChanges?: RepositorySecureChanges) => {
+      const secureEntries: SecureValues = {};
+      if (secureChanges?.token) {
+        secureEntries.token = secureChanges.token;
+      }
+      if (secureChanges?.commitSigningKey) {
+        secureEntries.commitSigningKey = secureChanges.commitSigningKey;
+      }
+      const secure = Object.keys(secureEntries).length ? secureEntries : undefined;
 
       // First test the config and wait for the result
       // unwrap will throw an error if the test fails
@@ -56,14 +67,13 @@ const generateRepositoryMetadata = (data: RepositorySpec) => {
   const normalisedName = data.title.toLowerCase().replaceAll(/[^a-z0-9\-_]+/g, '');
 
   if (
-    crypto.randomUUID && // we might not be in a secure context
     normalisedName && // we need a non-empty string before we check the first character
     normalisedName.charAt(0) >= 'a' && // required to start with a letter to be a valid k8s name
     normalisedName.charAt(0) <= 'z' &&
     normalisedName.replaceAll(/[^a-z]/g, '').length >= 3 // must look sensible to a human
   ) {
     // We still want a suffix, to avoid name collisions.
-    const randomBit = crypto.randomUUID().substring(0, 7);
+    const randomBit = generateUUID().substring(0, 7);
     const shortenedName = normalisedName.substring(0, 63 - 1 - randomBit.length);
     return { name: `${shortenedName}-${randomBit}` };
   } else {

@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { DataFrame, TraceLog } from '@grafana/data';
+import { type DataFrame, type TraceLog } from '@grafana/data';
 
 import { useDetailState } from './useDetailState';
 
@@ -48,17 +48,16 @@ describe('useDetailState', () => {
     expect(result.current.detailStates.get('span1')?.references.isOpen).toBe(true);
   });
 
-  it('toggles processes', async () => {
+  it('opens process and tags by default, and toggles them closed', async () => {
     const { result } = renderHook(() => useDetailState(sampleFrame));
     act(() => result.current.toggleDetail('span1'));
-    act(() => result.current.detailProcessToggle('span1'));
     expect(result.current.detailStates.get('span1')?.isProcessOpen).toBe(true);
-  });
-
-  it('toggles tags', async () => {
-    const { result } = renderHook(() => useDetailState(sampleFrame));
-    act(() => result.current.toggleDetail('span1'));
-    act(() => result.current.detailTagsToggle('span1'));
     expect(result.current.detailStates.get('span1')?.isTagsOpen).toBe(true);
+
+    act(() => result.current.detailProcessToggle('span1'));
+    expect(result.current.detailStates.get('span1')?.isProcessOpen).toBe(false);
+
+    act(() => result.current.detailTagsToggle('span1'));
+    expect(result.current.detailStates.get('span1')?.isTagsOpen).toBe(false);
   });
 });

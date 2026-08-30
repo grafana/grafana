@@ -1,7 +1,7 @@
 import { each } from 'lodash';
 
 import * as dateMath from './datemath';
-import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
+import { dateTime, type DurationUnit, type DateTime } from './moment_wrapper';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];

@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { type ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 
 import { ConfigureSnapshot } from './ConfigureSnapshot';
-import { ResourceTypeId } from './resourceDependency';
+import { type ResourceTypeId } from './resourceDependency';
 
 // Mock the functions imported by the component
 jest.mock('./resourceDependency', () => {

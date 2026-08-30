@@ -75,6 +75,7 @@ type Store interface {
 	DeleteTeamPermissions(ctx context.Context, orgID, teamID int64) error
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+	CleanupPluginRBAC(ctx context.Context, pluginIDs []string) error
 }
 
 type RoleRegistry interface {
@@ -82,8 +83,21 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
+type UserPermissionsClient interface {
+	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
+type UserPermissionsClientSetter interface {
+	SetUserPermissionsClient(client UserPermissionsClient)
+}
+
+type UserPermissionsEvaluator interface {
+	GetLocalUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
+}
+
 type Options struct {
-	ReloadCache bool
+	ReloadCache      bool
+	SkipZanzanaCache bool
 }
 
 type SearchOptions struct {

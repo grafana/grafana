@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
+import { type DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 import { loadDashboards } from './utils';
 
 export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {

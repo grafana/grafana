@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -21,10 +22,9 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -36,28 +36,29 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
-		},
+		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 	defer helper.Shutdown()
 
-	// Create devenv dashboards from legacy API
-	cfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
-	cfg.GroupVersion = &dashboardV0.GroupVersion
-	adminClient, err := k8srest.RESTClientFor(cfg)
-	require.NoError(t, err)
-	adminClient.Get()
+	// Create the devenv dashboards. The on-disk files are full v2 resource
+	// envelopes (dashboard.grafana.app/v2), so create them through the
+	// dynamic resource client as unstructured objects rather than POSTing to
+	// the legacy /api/dashboards/db endpoint.
+	gvr := schema.GroupVersionResource{
+		Group:    dashboardV2.GROUP,
+		Version:  dashboardV2.VERSION,
+		Resource: "dashboards",
+	}
+	dashboardClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
 
 	fileCount := 0
 	devenv := "../../../../devenv/dev-dashboards/panel-timeseries"
-	err = filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
-		require.NoError(t, err)
+	err := filepath.WalkDir(devenv, func(p string, d fs.DirEntry, e error) error {
+		require.NoError(t, e)
 		if d.IsDir() || filepath.Ext(d.Name()) != ".json" {
 			return nil
 		}
@@ -72,25 +73,16 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		data, err := os.ReadFile(p)
 		require.NoError(t, err)
 
-		cmd := dashboards.SaveDashboardCommand{
-			Dashboard: &simplejson.Json{},
-			Overwrite: true,
-		}
-		err = cmd.Dashboard.FromDB(data)
-		require.NoError(t, err)
-		cmd.Dashboard.Set("id", nil)
-		cmd.Dashboard.Set("uid", uid)
-		data, err = json.Marshal(cmd)
-		require.NoError(t, err)
+		obj := &unstructured.Unstructured{}
+		require.NoError(t, obj.UnmarshalJSON(data), "file: %s", d.Name())
+		// Override the resource name with the filename-derived UID so the
+		// search snapshots are keyed by a stable, readable identifier.
+		obj.SetName(uid)
+		obj.SetAPIVersion(gvr.GroupVersion().String())
+		obj.SetKind("Dashboard")
 
-		var statusCode int
-		result := adminClient.Post().AbsPath("api", "dashboards", "db").
-			Body(data).
-			SetHeader("Content-type", "application/json").
-			Do(ctx).
-			StatusCode(&statusCode)
-		require.NoError(t, result.Error(), "file: [%d] %s [status:%d]", fileCount, d.Name(), statusCode)
-		require.Equal(t, int(http.StatusOK), statusCode)
+		_, err = dashboardClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err, "file: [%d] %s", fileCount, d.Name())
 		fileCount++
 		return nil
 	})
@@ -193,6 +185,24 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 				"explain":          "true",
 			},
 		},
+		{
+			// Queries below the ngram minimum are matched as prefix wildcards, so
+			// they find titles with a word starting with the query.
+			name: "short-query-word-prefix",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ze", // should match "Zero Decimals Y Ticks"
+			},
+		},
+		{
+			// The same short query does not match inside a word: "ec" must not
+			// find "Zero Decimals Y Ticks" via "decimals".
+			name: "short-query-mid-word",
+			user: helper.Org1.Admin,
+			params: map[string]string{
+				"query": "ec",
+			},
+		},
 	}
 	for i, tc := range testCases {
 		if testCase != "" && testCase != tc.name {
@@ -226,10 +236,9 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -323,10 +332,9 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -434,10 +442,9 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -454,7 +461,7 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 			require.NoError(t, err)
 
 			var statusCode int
-			body := []byte(fmt.Sprintf(`{"uid":"%s","title":"Permission Test Folder"}`, folderUID))
+			body := fmt.Appendf(nil, `{"uid":"%s","title":"Permission Test Folder"}`, folderUID)
 			result := restClient.Post().AbsPath("api", "folders").
 				Body(body).
 				SetHeader("Content-type", "application/json").
@@ -682,6 +689,11 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
 }
 
+// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
+// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
+// The value depends on segment layout and is not stable across runs.
+var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
+
 func roundExplainValues(obj map[string]any, decimals uint32) {
 	for k, val := range obj {
 		switch k {
@@ -689,6 +701,11 @@ func roundExplainValues(obj map[string]any, decimals uint32) {
 			v, ok := val.(float64)
 			if ok {
 				obj[k] = roundTo(v, decimals)
+			}
+		case "message":
+			s, ok := val.(string)
+			if ok {
+				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
 			}
 		case "children":
 			children, ok := val.([]any)

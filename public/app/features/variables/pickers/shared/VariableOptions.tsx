@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { memo, type MouseEvent, type HTMLProps } from 'react';
 
-import { GrafanaTheme2, VariableOption } from '@grafana/data';
+import { type GrafanaTheme2, type VariableOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Tooltip, clearButtonStyles, useStyles2, useTheme2 } from '@grafana/ui';
@@ -87,7 +87,7 @@ export const VariableOptions = memo(
         <div className={styles.variableOptionsWrapper}>
           <ul
             className={styles.variableOptionsColumn}
-            aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
+            data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
             {renderMultiToggle()}

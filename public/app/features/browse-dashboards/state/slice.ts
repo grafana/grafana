@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
 import * as allReducers from './reducers';

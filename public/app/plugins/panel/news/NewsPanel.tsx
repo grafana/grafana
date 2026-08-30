@@ -1,20 +1,19 @@
 import { useEffect } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import { type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { RefreshEvent } from '@grafana/runtime';
 import { Alert, ScrollContainer, TextLink } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { useNewsFeed } from './useNewsFeed';
 
 interface NewsPanelProps extends PanelProps<Options> {}
 
 export function NewsPanel(props: NewsPanelProps) {
   const {
-    width,
     options: { feedUrl = DEFAULT_FEED_URL, showImage },
   } = props;
 
@@ -59,7 +58,7 @@ export function NewsPanel(props: NewsPanelProps) {
   return (
     <ScrollContainer minHeight="100%">
       {state.value.map((_, index) => {
-        return <News key={index} index={index} width={width} showImage={showImage} data={state.value} />;
+        return <News key={index} index={index} showImage={showImage} data={state.value} />;
       })}
     </ScrollContainer>
   );

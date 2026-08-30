@@ -1,4 +1,4 @@
-import { CSSProperties, FC, useRef } from 'react';
+import { type CSSProperties, type FC, useRef } from 'react';
 import * as React from 'react';
 import Transition from 'react-transition-group/Transition';
 
@@ -12,7 +12,7 @@ interface Style {
 const defaultMaxHeight = '200px';
 const defaultDuration = 200;
 
-export const defaultStyle: Style = {
+const defaultStyle: Style = {
   transition: `max-height ${defaultDuration}ms ease-in-out`,
   overflow: 'hidden',
 };

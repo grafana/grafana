@@ -1,9 +1,12 @@
 package apistore
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -11,20 +14,26 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/api/apitesting"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var rtscheme = runtime.NewScheme()
@@ -41,7 +50,6 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		opts: StorageOptions{
 			Scheme:              rtscheme,
 			EnableFolderSupport: true,
-			LargeObjectSupport:  nil,
 			MaximumNameLength:   100,
 		},
 	}
@@ -176,7 +184,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		err = meta.SetStatus(dashv1.DashboardStatus{
 			Conversion: &dashv1.DashboardConversionStatus{
 				Failed: true,
-				Error:  ptr.To("test"),
+				Error:  new("test"),
 			},
 		})
 		require.NoError(t, err)
@@ -199,6 +207,37 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "user:user2", meta2.GetUpdatedBy())
 		require.Equal(t, int64(2), meta2.GetGeneration())
+	})
+
+	t.Run("Update can not change the deprecated internal ID", func(t *testing.T) {
+		// The previously stored object owns internal ID 50
+		previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		prevMeta, err := utils.MetaAccessor(previous)
+		require.NoError(t, err)
+		prevMeta.SetDeprecatedInternalID(50) // nolint:staticcheck
+
+		assertStoredID := func(t *testing.T, updated *dashv1.Dashboard) {
+			t.Helper()
+			v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+			require.NoError(t, err)
+			stored, _, err := s.codec.Decode(v.raw.Bytes(), nil, &dashv1.Dashboard{})
+			require.NoError(t, err)
+			storedMeta, err := utils.MetaAccessor(stored)
+			require.NoError(t, err)
+			// The update is ignored: the internal ID stays pinned to the previous value
+			require.Equal(t, int64(50), storedMeta.GetDeprecatedInternalID()) // nolint:staticcheck
+		}
+
+		// Attempting to change it to a different value is ignored
+		changed := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		changedMeta, err := utils.MetaAccessor(changed)
+		require.NoError(t, err)
+		changedMeta.SetDeprecatedInternalID(999) // nolint:staticcheck
+		assertStoredID(t, changed)
+
+		// Attempting to clear it is also ignored
+		cleared := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		assertStoredID(t, cleared)
 	})
 
 	t.Run("Update should skip incrementing generation when content is unchanged", func(t *testing.T) {
@@ -237,7 +276,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, "2025-12-17T01:01:00Z", tmp.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	})
 
-	s.opts.RequireDeprecatedInternalID = true
+	s.opts.DeprecatedInternalID = DeprecatedID_Required
+	s.opts.Index = &fakeSearchIndex{inUse: map[string]bool{"100": true}}
+
 	t.Run("Should generate internal id", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{}
 		dashboard.Name = "test-name"
@@ -268,6 +309,18 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta, err = utils.MetaAccessor(newObject)
 		require.NoError(t, err)
 		require.Equal(t, meta.GetDeprecatedInternalID(), int64(1)) // nolint:staticcheck
+	})
+
+	t.Run("Should fail if deprecated ID if already in use", func(t *testing.T) {
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "test-name"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetDeprecatedInternalID(100) // nolint:staticcheck
+
+		_, err = s.prepareObjectForStorage(ctx, obj)
+		require.True(t, apierrors.IsConflict(err))
 	})
 
 	t.Run("Should remove grant permissions annotation", func(t *testing.T) {
@@ -653,50 +706,439 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "no config")
 	})
+
+	t.Run("skips when folder annotation is 'general' (canonical root)", func(t *testing.T) {
+		s := &Storage{
+			opts:         StorageOptions{EnableFolderSupport: true},
+			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
+		}
+		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
 }
 
-func TestPrepareLargeObjectForStorage(t *testing.T) {
+func TestVerifyFolder(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+
+	makeDash := func(t *testing.T, parent string) utils.GrafanaMetaAccessor {
+		t.Helper()
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1", Namespace: "default"}}
+		dash.SetGroupVersionKind(dashv1.DashboardResourceInfo.GroupVersionKind())
+		acc, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		if parent != "" {
+			acc.SetFolder(parent)
+		}
+		return acc
+	}
+
+	t.Run("support enabled, empty folder passes", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: true},
+		}
+		obj := makeDash(t, "")
+		require.NoError(t, s.verifyFolder(obj))
+		require.Empty(t, obj.GetFolder())
+	})
+
+	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: true},
+		}
+		obj := makeDash(t, "my-folder")
+		require.NoError(t, s.verifyFolder(obj))
+		require.Equal(t, "my-folder", obj.GetFolder())
+	})
+
+	t.Run("support disabled, empty folder passes", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: false},
+		}
+		obj := makeDash(t, "")
+		require.NoError(t, s.verifyFolder(obj))
+	})
+
+	t.Run("support disabled, folder set returns Invalid (422) with field cause", func(t *testing.T) {
+		s := &Storage{
+			gr:   dashv1.DashboardResourceInfo.GroupResource(),
+			opts: StorageOptions{EnableFolderSupport: false},
+		}
+		obj := makeDash(t, "my-folder")
+		err := s.verifyFolder(obj)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
+
+		status, ok := err.(apierrors.APIStatus)
+		require.True(t, ok, "error should implement APIStatus")
+		require.NotNil(t, status.Status().Details)
+		require.NotEmpty(t, status.Status().Details.Causes)
+		require.Equal(t,
+			"metadata.annotations[grafana.app/folder]",
+			status.Status().Details.Causes[0].Field,
+		)
+	})
+}
+
+func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int64N(1024))
 	require.NoError(t, err)
 
-	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser})
+	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+		snowflake: node,
+		opts: StorageOptions{
+			Scheme:              rtscheme,
+			EnableFolderSupport: false,
+		},
+	}
 
-	dashboard := dashv1.Dashboard{}
-	dashboard.Name = "test-name"
-	t.Run("Should deconstruct object if size is over threshold", func(t *testing.T) {
-		los := LargeObjectSupportFake{
-			threshold: 0,
-		}
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+	)
 
-		f := &Storage{
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
-			opts: StorageOptions{
-				LargeObjectSupport: &los,
-			},
-		}
+	t.Run("create: folder annotation returns Invalid (422)", func(t *testing.T) {
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("nope")
 
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
-		require.Nil(t, err)
-		require.True(t, los.deconstructed)
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
 	})
 
-	t.Run("Should not deconstruct object if size is under threshold", func(t *testing.T) {
-		los := LargeObjectSupportFake{
-			threshold: 1000,
-		}
+	t.Run("update: introducing a folder annotation returns Invalid (422)", func(t *testing.T) {
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		newDash := oldDash.DeepCopy()
+		meta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		meta.SetFolder("nope")
 
-		f := &Storage{
-			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
-			snowflake: node,
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err)
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid (422), got %T: %v", err, err)
+	})
+
+	t.Run("create: no folder annotation succeeds", func(t *testing.T) {
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d2"}}
+		_, err := s.prepareObjectForStorage(ctx, dash)
+		require.NoError(t, err)
+	})
+}
+
+// fakeSearchIndex is a minimal resourcepb.ResourceIndexClient for tests. Search
+// reports a hit when the request filters on a deprecatedInternalID label whose
+// value is listed in inUse, and reports no hits otherwise.
+type fakeSearchIndex struct {
+	resourcepb.ResourceIndexClient
+	inUse map[string]bool // deprecatedInternalID label values that already exist
+}
+
+func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	rsp := &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}
+	for _, label := range req.GetOptions().GetLabels() {
+		if label.GetKey() != utils.LabelKeyDeprecatedInternalID {
+			continue
+		}
+		for _, v := range label.GetValues() {
+			if f.inUse[v] {
+				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
+			}
+		}
+	}
+	return rsp, nil
+}
+
+// fakeOrder builds an immutable version-order snapshot for a single group (highest first).
+func fakeOrder(group string, order ...string) map[string][]string {
+	return map[string][]string{group: order}
+}
+
+// dashboardAt returns a dashboard with TypeMeta set to version so checkGVK takes the resolved-GVK path.
+func dashboardAt(version string) *dashv1.Dashboard {
+	d := &dashv1.Dashboard{}
+	d.Name = "test-name"
+	d.APIVersion = dashv1.DashboardResourceInfo.GroupResource().Group + "/" + version
+	d.Kind = "Dashboard"
+	return d
+}
+
+// newGlobalCapRegistry builds a registry whose global (ini) layer caps group at maxVersion.
+func newGlobalCapRegistry(group string, order []string, maxVersion string) *versionpolicy.VersionPolicyRegistry {
+	return versionpolicy.NewVersionPolicyRegistry(
+		versionpolicy.NewResolver(fakeOrder(group, order...)),
+		nil,
+		map[string]versionpolicy.VersionPolicy{group: {MaxAllowedVersion: maxVersion}},
+	)
+}
+
+func TestEncodeMaxVersionEnforcement(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	group := dashv1.DashboardResourceInfo.GroupResource().Group
+
+	newStorage := func(gr schema.GroupResource, vp *versionpolicy.VersionPolicyRegistry) *Storage {
+		return &Storage{
+			gr:    gr,
+			codec: apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 			opts: StorageOptions{
-				LargeObjectSupport: &los,
+				Scheme:        rtscheme,
+				VersionPolicy: vp,
 			},
 		}
+	}
 
-		_, err := f.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
-		require.Nil(t, err)
-		require.False(t, los.deconstructed)
+	t.Run("max=v1 + object v2 is rejected with a 4xx naming the ceiling", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v2"), &buf, true)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err) || apierrors.IsConflict(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
+	})
+
+	t.Run("max=v2 + object v1 is stored as v1, unchanged (regression guard)", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v1"), &buf, true)
+		require.NoError(t, err)
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v1", out.GetAPIVersion(), "no down/up-conversion: stored version must be exactly what was written")
+	})
+
+	t.Run("no policy set for the group leaves encode unchanged", func(t *testing.T) {
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), nil)
+
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v2"), &buf, true)
+		require.NoError(t, err)
+	})
+
+	codecStorage := func(reg *versionpolicy.VersionPolicyRegistry, persistAs string) *Storage {
+		return &Storage{
+			gr: dashv1.DashboardResourceInfo.GroupResource(),
+			codec: upcastCodec{
+				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+				apiVersion: group + "/" + persistAs,
+			},
+			opts: StorageOptions{Scheme: nil, VersionPolicy: reg}, // Scheme nil = codec path
+		}
+	}
+
+	t.Run("codec path: cap enforced against the persisted version, not the declared one", func(t *testing.T) {
+		// The codec converts up (persists v2) while the request declared v1 (<= cap). The old check read the
+		// declared version and let this through; the fix rejects against the persisted v2.
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		var buf bytes.Buffer
+		err := codecStorage(reg, "v2").encode(dashboardAt("v1"), &buf, true)
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "v1", "message should name the ceiling version")
+		require.Zero(t, buf.Len(), "rejected write must not leave its payload in the destination buffer")
+	})
+
+	t.Run("codec path: persisted version at/under cap is allowed", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
+		var buf bytes.Buffer
+		require.NoError(t, codecStorage(reg, "v1").encode(dashboardAt("v1"), &buf, true))
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v1", out.GetAPIVersion())
+	})
+
+	t.Run("codec path: uncapped group encodes directly", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "") // no cap for the group
+		var buf bytes.Buffer
+		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf, true))
+	})
+
+	t.Run("codec path: real LegacyCodec down-converts to the cap version (preferred==cap)", func(t *testing.T) {
+		// Real LegacyCodec, not a fake, with cap version first (as ReorderGroupVersionsForLegacyCodec does).
+		capGroup := "captest.grafana.app"
+		capGV := schema.GroupVersion{Group: capGroup, Version: "v1"}
+		higherGV := schema.GroupVersion{Group: capGroup, Version: "v2"}
+		codec := newCapCodec(t, capGV, higherGV)
+
+		reg := newGlobalCapRegistry(capGroup, []string{"v2", "v1"}, "v1")
+		s := &Storage{
+			gr:    schema.GroupResource{Group: capGroup, Resource: "widgets"},
+			codec: codec,
+			opts:  StorageOptions{Scheme: nil, VersionPolicy: reg},
+		}
+
+		var buf bytes.Buffer
+		require.NoError(t, s.encode(&capWidget{Value: "hi"}, &buf, true))
+
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, capGroup+"/v1", out.GetAPIVersion(), "preferred==cap: codec must persist the cap version")
+	})
+
+	t.Run("codec path: a persisted version from another group is rejected, not silently allowed", func(t *testing.T) {
+		// The codec picks a GVK outside the resource's group. That version cannot be ranked against the
+		// group's cap, so it must be rejected rather than slip through as unregistered.
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := &Storage{
+			gr: dashv1.DashboardResourceInfo.GroupResource(),
+			codec: upcastCodec{
+				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+				apiVersion: "other.grafana.app/v1",
+			},
+			opts: StorageOptions{Scheme: nil, VersionPolicy: reg},
+		}
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v1"), &buf, true)
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "does not match resource group")
+		require.Zero(t, buf.Len())
+	})
+
+	t.Run("enforceCap=false (deletion path) allows an over-cap write", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+		var buf bytes.Buffer
+		// enforceCap=false is used for deletion-related updates: a v2 write (over the v1 cap) is allowed.
+		require.NoError(t, s.encode(dashboardAt("v2"), &buf, false))
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v2", out.GetAPIVersion())
+	})
+}
+
+// upcastCodec is a codec whose Encode always writes a fixed apiVersion, simulating a versioning codec
+// that converts to a higher-priority storage version than the request declared. Decode is inherited.
+type upcastCodec struct {
+	runtime.Codec
+	apiVersion string
+}
+
+func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
+	_, err := fmt.Fprintf(w, `{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)
+	return err
+}
+
+// capWidget is a hub (internal) test type; capWidgetV1/capWidgetV2 are its external versions.
+type capWidget struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidget) DeepCopyObject() runtime.Object {
+	out := &capWidget{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+type capWidgetV1 struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidgetV1) DeepCopyObject() runtime.Object {
+	out := &capWidgetV1{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+type capWidgetV2 struct {
+	v1.TypeMeta   `json:",inline"`
+	v1.ObjectMeta `json:"metadata,omitempty"`
+	Value         string `json:"value"`
+}
+
+func (in *capWidgetV2) DeepCopyObject() runtime.Object {
+	out := &capWidgetV2{TypeMeta: in.TypeMeta, Value: in.Value}
+	in.DeepCopyInto(&out.ObjectMeta)
+	return out
+}
+
+// newCapCodec registers capWidget as the hub and versions[0]/[1] as its spokes, returning a real
+// serializer.CodecFactory.LegacyCodec(versions...).
+func newCapCodec(t *testing.T, versions ...schema.GroupVersion) runtime.Codec {
+	t.Helper()
+	require.Len(t, versions, 2, "newCapCodec takes exactly the two external spokes, cap version first")
+
+	s := runtime.NewScheme()
+	internalGV := schema.GroupVersion{Group: versions[0].Group, Version: runtime.APIVersionInternal}
+	s.AddKnownTypeWithName(internalGV.WithKind("Widget"), &capWidget{})
+	s.AddKnownTypeWithName(versions[0].WithKind("Widget"), &capWidgetV1{})
+	s.AddKnownTypeWithName(versions[1].WithKind("Widget"), &capWidgetV2{})
+
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV1)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidget), b.(*capWidgetV1)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+	require.NoError(t, s.AddConversionFunc((*capWidget)(nil), (*capWidgetV2)(nil), func(a, b interface{}, _ conversion.Scope) error {
+		in, out := a.(*capWidget), b.(*capWidgetV2)
+		out.ObjectMeta, out.Value = in.ObjectMeta, in.Value
+		return nil
+	}))
+
+	return serializer.NewCodecFactory(s).LegacyCodec(versions...)
+}
+
+// TestUpdateCapExemptsDeletion covers the drain-only policy: an object stored above the cap cannot be
+// mutated by a regular update, but soft delete and the writes that complete deletion still go through.
+func TestUpdateCapExemptsDeletion(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	group := dashv1.DashboardResourceInfo.GroupResource().Group
+	node, err := snowflake.NewNode(1)
+	require.NoError(t, err)
+	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+		snowflake: node,
+		opts: StorageOptions{
+			Scheme:            rtscheme,
+			MaximumNameLength: 100,
+			VersionPolicy:     newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1"),
+		},
+	}
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser})
+
+	// previous is stored above the v1 cap.
+	prev := func() *dashv1.Dashboard {
+		d := dashboardAt("v2")
+		d.UID = "uid-1"
+		return d
+	}
+
+	t.Run("a regular update to an over-cap object is rejected", func(t *testing.T) {
+		_, err := s.prepareObjectForUpdate(ctx, dashboardAt("v2"), prev())
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+	})
+
+	t.Run("a soft delete (sets deletionTimestamp) on an over-cap object is allowed", func(t *testing.T) {
+		now := v1.Now()
+		upd := dashboardAt("v2")
+		upd.DeletionTimestamp = &now
+		_, err := s.prepareObjectForUpdate(ctx, upd, prev())
+		require.NoError(t, err)
+	})
+
+	t.Run("a write while deletionTimestamp is already set is allowed (finalizer/status)", func(t *testing.T) {
+		now := v1.Now()
+		p := prev()
+		p.DeletionTimestamp = &now
+		upd := dashboardAt("v2")
+		upd.DeletionTimestamp = &now
+		_, err := s.prepareObjectForUpdate(ctx, upd, p)
+		require.NoError(t, err)
 	})
 }

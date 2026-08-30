@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import { ComponentType } from 'react';
+import { type ComponentType } from 'react';
 
 import {
   AIImproveAnnotationsButtonComponent,
-  GenAIImproveAnnotationsButtonProps,
+  type GenAIImproveAnnotationsButtonProps,
   addAIImproveAnnotationsButton,
 } from './addAIImproveAnnotationsButton';
 

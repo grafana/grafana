@@ -1,4 +1,4 @@
-import { AdHocFilterWithLabels } from '@grafana/scenes';
+import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 /**
  * Custom expression builder for Prometheus that properly handles regex operators.

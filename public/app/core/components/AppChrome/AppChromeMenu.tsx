@@ -5,25 +5,28 @@ import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 
 interface Props {}
 
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
   const animationSpeed = theme.transitions.duration.shortest;
-  const animationStyles = useStyles2(getAnimStyles, animationSpeed);
+  const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
@@ -45,7 +48,7 @@ export function AppChromeMenu({}: Props) {
     ref
   );
   const { dialogProps } = useDialog({ 'aria-label': t('navigation.megamenu.dialog-label', 'Navigation') }, ref);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (
     <div className={styles.wrapper}>
@@ -79,15 +82,14 @@ export function AppChromeMenu({}: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     backdrop: css({
-      backgroundColor: theme.components.overlay.background,
       bottom: 0,
       left: 0,
       position: 'fixed',
       right: 0,
-      top: 0,
+      top: `${getChromeHeaderLevelHeight()}px`,
       zIndex: theme.zIndex.modalBackdrop,
     }),
     menu: css({
@@ -99,8 +101,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: 0,
-      backgroundColor: theme.colors.background.primary,
+      top: `${getChromeHeaderLevelHeight()}px`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
@@ -117,7 +120,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number, visualRefreshEnabled: boolean) => {
   const commonTransition = {
     [theme.transitions.handleMotion('no-preference')]: {
       transitionDuration: `${animationDuration}ms`,
@@ -145,7 +148,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },

@@ -1,18 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
-import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
+import { interval, type Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 
-import { stringToMs, SelectableValue } from '@grafana/data';
+import { stringToMs } from '@grafana/data';
 
 import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
-
-export function getIntervalFromString(strInterval: string): SelectableValue<number> {
-  return {
-    label: strInterval,
-    value: stringToMs(strInterval),
-  };
-}
 
 interface Props {
   func: () => unknown;

@@ -1,15 +1,17 @@
-import { AnyAction, combineReducers, Reducer } from 'redux';
+import { type AnyAction, combineReducers, type Reducer } from 'redux';
 
-import { initialVariableEditorState, variableEditorReducer, VariableEditorState } from '../editor/reducer';
-import { initialVariableInspectState, variableInspectReducer, VariableInspectState } from '../inspect/reducer';
-import { initialOptionPickerState, optionsPickerReducer, OptionsPickerState } from '../pickers/OptionsPicker/reducer';
+import { initialVariableInspectState, variableInspectReducer, type VariableInspectState } from '../inspect/reducer';
+import {
+  initialOptionPickerState,
+  optionsPickerReducer,
+  type OptionsPickerState,
+} from '../pickers/OptionsPicker/reducer';
 
-import { initialTransactionState, transactionReducer, TransactionState } from './transactionReducer';
-import { initialVariablesState, VariablesState } from './types';
+import { initialTransactionState, transactionReducer, type TransactionState } from './transactionReducer';
+import { initialVariablesState, type VariablesState } from './types';
 import { variablesReducer } from './variablesReducer';
 
 export interface TemplatingState {
-  editor: VariableEditorState;
   variables: VariablesState;
   optionsPicker: OptionsPickerState;
   transaction: TransactionState;
@@ -21,7 +23,6 @@ let templatingReducers: Reducer<TemplatingState, AnyAction, Partial<TemplatingSt
 export function getTemplatingReducers() {
   if (!templatingReducers) {
     templatingReducers = combineReducers({
-      editor: variableEditorReducer,
       variables: variablesReducer,
       optionsPicker: optionsPickerReducer,
       transaction: transactionReducer,
@@ -34,7 +35,6 @@ export function getTemplatingReducers() {
 
 export function getInitialTemplatingState() {
   return {
-    editor: initialVariableEditorState,
     variables: initialVariablesState,
     optionsPicker: initialOptionPickerState,
     transaction: initialTransactionState,

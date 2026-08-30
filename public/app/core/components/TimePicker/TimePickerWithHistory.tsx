@@ -1,8 +1,15 @@
 import { uniqBy } from 'lodash';
 
-import { AppEvents, DateTime, LocalStorageValueProvider, TimeRange, isDateTime, rangeUtil } from '@grafana/data';
+import {
+  AppEvents,
+  type DateTime,
+  LocalStorageValueProvider,
+  type TimeRange,
+  isDateTime,
+  rangeUtil,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+import { type TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
@@ -62,7 +69,7 @@ function getValidHistory(values: unknown): TimePickerHistoryItem[] {
   return result;
 }
 
-export function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
+function deserializeHistory(values: TimePickerHistoryItem[]): TimeRange[] {
   return values.map((item) => rangeUtil.convertRawToRange(item, 'utc', undefined, 'YYYY-MM-DD HH:mm:ss'));
 }
 
@@ -98,7 +105,7 @@ function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {
  * Check if the value is a valid TimePickerHistoryItem. If it doesn't match the format exactly, it will return false.
  * @returns true if the value match exactly to TimePickerHistoryItem, false otherwise
  */
-export function getValidHistoryItem(value: unknown): TimePickerHistoryItem | null {
+function getValidHistoryItem(value: unknown): TimePickerHistoryItem | null {
   // First check if it's a valid object
   if (typeof value !== 'object' || value === null) {
     return null;

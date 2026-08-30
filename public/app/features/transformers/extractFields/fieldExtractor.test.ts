@@ -2,7 +2,7 @@ import { FieldType, toDataFrame } from '@grafana/data';
 
 import { addExtractedFields } from './extractFields';
 import { fieldExtractors } from './fieldExtractors';
-import { ExtractFieldsOptions, FieldExtractorID } from './types';
+import { type ExtractFieldsOptions, FieldExtractorID } from './types';
 
 describe('Extract fields from text', () => {
   it('JSON extractor', async () => {
@@ -131,6 +131,52 @@ describe('Extract fields from text', () => {
     const newFrame = addExtractedFields(frame, { format: FieldExtractorID.JSON, source: 'foo' });
     expect(newFrame.fields.length).toBe(2);
     expect(newFrame.fields[1].name).toBe('bar');
+  });
+
+  it('deduplicates extracted names against each other', async () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'foo', type: FieldType.string, values: ['{"foo":"extracedValue1","foo 1":"extracedValue2"}'] }],
+    });
+    const newFrame = addExtractedFields(frame, { format: FieldExtractorID.JSON, source: 'foo' });
+    expect(newFrame.fields.map((f) => f.name)).toEqual(['foo', 'foo 1', 'foo 1 1']);
+  });
+
+  it('does not deduplicate against fields discarded by replace', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'Line', type: FieldType.string, values: ['{"id":"abc","level":"warn"}'] },
+        { name: 'id', type: FieldType.string, values: ['originalId'] },
+      ],
+    });
+    const newFrame = addExtractedFields(frame, { format: FieldExtractorID.JSON, source: 'Line', replace: true });
+    expect(newFrame.fields.map((f) => f.name)).toEqual(['id', 'level']);
+  });
+
+  it('deduplicates against fields kept by replace: false', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'Line', type: FieldType.string, values: ['{"id":"abc","level":"warn"}'] },
+        { name: 'id', type: FieldType.string, values: ['originalId'] },
+      ],
+    });
+    const newFrame = addExtractedFields(frame, { format: FieldExtractorID.JSON, source: 'Line', replace: false });
+    expect(newFrame.fields.map((f) => f.name)).toEqual(['Line', 'id', 'id 1', 'level']);
+  });
+
+  it('deduplicates against the time field kept by keepTime', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Line', type: FieldType.string, values: ['{"Time":"extracedValue1","level":"warn"}'] },
+      ],
+    });
+    const newFrame = addExtractedFields(frame, {
+      format: FieldExtractorID.JSON,
+      source: 'Line',
+      replace: true,
+      keepTime: true,
+    });
+    expect(newFrame.fields.map((f) => f.name)).toEqual(['Time', 'Time 1', 'level']);
   });
 
   it('splits by regexp', async () => {

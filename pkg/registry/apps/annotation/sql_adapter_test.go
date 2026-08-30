@@ -2,6 +2,7 @@ package annotation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -9,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -25,13 +29,17 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
+var testSpanRecorder = tracetest.NewSpanRecorder()
+
 func TestMain(m *testing.M) {
+	otel.SetTracerProvider(tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(testSpanRecorder)))
 	testsuite.Run(m)
 }
 
 // fakeRepo implements annotations.Repository for testing.
 type fakeRepo struct {
-	items []*annotations.ItemDTO
+	items     []*annotations.ItemDTO
+	lastQuery *annotations.ItemQuery
 }
 
 func newFakeRepo() *fakeRepo {
@@ -45,6 +53,17 @@ func (f *fakeRepo) addItem(item *annotations.ItemDTO) {
 }
 
 func (f *fakeRepo) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	f.lastQuery = query
+
+	if query.AnnotationID != 0 {
+		for _, item := range f.items {
+			if item.ID == query.AnnotationID {
+				return []*annotations.ItemDTO{item}, nil
+			}
+		}
+		return []*annotations.ItemDTO{}, nil
+	}
+
 	start := int(query.Offset)
 	end := start + int(query.Limit)
 
@@ -81,6 +100,64 @@ func (f *fakeRepo) Delete(ctx context.Context, params *annotations.DeleteParams)
 
 func (f *fakeRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{}, nil
+}
+
+func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {
+	repo := newFakeRepo()
+	repo.addItem(&annotations.ItemDTO{ID: 1, Text: "test"})
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
+
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		OrgID: 1,
+	})
+
+	t.Run("List sets Type to annotation", func(t *testing.T) {
+		_, err := adapter.List(ctx, "default", ListOptions{Limit: 10})
+		require.NoError(t, err)
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
+
+	t.Run("Get sets Type to annotation", func(t *testing.T) {
+		_, _ = adapter.Get(ctx, "default", "a-1")
+		require.NotNil(t, repo.lastQuery)
+		assert.Equal(t, "annotation", repo.lastQuery.Type)
+		assert.Zero(t, repo.lastQuery.AlertID)
+	})
+}
+
+func TestSQLAdapter_Get(t *testing.T) {
+	repo := newFakeRepo()
+	repo.addItem(&annotations.ItemDTO{ID: 1, Text: "first"})
+	repo.addItem(&annotations.ItemDTO{ID: 2, Text: "second"})
+	repo.addItem(&annotations.ItemDTO{ID: 3, Text: "third"})
+
+	adapter := NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
+
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{
+		OrgID: 1,
+	})
+
+	t.Run("returns the matching annotation by ID", func(t *testing.T) {
+		result, err := adapter.Get(ctx, "default", "a-2")
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, "a-2", result.Name)
+		assert.Equal(t, "second", result.Spec.Text)
+		assert.Equal(t, int64(2), repo.lastQuery.AnnotationID)
+	})
+
+	t.Run("returns not found for non-existent ID", func(t *testing.T) {
+		_, err := adapter.Get(ctx, "default", "a-999")
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, ErrNotFound))
+	})
+
+	t.Run("returns error for invalid name format", func(t *testing.T) {
+		_, err := adapter.Get(ctx, "default", "invalid")
+		require.Error(t, err)
+	})
 }
 
 func TestSQLAdapter_ListPagination(t *testing.T) {
@@ -188,7 +265,7 @@ func TestSQLAdapter_ListPagination(t *testing.T) {
 }
 
 func TestSQLAdapter_ListWithCreatedByFilter(t *testing.T) {
-	sqlDB := db.InitTestDB(t)
+	sqlDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 2
 

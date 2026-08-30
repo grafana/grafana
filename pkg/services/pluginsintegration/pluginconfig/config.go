@@ -36,15 +36,16 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
 		cfg.ForwardHostEnvVars,
-		cfg.GrafanaComSSOAPIToken,
+		cfg.GrafanaComProxyAPIToken,
 	), nil
 }
 
 // PluginInstanceCfg contains the configuration for a plugin instance.
 // It is used to provide configuration to the plugin instance either via env vars or via each plugin request.
 type PluginInstanceCfg struct {
-	GrafanaAppURL string
-	Features      featuremgmt.FeatureToggles
+	GrafanaAppURL               string
+	MarketplaceLicenseDirectory string
+	Features                    featuremgmt.FeatureToggles
 
 	Tracing config.Tracing
 
@@ -105,6 +106,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 
 	return &PluginInstanceCfg{
 		GrafanaAppURL:                       cfg.AppURL,
+		MarketplaceLicenseDirectory:         cfg.MarketplaceLicenseDirectory,
 		Features:                            features,
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),

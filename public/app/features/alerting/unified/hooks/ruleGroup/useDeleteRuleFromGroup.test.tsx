@@ -4,7 +4,7 @@ import { byRole, byText } from 'testing-library-selector';
 
 import server from '@grafana/test-utils/server';
 import { AccessControlAction } from 'app/types/accessControl';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { setupMswServer } from '../../mockApi';
 import {

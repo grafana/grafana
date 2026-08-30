@@ -8,7 +8,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
 
-import { ExtensionDropdownProps } from './types';
+import { type ExtensionDropdownProps } from './types';
 
 const AddToDashboard = lazy(() =>
   import('./../AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
@@ -43,7 +43,7 @@ export const ConfirmDeletedPermanentlyModal = ({ isOpen, onDismiss, guid }: Moda
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmButtonVariant="destructive"
+      confirmVariant="destructive"
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.delete-modal.body">

@@ -1,9 +1,9 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getPluginDetails } from '../admin/api';
-import { getPluginSettings } from '../pluginSettings';
 
 type SandboxEligibilityCheckParams = {
   pluginId: string;
@@ -58,7 +58,7 @@ export async function isPluginFrontendSandboxEligible({ pluginId }: SandboxEligi
 async function isPluginSignatureEligibleForSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   try {
     // this can fail if we are trying to fetch settings of a non-installed plugin
-    const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
+    const pluginMeta = await getPluginSettings(pluginId, false);
     return pluginMeta.signatureType !== PluginSignatureType.grafana && pluginMeta.signature !== 'internal';
   } catch (e) {
     try {

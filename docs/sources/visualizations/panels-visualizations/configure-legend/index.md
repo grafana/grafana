@@ -126,11 +126,42 @@ Set where on the visualization a legend is displayed. Choose from:
 
 If you set the legend placement to **Right**, the **Width** option becomes available. Leave the field empty to allow Grafana to automatically set the legend width or enter a value in the field.
 
+### Limit
+
+Limit how many series items are shown by default.
+When the series count exceeds the limit, click the link to show all items to see the full list of series.
+
+Legend limits are supported for the following visualizations: time series, bar chart, bar gauge, candlestick, histogram, pie chart, state timeline, status history, trend, and XY chart.
+
 ### Values
 
 You can add more context to a visualization by adding series data values or [calculations](ref:calculations) to a legend. You can add as many values as you'd like. After you apply your changes, you can scroll the legend to see all values.
 
 ![Legend showing values](/media/docs/grafana/panels-visualizations/screenshot-legend-values-10.3.png)
+
+### Series visibility
+
+Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
+This lets you narrow the visible series by name or by label without editing the query, which is useful when a panel renders many series and you want to focus on a subset.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-series-visibility-v13.1.png" max-width="400px" alt="Series visibility filter switch" >}}
+
+After toggling the switch on, click the **Series visibility** icon to open a tooltip that has one or two sections, depending on your dataset:
+
+- **By name**: Lists each unique series name. Select one or more names to limit the visualization to those series.
+- **By labels**: Lists each label key with its values. Select label values to filter series that match.
+
+The tooltip also provides the following options:
+
+- **Select all and Deselect all**: Toggle every value in a section.
+- **Clear all**: Reset the filter.
+- **Pin to sidebar**: Dock the filter alongside the panel so it stays open while you explore.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-series-visibility-v13.1.mp4" >}}
+
+{{< admonition type="note" >}}
+The series visibility filter is currently only supported in the time series visualization.
+{{< /admonition >}}
 
 ## Change a series color
 

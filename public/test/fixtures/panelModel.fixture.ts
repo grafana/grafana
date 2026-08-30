@@ -1,6 +1,6 @@
 import { Chance } from 'chance';
 
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 
 export function wellFormedPanelModel<T extends object>(panelOptions: T, seed = 1): PanelModel<T> {
   const random = Chance(seed);

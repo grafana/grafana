@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
+import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
 
 interface Context {
   rule: CombinedRule;

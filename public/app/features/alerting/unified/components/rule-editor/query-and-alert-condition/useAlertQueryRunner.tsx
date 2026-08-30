@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data';
 
-import { AlertQuery } from '../../../../../../types/unified-alerting-dto';
+import { type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 
 export function useAlertQueryRunner() {
@@ -30,9 +30,10 @@ export function useAlertQueryRunner() {
     runner.current.cancel();
   }, []);
 
-  const runQueries = useCallback((queriesToPreview: AlertQuery[], condition: string) => {
-    runner.current.run(queriesToPreview, condition);
-  }, []);
+  const runQueries = useCallback(
+    (queriesToPreview: AlertQuery[], condition: string) => runner.current.run(queriesToPreview, condition),
+    []
+  );
 
   const isPreviewLoading = useMemo(() => {
     return Object.values(queryPreviewData).some((d) => d.state === LoadingState.Loading);

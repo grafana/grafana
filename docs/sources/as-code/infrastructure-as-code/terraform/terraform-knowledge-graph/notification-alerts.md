@@ -190,6 +190,8 @@ resource "grafana_asserts_notification_alerts_config" "example" {
 
 ## Best practices
 
+Consider the following best practices when managing notification alerts with Terraform.
+
 ### Label management
 
 - Use specific and meaningful labels in `match_labels` to ensure precise alert filtering

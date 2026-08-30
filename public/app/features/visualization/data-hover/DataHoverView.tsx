@@ -1,10 +1,17 @@
 import { css } from '@emotion/css';
 
-import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
+import {
+  type DataFrame,
+  type Field,
+  formattedValueToString,
+  getFieldDisplayName,
+  type GrafanaTheme2,
+  type LinkModel,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TextLink, useStyles2 } from '@grafana/ui';
-import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
-import { getDataLinks } from 'app/plugins/panel/status-history/utils';
+import { TextLink, getFieldDisplayLinks, useStyles2 } from '@grafana/ui';
+
+import { renderValue } from './renderValue';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -37,7 +44,7 @@ export function getDisplayValuesAndLinks(data: DataFrame, rowIndex: number, colu
     const value = field.values[rowIndex];
     const fieldDisplay = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
-    getDataLinks(field, rowIndex).forEach((link) => {
+    getFieldDisplayLinks(field, rowIndex).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
         links.push(link);

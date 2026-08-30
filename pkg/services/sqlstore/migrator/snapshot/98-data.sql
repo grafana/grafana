@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
 -- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
@@ -219,6 +219,11 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 
 
 --
+-- Dumping data for table `kv_leases`
+--
+
+
+--
 -- Dumping data for table `library_element`
 --
 
@@ -240,6 +245,11 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 
 --
 -- Dumping data for table `ngalert_configuration`
+--
+
+
+--
+-- Dumping data for table `pending_tenant_deletions`
 --
 
 
@@ -314,22 +324,12 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 
 
 --
--- Dumping data for table `resource`
---
-
-
---
 -- Dumping data for table `resource_blob`
 --
 
 
 --
 -- Dumping data for table `resource_events`
---
-
-
---
--- Dumping data for table `resource_history`
 --
 
 
@@ -422,14 +422,6 @@ INSERT INTO `dashboard_acl` (`id`, `org_id`, `dashboard_id`, `user_id`, `team_id
 -- Dumping data for table `test_data`
 --
 
-
---
--- Dumping data for table `unifiedstorage_migration_log`
---
-
-INSERT INTO `unifiedstorage_migration_log` (`id`, `migration_id`, `sql`, `success`, `error`, `timestamp`) VALUES
-  (1,'create unifiedstorage_migration_log table','CREATE TABLE IF NOT EXISTS `unifiedstorage_migration_log` (\n`id` BIGINT(20) PRIMARY KEY AUTO_INCREMENT NOT NULL\n, `migration_id` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `sql` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `success` TINYINT(1) NOT NULL\n, `error` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `timestamp` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  (2,'playlists migration','unified storage data migration: playlists',1,'','2022-01-01 00:00:00');
 
 --
 -- Dumping data for table `user_auth`

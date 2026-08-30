@@ -31,7 +31,9 @@ refs:
 
 Alerts and alert notifications should provide key information to help alert responders and incident participants understand what happened in their system and how to respond.
 
-Grafana Alerting offers the ability to monitor your alerts and manage your alerting setup. You can get an overview of your alerts, track the history of alert states, and monitor notification statuses. These can help you start investigating alert issues within Grafana and improve the reliability of your alerting implementation.
+Grafana Alerting offers the ability to monitor your alerts and manage your alerting setup. You can get an overview of your alerts, track the history of alert states, and review notifications that were already sent. These can help you start investigating alert issues within Grafana and improve the reliability of your alerting implementation.
+
+The **History** page includes separate tabs for alert state changes and sent notifications.
 
 {{< figure src="/media/docs/alerting/alert-history-page.png" max-width="750px" alt="History page in Grafana Alerting" >}}
 

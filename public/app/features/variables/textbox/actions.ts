@@ -1,5 +1,5 @@
-import { UrlQueryValue } from '@grafana/data';
-import { ThunkResult } from 'app/types/store';
+import { type UrlQueryValue } from '@grafana/data';
+import { type ThunkResult } from 'app/types/store';
 
 import { variableAdapters } from '../adapters';
 import { ensureStringValues } from '../ensureStringValues';
@@ -7,7 +7,7 @@ import { setOptionFromUrl } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
-import { KeyedVariableIdentifier } from '../state/types';
+import { type KeyedVariableIdentifier } from '../state/types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { createTextBoxOptions } from './reducer';

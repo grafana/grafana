@@ -7,12 +7,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestLabelsString(t *testing.T) {
@@ -81,7 +81,7 @@ func TestNewData(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: false,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 			},
 		}
@@ -98,13 +98,13 @@ func TestNewData(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 				"B": {
 					Var:              "B",
 					IsDatasourceNode: false,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(20.0),
+					Value:            new(20.0),
 				},
 			},
 		}
@@ -121,13 +121,13 @@ func TestNewData(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 				"B": {
 					Var:              "B",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "bar"},
-					Value:            util.Pointer(20.0),
+					Value:            new(20.0),
 				},
 			},
 		}
@@ -171,19 +171,19 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 				"B": {
 					Var:              "B",
 					IsDatasourceNode: false,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(20.0),
+					Value:            new(20.0),
 				},
 				"C": {
 					Var:              "C",
 					IsDatasourceNode: false,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(30.0),
+					Value:            new(30.0),
 				},
 			},
 		}
@@ -201,19 +201,19 @@ func TestDatasourceValueInTemplating(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 				"B": {
 					Var:              "B",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(20.0),
+					Value:            new(20.0),
 				},
 				"C": {
 					Var:              "C",
 					IsDatasourceNode: false,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(30.0),
+					Value:            new(30.0),
 				},
 			},
 		}
@@ -253,7 +253,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(1.0),
+					Value:  new(1.0),
 				},
 			},
 		},
@@ -266,7 +266,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:              "A",
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(1.1),
+					Value:            new(1.1),
 					IsDatasourceNode: true,
 				},
 			},
@@ -280,7 +280,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:              "A",
 					Labels:           data.Labels{},
-					Value:            util.Pointer(1.0),
+					Value:            new(1.0),
 					IsDatasourceNode: true,
 				},
 			},
@@ -310,13 +310,13 @@ func TestExpandTemplate(t *testing.T) {
 				"query": {
 					Var:              "query",
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.123),
+					Value:            new(10.123),
 					IsDatasourceNode: true,
 				},
 				"math": {
 					Var:              "math",
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 					IsDatasourceNode: false,
 				},
 			},
@@ -336,13 +336,13 @@ func TestExpandTemplate(t *testing.T) {
 				"query": {
 					Var:              "query",
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.123),
+					Value:            new(10.123),
 					IsDatasourceNode: true,
 				},
 				"second-query": {
 					Var:              "second-query",
 					Labels:           data.Labels{"instance": "bar"},
-					Value:            util.Pointer(20.456),
+					Value:            new(20.456),
 					IsDatasourceNode: true,
 				},
 			},
@@ -387,22 +387,22 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  util.Pointer(0.0),
+					Value:  new(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1.0),
+					Value:  new(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1048576.0),
+					Value:  new(1048576.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  util.Pointer(.12),
+					Value:  new(.12),
 				},
 			},
 		},
@@ -422,42 +422,42 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  util.Pointer(0.0),
+					Value:  new(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1.0),
+					Value:  new(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  util.Pointer(60.0),
+					Value:  new(60.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  util.Pointer(3600.0),
+					Value:  new(3600.0),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  util.Pointer(86400.0),
+					Value:  new(86400.0),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  util.Pointer(86400.0 + 3600.0),
+					Value:  new(86400.0 + 3600.0),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  util.Pointer(-(86400*2 + 3600*3 + 60*4 + 5.0)),
+					Value:  new(-(86400*2 + 3600*3 + 60*4 + 5.0)),
 				},
 				"H": {
 					Var:    "H",
 					Labels: data.Labels{},
-					Value:  util.Pointer(899.99),
+					Value:  new(899.99),
 				},
 			},
 		},
@@ -477,37 +477,37 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  util.Pointer(.1),
+					Value:  new(.1),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  util.Pointer(.0001),
+					Value:  new(.0001),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  util.Pointer(.12345),
+					Value:  new(.12345),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  util.Pointer(60.1),
+					Value:  new(60.1),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  util.Pointer(60.5),
+					Value:  new(60.5),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1.2345),
+					Value:  new(1.2345),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  util.Pointer(12.345),
+					Value:  new(12.345),
 				},
 			},
 		},
@@ -646,7 +646,7 @@ func TestExpandTemplate(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(1.0),
+					Value:            new(1.0),
 				},
 			},
 		},
@@ -661,13 +661,13 @@ func TestExpandTemplate(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(10.0),
+					Value:            new(10.0),
 				},
 				"B": {
 					Var:              "B",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "bar"},
-					Value:            util.Pointer(20.0),
+					Value:            new(20.0),
 				},
 			},
 		},
@@ -681,7 +681,7 @@ func TestExpandTemplate(t *testing.T) {
 					Var:              "A",
 					IsDatasourceNode: true,
 					Labels:           data.Labels{"instance": "foo"},
-					Value:            util.Pointer(1234567.0),
+					Value:            new(1234567.0),
 				},
 			},
 		},

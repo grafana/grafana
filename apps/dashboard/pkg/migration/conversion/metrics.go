@@ -2,10 +2,12 @@ package conversion
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -15,7 +17,8 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -62,16 +65,19 @@ func convertAPIVersionToFuncName(apiVersion string) string {
 		apiVersion = apiVersion[idx+1:]
 	}
 
-	// Map API versions to function name format
+	// Map API versions to function name format.
+	// v1 and v1beta1 both map to "V1" since they share the same Go type (v1beta1 is a thin wrapper).
 	switch apiVersion {
 	case "v0alpha1":
 		return "V0"
-	case "v1beta1":
+	case "v1", "v1beta1":
 		return "V1"
 	case "v2alpha1":
 		return "V2alpha1"
 	case "v2beta1":
 		return "V2beta1"
+	case "v2":
+		return "V2"
 	default:
 		return apiVersion
 	}
@@ -84,28 +90,60 @@ type dashboardInfo struct {
 	targetSchema    interface{}
 	sourceSchemaStr string
 	targetSchemaStr string
+	// sourceSizeBytes is the JSON-encoded size of the source dashboard spec being converted.
+	// It is -1 when the size could not be determined (e.g. marshal failure).
+	sourceSizeBytes int
 }
 
-// extractDashboardInfo extracts UID and schema versions from source and target dashboards
-func extractDashboardInfo(a, b interface{}) dashboardInfo {
-	info := dashboardInfo{}
+// byteCountWriter counts the bytes written to it and discards them, so we can
+// measure a JSON encoding's size without retaining a full-size copy of it.
+type byteCountWriter struct{ n int }
 
-	// get uid and schema version from source
+func (w *byteCountWriter) Write(p []byte) (int, error) { w.n += len(p); return len(p), nil }
+
+// specSizeBytes returns the JSON-encoded size of a dashboard spec in bytes.
+// It returns -1 if the spec cannot be marshalled so callers can distinguish
+// "unknown" from a genuinely empty (zero-byte) spec.
+//
+// It streams into a counting writer rather than using json.Marshal: this runs
+// once per object on every LIST response over specs up to ~20MB, and Marshal
+// would allocate a full-size copy of the encoding just to read its length.
+func specSizeBytes(spec interface{}) int {
+	var w byteCountWriter
+	if err := json.NewEncoder(&w).Encode(spec); err != nil {
+		getLogger().Debug("failed to measure dashboard spec size", "error", err)
+		return -1
+	}
+	return w.n - 1 // Encode appends a trailing newline
+}
+
+// extractDashboardInfo extracts UID, schema versions and source size from source and target dashboards
+func extractDashboardInfo(a, b interface{}) dashboardInfo {
+	info := dashboardInfo{sourceSizeBytes: -1}
+
+	// get uid, schema version and encoded size from source
 	switch source := a.(type) {
 	case *dashv0.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 		if source.Spec.Object != nil {
 			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
 		}
 	case *dashv1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 		if source.Spec.Object != nil {
 			info.sourceSchema = schemaversion.GetSchemaVersion(source.Spec.Object)
 		}
 	case *dashv2alpha1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 	case *dashv2beta1.Dashboard:
 		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
+	case *dashv2.Dashboard:
+		info.uid = source.Name
+		info.sourceSizeBytes = specSizeBytes(source.Spec)
 	}
 
 	// determine target schema version
@@ -149,12 +187,17 @@ func classifyConversionError(err error) string {
 }
 
 // buildErrorLogFields builds log fields for conversion errors
-func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, err error, info dashboardInfo, a, b interface{}) []interface{} {
+func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, err error, info dashboardInfo, a, b interface{}, duration time.Duration) []interface{} {
 	logFields := []interface{}{
 		"sourceVersionAPI", sourceVersionAPI,
 		"targetVersionAPI", targetVersionAPI,
 		"erroredConversionFunc", getErroredConversionFunc(err),
 		"dashboardUID", info.uid,
+		"durationMs", duration.Milliseconds(),
+	}
+
+	if info.sourceSizeBytes >= 0 {
+		logFields = append(logFields, "sourceSizeBytes", info.sourceSizeBytes)
 	}
 
 	// add schema version fields only if we have them (v0/v1 dashboards)
@@ -184,11 +227,16 @@ func buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType string, e
 }
 
 // buildSuccessLogFields builds log fields for successful conversions
-func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) []interface{} {
+func buildSuccessLogFields(sourceVersionAPI, targetVersionAPI string, info dashboardInfo, duration time.Duration) []interface{} {
 	logFields := []interface{}{
 		"sourceVersionAPI", sourceVersionAPI,
 		"targetVersionAPI", targetVersionAPI,
 		"dashboardUID", info.uid,
+		"durationMs", duration.Milliseconds(),
+	}
+
+	if info.sourceSizeBytes >= 0 {
+		logFields = append(logFields, "sourceSizeBytes", info.sourceSizeBytes)
 	}
 
 	// add schema version fields only if we have them (v0/v1 dashboards)
@@ -239,11 +287,19 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 		)
 		defer span.End()
 
+		// Time the whole conversion path, matching the span above: this includes
+		// extractDashboardInfo (which marshals the source to measure its size) and the
+		// data-loss check, so the metric reflects the full wall-clock cost of the path.
+		start := time.Now()
+
 		info := extractDashboardInfo(a, b)
 
 		span.SetAttributes(attribute.String("dashboard.uid", info.uid))
 		if schemaVer, ok := info.sourceSchema.(float64); ok {
 			span.SetAttributes(attribute.Int("source.schema_version", int(schemaVer)))
+		}
+		if info.sourceSizeBytes >= 0 {
+			span.SetAttributes(attribute.Int("source.size_bytes", info.sourceSizeBytes))
 		}
 
 		// wrape scope so we can pass context with span to child conversion functions
@@ -260,25 +316,40 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			err = checkConversionDataLoss(sourceVersionAPI, targetVersionAPI, a, b)
 		}
 
+		duration := time.Since(start)
+
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			span.RecordError(err)
 		} else {
 			span.SetStatus(codes.Ok, "conversion successful")
 		}
+		span.SetAttributes(attribute.Float64("conversion.duration_seconds", duration.Seconds()))
 
 		if err != nil {
-			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b)
+			recordConversionFailure(sourceVersionAPI, targetVersionAPI, err, info, a, b, duration)
 		} else {
-			recordConversionSuccess(sourceVersionAPI, targetVersionAPI, info)
+			recordConversionSuccess(sourceVersionAPI, targetVersionAPI, info, duration)
 		}
 
 		return nil
 	}
 }
 
+// observeConversionObjectSize records the source object size, labelled by outcome, when known.
+func observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, outcome string, info dashboardInfo) {
+	if info.sourceSizeBytes < 0 {
+		return
+	}
+	migration.MDashboardConversionObjectSizeBytes.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		outcome,
+	).Observe(float64(info.sourceSizeBytes))
+}
+
 // recordConversionFailure records metrics and logs for failed conversions
-func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}) {
+func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err error, info dashboardInfo, a, b interface{}, duration time.Duration) {
 	errorType := classifyConversionError(err)
 
 	migration.MDashboardConversionFailureTotal.WithLabelValues(
@@ -289,7 +360,15 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 		errorType,
 	).Inc()
 
-	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b)
+	migration.MDashboardConversionDuration.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		"failure",
+	).Observe(duration.Seconds())
+
+	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "failure", info)
+
+	logFields := buildErrorLogFields(sourceVersionAPI, targetVersionAPI, errorType, err, info, a, b, duration)
 	if errorType == "schema_minimum_version_error" {
 		getLogger().Warn("Dashboard conversion failed", logFields...)
 	} else {
@@ -298,7 +377,7 @@ func recordConversionFailure(sourceVersionAPI, targetVersionAPI string, err erro
 }
 
 // recordConversionSuccess records metrics and logs for successful conversions
-func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info dashboardInfo) {
+func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info dashboardInfo, duration time.Duration) {
 	migration.MDashboardConversionSuccessTotal.WithLabelValues(
 		sourceVersionAPI,
 		targetVersionAPI,
@@ -306,6 +385,14 @@ func recordConversionSuccess(sourceVersionAPI, targetVersionAPI string, info das
 		info.targetSchemaStr,
 	).Inc()
 
-	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info)
+	migration.MDashboardConversionDuration.WithLabelValues(
+		sourceVersionAPI,
+		targetVersionAPI,
+		"success",
+	).Observe(duration.Seconds())
+
+	observeConversionObjectSize(sourceVersionAPI, targetVersionAPI, "success", info)
+
+	successLogFields := buildSuccessLogFields(sourceVersionAPI, targetVersionAPI, info, duration)
 	getLogger().Debug("Dashboard conversion succeeded", successLogFields...)
 }

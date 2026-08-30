@@ -1,10 +1,15 @@
 import { noop } from 'lodash';
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings, MetricFindValue, SelectableValue, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { GroupByVariable, SceneVariable } from '@grafana/scenes';
+import {
+  type DataSourceInstanceSettings,
+  type MetricFindValue,
+  type SelectableValue,
+  getDataSourceRef,
+} from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
@@ -20,7 +25,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { datasource: datasourceRef, defaultOptions, allowCustomValue = true, defaultValue } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
-    return await getDataSourceSrv().get(datasourceRef);
+    return await getDataSourceInstance(datasourceRef);
   }, [variable.state]);
 
   const { value: groupByKeys = [] } = useAsync(async () => {

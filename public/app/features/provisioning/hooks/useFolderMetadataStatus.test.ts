@@ -114,6 +114,58 @@ describe('useFolderMetadataStatus', () => {
     });
   });
 
+  describe('root folder of folder-targeted repo', () => {
+    it('returns ok without querying _folder.json (root identity is stable)', () => {
+      setupMocks({
+        repoViewOverrides: {
+          repository: { name: 'my-repo', target: 'folder', title: 'Repo', type: 'github', workflows: ['branch'] },
+        },
+        fileQueryOverrides: {
+          data: undefined,
+          error: undefined,
+          isLoading: false,
+        },
+      });
+
+      // folderUID matches repo name -- this is the root folder
+      const { result } = renderHook(() => useFolderMetadataStatus('my-repo'));
+      expect(result.current.status).toBe('ok');
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith(expect.any(Symbol));
+    });
+
+    it('still checks metadata for nested folders of folder-targeted repos', () => {
+      setupMocks({
+        repoViewOverrides: {
+          repository: { name: 'my-repo', target: 'folder', title: 'Repo', type: 'github', workflows: ['branch'] },
+        },
+      });
+
+      // folderUID does NOT match repo name -- this is a nested folder
+      renderHook(() => useFolderMetadataStatus('nested-folder-uid'));
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
+        name: 'my-repo',
+        path: 'folders/my-folder/_folder.json',
+      });
+    });
+  });
+
+  describe('instance-targeted repo', () => {
+    it('still checks _folder.json even when folderUID matches repo name', () => {
+      setupMocks({
+        repoViewOverrides: {
+          repository: { name: 'my-repo', target: 'instance', title: 'Repo', type: 'github', workflows: ['branch'] },
+        },
+      });
+
+      // Same UID as repo name, but target is 'instance' -- root shortcut must not apply
+      renderHook(() => useFolderMetadataStatus('my-repo'));
+      expect(mockUseGetRepositoryFilesWithPathQuery).toHaveBeenCalledWith({
+        name: 'my-repo',
+        path: 'folders/my-folder/_folder.json',
+      });
+    });
+  });
+
   describe('path construction', () => {
     it('queries the correct path for nested folders', () => {
       setupMocks();

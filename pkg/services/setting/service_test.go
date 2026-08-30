@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -219,7 +220,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "could not find the requested resource")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("should handle 500 internal server error", func(t *testing.T) {
@@ -247,7 +248,8 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "error on the server")
+		// Now decodes the server's Status message instead of a generic one.
+		assert.Contains(t, err.Error(), "database connection failed")
 	})
 
 	t.Run("should handle connection errors", func(t *testing.T) {
@@ -693,6 +695,7 @@ func TestListCache(t *testing.T) {
 
 		remoteClient := client.(*remoteSettingService)
 		assert.Equal(t, float64(1), testutil.ToFloat64(remoteClient.metrics.cacheHitTotal))
+		assert.Equal(t, float64(1), testutil.ToFloat64(remoteClient.metrics.cacheMissTotal))
 	})
 
 	t.Run("should miss cache for different selectors", func(t *testing.T) {
@@ -795,6 +798,7 @@ func TestListCache(t *testing.T) {
 		remoteClient := client.(*remoteSettingService)
 		assert.NotNil(t, remoteClient.cache, "cache should be enabled by default")
 		assert.NotNil(t, remoteClient.metrics.cacheHitTotal, "cacheHitTotal should be set when cache enabled")
+		assert.NotNil(t, remoteClient.metrics.cacheMissTotal, "cacheMissTotal should be set when cache enabled")
 	})
 
 	t.Run("should not observe listResultSize on cache hit", func(t *testing.T) {
@@ -911,9 +915,7 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 		}
 		// Generate labels - always include section/key, merge with any custom labels
 		labels := map[string]string{"section": s.Section, "key": s.Key}
-		for k, v := range s.Labels {
-			labels[k] = v
-		}
+		maps.Copy(labels, s.Labels)
 		labelsJSON, _ := json.Marshal(labels)
 		sb.WriteString(fmt.Sprintf(
 			`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,

@@ -1,15 +1,15 @@
 import { mergeMap, from } from 'rxjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  Field,
-  FieldMatcher,
+  type Field,
+  type FieldMatcher,
   FieldMatcherID,
   fieldMatchers,
-  DataTransformerInfo,
+  type DataTransformerInfo,
 } from '@grafana/data';
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
+import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
 
 export interface FieldLookupOptions {
   lookupField?: string;
@@ -28,10 +28,11 @@ export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
 async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
   const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
 
-  const gazetteer = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
+  const gazetteer = await getGazetteer(options?.gazetteer ?? GAZETTEER_OPTIONS.countries.path);
 
   if (!gazetteer.frame) {
-    return Promise.reject('missing frame in gazetteer');
+    const reason = gazetteer.error ?? 'it contains no lookup data';
+    return Promise.reject(new Error(`Could not look up fields in "${gazetteer.path}": ${reason}`));
   }
 
   return addFieldsFromGazetteer(frames, gazetteer, fieldMatches);
@@ -61,7 +62,8 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
           fields.push({ ...gazetteerField, values: buffer });
         }
 
-        for (let valueIndex = 0; valueIndex < gazetteer.count!; valueIndex++) {
+        // One lookup per row: the buffers above are sized to the frame, not to the gazetteer
+        for (let valueIndex = 0; valueIndex < frameLength; valueIndex++) {
           const foundValue = gazetteer.find(values[valueIndex]);
 
           if (foundValue?.index != null) {

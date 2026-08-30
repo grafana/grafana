@@ -1,7 +1,7 @@
 package v1beta1
 
 #LogsLogsDefaultLabelsRecord: {
-	label:   string
+	label: string
 	values: [...string]
 }
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
@@ -236,12 +235,12 @@ func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions
 
 	result.For = model.Duration(rule.For)
 	if rule.For > 0 {
-		result.ForString = util.Pointer(model.Duration(rule.For).String())
+		result.ForString = new(model.Duration(rule.For).String())
 	}
 
 	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
 	if rule.KeepFiringFor > 0 {
-		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+		result.KeepFiringForString = new(model.Duration(rule.KeepFiringFor).String())
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
@@ -369,15 +368,15 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 
 	export := definitions.RouteExport{
 		Receiver:            route.Receiver,
-		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
+		GroupByStr:          NilIfEmpty(new(route.GroupByStr)),
 		Match:               route.Match,
 		MatchRE:             route.MatchRE,
 		Matchers:            route.Matchers,
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
-		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
-		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
-		Continue:            OmitDefault(util.Pointer(route.Continue)),
+		MuteTimeIntervals:   NilIfEmpty(new(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(new(route.ActiveTimeIntervals)),
+		Continue:            OmitDefault(new(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(route.RepeatInterval),
@@ -502,12 +501,12 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.Noti
 
 	return &definitions.AlertRuleNotificationSettingsExport{
 		Receiver:            m.Receiver,
-		GroupBy:             NilIfEmpty(util.Pointer(m.GroupBy)),
+		GroupBy:             NilIfEmpty(new(m.GroupBy)),
 		GroupWait:           toStringIfNotNil(m.GroupWait),
 		GroupInterval:       toStringIfNotNil(m.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals:   NilIfEmpty(util.Pointer(m.MuteTimeIntervals)),
-		ActiveTimeIntervals: NilIfEmpty(util.Pointer(m.ActiveTimeIntervals)),
+		MuteTimeIntervals:   NilIfEmpty(new(m.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(new(m.ActiveTimeIntervals)),
 	}
 }
 

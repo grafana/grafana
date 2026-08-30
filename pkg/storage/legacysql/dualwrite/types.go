@@ -32,40 +32,22 @@ type StorageStatus struct {
 	UpdateKey int64 `json:"update_key"`
 }
 
-func (status *StorageStatus) validate() bool {
-	changed := false
-
-	// Must write to unified if we are reading unified
-	if status.ReadUnified && !status.WriteUnified {
-		status.WriteUnified = true
-		changed = true
-	}
-
-	// Make sure we are writing somewhere
-	if !status.WriteLegacy && !status.WriteUnified {
-		status.WriteLegacy = true
-		changed = true
-	}
-	return changed
-}
-
 // Service is a service for managing the dual write storage
 //
 //go:generate mockery --name Service --structname MockService --inpackage --filename service_mock.go --with-expecter
 type Service interface {
-	ShouldManage(gr schema.GroupResource) bool
-
 	// Create a managed k8s storage instance
 	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)
+
+	// ValidateServedVersions returns an error when a resource's migrated apiVersion is
+	// not among the versions the apiserver serves.
+	ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error
 
 	// Check if the dual writes is reading from unified storage (mode3++)
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
 
 	// Get status details for a Group/Resource
 	Status(ctx context.Context, gr schema.GroupResource) (StorageStatus, error)
-
-	// Start a migration process (writes will be locked)
-	StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error)
 
 	// change the status (finish migration etc)
 	Update(ctx context.Context, status StorageStatus) (StorageStatus, error)

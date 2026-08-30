@@ -11,8 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
-
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -20,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -36,18 +35,18 @@ var (
 )
 
 type folderStorage struct {
+	resourceInfo utils.ResourceInfo
+
 	// Wrapped storage
 	store          grafanarest.Storage
 	tableConverter rest.TableConvertor
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
-	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
 }
 
 func (s *folderStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *folderStorage) Destroy() {}
@@ -57,11 +56,11 @@ func (s *folderStorage) NamespaceScoped() bool {
 }
 
 func (s *folderStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *folderStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -152,18 +151,14 @@ func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return obj, async, err
 }
 
-// GracefulDeleter
-func (s *folderStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for folders not implemented")
-}
-
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	isNested := parentUID != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) && isNested {
-		// No permissions on nested folders when kubernetesDashboards is enabled
+	// treat both the legacy empty value and "general" as root so the
+	// editor/viewer default permissions are still granted on new root folders.
+	isNested := !folder.IsRootFolderUID(parentUID)
+	if isNested {
+		// Creator permissions are only set on root-level folders.
 		return nil
 	}
 
@@ -188,10 +183,6 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
 	if err != nil {
 		return err
-	}
-
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		s.acService.ClearUserPermissionCache(user)
 	}
 
 	return nil

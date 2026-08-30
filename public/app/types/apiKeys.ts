@@ -1,4 +1,4 @@
-﻿import { OrgRole, WithAccessControlMetadata } from '@grafana/data';
+﻿import { type OrgRole, type WithAccessControlMetadata } from '@grafana/data';
 
 export interface ApiKey extends WithAccessControlMetadata {
   id?: number;
@@ -11,21 +11,4 @@ export interface ApiKey extends WithAccessControlMetadata {
   isRevoked?: boolean;
   created?: string;
   lastUsedAt?: string;
-}
-
-export interface ApikeyMigrationResult {
-  total: number;
-  migrated: number;
-  failed: number;
-  failedApikeyIDs: number[];
-  failedDetails: string[];
-}
-
-export interface ApiKeysState {
-  includeExpired: boolean;
-  keys: ApiKey[];
-  keysIncludingExpired: ApiKey[];
-  searchQuery: string;
-  hasFetched: boolean;
-  migrationResult?: ApikeyMigrationResult;
 }

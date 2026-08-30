@@ -1,21 +1,29 @@
-import { initRegionalFormatForTests } from '@grafana/i18n';
-
-import { RawTimeRange, TimeOption, TimeRange } from '../types/time';
-import * as featureToggles from '../utils/featureToggles';
+import { type RawTimeRange, type TimeOption, type TimeRange } from '../types/time';
 
 import { dateTime } from './moment_wrapper';
 import {
   convertRawToRange,
   describeInterval,
-  describeTimeRange,
+  type describeTimeRange as DescribeTimeRange,
   isRelativeTimeRange,
   relativeToTimeRange,
   roundInterval,
   timeRangeToRelative,
-  describeTextRange,
+  type describeTextRange as DescribeTextRange,
 } from './rangeutil';
 
 describe('Range Utils', () => {
+  const flagName = '__grafanaUseLuxon';
+  const originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
+
+  afterEach(() => {
+    if (originalDescriptor) {
+      Object.defineProperty(window, flagName, originalDescriptor);
+    } else {
+      Reflect.deleteProperty(window, flagName);
+    }
+  });
+
   // These tests probably wrap the dateTimeParser tests to some extent
   describe('convertRawToRange', () => {
     const DEFAULT_DATE_VALUE = '1996-07-30 16:00:00'; // Default format YYYY-MM-DD HH:mm:ss
@@ -316,7 +324,18 @@ describe('Range Utils', () => {
     });
   });
 
-  describe('describeTimeRange', () => {
+  describe.each([true, false])('describeTimeRange (luxon=%s)', (luxon) => {
+    let describeTimeRange: typeof DescribeTimeRange;
+    beforeEach(async () => {
+      Object.defineProperty(window, flagName, {
+        configurable: true,
+        value: luxon,
+      });
+      await jest.isolateModulesAsync(async () => {
+        describeTimeRange = (await import('./rangeutil')).describeTimeRange;
+      });
+    });
+
     it.each([
       ['now-5m', 'now', 'Last 5 minutes'],
       ['now-15m', 'now', 'Last 15 minutes'],
@@ -340,6 +359,10 @@ describe('Range Utils', () => {
       ['now/fy', 'now/fy', 'This fiscal year'],
       ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
       ['now-1y/fy', 'now-1y/fy', 'Previous fiscal year'],
+      ['now-1fQ/fQ', 'now', 'Last 1 fiscal quarter'],
+      ['now-2fQ', 'now', 'Last 2 fiscal quarters'],
+      ['now-1fy', 'now', 'Last 1 fiscal year'],
+      ['now-2Q', 'now', 'Last 2 quarters'],
       ['now-6h', 'now-3h', 'now-6h to now-3h'],
       ['now-6h', 'now+1h', 'now-6h to now+1h'],
       ['now/d+6h', 'now-3h', 'now/d+6h to now-3h'],
@@ -384,20 +407,53 @@ describe('Range Utils', () => {
       expect(result).toBe('2023-01-15 05:30:00 to a few seconds ago');
     });
 
-    it('should handle absolute from, relative math to', () => {
+    it('should handle absolute from, relative math to distant past', () => {
+      // Loop to ensure we don't have an inconsistent 24 hours vs 1 day representation
+      for (let i = 0; i < 100; i++) {
+        const text = describeTimeRange({
+          from: dateTime([2014, 10, 10, 2, 3, 4]),
+          to: 'now-1d',
+        });
+        expect(text).toBe(`2014-11-10 02:03:04 to ${luxon ? '1' : 'a'} day ago`);
+      }
+    });
+
+    it('should handle absolute from, relative math to near past', () => {
       const text = describeTimeRange({
         from: dateTime([2014, 10, 10, 2, 3, 4]),
-        to: 'now-1d',
+        to: 'now-5s',
       });
-      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
+      expect(text).toBe('2014-11-10 02:03:04 to a few seconds ago');
+    });
+
+    it('should handle absolute from, relative math to distant future', () => {
+      // Loop to ensure we don't have an inconsistent 24 hours vs 1 day representation
+      for (let i = 0; i < 100; i++) {
+        const text = describeTimeRange({
+          from: dateTime([2014, 10, 10, 2, 3, 4]),
+          to: 'now+1d',
+        });
+        expect(text).toBe(`2014-11-10 02:03:04 to in ${luxon ? '1' : 'a'} day`);
+      }
+    });
+
+    it('should handle absolute from, relative math to near future', () => {
+      const text = describeTimeRange({
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
+        to: 'now+5s',
+      });
+      expect(text).toBe('2014-11-10 02:03:04 to in a few seconds');
     });
 
     it('should handle relative from, absolute to', () => {
-      const from = 'now-1h';
-      const to = dateTime('2023-01-15T14:45:00Z');
+      // Loop to ensure we don't have an inconsistent 60 minutes vs 1 hour representation
+      for (let i = 0; i < 100; i++) {
+        const from = 'now-1h';
+        const to = dateTime('2023-01-15T14:45:00Z');
 
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 2023-01-15 09:45:00');
+        const result = describeTimeRange({ from, to });
+        expect(result).toBe(`${luxon ? '1' : 'an'} hour ago to 2023-01-15 09:45:00`);
+      }
     });
 
     it('should handle invalid relative expressions', () => {
@@ -417,143 +473,59 @@ describe('Range Utils', () => {
     });
   });
 
-  describe('describeTimeRange - localeFormatPreference enabled', () => {
-    let mockGetFeatureToggle: jest.SpyInstance;
-
-    beforeAll(() => {
-      initRegionalFormatForTests('en-AU');
-      mockGetFeatureToggle = jest.spyOn(featureToggles, 'getFeatureToggle').mockImplementation((featureName) => {
-        return featureName === 'localeFormatPreference';
+  describe.each([true, false])('describeTextRange (luxon=%s)', (luxon) => {
+    let describeTextRange: typeof DescribeTextRange;
+    beforeEach(async () => {
+      Object.defineProperty(window, flagName, {
+        configurable: true,
+        value: luxon,
+      });
+      await jest.isolateModulesAsync(async () => {
+        describeTextRange = (await import('./rangeutil')).describeTextRange;
       });
     });
 
-    afterAll(() => {
-      mockGetFeatureToggle.mockRestore();
+    it('should handle simple old expression with only amount and unit', () => {
+      const info = describeTextRange('5m');
+      expect(info.display).toBe('Last 5 minutes');
     });
 
-    it.each([
-      ['now-5m', 'now', 'Last 5 minutes'],
-      ['now-15m', 'now', 'Last 15 minutes'],
-      ['now-1h', 'now', 'Last 1 hour'],
-      ['now-7d', 'now', 'Last 7 days'],
-      ['now/d', 'now/d', 'Today'],
-      ['now/d', 'now', 'Today so far'],
-      ['now/w', 'now/w', 'This week'],
-      ['now-1d/d', 'now-1d/d', 'Yesterday'],
-      ['now-1w/w', 'now-1w/w', 'Previous week'],
-      ['now-1y/y', 'now-1y/y', 'Previous year'],
-      ['now/fQ', 'now/fQ', 'This fiscal quarter'],
-      ['now-1Q/fQ', 'now-1Q/fQ', 'Previous fiscal quarter'],
-    ])('should return display name "%s" for range from "%s" to "%s"', (from, to, expected) => {
-      expect(describeTimeRange({ from, to })).toBe(expected);
+    it('should have singular when amount is 1', () => {
+      const info = describeTextRange('1h');
+      expect(info.display).toBe('Last 1 hour');
     });
 
-    it('should prioritize custom quick ranges over standard ranges', () => {
-      const customRanges = [{ from: 'now-5m', to: 'now', display: 'Lightning round!' }];
-
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, customRanges)).toBe('Lightning round!');
+    it('should handle non default amount', () => {
+      const info = describeTextRange('13h');
+      expect(info.display).toBe('Last 13 hours');
+      expect(info.from).toBe('now-13h');
     });
 
-    it('should format with the default timezone', () => {
-      // Tests default to Pacific/Easter
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/1/23, 5:30 – 9:45 am');
+    it('should handle non default future amount', () => {
+      const info = describeTextRange('+3h');
+      expect(info.display).toBe('Next 3 hours');
+      expect(info.from).toBe('now');
+      expect(info.to).toBe('now+3h');
     });
 
-    it('should respect timezone in datetime formatting', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to }, 'Australia/Sydney');
-      expect(result).toBe('15/1/23, 9:30 pm – 16/1/23, 1:45 am');
+    it('should handle now/d', () => {
+      const info = describeTextRange('now/d');
+      expect(info.display).toBe('Today so far');
     });
 
-    it('should include seconds in the output if the time has seconds', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = dateTime('2023-01-15T14:45:12Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/1/23, 5:30:00 am – 9:45:12 am');
+    it('should handle now/w', () => {
+      const info = describeTextRange('now/w');
+      expect(info.display).toBe('This week so far');
     });
 
-    it('should handle absolute from, relative to', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'now';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('15/01/2023, 5:30 am to a few seconds ago');
+    it('should handle now/M', () => {
+      const info = describeTextRange('now/M');
+      expect(info.display).toBe('This month so far');
     });
 
-    it('should handle relative from, absolute to', () => {
-      const from = 'now-1h';
-      const to = dateTime('2023-01-15T14:45:00Z');
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toBe('an hour ago to 15/01/2023, 9:45 am');
+    it('should handle now/y', () => {
+      const info = describeTextRange('now/y');
+      expect(info.display).toBe('This year so far');
     });
-
-    it('should handle invalid relative expressions', () => {
-      const from = dateTime('2023-01-15T10:30:00Z');
-      const to = 'invalid-expression';
-
-      const result = describeTimeRange({ from, to });
-      expect(result).toContain('Invalid date');
-    });
-
-    it('should handle empty custom ranges array', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, [])).toBe('Last 5 minutes');
-    });
-
-    it('should handle null custom ranges', () => {
-      expect(describeTimeRange({ from: 'now-5m', to: 'now' }, undefined, undefined)).toBe('Last 5 minutes');
-    });
-  });
-});
-
-describe('describeTextRange', () => {
-  it('should handle simple old expression with only amount and unit', () => {
-    const info = describeTextRange('5m');
-    expect(info.display).toBe('Last 5 minutes');
-  });
-
-  it('should have singular when amount is 1', () => {
-    const info = describeTextRange('1h');
-    expect(info.display).toBe('Last 1 hour');
-  });
-
-  it('should handle non default amount', () => {
-    const info = describeTextRange('13h');
-    expect(info.display).toBe('Last 13 hours');
-    expect(info.from).toBe('now-13h');
-  });
-
-  it('should handle non default future amount', () => {
-    const info = describeTextRange('+3h');
-    expect(info.display).toBe('Next 3 hours');
-    expect(info.from).toBe('now');
-    expect(info.to).toBe('now+3h');
-  });
-
-  it('should handle now/d', () => {
-    const info = describeTextRange('now/d');
-    expect(info.display).toBe('Today so far');
-  });
-
-  it('should handle now/w', () => {
-    const info = describeTextRange('now/w');
-    expect(info.display).toBe('This week so far');
-  });
-
-  it('should handle now/M', () => {
-    const info = describeTextRange('now/M');
-    expect(info.display).toBe('This month so far');
-  });
-
-  it('should handle now/y', () => {
-    const info = describeTextRange('now/y');
-    expect(info.display).toBe('This year so far');
   });
 });

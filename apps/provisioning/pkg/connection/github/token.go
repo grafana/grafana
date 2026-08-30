@@ -79,12 +79,3 @@ func parseJWTToken(token, privateKey common.RawSecureValue) (*jwt.RegisteredClai
 
 	return claims, nil
 }
-
-func getIssuingAndExpirationTimeFromToken(token, privateKey common.RawSecureValue) (time.Time, time.Time, error) {
-	claims, err := parseJWTToken(token, privateKey)
-	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("failed to parse token: %w", err)
-	}
-
-	return claims.IssuedAt.Time, claims.ExpiresAt.Time, nil
-}

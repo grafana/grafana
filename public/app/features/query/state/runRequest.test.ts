@@ -1,25 +1,25 @@
-import { Observable, Subscriber, Subscription } from 'rxjs';
+import { Observable, type Subscriber, type Subscription } from 'rxjs';
 
 import {
-  CoreApp,
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
+  type CoreApp,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
   DataTopic,
   dateTime,
   LoadingState,
-  PanelData,
+  type PanelData,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { getMockDataSource, TestQuery } from './mocks/mockDataSource';
+import { getMockDataSource, type TestQuery } from './mocks/mockDataSource';
 import { callQueryMethodWithMigration, runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
@@ -59,7 +59,7 @@ class ScenarioCtx {
   results!: PanelData[];
   subscription!: Subscription;
   wasStarted = false;
-  error: Error | null = null;
+  error: unknown = null;
   toStartTime = dateTime();
   fromStartTime = dateTime();
 
@@ -323,6 +323,20 @@ describe('runRequest', () => {
 
     it('should emit 1 error result', () => {
       expect(ctx.results[0].error?.message).toBe('Ohh no');
+      expect(ctx.results[0].state).toBe(LoadingState.Error);
+    });
+  });
+
+  // Errors that come back out of the Redux store are frozen by immer -- for example anything a
+  // runtime data source gets from an RTK Query `unwrap()`. Normalising those used to throw.
+  runRequestScenarioThatThrows('on a thrown frozen error', (ctx) => {
+    ctx.setup(() => {
+      ctx.error = Object.freeze({ status: 500, statusText: 'Internal Server Error' });
+      ctx.start();
+    });
+
+    it('should emit 1 error result', () => {
+      expect(ctx.results[0].error?.message).toBe('Query error: 500 Internal Server Error');
       expect(ctx.results[0].state).toBe(LoadingState.Error);
     });
   });

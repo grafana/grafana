@@ -1,36 +1,66 @@
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
-  SceneGridItemLike,
+  type SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
-  SceneObject,
+  type SceneObject,
   SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectState,
+  type SceneVariable,
+  type SceneVariables,
+  SceneVariableSet,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { dashboardSceneGraph, PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
+import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { findAllGridTypes } from '../layouts-shared/findAllGridTypes';
+import { convertRowToTab } from '../layouts-shared/convertRowToTab';
+import { convertTabToRow } from '../layouts-shared/convertTabToRow';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
+import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getRowFromClipboard } from '../layouts-shared/paste';
-import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, GridLayoutType, mapIdToGridLayoutType, ungroupLayout } from '../layouts-shared/utils';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import {
+  showConvertMixedGridsModal,
+  showRepeatLossConfirmation,
+  showUngroupConfirmation,
+  showUngroupGroupsModal,
+} from '../layouts-shared/ungroupConfirmation';
+import {
+  deduplicateTitles,
+  generateUniqueTitle,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+  ungroupLayout,
+} from '../layouts-shared/utils';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import {
+  type DashboardLayoutGroup,
+  isDashboardLayoutGroup,
+  type NestedGroupsTarget,
+} from '../types/DashboardLayoutGroup';
+import {
+  type DashboardLayoutManager,
+  type GroupTarget,
+  type GroupingResult,
+  isDashboardLayoutManager,
+} from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
@@ -75,6 +105,10 @@ export class RowsLayoutManager
     this.setState({ isDropTarget });
   }
 
+  public getAllGridTypes(): string[] {
+    return this.state.rows.flatMap((row) => row.getLayout().getAllGridTypes());
+  }
+
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
     // Create a new row with a DefaultGridLayoutManager and add the grid item to it
     const newLayout = new DefaultGridLayoutManager({
@@ -114,6 +148,10 @@ export class RowsLayoutManager
     return panels;
   }
 
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({});
   }
@@ -131,7 +169,7 @@ export class RowsLayoutManager
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem({});
+    const newRow = row ?? new RowItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
 
     const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
@@ -139,10 +177,16 @@ export class RowsLayoutManager
       newRow.setState({ title: newTitle });
     }
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: newRow,
       source: this,
-      perform: () => this.setState({ rows: [...this.state.rows, newRow] }),
+      perform: () => {
+        this.setState({ rows: [...this.state.rows, newRow] });
+        const dashboard = getDashboardSceneFor(this);
+        if (dashboard.state.isEditing) {
+          newRow.getLayout().editModeChanged?.(true);
+        }
+      },
       undo: () => this.setState({ rows: this.state.rows.filter((r) => r !== newRow) }),
     });
 
@@ -157,10 +201,6 @@ export class RowsLayoutManager
     const scene = getDashboardSceneFor(this);
     const row = getRowFromClipboard(scene);
     this.addNewRow(row);
-  }
-
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
   }
 
   public getOutlineChildren() {
@@ -197,47 +237,127 @@ export class RowsLayoutManager
   }
 
   public ungroupRows() {
-    const hasNonGridLayout = this.state.rows.some((row) => !row.getLayout().descriptor.isGridLayout);
-    const gridTypes = new Set(findAllGridTypes(this));
+    const layouts = this.state.rows.map((row) => row.getLayout());
+    const hasNestedRows = layouts.some((layout) => layout instanceof RowsLayoutManager);
+    const hasNestedTabs = layouts.some((layout) => layout instanceof TabsLayoutManager);
+    const gridTypes = new Set(this.getAllGridTypes());
 
-    showUngroupConfirmation({
-      hasNonGridLayout,
-      gridTypes,
-      onConfirm: (gridLayoutType) => {
-        this.wrapUngroupRowsInEdit(gridLayoutType);
-      },
-      onConvertMixedGrids: (availableIds) => {
-        this._confirmConvertMixedGrids(availableIds);
-      },
-    });
+    // Grids only: merge them into a single grid, asking for the grid type when grids are mixed
+    if (!hasNestedRows && !hasNestedTabs) {
+      showUngroupConfirmation({
+        gridTypes,
+        onConfirm: (gridLayoutType) => {
+          this._wrapUngroupInEdit(() => this.ungroup(gridLayoutType));
+        },
+        onConvertMixedGrids: (availableIds) => {
+          this._confirmConvertMixedGrids(availableIds);
+        },
+      });
+      return;
+    }
+
+    const willLoseRepeatOptions = this.state.rows.some(
+      (row) => !row.getLayout().descriptor.isGridLayout && Boolean(row.state.repeatByVariable)
+    );
+    const disabledTabsReason = this._isDirectChildOfTabsLayout()
+      ? t('dashboard.canvas-actions.disabled-nested-tabs', 'Tabs cannot be nested inside other tabs')
+      : undefined;
+
+    // Ask the user when nested groups are mixed, or when the graceful target would be
+    // tabs but this layout lives inside a tab, where nested tabs are not allowed
+    if ((hasNestedRows && hasNestedTabs) || (hasNestedTabs && disabledTabsReason)) {
+      showUngroupGroupsModal({
+        disabledTabsReason,
+        showRepeatLossWarning: willLoseRepeatOptions,
+        onSelect: (target) => {
+          this._wrapUngroupInEdit(() => this.hoistNestedGroups(target));
+        },
+      });
+      return;
+    }
+
+    // Single nested group type: hoist gracefully, confirming first if repeat options would be lost
+    const target: NestedGroupsTarget = hasNestedTabs ? 'tabs' : 'rows';
+    const perform = () => this._wrapUngroupInEdit(() => this.hoistNestedGroups(target));
+
+    if (willLoseRepeatOptions) {
+      showRepeatLossConfirmation(perform);
+    } else {
+      perform();
+    }
+  }
+
+  /**
+   * Whether replacing this layout with a tabs layout would create tabs directly nested in tabs,
+   * which is the only forbidden tabs nesting
+   */
+  private _isDirectChildOfTabsLayout(): boolean {
+    let ancestor: SceneObject | undefined = this.parent;
+
+    while (ancestor) {
+      if (isDashboardLayoutManager(ancestor)) {
+        return ancestor instanceof TabsLayoutManager;
+      }
+      ancestor = ancestor.parent;
+    }
+
+    return false;
   }
 
   private _confirmConvertMixedGrids(availableIds: Set<string>) {
     showConvertMixedGridsModal(availableIds, (id: string) => {
       const selected = mapIdToGridLayoutType(id);
       if (selected) {
-        this.wrapUngroupRowsInEdit(selected);
+        this._wrapUngroupInEdit(() => this.ungroup(selected));
       }
     });
   }
 
-  private wrapUngroupRowsInEdit(gridLayoutType: GridLayoutType) {
+  private _wrapUngroupInEdit(performUngroup: () => void) {
     const parent = this.parent;
     if (!parent || !isLayoutParent(parent)) {
       throw new Error('Ungroup rows failed: parent is not a layout container');
     }
 
     const previousLayout = this.clone({});
+    // Ungrouping moves the section-level variables of the dissolved rows up to the parent,
+    // so undo needs to restore the parent's variables in addition to restoring the layout
+    const previousVariableSet = parent.state.$variables;
+    const previousVariables =
+      previousVariableSet instanceof SceneVariableSet ? [...previousVariableSet.state.variables] : undefined;
     const scene = getDashboardSceneFor(this);
 
-    dashboardEditActions.edit({
+    // Undo replaces this layout with a detached clone, so redo cannot run the ungroup again
+    // (it would mutate this detached original while leaking variables into the live parent).
+    // Instead, the result of the first run is captured and redo re-installs it.
+    let nextLayout: DashboardLayoutManager | undefined;
+    let nextVariableSet: SceneVariables | undefined;
+    let nextVariables: SceneVariable[] | undefined;
+
+    edit({
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
-        this.ungroup(gridLayoutType);
+        if (nextLayout) {
+          parent.switchLayout(nextLayout, true);
+          if (nextVariableSet instanceof SceneVariableSet && nextVariables) {
+            nextVariableSet.setState({ variables: nextVariables });
+          }
+          parent.setState({ $variables: nextVariableSet });
+          return;
+        }
+
+        performUngroup();
+        nextLayout = parent.getLayout();
+        nextVariableSet = parent.state.$variables;
+        nextVariables = nextVariableSet instanceof SceneVariableSet ? [...nextVariableSet.state.variables] : undefined;
       },
       undo: () => {
-        parent.switchLayout(previousLayout);
+        parent.switchLayout(previousLayout, true);
+        if (previousVariableSet instanceof SceneVariableSet && previousVariables) {
+          previousVariableSet.setState({ variables: previousVariables });
+        }
+        parent.setState({ $variables: previousVariableSet });
       },
     });
   }
@@ -258,6 +378,9 @@ export class RowsLayoutManager
       }
     }
 
+    // All rows are dissolved when merging into a single grid, so their variables move up a level
+    moveSectionVariablesUp(this.state.rows, this);
+
     this.convertAllGridLayouts(gridLayoutType);
 
     const firstRow = this.state.rows[0];
@@ -276,6 +399,82 @@ export class RowsLayoutManager
     this.setState({ rows: [firstRow] });
     this.removeRow(firstRow, true);
     ungroupLayout(this, firstRow.state.layout, true);
+  }
+
+  /**
+   * Removes the rows level while preserving content structure:
+   * nested groups are hoisted up a level and other rows are converted to the target group type.
+   */
+  public hoistNestedGroups(target: NestedGroupsTarget) {
+    // Rows holding nested groups are dissolved (their content is hoisted),
+    // so their section-level variables move up a level instead of being lost
+    moveSectionVariablesUp(
+      this.state.rows.filter((row) => !row.getLayout().descriptor.isGridLayout && !row.state.repeatSourceKey),
+      this
+    );
+
+    if (target === 'tabs') {
+      const tabs: TabItem[] = [];
+
+      for (const row of this.state.rows) {
+        if (row.state.repeatSourceKey) {
+          continue;
+        }
+
+        const layout = row.getLayout();
+
+        if (layout instanceof TabsLayoutManager) {
+          for (const tab of layout.state.tabs) {
+            if (!tab.state.repeatSourceKey) {
+              tab.clearParent();
+              tabs.push(tab);
+            }
+          }
+        } else if (layout instanceof RowsLayoutManager) {
+          for (const innerRow of layout.state.rows) {
+            if (!innerRow.state.repeatSourceKey) {
+              tabs.push(convertRowToTab(innerRow));
+            }
+          }
+        } else {
+          tabs.push(convertRowToTab(row));
+        }
+      }
+
+      deduplicateTitles(tabs);
+      ungroupLayout(this, new TabsLayoutManager({ tabs }), true);
+      return;
+    }
+
+    const rows: RowItem[] = [];
+
+    for (const row of this.state.rows) {
+      if (row.state.repeatSourceKey) {
+        continue;
+      }
+
+      const layout = row.getLayout();
+
+      if (layout instanceof RowsLayoutManager) {
+        for (const innerRow of layout.state.rows) {
+          if (!innerRow.state.repeatSourceKey) {
+            innerRow.clearParent();
+            rows.push(innerRow);
+          }
+        }
+      } else if (layout instanceof TabsLayoutManager) {
+        for (const tab of layout.state.tabs) {
+          if (!tab.state.repeatSourceKey) {
+            rows.push(convertTabToRow(tab));
+          }
+        }
+      } else {
+        rows.push(row);
+      }
+    }
+
+    deduplicateTitles(rows);
+    this.setState({ rows });
   }
 
   public removeRow(row: RowItem, skipUndo?: boolean) {
@@ -306,7 +505,7 @@ export class RowsLayoutManager
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.removeElement({
+      removeElement({
         removedObject: row,
         source: this,
         perform,
@@ -331,8 +530,8 @@ export class RowsLayoutManager
       return;
     }
 
-    const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, rowKey, { force: true, multi: false });
+    const sidebar = getDashboardSceneFor(this).state.sidebar;
+    sidebar.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {
@@ -359,6 +558,7 @@ export class RowsLayoutManager
             title: tab.state.title,
             conditionalRendering,
             repeatByVariable: tab.state.repeatByVariable,
+            $variables: tab.state.$variables,
           })
         );
       }

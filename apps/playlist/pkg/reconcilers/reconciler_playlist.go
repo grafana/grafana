@@ -6,7 +6,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/operator"
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 )
 
 func NewPlaylistReconciler(patchClient operator.PatchClient) (operator.Reconciler, error) {

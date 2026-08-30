@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';
 
-import { CommonSettingsComponentProps } from '../../../types/receiver-form';
+import { type CommonSettingsComponentProps } from '../../../types/receiver-form';
 
 export const CloudCommonChannelSettings = ({
   pathPrefix,

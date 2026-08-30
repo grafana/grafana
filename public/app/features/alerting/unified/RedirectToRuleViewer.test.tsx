@@ -1,9 +1,9 @@
 import { useLocation } from 'react-use';
 import { render, screen } from 'test/test-utils';
 
-import { DataSourceJsonData, PluginMeta } from '@grafana/data';
+import { type DataSourceJsonData, type PluginMeta } from '@grafana/data';
 
-import { CombinedRule, Rule } from '../../../types/unified-alerting';
+import { type CombinedRule, type Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
 
 import { RedirectToRuleViewer } from './RedirectToRuleViewer';

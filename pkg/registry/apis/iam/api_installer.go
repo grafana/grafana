@@ -51,11 +51,22 @@ type ApiInstaller[T runtime.Object] interface {
 // while keeping the core IAM registration logic in OSS.
 type RoleApiInstaller ApiInstaller[*iamv0.Role]
 
+// RoleBindingApiInstaller provides RoleBinding-specific API registration and validation.
+type RoleBindingApiInstaller ApiInstaller[*iamv0.RoleBinding]
+
 // GlobalRoleApiInstaller provides GlobalRole-specific API registration and validation.
 type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
 
 // TeamLBACApiInstaller provides TeamLBACRule-specific API registration and validation.
-type TeamLBACApiInstaller ApiInstaller[*iamv0.TeamLBACRule]
+type TeamLBACApiInstaller interface {
+	ApiInstaller[*iamv0.TeamLBACRule]
+
+	// GetRulesForSubjectGetter returns the mode-aware storage used internally by
+	// the for-subject subresource. It intentionally excludes the datasource CRUD
+	// authorization wrapper because the subresource has its own service-only
+	// authorization contract.
+	GetRulesForSubjectGetter() rest.Getter
+}
 
 // ExternalGroupMappingApiInstaller provides ExternalGroupMapping-specific API registration and validation.
 type ExternalGroupMappingApiInstaller ApiInstaller[*iamv0.ExternalGroupMapping]
@@ -74,6 +85,10 @@ func (n *NoopApiInstaller[T]) GetAuthorizer() authorizer.Authorizer {
 func (n *NoopApiInstaller[T]) RegisterStorage(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	storage[n.ResourceInfo.StoragePath()] = &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
 	return nil
+}
+
+func (n *NoopApiInstaller[T]) GetRulesForSubjectGetter() rest.Getter {
+	return &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
 }
 
 func (n *NoopApiInstaller[T]) ValidateOnCreate(ctx context.Context, obj T) error {
@@ -137,5 +152,12 @@ func ProvideNoopTeamLBACApiInstaller() TeamLBACApiInstaller {
 func ProvideNoopExternalGroupMappingApiInstaller() ExternalGroupMappingApiInstaller {
 	return &NoopApiInstaller[*iamv0.ExternalGroupMapping]{
 		ResourceInfo: iamv0.ExternalGroupMappingResourceInfo,
+	}
+}
+
+// ProvideNoopRoleBindingApiInstaller provides a no-op RoleBinding installer.
+func ProvideNoopRoleBindingApiInstaller() RoleBindingApiInstaller {
+	return &NoopApiInstaller[*iamv0.RoleBinding]{
+		ResourceInfo: iamv0.RoleBindingInfo,
 	}
 }

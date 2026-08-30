@@ -2,15 +2,21 @@ package builder
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // convertHandlerToRouteFunction converts an http.HandlerFunc to a restful.RouteFunction
@@ -25,9 +31,7 @@ func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFuncti
 		// Get all path parameters from the restful.Request
 		// The restful.Request has PathParameters() method that returns a map
 		pathParams := req.PathParameters()
-		for key, value := range pathParams {
-			vars[key] = value
-		}
+		maps.Copy(vars, pathParams)
 
 		// Set the vars in the request context using mux.SetURLVars
 		// This makes mux.Vars(r) work correctly
@@ -41,11 +45,14 @@ func convertHandlerToRouteFunction(handler http.HandlerFunc) restful.RouteFuncti
 
 // AugmentWebServicesWithCustomRoutes adds custom routes from builders to existing WebServices
 // in the container.
+//
+// extra is variadic to leave existing callers untouched.
 func AugmentWebServicesWithCustomRoutes(
 	container *restful.Container,
 	builders []APIGroupBuilder,
 	metricsRegistry prometheus.Registerer,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extra ...GroupVersionRoutes,
 ) error {
 	if container == nil {
 		return fmt.Errorf("container cannot be nil")
@@ -66,10 +73,9 @@ func AugmentWebServicesWithCustomRoutes(
 		}
 
 		for _, gv := range GetGroupVersions(b) {
-			// Filter out disabled API groups
-			gvr := gv.WithResource("")
-			if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gvr) {
-				klog.InfoS("Skipping custom routes for disabled group version", "gv", gv.String())
+			// Checked before GetAPIRoutes, which for some builders builds OpenAPI
+			// definitions.
+			if !customRoutesEnabled(apiResourceConfig, gv) {
 				continue
 			}
 
@@ -78,52 +84,73 @@ func AugmentWebServicesWithCustomRoutes(
 				continue
 			}
 
-			// Find or create WebService for this group version
-			rootPath := "/apis/" + gv.String()
-			ws, exists := existingWebServices[rootPath]
-			if !exists {
-				// Create a new WebService if one doesn't exist
-				ws = new(restful.WebService)
-				ws.Path(rootPath)
-				container.Add(ws)
-				existingWebServices[rootPath] = ws
-			}
-
-			// Add root handlers using OpenAPI specs
-			for _, route := range routes.Root {
-				instrumentedHandler := metrics.InstrumentHandler(
-					gv.Group,
-					gv.Version,
-					route.Path,
-					route.Handler,
-				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
-
-				// Use OpenAPI spec to configure routes properly
-				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, false); err != nil {
-					return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
-				}
-			}
-
-			// Add namespace handlers using OpenAPI specs
-			for _, route := range routes.Namespace {
-				instrumentedHandler := metrics.InstrumentHandler(
-					gv.Group,
-					gv.Version,
-					route.Path,
-					route.Handler,
-				)
-				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
-
-				// Use OpenAPI spec to configure routes properly
-				if err := addRouteFromSpec(ws, route.Path, route.Spec, routeFunction, true); err != nil {
-					return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
-				}
+			if err := addRoutesToWebService(container, existingWebServices, metrics, gv, routes); err != nil {
+				return err
 			}
 		}
 	}
 
+	for _, e := range extra {
+		if e.Routes == nil || !customRoutesEnabled(apiResourceConfig, e.GroupVersion) {
+			continue
+		}
+		if err := addRoutesToWebService(container, existingWebServices, metrics, e.GroupVersion, e.Routes); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func customRoutesEnabled(apiResourceConfig *serverstorage.ResourceConfig, gv schema.GroupVersion) bool {
+	if apiResourceConfig != nil && !apiResourceConfig.ResourceEnabled(gv.WithResource("")) {
+		klog.InfoS("Skipping custom routes for disabled group version", "gv", gv.String())
+		return false
+	}
+	return true
+}
+
+// addRoutesToWebService mounts routes for gv, creating the WebService if it is
+// missing. existingWebServices is updated on creation because a second
+// WebService on the same root path would shadow the first.
+func addRoutesToWebService(
+	container *restful.Container,
+	existingWebServices map[string]*restful.WebService,
+	metrics *CustomRouteMetrics,
+	gv schema.GroupVersion,
+	routes *APIRoutes,
+) error {
+	rootPath := "/apis/" + gv.String()
+	ws, exists := existingWebServices[rootPath]
+	if !exists {
+		ws = new(restful.WebService)
+		ws.Path(rootPath)
+		container.Add(ws)
+		existingWebServices[rootPath] = ws
+	}
+
+	for _, route := range routes.Root {
+		if err := addInstrumentedRoute(ws, metrics, gv, route, false); err != nil {
+			return fmt.Errorf("failed to add root route %s: %w", route.Path, err)
+		}
+	}
+	for _, route := range routes.Namespace {
+		if err := addInstrumentedRoute(ws, metrics, gv, route, true); err != nil {
+			return fmt.Errorf("failed to add namespace route %s: %w", route.Path, err)
+		}
+	}
+	return nil
+}
+
+func addInstrumentedRoute(
+	ws *restful.WebService,
+	metrics *CustomRouteMetrics,
+	gv schema.GroupVersion,
+	route APIRouteHandler,
+	isNamespaced bool,
+) error {
+	instrumented := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, route.Handler)
+	return addRouteFromSpec(ws, route.Path, route.Spec, convertHandlerToRouteFunction(instrumented), isNamespaced)
 }
 
 // addRouteFromSpec adds routes to a WebService using OpenAPI specs
@@ -140,20 +167,7 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		fullPath = "/" + routePath
 	}
 
-	// Add routes for each HTTP method defined in the OpenAPI spec
-	operations := map[string]*spec3.Operation{
-		"GET":    pathProps.Get,
-		"POST":   pathProps.Post,
-		"PUT":    pathProps.Put,
-		"PATCH":  pathProps.Patch,
-		"DELETE": pathProps.Delete,
-	}
-
-	for method, operation := range operations {
-		if operation == nil {
-			continue
-		}
-
+	for method, operation := range GetPathOperations(pathProps) {
 		// Create route builder for this method
 		var routeBuilder *restful.RouteBuilder
 		switch method {
@@ -167,6 +181,8 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 			routeBuilder = ws.PATCH(fullPath)
 		case "DELETE":
 			routeBuilder = ws.DELETE(fullPath)
+		default:
+			return fmt.Errorf("unsupported method: %s / path:%s", method, fullPath)
 		}
 
 		// Set operation ID from OpenAPI spec (with K8s verb prefix if needed)
@@ -181,22 +197,6 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		// Add description from OpenAPI spec
 		if operation.Description != "" {
 			routeBuilder = routeBuilder.Doc(operation.Description)
-		}
-
-		// Check if namespace parameter is already in the OpenAPI spec
-		hasNamespaceParam := false
-		if operation.Parameters != nil {
-			for _, param := range operation.Parameters {
-				if param.Name == "namespace" && param.In == "path" {
-					hasNamespaceParam = true
-					break
-				}
-			}
-		}
-
-		// Add namespace parameter for namespaced routes if not already in spec
-		if isNamespaced && !hasNamespaceParam {
-			routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
 		}
 
 		// Add parameters from OpenAPI spec
@@ -224,6 +224,39 @@ func addRouteFromSpec(ws *restful.WebService, routePath string, pathProps *spec3
 		// and will be added to the OpenAPI document via addBuilderRoutes in openapi.go.
 		// We don't duplicate that information here since restful uses the route metadata
 		// for OpenAPI generation, which is handled separately in this codebase.
+
+		if isNamespaced {
+			// Check if namespace parameter is already in the OpenAPI spec
+			hasNamespaceParam := false
+			if operation.Parameters != nil {
+				for _, param := range operation.Parameters {
+					if param.Name == "namespace" && param.In == "path" {
+						hasNamespaceParam = true
+						break
+					}
+				}
+			}
+
+			// Add namespace parameter for namespaced routes if not already in spec
+			if !hasNamespaceParam {
+				routeBuilder = routeBuilder.Param(restful.PathParameter("namespace", "object name and auth scope, such as for teams and projects"))
+			}
+
+			// Add the namespace to context, matching standard k8s behavior
+			routeBuilder = routeBuilder.Filter(func(req *restful.Request, resp *restful.Response, next *restful.FilterChain) {
+				ns := req.PathParameter("namespace")
+				if ns == "" {
+					err := errors.NewBadRequest("missing user")
+					errhttp.Write(req.Request.Context(), err, resp)
+					return
+				}
+
+				// Set the namespace value
+				ctx := request.WithNamespace(req.Request.Context(), ns)
+				req.Request = req.Request.WithContext(ctx)
+				next.ProcessFilter(req, resp)
+			})
+		}
 
 		// Register the route with handler
 		ws.Route(routeBuilder.To(handler))

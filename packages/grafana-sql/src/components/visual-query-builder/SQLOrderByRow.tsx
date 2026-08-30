@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 
-import { QueryWithDefaults } from '../../defaults';
-import { DB, SQLQuery } from '../../types';
+import { type QueryWithDefaults } from '../../defaults';
+import { type DB, type SQLQuery } from '../../types';
 import { getColumnsWithIndices } from '../../utils/getColumnsWithIndices';
 import { useSqlChange } from '../../utils/useSqlChange';
 

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import config from 'app/core/config';
 
 import { ServerStats } from './ServerStats';
-import { ServerStat } from './state/apis';
+import { type ServerStat } from './state/apis';
 
 const stats: ServerStat = {
   activeAdmins: 1,

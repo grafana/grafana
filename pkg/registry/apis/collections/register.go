@@ -49,6 +49,7 @@ func RegisterAPIService(
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
+			AllowOrgAdmin: true,
 			Resource: map[string][]utils.ResourceOwner{
 				"stars": {utils.UserResourceOwner},
 			},
@@ -94,14 +95,13 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	if err != nil {
 		return err
 	}
-	stars = &starStorage{Storage: stars} // wrap List so we only return one value
 	if b.legacyStars != nil && opts.DualWriteBuilder != nil {
 		stars, err = opts.DualWriteBuilder(resource.GroupResource(), b.legacyStars, stars)
 		if err != nil {
 			return err
 		}
 	}
-	storage[resource.StoragePath()] = stars
+	storage[resource.StoragePath()] = &starStorage{Storage: stars} // wrap List so we only return one value
 	storage[resource.StoragePath("update")] = &starsREST{store: stars}
 
 	apiGroupInfo.VersionedResourcesStorageMap[collections.APIVersion] = storage

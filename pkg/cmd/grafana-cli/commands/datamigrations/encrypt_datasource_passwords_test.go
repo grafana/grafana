@@ -25,7 +25,7 @@ func TestIntegrationPasswordMigrationCommand(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// setup datasources with password, basic_auth and none
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		passwordMigration(t, sess, store)
 		return nil

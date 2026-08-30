@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { uniq } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { Icon, Label, MultiSelect, Tooltip, useStyles2 } from '@grafana/ui';
+import { type AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export const ReceiverFilter = ({ groups, receivers, onReceiversChange }: Props) => {
+  const styles = useStyles2(getStyles);
   const receiverOptions = uniq(groups.map((group) => group.receiver.name))
     .map<SelectableValue<string>>((receiverName) => ({
       label: receiverName === 'NONE' ? t('alerting.receiver-filter.no-grouping', 'No grouping') : receiverName,
@@ -22,7 +24,7 @@ export const ReceiverFilter = ({ groups, receivers, onReceiversChange }: Props) 
     .sort((a, b) => collator.compare(a.label || '', b.label || ''));
 
   return (
-    <div data-testid={'receiver-filter-container'}>
+    <div data-testid={'receiver-filter-container'} className={styles.wrapper}>
       <Label>
         <span>
           <Trans i18nKey="alerting.receiver-filter.contact-point">Contact point</Trans>&nbsp;
@@ -46,8 +48,15 @@ export const ReceiverFilter = ({ groups, receivers, onReceiversChange }: Props) 
           onReceiversChange(items.map(({ value }) => value).filter((v): v is string => v !== undefined));
         }}
         options={receiverOptions}
-        width={34}
+        width={32}
       />
     </div>
   );
 };
+
+const getStyles = () => ({
+  wrapper: css({
+    minWidth: 0,
+    flex: '1 1 0',
+  }),
+});

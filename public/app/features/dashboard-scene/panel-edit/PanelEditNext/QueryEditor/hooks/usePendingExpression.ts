@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQueryType } from 'app/features/expressions/types';
+import { type ExpressionQueryType } from 'app/features/expressions/types';
 import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 
-import { PendingExpression } from '../QueryEditorContext';
+import { type PendingExpression } from '../QueryEditorContext';
 
 interface UsePendingExpressionOptions {
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
@@ -15,16 +15,12 @@ interface UsePendingExpressionOptions {
 export function usePendingExpression({ addQuery, onCardSelectionChange }: UsePendingExpressionOptions) {
   const [pendingExpression, setPendingExpressionState] = useState<PendingExpression | null>(null);
 
-  const setPendingExpression = useCallback(
-    (pending: PendingExpression | null) => {
-      setPendingExpressionState(pending);
-      if (pending) {
-        // Deselect any currently selected card so the content area shows the picker
-        onCardSelectionChange(null, null);
-      }
-    },
-    [onCardSelectionChange]
-  );
+  const setPendingExpression = useCallback((pending: PendingExpression | null) => {
+    // Don't touch card selection on open: the picker renders purely off pending state
+    // (via getEditorType / hasPendingPicker), so deselecting would wipe the bulk
+    // selection and leave multi-select mode in an inconsistent state on cancel.
+    setPendingExpressionState(pending);
+  }, []);
 
   const finalizePendingExpression = useCallback(
     (type: ExpressionQueryType) => {

@@ -3,16 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import {
-  AnnotationQuery,
+  type AnnotationQuery,
   FieldType,
   LoadingState,
-  PanelData,
+  type PanelData,
   VariableSupportType,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -42,6 +43,19 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(async () => ({
+    ...defaultDatasource,
+    variables: {
+      getType: () => VariableSupportType.Custom,
+      query: jest.fn(),
+      editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+    },
+  })),
+  getDataSourceInstanceSettings: jest.fn(async () => ({ ...defaultDatasource })),
 }));
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -88,20 +102,9 @@ describe('AnnotationSettingsEdit', () => {
     };
   }
 
-  // For testing combobox
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    // For testing combobox
+    mockComboboxRect();
   });
 
   afterEach(() => {

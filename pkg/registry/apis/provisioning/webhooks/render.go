@@ -104,7 +104,7 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = c
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = provisioningapis.WithTimeout(c, 20*time.Second)
 	return nil
 }
 
@@ -114,8 +114,8 @@ func (c *renderConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	namespace := request.NamespaceValue(ctx)
-	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		namespace := request.NamespaceValue(ctx)
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -169,7 +169,7 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}), 20*time.Second), nil
+	}), nil
 }
 
 var (

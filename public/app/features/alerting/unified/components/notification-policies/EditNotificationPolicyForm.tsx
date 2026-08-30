@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { ReactNode, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
 import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Badge,
@@ -21,11 +21,12 @@ import {
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ExternalAlertmanagerContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
-import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { TimeIntervalAction } from 'app/features/alerting/unified/hooks/abilities/types';
+import { MatcherOperator, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { FormAmRoute } from '../../types/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   amRouteToFormAmRoute,
@@ -53,7 +54,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
+  const { granted: canSeeMuteTimings } = useTimeIntervalAbility({ action: TimeIntervalAction.View });
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
 
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];

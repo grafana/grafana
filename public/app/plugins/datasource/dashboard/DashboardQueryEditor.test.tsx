@@ -1,12 +1,12 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, LoadingState, PanelPluginMeta } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelPluginMeta } from '@grafana/data';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import {
   createDashboardModelFixture,
@@ -16,8 +16,8 @@ import { MIXED_DATASOURCE_NAME } from '../mixed/MixedDataSource';
 
 import { DashboardQueryEditor, INVALID_PANEL_DESCRIPTION } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './constants';
-import { DashboardDatasource } from './datasource';
-import { DashboardQuery } from './types';
+import { type DashboardDatasource } from './datasource';
+import { type DashboardQuery } from './types';
 
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
@@ -215,7 +215,7 @@ describe('DashboardQueryEditor', () => {
         );
       });
 
-      const adhocFiltersToggle = await screen.findByText('AdHoc Filters');
+      const adhocFiltersToggle = await screen.findByText('Filters');
       expect(adhocFiltersToggle).toBeInTheDocument();
     });
   });

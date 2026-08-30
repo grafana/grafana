@@ -8,7 +8,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 import { EffectsEditor } from './EffectsEditor';
 import { GaugePanel } from './GaugePanel';
 import { gaugePanelChangedHandler, gaugePanelMigrationHandler, shouldMigrateGauge } from './migrations';
-import { defaultGaugePanelEffects, defaultOptions, Options } from './panelcfg.gen';
+import { defaultGaugePanelEffects, defaultOptions, type Options } from './panelcfg.gen';
 import { gaugePresetsSupplier } from './presets';
 import { gaugeSuggestionsSupplier } from './suggestions';
 

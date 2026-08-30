@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
+import { useFlagTableInspectDataTableNG } from '@grafana/runtime/internal';
+import { defaultTimeZone, type TimeZone } from '@grafana/schema';
+import { TabbedContainer, type TabConfig, useStyles2 } from '@grafana/ui';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -15,10 +17,10 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { mixedRequestId } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
-import { GetDataOptions } from '../query/state/PanelQueryRunner';
+import { type GetDataOptions } from '../query/state/PanelQueryRunner';
 
 import { runQueries } from './state/query';
 
@@ -42,6 +44,7 @@ export function ExploreQueryInspector(props: Props) {
     errors = [queryResponse.error];
   }
   const styles = useStyles2(getStyles);
+  const useTableNG = useFlagTableInspectDataTableNG();
 
   useEffect(() => {
     reportInteraction('grafana_explore_query_inspector_opened');
@@ -75,6 +78,7 @@ export function ExploreQueryInspector(props: Props) {
         app={CoreApp.Explore}
         formattedDataDescription="Matches the format in the panel"
         onOptionsChange={setDataOptions}
+        useTableNG={useTableNG}
       />
     ),
   };
@@ -106,7 +110,12 @@ export function ExploreQueryInspector(props: Props) {
   }
   return (
     <ExploreDrawer>
-      <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
+      <TabbedContainer
+        tabs={tabs}
+        onClose={onClose}
+        closeIconTooltip="Close query inspector"
+        testId={selectors.pages.Explore.QueryInspector.container}
+      />
     </ExploreDrawer>
   );
 }

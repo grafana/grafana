@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -21,6 +22,13 @@ type RepoGetter interface {
 type JobProgressRecorder interface {
 	Started() time.Time
 	Record(ctx context.Context, result JobResourceResult)
+	// RecordDryRun tallies a result into the job summary (the same bookkeeping
+	// as Record) without the side effects that assume a real write happened:
+	// no resource-operation counter/duration observation, no per-file success
+	// log, and no contribution to the job's own error/warning state. Use it for
+	// previews (e.g. pull request evaluation) that never actually change
+	// anything.
+	RecordDryRun(ctx context.Context, result JobResourceResult)
 	ResetResults(keepWarnings bool)
 	SetFinalMessage(ctx context.Context, msg string)
 	SetMessage(ctx context.Context, msg string)
@@ -50,6 +58,31 @@ type Worker interface {
 	//
 	// The job spec and metadata MUST not be modified in the storage layer while this is running. All updates go via the progress type.
 	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) error
+}
+
+// IsOrphanCleanupAction returns true for job actions that operate on orphaned
+// resources and do not require the target repository to exist.
+func IsOrphanCleanupAction(action provisioning.JobAction) bool {
+	return action == provisioning.JobActionReleaseResources ||
+		action == provisioning.JobActionDeleteResources
+}
+
+// ValidateRepoForCleanup checks that the repository is still missing or
+// terminating at the time the cleanup worker starts processing. The repo was
+// validated at job creation time, but it may have been recreated while the
+// job sat in the queue.
+//   - repo == nil → repository was not found (expected, proceed)
+//   - repo has DeletionTimestamp → repository is terminating (expected, proceed)
+//   - repo exists and is healthy → repository was recreated (abort)
+func ValidateRepoForCleanup(repo repository.Repository) error {
+	if repo == nil {
+		return nil
+	}
+	cfg := repo.Config()
+	if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+		return nil
+	}
+	return fmt.Errorf("repository %q was recreated since cleanup job was queued; aborting", cfg.Name)
 }
 
 // ProgressFn is a function that can be called to update the progress of a job

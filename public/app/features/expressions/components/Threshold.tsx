@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import { AnyAction } from '@reduxjs/toolkit';
+import { type AnyAction } from '@reduxjs/toolkit';
 import { uniqueId } from 'lodash';
 import * as React from 'react';
-import { FormEvent, useEffect, useReducer } from 'react';
+import { type FormEvent, useEffect, useReducer } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQuery, thresholdFunctions } from '../types';
+import { type ClassicCondition, type ExpressionQuery, thresholdFunctions } from '../types';
 
 import { ThresholdSelect } from './ThresholdSelect';
 import { ToLabel } from './ToLabel';
@@ -412,36 +412,17 @@ function RecoveryThresholdRow({ isRange, condition, onError, dispatch, allowOnbl
             </InlineField>
           </InlineFieldRow>
         );
+      // Both equality operators generate an IsEqual unload evaluator: "is equal to X" recovers
+      // when the value reaches the recovery value, and "is not equal to X" recovers when the
+      // value returns to X.
       case EvalFunction.IsEqual:
+      case EvalFunction.IsNotEqual:
         return (
           <InlineFieldRow className={styles.hysteresis}>
             <InlineField
               label={t(
                 'alerting.rule-form.threshold.recovery.stop-alerting-equal',
                 'Stop alerting (or pending state) when equal to'
-              )}
-              labelWidth={'auto'}
-              invalid={Boolean(invalidErrorMsg)}
-              error={invalidErrorMsg}
-            >
-              <Input
-                type="number"
-                width={10}
-                onBlur={(event) => {
-                  allowOnblur.current && onUnloadValueChange(event, 0);
-                }}
-                defaultValue={condition.unloadEvaluator?.params[0]}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        );
-      case EvalFunction.IsNotEqual:
-        return (
-          <InlineFieldRow className={styles.hysteresis}>
-            <InlineField
-              label={t(
-                'alerting.rule-form.threshold.recovery.stop-alerting-not-equal',
-                'Stop alerting (or pending state) when not equal to'
               )}
               labelWidth={'auto'}
               invalid={Boolean(invalidErrorMsg)}

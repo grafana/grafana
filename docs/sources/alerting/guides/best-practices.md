@@ -16,6 +16,11 @@ menuTitle: Best practices
 title: Best practices
 weight: 1010
 refs:
+  when-slos-reduce-alert-noise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/when-slos-reduce-alert-noise/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/guides/when-slos-reduce-alert-noise/
   recovery-threshold:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
@@ -177,13 +182,15 @@ Finally, avoid rapid resolve-and-fire notifications by using [`keep_firing_for`]
 
 ## Graduate symptom-based alerts into SLOs
 
-When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into an [SLO](/docs/grafana-cloud/alerting-and-irm/slo/).
+When a symptom-based alert fires frequently, it usually indicates a reliability concern that should be measured and managed more deliberately. This is often a sign that the alert could evolve into an [service level objective (SLO)](/docs/grafana-cloud/alerting-and-irm/slo/introduction).
 
 Traditional alerts create pressure to react immediately, while error budgets introduce a buffer of time to act, changing how urgency is handled. Alerts can then be defined in terms of error budget burn rate rather than reacting to every minor deviation.
 
 SLOs also align distinct teams around common reliability goals by providing a shared definition of what "good" looks like. They help consolidate multiple symptom alerts into a single user-facing objective.
 
 For example, instead of several teams alerting on high latency, a single SLO can be used across teams to capture overall API performance.
+
+For other use cases, refer to [when alerts need an SLO](ref:when-slos-reduce-alert-noise).
 
 ## Integrate alerting into incident post-mortems
 

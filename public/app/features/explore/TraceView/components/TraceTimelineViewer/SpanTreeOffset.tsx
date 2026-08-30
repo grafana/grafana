@@ -13,15 +13,15 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { get as _get } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2) => ({

@@ -1,5 +1,5 @@
-import { DateTime } from '../datetime/moment_wrapper';
-import { FieldType, DataFrameDTO } from '../types/dataFrame';
+import { type DateTime } from '../datetime/moment_wrapper';
+import { FieldType, type DataFrameDTO } from '../types/dataFrame';
 
 import { DataFrameView } from './DataFrameView';
 import { MutableDataFrame } from './MutableDataFrame';

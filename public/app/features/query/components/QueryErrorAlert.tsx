@@ -7,9 +7,9 @@ import {
   useAssistant,
   useProvidePageContext,
 } from '@grafana/assistant';
-import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
+import { type DataQueryError, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 export interface Props {

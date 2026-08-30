@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Spinner, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 /**
  * Discriminated union for compatibility check states.
@@ -15,7 +15,7 @@ export type CompatibilityState =
   | { status: 'success'; score: number; metricsFound: number; metricsTotal: number }
   | { status: 'error'; errorMessage?: string; errorCode?: string };
 
-export type ErrorCategory = 'not_supported' | 'unexpected';
+type ErrorCategory = 'not_supported' | 'unexpected';
 
 interface ScoreIndicator {
   color: 'green' | 'orange' | 'red';
@@ -58,7 +58,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
       <Tooltip interactive={true} content={tooltipContent}>
         <Button
           variant="secondary"
-          fill="outline"
+          fill="solid"
           disabled={isLoading}
           onClick={(e) => {
             e.stopPropagation();
@@ -68,6 +68,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
           data-testid={isLoading ? 'compatibility-badge-loading' : undefined}
           className={styles.button}
           icon="info-circle"
+          size="sm"
         >
           {buttonText}
           {isLoading && <Spinner size="xs" inline className={styles.spinner} />}
@@ -77,7 +78,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
   }
 
   if (state.status === 'error') {
-    const tooltipContent = getErrorTooltip(state.errorCode, styles.tooltipLink);
+    const tooltipContent = getErrorTooltip(state.errorCode);
 
     return (
       <Tooltip interactive={true} content={tooltipContent}>
@@ -124,7 +125,6 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
             })}
             icon={icon}
             color={color}
-            className={styles.badge}
           />
         </span>
       </Tooltip>
@@ -181,7 +181,7 @@ function getScoreIndicator(score: number, metricsFound: number, metricsTotal: nu
   };
 }
 
-function getErrorTooltip(errorCode: string | undefined, linkClassName: string) {
+function getErrorTooltip(errorCode: string | undefined) {
   const category = categorizeError(errorCode);
   if (category === 'not_supported') {
     return (
@@ -195,23 +195,17 @@ function getErrorTooltip(errorCode: string | undefined, linkClassName: string) {
   return (
     <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
       Compatibility check failed. First, verify the{' '}
-      <a
-        href="https://grafana.com/docs/grafana/latest/datasources/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClassName}
-      >
+      <TextLink variant="bodySmall" href="https://grafana.com/docs/grafana/latest/datasources/" external>
         data source
-      </a>{' '}
+      </TextLink>{' '}
       is working. Then open the dashboard and review the{' '}
-      <a
+      <TextLink
+        variant="bodySmall"
         href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClassName}
+        external
       >
         variables
-      </a>
+      </TextLink>
       .
     </Trans>
   );
@@ -230,23 +224,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
     }),
-    badge: css({
-      paddingTop: theme.spacing(0.8),
-      paddingBottom: theme.spacing(0.8),
-    }),
     clickableBadge: css({
       paddingTop: theme.spacing(0.8),
       paddingBottom: theme.spacing(0.8),
       cursor: 'pointer',
       '&:hover': {
         opacity: 0.8,
-      },
-    }),
-    tooltipLink: css({
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
-      '&:hover': {
-        textDecoration: 'none',
       },
     }),
   };

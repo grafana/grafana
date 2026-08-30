@@ -54,7 +54,7 @@ func TestNaN(t *testing.T) {
 			vars:      Vars{"A": resultValuesNoErr(makeNumber("", nil, NaN))},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
-			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(1))),
+			results:   resultValuesNoErr(makeNumber("", nil, new(1.))),
 		},
 		{
 			name: "binary: Scalar Op(Non-AND/OR) Series(with NaN value) is NaN)",
@@ -62,7 +62,7 @@ func TestNaN(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(2),
+						time.Unix(5, 0), new(2.),
 					}, tp{
 						time.Unix(10, 0), NaN,
 					}),
@@ -72,7 +72,7 @@ func TestNaN(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(-1),
+					time.Unix(5, 0), new(float64(-1)),
 				}, tp{
 					time.Unix(10, 0), NaN,
 				}),
@@ -84,18 +84,18 @@ func TestNaN(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(2),
+						time.Unix(5, 0), new(2.),
 					}, tp{
 						time.Unix(10, 0), NaN,
 					}),
 				),
-				"B": resultValuesNoErr(makeNumber("", nil, float64Pointer(0))),
+				"B": resultValuesNoErr(makeNumber("", nil, new(0.))),
 			},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(0),
+					time.Unix(5, 0), new(0.),
 				}, tp{
 					time.Unix(10, 0), NaN,
 				}),
@@ -107,7 +107,7 @@ func TestNaN(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("temp", nil, tp{
-						time.Unix(5, 0), float64Pointer(2),
+						time.Unix(5, 0), new(2.),
 					}, tp{
 						time.Unix(10, 0), NaN,
 					}),
@@ -190,7 +190,7 @@ func TestNullValues(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("", nil, tp{
-						time.Unix(5, 0), float64Pointer(1),
+						time.Unix(5, 0), new(1.),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}),
@@ -200,7 +200,7 @@ func TestNullValues(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(-1),
+					time.Unix(5, 0), new(float64(-1)),
 				}, tp{
 					time.Unix(10, 0), nil,
 				}),
@@ -212,7 +212,7 @@ func TestNullValues(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("", nil, tp{
-						time.Unix(5, 0), float64Pointer(1),
+						time.Unix(5, 0), new(1.),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}),
@@ -222,7 +222,7 @@ func TestNullValues(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(0),
+					time.Unix(5, 0), new(0.),
 				}, tp{
 					time.Unix(10, 0), nil,
 				}),
@@ -234,7 +234,7 @@ func TestNullValues(t *testing.T) {
 			vars: Vars{
 				"A": resultValuesNoErr(
 					makeSeries("", nil, tp{
-						time.Unix(5, 0), float64Pointer(1),
+						time.Unix(5, 0), new(1.),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}),
@@ -244,7 +244,7 @@ func TestNullValues(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(0),
+					time.Unix(5, 0), new(0.),
 				}, tp{
 					time.Unix(10, 0), nil,
 				}),
@@ -275,7 +275,7 @@ func TestNullValues(t *testing.T) {
 			expr: "$A * $B",
 			vars: Vars{
 				"A": resultValuesNoErr(makeNumber("", nil, nil)),
-				"B": resultValuesNoErr(makeNumber("", nil, float64Pointer(1))),
+				"B": resultValuesNoErr(makeNumber("", nil, new(1.))),
 			},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
@@ -285,10 +285,10 @@ func TestNullValues(t *testing.T) {
 			name: "number and series: binary non-null number and series with a null: is null",
 			expr: "$A * $B",
 			vars: Vars{
-				"A": resultValuesNoErr(makeNumber("", nil, float64Pointer(1))),
+				"A": resultValuesNoErr(makeNumber("", nil, new(1.))),
 				"B": resultValuesNoErr(
 					makeSeries("", nil, tp{
-						time.Unix(5, 0), float64Pointer(1),
+						time.Unix(5, 0), new(1.),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}),
@@ -298,7 +298,7 @@ func TestNullValues(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: resultValuesNoErr(
 				makeSeries("", nil, tp{
-					time.Unix(5, 0), float64Pointer(1),
+					time.Unix(5, 0), new(1.),
 				}, tp{
 					time.Unix(10, 0), nil,
 				}),
@@ -311,7 +311,7 @@ func TestNullValues(t *testing.T) {
 				"A": resultValuesNoErr(makeNumber("", nil, nil)),
 				"B": resultValuesNoErr(
 					makeSeries("", nil, tp{
-						time.Unix(5, 0), float64Pointer(1),
+						time.Unix(5, 0), new(1.),
 					}, tp{
 						time.Unix(10, 0), nil,
 					}),
@@ -414,7 +414,7 @@ func TestNoData(t *testing.T) {
 		"$A || $B",
 		"$A && $B",
 	}
-	series := makeSeries("test", nil, tp{time.Unix(5, 0), float64Pointer(2)})
+	series := makeSeries("test", nil, tp{time.Unix(5, 0), new(2.)})
 	for _, expr := range bin_ops {
 		t.Run(fmt.Sprintf("op: %s", expr), func(t *testing.T) {
 			e, err := New(expr)

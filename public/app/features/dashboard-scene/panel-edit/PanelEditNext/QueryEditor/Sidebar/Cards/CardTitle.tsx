@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 // Text component doesn't let us use strikethrough so we use a span with the correct style instead
@@ -17,7 +17,7 @@ function getStyles(theme: GrafanaTheme2) {
       whiteSpace: 'nowrap',
       textDecoration: 'none',
       color: theme.colors.text.primary,
-      ...theme.typography.code,
+      ...theme.typography.body,
       fontWeight: theme.typography.fontWeightLight,
     }),
 

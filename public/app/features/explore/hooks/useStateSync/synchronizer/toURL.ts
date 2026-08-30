@@ -1,18 +1,18 @@
-import { Action } from '@reduxjs/toolkit';
+import { type Action } from '@reduxjs/toolkit';
 import { isEqual } from 'lodash';
-import { MutableRefObject } from 'react';
+import { type MutableRefObject } from 'react';
 
-import { UrlQueryMap } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
+import { type UrlQueryMap } from '@grafana/data';
+import { type LocationService } from '@grafana/runtime';
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { changeCompactModeAction, changePanelsStateAction } from 'app/features/explore/state/explorePane';
 import { splitClose, splitOpen } from 'app/features/explore/state/main';
 import { runQueries } from 'app/features/explore/state/query';
 import { changeRangeAction } from 'app/features/explore/state/time';
-import { ExploreState } from 'app/types/explore';
+import { type ExploreState } from 'app/types/explore';
 
 import { getUrlStateFromPaneState } from '../external.utils';
-import { InitState } from '../internal.utils';
+import { type InitState } from '../internal.utils';
 
 /*
 We want to update the URL when:

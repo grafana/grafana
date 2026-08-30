@@ -1,5 +1,5 @@
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 interface ReturnBag {
   folder?: FolderDTO;
@@ -26,5 +26,5 @@ export function stringifyFolder({ title, parents }: FolderDTO) {
 }
 
 function encodeTitle(title: string): string {
-  return title.replaceAll('/', '\\/');
+  return title.replaceAll('\\', '\\\\').replaceAll('/', '\\/');
 }

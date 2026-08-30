@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, useStyles2 } from '@grafana/ui';
 
@@ -31,7 +31,7 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     padding: theme.spacing(0.5, 1),
     borderRadius: theme.shape.radius.default,

@@ -1,10 +1,10 @@
-import { VariableOption } from '@grafana/data';
+import { type VariableOption } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
 import { textboxBuilder } from '../shared/testing/builders';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { ComponentProps, useId } from 'react';
+import { type ComponentProps, useId } from 'react';
 
-import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Stack, Switch, Label, Tooltip, Grid, useStyles2 } from '@grafana/ui';
 
-import { GaugePanelEffects } from './panelcfg.gen';
+import { type GaugePanelEffects } from './panelcfg.gen';
 
 function EffectsEditorInput(props: ComponentProps<typeof Switch> & { tooltip?: string }) {
   const id = useId();
@@ -43,16 +44,19 @@ export function EffectsEditor(props: StandardEditorProps<GaugePanelEffects>) {
         label={t('gauge.config.effects.gradient', 'Gradient')}
         value={!!props.value?.gradient}
         onChange={(e) => props.onChange({ ...props.value, gradient: e.currentTarget.checked })}
+        data-testid={selectors.components.PanelEditor.Gauge.gradientSwitch}
       />
       <EffectsEditorInput
         label={t('gauge.config.effects.bar-glow', 'Bar glow')}
         value={!!props.value?.barGlow}
         onChange={(e) => props.onChange({ ...props.value, barGlow: e.currentTarget.checked })}
+        data-testid={selectors.components.PanelEditor.Gauge.barGlowSwitch}
       />
       <EffectsEditorInput
         label={t('gauge.config.effects.center-glow', 'Center glow')}
         value={!!props.value?.centerGlow}
         onChange={(e) => props.onChange({ ...props.value, centerGlow: e.currentTarget.checked })}
+        data-testid={selectors.components.PanelEditor.Gauge.centerGlowSwitch}
       />
     </Grid>
   );

@@ -2,12 +2,15 @@ import * as React from 'react';
 
 import { store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import {
-  AlertManagerDataSource,
+  type AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   getAlertmanagerDataSourceByName,
 } from '../utils/datasource';

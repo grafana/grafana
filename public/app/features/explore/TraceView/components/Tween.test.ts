@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import Tween, { TweenState } from './Tween';
+import Tween, { type TweenState } from './Tween';
 
 describe('Tween', () => {
   const oldNow = Date.now;

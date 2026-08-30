@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 
 import { generateDashboardImage } from './utils';
 
@@ -23,15 +23,17 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/features/dashboard-scene/utils/getDashboardUrl', () => ({
   getDashboardUrl: jest
     .fn()
-    .mockImplementation((params: { updateQuery?: Record<string, string | number | boolean> }) => {
-      const url = new URL('http://test-url');
-      if (params.updateQuery) {
-        Object.entries(params.updateQuery).forEach(([key, value]) => {
-          url.searchParams.append(key, String(value));
-        });
+    .mockImplementation(
+      (params: { absolute?: boolean; uid?: string; updateQuery?: Record<string, string | number | boolean> }) => {
+        const url = new URL(`/render/d/${params.uid}`, 'http://test-url');
+        if (params.updateQuery) {
+          Object.entries(params.updateQuery).forEach(([key, value]) => {
+            url.searchParams.append(key, String(value));
+          });
+        }
+        return params.absolute ? url.toString() : `${url.pathname}${url.search}`;
       }
-      return url.toString();
-    }),
+    ),
 }));
 
 describe('Dashboard Export Image Utils', () => {
@@ -115,7 +117,9 @@ describe('Dashboard Export Image Utils', () => {
       expect(result.blob).toBe(mockBlob);
       expect(fetchMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: expect.stringMatching(/height=-1.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
+          url: expect.stringMatching(
+            /^\/render\/d\/test-uid\?height=-1.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/
+          ),
           responseType: 'blob',
         })
       );
@@ -123,7 +127,6 @@ describe('Dashboard Export Image Utils', () => {
         uid: 'test-uid',
         currentQueryParams: '',
         render: true,
-        absolute: true,
         updateQuery: {
           height: -1,
           width: 1280,
@@ -164,7 +167,6 @@ describe('Dashboard Export Image Utils', () => {
         uid: 'test-uid',
         currentQueryParams: '',
         render: true,
-        absolute: true,
         updateQuery: {
           height: -1,
           width: 1500, // Should use config value

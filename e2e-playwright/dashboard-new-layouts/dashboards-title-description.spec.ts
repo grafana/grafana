@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -8,36 +8,35 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
-
 test.describe(
   'Dashboard',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, controls, sidebar }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Options');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      const titleInput = page.locator('[aria-label="dashboard-options Title field property editor"] input');
+      const titleInput = sidebar.dashboardOptions.getTitleInput();
       await expect(titleInput).toHaveValue('Annotation filtering');
-      await titleInput.fill('New dashboard title');
-      await expect(titleInput).toHaveValue('New dashboard title');
 
-      // Check that new dashboard title is reflected in breadcrumb
+      const newTitle = 'New dashboard title';
+      await titleInput.fill(newTitle);
+      await expect(titleInput).toHaveValue(newTitle);
+
+      // check that new dashboard title is updated in the breadcrumbs
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb('New dashboard title'))
+        dashboardPage.getByGrafanaSelector(selectors.components.Breadcrumbs.breadcrumb(newTitle))
       ).toBeVisible();
 
-      // Check that we can successfully change the dashboard description
-      const descriptionTextArea = page.locator(
-        '[aria-label="dashboard-options Description field property editor"] textarea'
-      );
-      await descriptionTextArea.fill('Dashboard description');
-      await expect(descriptionTextArea).toHaveValue('Dashboard description');
+      const descriptionTextarea = sidebar.dashboardOptions.getDescriptionTextarea();
+      await expect(descriptionTextarea).toHaveValue('');
+
+      const newDescription = 'Dashboard description';
+      await descriptionTextarea.fill(newDescription);
+      await expect(descriptionTextarea).toHaveValue(newDescription);
     });
   }
 );

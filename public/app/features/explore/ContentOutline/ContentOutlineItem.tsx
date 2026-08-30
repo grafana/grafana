@@ -1,7 +1,10 @@
-import { useEffect, useRef, ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import * as React from 'react';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
+
+/** The `panelId` query rows register themselves under, shared so lookups cannot drift. */
+export const QUERIES_PANEL_ID = 'Queries';
 
 type INDENT_LEVELS = 'root' | 'child';
 

@@ -1,4 +1,4 @@
-import { UrlQueryMap, VariableRefresh } from '@grafana/data';
+import { type UrlQueryMap, VariableRefresh } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import {

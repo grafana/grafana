@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { AlertmanagerAlert, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Silence } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertSilencesApi } from '../api/alertSilencesApi';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getDatasourceAPIUid } from '../utils/datasource';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from './useAbilities';
+import { isGranted } from './abilities/abilityUtils';
+import { useSilenceAbility } from './abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from './abilities/types';
 
 interface UseSilenceViewDataResult {
   silence?: Silence;
@@ -32,10 +34,8 @@ export function useSilenceViewData(): UseSilenceViewDataResult {
     accessControl: true,
   });
 
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const previewAbility = useSilenceAbility({ action: SilenceAction.Preview });
+  const canPreview = isGranted(previewAbility);
 
   const { data: alertManagerAlerts = [] } = alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
     {

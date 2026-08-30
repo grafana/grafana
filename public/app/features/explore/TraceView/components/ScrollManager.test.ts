@@ -14,10 +14,10 @@
 
 jest.mock('./scroll-page');
 
-import ScrollManager, { Accessors } from './ScrollManager';
+import ScrollManager, { type Accessors } from './ScrollManager';
 import traceGenerator from './demo/trace-generators';
 import { scrollBy, scrollTo } from './scroll-page';
-import { Trace, TraceSpanData, TraceSpanReference } from './types/trace';
+import { type Trace, type TraceSpanData, type TraceSpanReference } from './types/trace';
 
 const SPAN_HEIGHT = 2;
 

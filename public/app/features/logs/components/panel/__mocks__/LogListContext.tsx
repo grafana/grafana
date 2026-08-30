@@ -3,8 +3,8 @@ import { createContext, useContext } from 'react';
 import { CoreApp, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { checkLogsError, checkLogsSampled } from 'app/features/logs/utils';
 
-import { LogListContextData, Props } from '../LogListContext';
-import { LogListModel } from '../processing';
+import { type LogListContextData, type Props } from '../LogListContext';
+import { type LogListModel } from '../processing';
 
 jest.mock('@grafana/assistant', () => {
   return {
@@ -43,6 +43,7 @@ export const LogListContext = createContext<LogListContextData>({
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  syntaxHighlightingUnavailable: false,
   timestampResolution: 'ns',
   unwrappedColumns: false,
   wrapLogMessage: false,
@@ -98,6 +99,8 @@ export const defaultValue: LogListContextData = {
   showLevel: true,
   showTime: false,
   sortOrder: LogsSortOrder.Ascending,
+  syntaxHighlighting: true,
+  syntaxHighlightingUnavailable: false,
   unwrappedColumns: false,
   wrapLogMessage: false,
   isAssistantAvailable: false,

@@ -1,4 +1,4 @@
-import { Decorator } from '@storybook/react';
+import { type Decorator } from '@storybook/react';
 import * as React from 'react';
 
 import { getThemeById, ThemeContext } from '@grafana/data';

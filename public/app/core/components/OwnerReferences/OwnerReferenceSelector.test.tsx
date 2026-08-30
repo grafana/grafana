@@ -1,10 +1,11 @@
 import { HttpResponse, http } from 'msw';
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
-import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
-import { FeatureToggles } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { backendSrv } from '../../services/backend_srv';
 
@@ -12,15 +13,21 @@ import { OwnerReferenceSelector } from './OwnerReferenceSelector';
 
 setBackendSrv(backendSrv);
 const server = setupMockServer();
-comboboxTestSetup();
-
-const toggle: Array<keyof FeatureToggles> = ['kubernetesTeamsApi'];
+mockComboboxRect();
 
 describe.each([
-  { name: 'IAM path', toggles: { enable: toggle } },
-  { name: 'legacy path', toggles: { disable: toggle } },
-])('OwnerReferenceSelector ($name)', ({ toggles }) => {
-  testWithFeatureToggles(toggles);
+  { name: 'IAM path', flags: { [FlagKeys.KubernetesTeamsApi]: true } },
+  { name: 'legacy path', flags: { [FlagKeys.KubernetesTeamsApi]: false } },
+])('OwnerReferenceSelector ($name)', ({ flags }) => {
+  beforeEach(() => {
+    setTestFlags(flags);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
 
   it('shows load error but keeps selector interactive', async () => {
     const { getByRole, findByText } = render(

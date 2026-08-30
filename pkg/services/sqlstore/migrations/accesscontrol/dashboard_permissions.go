@@ -11,6 +11,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -35,20 +36,20 @@ var dashboardPermissionTranslation = map[dashboardaccess.PermissionType][]string
 
 var folderPermissionTranslation = map[dashboardaccess.PermissionType][]string{
 	dashboardaccess.PERMISSION_VIEW: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_VIEW], []string{
-		dashboards.ActionFoldersRead,
+		folder.ActionFoldersRead,
 	}...),
 	dashboardaccess.PERMISSION_EDIT: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_EDIT], []string{
 		dashboards.ActionDashboardsCreate,
-		dashboards.ActionFoldersRead,
-		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersDelete,
+		folder.ActionFoldersRead,
+		folder.ActionFoldersWrite,
+		folder.ActionFoldersDelete,
 	}...),
 	dashboardaccess.PERMISSION_ADMIN: append(dashboardPermissionTranslation[dashboardaccess.PERMISSION_ADMIN], []string{
-		dashboards.ActionFoldersRead,
-		dashboards.ActionFoldersWrite,
-		dashboards.ActionFoldersDelete,
-		dashboards.ActionFoldersPermissionsRead,
-		dashboards.ActionFoldersPermissionsWrite,
+		folder.ActionFoldersRead,
+		folder.ActionFoldersWrite,
+		folder.ActionFoldersDelete,
+		folder.ActionFoldersPermissionsRead,
+		folder.ActionFoldersPermissionsWrite,
 	}...),
 }
 
@@ -196,7 +197,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 func (m dashboardPermissionsMigrator) mapPermission(id int64, p dashboardaccess.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
-		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
+		scope := folder.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
 		permissions := make([]*ac.Permission, 0, len(actions))
 		for _, action := range actions {
 			permissions = append(permissions, &ac.Permission{Action: action, Scope: scope})
@@ -659,6 +660,118 @@ func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *
 	}
 
 	return nil
+}
+
+const managedFolderVariableActionsMigratorID = "managed folder permissions variable actions migration"
+
+func AddManagedFolderVariableActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(managedFolderVariableActionsMigratorID, &managedFolderVariableActionsMigrator{})
+}
+
+type managedFolderVariableActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedFolderVariableActionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedFolderVariableActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	var ids []any
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids)-1)+") AND scope LIKE 'folders:%'", ids...).Find(&permissions); err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string][]ac.Permission)
+		}
+		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for id, a := range mapped {
+		for scope, p := range a {
+			kind, attribute, identifier := ac.Permission{Scope: scope}.SplitScope()
+
+			if hasFolderView(p) {
+				if !hasAction(ac.ActionVariablesRead, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesRead,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+					})
+				}
+			}
+
+			if hasFolderAdmin(p) || hasFolderEdit(p) {
+				if !hasAction(ac.ActionVariablesCreate, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesCreate,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+					})
+				}
+				if !hasAction(ac.ActionVariablesDelete, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesDelete,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+					})
+				}
+				if !hasAction(ac.ActionVariablesWrite, p) {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesWrite,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	return batch(len(toAdd), batchSize, func(start, end int) error {
+		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 const ManagedDashboardAnnotationActionsMigratorID = "managed dashboard permissions annotation actions migration"

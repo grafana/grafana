@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
 import {
-  CSSProperties,
+  type CSSProperties,
   memo,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-  MouseEvent,
+  type MouseEvent,
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
 import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
-import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import { findHighlightChunksInText, type GrafanaTheme2, LogsDedupStrategy, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Icon, Tooltip } from '@grafana/ui';
 
@@ -28,12 +28,12 @@ import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
 import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
-import { getNormalizedFieldName, LogListModel } from './processing';
+import { getNormalizedFieldName, type LogListModel } from './processing';
 import {
   FIELD_GAP_MULTIPLIER,
   getLogLineDOMHeight,
-  LogFieldDimension,
-  LogLineVirtualization,
+  type LogFieldDimension,
+  type LogLineVirtualization,
   DEFAULT_LINE_HEIGHT,
 } from './virtualization';
 
@@ -128,6 +128,9 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    // TODO remove when react-use is fixed
+    // see https://github.com/streamich/react-use/issues/2612
+    // @ts-expect-error
     const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
@@ -146,9 +149,9 @@ const LogLineComponent = memo(
       const calculatedHeight = typeof height === 'number' ? height : undefined;
       const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
-        onOverflow(index, log.uid, actualHeight);
+        onOverflow(index, log.uniqueKey, actualHeight);
       }
-    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
+    }, [height, index, intersection?.isIntersecting, log.uniqueKey, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();
@@ -183,7 +186,7 @@ const LogLineComponent = memo(
       } else {
         setCollapsed(log.collapsed ?? undefined);
       }
-    }, [log.uid, log.collapsed, wrapLogMessage]);
+    }, [log.uniqueKey, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -191,7 +194,7 @@ const LogLineComponent = memo(
       const newState = !collapsed;
       log.setCollapsedState(newState);
       setCollapsed(newState);
-      onOverflow?.(index, log.uid);
+      onOverflow?.(index, log.uniqueKey);
     }, [collapsed, index, log, onOverflow]);
 
     const handleClick = useCallback(
@@ -360,7 +363,9 @@ const Log = memo(
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
         {showLevel && (log.displayLevel || !wrapLogMessage) && (
-          <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
+          <span className={`${styles.level} level-${log.logLevel} field`} title={log.logLevel}>
+            {log.displayLevel}{' '}
+          </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
           <span className="field">
@@ -533,19 +538,26 @@ export const getStyles = (
   }
 
   const colors = {
-    critical: '#B877D9',
+    critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
-    warning: '#FBAD37',
-    debug: '#6E9FFF',
+    warning: theme.colors.warning.text,
+    // dimgray fails WCAG AA contrast on dark backgrounds, so use a lighter gray in dark theme
+    debug: theme.isDark ? '#9e9e9e' : theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
-    info: '#6CCF8E',
+    info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
     logLineBody: maxContrast,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const hoverColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.background).setAlpha(0.25).toString();
+  const detailsColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
@@ -557,6 +569,10 @@ export const getStyles = (
       wordBreak: 'break-all',
       '&:hover': {
         background: hoverColor,
+        // Keep the sticky menu background in sync with the hovered log line.
+        '& .log-line-menu': {
+          background: hoverColor,
+        },
       },
       '&.infinite-scroll': {
         '&::before': {
@@ -623,19 +639,36 @@ export const getStyles = (
       lineHeight: theme.typography.body.lineHeight,
     }),
     detailsDisplayed: css({
-      background: tinycolor(theme.colors.background.canvas)
-        .darken(theme.isDark ? 2 : 5)
-        .toRgbString(),
+      background: detailsColor,
+      '& .log-line-menu': {
+        background: detailsColor,
+      },
     }),
     currentLog: css({
       background: hoverColor,
       fontWeight: theme.typography.fontWeightBold,
+      '& .log-line-menu': {
+        background: hoverColor,
+      },
     }),
     pinnedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      // The pinned highlight is translucent, so layer it over the panel background to keep the sticky menu opaque.
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
     }),
     permalinkedLogLine: css({
-      backgroundColor: tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString(),
+      backgroundColor: pinnedColor,
+      '& .log-line-menu': {
+        background: `linear-gradient(${pinnedColor}, ${pinnedColor}), ${theme.colors.background.primary}`,
+      },
+    }),
+    menuWrapper: css({
+      background: theme.colors.background.primary,
+      left: 0,
+      position: 'sticky',
+      zIndex: 1,
     }),
     menuIcon: css({
       height: virtualization?.getLineHeight() ?? DEFAULT_LINE_HEIGHT,
@@ -696,6 +729,9 @@ export const getStyles = (
       },
       '&.level-debug': {
         color: colors.debug,
+      },
+      '&.level-trace': {
+        color: colors.trace,
       },
     }),
     loadMoreButton: css({

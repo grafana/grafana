@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { Box, Text } from '@grafana/ui';
 
 import { useGetFolderQueryFacade } from '../../../api/clients/folder/v1beta1/hooks';
-import { DashboardsTreeItem } from '../../../features/browse-dashboards/types';
+import { type DashboardsTreeItem } from '../../../features/browse-dashboards/types';
 
 interface ParentTextProps {
   folder: string;

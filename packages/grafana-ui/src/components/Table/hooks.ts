@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import * as React from 'react';
-import { VariableSizeList } from 'react-window';
+import type * as React from 'react';
+import { type VariableSizeList } from 'react-window';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { GrafanaTableState } from './types';
+import { type GrafanaTableState } from './types';
 
 /**
   To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),

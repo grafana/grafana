@@ -210,7 +210,7 @@ func filterPermissionsByGet(
 		return nil
 	}
 	filtered, err := iamauthorizer.CanViewTargets(authorizer, ctx, authInfo, perms, func(i int) (string, string, string, string, bool) {
-		grn, err := backend.ParseScope(perms[i].Scope)
+		grn, err := backend.ParseScope(perms[i].Scope, "")
 		if err != nil {
 			return "", "", "", "", false
 		}

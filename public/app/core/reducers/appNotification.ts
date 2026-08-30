@@ -1,15 +1,16 @@
-import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { AppNotification, AppNotificationSeverity, AppNotificationsState } from 'app/types/appNotifications';
+import { store } from '@grafana/data';
+import { type AppNotification, AppNotificationSeverity, type AppNotificationsState } from 'app/types/appNotifications';
 
 const MAX_STORED_NOTIFICATIONS = 25;
-export const STORAGE_KEY = 'notifications';
-export const NEW_NOTIFS_KEY = `${STORAGE_KEY}/lastRead`;
+const STORAGE_KEY = 'notifications';
+const NEW_NOTIFS_KEY = `${STORAGE_KEY}/lastRead`;
 type StoredNotification = Omit<AppNotification, 'component'>;
 
-export const initialState: AppNotificationsState = {
+const initialState: AppNotificationsState = {
   byId: deserializeNotifications(),
-  lastRead: Number.parseInt(window.localStorage.getItem(NEW_NOTIFS_KEY) ?? `${Date.now()}`, 10),
+  lastRead: Number.parseInt(store.get(NEW_NOTIFS_KEY) ?? `${Date.now()}`, 10),
 };
 
 /**
@@ -60,10 +61,8 @@ export const appNotificationsReducer = appNotificationsSlice.reducer;
 // Selectors
 
 export const selectLastReadTimestamp = (state: AppNotificationsState) => state.lastRead;
-export const selectById = (state: AppNotificationsState) => state.byId;
-export const selectAll = createSelector(selectById, (byId) =>
-  Object.values(byId).sort((a, b) => b.timestamp - a.timestamp)
-);
+const selectById = (state: AppNotificationsState) => state.byId;
+const selectAll = createSelector(selectById, (byId) => Object.values(byId).sort((a, b) => b.timestamp - a.timestamp));
 export const selectWarningsAndErrors = createSelector(selectAll, (all) => all.filter(isAtLeastWarning));
 export const selectVisible = createSelector(selectById, (byId) => Object.values(byId).filter((n) => n.showing));
 
@@ -83,8 +82,8 @@ function isStoredNotification(obj: unknown): obj is StoredNotification {
 
 // (De)serialization
 
-export function deserializeNotifications(): Record<string, StoredNotification> {
-  const storedNotifsRaw = window.localStorage.getItem(STORAGE_KEY);
+function deserializeNotifications(): Record<string, StoredNotification> {
+  const storedNotifsRaw = store.get(STORAGE_KEY);
   if (!storedNotifsRaw) {
     return {};
   }
@@ -120,7 +119,7 @@ function serializeNotifications(notifs: Record<string, StoredNotification>) {
     }, {});
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(reducedNotifs));
+    store.set(STORAGE_KEY, JSON.stringify(reducedNotifs));
   } catch (err) {
     console.error('Unable to persist notifications to local storage');
     console.error(err);

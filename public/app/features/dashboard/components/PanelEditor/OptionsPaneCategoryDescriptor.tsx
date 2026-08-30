@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Box } from '@grafana/ui';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { type OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 
 export interface OptionsPaneCategoryDescriptorProps {
   id: string;
@@ -13,8 +13,10 @@ export interface OptionsPaneCategoryDescriptorProps {
   forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
+  isDashboardSidebar?: boolean;
   itemsCount?: number;
   customRender?: () => React.ReactNode;
+  headerActions?: React.ReactNode;
   sandboxId?: string;
   /**
    * When set will disable category and show tooltip with disabledText on

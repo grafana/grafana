@@ -1,14 +1,14 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, GraphSeriesValue } from '@grafana/data';
+import { type GrafanaTheme2, type GraphSeriesValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 /**
- * @public
+ * @alpha
  */
 export interface SeriesTableRowProps {
   color?: string;
@@ -52,7 +52,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
 };
 
 /**
- * @public
+ * @alpha
  */
 export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRowProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);
@@ -71,7 +71,7 @@ export const SeriesTableRow = ({ color, label, value, isActive }: SeriesTableRow
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface SeriesTableProps {
   timestamp?: string | GraphSeriesValue;
@@ -79,7 +79,7 @@ export interface SeriesTableProps {
 }
 
 /**
- * @public
+ * @alpha
  */
 export const SeriesTable = ({ timestamp, series }: SeriesTableProps) => {
   const styles = useStyles2(getSeriesTableRowStyles);

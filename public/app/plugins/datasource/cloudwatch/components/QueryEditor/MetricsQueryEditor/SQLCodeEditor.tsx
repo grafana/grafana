@@ -1,9 +1,9 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import { useCallback, useEffect } from 'react';
 
-import { CodeEditor, Monaco } from '@grafana/ui';
+import { CodeEditor, type Monaco } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../../datasource';
+import { type CloudWatchDatasource } from '../../../datasource';
 import language from '../../../language/cloudwatch-sql/definition';
 import { TRIGGER_SUGGEST } from '../../../language/monarch/commands';
 import { registerLanguage } from '../../../language/monarch/register';

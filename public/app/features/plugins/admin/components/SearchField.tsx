@@ -2,10 +2,12 @@ import { useState, useRef } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FilterInput } from '@grafana/ui';
 
 interface Props {
+  id: string;
   value?: string;
   onSearch: (value: string) => void;
 }
@@ -29,13 +31,15 @@ const useDebounceWithoutFirstRender = (callBack: () => void, delay = 0, deps: Re
   );
 };
 
-export const SearchField = ({ value, onSearch }: Props) => {
+export const SearchField = ({ id, value, onSearch }: Props) => {
   const [query, setQuery] = useState(value);
 
   useDebounceWithoutFirstRender(() => onSearch(query ?? ''), 500, [query]);
 
   return (
     <FilterInput
+      id={id}
+      data-testid={selectors.components.SearchField.searchInput}
       value={query}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.keyCode === 13) {

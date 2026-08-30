@@ -3,11 +3,11 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Box, DataSourceHttpSettings, InlineField, InlineSwitch, Select, Text } from '@grafana/ui';
 
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';
 
 export type Props = DataSourcePluginOptionsEditorProps<AlertManagerDataSourceJsonData>;
 
@@ -82,7 +82,7 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">settings page</Link>.
+            Make sure to enable the alert forwarding on the <Link to={'/alerting/admin'}>settings page</Link>.
           </Text>
         )}
       </Box>

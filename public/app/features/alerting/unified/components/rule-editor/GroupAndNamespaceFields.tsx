@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 
 import { useGetNameSpacesByDatasourceName } from './useAlertRuleSuggestions';
 
@@ -77,7 +78,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
         />
       </Field>
       <Field
-        data-testid="group-picker"
+        data-testid={selectors.components.AlertRules.groupPicker}
         label={t('alerting.group-and-namespace-fields.group-picker-label-group', 'Group')}
         // Disable translations as we don't intend to use this dropdown longterm,
         // so avoiding us adding translations for the sake of it

@@ -20,6 +20,9 @@ checkv0alpha1: {
 			url: string
 			// Human readable error message
 			message: string
+			// i18n key for the message (e.g. "advisor.link.fix-me"), so the
+			// frontend can translate without deriving the key from the text
+			messageKey?: string
 		}
 		#ReportFailure: {
 			// Severity of the failure
@@ -34,7 +37,7 @@ checkv0alpha1: {
 			links: [...#ErrorLink]
 			// More information about the failure, not meant to be displayed to the user. Used for LLM suggestions.
 			moreInfo?: string
-		}	
+		}
 		#Report: {
 			// Number of elements analyzed
 			count: int

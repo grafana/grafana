@@ -7,8 +7,6 @@ import (
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestPrometheusRuleGroup_Validate(t *testing.T) {
@@ -26,12 +24,12 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 				Labels: map[string]string{
 					"label-1": "value-1",
 				},
-				QueryOffset: util.Pointer(prommodel.Duration(time.Duration(1) * time.Second)),
+				QueryOffset: new(prommodel.Duration(time.Duration(1) * time.Second)),
 				Rules: []PrometheusRule{
 					{
 						Alert:         "test_alert",
 						Expr:          "up == 0",
-						KeepFiringFor: util.Pointer(prommodel.Duration(10)),
+						KeepFiringFor: new(prommodel.Duration(10)),
 					},
 				},
 			},
@@ -42,7 +40,7 @@ func TestPrometheusRuleGroup_Validate(t *testing.T) {
 			group: PrometheusRuleGroup{
 				Name:        "test_group",
 				Interval:    prommodel.Duration(60),
-				QueryOffset: util.Pointer(prommodel.Duration(-1)),
+				QueryOffset: new(prommodel.Duration(-1)),
 			},
 			expectError: true,
 			errorMsg:    "query_offset must be >= 0",

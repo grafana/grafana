@@ -1,16 +1,16 @@
 import type { InternalLoggerLevel } from '@grafana/faro-core';
 
-import { SystemDateFormatSettings } from '../datetime/formats';
-import { MapLayerOptions } from '../geo/layer';
+import { type SystemDateFormatSettings } from '../datetime/formats';
+import { type MapLayerOptions } from '../geo/layer';
 
-import { DataSourceInstanceSettings } from './datasource';
-import { FeatureToggles } from './featureToggles.gen';
-import { IconName } from './icon';
-import { NavLinkDTO } from './navModel';
-import { OrgRole } from './orgs';
-import { PanelPluginMeta } from './panel';
-import { AngularMeta, PluginDependencies, PluginExtensions, PluginLoadingStrategy } from './plugin';
-import { TimeOption } from './time';
+import { type DataSourceInstanceSettings } from './datasource';
+import { type FeatureToggles } from './featureToggles.gen';
+import { type IconName } from './icon';
+import { type NavLinkDTO } from './navModel';
+import { type OrgRole } from './orgs';
+import { type PanelPluginMeta } from './panel';
+import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import { type TimeOption } from './time';
 
 export interface AzureSettings {
   cloud?: string;
@@ -105,9 +105,11 @@ export interface GrafanaJavascriptAgentConfig {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  botFilterEnabled: boolean;
+  trackResources?: boolean;
 }
 
-export interface UnifiedAlertingStateHistoryConfig {
+interface UnifiedAlertingStateHistoryConfig {
   backend?: string;
   primary?: string;
   prometheusTargetDatasourceUID?: string;
@@ -179,7 +181,6 @@ export interface CurrentUserDTO {
   gravatarUrl: string;
   timezone: string;
   weekStart: string;
-  regionalFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;
@@ -300,6 +301,7 @@ export interface GrafanaConfig {
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;
   analyticsConsoleReporting: boolean;
+  pluginImportTelemetryPackages: string[];
   rendererAvailable: boolean;
   rendererVersion: string;
   rendererDefaultImageWidth: number;
@@ -307,10 +309,12 @@ export interface GrafanaConfig {
   rendererDefaultImageScale: number;
   dashboardPerformanceMetrics: string[];
   panelSeriesLimit: number;
+  reportRenderQueryGracePeriodMs: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  provisioningEnabled: boolean;
   cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;
@@ -347,10 +351,11 @@ export interface GrafanaConfig {
   };
   analytics: {
     enabled: boolean;
+    presenceIndicatorsDisabled?: boolean;
   };
 }
 
-export interface SqlConnectionLimits {
+interface SqlConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
   connMaxLifetime: number;
@@ -382,7 +387,6 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
-  passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
   disableSignoutMenu?: boolean;
 }

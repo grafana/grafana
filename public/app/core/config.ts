@@ -1,5 +1,5 @@
 import { PluginState } from '@grafana/data';
-import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { config, type GrafanaBootConfig } from '@grafana/runtime';
 
 let grafanaConfig: GrafanaBootConfig = config;
 

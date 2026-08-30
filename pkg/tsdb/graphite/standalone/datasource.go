@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	graphite "github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
@@ -27,7 +28,7 @@ type Datasource struct {
 }
 
 func contextualMiddlewares(ctx context.Context) context.Context {
-	cfg := backend.GrafanaConfigFromContext(ctx)
+	cfg := config.GrafanaConfigFromContext(ctx)
 	return httpclient.WithContextualMiddleware(ctx, httpclient.ResponseLimitMiddleware(cfg.ResponseLimit()))
 }
 

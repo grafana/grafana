@@ -1,7 +1,7 @@
 import { Component, createRef } from 'react';
-import uPlot, { AlignedData, Options } from 'uplot';
+import uPlot, { type AlignedData, type Options } from 'uplot';
 
-import { PlotProps } from './types';
+import { type PlotProps } from './types';
 import { pluginLog } from './utils';
 
 import 'uplot/dist/uPlot.min.css';
@@ -78,14 +78,17 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
   }
 
   componentDidUpdate(prevProps: PlotProps) {
+    if (!sameConfig(prevProps, this.props)) {
+      this.reinitPlot();
+      return;
+    }
     if (!sameDims(prevProps, this.props)) {
       this.plotInstance?.setSize({
         width: Math.floor(this.props.width),
         height: Math.floor(this.props.height),
       });
-    } else if (!sameConfig(prevProps, this.props)) {
-      this.reinitPlot();
-    } else if (!sameData(prevProps, this.props)) {
+    }
+    if (!sameData(prevProps, this.props)) {
       this.plotInstance?.setData(this.props.data as AlignedData);
     }
   }

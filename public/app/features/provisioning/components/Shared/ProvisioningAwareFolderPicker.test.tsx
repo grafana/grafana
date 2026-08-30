@@ -55,7 +55,7 @@ describe('ProvisioningAwareFolderPicker', () => {
       refetch: jest.fn(),
     });
 
-    config.featureToggles = { provisioning: true };
+    config.provisioningEnabled = true;
   });
 
   describe('Provisioned Instance', () => {
@@ -97,7 +97,7 @@ describe('ProvisioningAwareFolderPicker', () => {
   describe('Feature Toggle Disabled', () => {
     beforeEach(() => {
       mockUseIsProvisionedInstance.mockReturnValue(false);
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('should not apply restrictions', () => {

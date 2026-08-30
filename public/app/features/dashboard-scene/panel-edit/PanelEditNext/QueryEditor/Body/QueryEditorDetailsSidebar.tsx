@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { FocusEvent, useCallback, useRef } from 'react';
+import { type FocusEvent, useCallback, useRef } from 'react';
 
-import { GrafanaTheme2, rangeUtil } from '@grafana/data';
+import { type GrafanaTheme2, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClickOutsideWrapper, Stack, Switch, useStyles2 } from '@grafana/ui';
 
@@ -196,7 +196,7 @@ function getStyles(theme: GrafanaTheme2) {
       bottom: 0,
       display: 'flex',
       flexDirection: 'column',
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       borderRight: `1px solid ${theme.colors.border.weak}`,
     }),
     content: css({

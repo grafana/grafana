@@ -1,13 +1,13 @@
-import { StoryFn, Meta } from '@storybook/react';
-import { FC, useEffect, useState } from 'react';
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { type FC, useEffect, useState } from 'react';
 
-import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
-import { LegendDisplayMode, LegendPlacement } from '@grafana/schema';
+import { type DisplayValue, type GrafanaTheme2 } from '@grafana/data';
+import { LegendDisplayMode, type LegendOverflow, type LegendPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
 import { VizLegend } from './VizLegend';
-import { VizLegendItem } from './types';
+import { type VizLegendItem } from './types';
 
 const meta: Meta = {
   title: 'Plugins/VizLegend',
@@ -39,9 +39,10 @@ interface LegendStoryDemoProps {
   placement: LegendPlacement;
   seriesCount: number;
   stats?: DisplayValue[];
+  overflow?: LegendOverflow;
 }
 
-const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
+const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats, overflow }) => {
   const theme = useTheme2();
   const [items, setItems] = useState<VizLegendItem[]>(generateLegendItems(seriesCount, theme, stats));
 
@@ -70,7 +71,13 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
   return (
     <p style={{ marginBottom: '32px' }}>
       <h3 style={{ marginBottom: '32px' }}>{name}</h3>
-      <VizLegend displayMode={displayMode} items={items} placement={placement} onLabelClick={onLabelClick} />
+      <VizLegend
+        displayMode={displayMode}
+        items={items}
+        placement={placement}
+        onLabelClick={onLabelClick}
+        overflow={overflow}
+      />
     </p>
   );
 };

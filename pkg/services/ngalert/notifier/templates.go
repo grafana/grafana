@@ -3,8 +3,10 @@ package notifier
 import (
 	"context"
 
+	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/templates"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	prometheusModel "github.com/prometheus/common/model"
 
@@ -34,10 +36,16 @@ func (am *alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 		AddDefaultLabelsAndAnnotations(alert)
 	}
 
+	kind := templates.GrafanaKind
+	if c.Kind == definition.MimirTemplateKind {
+		kind = templates.MimirKind
+	}
+
 	return am.Base.TestTemplate(ctx, alertingNotify.TestTemplatesConfigBodyParams{
 		Alerts:   c.Alerts,
 		Template: c.Template,
 		Name:     c.Name,
+		Kind:     kind,
 	})
 }
 

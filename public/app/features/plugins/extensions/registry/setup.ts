@@ -1,8 +1,8 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
-import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
+import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
@@ -13,7 +13,7 @@ import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from './AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './ExposedComponentsRegistry';
-import { PluginExtensionRegistries } from './types';
+import { type PluginExtensionRegistries } from './types';
 
 function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   const addedComponentsRegistry = new AddedComponentsRegistry(apps);
@@ -56,7 +56,7 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         id: PluginExtensionExposedComponents.CreateAlertFromPanelV1,
         title: 'Create alert from panel',
         description: 'Modal to create an alert rule from panel data',
-        component: CreateAlertFromPanelExposedComponent,
+        component: CreateAlertFromPanelExposedComponentLazy,
       },
       {
         id: PluginExtensionExposedComponents.OpenQueryLibraryV1,

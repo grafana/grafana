@@ -1,22 +1,22 @@
 import { css, cx } from '@emotion/css';
-import { max } from 'lodash';
-import { RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
+import { type RefCallback, useLayoutEffect, useMemo, useRef, type JSX } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { SelectableValue, toIconName } from '@grafana/data';
+import { type SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { getSelectStyles } from './getSelectStyles';
 import { ToggleAllState } from './types';
 
-export interface ToggleAllOptions {
+interface ToggleAllOptions {
   state: ToggleAllState;
   selectAllClicked: () => void;
   selectedCount?: number;
@@ -54,16 +54,18 @@ export const SelectMenu = ({
       style={{ maxHeight }}
       aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
     >
-      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators padding={0.5}>
-        {toggleAllOptions && (
-          <ToggleAllOption
-            state={toggleAllOptions.state}
-            optionComponent={optionsElement}
-            selectedCount={toggleAllOptions.selectedCount}
-            onClick={toggleAllOptions.selectAllClicked}
-          ></ToggleAllOption>
-        )}
-        {children}
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators>
+        <Box padding={0.5} display="flex" direction="column" gap={0}>
+          {toggleAllOptions && (
+            <ToggleAllOption
+              state={toggleAllOptions.state}
+              optionComponent={optionsElement}
+              selectedCount={toggleAllOptions.selectedCount}
+              onClick={toggleAllOptions.selectAllClicked}
+            ></ToggleAllOption>
+          )}
+          {children}
+        </Box>
       </ScrollContainer>
     </div>
   );
@@ -73,9 +75,15 @@ SelectMenu.displayName = 'SelectMenu';
 
 const VIRTUAL_LIST_ITEM_HEIGHT = 37;
 const VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER = 8;
-const VIRTUAL_LIST_PADDING = 8;
+const VIRTUAL_LIST_PADDING = 4;
 // Some list items have icons or checkboxes so we need some extra width
 const VIRTUAL_LIST_WIDTH_EXTRA = 58;
+
+// need to set position: relative on the inner element so that the absolutely positioned rows resolve against it.
+const VirtualInnerElement = React.forwardRef<HTMLDivElement, JSX.IntrinsicElements['div']>(
+  ({ style, ...rest }, ref) => <div ref={ref} style={{ ...style, position: 'relative' }} {...rest} />
+);
+VirtualInnerElement.displayName = 'VirtualInnerElement';
 
 // A virtualized version of the SelectMenu, descriptions for SelectableValue options not supported since those are of a variable height.
 //
@@ -170,26 +178,35 @@ export const VirtualizedSelectMenu = ({
     );
   }
 
-  let longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  let longestOption = flattenedOptions.reduce((max, option) => {
+    const length = option.label?.length ?? 0;
+    return Math.max(max, length);
+  }, 0);
   if (toggleAllOptions && longestOption < 12) {
     longestOption = 12;
   }
   const widthEstimate =
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
-  const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
+  const heightEstimate = Math.min(
+    flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT + VIRTUAL_LIST_PADDING * 2,
+    maxHeight
+  );
 
   return (
     <List
       outerRef={scrollRef}
       ref={listRef}
       className={styles.menu}
+      // Padding leaves room for the focused option's focus ring, which would otherwise be clipped.
+      style={{ padding: VIRTUAL_LIST_PADDING }}
+      innerElementType={VirtualInnerElement}
       height={heightEstimate}
       width={widthEstimate}
       aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
       itemCount={flattenedChildren.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >
-      {({ index, style }) => <div style={{ ...style, overflow: 'hidden' }}>{flattenedChildren[index]}</div>}
+      {({ index, style }) => <div style={style}>{flattenedChildren[index]}</div>}
     </List>
   );
 };
@@ -211,6 +228,9 @@ interface SelectMenuOptionProps<T> {
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;
+  selectProps?: {
+    showFocusRing?: boolean;
+  };
 }
 
 const ToggleAllOption = ({
@@ -262,6 +282,7 @@ export const SelectMenuOptions = ({
   isFocused,
   isSelected,
   renderOptionLabel,
+  selectProps,
 }: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -277,6 +298,7 @@ export const SelectMenuOptions = ({
       className={cx(
         styles.option,
         isFocused && styles.optionFocused,
+        isFocused && selectProps?.showFocusRing && styles.optionFocusRing,
         isSelected && styles.optionSelected,
         data.isDisabled && styles.optionDisabled
       )}

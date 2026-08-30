@@ -4,7 +4,7 @@ import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
-import { ScopesService } from '../ScopesService';
+import { type ScopesService } from '../ScopesService';
 
 import {
   applyScopes,
@@ -51,7 +51,6 @@ describe('Selector', () => {
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
-    config.featureToggles.useScopeSingleNodeEndpoint = true;
   });
 
   beforeEach(async () => {

@@ -261,6 +261,40 @@ func TestService_Authenticate(t *testing.T) {
 	}
 }
 
+func TestServiceClientLookupsUseCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	expectedConfig := &authntest.FakeSSOClientConfig{ExpectedName: "OAuth"}
+	client := &authntest.FakeClient{
+		ExpectedName: "auth.client.test",
+		IsEnabledFunc: func(gotCtx context.Context) bool {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			return true
+		},
+		GetConfigFunc: func(gotCtx context.Context) authn.SSOClientConfig {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			return expectedConfig
+		},
+	}
+	service := &Service{clients: map[string]authn.Client{client.Name(): client}}
+
+	assert.True(t, service.IsClientEnabled(ctx, client.Name()))
+	config, ok := service.GetClientConfig(ctx, client.Name())
+	assert.True(t, ok)
+	assert.Same(t, expectedConfig, config)
+}
+
+func TestServiceGetClientConfigReturnsFalseWhenConfigUnavailable(t *testing.T) {
+	client := &authntest.FakeClient{ExpectedName: "auth.client.test"}
+	service := &Service{clients: map[string]authn.Client{client.Name(): client}}
+
+	config, ok := service.GetClientConfig(t.Context(), client.Name())
+
+	assert.False(t, ok)
+	assert.Nil(t, config)
+}
+
 func TestService_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string
@@ -280,12 +314,44 @@ func TestService_OrgID(t *testing.T) {
 			expectedOrgID: 1,
 		},
 		{
-			desc: "should set org id when present in url",
+			desc: "should set org id from ?targetOrgId (legacy api caller param)",
 			req: &authn.Request{HTTPRequest: &http.Request{
 				Header: map[string][]string{},
 				URL:    mustParseURL("http://localhost/?targetOrgId=2"),
 			}},
 			expectedOrgID: 2,
+		},
+		{
+			desc: "should set org id from ?orgId (frontend param)",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=2"),
+			}},
+			expectedOrgID: 2,
+		},
+		{
+			desc: "should prefer ?orgId over ?targetOrgId when both are present",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=3&targetOrgId=4"),
+			}},
+			expectedOrgID: 3,
+		},
+		{
+			desc: "should fall back to ?targetOrgId when ?orgId is malformed",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=abc&targetOrgId=5"),
+			}},
+			expectedOrgID: 5,
+		},
+		{
+			desc: "should return 0 when ?orgId is malformed and ?targetOrgId is missing",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://localhost/?orgId=abc"),
+			}},
+			expectedOrgID: 0,
 		},
 		{
 			desc: "should prioritise org id from url when present in both header and url",

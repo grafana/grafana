@@ -77,7 +77,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodGet,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to fetch dashboard annotation by id with the old dashboard scope",
@@ -119,7 +119,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPut,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to update dashboard annotation with the old dashboard scope",
@@ -161,7 +161,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodPatch,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to patch dashboard annotation with the old dashboard scope",
@@ -206,7 +206,7 @@ func TestAPI_Annotations(t *testing.T) {
 			method:       http.MethodPost,
 			body:         "{\"dashboardId\": 2,\"text\": \"test\"}",
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to create dashboard annotation with the old dashboard scope",
@@ -251,7 +251,7 @@ func TestAPI_Annotations(t *testing.T) {
 			path:         "/api/annotations/2",
 			method:       http.MethodDelete,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to delete dashboard annotation with the old dashboard scope",
@@ -311,7 +311,7 @@ func TestAPI_Annotations(t *testing.T) {
 			body:         "{\"dashboardId\": 2, \"panelId\": 1}",
 			method:       http.MethodPost,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID)}},
 		},
 		{
 			desc:         "should not be able to mass delete dashboard annotation with the old dashboard scope",
@@ -352,6 +352,57 @@ func TestAPI_Annotations(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func TestAPI_GetAnnotationTags(t *testing.T) {
+	tests := []struct {
+		desc          string
+		path          string
+		expectedLimit int64
+	}{
+		{
+			desc:          "applies the default limit when none is supplied",
+			path:          "/api/annotations/tags",
+			expectedLimit: defaultAnnotationsLimit,
+		},
+		{
+			desc:          "passes an explicit limit through unchanged",
+			path:          "/api/annotations/tags?limit=250",
+			expectedLimit: 250,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			repo := annotations.FakeAnnotationsRepo{}
+			var gotQuery *annotations.TagsQuery
+			repo.On("FindTags", mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					gotQuery = args.Get(1).(*annotations.TagsQuery)
+				}).
+				Return(annotations.FindTagsResult{}, nil)
+
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.annotationsRepo = &repo
+				hs.Features = featuremgmt.WithFeatures()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			})
+
+			permissions := []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}}
+			req := webtest.RequestWithSignedInUser(
+				server.NewRequest(http.MethodGet, tt.path, nil),
+				authedUserWithPermissions(1, 1, permissions),
+			)
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			require.NotNil(t, gotQuery)
+			assert.Equal(t, tt.expectedLimit, gotQuery.Limit)
 		})
 	}
 }
@@ -412,7 +463,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			given: "annotations:id:1",
 			want: []string{
 				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(rootDashUID),
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID),
+				folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID),
 			},
 			wantErr: nil,
 		},
@@ -421,7 +472,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 			given: "annotations:id:3",
 			want: []string{
 				dashboards.ScopeDashboardsProvider.GetResourceScopeUID(folderDashUID),
-				dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+				folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
 			},
 			wantErr: nil,
 		},

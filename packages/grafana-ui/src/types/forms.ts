@@ -1,4 +1,4 @@
-import { UseFormReturn, FieldValues, FieldErrors, FieldArrayMethodProps } from 'react-hook-form';
+import { type UseFormReturn, type FieldValues, type FieldErrors, type FieldArrayMethodProps } from 'react-hook-form';
 export type { SubmitHandler as FormsOnSubmit, FieldErrors as FormFieldErrors } from 'react-hook-form';
 
 /**

@@ -1,7 +1,7 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { DataContextScopedVar, FieldType, toDataFrame } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type DataContextScopedVar, FieldType, toDataFrame } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 describe('dataMacros', () => {
   let _templateSrv: TemplateSrv;
@@ -152,6 +152,9 @@ describe('dataMacros', () => {
     const scopedVars = { __dataContext: dataContext };
 
     expect(_templateSrv.replace('${__field.name}', scopedVars)).toBe('CoolNumber');
+    expect(_templateSrv.replace('${__field.displayName}', scopedVars)).toBe(
+      'CoolNumber {cluster="US", region="west=1"}'
+    );
     expect(_templateSrv.replace('${__field.labels.cluster}', scopedVars)).toBe('US');
     expect(_templateSrv.replace('${__field.labels.region:percentencode}', scopedVars)).toBe('west%3D1');
   });

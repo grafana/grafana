@@ -1,7 +1,5 @@
-import { BootData, PanelPluginMeta } from '@grafana/data';
+import { type BootData, type PanelPluginMeta } from '@grafana/data';
 import { test, expect } from '@grafana/plugin-e2e';
-
-import { VisualizationSelectPaneTab } from '../../public/app/features/dashboard/components/PanelEditor/types';
 
 test.describe(
   'Panels smokescreen',
@@ -21,7 +19,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({});
 
       // Add new panel
-      await dashboardPage.addPanel();
+      const editPage = await dashboardPage.addPanel();
 
       // Get panel types from window object
       const panelTypes: PanelPluginMeta[] = await page.evaluate(() => {
@@ -31,9 +29,9 @@ test.describe(
         return win.grafanaBootData?.settings?.panels ?? {};
       });
 
-      const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
+      const vizPicker = editPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
 
-      // when newVizSuggestions=true the viz picker may be auto-opened
+      // the viz picker is auto-opened for new unconfigured panels
       if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
         await vizPicker.click({ force: true });
       }
@@ -45,19 +43,11 @@ test.describe(
         }
 
         try {
-          // Select the panel type in the viz picker
-          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
-          await vizPicker.click({ force: true });
-          await dashboardPage
-            .getByGrafanaSelector(
-              selectors.components.Tab.title(VisualizationSelectPaneTab[VisualizationSelectPaneTab.Visualizations])
-            )
-            .click();
-          await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item(panel.name)).click();
+          editPage.setVisualization(panel.name);
 
           // Verify panel type is selected
           await expect(
-            dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
+            editPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
             'verify panel editor for the selected panel type is rendered'
           ).toHaveText(panel.name, { timeout: 10000 });
 
@@ -69,6 +59,10 @@ test.describe(
             page.getByText('An unexpected error happened'),
             'ensure no unexpected error occurred'
           ).toBeHidden();
+
+          // open the viz picker to get ready to select the next panel type
+          await expect(vizPicker.filter({ hasText: 'Change' }), 'we should be viewing panel options').toBeVisible();
+          await vizPicker.click({ force: true });
         } catch (error) {
           throw new Error(`Panel '${panel.name}' failed: ${error}`);
         }

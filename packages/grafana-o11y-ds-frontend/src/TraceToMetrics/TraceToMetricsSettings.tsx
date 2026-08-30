@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
@@ -165,9 +165,9 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           </InlineField>
 
           <Button
-            variant="destructive"
+            variant="secondary"
             aria-label="Remove query"
-            icon="times"
+            icon="trash-alt"
             type="button"
             onClick={() => {
               const newQueries = options.jsonData.tracesToMetrics?.queries.filter((_, index) => index !== i);

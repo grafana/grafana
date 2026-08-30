@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 
-import { ScopeNode } from '@grafana/data';
+import { type ScopeNode } from '@grafana/data';
 
 import { ScopesTreeItemList } from './ScopesTreeItemList';
-import { NodesMap, SelectedScope, TreeNode } from './types';
+import { type NodesMap, type SelectedScope, type TreeNode } from './types';
 
 // Mock the ScopesContextProvider hook since it requires a full context setup
 jest.mock('../ScopesContextProvider', () => ({

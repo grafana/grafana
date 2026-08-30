@@ -1,27 +1,26 @@
 import ansicolor from 'ansicolor';
 import { LosslessNumber, parse, stringify } from 'lossless-json';
-import Prism, { Grammar, Token } from 'prismjs';
+import Prism, { type Grammar, type Token } from 'prismjs';
 
 import {
-  DataFrame,
+  type DataFrame,
   dateTimeFormat,
-  Labels,
+  type Labels,
   LogLevel,
-  LogRowModel,
-  LogsSortOrder,
+  type LogRowModel,
+  type LogsSortOrder,
   systemDateFormats,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { FieldDef, getAllFields } from '../logParser';
+import { type FieldDef, getAllFields } from '../logParser';
 import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
-import { LogLineVirtualization } from './virtualization';
+import { type LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
 export const NEWLINES_REGEX = /(\r\n|\n|\r)/g;
@@ -53,6 +52,7 @@ export class LogListModel implements LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uid: string;
+  readonly uniqueKey: string;
   uniqueLabels: Labels | undefined;
   uniqueLabelsExpanded = false;
 
@@ -72,7 +72,18 @@ export class LogListModel implements LogRowModel {
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      escape,
+      getFieldLinks,
+      grammar,
+      otelLogsFormattingEnabled = false,
+      prettifyJSON,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions,
+    // Position of this row within the array being processed.
+    index: number
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -97,6 +108,9 @@ export class LogListModel implements LogRowModel {
     this.timeLocal = log.timeLocal;
     this.timeUtc = log.timeUtc;
     this.uid = log.uid;
+    // log.uid is not guaranteed unique, which causes troubles with virtualization. To that end, we create a truly unique
+    // identifier, while leaving the data source identifier unmodified
+    this.uniqueKey = `${log.uid}#${index}`;
     this.uniqueLabels = log.uniqueLabels;
 
     // LogListModel
@@ -117,14 +131,17 @@ export class LogListModel implements LogRowModel {
     }
     this.raw = log.raw;
 
-    if (config.featureToggles.otelLogsFormatting && this.otelLanguage) {
+    if (otelLogsFormattingEnabled && this.otelLanguage) {
       this.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME] = getOtelAttributesField(this, wrapLogMessage);
     }
   }
 
-  clone() {
+  clone({ prettifyJSON }: { prettifyJSON?: boolean } = {}) {
     const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
+    if (prettifyJSON !== undefined) {
+      clone._prettifyJSON = prettifyJSON;
+    }
     clone._wrapLogMessage = true;
     clone._body = undefined;
     clone._highlightTokens = undefined;
@@ -134,8 +151,9 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
+      let raw = this.raw;
       try {
-        const parsed = parse(this.raw, undefined, {
+        const parsed = parse(raw, undefined, {
           onDuplicateKey: ({ newValue }) => newValue,
         });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
@@ -143,15 +161,14 @@ export class LogListModel implements LogRowModel {
         }
         const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
-          this.raw = reStringified;
+          raw = reStringified;
         }
       } catch (error) {}
 
       // always escape for literal \n, \t, \r sequences so "Escape newlines" works for all log types.
       if (this._escapeUnescapedString) {
-        this.raw = escapeUnescapedString(this.raw);
+        raw = escapeUnescapedString(raw);
       }
-      const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : raw;
@@ -284,6 +301,7 @@ export class LogListModel implements LogRowModel {
 export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
+  otelLogsFormattingEnabled?: boolean;
   order: LogsSortOrder;
   prettifyJSON?: boolean;
   timeZone: string;
@@ -293,20 +311,34 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  {
+    escape,
+    getFieldLinks,
+    otelLogsFormattingEnabled,
+    order,
+    prettifyJSON,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
-  return orderedLogs.map((log) =>
-    preProcessLog(log, {
-      escape,
-      getFieldLinks,
-      grammar,
-      prettifyJSON,
-      timeZone,
-      virtualization,
-      wrapLogMessage,
-    })
+  return orderedLogs.map((log, index) =>
+    preProcessLog(
+      log,
+      {
+        escape,
+        getFieldLinks,
+        grammar,
+        otelLogsFormattingEnabled,
+        prettifyJSON,
+        timeZone,
+        virtualization,
+        wrapLogMessage,
+      },
+      index
+    )
   );
 };
 
@@ -314,13 +346,14 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  otelLogsFormattingEnabled?: boolean;
   prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
 }
-const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions): LogListModel => {
-  return new LogListModel(log, options);
+const preProcessLog = (log: LogRowModel, options: PreProcessLogOptions, index: number): LogListModel => {
+  return new LogListModel(log, options, index);
 };
 
 function logLevelToDisplayLevel(level = '') {
@@ -330,7 +363,7 @@ function logLevelToDisplayLevel(level = '') {
     case LogLevel.warning:
       return 'warn';
     case LogLevel.unknown:
-      return '';
+      return 'unk';
     default:
       return level;
   }

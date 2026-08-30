@@ -5,7 +5,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
-import { CatalogPlugin, PluginStatus } from '../types';
+import { type CatalogPlugin, PluginStatus } from '../types';
 
 import { UpdateModalBody } from './UpdateAllModalBody';
 const PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME = 'plugins_update_all_clicked';
@@ -160,7 +160,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
       confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
-      confirmButtonVariant="primary"
+      confirmVariant="primary"
     />
   );
 };

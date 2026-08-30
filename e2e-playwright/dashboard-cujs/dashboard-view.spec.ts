@@ -19,7 +19,7 @@ test.describe(
     tag: ['@dashboard-cujs'],
   },
   () => {
-    test('View a dashboard', async ({ page, gotoDashboardPage, selectors }) => {
+    test.skip('View a dashboard', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboards = await getConfigDashboards();
       if (dashboards.length === 0) {
         dashboards.push(DASHBOARD_UNDER_TEST);

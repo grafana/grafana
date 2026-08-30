@@ -2,11 +2,11 @@ import { cx, css } from '@emotion/css';
 import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconSize, isIconSize } from '../../types/icon';
+import { type IconSize, isIconSize } from '../../types/icon';
 import { spin } from '../../utils/keyframes';
 import { Icon } from '../Icon/Icon';
 import { getIconRoot, getIconSubDir } from '../Icon/utils';

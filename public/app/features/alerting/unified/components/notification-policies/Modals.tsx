@@ -1,13 +1,18 @@
 import { groupBy } from 'lodash';
-import { FC, type JSX, useCallback, useMemo, useState } from 'react';
+import { type FC, type JSX, useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
-import { AlertState, AlertmanagerGroup, ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Button, Icon, Modal, type ModalProps, Spinner, Stack, Text } from '@grafana/ui';
+import {
+  AlertState,
+  type AlertmanagerGroup,
+  type ObjectMatcher,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
-import { FormAmRoute } from '../../types/amroutes';
-import { MatcherFormatter } from '../../utils/matchers';
-import { InsertPosition } from '../../utils/routeTree';
+import { type FormAmRoute } from '../../types/amroutes';
+import { type MatcherFormatter } from '../../utils/matchers';
+import { type InsertPosition, countChildRoutes } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
 import { AlertGroupsSummary } from './AlertGroupsSummary';
@@ -181,6 +186,8 @@ const useDeletePolicyModal = (
     setShowModal(true);
   }, []);
 
+  const childRouteCount = route ? countChildRoutes(route) : 0;
+
   const modalElement = useMemo(
     () =>
       loading ? (
@@ -191,19 +198,30 @@ const useDeletePolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title={t(
-            'alerting.use-delete-policy-modal.modal-element.title-delete-notification-policy',
-            'Delete notification policy'
-          )}
+          title={t('alerting.use-delete-policy-modal.modal-element.title-delete-notification-policy', 'Delete route')}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <Trans i18nKey="alerting.policies.delete.warning-1">
-            Deleting this notification policy will permanently remove it.
+            Deleting this route will permanently remove it.
           </Trans>{' '}
-          <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this policy?</Trans>
+          {childRouteCount > 0 && (
+            <Text element="p" color="error" weight="bold">
+              <Trans
+                i18nKey="alerting.policies.delete.warning-child-routes"
+                count={childRouteCount}
+                tOptions={{
+                  defaultValue_one: 'This will also remove {{count}} child route.',
+                  defaultValue_other: 'This will also remove {{count}} child routes.',
+                }}
+              >
+                This will also remove {{ count: childRouteCount }} child routes.
+              </Trans>
+            </Text>
+          )}{' '}
+          <Trans i18nKey="alerting.policies.delete.warning-2">Are you sure you want to delete this route?</Trans>
           <Modal.ButtonRow>
             <Button type="button" variant="destructive" onClick={() => route && handleDelete(route).catch(setError)}>
-              <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete policy</Trans>
+              <Trans i18nKey="alerting.policies.delete.confirm">Yes, delete route</Trans>
             </Button>
             <Button type="button" variant="secondary" onClick={handleDismiss}>
               <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
@@ -211,7 +229,7 @@ const useDeletePolicyModal = (
           </Modal.ButtonRow>
         </Modal>
       ),
-    [handleDismiss, loading, showModal, error, route, handleDelete]
+    [handleDismiss, loading, showModal, error, route, handleDelete, childRouteCount]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -292,7 +310,7 @@ const useAlertGroupsModal = (
   return [modalElement, handleShow, handleDismiss];
 };
 
-export const UpdatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
+const UpdatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
   <Modal
     isOpen={isOpen}
     onDismiss={onDismiss}

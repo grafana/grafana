@@ -2,7 +2,7 @@ import { configureStore } from 'app/store/configureStore';
 import { useSelector } from 'app/types/store';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
-import { BrowseDashboardsState } from '../types';
+import { type BrowseDashboardsState } from '../types';
 
 import { useBrowseLoadingStatus } from './hooks';
 

@@ -2,7 +2,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack, Text } from '@grafana/ui';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
-import { DryRunValidationResult } from './types';
+import { type DryRunValidationResult } from './types';
 
 interface ValidationStatusProps {
   state: 'loading' | 'success' | 'warning' | 'error';

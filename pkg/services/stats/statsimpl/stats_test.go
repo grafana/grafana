@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,15 +42,16 @@ func TestMain(m *testing.M) {
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgSvc := populateDB(t, db, cfg)
+
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(1)).Return(int64(2), nil)
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(2)).Return(int64(1), nil)
-	dashSvc.On("CountDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 1}).Return([]*dashboards.DashboardTagCloudItem{{Term: "test"}}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 2}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
 	dashSvc.On("GetDashboardTags", mock.Anything, &dashboards.GetDashboardTagsQuery{OrgID: 3}).Return([]*dashboards.DashboardTagCloudItem{}, nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(1)).Return(int64(0), nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(2)).Return(int64(0), nil)
+	dashSvc.On("CountProvisionedDashboardsInOrg", mock.Anything, int64(3)).Return(int64(0), nil)
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{{ID: 1}, {ID: 2}, {ID: 3}}
@@ -90,8 +92,8 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.APIKeys)
 		assert.Equal(t, int64(2), result.Correlations)
 		assert.Equal(t, int64(3), result.Orgs)
-		assert.Equal(t, int64(3), result.Dashboards)
-		assert.Equal(t, int64(9), result.Folders)       // will return 3 folders for each org
+		assert.Equal(t, int64(15), result.Dashboards)   // 5 per org from mock × 3 orgs
+		assert.Equal(t, int64(15), result.Folders)      // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(15), result.Playlists)    // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(15), result.Repositories) // 5 per org from mock × 3 orgs
 		assert.NotNil(t, result.DatabaseCreatedTime)
@@ -127,7 +129,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		stats, err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), stats.Tags)
-		assert.Equal(t, int64(3), stats.Dashboards)
+		assert.Equal(t, int64(15), stats.Dashboards) // 5 per org from mock × 3 orgs
 		assert.Equal(t, int64(3), stats.Orgs)
 		assert.Equal(t, int64(15), stats.Playlists) // 5 per org from mock × 3 orgs
 	})
@@ -149,14 +151,14 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, _ := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
-		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), nil,
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
-	correlationsSvc := correlationstest.New(db, cfg, bus)
+	correlationsSvc := correlationstest.New(context.Background(), db, cfg, bus)
 
 	c := make([]correlations.Correlation, 2)
 	for i := range c {

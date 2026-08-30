@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { OptionProps } from 'react-select';
 
-import SelectOption from './SelectOption';
+import { SelectOption } from './SelectOption';
 
 const model: OptionProps = {
   data: jest.fn(),

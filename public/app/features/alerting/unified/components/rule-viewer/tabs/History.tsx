@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 
 import { config } from '@grafana/runtime';
-import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { StateHistoryImplementation } from '../../../hooks/useStateHistoryModal';
 

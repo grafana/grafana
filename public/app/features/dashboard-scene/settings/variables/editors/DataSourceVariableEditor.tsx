@@ -1,14 +1,16 @@
-import React, { FormEvent } from 'react';
+import React, { type FormEvent } from 'react';
+import { useAsync } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { DataSourceVariable, SceneVariable } from '@grafana/scenes';
-import { Combobox, ComboboxOption, Input } from '@grafana/ui';
+import { DataSourceVariable, type SceneVariable } from '@grafana/scenes';
+import { Combobox, type ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
+import { useGetAllVariableOptions, VariableValuesPreview } from '../components/VariableValuesPreview';
 import { getOptionDataSourceTypes } from '../utils';
 
 interface DataSourceVariableEditorProps {
@@ -19,7 +21,7 @@ interface DataSourceVariableEditorProps {
 export function DataSourceVariableEditor({ variable, onRunQuery }: DataSourceVariableEditorProps) {
   const { pluginId, regex, isMulti, allValue, includeAll, allowCustomValue } = variable.useState();
 
-  const optionTypes = getOptionDataSourceTypes();
+  const { value: optionTypes = [] } = useAsync(getOptionDataSourceTypes, []);
 
   const onChangeType = (option: SelectableValue) => {
     variable.setState({
@@ -79,18 +81,23 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
+      title: t('dashboard.sidebar.variable.datasource-options.type', 'Type'),
       id: 'datasource-options-type',
       render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
     }),
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
+      title: t('dashboard.sidebar.variable.datasource-options.name-filter', 'Name filter'),
       id: 'datasource-options-name-filter',
       description: t(
-        'dashboard.edit-pane.variable.datasource-options.name-filter-description',
+        'dashboard.sidebar.variable.datasource-options.name-filter-description',
         'Regex filter for which data source instances to include. Leave empty for all.'
       ),
       render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
+    }),
+    new OptionsPaneItemDescriptor({
+      id: 'datasource-options-preview',
+      skipField: true,
+      render: () => <DataSourceValuesPreview variable={variable} />,
     }),
   ];
 }
@@ -100,9 +107,15 @@ interface InputProps {
   id?: string;
 }
 
+function DataSourceValuesPreview({ variable }: InputProps) {
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
+
+  return <VariableValuesPreview options={options} staticOptions={staticOptions} pageSize={5} />;
+}
+
 function DataSourceTypeSelect({ variable, id }: InputProps) {
   const { pluginId } = variable.useState();
-  const options = getOptionDataSourceTypes();
+  const { value: options = [] } = useAsync(getOptionDataSourceTypes, []);
 
   const onChange = async (value: ComboboxOption<string>) => {
     variable.setState({ pluginId: value.value });
@@ -115,7 +128,7 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
       options={options}
       value={pluginId}
       onChange={onChange}
-      placeholder={t('dashboard.edit-pane.variable.datasource-options.type-placeholder', 'Choose data source type')}
+      placeholder={t('dashboard.sidebar.variable.datasource-options.type-placeholder', 'Choose data source type')}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
     />
   );
@@ -135,7 +148,7 @@ function DataSourceNameFilter({ variable, id }: InputProps) {
       defaultValue={regex}
       onBlur={onBlur}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}
-      placeholder={t('dashboard.edit-pane.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
+      placeholder={t('dashboard.sidebar.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
     />
   );
 }

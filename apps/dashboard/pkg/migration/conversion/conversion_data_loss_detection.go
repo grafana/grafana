@@ -5,7 +5,8 @@ import (
 	"fmt"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
@@ -241,8 +242,8 @@ func collectStatsV0V1(spec map[string]interface{}) dashboardStats {
 	}
 }
 
-// countPanelsV2 counts panels in v2alpha1 or v2beta1 dashboard spec (structured)
-func countPanelsV2(elements map[string]dashv2alpha1.DashboardElement) int {
+// countPanelsV2alpha1 counts panels in v2alpha1 dashboard spec (structured)
+func countPanelsV2alpha1(elements map[string]dashv2alpha1.DashboardElement) int {
 	count := 0
 	for _, element := range elements {
 		// Check if element is a Panel (not a LibraryPanel)
@@ -255,8 +256,8 @@ func countPanelsV2(elements map[string]dashv2alpha1.DashboardElement) int {
 	return count
 }
 
-// countQueriesV2 counts data queries in v2alpha1 or v2beta1 dashboard spec
-func countQueriesV2(elements map[string]dashv2alpha1.DashboardElement) int {
+// countQueriesV2alpha1 counts data queries in v2alpha1 dashboard spec
+func countQueriesV2alpha1(elements map[string]dashv2alpha1.DashboardElement) int {
 	count := 0
 	for _, element := range elements {
 		if element.PanelKind != nil {
@@ -266,29 +267,29 @@ func countQueriesV2(elements map[string]dashv2alpha1.DashboardElement) int {
 	return count
 }
 
-// countAnnotationsV2 counts annotations in v2alpha1 or v2beta1 dashboard spec
-func countAnnotationsV2(annotations []dashv2alpha1.DashboardAnnotationQueryKind) int {
+// countAnnotationsV2alpha1 counts annotations in v2alpha1 dashboard spec
+func countAnnotationsV2alpha1(annotations []dashv2alpha1.DashboardAnnotationQueryKind) int {
 	return len(annotations)
 }
 
-// countLinksV2 counts dashboard links in v2alpha1 or v2beta1 dashboard spec
-func countLinksV2(links []dashv2alpha1.DashboardDashboardLink) int {
+// countLinksV2alpha1 counts dashboard links in v2alpha1 dashboard spec
+func countLinksV2alpha1(links []dashv2alpha1.DashboardDashboardLink) int {
 	return len(links)
 }
 
-// countVariablesV2 counts template variables in v2alpha1 or v2beta1 dashboard spec
-func countVariablesV2(variables []dashv2alpha1.DashboardVariableKind) int {
+// countVariablesV2alpha1 counts template variables in v2alpha1 dashboard spec
+func countVariablesV2alpha1(variables []dashv2alpha1.DashboardVariableKind) int {
 	return len(variables)
 }
 
 // collectStatsV2alpha1 collects statistics from v2alpha1 dashboard
 func collectStatsV2alpha1(spec dashv2alpha1.DashboardSpec) dashboardStats {
 	return dashboardStats{
-		panelCount:      countPanelsV2(spec.Elements),
-		queryCount:      countQueriesV2(spec.Elements),
-		annotationCount: countAnnotationsV2(spec.Annotations),
-		linkCount:       countLinksV2(spec.Links),
-		variableCount:   countVariablesV2(spec.Variables),
+		panelCount:      countPanelsV2alpha1(spec.Elements),
+		queryCount:      countQueriesV2alpha1(spec.Elements),
+		annotationCount: countAnnotationsV2alpha1(spec.Annotations),
+		linkCount:       countLinksV2alpha1(spec.Links),
+		variableCount:   countVariablesV2alpha1(spec.Variables),
 	}
 }
 
@@ -340,6 +341,38 @@ func collectStatsV2beta1(spec dashv2beta1.DashboardSpec) dashboardStats {
 		annotationCount: countAnnotationsV2beta1(spec.Annotations),
 		linkCount:       countLinksV2beta1(spec.Links),
 		variableCount:   countVariablesV2beta1(spec.Variables),
+	}
+}
+
+func countPanelsV2(elements map[string]dashv2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count++
+		} else if element.LibraryPanelKind != nil {
+			count++
+		}
+	}
+	return count
+}
+
+func countQueriesV2(elements map[string]dashv2.DashboardElement) int {
+	count := 0
+	for _, element := range elements {
+		if element.PanelKind != nil {
+			count += len(element.PanelKind.Spec.Data.Spec.Queries)
+		}
+	}
+	return count
+}
+
+func collectStatsV2(spec dashv2.DashboardSpec) dashboardStats {
+	return dashboardStats{
+		panelCount:      countPanelsV2(spec.Elements),
+		queryCount:      countQueriesV2(spec.Elements),
+		annotationCount: len(spec.Annotations),
+		linkCount:       len(spec.Links),
+		variableCount:   len(spec.Variables),
 	}
 }
 
@@ -450,6 +483,8 @@ func collectDashboardStats(dashboard interface{}) dashboardStats {
 		return collectStatsV2alpha1(d.Spec)
 	case *dashv2beta1.Dashboard:
 		return collectStatsV2beta1(d.Spec)
+	case *dashv2.Dashboard:
+		return collectStatsV2(d.Spec)
 	}
 	return dashboardStats{}
 }

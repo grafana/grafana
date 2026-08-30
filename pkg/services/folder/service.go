@@ -6,15 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
-type LegacyService interface {
-	CreateLegacy(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
-	GetLegacy(ctx context.Context, q *GetFolderQuery) (*Folder, error)
-	UpdateLegacy(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
-	DeleteLegacy(ctx context.Context, cmd *DeleteFolderCommand) error
-	MoveLegacy(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
-	GetFoldersLegacy(ctx context.Context, q GetFoldersQuery) ([]*Folder, error)
-}
-
 // The folder.Service is backed by calls forwarding to an apiserver
 type Service interface {
 	RegisterService(service RegistryService) error

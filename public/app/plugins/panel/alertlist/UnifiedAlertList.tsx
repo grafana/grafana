@@ -3,7 +3,7 @@ import { sortBy } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 import { useEffectOnce, useToggle } from 'react-use';
 
-import { GrafanaTheme2, PanelProps } from '@grafana/data';
+import { type GrafanaTheme2, type PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
@@ -17,6 +17,7 @@ import {
   LoadingPlaceholder,
   ScrollContainer,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -37,16 +38,23 @@ import {
 } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkDispatch, useDispatch } from 'app/types/store';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ThunkDispatch, useDispatch } from 'app/types/store';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertingAction, useAlertingAbility } from '../../../features/alerting/unified/hooks/useAbilities';
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
-import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
+import { type AlertingRule, type CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import { GroupMode, SortOrder, STAT_THRESHOLDS_DEFAULT, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
+import {
+  GroupMode,
+  SortOrder,
+  STAT_THRESHOLDS_DEFAULT,
+  type StateFilter,
+  type UnifiedAlertListOptions,
+  ViewMode,
+} from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
 import { buildAlertingListUrl, filterAlerts, getStatDisplayValue } from './util';
@@ -285,6 +293,7 @@ function StatView({
   styles: ReturnType<typeof getStyles>;
 }) {
   const enhancementsEnabled = Boolean(config.featureToggles.alertingAlertListPanelEnhancements);
+  const theme = useTheme2();
 
   const displayValue = enhancementsEnabled
     ? getStatDisplayValue(
@@ -292,7 +301,7 @@ function StatView({
         options.statColorMode ?? BigValueColorMode.None,
         options.statThresholds ?? STAT_THRESHOLDS_DEFAULT,
         options.statValueMappings ?? [],
-        config.theme2
+        theme
       )
     : { text: `${rules.length}`, numeric: rules.length };
 
@@ -306,7 +315,7 @@ function StatView({
       graphMode={BigValueGraphMode.None}
       textMode={BigValueTextMode.Auto}
       justifyMode={BigValueJustifyMode.Auto}
-      theme={config.theme2}
+      theme={theme}
       value={displayValue}
     />
   );
@@ -505,13 +514,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   }),
   customGroupDetails: css({
     marginBottom: theme.spacing(0.5),
-  }),
-  link: css({
-    wordBreak: 'break-all',
-    color: theme.colors.primary.text,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
   }),
   hidden: css({
     display: 'none',

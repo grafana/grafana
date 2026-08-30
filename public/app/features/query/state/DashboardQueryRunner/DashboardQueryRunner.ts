@@ -1,22 +1,22 @@
-import { merge, Observable, ReplaySubject, Subject, Subscription, timer, Unsubscribable } from 'rxjs';
+import { merge, type Observable, ReplaySubject, Subject, Subscription, timer, type Unsubscribable } from 'rxjs';
 import { finalize, map, mapTo, mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
 
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 
-import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
-import { DashboardModel } from '../../../dashboard/state/DashboardModel';
+import { getTimeSrv, type TimeSrv } from '../../../dashboard/services/TimeSrv';
+import { type DashboardModel } from '../../../dashboard/state/DashboardModel';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import {
-  DashboardQueryRunner,
-  DashboardQueryRunnerOptions,
-  DashboardQueryRunnerResult,
-  DashboardQueryRunnerWorker,
-  DashboardQueryRunnerWorkerResult,
+  type DashboardQueryRunner,
+  type DashboardQueryRunnerOptions,
+  type DashboardQueryRunnerResult,
+  type DashboardQueryRunnerWorker,
+  type DashboardQueryRunnerWorkerResult,
 } from './types';
 import { getAnnotationsByPanelId } from './utils';
 

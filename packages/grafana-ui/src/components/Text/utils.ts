@@ -1,6 +1,6 @@
-import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { TextProps } from './Text';
+import { type TextProps } from './Text';
 
 export const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2): number => {
   switch (weight) {

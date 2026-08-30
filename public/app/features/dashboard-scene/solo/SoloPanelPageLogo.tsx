@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaTextLogoDarkSvg from 'img/grafana_text_logo_dark.svg';
@@ -123,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     zIndex: 1000,
     display: 'flex',
     alignItems: 'center',
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z3,
     border: `1px solid ${theme.colors.border.weak}`,
     // Base font size - will be scaled via inline style
     fontSize: theme.typography.body.fontSize,

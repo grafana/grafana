@@ -1,6 +1,7 @@
 package dashboardsearch
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -48,12 +49,59 @@ var (
 	}
 )
 
+type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
+
+// SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
+// or it hits an empty page.
+func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
+	if request.Limit == 0 {
+		request.Limit = 100000
+	}
+	request.Page = int64(1)
+	request.Offset = int64(0)
+
+	res, err := searchFn(ctx, orgID, request)
+	if err != nil {
+		return v0alpha1.SearchResults{}, err
+	}
+	results, err := ParseResults(res, 0)
+	if err != nil {
+		return v0alpha1.SearchResults{}, err
+	}
+
+	request.Offset += int64(len(results.Hits))
+	request.Page++
+	for request.Offset < res.TotalHits {
+		res, err = searchFn(ctx, orgID, request)
+		if err != nil {
+			return v0alpha1.SearchResults{}, err
+		}
+
+		page, err := ParseResults(res, 0)
+		if err != nil {
+			return v0alpha1.SearchResults{}, err
+		}
+
+		if len(page.Hits) == 0 {
+			break
+		}
+
+		results.Hits = append(results.Hits, page.Hits...)
+		request.Offset += int64(len(page.Hits))
+		request.Page++
+	}
+
+	return results, nil
+}
+
 // nolint:gocyclo
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		return v0alpha1.SearchResults{}, fmt.Errorf("%d error searching: %s: %s", result.Error.Code, result.Error.Message, result.Error.Details)
+		// Wrap via GetError so the status code/reason survives, letting callers
+		// classify transient search failures (e.g. 429/503) as retryable.
+		return v0alpha1.SearchResults{}, fmt.Errorf("error searching: %w", resource.GetError(result.Error))
 	} else if result.Results == nil {
 		return v0alpha1.SearchResults{}, nil
 	}

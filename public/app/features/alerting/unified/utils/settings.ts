@@ -1,4 +1,4 @@
-import { AlertmanagerChoice, GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerChoice, type GrafanaAlertingConfiguration } from 'app/plugins/datasource/alertmanager/types';
 
 // if we have either "internal" or "both" configured this means the internal Alertmanager is receiving Grafana-managed alerts
 export const isInternalAlertmanagerInterestedInAlerts = (config?: GrafanaAlertingConfiguration): boolean => {

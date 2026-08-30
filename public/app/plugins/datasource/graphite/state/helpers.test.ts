@@ -1,5 +1,5 @@
 import { handleTargetChanged } from './helpers';
-import { GraphiteQueryEditorState } from './store';
+import { type GraphiteQueryEditorState } from './store';
 
 describe('handleTargetChanged', () => {
   let state: GraphiteQueryEditorState;

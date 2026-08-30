@@ -13,27 +13,48 @@
 // limitations under the License.
 
 import { css, keyframes } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
+import { memo, useMemo } from 'react';
 
-import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
-import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
+import { Icon, stylesFactory, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
-import TNil from '../types/TNil';
-import { SpanLinkFunc } from '../types/links';
-import { TraceSpan, CriticalPathSection } from '../types/trace';
+import { type SpanBarOptions } from '../settings/SpanBarSettings';
+import type TNil from '../types/TNil';
+import { SpanLinkType, type SpanLinkFunc } from '../types/links';
+import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
 import SpanTreeOffset from './SpanTreeOffset';
+import { SummaryDurationStatsTooltip } from './SummaryDurationStatsTooltip';
 import Ticks from './Ticks';
 import TimelineRow from './TimelineRow';
-import { ViewedBoundsFunctionType } from './utils';
+import { type ViewedBoundsFunctionType } from './utils';
+
+const GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY = 'grafana.adaptivetraces.restored';
+
+export function spanHasAdaptiveTraceRestoredTag(tags: TraceKeyValuePair[]): boolean {
+  const tag = tags.find((kv) => kv.key === GRAFANA_ADAPTIVE_TRACES_RESTORED_TAG_KEY);
+  if (!tag) {
+    return false;
+  }
+  const v = tag.value;
+  if (typeof v === 'boolean') {
+    return v;
+  }
+  if (typeof v === 'string') {
+    return v.toLowerCase() === 'true';
+  }
+  return false;
+}
 
 const spanBarClassName = 'spanBar';
 const spanBarLabelClassName = 'spanBarLabel';
@@ -287,6 +308,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       marginRight: '0.25rem',
       padding: '1px',
     }),
+    adaptiveTracesRestoredIconWrap: css({
+      label: 'adaptiveTracesRestoredIconWrap',
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'inline-flex',
+      flexShrink: 0,
+      padding: '4px',
+      '&:hover': {
+        color: `#fff`,
+      },
+    }),
     rpcColorMarker: css({
       label: 'rpcColorMarker',
       borderRadius: theme.shape.radius.md,
@@ -297,6 +329,59 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       padding: '1px',
       width: '1em',
       verticalAlign: 'middle',
+    }),
+    summaryCountBadge: cx(
+      getSummaryCountBadgeStyle(theme),
+      css({ label: 'summaryCountBadge', marginInlineStart: '0.5rem', marginInlineEnd: '0.25rem' })
+    ),
+    // Summary-span label: a non-interactive flex wrapper holding the toggle button and the stats
+    // sibling. Carries the row underline + horizontal scroll that styles.name provides for normal
+    // spans, so the two look consistent.
+    summaryLabel: css({
+      label: 'summaryLabel',
+      alignItems: 'baseline',
+      display: 'flex',
+      flex: '1 1 auto',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      position: 'relative',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
+      },
+      borderBottomColor: `${serviceColor}CF`,
+      borderBottomWidth: '2px',
+      borderBottomStyle: 'solid',
+    }),
+    summaryToggle: css({
+      label: 'summaryToggle',
+      background: 'transparent',
+      border: 'none',
+      color: autoColor(theme, '#000'),
+      cursor: 'pointer',
+      // Do not shrink: the wrapper (summaryLabel) owns horizontal scroll, so the toggle keeps its
+      // natural width and pushes the stats along rather than shrinking and letting its nowrap text
+      // overflow on top of the adjacent stats when the name column is narrow.
+      flex: '0 0 auto',
+      outline: 'none',
+      padding: '4px',
+      textAlign: 'left',
+      whiteSpace: 'nowrap',
+      '&:focus': {
+        textDecoration: 'none',
+      },
+      '&:hover > span': {
+        color: autoColor(theme, '#000'),
+      },
+    }),
+    summaryStats: css({
+      label: 'summaryStats',
+      color: autoColor(theme, '#484848'),
+      flex: '0 0 auto',
+      fontSize: '0.9em',
+      paddingBlock: '4px',
+      paddingInlineEnd: '4px',
+      whiteSpace: 'nowrap',
     }),
     labelRight: css({
       label: 'labelRight',
@@ -311,7 +396,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
 
 export type SpanBarRowProps = {
   className?: string;
-  theme: GrafanaTheme2;
   color: string;
   spanBarOptions: SpanBarOptions | undefined;
   columnDivision: number;
@@ -354,7 +438,7 @@ export type SpanBarRowProps = {
   criticalPath: CriticalPathSection[];
 };
 
-const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
+export const SpanBarRow = memo((props: SpanBarRowProps) => {
   const {
     className = '',
     color,
@@ -377,7 +461,6 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
     removeHoverIndentGuideId,
     clippingLeft,
     clippingRight,
-    theme,
     createSpanLink,
     datasourceType,
     showServiceName,
@@ -389,12 +472,19 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
 
   const { duration, hasChildren: isParent, operationName, process } = span;
   const serviceDisplayName = getServiceDisplayName(process);
-  const label = formatDuration(duration);
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  // Summary spans show aggregated (min | median | max) stats in place of the single
+  // duration, falling back to the wall-clock duration when min/max are unavailable.
+  const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  const summaryStats = summaryDurationStats?.map((stat) => stat.value).join(' | ') ?? null;
+  const label = summaryStats ?? formatDuration(duration);
+  const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
   const viewStart = viewBounds.start;
   const viewEnd = viewBounds.end;
-  const styles = getStyles(theme, showSpanFilterMatchesOnly, color);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles, showSpanFilterMatchesOnly, color);
 
   const labelDetail = `${serviceDisplayName}::${operationName}`;
   let longLabel;
@@ -447,6 +537,67 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
     []
   );
 
+  const links = useMemo(
+    () => (createSpanLink?.(span) || []).filter((link) => link.type === SpanLinkType.Traces),
+    [createSpanLink, span]
+  );
+
+  // Shared identity content of the label (icon, service, operation, count badge). Rendered inside the
+  // toggle button for both normal and summary spans; summary spans additionally render the duration
+  // stats as a sibling OUTSIDE the button (see below).
+  const labelIdentity = (
+    <>
+      {showErrorIcon && (
+        <Icon
+          name={'exclamation-circle'}
+          style={{
+            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
+          }}
+          className={styles.errorIcon}
+        />
+      )}
+      {showServiceName && (
+        <span
+          className={cx(styles.svcName, {
+            [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+          })}
+        >
+          {`${serviceDisplayName} `}
+        </span>
+      )}
+      {rpc && (
+        <span>
+          <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+          {rpc.serviceName}
+        </span>
+      )}
+      {noInstrumentedServer && (
+        <span>
+          <Icon name={'arrow-right'} />{' '}
+          <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+          {noInstrumentedServer.serviceName}
+        </span>
+      )}
+      <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+      {/* The processor only aggregates groups of >= min_spans_to_aggregate (>= 2), so a real
+          summary span never has a 0 or absent count; guard defensively anyway since span_count
+          arrives as an untrusted tag value and a bare "0" pill conveys nothing. */}
+      {isSummarySpan && span.aggregation && (span.aggregation.spanCount ?? 0) > 0 && (
+        <span
+          className={styles.summaryCountBadge}
+          style={{ background: color, color: theme.colors.getContrastText(color) }}
+          aria-label={t('explore.span-bar-row.summary-count-aria', '', {
+            count: span.aggregation.spanCount,
+            defaultValue_one: '{{count}} aggregated span',
+            defaultValue_other: '{{count}} aggregated spans',
+          })}
+        >
+          {span.aggregation.spanCount}
+        </span>
+      )}
+    </>
+  );
+
   return (
     <TimelineRow
       className={cx(
@@ -479,90 +630,83 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             visibleSpanIds={visibleSpanIds}
           />
-          <button
-            type="button"
-            className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
-            aria-checked={isDetailExpanded}
-            title={labelDetail}
-            onClick={handleDetailToggle}
-            role="switch"
-            tabIndex={0}
-          >
-            {showErrorIcon && (
-              <Icon
-                name={'exclamation-circle'}
-                style={{
-                  backgroundColor: span.errorIconColor
-                    ? autoColor(theme, span.errorIconColor)
-                    : autoColor(theme, '#db2828'),
-                }}
-                className={styles.errorIcon}
-              />
-            )}
-            {showServiceName && (
-              <span
-                className={cx(styles.svcName, {
-                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
-                })}
+          {isSummarySpan ? (
+            // Summary spans render the toggle button (identity only) plus the duration stats as
+            // siblings inside a non-interactive wrapper. The stats tooltip trigger must NOT sit
+            // inside the button: @grafana/ui Tooltip clones its child with tabIndex={0}, and a
+            // <button> may not contain a tabindex/focusable descendant (invalid HTML + extra tab stop).
+            <div className={cx(styles.summaryLabel, { [styles.nameDetailExpanded]: isDetailExpanded })}>
+              <button
+                type="button"
+                className={styles.summaryToggle}
+                aria-checked={isDetailExpanded}
+                title={labelDetail}
+                onClick={handleDetailToggle}
+                role="switch"
+                tabIndex={0}
               >
-                {`${serviceDisplayName} `}
+                {labelIdentity}
+              </button>
+              {summaryDurationStats ? (
+                <SummaryDurationStatsTooltip stats={summaryDurationStats}>
+                  <span className={styles.summaryStats}>({label})</span>
+                </SummaryDurationStatsTooltip>
+              ) : (
+                <span className={styles.summaryStats}>({label})</span>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
+              aria-checked={isDetailExpanded}
+              title={labelDetail}
+              onClick={handleDetailToggle}
+              role="switch"
+              tabIndex={0}
+            >
+              {labelIdentity}
+              <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            </button>
+          )}
+          {showAdaptiveTracesRestoredHint && (
+            <Tooltip
+              placement="top"
+              content={t('explore.span-bar-row.tooltip-adaptive-traces-restored', 'Recovered by Adaptive Traces.')}
+            >
+              <span
+                className={cx(styles.adaptiveTracesRestoredIconWrap, 'icon-wrapper')}
+                data-testid="SpanBarRow-adaptiveTracesRestored"
+              >
+                <Icon name="info-circle" />
               </span>
-            )}
-            {rpc && (
-              <span>
-                <Icon name={'arrow-right'} /> <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
-                {rpc.serviceName}
-              </span>
-            )}
-            {noInstrumentedServer && (
-              <span>
-                <Icon name={'arrow-right'} />{' '}
-                <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
-                {noInstrumentedServer.serviceName}
-              </span>
-            )}
-            <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
-          </button>
-          {createSpanLink &&
-            (() => {
-              const links = createSpanLink(span);
-              const count = links?.length || 0;
-              if (links && count === 1) {
-                if (!links[0]) {
-                  return null;
-                }
-
-                return (
-                  <a
-                    href={links[0].href}
-                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
-                    target={'_blank'}
-                    style={{
-                      borderBottom: `2px solid ${color}CF`,
-                      paddingInline: '4px',
-                    }}
-                    rel="noopener noreferrer"
-                    onClick={
-                      links[0].onClick
-                        ? (event) => {
-                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
-                              event.preventDefault();
-                              links[0].onClick(event);
-                            }
-                          }
-                        : undefined
+            </Tooltip>
+          )}
+          {links.length === 1 && (
+            <a
+              href={links[0].href}
+              // Needs to have target otherwise preventDefault would not work due to angularRouter.
+              target={'_blank'}
+              style={{
+                borderBottom: `2px solid ${color}CF`,
+                paddingInline: '4px',
+              }}
+              rel="noopener noreferrer"
+              onClick={
+                links[0].onClick
+                  ? (event) => {
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                        event.preventDefault();
+                        links[0].onClick(event);
+                      }
                     }
-                  >
-                    {links[0].content}
-                  </a>
-                );
-              } else if (links && count > 1) {
-                return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
-              } else {
-                return null;
+                  : undefined
               }
-            })()}
+            >
+              {links[0].content}
+            </a>
+          )}
+          {links.length > 1 && <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />}
         </div>
       </TimelineRow.Cell>
       <TimelineRow.Cell
@@ -586,6 +730,7 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
           color={color}
           shortLabel={label}
           longLabel={longLabel}
+          labelDetail={labelDetail}
           traceStartTime={traceStartTime}
           span={span}
           labelClassName={`${spanBarLabelClassName} ${hintClassName}`}
@@ -596,6 +741,4 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
   );
 });
 
-UnthemedSpanBarRow.displayName = 'UnthemedSpanBarRow';
-
-export default withTheme2(UnthemedSpanBarRow);
+SpanBarRow.displayName = 'SpanBarRow';

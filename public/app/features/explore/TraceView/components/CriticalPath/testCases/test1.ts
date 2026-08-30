@@ -29,7 +29,7 @@ Here +++++ are critical path sections
 */
 
 import transformTraceData from '../../model/transform-trace-data';
-import { Trace, TraceResponse } from '../../types/trace';
+import { type Trace, type TraceResponse } from '../../types/trace';
 
 const testTrace: TraceResponse = {
   traceID: 'test1-trace',

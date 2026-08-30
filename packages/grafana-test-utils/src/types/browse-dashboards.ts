@@ -55,4 +55,7 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
+
+  // Owner references in the search API format: {Group}/{Kind}/{Name}
+  ownerReferences?: string[];
 }

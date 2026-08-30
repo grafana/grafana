@@ -69,6 +69,7 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 | **Machine Learning**             | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
 | **OnCall**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
 | **Private Data Connect**         | —                                       | —                                                           | Full access                                   |
+| **Session Replay**               | View session recordings                 | View session recordings                                     | View session recordings                       |
 | **SLO**                          | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
 | **Synthetic Monitoring**         | Read checks, probes, alerts, thresholds | + Create, edit, delete checks, probes, alerts, thresholds   | + Manage access tokens                        |
 
@@ -160,9 +161,10 @@ Plugin ID: `grafana-cmab-app`
 
 Plugin ID: `grafana-dbo11y-app`
 
-| Plugin role                        | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| `plugins:grafana-dbo11y-app:admin` | Read/write access to everything in Database Observability plugin |
+| Plugin role                         | Description                                                      |
+| ----------------------------------- | ---------------------------------------------------------------- |
+| `plugins:grafana-dbo11y-app:admin`  | Read/write access to everything in Database Observability plugin |
+| `plugins:grafana-dbo11y-app:reader` | Read access to everything in Database Observability plugin       |
 
 ## Easystart / Integrations plugin
 
@@ -210,14 +212,6 @@ Plugin ID: `grafana-auth-app`
 | Plugin role                       | Description                                        |
 | --------------------------------- | -------------------------------------------------- |
 | `plugins:grafana-auth-app:writer` | Write and manage access policies for Grafana Cloud |
-
-## Incident plugin
-
-Plugin ID: `grafana-incident-app`
-
-| Plugin role                                    | Description                |
-| ---------------------------------------------- | -------------------------- |
-| `plugins:grafana-incident-app:incident-access` | Access to Grafana Incident |
 
 ## IRM plugin
 
@@ -357,94 +351,6 @@ Plugin ID: `grafana-ml-app`
 | `plugins:grafana-ml-app:sift-editor` | Read and write access to Sift features |
 | `plugins:grafana-ml-app:sift-viewer` | Read access to Sift features           |
 
-## OnCall plugin
-
-Plugin ID: `grafana-oncall-app`
-
-### Core roles
-
-| Plugin role                                         | Description                                                                                                                                                                                              |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:admin`                  | Read/write access to everything in OnCall                                                                                                                                                                |
-| `plugins:grafana-oncall-app:editor`                 | Similar to Admin, minus abilities to: create Integrations, create Escalation Chains, create Outgoing Webhooks, update ChatOps settings, update other user's settings, and update general OnCall settings |
-| `plugins:grafana-oncall-app:reader`                 | Read-only access to everything in OnCall                                                                                                                                                                 |
-| `plugins:grafana-oncall-app:oncaller`               | Read access to everything in OnCall, plus edit access to Alert Groups, Schedules, and own settings                                                                                                       |
-| `plugins:grafana-oncall-app:notifications-receiver` | Receive OnCall alert notifications, plus edit own OnCall settings                                                                                                                                        |
-
-### Alert groups
-
-| Plugin role                                             | Description                                                                                     |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:alert-groups-reader`        | Read-only access to OnCall Alert Groups                                                         |
-| `plugins:grafana-oncall-app:alert-groups-editor`        | Read access to OnCall Alert Groups + ability to act on Alert Groups (acknowledge, resolve, etc) |
-| `plugins:grafana-oncall-app:alert-groups-direct-paging` | Manually create new Alert Groups (Direct Paging)                                                |
-
-### Integrations
-
-| Plugin role                                      | Description                              |
-| ------------------------------------------------ | ---------------------------------------- |
-| `plugins:grafana-oncall-app:integrations-reader` | Read-only access to OnCall Integrations  |
-| `plugins:grafana-oncall-app:integrations-editor` | Read/write access to OnCall Integrations |
-
-### Escalation chains
-
-| Plugin role                                           | Description                                   |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `plugins:grafana-oncall-app:escalation-chains-reader` | Read-only access to OnCall Escalation Chains  |
-| `plugins:grafana-oncall-app:escalation-chains-editor` | Read/write access to OnCall Escalation Chains |
-
-### Schedules
-
-| Plugin role                                   | Description                           |
-| --------------------------------------------- | ------------------------------------- |
-| `plugins:grafana-oncall-app:schedules-reader` | Read-only access to OnCall Schedules  |
-| `plugins:grafana-oncall-app:schedules-editor` | Read/write access to OnCall Schedules |
-
-### ChatOps
-
-| Plugin role                                 | Description                         |
-| ------------------------------------------- | ----------------------------------- |
-| `plugins:grafana-oncall-app:chatops-reader` | Read-only access to OnCall ChatOps  |
-| `plugins:grafana-oncall-app:chatops-editor` | Read/write access to OnCall ChatOps |
-
-### Outgoing webhooks
-
-| Plugin role                                           | Description                                   |
-| ----------------------------------------------------- | --------------------------------------------- |
-| `plugins:grafana-oncall-app:outgoing-webhooks-reader` | Read-only access to OnCall Outgoing Webhooks  |
-| `plugins:grafana-oncall-app:outgoing-webhooks-editor` | Read/write access to OnCall Outgoing Webhooks |
-
-### Maintenance
-
-| Plugin role                                     | Description                             |
-| ----------------------------------------------- | --------------------------------------- |
-| `plugins:grafana-oncall-app:maintenance-reader` | Read-only access to OnCall Maintenance  |
-| `plugins:grafana-oncall-app:maintenance-editor` | Read/write access to OnCall Maintenance |
-
-### API keys
-
-| Plugin role                                  | Description                                                       |
-| -------------------------------------------- | ----------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:api-keys-reader` | Read-only access to OnCall API Keys                               |
-| `plugins:grafana-oncall-app:api-keys-editor` | Read/write access to OnCall API Keys + ability to consume the API |
-
-### User settings
-
-| Plugin role                                       | Description                                                                              |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `plugins:grafana-oncall-app:user-settings-reader` | Read-only access to own OnCall User Settings                                             |
-| `plugins:grafana-oncall-app:user-settings-editor` | Read/write access to own OnCall User Settings + view basic info about other OnCall users |
-| `plugins:grafana-oncall-app:user-settings-admin`  | Read/write access to your own + other's OnCall User Settings                             |
-
-### Notification and general settings
-
-| Plugin role                                               | Description                                       |
-| --------------------------------------------------------- | ------------------------------------------------- |
-| `plugins:grafana-oncall-app:notification-settings-reader` | Read-only access to OnCall Notification Settings  |
-| `plugins:grafana-oncall-app:notification-settings-editor` | Read/write access to OnCall Notification Settings |
-| `plugins:grafana-oncall-app:settings-reader`              | Read-only access to OnCall Settings               |
-| `plugins:grafana-oncall-app:settings-editor`              | Read/write access to OnCall Settings              |
-
 ## Private Data Connect plugin
 
 Plugin ID: `grafana-pdc-app`
@@ -453,6 +359,14 @@ Plugin ID: `grafana-pdc-app`
 | ------------------------------------------------ | --------------------- |
 | `plugins:grafana-pdc-app:private-networks-read`  | Read Private Networks |
 | `plugins:grafana-pdc-app:private-networks-write` | Edit Private Networks |
+
+## Session Replay plugin
+
+Plugin ID: `grafana-sessionreplay-app`
+
+| Plugin role                                           | Description                                       |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| `plugins:grafana-sessionreplay-app:recordings-viewer` | View session recordings in Frontend Observability |
 
 ## SLO plugin
 

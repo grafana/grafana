@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
 import { setPluginLinksHook } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { DrilldownExtensionPoint } from './DrilldownExtensionPoint';
 

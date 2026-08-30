@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { Trans } from '@grafana/i18n';
 import { Button, ClipboardButton, TextArea, Stack, TextLink } from '@grafana/ui';
 
-import { SaveDashboardFormProps } from '../types';
+import { type SaveDashboardFormProps } from '../types';
 
 export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveDashboardFormProps, 'isLoading'>) => {
   const [dashboardJSON, setDashboardJson] = useState(() => {

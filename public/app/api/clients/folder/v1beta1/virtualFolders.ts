@@ -1,4 +1,6 @@
-export const rootFolder = {
+import { type Folder } from '@grafana/api-clients/rtkq/folder/v1beta1';
+
+export const rootFolder: Folder = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
@@ -14,10 +16,9 @@ export const rootFolder = {
     title: 'Dashboards',
     description: '',
   },
-  status: {},
 };
 
-export const sharedWithMeFolder = {
+export const sharedWithMeFolder: Folder = {
   kind: 'Folder',
   apiVersion: 'folder.grafana.app/v1beta1',
   metadata: {
@@ -33,5 +34,4 @@ export const sharedWithMeFolder = {
     title: 'Shared with me',
     description: 'Dashboards and folders shared with me',
   },
-  status: {},
 };

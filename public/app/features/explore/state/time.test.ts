@@ -2,7 +2,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 
 import { createDefaultInitialState } from './testHelpers';
 import { changeRangeAction, timeReducer, updateTime } from './time';
@@ -37,6 +37,9 @@ describe('Explore item reducer', () => {
   describe('changing range', () => {
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
+        const expectedFrom = dateTime('2019-01-01');
+        const expectedTo = dateTime('2019-01-02');
+
         reducerTester<ExploreItemState>()
           .givenReducer(timeReducer, {
             range: null,
@@ -46,13 +49,19 @@ describe('Explore item reducer', () => {
             changeRangeAction({
               exploreId: 'left',
               absoluteRange: { from: 1546297200000, to: 1546383600000 },
-              range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
+              range: { from: expectedFrom, to: expectedTo, raw: { from: 'now-1d', to: 'now' } },
             })
           )
-          .thenStateShouldEqual({
-            absoluteRange: { from: 1546297200000, to: 1546383600000 },
-            range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
-          } as unknown as ExploreItemState);
+          .thenStatePredicateShouldEqual((resultingState) => {
+            return (
+              resultingState.absoluteRange.from === 1546297200000 &&
+              resultingState.absoluteRange.to === 1546383600000 &&
+              resultingState.range.raw.from === 'now-1d' &&
+              resultingState.range.raw.to === 'now' &&
+              resultingState.range.from.valueOf() === expectedFrom.valueOf() &&
+              resultingState.range.to.valueOf() === expectedTo.valueOf()
+            );
+          });
       });
     });
   });

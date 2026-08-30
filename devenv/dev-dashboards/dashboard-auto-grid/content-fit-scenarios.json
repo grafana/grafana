@@ -1,0 +1,1094 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "content-fit-scenarios"
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "description": "Test matrix for auto-grid content-fit: growth, clamping, match row heights, per-panel overrides, fill screen.",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Text short — clamps at min height",
+          "description": "Content smaller than min: panel sits at min height (320px standard).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Short\n\nOne line of content.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Text long — grows to content",
+          "description": "Content taller than min: panel grows to natural height.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Timeseries — not fit-capable",
+          "description": "Plugin without fit support: keeps standard height.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Table small — self-sizes",
+          "description": "Fit-capable table with 3 rows: shrinks/sits at min.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,name,value\n1,alpha,10\n2,beta,20\n3,gamma,30",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Table large — grows",
+          "description": "Fit-capable table with 40 rows: grows (unlimited max).",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,name,value\n1,row-1,7\n2,row-2,14\n3,row-3,21\n4,row-4,28\n5,row-5,35\n6,row-6,42\n7,row-7,49\n8,row-8,56\n9,row-9,63\n10,row-10,70\n11,row-11,77\n12,row-12,84\n13,row-13,91\n14,row-14,98\n15,row-15,5\n16,row-16,12\n17,row-17,19\n18,row-18,26\n19,row-19,33\n20,row-20,40\n21,row-21,47\n22,row-22,54\n23,row-23,61\n24,row-24,68\n25,row-25,75\n26,row-26,82\n27,row-27,89\n28,row-28,96\n29,row-29,3\n30,row-30,10\n31,row-31,17\n32,row-32,24\n33,row-33,31\n34,row-34,38\n35,row-35,45\n36,row-36,52\n37,row-37,59\n38,row-38,66\n39,row-39,73\n40,row-40,80",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Long — sets the row height",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Short — stretches to match",
+          "description": "With match on, chrome should fill the stretched cell edge-to-edge.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Short\n\nOne line of content.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Timeseries — stretches too",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Tiny — clamps at min 100px",
+          "description": "Custom min height 100: should be shorter than standard.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "One line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Very long — clamps at max 400px",
+          "description": "Custom max height 400: content scrolls inside.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Very long\n\n1. Numbered line 1 with padding text to add height\n2. Numbered line 2 with padding text to add height\n3. Numbered line 3 with padding text to add height\n4. Numbered line 4 with padding text to add height\n5. Numbered line 5 with padding text to add height\n6. Numbered line 6 with padding text to add height\n7. Numbered line 7 with padding text to add height\n8. Numbered line 8 with padding text to add height\n9. Numbered line 9 with padding text to add height\n10. Numbered line 10 with padding text to add height\n11. Numbered line 11 with padding text to add height\n12. Numbered line 12 with padding text to add height\n13. Numbered line 13 with padding text to add height\n14. Numbered line 14 with padding text to add height\n15. Numbered line 15 with padding text to add height\n16. Numbered line 16 with padding text to add height\n17. Numbered line 17 with padding text to add height\n18. Numbered line 18 with padding text to add height\n19. Numbered line 19 with padding text to add height\n20. Numbered line 20 with padding text to add height\n21. Numbered line 21 with padding text to add height\n22. Numbered line 22 with padding text to add height\n23. Numbered line 23 with padding text to add height\n24. Numbered line 24 with padding text to add height\n25. Numbered line 25 with padding text to add height\n26. Numbered line 26 with padding text to add height\n27. Numbered line 27 with padding text to add height\n28. Numbered line 28 with padding text to add height\n29. Numbered line 29 with padding text to add height\n30. Numbered line 30 with padding text to add height\n31. Numbered line 31 with padding text to add height\n32. Numbered line 32 with padding text to add height\n33. Numbered line 33 with padding text to add height\n34. Numbered line 34 with padding text to add height\n35. Numbered line 35 with padding text to add height\n36. Numbered line 36 with padding text to add height\n37. Numbered line 37 with padding text to add height\n38. Numbered line 38 with padding text to add height\n39. Numbered line 39 with padding text to add height\n40. Numbered line 40 with padding text to add height\n41. Numbered line 41 with padding text to add height\n42. Numbered line 42 with padding text to add height\n43. Numbered line 43 with padding text to add height\n44. Numbered line 44 with padding text to add height\n45. Numbered line 45 with padding text to add height\n\nThe end.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Table 40 rows — clamps at max 400px",
+          "description": "Table also bounded by max height; inner scroll.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "csvContent": "id,name,value\n1,row-1,7\n2,row-2,14\n3,row-3,21\n4,row-4,28\n5,row-5,35\n6,row-6,42\n7,row-7,49\n8,row-8,56\n9,row-9,63\n10,row-10,70\n11,row-11,77\n12,row-12,84\n13,row-13,91\n14,row-14,98\n15,row-15,5\n16,row-16,12\n17,row-17,19\n18,row-18,26\n19,row-19,33\n20,row-20,40\n21,row-21,47\n22,row-22,54\n23,row-23,61\n24,row-24,68\n25,row-25,75\n26,row-26,82\n27,row-27,89\n28,row-28,96\n29,row-29,3\n30,row-30,10\n31,row-31,17\n32,row-32,24\n33,row-33,31\n34,row-34,38\n35,row-35,45\n36,row-36,52\n37,row-37,59\n38,row-38,66\n39,row-39,73\n40,row-40,80",
+                        "scenarioId": "csv_content"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-12": {
+        "kind": "Panel",
+        "spec": {
+          "id": 12,
+          "title": "Override ON — grows",
+          "description": "Layout fit is OFF, but this panel overrides to ON: it should grow.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-13": {
+        "kind": "Panel",
+        "spec": {
+          "id": 13,
+          "title": "Default — fixed height",
+          "description": "Layout fit is OFF and no override: standard fixed height, content scrolls.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "Override OFF — fixed height",
+          "description": "Layout fit is ON, but this panel overrides to OFF: fixed standard height.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-15": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Default — grows",
+          "description": "Layout fit is ON and no override: grows to content.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Long\n\n- Item 1 with some explanatory text\n- Item 2 with some explanatory text\n- Item 3 with some explanatory text\n- Item 4 with some explanatory text\n- Item 5 with some explanatory text\n- Item 6 with some explanatory text\n- Item 7 with some explanatory text\n- Item 8 with some explanatory text\n- Item 9 with some explanatory text\n- Item 10 with some explanatory text\n- Item 11 with some explanatory text\n- Item 12 with some explanatory text\n- Item 13 with some explanatory text\n- Item 14 with some explanatory text\n- Item 15 with some explanatory text\n\n## Section\n\nEnough content to clearly exceed the standard row height.\n\nFinal line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-16": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Fill screen A",
+          "description": "Fill screen: rows stretch to fill the viewport.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Short\n\nOne line of content.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-17": {
+        "kind": "Panel",
+        "spec": {
+          "id": 17,
+          "title": "Fill screen B",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {},
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-18": {
+        "kind": "Panel",
+        "spec": {
+          "id": 18,
+          "title": "Tiny — shrinks with no floor",
+          "description": "Min height none: the panel shrinks to its one-line content, below any named floor.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "One line.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-19": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "Long — still grows",
+          "description": "Min height none only removes the floor; tall content still grows.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "Paragraph 1: content-fit lets this panel grow to its natural height.\n\nParagraph 2: content-fit lets this panel grow to its natural height.\n\nParagraph 3: content-fit lets this panel grow to its natural height.\n\nParagraph 4: content-fit lets this panel grow to its natural height.\n\nParagraph 5: content-fit lets this panel grow to its natural height.\n\nParagraph 6: content-fit lets this panel grow to its natural height.\n\nParagraph 7: content-fit lets this panel grow to its natural height.\n\nParagraph 8: content-fit lets this panel grow to its natural height.\n\nParagraph 9: content-fit lets this panel grow to its natural height.\n\nParagraph 10: content-fit lets this panel grow to its natural height.\n\nParagraph 11: content-fit lets this panel grow to its natural height.\n\nParagraph 12: content-fit lets this panel grow to its natural height.",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "1. Fit basics",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-1"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-2"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-3"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-4"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-5"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "2. Match row heights",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "matchRowHeights": true,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-6"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-7"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-8"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "3. Min & max bounds",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "custom",
+                  "minHeight": 100,
+                  "maxHeightMode": "custom",
+                  "maxHeight": 400,
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-9"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-10"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-11"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "4. Item override: on",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": false,
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-12"
+                        },
+                        "fitContent": true
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-13"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "5. Item override: off",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-14"
+                        },
+                        "fitContent": false
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-15"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "6. Fill screen",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": true,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-16"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-17"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "7. No min height",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 3,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fitContent": true,
+                  "minHeightMode": "none",
+                  "matchRowHeights": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-18"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-19"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "content-fit"],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Content-fit scenarios",
+    "variables": []
+  }
+}

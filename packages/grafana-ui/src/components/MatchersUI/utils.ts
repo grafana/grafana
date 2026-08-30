@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
+import { type DataFrame, type Field, getFieldDisplayName, FieldNamePickerBaseNameMode, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 
 import { getFieldTypeIcon } from '../../types/icon';
-import { ComboboxOption } from '../Combobox/types';
+import { type ComboboxOption } from '../Combobox/types';
 
 /**
  * @internal
@@ -102,13 +102,13 @@ export function getGroupLabelForScope(scope?: MatcherScope): string | undefined 
 export function getGroupDescriptionForScope(scope: MatcherScope): string | undefined {
   switch (scope) {
     case 'nested':
-      return t('grafana-ui.matchers.groups.nested.description', 'Fields from nested dataframes.');
+      return t('grafana-ui.matchers.groups.nested-description', 'Fields from nested dataframes.');
     case 'annotation':
-      return t('grafana-ui.matchers.groups.annotation.description', 'Annotations series for this panel.');
+      return t('grafana-ui.matchers.groups.annotation-description', 'Annotations series for this panel.');
     case 'series':
-      return t('grafana-ui.matchers.groups.series.description', 'Fields from the dataframes in this panel.');
+      return t('grafana-ui.matchers.groups.series-description', 'Fields from the dataframes in this panel.');
     case 'exemplar':
-      return t('grafana-ui.matchers.groups.exemplar.description', 'Trace exemplars for this panel.');
+      return t('grafana-ui.matchers.groups.exemplar-description', 'Trace exemplars for this panel.');
     default:
       return undefined;
   }

@@ -116,4 +116,30 @@ describe('SilenceViewPage', () => {
     expect(parsedRuleLink.pathname).toBe(`/alerting/grafana/${encodeURIComponent(MOCK_RULE_UID)}/view`);
     expect(parsedRuleLink.searchParams.get('returnTo')).toBe(`/alerting/silence/${silenceId}/view`);
   });
+
+  it('should show a warning when the targeted alert rule is unavailable', async () => {
+    const silenceId = 'silence-with-dangling-rule';
+    const silenceWithDanglingRule = mockSilence({
+      id: silenceId,
+      comment: 'Silence targeting a deleted rule',
+      metadata: {
+        rule_uid: MOCK_RULE_UID,
+      },
+    });
+
+    setSilenceGetResolver(({ request }) => {
+      const ruleMetadataQueryParam = new URL(request.url).searchParams.get('ruleMetadata');
+      const { metadata, ...silence } = silenceWithDanglingRule;
+      return HttpResponse.json({
+        ...silence,
+        ...(ruleMetadataQueryParam && { metadata }),
+      });
+    });
+
+    renderSilenceViewPage(silenceId);
+
+    expect(await screen.findByText(/alert rule unavailable/i)).toBeInTheDocument();
+    expect(screen.getByLabelText('Alert rule unavailable')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: MOCK_GRAFANA_ALERT_RULE_TITLE })).not.toBeInTheDocument();
+  });
 });

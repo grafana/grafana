@@ -1,11 +1,11 @@
-import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
+import { createAction, createAsyncThunk, type Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, of } from 'rxjs';
 
-import { PanelPlugin, PluginError } from '@grafana/data';
+import { type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { StoreState, ThunkResult } from 'app/types/store';
+import { type StoreState, type ThunkResult } from 'app/types/store';
 
 import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
 import {
@@ -21,7 +21,14 @@ import {
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes } from '../helpers';
-import { CatalogPlugin, RemotePlugin, LocalPlugin, InstancePlugin, ProvisionedPlugin, PluginStatus } from '../types';
+import {
+  type CatalogPlugin,
+  type RemotePlugin,
+  type LocalPlugin,
+  type InstancePlugin,
+  type ProvisionedPlugin,
+  PluginStatus,
+} from '../types';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -183,22 +190,6 @@ export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string
 );
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
-
-// 1. gets remote equivalents from the store (if there are any)
-// 2. merges the remote equivalents with the local plugins
-// 3. updates the store with the updated CatalogPlugin objects
-export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
-
-// 1. gets local equivalents from the store (if there are any)
-// 2. merges the local equivalents with the remote plugins
-// 3. updates the store with the updated CatalogPlugin objects
-export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
-
-// 1. merges the local and remote plugins
-// 2. updates the store with the CatalogPlugin objects
-export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; remote: RemotePlugin[] }>(
-  `${STATE_PREFIX}/addLocalPlugins`
-);
 
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<

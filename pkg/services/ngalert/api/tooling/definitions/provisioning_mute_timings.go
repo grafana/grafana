@@ -8,6 +8,8 @@ import (
 //
 // Get all the mute timings.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: MuteTimings
 //       403: ForbiddenError
@@ -30,6 +32,8 @@ import (
 // swagger:route GET /v1/provisioning/mute-timings/{name} provisioning stable RouteGetMuteTiming
 //
 // Get a mute timing.
+//
+// Deprecated: true
 //
 //     Responses:
 //       200: MuteTimeInterval
@@ -55,6 +59,8 @@ import (
 //
 // Create a new mute timing.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -62,10 +68,13 @@ import (
 //       201: MuteTimeInterval
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route PUT /v1/provisioning/mute-timings/{name} provisioning stable RoutePutMuteTiming
 //
 // Replace an existing mute timing.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -79,6 +88,8 @@ import (
 // swagger:route DELETE /v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
 // Delete a mute timing.
+//
+// Deprecated: true
 //
 //     Responses:
 //       204: description: The mute timing was deleted successfully.
@@ -124,14 +135,6 @@ type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
 	Version                 string     `json:"version,omitempty"`
 	Provenance              Provenance `json:"provenance,omitempty"`
-}
-
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.Name
 }
 
 type MuteTimeIntervalExport struct {

@@ -1,10 +1,10 @@
 import { setAppPluginMetas } from '@grafana/runtime/internal';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
-  RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
-  RulerRecordingRuleDTO,
-  RulerRuleDTO,
+  type RulerAlertingRuleDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRecordingRuleDTO,
+  type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { mockRulerAlertingRule, mockRulerGrafanaRule, mockRulerRuleGroup } from '../mocks';

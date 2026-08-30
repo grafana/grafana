@@ -1,11 +1,12 @@
 import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Label, Stack, Tooltip } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
-import { Folder, RuleFormValues } from '../../types/rule-form';
+import { type Folder, type RuleFormValues } from '../../types/rule-form';
 import { CreateNewFolder } from '../create-folder/CreateNewFolder';
 
 export function FolderSelectorV2() {
@@ -53,7 +54,7 @@ export function FolderSelectorV2() {
             </Label>
           }
           error={errors.folder?.message}
-          data-testid="folder-picker"
+          data-testid={selectors.components.AlertRules.folderPicker}
         >
           <Stack direction="column" alignItems="flex-start" gap={1}>
             <Controller

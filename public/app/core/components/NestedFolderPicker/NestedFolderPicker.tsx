@@ -4,24 +4,28 @@ import debounce from 'debounce-promise';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { getStatusFromError } from 'app/core/utils/errors';
-import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
+import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { QueryResponse } from 'app/features/search/service/types';
+import { type QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
-import { DashboardViewItem } from 'app/features/search/types';
-import { PermissionLevel } from 'app/types/acl';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { resolveStarredFolders } from 'app/features/stars/folders';
+import { useStarredItems } from 'app/features/stars/hooks';
+import { type PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
-import { TEAM_FOLDERS_UID, useGetTeamFolders } from './useTeamOwnedFolder';
+import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
 
@@ -38,7 +42,9 @@ export interface NestedFolderPickerProps {
   /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
 
-  /* Start tree from this folder instead of root */
+  /* Start tree from this folder instead of root. When set, the picker is scoped
+   to this subtree — only descendants of this folder are shown, and top-level
+   items like team folders are excluded. */
   rootFolderUID?: string;
 
   /* Custom root folder item, default is "Dashboards" */
@@ -55,6 +61,9 @@ export interface NestedFolderPickerProps {
 
   /* HTML ID for the button element for form labels */
   id?: string;
+
+  /* Disable opening the picker (still shows the selected folder label) */
+  disabled?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -82,6 +91,7 @@ export function NestedFolderPicker({
   permission = 'edit',
   onChange,
   id,
+  disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
@@ -98,19 +108,28 @@ export function NestedFolderPicker({
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   // keep Team folders expanded by default so the UX matches when team folders were previously listed at top level
-  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({ [TEAM_FOLDERS_UID]: true });
+  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({
+    [TEAM_FOLDERS_UID]: true,
+    [STARRED_FOLDERS_UID]: true,
+  });
   const overlayId = useId();
 
-  const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const { teamFolderTreeItems, teamFolderOwnersByUid } = useTeamFolders(foldersOpenState, value, onChange);
+  const {
+    teamFolderTreeItems,
+    teamFolderOwnersByUid,
+    error: teamFoldersError,
+  } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
+
+  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
     emptyFolders,
     items: browseFlatTree,
     isLoading: isBrowseLoading,
+    error: browseError,
     requestNextPage: fetchFolderPage,
   } = useFoldersQuery({
     isBrowsing,
@@ -176,8 +195,8 @@ export function NestedFolderPicker({
     async (uid: string, newOpenState: boolean) => {
       setFoldersOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
-      // Team folders is a virtual folder, so don't trigger browse pagination for it
-      if (uid === TEAM_FOLDERS_UID) {
+      // Team / starred folders are virtual roots, so don't trigger browse pagination for them
+      if (uid === TEAM_FOLDERS_UID || uid === STARRED_FOLDERS_UID) {
         return;
       }
 
@@ -234,13 +253,24 @@ export function NestedFolderPicker({
         flatTree = filterRootItem(flatTree);
       }
 
+      // Only show team folders when browsing the full tree (no rootFolderUID scope)
+      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...starredFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
-      return filterExcludedItems([...teamFolderTreeItems, ...flatTree], excludeUIDs);
+      return filterExcludedItems(fullTree, excludeUIDs);
     } else {
       flatTree = searchResultsToTreeItems(searchResults?.items || []);
       return filterExcludedItems(flatTree, excludeUIDs);
     }
-  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder, teamFolderTreeItems]);
+  }, [
+    browseFlatTree,
+    excludeUIDs,
+    isBrowsing,
+    searchResults?.items,
+    showRootFolder,
+    teamFolderTreeItems,
+    starredFolderTreeItems,
+    rootFolderUID,
+  ]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -258,6 +288,7 @@ export function NestedFolderPicker({
   );
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
+  const displayError = teamFoldersError || starredFoldersError || browseError;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
@@ -288,6 +319,7 @@ export function NestedFolderPicker({
     return (
       <Trigger
         id={id}
+        data-testid={selectors.components.FolderPicker.triggerButton}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
@@ -302,7 +334,7 @@ export function NestedFolderPicker({
             : undefined
         }
         {...getReferenceProps()}
-        disabled={isForbidden}
+        disabled={disabled || isForbidden}
       />
     );
   }
@@ -312,6 +344,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
+        data-testid={selectors.components.FolderPicker.input}
         prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
@@ -338,37 +371,40 @@ export function NestedFolderPicker({
         }}
         {...getFloatingProps()}
       >
-        {error ? (
+        {displayError && (
           <Alert
             className={styles.error}
             severity="warning"
-            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+            title={
+              teamFoldersError
+                ? t('browse-dashboards.folder-picker.team-folders-error-title', 'Error loading team folders')
+                : t('browse-dashboards.folder-picker.error-title', 'Error loading some folders')
+            }
           >
-            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+            {displayError.message ||
+              displayError.toString?.() ||
+              t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
           </Alert>
-        ) : (
-          <div>
-            {isLoading && (
-              <div className={styles.loader}>
-                <LoadingBar width={600} />
-              </div>
-            )}
-
-            <NestedFolderList
-              items={flatTree}
-              selectedFolder={value}
-              focusedItemIndex={focusedItemIndex}
-              onFolderExpand={handleFolderExpand}
-              onFolderSelect={handleFolderSelect}
-              idPrefix={overlayId}
-              foldersAreOpenable={!(search && searchResults)}
-              isItemLoaded={isItemLoaded}
-              requestLoadMore={handleLoadMore}
-              emptyFolders={emptyFolders}
-              teamFolderOwnersByUid={teamFolderOwnersByUid}
-            />
+        )}
+        {isLoading && (
+          <div className={styles.loader}>
+            <LoadingBar width={600} />
           </div>
         )}
+
+        <NestedFolderList
+          items={flatTree}
+          selectedFolder={value}
+          focusedItemIndex={focusedItemIndex}
+          onFolderExpand={handleFolderExpand}
+          onFolderSelect={handleFolderSelect}
+          idPrefix={overlayId}
+          foldersAreOpenable={!(search && searchResults)}
+          isItemLoaded={isItemLoaded}
+          requestLoadMore={handleLoadMore}
+          emptyFolders={emptyFolders}
+          teamFolderOwnersByUid={teamFolderOwnersByUid}
+        />
       </fieldset>
     </>
   );
@@ -377,9 +413,10 @@ export function NestedFolderPicker({
 function useTeamFolders(
   foldersOpenState: Record<string, boolean>,
   value?: string,
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void,
+  showRootFolder = true
 ) {
-  const { foldersByTeam } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
+  const { foldersByTeam, error } = useGetTeamFolders();
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
   const firstTeamFolder = teamFolders[0];
 
@@ -432,16 +469,87 @@ function useTeamFolders(
 
   const preselectDidRun = useRef(false);
   useEffect(() => {
+    // When root is shown, value '' means the Dashboards root — do not overwrite it.
+    if (showRootFolder) {
+      return;
+    }
     if (value === '' && firstTeamFolder && onChange && !preselectDidRun.current) {
       preselectDidRun.current = true;
       onChange(firstTeamFolder.name, firstTeamFolder.title);
     }
-  }, [value, firstTeamFolder, onChange]);
+  }, [value, firstTeamFolder, onChange, showRootFolder]);
 
   return {
     teamFolderTreeItems,
     teamFolderOwnersByUid,
+    error,
   };
+}
+
+function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
+  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder', { skip: !starredFoldersEnabled() });
+
+  const [folders, setFolders] = useState<DashboardViewItem[]>([]);
+
+  // Custom use effect for loading data to prevent async state setting, which breaks the tests
+  useEffect(() => {
+    if (!uids || uids.length === 0) {
+      setFolders([]);
+      return;
+    }
+
+    let cancelled = false;
+    resolveStarredFolders(uids, permission)
+      .then((items) => {
+        if (!cancelled) {
+          setFolders(items);
+        }
+      })
+      .catch(() => {
+        // Searcher failures are non-fatal here; the starred section just stays empty.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uids, permission]);
+
+  const starredFolderTreeItems = useMemo(() => {
+    if (folders.length === 0) {
+      return [];
+    }
+
+    // "Starred folders" is a virtual root, sibling to the "Dashboards" virtual root. The container
+    // itself is disabled (non-selectable); its children are real folders selectable by real UID.
+    const starredIsOpen = foldersOpenState[STARRED_FOLDERS_UID] ?? true;
+
+    const parentItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+      isOpen: starredIsOpen,
+      level: 0,
+      disabled: true,
+      item: {
+        kind: 'folder' as const,
+        title: t('browse-dashboards.folder-picker.starred-folders', 'Starred folders'),
+        uid: STARRED_FOLDERS_UID,
+        parentUID: undefined,
+      },
+    };
+
+    const children = folders.map((folder) => ({
+      isOpen: false,
+      level: 1,
+      parentUID: STARRED_FOLDERS_UID,
+      item: {
+        kind: 'folder' as const,
+        title: folder.title,
+        uid: folder.uid,
+        parentUID: STARRED_FOLDERS_UID,
+      },
+    }));
+
+    return starredIsOpen ? [parentItem, ...children] : [parentItem];
+  }, [folders, foldersOpenState]);
+
+  return { starredFolderTreeItems, error: error ? new Error(getMessageFromError(error)) : undefined };
 }
 
 function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {
@@ -488,6 +596,7 @@ function filterExcludedItems(items: DashboardsTreeItem[], excludeUIDs: string[] 
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     button: css({
       maxWidth: '100%',
@@ -495,11 +604,19 @@ const getStyles = (theme: GrafanaTheme2) => {
     error: css({
       marginBottom: 0,
     }),
-    tableWrapper: css({
-      boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: theme.zIndex.portal,
-    }),
+    tableWrapper: css(
+      {
+        boxShadow: theme.shadows.z3,
+        position: 'relative',
+        zIndex: theme.zIndex.portal,
+      },
+      visualRefreshEnabled && {
+        boxShadow: theme.shadows.z2,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        overflow: 'hidden',
+      }
+    ),
     loader: css({
       position: 'absolute',
       top: 0,

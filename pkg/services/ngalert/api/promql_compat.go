@@ -140,7 +140,7 @@ func extractEvalStringFromProm(s sample) string {
 	var sb strings.Builder
 	sb.WriteString("[ ")
 	var ls string
-	if len(s.Metric) > 0 {
+	if s.Metric.Len() > 0 {
 		ls = s.Metric.String()
 	}
 	sb.WriteString(fmt.Sprintf("labels={%s} ", ls))

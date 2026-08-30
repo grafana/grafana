@@ -2,19 +2,20 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import {
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationqueryNotificationStatus,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationqueryNotificationStatus,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, textUtil } from '@grafana/data';
+import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
-import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
+import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 import { StateTag } from '../../components/StateTag';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { formatPrometheusDuration } from '../../utils/time';
 import { createRelativeUrl } from '../../utils/url';
@@ -309,8 +310,10 @@ function NotificationStatusGroup({
   const receiverLabel =
     uniqueReceivers.length === 1
       ? uniqueReceivers[0]
-      : t('alerting.instance-details.timeline-n-uniqueReceivers', '{{count}} uniqueReceivers', {
+      : t('alerting.instance-details.timeline-n-uniqueReceivers', '', {
           count: uniqueReceivers.length,
+          defaultValue_one: '{{count}} uniqueReceivers',
+          defaultValue_other: '{{count}} uniqueReceivers',
         });
 
   let deliveryLabel: string | undefined;
@@ -343,6 +346,7 @@ function NotificationStatusGroup({
         type="button"
         aria-expanded={expanded}
         aria-label={t('alerting.instance-details.timeline-toggle-notifications', 'Toggle notification details')}
+        data-testid={selectors.pages.Alerting.Triage.notificationToggleButton}
       >
         <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
           <StateTag state={isFiring ? 'bad' : 'good'} size="sm">

@@ -1,7 +1,7 @@
-import { dateTime, DataQuery, store } from '@grafana/data';
-import { RichHistoryQuery } from 'app/types/explore';
+import { dateTime, type DataQuery, store } from '@grafana/data';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import RichHistoryStorage, { RichHistoryStorageWarning } from '../history/RichHistoryStorage';
+import { type default as RichHistoryStorage, RichHistoryStorageWarning } from '../history/RichHistoryStorage';
 
 import {
   addToRichHistory,
@@ -182,7 +182,7 @@ describe('richHistory', () => {
   describe('createDateStringFromTs', () => {
     it('should correctly create string value from timestamp', () => {
       const value = createDateStringFromTs(1583932327000);
-      expect(value).toEqual('March 11');
+      expect(value).toEqual('March 11, 2020');
     });
   });
 
@@ -191,7 +191,7 @@ describe('richHistory', () => {
       // Have to offset the timezone of a 1 microsecond epoch, and then reverse the changes
       storedHistory[0].createdAt = 1 + -1 * dateTime().utcOffset() * 60 * 1000;
       const heading = createQueryHeading(storedHistory[0], SortOrder.Ascending);
-      expect(heading).toEqual('January 1');
+      expect(heading).toEqual('January 1, 1970');
     });
     it('should correctly create heading for queries when sort order is datasourceAZ ', () => {
       const heading = createQueryHeading(storedHistory[0], SortOrder.DatasourceAZ);

@@ -3,16 +3,18 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // testLogger implements logging.Logger and captures log calls for testing
@@ -416,6 +418,162 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	recorder.mu.RUnlock()
 }
 
+// TestUpdateSummary_TotalChanges verifies the recorder sets the action-aware
+// TotalChanges on each summary as successful results are recorded, matching what
+// each single-purpose worker records: push→writes, delete→deletes, move→creates
+// (a rename is recorded as create+delete, so count creates once), else→create+update+delete.
+func TestUpdateSummary_TotalChanges(t *testing.T) {
+	ctx := context.Background()
+	noop := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	tests := []struct {
+		name    string
+		action  provisioning.JobAction
+		actions []repository.FileAction
+		want    int64
+	}{
+		{
+			name:    "push counts writes",
+			action:  provisioning.JobActionPush,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionCreated},
+			want:    2,
+		},
+		{
+			name:    "delete counts deletes",
+			action:  provisioning.JobActionDelete,
+			actions: []repository.FileAction{repository.FileActionDeleted, repository.FileActionDeleted},
+			want:    2,
+		},
+		{
+			name:    "move counts creates only",
+			action:  provisioning.JobActionMove,
+			actions: []repository.FileAction{repository.FileActionRenamed, repository.FileActionRenamed},
+			want:    2,
+		},
+		{
+			name:    "pull sums create+update+delete",
+			action:  provisioning.JobActionPull,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionUpdated, repository.FileActionDeleted},
+			want:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := newJobProgressRecorder(noop, nil, tt.action).(*jobProgressRecorder)
+			for _, a := range tt.actions {
+				recorder.Record(ctx, NewPathOnlyResult("file.json").
+					WithAction(a).
+					Build())
+			}
+
+			summaries := recorder.summary()
+			require.Len(t, summaries, 1)
+			require.Equal(t, tt.want, summaries[0].TotalChanges)
+		})
+	}
+}
+
+func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Folder depth violations are surfaced as warnings instead of errors so
+	// the job is not retried in a loop. They must still populate
+	// failedCreations so that descendant resources are short-circuited
+	// instead of generating duplicate bad requests for the same offending
+	// path.
+	depthErr := resources.NewFolderDepthExceededError(
+		"too/deep/folder/",
+		errors.New("folder max depth exceeded, max depth is 4"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "too/deep/folder/",
+		Err:  depthErr,
+	}
+	recorder.Record(ctx, NewFolderResult("too/deep/folder/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "too/deep/folder/", "depth-exceeded warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "depth-exceeded warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "depth-exceeded warning should not increment error count")
+}
+
+func TestJobProgressRecorderFolderUIDTooLongFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Folder UID-length violations are surfaced as warnings instead of
+	// errors so the job is not retried in a loop. They must still populate
+	// failedCreations so that descendant resources are short-circuited
+	// instead of generating duplicate bad requests for the same offending
+	// path.
+	uidErr := resources.NewFolderUIDTooLongError(
+		"GMPO/bare-metal-services-engineering/",
+		"a0123456789012345678901234567890123456789",
+		errors.New("uid too long, max 40 characters"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "GMPO/bare-metal-services-engineering/",
+		Err:  uidErr,
+	}
+	recorder.Record(ctx, NewFolderResult("GMPO/bare-metal-services-engineering/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "GMPO/bare-metal-services-engineering/", "uid-too-long warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "uid-too-long warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "uid-too-long warning should not increment error count")
+}
+
+func TestJobProgressRecorderFolderValidationFailureTrackingFromWarning(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	// Generic folder-API validation rejections (illegal-uid-chars,
+	// reserved-uid, future folder validations) must follow the same
+	// failed-creations short-circuit as the more specific depth/UID
+	// cases so descendant resources don't burst-write identical bad
+	// requests against the folder API.
+	validationErr := resources.NewFolderValidationError(
+		"bad-folder/",
+		errors.New("uid contains illegal characters"),
+	)
+	pathErr := &resources.PathCreationError{
+		Path: "bad-folder/",
+		Err:  validationErr,
+	}
+	recorder.Record(ctx, NewFolderResult("bad-folder/").
+		WithAction(repository.FileActionCreated).
+		WithError(pathErr).
+		Build())
+
+	recorder.mu.RLock()
+	defer recorder.mu.RUnlock()
+	assert.Contains(t, recorder.failedCreations, "bad-folder/", "folder validation warning should still mark the path as a failed creation")
+	assert.Empty(t, recorder.errors, "folder validation warning should not contribute to the error list")
+	assert.Equal(t, 0, recorder.errorCount, "folder validation warning should not increment error count")
+}
+
 func TestJobProgressRecorderHasDirPathFailedCreation(t *testing.T) {
 	ctx := context.Background()
 
@@ -591,8 +749,7 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 	assert.False(t, recorder.HasChildPathFailedUpdate("created/"), "creation failures are not tracked as update failures")
 
 	// Warning-level update failures ARE tracked (e.g. validation errors routed
-	// to warning via isWarningError). detectMissingFolderMetadata now runs after
-	// deleteFolders, so its benign warnings don't interfere with cleanup.
+	// to warning via isWarningError).
 	validationErr := resources.NewResourceValidationError(errors.New("invalid content"))
 	recorder.Record(ctx, NewResourceResult().
 		WithPath("warned/dash.json").
@@ -608,21 +765,43 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 		Build())
 	assert.True(t, recorder.HasChildPathFailedUpdate("explicit-warn/"), "explicit WithWarning updates must be tracked")
 
+	// Non-failing warnings (missing/invalid folder metadata) are NOT tracked
+	// because the underlying folder operation succeeded.
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("missing-meta/").
+		WithAction(repository.FileActionUpdated).
+		WithWarning(resources.NewMissingFolderMetadata("missing-meta/")).
+		Build())
+	assert.False(t, recorder.HasChildPathFailedUpdate("missing-meta/"), "missing folder metadata warnings must not be tracked as failed updates")
+
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("invalid-meta/").
+		WithAction(repository.FileActionUpdated).
+		WithWarning(resources.NewInvalidFolderMetadata("invalid-meta/", errors.New("bad json"))).
+		Build())
+	assert.False(t, recorder.HasChildPathFailedUpdate("invalid-meta/"), "invalid folder metadata warnings must not be tracked as failed updates")
+
 	// Failed renames are tracked as update failures — a rename moves a child,
 	// so if it fails the child stays under the old folder.
+	// Cross-folder rename: source is oldfolder/, destination is newfolder/.
+	// Both paths must be tracked so the old folder is not deleted prematurely.
 	recorder.Record(ctx, NewResourceResult().
-		WithPath("renamed/old-dash.json").
+		WithPath("newfolder/old-dash.json").
+		WithPreviousPath("oldfolder/old-dash.json").
 		WithAction(repository.FileActionRenamed).
 		WithError(assert.AnError).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("renamed/"), "failed renames must be tracked as update failures")
+	assert.True(t, recorder.HasChildPathFailedUpdate("oldfolder/"), "failed renames must protect the source folder")
+	assert.True(t, recorder.HasChildPathFailedUpdate("newfolder/"), "failed renames must also protect the destination folder")
 
 	recorder.Record(ctx, NewResourceResult().
-		WithPath("rename-warn/panel.json").
+		WithPath("new-warn/panel.json").
+		WithPreviousPath("old-warn/panel.json").
 		WithAction(repository.FileActionRenamed).
 		WithWarning(errors.New("rename conflict")).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("rename-warn/"), "warning-level rename failures must be tracked")
+	assert.True(t, recorder.HasChildPathFailedUpdate("old-warn/"), "warning-level rename failures must protect the source folder")
+	assert.True(t, recorder.HasChildPathFailedUpdate("new-warn/"), "warning-level rename failures must protect the destination folder")
 
 	// Empty recorder should always return false
 	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
@@ -915,6 +1094,41 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 	})
 }
 
+func TestJobProgressRecorderCompleteWithWarningError(t *testing.T) {
+	ctx := context.Background()
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	t.Run("warning-wrapped error completes in warning state and keeps its message", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, AsWarning(errors.New("migrate functionality is disabled by configuration")))
+
+		assert.Equal(t, provisioning.JobStateWarning, finalStatus.State)
+		assert.Equal(t, "migrate functionality is disabled by configuration", finalStatus.Message)
+	})
+
+	t.Run("plain error still completes in error state", func(t *testing.T) {
+		recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+		finalStatus := recorder.Complete(ctx, errors.New("boom"))
+
+		assert.Equal(t, provisioning.JobStateError, finalStatus.State)
+		assert.Equal(t, "boom", finalStatus.Message)
+	})
+}
+
+func TestAsWarning(t *testing.T) {
+	assert.Nil(t, AsWarning(nil))
+	assert.False(t, IsWarning(nil))
+	assert.False(t, IsWarning(errors.New("plain")))
+
+	err := AsWarning(errors.New("disabled by configuration"))
+	assert.True(t, IsWarning(err))
+	assert.Equal(t, "disabled by configuration", err.Error())
+	// Preserves the wrapped error for errors.Is/As chains.
+	assert.True(t, IsWarning(fmt.Errorf("wrapped: %w", err)))
+}
+
 func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 	ctx := context.Background()
 
@@ -927,7 +1141,7 @@ func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(goroutines)
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
 			recorder.Record(ctx, NewPathOnlyResult("file.json").

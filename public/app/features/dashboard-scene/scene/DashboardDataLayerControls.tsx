@@ -1,20 +1,30 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { sceneGraph } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
+import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
+import { annotationEditActions } from '../settings/annotations/actions';
+
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
 import { DataLayerControl } from './DataLayerControl';
+import { AnnotationEditActions } from './edit-actions-popover/AnnotationEditActions';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
 
-export function DashboardDataLayerControls({ dashboard }: { dashboard: DashboardScene }) {
+type DashboardDataLayerControlsProps = {
+  dashboard: DashboardScene;
+  inMenu?: boolean;
+};
+
+export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataLayerControlsProps) {
   // We render controls here (instead of the data layer set's default renderer) to
   // respect per-layer `placement` and edit-mode visibility rules.
   const dataLayerSet = sceneGraph.getData(dashboard);
   const state = dataLayerSet.useState();
-  const styles = useStyles2(getStyles);
 
   const visibleLayers = useMemo(() => {
     if (!isDashboardDataLayerSetState(state) || !isDashboardDataLayerSet(dataLayerSet)) {
@@ -26,11 +36,66 @@ export function DashboardDataLayerControls({ dashboard }: { dashboard: Dashboard
   return useMemo(
     () =>
       visibleLayers.map((layer) => (
-        <div key={layer.state.key} className={styles.container}>
-          <DataLayerControl layer={layer} />
-        </div>
+        <DataLayerControlEditWrapper key={layer.state.key!} layer={layer} inMenu={inMenu} />
       )),
-    [visibleLayers, styles.container]
+    [inMenu, visibleLayers]
+  );
+}
+
+export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
+  const styles = useStyles2(getStyles);
+  const [isQueryEditorOpen, setIsQueryEditorOpen] = useState(false);
+
+  const onClickEditLayer = useCallback(() => {
+    const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
+    dashboard.state.sidebar.selectObject(layer);
+  }, [layer]);
+
+  const onClickEditLayerQuery = useCallback(() => {
+    setIsQueryEditorOpen(true);
+  }, []);
+
+  const onClickDuplicateLayer = useCallback(() => {
+    if (layer instanceof DashboardAnnotationsDataLayer) {
+      annotationEditActions.duplicateAnnotation(layer);
+    }
+  }, [layer]);
+
+  const onClickDeleteLayer = useCallback(() => {
+    const dataLayerSet = layer.parent;
+
+    if (dataLayerSet instanceof DashboardDataLayerSet && layer instanceof DashboardAnnotationsDataLayer) {
+      annotationEditActions.removeAnnotation({
+        source: dataLayerSet,
+        removedObject: layer,
+      });
+    }
+  }, [layer]);
+
+  const editActions = useMemo(
+    () => (
+      <AnnotationEditActions
+        layer={layer}
+        onClickEdit={onClickEditLayer}
+        onClickEditQuery={onClickEditLayerQuery}
+        onClickDuplicate={onClickDuplicateLayer}
+        onClickDelete={onClickDeleteLayer}
+      />
+    ),
+    [layer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
+  );
+
+  return (
+    <>
+      {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
+        <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+      )}
+      <EditActionsPopover content={editActions}>
+        <div className={styles.container}>
+          <DataLayerControl layer={layer} inMenu={inMenu} />
+        </div>
+      </EditActionsPopover>
+    </>
   );
 }
 

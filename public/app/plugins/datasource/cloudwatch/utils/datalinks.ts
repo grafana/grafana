@@ -1,17 +1,18 @@
 import {
-  DataFrame,
-  DataLink,
-  DataQueryRequest,
-  DataQueryResponse,
+  type DataFrame,
+  type DataLink,
+  type DataQueryRequest,
+  type DataQueryResponse,
   FieldType,
-  ScopedVars,
-  TimeRange,
+  type ScopedVars,
+  type TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
-import { AwsUrl, encodeUrl } from '../aws_url';
-import { CloudWatchLogsQuery } from '../dataquery.gen';
-import { CloudWatchQuery } from '../types';
+import { type AwsUrl, encodeUrl } from '../aws_url';
+import { type CloudWatchLogsQuery } from '../dataquery.gen';
+import { type CloudWatchQuery } from '../types';
 
 type ReplaceFn = (
   target?: string,
@@ -46,7 +47,8 @@ export async function addDataLinksToLogsResponse(
     }
 
     // add a link to the cloudwatch console as a separate field that will be displayed as a link
-    if (dataFrame.fields.length) {
+    // @ts-ignore ignore feature toggle type error
+    if (config.featureToggles.cloudWatchLogsInsightsDataLinks && dataFrame.fields.length) {
       dataFrame.fields.push({
         name: '',
         type: FieldType.string,
@@ -64,9 +66,16 @@ export async function addDataLinksToLogsResponse(
 async function createInternalXrayLink(datasourceUid: string, region: string): Promise<DataLink | undefined> {
   let ds;
   try {
-    ds = await getDataSourceSrv().get(datasourceUid);
+    ds = await getDataSourceInstanceSettings(datasourceUid);
   } catch (e) {
-    console.error('Could not load linked xray data source, it was probably deleted after it was linked', e);
+    console.error('Could not load linked X-Ray data source', e);
+    return undefined;
+  }
+
+  if (!ds) {
+    console.error(
+      `Could not find linked X-Ray data source with uid: ${datasourceUid}, it was probably deleted after it was linked`
+    );
     return undefined;
   }
 

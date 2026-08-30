@@ -1,5 +1,5 @@
-import { ScopedVars, TimeRange, TypedVariableModel, VariableOption } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { type ScopedVars, type TimeRange, type TypedVariableModel, type VariableOption } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
 
 import { variableRegex } from '../variables/utils';
 

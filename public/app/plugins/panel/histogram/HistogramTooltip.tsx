@@ -1,18 +1,18 @@
-import { ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
-import { DataFrame, formattedValueToString } from '@grafana/data';
+import { type DataFrame, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
+  type VizTooltipItem,
+  type FilterByGroupedLabelsModel,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  VizTooltipItem,
-} from '@grafana/ui/internal';
-
-import { getDataLinks } from '../status-history/utils';
-import { isTooltipScrollable } from '../timeseries/utils';
+  getFieldDisplayItems,
+  getFieldDisplayLinks,
+  isTooltipScrollable,
+} from '@grafana/ui';
 
 export interface HistogramTooltipProps {
   // aligned series frame
@@ -28,6 +28,7 @@ export interface HistogramTooltipProps {
 
   isPinned: boolean;
   maxHeight?: number;
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
 }
 
 export const HistogramTooltip = ({
@@ -39,6 +40,7 @@ export const HistogramTooltip = ({
   sortOrder = SortOrder.None,
   isPinned,
   maxHeight,
+  filterByGroupedLabels,
 }: HistogramTooltipProps) => {
   const xMinField = series.fields[0];
   const xMaxField = series.fields[1];
@@ -56,7 +58,7 @@ export const HistogramTooltip = ({
   };
 
   const contentItems = useMemo(
-    () => getContentItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
+    () => getFieldDisplayItems(xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder),
     [xMinOnlyFrame.fields, xMinField, dataIdxs, seriesIdx, mode, sortOrder]
   );
 
@@ -65,9 +67,9 @@ export const HistogramTooltip = ({
   if (isPinned && seriesIdx != null) {
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
-    const links = getDataLinks(field, dataIdx);
+    const links = getFieldDisplayLinks(field, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} />;
+    footer = <VizTooltipFooter dataLinks={links} filterByGroupedLabels={filterByGroupedLabels} />;
   }
 
   return (

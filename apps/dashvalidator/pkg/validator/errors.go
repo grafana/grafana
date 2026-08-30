@@ -98,25 +98,25 @@ func NewDatasourceWrongTypeError(uid string, expectedType string, actualType str
 		WithDetail("actualType", actualType)
 }
 
-// NewDatasourceUnreachableError creates an error for unreachable datasource
-func NewDatasourceUnreachableError(uid string, url string, cause error) *ValidationError {
+// NewDatasourceUnreachableError creates an error for unreachable datasource.
+// URL is intentionally omitted from the user-facing error; operators recover
+// it from DEBUG logs at the caller site.
+func NewDatasourceUnreachableError(uid string, cause error) *ValidationError {
 	return NewValidationError(
 		ErrCodeDatasourceUnreachable,
-		fmt.Sprintf("datasource %s at %s is unreachable", uid, url),
+		fmt.Sprintf("datasource %s is unreachable", uid),
 		http.StatusServiceUnavailable,
 	).WithDetail("datasourceUID", uid).
-		WithDetail("url", url).
 		WithCause(cause)
 }
 
 // NewAPIUnavailableError creates an error for unavailable API
-func NewAPIUnavailableError(statusCode int, responseBody string, cause error) *ValidationError {
+func NewAPIUnavailableError(statusCode int, cause error) *ValidationError {
 	return NewValidationError(
 		ErrCodeAPIUnavailable,
 		fmt.Sprintf("Prometheus API returned status %d", statusCode),
 		http.StatusBadGateway,
 	).WithDetail("upstreamStatus", statusCode).
-		WithDetail("responseBody", responseBody).
 		WithCause(cause)
 }
 
@@ -129,13 +129,15 @@ func NewAPIInvalidResponseError(message string, cause error) *ValidationError {
 	).WithCause(cause)
 }
 
-// NewAPITimeoutError creates an error for API timeout
-func NewAPITimeoutError(url string, cause error) *ValidationError {
+// NewAPITimeoutError creates an error for API timeout.
+// URL is intentionally omitted from the user-facing error; operators recover
+// it from DEBUG logs at the caller site.
+func NewAPITimeoutError(uid string, cause error) *ValidationError {
 	return NewValidationError(
 		ErrCodeAPITimeout,
-		fmt.Sprintf("request to %s timed out", url),
+		fmt.Sprintf("request to datasource %s timed out", uid),
 		http.StatusGatewayTimeout,
-	).WithDetail("url", url).
+	).WithDetail("datasourceUID", uid).
 		WithCause(cause)
 }
 

@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
-import { FC } from 'react';
-import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
+import { type FC } from 'react';
+import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
@@ -19,9 +20,9 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import {
-  NotificationChannelOption,
-  NotificationChannelSecureFields,
-  OptionMeta,
+  type NotificationChannelOption,
+  type NotificationChannelSecureFields,
+  type OptionMeta,
 } from 'app/features/alerting/unified/types/alerting';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -112,7 +113,7 @@ export const OptionField: FC<Props> = ({
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
-      data-testid={`${pathPrefix}${option.propertyName}`}
+      data-testid={selectors.pages.Alerting.ContactPointForm.settingsField(`${pathPrefix}${option.propertyName}`)}
     >
       <OptionInput
         id={`${pathPrefix}${option.propertyName}`}

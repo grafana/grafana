@@ -1,11 +1,14 @@
-import type { AppPluginConfig } from '@grafana/data';
+import { type AppPluginConfig, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
-import { initPluginMetas } from './plugins';
-import type { AppPluginMetas } from './types';
+import { getPluginMetasUrl, initPluginMetas } from './plugins';
+import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
 
@@ -13,16 +16,35 @@ function initialized(): boolean {
   return Boolean(Object.keys(apps).length);
 }
 
+function setApps(input: AppPluginMetas) {
+  apps = input;
+}
+
+function setMetas(metas: PluginMetasResponse | null) {
+  if (!metas?.items.length) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
+    logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
+    return;
+  }
+
+  const mapper = getAppPluginMapper();
+  setApps(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
+}
+
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
-    apps = config.apps;
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    // eslint-disable-next-line @grafana/no-config-apps
+    setApps(config.apps);
+    logPluginMetaDebug('PluginMeta: initializing app plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getAppPluginMapper();
-  apps = mapper(metas);
+  setMetas(metas);
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
@@ -67,5 +89,5 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
     throw new Error('setAppPluginMetas() function can only be called from tests.');
   }
 
-  apps = structuredClone(override);
+  setApps(structuredClone(override));
 }

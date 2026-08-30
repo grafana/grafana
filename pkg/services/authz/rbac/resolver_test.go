@@ -5,13 +5,17 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_resolveScopeMap(t *testing.T) {
 	tests := []struct {
 		name     string
+		action   string
 		scopeMap map[string]bool
 		ns       types.NamespaceInfo
 		cache    map[string]map[int64]string // Namespace: team ID -> UID cache
@@ -137,6 +141,59 @@ func TestService_resolveScopeMap(t *testing.T) {
 				"teams:id:1": true,
 			},
 		},
+		{
+			// delegate resolved to "*" (roles resource) and scope retained for SkipWildcard exact-match on permissions resource.
+			name:   "permissions:type:delegate on a role-management action resolves to wildcard and retains literal scope",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+			},
+		},
+		{
+			// a delegate grant on an ordinary action only gates delegation checks;
+			// expanding it would grant the action itself on every resource.
+			name:   "permissions:type:delegate on a non-role action stays literal",
+			action: "dashboards:read",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+			want: map[string]bool{
+				"permissions:type:delegate": true,
+			},
+		},
+		{
+			// escalate resolves to "" (no expansion), stays literal; "*" from a delegate holder is ignored by SkipWildcard.
+			name:   "permissions:type:escalate stays as literal scope",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"permissions:type:escalate": true,
+			},
+		},
+		{
+			// delegate resolution to "*" cannot satisfy the escalate exact-scope check (SkipWildcard).
+			name:   "delegate cannot satisfy escalate check — no privilege escalation",
+			action: "roles:write",
+			ns:     types.NamespaceInfo{Value: "org-1", OrgID: 1},
+			scopeMap: map[string]bool{
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+			want: map[string]bool{
+				"*":                         true,
+				"permissions:type:delegate": true,
+				"permissions:type:escalate": true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -150,7 +207,7 @@ func TestService_resolveScopeMap(t *testing.T) {
 					s.teamIDCache.Set(context.Background(), teamIDsCacheKey(ns), cache)
 				}
 			}
-			got, err := s.resolveScopeMap(context.Background(), tt.ns, tt.scopeMap)
+			got, err := s.resolveScopeMap(context.Background(), tt.ns, tt.action, tt.scopeMap)
 			require.NoError(t, err)
 
 			require.Len(t, got, len(tt.want))
@@ -160,4 +217,50 @@ func TestService_resolveScopeMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Test that fetch* functions paginate through all results when the store returns multiple pages.
+// Each test uses pageSize=2 with 5 items, expecting 3 pages (2+2+1).
+func TestService_fetchPagination(t *testing.T) {
+	ns := types.NamespaceInfo{Value: "org-1", OrgID: 1}
+
+	t.Run("teams", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, teams: []team.Team{
+			{ID: 1, UID: "t1"}, {ID: 2, UID: "t2"}, {ID: 3, UID: "t3"}, {ID: 4, UID: "t4"}, {ID: 5, UID: "t5"},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchTeams(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
+
+	t.Run("service accounts", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, serviceAccounts: []legacy.ServiceAccount{
+			{ID: 1, UID: "sa1"}, {ID: 2, UID: "sa2"}, {ID: 3, UID: "sa3"}, {ID: 4, UID: "sa4"}, {ID: 5, UID: "sa5"},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchServiceAccounts(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
+
+	t.Run("users", func(t *testing.T) {
+		s := setupService()
+		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, users: []common.UserWithRole{
+			{User: user.User{ID: 1, UID: "u1"}}, {User: user.User{ID: 2, UID: "u2"}}, {User: user.User{ID: 3, UID: "u3"}},
+			{User: user.User{ID: 4, UID: "u4"}}, {User: user.User{ID: 5, UID: "u5"}},
+		}}
+		s.identityStore = store
+
+		got, err := s.fetchUsers(context.Background(), ns)
+		require.NoError(t, err)
+		require.Len(t, got, 5)
+		require.Equal(t, 3, store.calls)
+	})
 }

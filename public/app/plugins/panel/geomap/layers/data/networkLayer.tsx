@@ -1,34 +1,24 @@
 import { isNumber } from 'lodash';
-import Feature, { FeatureLike } from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
-import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
+import Feature, { type FeatureLike } from 'ol/Feature';
+import { type Geometry, LineString, type Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  FrameGeometrySourceMode,
-  EventBus,
-  DataFrame,
-  Field,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, type DataFrame, type Field } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { GraphFrame } from 'app/plugins/panel/nodeGraph/types';
+import { type GraphFrame } from 'app/plugins/panel/nodeGraph/types';
 import { getGraphFrame } from 'app/plugins/panel/nodeGraph/utils';
 
-import { MarkersLegendProps, MarkersLegend } from '../../components/MarkersLegend';
+import { type MarkersLegendProps, MarkersLegend } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { StyleConfig, defaultStyleConfig } from '../../style/types';
+import { type StyleConfig, defaultStyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
@@ -46,17 +36,7 @@ const defaultOptions: NetworkConfig = {
   arrow: 0,
 };
 
-export const NETWORK_LAYER_ID = 'network';
-
-// Used by default when nothing is configured
-export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
-  type: NETWORK_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-};
+const NETWORK_LAYER_ID = 'network';
 
 /**
  * Map layer configuration for network overlay
@@ -75,7 +55,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -87,7 +67,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorImage({
-      source
+      source,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
@@ -210,9 +190,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         if (legend) {
           legendProps.next({
             styleConfig: style,
-            size: style.dims?.size,
             layerName: options.name,
-            layer: vectorLayer,
           });
         }
         const graphFrames = getGraphFrame(data.series);

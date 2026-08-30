@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties } from 'react';
+import { type CSSProperties } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
-import { LineStyle } from '@grafana/schema';
+import { type GrafanaTheme2, fieldColorModeRegistry } from '@grafana/data';
+import { type LineStyle } from '@grafana/schema';
 
 import { useTheme2, useStyles2 } from '../../themes/ThemeContext';
 
@@ -70,6 +70,7 @@ export const SeriesIcon = React.memo(
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     display: 'inline-block',
+    verticalAlign: 'middle',
     width: '14px',
     height: '4px',
   }),

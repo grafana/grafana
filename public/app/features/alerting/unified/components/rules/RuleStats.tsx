@@ -6,10 +6,10 @@ import { Fragment, useDeferredValue, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import {
-  AlertGroupTotals,
+  type AlertGroupTotals,
   AlertInstanceTotalState,
-  CombinedRuleGroup,
-  CombinedRuleNamespace,
+  type CombinedRuleGroup,
+  type CombinedRuleNamespace,
 } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -128,7 +128,11 @@ export function getComponentsFromStats(
       <Badge
         color="red"
         key="errors"
-        text={t('alerting.rule-stats.error', `{{count}} errors`, { count: stats.error })}
+        text={t('alerting.rule-stats.error', '', {
+          count: stats.error,
+          defaultValue_one: '{{count}} errors',
+          defaultValue_other: '{{count}} errors',
+        })}
       />
     );
   }

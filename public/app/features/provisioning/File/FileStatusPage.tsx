@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
@@ -8,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, CodeEditor, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import {
-  ResourceWrapper,
+  type ResourceWrapper,
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
   useReplaceRepositoryFilesWithPathMutation,

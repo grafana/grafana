@@ -38,7 +38,7 @@ export const getEvaluationGroupOptions = (minInterval = MIN_INTERVAl) => {
   return [...head, ...tail].map(formatPrometheusDuration);
 };
 
-export const QUICK_PICK_OPTIONS = getEvaluationGroupOptions(MIN_INTERVAl);
+const QUICK_PICK_OPTIONS = getEvaluationGroupOptions(MIN_INTERVAl);
 
 interface Props {
   currentInterval: string;

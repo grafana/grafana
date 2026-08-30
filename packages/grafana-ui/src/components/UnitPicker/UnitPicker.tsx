@@ -1,9 +1,10 @@
 import { memo } from 'react';
 
-import { getValueFormats, SelectableValue } from '@grafana/data';
+import { getValueFormats, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { Cascader, CascaderOption } from '../Cascader/Cascader';
+import { Cascader, type CascaderOption } from '../Cascader/Cascader';
 
 export interface UnitPickerProps {
   onChange: (item?: string) => void;
@@ -63,6 +64,7 @@ export const UnitPicker = memo<UnitPickerProps>(({ onChange, value, width, id })
       placeholder={t('grafana-ui.unit-picker.placeholder', 'Choose')}
       isClearable
       onSelect={onChange}
+      data-testid={selectors.components.UnitPicker.container}
     />
   );
 });

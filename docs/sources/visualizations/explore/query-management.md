@@ -1,8 +1,10 @@
 ---
 keywords:
   - explore
-  - loki
-  - logs
+  - query history
+  - starred queries
+  - saved queries
+  - shortened link
 labels:
   products:
     - cloud

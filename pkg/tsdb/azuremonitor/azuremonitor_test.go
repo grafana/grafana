@@ -12,17 +12,18 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var testRoutes = map[string]types.AzRoute{
@@ -54,6 +55,11 @@ var testRoutes = map[string]types.AzRoute{
 	azurePortal: {
 		URL: "https://portal.azure.com",
 	},
+	azureMonitorBatchMetrics: {
+		URL:     "https://metrics.monitor.azure.com",
+		Scopes:  []string{"https://metrics.monitor.azure.com/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana"},
+	},
 }
 
 func TestNewInstanceSettings(t *testing.T) {
@@ -77,10 +83,10 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Contains(t, err.Error(), "current user authentication is not enabled for azure monitor")
 			},
 			setupContext: func(ctx context.Context) context.Context {
-				featureToggles := backend.NewGrafanaCfg(map[string]string{
+				featureToggles := config.NewGrafanaCfg(map[string]string{
 					featuretoggles.EnabledFeatures: "", // No enabled features
 				})
-				return backend.WithGrafanaConfig(ctx, featureToggles)
+				return config.WithGrafanaConfig(ctx, featureToggles)
 			},
 		},
 		{
@@ -97,7 +103,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
-				Services:                map[string]types.DatasourceService{},
+				Services: map[string]types.DatasourceService{
+					azureMonitorBatchMetrics: {URL: testRoutes[azureMonitorBatchMetrics].URL},
+				},
 			},
 			Err: require.NoError,
 		},
@@ -134,6 +142,16 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "rejects customized cloud whose batch metrics route URL is not absolute",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Azure Monitor Batch Metrics":{"URL":"metrics.monitor.azure.us"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      51,
+			},
+			expectedModel: nil,
+			Err:           require.Error,
+		},
 	}
 
 	for _, tt := range tests {
@@ -152,8 +170,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				require.Nil(t, instance, "Expected instance to be nil")
 			} else {
 				require.NotNil(t, instance, "Expected instance to be created")
-				if !cmp.Equal(instance, *tt.expectedModel) {
-					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel))
+				opts := []cmp.Option{cmpopts.IgnoreFields(types.DatasourceService{}, "HTTPClient", "Logger")}
+				if !cmp.Equal(instance, *tt.expectedModel, opts...) {
+					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel, opts...))
 				}
 			}
 		})

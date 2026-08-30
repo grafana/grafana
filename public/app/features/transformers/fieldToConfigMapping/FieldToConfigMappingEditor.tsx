@@ -1,16 +1,22 @@
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 
-import { DataFrame, getFieldDisplayName, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import {
+  type DataFrame,
+  getFieldDisplayName,
+  type GrafanaTheme2,
+  ReducerID,
+  type SelectableValue,
+} from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Select, StatsPicker, useStyles2 } from '@grafana/ui';
 
 import {
   configMapHandlers,
   evaluateFieldMappings,
-  FieldToConfigMapHandler,
-  FieldToConfigMapping,
-  HandlerArguments,
+  type FieldToConfigMapHandler,
+  type FieldToConfigMapping,
+  type HandlerArguments,
   lookUpConfigHandler as findConfigHandlerFor,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 

@@ -8,6 +8,14 @@ const defaultSettings = {
   items: [],
   allowImageRendering: true,
   availableRepositoryTypes: ['github', 'gitlab', 'bitbucket', 'git', 'local'],
+  availableConnectionTypes: [
+    'github',
+    'githubEnterprise',
+    'githubOAuth',
+    'githubEnterpriseOAuth',
+    'gitlabOAuth',
+    'bitbucketOAuth',
+  ],
 };
 
 const defaultStats = {
@@ -81,6 +89,9 @@ const getRepositoryRefsHandler = (response = defaultRefs) =>
 const getRepositoryFilesHandler = (response = defaultRepositoryFiles) =>
   http.get(`${BASE}/repositories/:name/files/`, () => HttpResponse.json(response));
 
+const getRepositoryFileWithPathHandler = () =>
+  http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status: 404 }));
+
 const createRepositoryHandler = (response = defaultRepository) =>
   http.post(`${BASE}/repositories`, () => HttpResponse.json(response));
 
@@ -94,6 +105,9 @@ const createRepositoryJobsHandler = () =>
   http.post(`${BASE}/repositories/:name/jobs`, () =>
     HttpResponse.json({ spec: { action: 'pull' }, status: { state: 'success' } })
   );
+
+const listJobsHandler = () =>
+  http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [], metadata: { resourceVersion: '1' } }));
 
 const createConnectionHandler = (response = defaultConnection) =>
   http.post(`${BASE}/connections`, () => HttpResponse.json(response));
@@ -123,10 +137,12 @@ const handlers = [
   listRepositoriesHandler(),
   getRepositoryRefsHandler(),
   getRepositoryFilesHandler(),
+  getRepositoryFileWithPathHandler(),
   createRepositoryHandler(),
   replaceRepositoryHandler(),
   testRepositoryHandler(),
   createRepositoryJobsHandler(),
+  listJobsHandler(),
   createConnectionHandler(),
   replaceConnectionHandler(),
   listConnectionsHandler(),

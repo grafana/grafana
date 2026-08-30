@@ -1,41 +1,48 @@
 import { css, cx } from '@emotion/css';
-import { RefObject, useMemo } from 'react';
+import { type RefObject, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { LazyLoader, type SceneComponentProps, type VizPanel } from '@grafana/scenes';
 import { useElementSelection } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { renderMatchingSoloPanels, useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
+import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
 import { getIsLazy } from '../layouts-shared/utils';
 
-import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+import { type DashboardGridItem, type RepeatDirection } from './DashboardGridItem';
 
 interface PanelWrapperProps {
   panel: VizPanel;
   isLazy: boolean;
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   isSelected?: boolean;
 }
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   if (isLazy) {
     return (
-      <LazyLoader
-        key={panel.state.key!}
-        ref={containerRef}
-        className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
-      >
-        <panel.Component model={panel} />
-      </LazyLoader>
+      <PanelEditActionsWrapper panel={panel}>
+        <LazyLoader
+          key={panel.state.key!}
+          ref={containerRef}
+          mode="query"
+          className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
+        >
+          <panel.Component model={panel} />
+        </LazyLoader>
+      </PanelEditActionsWrapper>
     );
   }
+
   return (
-    <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
-      <panel.Component model={panel} />
-    </div>
+    <PanelEditActionsWrapper panel={panel}>
+      <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
+        <panel.Component model={panel} />
+      </div>
+    </PanelEditActionsWrapper>
   );
 }
 

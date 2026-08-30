@@ -2,16 +2,20 @@ import { debounce } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { CoreApp, type QueryEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
 import { AzureQueryType } from '../../dataquery.gen';
-import AzureMonitorDatasource from '../../datasource';
+import type AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorQuery } from '../../types/query';
-import { AzureMonitorDataSourceJsonData, AzureMonitorErrorish, AzureMonitorOption } from '../../types/types';
+import { type AzureMonitorQuery } from '../../types/query';
+import {
+  type AzureMonitorDataSourceJsonData,
+  type AzureMonitorErrorish,
+  type AzureMonitorOption,
+} from '../../types/types';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
@@ -22,7 +26,7 @@ import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
 
-export type AzureMonitorQueryEditorProps = QueryEditorProps<
+type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
   AzureMonitorQuery,
   AzureMonitorDataSourceJsonData

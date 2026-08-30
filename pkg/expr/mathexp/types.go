@@ -25,8 +25,18 @@ type Values []Value
 func (vals Values) AsDataFrames(refID string) []*data.Frame {
 	frames := make([]*data.Frame, len(vals))
 	for i, v := range vals {
-		frames[i] = v.AsDataFrame()
-		frames[i].RefID = refID
+		frame := v.AsDataFrame()
+		// A passthrough expression (e.g. `$A`) returns its input's Values verbatim, so the
+		// underlying frame is shared with the input result. Because the results map is iterated in
+		// a non-deterministic order, mutating RefID in place would let one result overwrite the
+		// other's RefID on the shared frame. Copy the frame header (fields are still shared) so each
+		// result owns its RefID.
+		if frame.RefID != refID {
+			frameCopy := *frame
+			frameCopy.RefID = refID
+			frame = &frameCopy
+		}
+		frames[i] = frame
 	}
 	return frames
 }

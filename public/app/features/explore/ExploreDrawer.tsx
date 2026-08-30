@@ -1,10 +1,10 @@
 // Libraries
 import { css, cx, keyframes } from '@emotion/css';
-import { Resizable, ResizeCallback } from 're-resizable';
+import { Resizable, type ResizeCallback } from 're-resizable';
 import * as React from 'react';
 
 // Services & Utils
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface Props {
@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     bottom: 0,
     background: theme.colors.background.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     zIndex: theme.zIndex.navbarFixed,
   }),
   drawerActive: css({

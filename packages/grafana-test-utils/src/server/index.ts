@@ -1,4 +1,4 @@
-import { HttpHandler } from 'msw';
+import { type HttpHandler } from 'msw';
 import { setupServer } from 'msw/node';
 
 import { resetFixtures } from '../fixtures';

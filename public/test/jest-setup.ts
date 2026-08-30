@@ -2,7 +2,7 @@
 import './global-jquery-shim';
 
 import { TransformStream } from 'node:stream/web';
-import { MessageChannel, MessagePort } from 'node:worker_threads';
+import { MessageChannel, type MessagePort } from 'node:worker_threads';
 import { TextEncoder, TextDecoder } from 'util';
 
 // we need to isolate the `@grafana/data` module here now that it depends on `@grafana/i18n`
@@ -14,7 +14,7 @@ jest.isolateModulesAsync(async () => {
     appEvents: testAppEvents,
   }));
 });
-import { GrafanaBootConfig } from '@grafana/runtime';
+import { type GrafanaBootConfig } from '@grafana/runtime';
 
 import 'blob-polyfill';
 import 'mutationobserver-shim';
@@ -94,6 +94,8 @@ global.ResizeObserver = class ResizeObserver {
       // Needed for react-virtual to work in tests
       getAttribute: () => 1,
     },
+    // Needed for react-data-grid (TableNG) to measure columns in tests
+    contentBoxSize: [{ inlineSize: 500, blockSize: 500 }],
   } as unknown as ResizeObserverEntry;
 
   #isObserving = false;
@@ -126,6 +128,9 @@ global.ResizeObserver = class ResizeObserver {
     this.#isObserving = false;
   }
 };
+
+// jsdom doesn't implement scrollIntoView; react-data-grid (TableNG) calls it on cell selection/focus.
+window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 // originally using just global.MessageChannel = MessageChannel
 // however this results in open handles in jest tests

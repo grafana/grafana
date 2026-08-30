@@ -45,8 +45,8 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 		opt(p)
 	}
 
-	origDirector := p.Director
-	p.Director = wrapDirector(origDirector)
+	origDirector := p.Director              // nolint:staticcheck
+	p.Director = wrapDirector(origDirector) // nolint:staticcheck
 
 	if p.ModifyResponse == nil {
 		// nolint:bodyclose

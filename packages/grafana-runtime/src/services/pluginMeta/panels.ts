@@ -1,12 +1,15 @@
-import type { PanelPluginMeta } from '@grafana/data';
+import { PluginType, type PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
-import { initPluginMetas, refetchPluginMetas } from './plugins';
-import type { PanelPluginMetas } from './types';
+import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
+import type { PanelPluginMetas, PluginMetasResponse } from './types';
 
 let panels: PanelPluginMetas = {};
 let panelsByAliasIDs: PanelPluginMetas = {};
@@ -37,18 +40,41 @@ function resolveAliasIDs(panels: PanelPluginMetas): PanelPluginMetas {
   return panelsByAliasIDs;
 }
 
+function setPanelsAndAliases(input: PanelPluginMetas) {
+  // Text v2 supports data queries, but plugin.json is shared with v1 which does not.
+  // Remove once v2 is the default and plugin.json can set skipDataQuery: false.
+  if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
+    input = { ...input, text: { ...input.text, skipDataQuery: false } };
+  }
+  panels = input;
+  panelsByAliasIDs = resolveAliasIDs(panels);
+}
+
+function setMetas(metas: PluginMetasResponse | null) {
+  if (!metas?.items.length) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
+    // eslint-disable-next-line @grafana/no-config-panels
+    setPanelsAndAliases(config.panels);
+    logPluginMetaWarning(message, { pluginType: PluginType.panel, requestUrl: getPluginMetasUrl() });
+    return;
+  }
+
+  const mapper = getPanelPluginMapper();
+  setPanelsAndAliases(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
+}
+
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
-    // eslint-disable-next-line no-restricted-syntax
-    panels = config.panels;
-    panelsByAliasIDs = resolveAliasIDs(panels);
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    // eslint-disable-next-line @grafana/no-config-panels
+    setPanelsAndAliases(config.panels);
+    logPluginMetaDebug('PluginMeta: initializing panel plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setMetas(metas);
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -143,24 +169,16 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
     throw new Error('setPanelPluginMetas() function can only be called from tests.');
   }
 
-  panels = structuredClone(override);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setPanelsAndAliases(structuredClone(override));
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
-    panels = settings.panels;
-    panelsByAliasIDs = resolveAliasIDs(panels);
-
-    // TODO(@hugohaggmark) remove this as soon as all config.panels occurances have been replaced in core Grafana
-    // eslint-disable-next-line no-restricted-syntax
-    config.panels = settings.panels;
+    setPanelsAndAliases(settings.panels);
     return;
   }
 
   const metas = await refetchPluginMetas();
-  const mapper = getPanelPluginMapper();
-  panels = mapper(metas);
-  panelsByAliasIDs = resolveAliasIDs(panels);
+  setMetas(metas);
 }

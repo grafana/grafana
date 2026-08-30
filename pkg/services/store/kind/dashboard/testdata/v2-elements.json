@@ -11,7 +11,7 @@
           "id": 1,
           "title": "Timeseries panel",
           "description": "A v2 panel",
-          "vizConfig": { "kind": "TimeseriesPanel", "spec": {} },
+          "vizConfig": { "kind": "VizConfig", "group": "timeseries", "spec": {} },
           "data": {
             "kind": "QueryGroup",
             "spec": {
@@ -32,6 +32,15 @@
           "id": 2,
           "title": "Library panel instance",
           "libraryPanel": { "uid": "lib-uid-123", "name": "My Library Panel" }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Legacy v2alpha1 panel",
+          "description": "A v2alpha1 panel carrying the plugin id in kind",
+          "vizConfig": { "kind": "table", "spec": {} }
         }
       }
     },

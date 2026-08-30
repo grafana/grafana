@@ -1,24 +1,18 @@
-import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import { backendSrv } from '../services/backend_srv';
-
-import { RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
+import { type RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 
-const dsMock = new DatasourceSrv();
-dsMock.init(
-  {
-    // @ts-ignore
-    'name-of-dev-test': { uid: 'dev-test', name: 'name-of-dev-test' },
-  },
-  ''
-);
+const devTest = { uid: 'dev-test', name: 'name-of-dev-test' };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-  getDataSourceSrv: () => dsMock,
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
+    if (typeof nameOrUid === 'string') {
+      return Promise.resolve(nameOrUid === devTest.name ? devTest : undefined);
+    }
+    return Promise.resolve(nameOrUid.uid === devTest.uid ? devTest : undefined);
+  },
 }));
 
 const validRichHistory: RichHistoryQuery = {
@@ -40,24 +34,22 @@ const validDTO: RichHistoryLocalStorageDTO = {
 };
 
 describe('LocalStorage converted', () => {
-  it('converts RichHistoryQuery to local storage DTO', () => {
-    expect(toDTO(validRichHistory)).toMatchObject(validDTO);
+  it('converts RichHistoryQuery to local storage DTO', async () => {
+    expect(await toDTO(validRichHistory)).toMatchObject(validDTO);
   });
 
-  it('throws an error when data source for RichHistory does not exist to avoid saving invalid items', () => {
+  it('throws an error when data source for RichHistory does not exist to avoid saving invalid items', async () => {
     const invalidRichHistory = { ...validRichHistory, datasourceUid: 'invalid' };
-    expect(() => {
-      toDTO(invalidRichHistory);
-    }).toThrow();
+    await expect(toDTO(invalidRichHistory)).rejects.toThrow();
   });
 
-  it('converts DTO to RichHistoryQuery', () => {
-    expect(fromDTO(validDTO)).toMatchObject(validRichHistory);
+  it('converts DTO to RichHistoryQuery', async () => {
+    expect(await fromDTO(validDTO)).toMatchObject(validRichHistory);
   });
 
-  it('uses empty uid when datasource does not exist for a DTO to fail gracefully for queries from removed datasources', () => {
+  it('uses empty uid when datasource does not exist for a DTO to fail gracefully for queries from removed datasources', async () => {
     const invalidDto = { ...validDTO, datasourceName: 'removed' };
-    expect(fromDTO(invalidDto)).toMatchObject({
+    expect(await fromDTO(invalidDto)).toMatchObject({
       ...validRichHistory,
       datasourceName: 'removed',
       datasourceUid: '',

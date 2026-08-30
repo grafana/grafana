@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { StepperStateProvider, useStepperState } from './StepperState';
@@ -25,7 +25,7 @@ describe('StepperStateProvider', () => {
     expect(screen.getByTestId('test')).toHaveTextContent(StepKey.Notifications);
   });
 
-  it('should default to Notifications step when no initialStep is provided', () => {
+  it('should default to the Notifications step when no initialStep is provided', () => {
     const { result } = renderHook(() => useStepperState(), { wrapper });
 
     expect(result.current.activeStep).toBe(StepKey.Notifications);

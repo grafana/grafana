@@ -1,4 +1,4 @@
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { StatementPosition } from '../../monarch/types';
 import { AND, ASC, BY, DESC, EQUALS, FROM, GROUP, NOT_EQUALS, ORDER, SCHEMA, SELECT, WHERE } from '../language';
 

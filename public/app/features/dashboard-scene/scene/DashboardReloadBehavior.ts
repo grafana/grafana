@@ -1,12 +1,12 @@
 import { debounce, isEqual } from 'lodash';
 
-import { UrlQueryMap } from '@grafana/data';
+import { type UrlQueryMap } from '@grafana/data';
 import {
   sceneGraph,
   SceneObjectBase,
-  SceneObjectState,
+  type SceneObjectState,
   sceneUtils,
-  SceneVariable,
+  type SceneVariable,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { createLogger } from '@grafana/ui';

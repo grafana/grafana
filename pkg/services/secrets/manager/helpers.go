@@ -16,11 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupTestService(tb testing.TB, store secrets.Store) *SecretsService {
+func SetupTestService(tb testing.TB,
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *SecretsService {
 	return setupTestService(tb, store, featuremgmt.WithFeatures())
 }
 
-func setupTestService(tb testing.TB, store secrets.Store, features featuremgmt.FeatureToggles) *SecretsService {
+func setupTestService(tb testing.TB,
+	store secrets.Store, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	features featuremgmt.FeatureToggles,
+) *SecretsService {
 	tb.Helper()
 	defaultKey := "SdlklWklckeLS"
 	raw, err := ini.Load([]byte(`

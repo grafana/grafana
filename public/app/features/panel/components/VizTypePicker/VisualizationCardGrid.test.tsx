@@ -4,19 +4,18 @@ import userEvent from '@testing-library/user-event';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
 
-import { VisualizationCardGrid, VisualizationCardGridGroup } from './VisualizationCardGrid';
+import { VisualizationCardGrid, type VisualizationCardGridGroup } from './VisualizationCardGrid';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: { newVizSuggestions: true },
   },
 }));
 

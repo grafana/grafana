@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"time"
 
@@ -11,7 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-func ProvideService(db db.DB, secretsService secrets.Service) *Service {
+func ProvideService(db db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) *Service {
 	s := &Service{
 		db: db,
 		decryptionCache: secureJSONDecryptionCache{
@@ -27,7 +30,7 @@ func ProvideService(db db.DB, secretsService secrets.Service) *Service {
 type Service struct {
 	db              db.DB
 	decryptionCache secureJSONDecryptionCache
-	secretsService  secrets.Service
+	secretsService  secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 
 	logger log.Logger
 }
@@ -202,9 +205,7 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 			return err
 		}
 
-		for key, encryptedData := range cmd.EncryptedSecureJsonData {
-			pluginSetting.SecureJsonData[key] = encryptedData
-		}
+		maps.Copy(pluginSetting.SecureJsonData, cmd.EncryptedSecureJsonData)
 
 		// add state change event on commit success
 		if pluginSetting.Enabled != cmd.Enabled {

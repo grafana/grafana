@@ -15,20 +15,20 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display":                 schema_pkg_apis_iam_v0alpha1_Display(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.DisplayList":             schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef":             schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":              schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList":          schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec":          schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken":     schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountTokenList": schema_pkg_apis_iam_v0alpha1_ServiceAccountTokenList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember":              schema_pkg_apis_iam_v0alpha1_TeamMember(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList":          schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":                 schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject":             schema_pkg_apis_iam_v0alpha1_TeamSubject(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":                schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
-		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":            schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
+		Display{}.OpenAPIModelName():                                      schema_pkg_apis_iam_v0alpha1_Display(ref),
+		DisplayList{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_DisplayList(ref),
+		IdentityRef{}.OpenAPIModelName():                                  schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
+		SSOSetting{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
+		SSOSettingList{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
+		SSOSettingSpec{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember":     schema_pkg_apis_iam_v0alpha1_TeamMember(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList": schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":        schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject":    schema_pkg_apis_iam_v0alpha1_TeamSubject(ref),
+		UserPermission{}.OpenAPIModelName():                               schema_pkg_apis_iam_v0alpha1_UserPermission(ref),
+		UserPermissions{}.OpenAPIModelName():                              schema_pkg_apis_iam_v0alpha1_UserPermissions(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":       schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":   schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
 	}
 }
 
@@ -41,7 +41,7 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:     ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"displayName": {
@@ -66,12 +66,19 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Format:      "int64",
 						},
 					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -154,7 +161,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display"),
+										Ref:     ref(Display{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -165,7 +172,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Display", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			Display{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -228,14 +235,14 @@ func schema_pkg_apis_iam_v0alpha1_SSOSetting(ref common.ReferenceCallback) commo
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec"),
+							Ref:     ref(SSOSettingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec", "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SSOSettingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -272,7 +279,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting"),
+										Ref:     ref(SSOSetting{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -283,7 +290,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			SSOSetting{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -317,96 +324,6 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) c
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"revoked": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"expires": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
-						},
-					},
-					"lastUsed": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
-						},
-					},
-					"created": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("io.k8s.apimachinery.pkg.apis.meta.v1.Time"),
-						},
-					},
-				},
-				Required: []string{"created"},
-			},
-		},
-		Dependencies: []string{
-			"io.k8s.apimachinery.pkg.apis.meta.v1.Time"},
-	}
-}
-
-func schema_pkg_apis_iam_v0alpha1_ServiceAccountTokenList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountToken", "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
-	}
-}
-
 func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -416,7 +333,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:     ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"displayName": {
@@ -441,6 +358,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 							Format:      "int64",
 						},
 					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
 							Description: "External is set if member ship was synced from external IDP.",
@@ -461,7 +385,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -542,7 +466,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 						SchemaProps: spec.SchemaProps{
 							Description: "Identity is a reference to the identity of this subject.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
+							Ref:         ref(IdentityRef{}.OpenAPIModelName()),
 						},
 					},
 					"permission": {
@@ -558,7 +482,69 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
+			IdentityRef{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "UserPermission is one effective action and scope granted to an identity.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"action": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"action", "scope"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_UserPermissions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "UserPermissions contains the effective permissions for the current identity.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"permissions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(UserPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"permissions"},
+			},
+		},
+		Dependencies: []string{
+			UserPermission{}.OpenAPIModelName()},
 	}
 }
 

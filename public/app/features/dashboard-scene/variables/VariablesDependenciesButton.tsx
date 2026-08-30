@@ -1,18 +1,23 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
+import { type SceneVariable, type SceneVariableState } from '@grafana/scenes';
+import { Button, useTheme2 } from '@grafana/ui';
 import { NetworkGraphModal } from 'app/features/variables/inspect/NetworkGraphModal';
 
 import { createDependencyEdges, createDependencyNodes, filterNodesWithDependencies } from './utils';
 
 interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
+  isInSidebar?: boolean;
 }
 
-export const VariablesDependenciesButton = ({ variables }: Props) => {
+export const VariablesDependenciesButton = ({ variables, isInSidebar }: Props) => {
+  const styles = getStyles(useTheme2());
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
 
@@ -28,7 +33,21 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
       edges={edges}
     >
       {({ showModal }) => {
-        return (
+        return isInSidebar ? (
+          <Button
+            className={styles.dependenciesButton}
+            icon="channel-add"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              reportInteraction('Show variable dependencies');
+              showModal();
+            }}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.showDependenciesButton}
+          >
+            <Trans i18nKey="variables.variables-dependencies-button.show-dependencies">Show dependencies</Trans>
+          </Button>
+        ) : (
           <Button
             onClick={() => {
               reportInteraction('Show variable dependencies');
@@ -44,3 +63,7 @@ export const VariablesDependenciesButton = ({ variables }: Props) => {
     </NetworkGraphModal>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  dependenciesButton: css({ width: '100%', justifyContent: 'center', margin: `${theme.spacing(1)} 0` }),
+});

@@ -1,8 +1,8 @@
 import { useMemo, useRef } from 'react';
 
-import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
-import { CombinedRule, Rule, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { type Rule, type RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { getRulePluginOrigin } from '../utils/rules';
@@ -15,11 +15,11 @@ interface BaseRuleExtensionContext {
   labels: Record<string, string>;
 }
 
-export interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
+interface AlertingRuleExtensionContext extends BaseRuleExtensionContext {
   annotations: Record<string, string>;
 }
 
-export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
+interface RecordingRuleExtensionContext extends BaseRuleExtensionContext {}
 
 export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifier: RuleGroupIdentifierV2) {
   // This ref provides a stable reference to an empty array, which is used to avoid re-renders when the rule is undefined.
@@ -41,11 +41,6 @@ export function useRulePluginLinkExtension(rule: Rule | undefined, groupIdentifi
   const { pluginId } = ruleOrigin;
 
   return links.filter((link) => link.pluginId === pluginId);
-}
-
-export interface PluginRuleExtensionParam {
-  pluginId: string;
-  rule: CombinedRule;
 }
 
 interface AlertingRuleExtensionPoint {

@@ -128,6 +128,10 @@ func (f FakeStore) DeleteExternalServiceRole(ctx context.Context, externalServic
 	return f.ExpectedErr
 }
 
+func (f FakeStore) CleanupPluginRBAC(_ context.Context, _ []string) error {
+	return f.ExpectedErr
+}
+
 var _ accesscontrol.PermissionsService = new(FakePermissionsService)
 
 type FakePermissionsService struct {

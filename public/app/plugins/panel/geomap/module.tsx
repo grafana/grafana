@@ -11,7 +11,7 @@ import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
 import { defaultMapViewConfig, type Options, TooltipMode } from './panelcfg.gen';
 import { geomapSuggestionsSupplier } from './suggestions';
-import { GeomapInstanceState } from './types';
+import { type GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<Options>(GeomapPanel)
   .setNoPadding()
@@ -147,10 +147,10 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
       .addBooleanSwitch({
         category,
         path: 'controls.showAttribution',
-        name: t('geomap.name-show-attribution', 'Show attribution'),
+        name: t('geomap.name-show-optional-attribution', 'Show optional attribution'),
         description: t(
-          'geomap.description-show-attribution',
-          'Show the map source attribution info in the lower right'
+          'geomap.description-show-optional-attribution',
+          'Show the map source attribution info in the lower right. Attribution required by a layer license is always shown.'
         ),
         defaultValue: true,
       })

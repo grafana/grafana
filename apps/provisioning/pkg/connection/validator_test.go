@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -181,6 +182,90 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			factoryErrors: field.ErrorList{},
 			wantErr:       false,
 		},
+		{
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection (modified)",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:     admission.Update,
+			factoryErrors: field.ErrorList{},
+			wantErr:       false,
+		},
+		{
+			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			},
+			operation:     admission.Update,
+			factoryErrors: field.ErrorList{},
+			wantErr:       false,
+		},
+		{
+			name: "blocks CREATE when incoming object carries the pending-delete label",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
 	}
 
 	for _, tt := range tests {
@@ -273,11 +358,35 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 		dryRun          bool
 		factoryErrors   field.ErrorList
 		buildError      error
+		oauthConnection bool
 		testResults     *provisioning.TestResults
 		testError       error
 		wantErr         bool
 		wantErrContains string
 	}{
+		{
+			name: "dryRun skips runtime test for OAuth connection with a token",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GitlabOAuthConnectionType,
+					OAuth: &provisioning.ConnectionOAuthConfig{
+						ClientID: "client-123",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			operation:       admission.Create,
+			dryRun:          true,
+			factoryErrors:   field.ErrorList{},
+			oauthConnection: true,
+			wantErr:         false,
+		},
 		{
 			name: "dryRun with valid connection passes runtime validation",
 			obj: &provisioning.Connection{
@@ -483,6 +592,12 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					if conn.DeletionTimestamp == nil {
 						if tt.buildError != nil {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildError).Once()
+						} else if tt.oauthConnection {
+							oauthConn := struct {
+								*MockConnection
+								*MockOAuthConnection
+							}{NewMockConnection(t), NewMockOAuthConnection(t)}
+							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(oauthConn, nil).Once()
 						} else {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil).Once()
 							if tt.testError != nil {

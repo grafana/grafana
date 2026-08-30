@@ -9,12 +9,14 @@ import (
 
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -25,15 +27,20 @@ type streamDecoder struct {
 	codec       runtime.Codec
 	cancelWatch context.CancelFunc
 	done        sync.WaitGroup
+
+	sendInitialEvents   bool
+	initialBookmarkSent bool
+	expiredSent         bool
 }
 
-func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
+func newStreamDecoder(client resourcepb.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc, sendInitialEvents bool) *streamDecoder {
 	return &streamDecoder{
-		client:      client,
-		newFunc:     newFunc,
-		predicate:   predicate,
-		codec:       codec,
-		cancelWatch: cancelWatch,
+		client:            client,
+		newFunc:           newFunc,
+		predicate:         predicate,
+		codec:             codec,
+		cancelWatch:       cancelWatch,
+		sendInitialEvents: sendInitialEvents,
 	}
 }
 func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Object, error) {
@@ -73,6 +80,22 @@ decode:
 			return watch.Error, nil, io.EOF
 		case grpcStatus.Code(err) == grpcCodes.Canceled:
 			return watch.Error, nil, err
+		case resource.IsResourceVersionExpired(err):
+			// Surface a 410/Expired status object (instead of an error) so clients
+			// such as reflectors re-list from scratch rather than retrying the
+			// watch from a resource version the server can no longer serve.
+			if d.expiredSent {
+				return watch.Error, nil, io.EOF
+			}
+			d.expiredSent = true
+			klog.V(2).Infof("client: watch resource version expired: %s", err)
+			status := resource.AsErrorResult(err)
+			return watch.Error, &metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    status.Code,
+				Reason:  metav1.StatusReason(status.Reason),
+				Message: status.Message,
+			}, nil
 		case err != nil:
 			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
@@ -93,7 +116,6 @@ decode:
 		if evt.Type == resourcepb.WatchEvent_BOOKMARK {
 			obj := d.newFunc()
 
-			// here k8s expects an empty object with just resource version and k8s.io/initial-events-end annotation
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
 				klog.Errorf("error getting object accessor: %s", err)
@@ -101,7 +123,10 @@ decode:
 			}
 
 			accessor.SetResourceVersionInt64(evt.Resource.Version)
-			accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+			if d.sendInitialEvents && !d.initialBookmarkSent {
+				accessor.SetAnnotations(map[string]string{"k8s.io/initial-events-end": "true"})
+				d.initialBookmarkSent = true
+			}
 			return watch.Bookmark, obj, nil
 		}
 

@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
 
+import { SIDEBAR_CARD_DATA_ATTR } from '../../constants';
 import { trackRenameInitiated } from '../../tracking';
 
 interface EditableQueryNameProps {
@@ -133,7 +134,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
       title={t('query-editor-next.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate variant="code">
+        <Text color="primary" element="p" truncate variant="body">
           {query.refId}
         </Text>
       </span>
@@ -143,7 +144,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
 }
 
 function isSidebarCardElement(target: EventTarget | null) {
-  return target instanceof HTMLElement && target.closest('[data-query-sidebar-card]') !== null;
+  return target instanceof HTMLElement && target.closest(`[${SIDEBAR_CARD_DATA_ATTR}]`) !== null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -178,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '300px',
 
     input: {
-      fontFamily: theme.typography.fontFamilyMonospace,
+      fontFamily: theme.typography.fontFamily,
     },
   }),
   inputRow: css({

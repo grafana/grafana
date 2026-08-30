@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';

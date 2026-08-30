@@ -1,6 +1,6 @@
-import { BaseVariableModel, DataSourceRef, LoadingState } from '@grafana/data';
+import { type BaseVariableModel, type DataSourceRef, LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -9,16 +9,15 @@ import { createAdHocVariableAdapter } from '../adhoc/adapter';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createDataSourceOptions } from '../datasource/reducer';
-import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
-import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { setVariableQueryRunner, type VariableQueryRunner } from '../query/VariableQueryRunner';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { adHocBuilder, constantBuilder, datasourceBuilder, queryBuilder } from '../shared/testing/builders';
 import { TransactionStatus } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { initVariablesTransaction } from './actions';
-import { getPreloadedState, getRootReducer, RootReducerType } from './helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,
@@ -184,23 +183,22 @@ describe('initVariablesTransaction', () => {
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions[0]).toEqual(toKeyedAction(key, cleanVariables()));
-        expect(dispatchedActions[1]).toEqual(toKeyedAction(key, cleanEditorState()));
-        expect(dispatchedActions[2]).toEqual(toKeyedAction(key, cleanPickerState()));
-        expect(dispatchedActions[3]).toEqual(toKeyedAction(key, variablesClearTransaction()));
-        expect(dispatchedActions[4]).toEqual(toKeyedAction(key, variablesInitTransaction({ uid: key })));
+        expect(dispatchedActions[1]).toEqual(toKeyedAction(key, cleanPickerState()));
+        expect(dispatchedActions[2]).toEqual(toKeyedAction(key, variablesClearTransaction()));
+        expect(dispatchedActions[3]).toEqual(toKeyedAction(key, variablesInitTransaction({ uid: key })));
+        expect(dispatchedActions[4].payload.action.type).toEqual(addVariable.type);
+        expect(dispatchedActions[4].payload.action.payload.id).toEqual('__dashboard');
         expect(dispatchedActions[5].payload.action.type).toEqual(addVariable.type);
-        expect(dispatchedActions[5].payload.action.payload.id).toEqual('__dashboard');
+        expect(dispatchedActions[5].payload.action.payload.id).toEqual('__org');
         expect(dispatchedActions[6].payload.action.type).toEqual(addVariable.type);
-        expect(dispatchedActions[6].payload.action.payload.id).toEqual('__org');
-        expect(dispatchedActions[7].payload.action.type).toEqual(addVariable.type);
-        expect(dispatchedActions[7].payload.action.payload.id).toEqual('__user');
-        expect(dispatchedActions[8]).toEqual(
+        expect(dispatchedActions[6].payload.action.payload.id).toEqual('__user');
+        expect(dispatchedActions[7]).toEqual(
           toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant })))
         );
-        expect(dispatchedActions[9]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(constant))));
-        expect(dispatchedActions[10]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(constant))));
-        expect(dispatchedActions[11]).toEqual(toKeyedAction(key, variablesCompleteTransaction({ uid: key })));
-        return dispatchedActions.length === 12;
+        expect(dispatchedActions[8]).toEqual(toKeyedAction(key, variableStateNotStarted(toVariablePayload(constant))));
+        expect(dispatchedActions[9]).toEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(constant))));
+        expect(dispatchedActions[10]).toEqual(toKeyedAction(key, variablesCompleteTransaction({ uid: key })));
+        return dispatchedActions.length === 11;
       });
     });
   });

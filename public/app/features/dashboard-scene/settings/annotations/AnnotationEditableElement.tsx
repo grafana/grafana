@@ -1,13 +1,18 @@
 import { useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { dataLayers } from '@grafana/scenes';
+import { type dataLayers } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
+import {
+  type EditableDashboardElement,
+  type EditableDashboardElementInfo,
+} from '../../scene/types/EditableDashboardElement';
 
 import {
   AnnotationColorPicker,
@@ -21,7 +26,7 @@ import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
-function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
   const enabledId = useId();
@@ -73,7 +78,7 @@ function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boole
 
   const queryOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.edit-pane.annotation.query', 'Query'),
+      title: t('dashboard.sidebar.annotation.query', 'Query'),
       id: queryCategoryId,
     }).addItem(
       new OptionsPaneItemDescriptor({
@@ -94,23 +99,46 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.annotation', 'Annotation'),
+      typeName: t('dashboard.sidebar.elements.annotation', 'Annotation'),
       icon: 'comment-alt',
       instanceName: this.layer.state.name,
       isHidden: this.layer.state.isHidden,
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
+
+  public onDuplicate() {
+    annotationEditActions.duplicateAnnotation(this.layer);
+  }
+
+  public onConfirmDelete() {
+    const name = this.layer.state.name;
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.annotation-editable-element.delete-title', 'Delete annotation query'),
+        text: t(
+          'dashboard-scene.annotation-editable-element.delete-text',
+          'Are you sure you want to delete: {{name}}?',
+          { name }
+        ),
+        yesText: t('dashboard-scene.annotation-editable-element.delete-confirm', 'Delete annotation query'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
+  }
 
   public onDelete() {
     const dataLayerSet = this.layer.parent;
-
-    if (dataLayerSet instanceof DashboardDataLayerSet) {
-      annotationEditActions.removeAnnotation({
-        source: dataLayerSet,
-        removedObject: this.layer,
-      });
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
     }
+
+    annotationEditActions.removeAnnotation({
+      source: dataLayerSet,
+      removedObject: this.layer,
+    });
   }
 }

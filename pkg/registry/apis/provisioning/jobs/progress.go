@@ -14,6 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// NotifyThrottleInterval is the minimum time between two persisted "immediate"
+// progress notifications; SetMessage/SetTotal calls closer together are
+// coalesced. Callers that need every update to persist must space them at least
+// this far apart.
+const NotifyThrottleInterval = 500 * time.Millisecond
+
 // maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
 func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
@@ -62,7 +68,7 @@ type jobProgressRecorder struct {
 func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
 		resultReasons:       make(map[string]struct{}),
@@ -76,6 +82,34 @@ func (r *jobProgressRecorder) Started() time.Time {
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, false)
+}
+
+// RecordDryRun tallies result into the job summary without the write-assuming
+// side effects Record has: no resource-operation metric, no per-file success/
+// failure log, and no contribution to errors/errorCount (so a preview failure
+// cannot flip the job's own state to error/warning in Complete). Use it for
+// previews (e.g. pull request evaluation) that never actually change anything.
+func (r *jobProgressRecorder) RecordDryRun(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, true)
+}
+
+// record is the shared implementation behind Record and RecordDryRun. The
+// summary tally (updateSummary) always runs; isDryRun gates everything that
+// assumes a real write happened -- the resource-operation metric, the per-file
+// success/failure log, and error/warning bookkeeping (errors, errorCount,
+// failedCreations/Deletions/Updates) that would otherwise let a preview
+// failure flip the job's own state in Complete.
+func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResult, isDryRun bool) {
+	if isDryRun {
+		r.mu.Lock()
+		r.updateSummary(result)
+		r.mu.Unlock()
+
+		r.maybeNotify(ctx)
+		return
+	}
+
 	var (
 		shouldLogError   bool
 		shouldLogWarning bool
@@ -114,15 +148,31 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		// A rename is a move operation; if it fails the child stays under the old folder.
 		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
 		}
 	} else if result.Warning() != nil {
 		// Track failed deletions/updates/renames with warnings — these still represent
 		// operations that did not fully succeed and may block parent folder removal.
-		if result.Action() == repository.FileActionDeleted {
-			r.failedDeletions = append(r.failedDeletions, result.Path())
-		}
-		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
-			r.failedUpdates = append(r.failedUpdates, result.Path())
+		// Non-failing warnings (e.g. missing/invalid folder metadata) are excluded
+		// because the underlying resource operation succeeded.
+		if !isNonFailingWarning(result.Warning()) {
+			if result.Action() == repository.FileActionDeleted {
+				r.failedDeletions = append(r.failedDeletions, result.Path())
+			}
+			if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
+				r.failedUpdates = append(r.failedUpdates, result.Path())
+				if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+					r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+				}
+			}
+
+			// Folder creation failures may be surfaced as warnings.
+			var pathErr *resources.PathCreationError
+			if errors.As(result.Warning(), &pathErr) {
+				r.failedCreations = append(r.failedCreations, pathErr.Path)
+			}
 		}
 
 		if reason := result.WarningReason(); reason != "" {
@@ -136,11 +186,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	// Measure once so the metric and the log line agree on the operation duration.
+	duration := result.elapsed()
 	if r.metrics != nil {
-		r.metrics.RecordResourceOperation(r.action, result)
+		r.metrics.RecordResourceOperation(r.action, result, duration)
 	}
 
-	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name(), "duration", duration, "bytes", result.Bytes())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
 	} else if shouldLogWarning {
@@ -288,6 +340,22 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 			summary.Create++
 		}
 		summary.Write = summary.Create + summary.Update
+
+		// Action-aware total, kept in sync with the counters above so the driver can
+		// sum it without re-deriving per action. Each single-purpose worker records
+		// one FileAction type: push writes, delete deletes, move renames (recorded as
+		// create+delete, so count creates only to avoid double-counting). Everything
+		// else (pull, migrate) sums create+update+delete.
+		switch r.action {
+		case provisioning.JobActionPush:
+			summary.TotalChanges = summary.Write
+		case provisioning.JobActionDelete:
+			summary.TotalChanges = summary.Delete
+		case provisioning.JobActionMove:
+			summary.TotalChanges = summary.Create
+		default:
+			summary.TotalChanges = summary.Create + summary.Update + summary.Delete
+		}
 	}
 }
 
@@ -342,7 +410,11 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	if err != nil {
-		jobStatus.State = provisioning.JobStateError
+		if IsWarning(err) {
+			jobStatus.State = provisioning.JobStateWarning
+		} else {
+			jobStatus.State = provisioning.JobStateError
+		}
 		jobStatus.Message = err.Error()
 	}
 

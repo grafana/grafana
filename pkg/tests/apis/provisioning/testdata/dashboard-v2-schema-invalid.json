@@ -1,0 +1,44 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "test-dashboard-v2-schema-invalid"
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "elements": {},
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "NotAGridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "p1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [],
+      "hideTimepicker": false
+    },
+    "title": "Invalid v2 Dashboard - bad layout item kind",
+    "variables": []
+  }
+}

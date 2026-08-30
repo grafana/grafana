@@ -2,7 +2,9 @@
   "type": "panel",
   "name": "Logs Table",
   "id": "logstable",
-  "state": "alpha",
+  "suggestions": true,
+  "state": "beta",
+  "hideFromList": true,
   "info": {
     "author": {
       "name": "Grafana Labs",

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { type GrafanaTheme2, type QueryEditorProps } from '@grafana/data';
 import { Box, InlineField, Input, TagsInput, useStyles2 } from '@grafana/ui';
 
-import { GraphiteDatasource } from '../datasource';
-import { GraphiteQuery, GraphiteOptions } from '../types';
+import { type GraphiteDatasource } from '../datasource';
+import { type GraphiteQuery, type GraphiteOptions } from '../types';
 
 export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>) => {
   const { query, onChange } = props;

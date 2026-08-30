@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { TableCellDisplayMode } from '../../types';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
-import { ImageCellProps, TableCellStyles } from '../types';
+import { type ImageCellProps, type TableCellStyles } from '../types';
 
 export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps) => {
   const [error, setError] = useState(false);
@@ -17,7 +17,7 @@ export const ImageCell = ({ cellOptions, field, value, rowIdx }: ImageCellProps)
 
   return (
     <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
-      {error ? text : <img alt={alt} src={text} title={title} onError={() => setError(true)} />}
+      {error ? (alt ?? text) : <img alt={alt} src={text} title={title} onError={() => setError(true)} />}
     </MaybeWrapWithLink>
   );
 };

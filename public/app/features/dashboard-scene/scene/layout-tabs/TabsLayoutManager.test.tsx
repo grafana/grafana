@@ -1,37 +1,52 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { moveElement } from '../../actions/element/moveElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { GridLayoutType } from '../layouts-shared/utils';
 
 import { TabItem } from './TabItem';
-import { TabsLayoutManager } from './TabsLayoutManager';
+import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
+let lastEditPerform: (() => void) | undefined;
+let lastEditUndo: (() => void) | undefined;
 
-jest.mock('../../edit-pane/shared', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    moveElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    edit: jest.fn(({ perform }) => {
-      perform();
-    }),
-  },
-  ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
+jest.mock('../../actions/element/addElement', () => ({
+  addElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/moveElement', () => ({
+  moveElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/utils/edit', () => ({
+  edit: jest.fn(({ perform, undo }) => {
+    perform();
+    lastEditPerform = perform;
+    lastEditUndo = undo;
+  }),
 }));
 
 function buildTabsLayoutManager(tabs: TabItem[] = []) {
@@ -49,7 +64,7 @@ describe('TabsLayoutManager', () => {
       tabsLayoutManager.setState({ currentTabSlug: tabsLayoutManager.getCurrentTab()?.getSlug() });
 
       const urlState = tabsLayoutManager.getUrlState();
-      expect(urlState).toEqual({ dtab: 'performance' });
+      expect(urlState).toEqual({ dtab: 'Performance' });
     });
 
     it('when nested under row and parent tab', () => {
@@ -73,7 +88,68 @@ describe('TabsLayoutManager', () => {
 
       const urlState = innerMostTabsLayoutManager.getUrlState();
       expect(urlState).toEqual({
-        ['overview-frontend-dtab']: 'performance',
+        ['Overview-Frontend-dtab']: 'Performance',
+      });
+    });
+  });
+
+  describe('getSlug', () => {
+    it('generates slugs based on tab titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const tab1 = tabsLayoutManager.addNewTab(new TabItem({ title: 'My Tab Title' }));
+      const tab2 = tabsLayoutManager.addNewTab(new TabItem({ title: 'Another Tab!' }));
+
+      expect(tab1.getSlug()).toBe('My-Tab-Title');
+      expect(tab2.getSlug()).toBe('Another-Tab!');
+    });
+
+    it('disambiguates slugs when multiple titles are encoded to the same value', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab 1' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'New tab-1' }));
+
+      expect(firstTab.getSlug()).toBe('New-tab-1');
+      expect(secondTab.getSlug()).toBe('New-tab-1__2');
+    });
+
+    it('keeps clean slugs when there is no slug duplication', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([]);
+      const firstTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab One' }));
+      const secondTab = tabsLayoutManager.addNewTab(new TabItem({ title: 'Tab Two' }));
+
+      expect(firstTab.getSlug()).toBe('Tab-One');
+      expect(secondTab.getSlug()).toBe('Tab-Two');
+    });
+
+    it('keeps slug values stable across different tab layout instances', () => {
+      const titles = ['New tab 1', 'New tab-1', 'Other tab'];
+
+      const getSlugsFromFreshLayout = () => {
+        const tabs = titles.map((title) => new TabItem({ title }));
+        buildTabsLayoutManager(tabs);
+        return tabs.map((tab) => tab.getSlug());
+      };
+
+      const firstRunSlugs = getSlugsFromFreshLayout();
+      const secondRunSlugs = getSlugsFromFreshLayout();
+
+      expect(firstRunSlugs).toEqual(['New-tab-1', 'New-tab-1__2', 'Other-tab']);
+      expect(secondRunSlugs).toEqual(firstRunSlugs);
+    });
+
+    it('skips empty primary query value and falls back to legacy slugified key', () => {
+      const tab1 = new TabItem({ title: 'question?' });
+      const tab2 = new TabItem({ title: 'Performance' });
+      const [tabManager, urlKeys] = setupRowWithTabs([tab1, tab2]);
+
+      const updateFromUrlArgs = {
+        [urlKeys[0]]: '',
+        [urlKeys[1]]: getLegacySlugForRowOrTab(tab2),
+      };
+
+      assertSelectedTab(tabManager, updateFromUrlArgs, {
+        slug: getLegacySlugForRowOrTab(tab2),
+        title: tab2.state.title!,
       });
     });
   });
@@ -140,6 +216,40 @@ describe('TabsLayoutManager', () => {
 
       expect(tabsLayoutManager.state.tabs).toHaveLength(0);
     });
+
+    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
+      // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
+      // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
+      const defaultLayoutTemplate = new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [],
+          isDraggable: false,
+          isResizable: false,
+        }),
+      });
+
+      const tabsLayoutManager = new TabsLayoutManager({
+        key: 'test-TabsLayoutManager',
+        tabs: [new TabItem({ title: 'First' })],
+      });
+      new DashboardScene({
+        body: tabsLayoutManager,
+        isEditing: true,
+        editable: true,
+        preferences: { defaultLayoutTemplate },
+      });
+
+      tabsLayoutManager.editModeChanged(true);
+
+      const newTab = tabsLayoutManager.addNewTab();
+      const layout = newTab.getLayout();
+      expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
+
+      const grid = (layout as DefaultGridLayoutManager).state.grid;
+      expect(grid.state.isDraggable).toBe(true);
+      expect(grid.state.isResizable).toBe(true);
+    });
   });
 
   describe('removeTab', () => {
@@ -160,7 +270,7 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs[0]).toBe(tab1);
       expect(tabsLayoutManager.state.tabs[1]).toBe(tab2);
       expect(tabsLayoutManager.state.currentTabSlug).toBe(tab2.getSlug());
-      expect(dashboardEditActions.removeElement).toHaveBeenCalled();
+      expect(removeElement).toHaveBeenCalled();
     });
 
     it('should handle undo action correctly', () => {
@@ -227,7 +337,7 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs[0]).toBe(tab2);
       expect(tabsLayoutManager.state.tabs[1]).toBe(tab3);
       expect(tabsLayoutManager.state.tabs[2]).toBe(tab1);
-      expect(dashboardEditActions.moveElement).toHaveBeenCalled();
+      expect(moveElement).toHaveBeenCalled();
     });
 
     describe('undo', () => {
@@ -421,6 +531,334 @@ describe('TabsLayoutManager', () => {
     });
   });
 
+  describe('hoistNestedGroups', () => {
+    it('should hoist nested rows to the top level when hoisting to rows', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const row2 = new RowItem({ title: 'Row 2' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [row1, row2] }) }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(RowsLayoutManager);
+      const rows = (newLayout as RowsLayoutManager).state.rows;
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toBe(row1);
+      expect(rows[1]).toBe(row2);
+    });
+
+    it('should convert grid tabs and nested tabs into rows when hoisting to rows', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const gridLayout = AutoGridLayoutManager.createEmpty();
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Rows tab', layout: new RowsLayoutManager({ rows: [row1] }) }),
+        new TabItem({
+          title: 'Tabs tab',
+          layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Inner tab' })] }),
+        }),
+        new TabItem({ title: 'Grid tab', layout: gridLayout }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(RowsLayoutManager);
+      const rows = (newLayout as RowsLayoutManager).state.rows;
+      expect(rows.map((row) => row.state.title)).toEqual(['Row 1', 'Inner tab', 'Grid tab']);
+      expect(rows[0]).toBe(row1);
+      expect(rows[2].state.layout).toBe(gridLayout);
+    });
+
+    it('should move section variables of dissolved tabs up to the dashboard', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should not move repeater-injected local variables up when dissolving a repeated tab', () => {
+      const sectionVariable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const localVariable = new LocalValueVariable({ name: 'server', value: 'A', text: 'A' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Repeated',
+          repeatByVariable: 'server',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [sectionVariable, localVariable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const sceneVariables = scene.state.$variables?.state.variables ?? [];
+      expect(sceneVariables).toContain(sectionVariable);
+      expect(sceneVariables).not.toContain(localVariable);
+    });
+
+    it('should hoist nested tabs into this layout and convert nested rows into tabs when hoisting to tabs', () => {
+      const innerTab1 = new TabItem({ title: 'Inner 1' });
+      const innerTab2 = new TabItem({ title: 'Inner 2' });
+      const gridTab = new TabItem({ title: 'Grid tab' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Outer', layout: new TabsLayoutManager({ tabs: [innerTab1, innerTab2] }) }),
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Inner row' })] }),
+        }),
+        gridTab,
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('tabs');
+
+      expect(scene.state.body).toBe(tabsLayoutManager);
+      expect(tabsLayoutManager.state.tabs.map((tab) => tab.state.title)).toEqual([
+        'Inner 1',
+        'Inner 2',
+        'Inner row',
+        'Grid tab',
+      ]);
+      expect(tabsLayoutManager.state.tabs[0]).toBe(innerTab1);
+      expect(tabsLayoutManager.state.tabs[1]).toBe(innerTab2);
+      expect(tabsLayoutManager.state.tabs[3]).toBe(gridTab);
+    });
+
+    it('should make row titles unique when hoisting to rows produces clashing titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Tab 2', layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Overview' }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body as RowsLayoutManager;
+      expect(newLayout.state.rows.map((row) => row.state.title)).toEqual(['Overview', 'Overview 1', 'Overview 2']);
+    });
+
+    it('should make tab titles unique when hoisting to tabs produces clashing titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Group', layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Overview' }),
+      ]);
+
+      tabsLayoutManager.hoistNestedGroups('tabs');
+
+      expect(tabsLayoutManager.state.tabs.map((tab) => tab.state.title)).toEqual(['Overview', 'Overview 1']);
+    });
+  });
+
+  describe('ungroup', () => {
+    it('should merge grids into a single grid when no tab contains a nested group', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(newLayout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('should move section variables of merged tabs up to the dashboard', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should not move repeater-injected local variables up when merging a repeated tab', () => {
+      const sectionVariable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const localVariable = new LocalValueVariable({ name: 'server', value: 'A', text: 'A' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Repeated',
+          repeatByVariable: 'server',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+          $variables: new SceneVariableSet({ variables: [sectionVariable, localVariable] }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const sceneVariables = scene.state.$variables?.state.variables ?? [];
+      expect(sceneVariables).toContain(sectionVariable);
+      expect(sceneVariables).not.toContain(localVariable);
+    });
+
+    it('should flatten nested groups recursively into a single grid', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Tab 1',
+          layout: new RowsLayoutManager({
+            rows: [
+              new RowItem({
+                title: 'Row 1',
+                layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+              }),
+            ],
+          }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const newLayout = scene.state.body;
+      expect(newLayout).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(newLayout.getVizPanels()).toHaveLength(2);
+    });
+  });
+
+  describe('ungroupTabs', () => {
+    let publishSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      lastEditPerform = undefined;
+      lastEditUndo = undefined;
+      publishSpy = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      publishSpy.mockRestore();
+    });
+
+    it('should hoist directly without any modal when only one nested group type exists', () => {
+      const row1 = new RowItem({ title: 'Row 1' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [row1] }) }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).not.toHaveBeenCalled();
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+    });
+
+    it('should show the ungroup groups modal when nested groups are mixed', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Rows tab', layout: new RowsLayoutManager({ rows: [new RowItem({})] }) }),
+        new TabItem({ title: 'Tabs tab', layout: new TabsLayoutManager({ tabs: [new TabItem({})] }) }),
+      ]);
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy.mock.calls[0][0]).toBeInstanceOf(ShowModalReactEvent);
+    });
+
+    it('should ask for confirmation when hoisting would lose repeat options', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          repeatByVariable: 'server',
+          layout: new RowsLayoutManager({ rows: [new RowItem({})] }),
+        }),
+      ]);
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).toHaveBeenCalledTimes(1);
+      expect(publishSpy.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+    });
+
+    it('should hoist directly without confirmation when dissolved tabs only have section variables', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({})] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      expect(publishSpy).not.toHaveBeenCalled();
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should redo the hoist after undo by re-installing the resulting layout', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      const layoutAfterUngroup = scene.state.body;
+      expect(layoutAfterUngroup).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+
+      // Undo detaches the hoisted layout and re-installs a clone of the pre-hoist state
+      lastEditUndo!();
+
+      expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+      expect(scene.state.body).not.toBe(tabsLayoutManager);
+      expect(scene.state.$variables?.state.variables ?? []).not.toContain(variable);
+
+      // Redo must re-install the hoist result instead of re-running it on the detached original
+      lastEditPerform!();
+
+      expect(scene.state.body).toBe(layoutAfterUngroup);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+  });
+
   describe('duplicate', () => {
     it('should return a new TabsLayoutManager instance', () => {
       const tabsLayoutManager = buildTabsLayoutManager();
@@ -492,3 +930,34 @@ describe('TabsLayoutManager', () => {
     });
   });
 });
+
+function setupRowWithTabs(tabs: TabItem[]): [TabsLayoutManager, string[]] {
+  const tabManager = new TabsLayoutManager({
+    tabs: [...tabs],
+  });
+  new RowsLayoutManager({
+    rows: [
+      new RowItem({
+        title: 'UPPER row!',
+        layout: tabManager,
+      }),
+    ],
+  });
+
+  const possibleKeys = getTabsLayoutUrlKeysToTry(tabManager);
+  expect(possibleKeys).toEqual(['UPPER-row!-dtab', 'upper-row-dtab']);
+
+  return [tabManager, possibleKeys];
+}
+
+function assertSelectedTab(
+  manager: TabsLayoutManager,
+  updateFromUrlValues: Record<string, string>,
+  { slug, title }: { slug: string; title: string }
+) {
+  manager.setState({ currentTabSlug: undefined });
+  manager.updateFromUrl(updateFromUrlValues);
+
+  expect(manager.state.currentTabSlug).toBe(slug);
+  expect(manager.getCurrentTab()?.state.title).toBe(title);
+}

@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash';
 
-import { Labels } from '../../../../types/unified-alerting-dto';
-import { Label } from '../components/rules/state-history/common';
+import { type Labels } from '../../../../types/unified-alerting-dto';
+import { type Label } from '../components/rules/state-history/common';
 
 export function labelsToTags(labels: Labels) {
   return Object.entries(labels)
@@ -48,5 +48,3 @@ export function labelsSize(labels?: Labels) {
 export function isPrivateLabelKey(labelKey: string) {
   return (labelKey.startsWith('__') && labelKey.endsWith('__')) || labelKey === GRAFANA_ORIGIN_LABEL;
 }
-
-export const isPrivateLabel = ([key, _]: [string, string]) => isPrivateLabelKey(key);

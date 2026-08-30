@@ -3,11 +3,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder, mockRulerAlertingRule } from '../mocks';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
@@ -15,7 +16,7 @@ import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mo
 import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
-import { RuleFormValues } from '../types/rule-form';
+import { type RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 
@@ -37,9 +38,9 @@ const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
-    folderContainer: byTestId('folder-picker'),
+    folderContainer: byTestId(selectors.components.AlertRules.folderPicker),
     namespace: byTestId('namespace-picker'),
-    group: byTestId('group-picker'),
+    group: byTestId(selectors.components.AlertRules.groupPicker),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
@@ -62,7 +63,9 @@ describe('CloneRuleEditor', function () {
     id: 1,
     type: DashboardSearchItemType.DashDB,
     accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
       [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
     },
   };
 

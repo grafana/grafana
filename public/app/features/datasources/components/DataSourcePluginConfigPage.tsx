@@ -1,6 +1,6 @@
 import { Trans } from '@grafana/i18n';
 
-import { GenericDataSourcePlugin } from '../types';
+import { type GenericDataSourcePlugin } from '../types';
 
 export type Props = {
   plugin?: GenericDataSourcePlugin | null;

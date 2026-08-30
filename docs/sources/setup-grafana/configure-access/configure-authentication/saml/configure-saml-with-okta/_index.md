@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/
   - ../../../configure-security/configure-authentication/saml/configure-saml-with-okta/ # /docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
@@ -22,6 +21,10 @@ Grafana supports user authentication through Okta, which is useful when you want
 - Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/).
 
 ## Set up SAML with Okta
+
+{{< admonition type="caution" >}}
+These steps are for assistance only, refer to the [official Okta documentation](https://help.okta.com/) for the up-to-date instructions.
+{{< /admonition >}}
 
 1. Log in to the [Okta portal](https://login.okta.com/).
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.

@@ -312,6 +312,7 @@ func convertQueryOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQueryOptio
 	out.TimeFrom = in.TimeFrom
 	out.MaxDataPoints = in.MaxDataPoints
 	out.TimeShift = in.TimeShift
+	out.TimeCompare = in.TimeCompare
 	out.QueryCachingTTL = in.QueryCachingTTL
 	out.Interval = in.Interval
 	out.CacheTimeout = in.CacheTimeout
@@ -368,8 +369,9 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 		for i, step := range in.Thresholds.Steps {
 			// Preserve null values from v2beta1
 			out.Thresholds.Steps[i] = dashv2alpha1.DashboardThreshold{
-				Value: step.Value,
-				Color: step.Color,
+				Value:     step.Value,
+				ValueExpr: step.ValueExpr,
+				Color:     step.Color,
 			}
 		}
 	}
@@ -747,6 +749,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2beta1_to_V2alpha1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -818,6 +821,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
+				EnableGroupBy:    in.AdhocVariableKind.Spec.EnableGroupBy,
 				Datasource:       datasource,
 			},
 		}
@@ -986,6 +990,23 @@ func convertTabRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabRep
 	return &dashv2alpha1.DashboardTabRepeatOptions{
 		Mode:  in.Mode,
 		Value: in.Value,
+	}
+}
+
+func convertCustomValuesFormat_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCustomVariableSpecValuesFormat) *dashv2alpha1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+
+	switch *in {
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
 	}
 }
 

@@ -3,17 +3,17 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, ButtonVariant, Tooltip, useStyles2 } from '@grafana/ui';
+import { type VizPanel } from '@grafana/scenes';
+import { Alert, Button, type ButtonVariant, Tooltip, useStyles2 } from '@grafana/ui';
 import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
 import { AlertRuleDrawerForm } from 'app/features/alerting/unified/components/AlertRuleDrawerForm';
 import { createPanelAlertRuleNavigation } from 'app/features/alerting/unified/utils/navigation';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
-import { ButtonFill } from '../../../../../../packages/grafana-ui/src/components/Button/Button';
+import { type ButtonFill } from '../../../../../../packages/grafana-ui/src/components/Button/Button';
 
 interface ScenesNewRuleFromPanelButtonProps {
   panel: VizPanel;

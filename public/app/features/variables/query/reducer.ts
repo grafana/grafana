@@ -1,24 +1,26 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
 
 import {
-  MetricFindValue,
-  QueryVariableModel,
+  type MetricFindValue,
+  type QueryVariableModel,
   stringToJsRegex,
-  VariableOption,
+  type VariableOption,
   VariableRefresh,
   VariableSort,
 } from '@grafana/data';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NONE_VARIABLE_TEXT, NONE_VARIABLE_VALUE } from '../constants';
 import { getInstanceState } from '../state/getInstanceState';
-import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariablesState, type VariablePayload, type VariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
 
 interface VariableOptionsUpdate {
   templatedRegex: string;
   results: MetricFindValue[];
 }
+
+const naturalCollator = new Intl.Collator(undefined, { numeric: true });
 
 export const initialQueryVariableModelState: QueryVariableModel = {
   ...initialVariableModelState,
@@ -73,7 +75,7 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
         return 1;
       }
 
-      return a.text.localeCompare(b.text, undefined, { numeric: true });
+      return naturalCollator.compare(a.text, b.text);
     });
   }
 
@@ -154,7 +156,7 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
   return sortVariableValues(options, sort);
 };
 
-export const queryVariableSlice = createSlice({
+const queryVariableSlice = createSlice({
   name: 'templating/query',
   initialState: initialVariablesState,
   reducers: {

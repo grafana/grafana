@@ -31,7 +31,8 @@ import (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service,
+func ProvideEmbeddedSigningKeysService(dbStore db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache remotecache.CacheStorage, routerRegister routing.RouteRegister,
 ) (*Service, error) {
 	s := &Service{
@@ -54,7 +55,7 @@ func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Ser
 type Service struct {
 	log            log.Logger
 	store          signingkeystore.SigningStore
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	remoteCache    remotecache.CacheStorage
 	localCache     *localcache.CacheService
 }
@@ -116,7 +117,7 @@ func (s *Service) buildJWKS(ctx context.Context, keys []signingkeys.SigningKey) 
 
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
 // created with the specified algorithm.
-// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+// The key will be automatically rotated at the beginning of each month.
 func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
 	if alg != jose.ES256 {
@@ -177,8 +178,10 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 		return nil, err
 	}
 
+	// Set expiration to a bit over a month to account for things like
+	// 31-day months or longer-lived tokens.
 	now := time.Now()
-	expiry := now.Add(30 * 24 * time.Hour)
+	expiry := now.Add(33 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
 		PrivateKey: string(encoded),

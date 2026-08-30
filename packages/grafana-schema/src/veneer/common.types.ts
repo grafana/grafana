@@ -1,6 +1,6 @@
 import * as raw from '../common/common.gen';
 
-import { MatcherConfig } from './dashboard.types';
+import { type MatcherConfig } from './dashboard.types';
 
 export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
   // Custom options depending on the type

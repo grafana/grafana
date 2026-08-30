@@ -18,7 +18,7 @@ export const getAPIReducerPath = (group: string, version: string) => `${group}/$
  * Check if a string is well-formed UTF-16 (no lone surrogates).
  * encodeURIComponent() throws an error for lone surrogates
  */
-export const isWellFormed = (str: string): boolean => {
+const isWellFormed = (str: string): boolean => {
   try {
     encodeURIComponent(str);
     return true;

@@ -1,15 +1,15 @@
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 import {
-  ColorDimensionConfig,
-  ResourceDimensionConfig,
-  ScalarDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-  DirectionDimensionConfig,
-  ConnectionDirection,
+  type ColorDimensionConfig,
+  type ResourceDimensionConfig,
+  type ScalarDimensionConfig,
+  type ScaleDimensionConfig,
+  type TextDimensionConfig,
+  type DirectionDimensionConfig,
+  type ConnectionDirection,
 } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 
 export interface DimensionContext {
   getColor(color: ColorDimensionConfig): DimensionSupplier<string>;

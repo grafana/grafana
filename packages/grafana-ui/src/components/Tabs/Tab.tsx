@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { HTMLProps } from 'react';
+import { type HTMLProps } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { clearButtonStyles } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -23,6 +23,8 @@ export interface TabProps extends HTMLProps<HTMLElement> {
   onChangeTab?: (event: React.MouseEvent<HTMLElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
+  /** When provided and counter exceeds it, the counter renders as "{counterCappedAt}+" (e.g. "50+"). */
+  counterCappedAt?: number;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
   truncate?: boolean;
@@ -44,6 +46,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       icon,
       onChangeTab,
       counter,
+      counterCappedAt,
       suffix: Suffix,
       className,
       href,
@@ -62,7 +65,7 @@ export const Tab = React.forwardRef<HTMLElement, TabProps>(
       <>
         {icon && <Icon name={icon} data-testid={`tab-icon-${icon}`} />}
         {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
+        {typeof counter === 'number' && <Counter value={counter} cappedAt={counterCappedAt} />}
         {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );

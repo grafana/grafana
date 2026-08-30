@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
@@ -13,14 +12,11 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 	connectionName := "connection-repositories-test"
 
@@ -46,7 +42,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			},
 		},
 	}}
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err)
 
 	t.Run("admin can access endpoint and get repository list", func(t *testing.T) {
@@ -57,7 +53,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("repositories").
-			Do(ctx).
+			Do(t.Context()).
 			StatusCode(&statusCode)
 
 		// Endpoint is implemented and should return 200 with repository list
@@ -92,7 +88,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("repositories").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "editor should not be able to access repositories endpoint")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -106,7 +102,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("repositories").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to access repositories endpoint")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -124,7 +120,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 			SubResource("repositories").
 			Body(configBytes).
 			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "POST should not be allowed")
 		require.True(t, apierrors.IsMethodNotSupported(result.Error()), "error should be MethodNotSupported")
@@ -132,10 +128,8 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing
@@ -160,7 +154,7 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 			},
 		},
 	}}
-	_, err := helper.CreateGithubConnection(t, ctx, connection)
+	_, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err)
 
 	t.Run("verify ExternalRepositoryList type exists in API", func(t *testing.T) {

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -18,9 +18,22 @@ import (
 	permreg "github.com/grafana/grafana/pkg/services/accesscontrol/permreg/test"
 	"github.com/grafana/grafana/pkg/services/authn"
 	rbac "github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func setCloudRBACRolesFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagCloudRBACRoles: {
+			Key:            featuremgmt.FlagCloudRBACRoles,
+			Variants:       map[string]any{"on": enabled},
+			DefaultVariant: "on",
+		},
+	})
+}
 
 func TestRBACSync_SyncPermission(t *testing.T) {
 	type testCase struct {
@@ -250,15 +263,18 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 	type testCase struct {
 		desc           string
 		module         string
+		stackID        string
 		identity       *authn.Identity
+		syncErr        error
 		expectedErr    error
 		expectedCalled bool
 	}
 
 	tests := []testCase{
 		{
-			desc:   "should call sync when authenticated with grafana com and has viewer role",
-			module: login.GrafanaComAuthModule,
+			desc:    "should call sync when authenticated with grafana com and has viewer role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
@@ -269,8 +285,22 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedCalled: true,
 		},
 		{
-			desc:   "should call sync when authenticated with grafana com and has editor role",
-			module: login.GrafanaComAuthModule,
+			desc:    "should not call sync when not running in Grafana Cloud",
+			module:  login.GrafanaComAuthModule,
+			stackID: "",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			expectedErr:    nil,
+			expectedCalled: false,
+		},
+		{
+			desc:    "should call sync when authenticated with grafana com and has editor role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
@@ -281,8 +311,9 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedCalled: true,
 		},
 		{
-			desc:   "should call sync when authenticated with grafana com and has admin role",
-			module: login.GrafanaComAuthModule,
+			desc:    "should call sync when authenticated with grafana com and has admin role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
@@ -293,20 +324,35 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedCalled: true,
 		},
 		{
-			desc:   "should not call sync when authenticated with grafana com and has invalid role",
-			module: login.GrafanaComAuthModule,
+			desc:    "should call sync and not block login when authenticated with grafana com and has none role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
+		{
+			desc:    "should not block login when authenticated with grafana com and has an unmapped role",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
 			},
-			expectedErr:    errInvalidCloudRole,
+			expectedErr:    nil,
 			expectedCalled: false,
 		},
 		{
-			desc:   "should not call sync when not authenticated with grafana com",
-			module: login.LDAPAuthModule,
+			desc:    "should not call sync when not authenticated with grafana com",
+			module:  login.LDAPAuthModule,
+			stackID: "1",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
@@ -316,20 +362,36 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 			expectedErr:    nil,
 			expectedCalled: false,
 		},
+		{
+			desc:    "should not fail login when a cloud role is not registered",
+			module:  login.GrafanaComAuthModule,
+			stackID: "1",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			syncErr:        accesscontrol.ErrRoleNotFound,
+			expectedErr:    nil,
+			expectedCalled: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			setCloudRBACRolesFlag(t, true)
 			var called bool
 			s := &RBACSync{
 				ac: &acmock.Mock{
 					SyncUserRolesFunc: func(_ context.Context, _ int64, _ accesscontrol.SyncUserRolesCommand) error {
 						called = true
-						return nil
+						return tt.syncErr
 					},
 				},
 				log:    log.NewNopLogger(),
 				tracer: tracing.InitializeTracerForTest(),
+				cfg:    &setting.Cfg{StackID: tt.stackID},
 			}
 
 			req := &authn.Request{}
@@ -344,23 +406,25 @@ func TestRBACSync_SyncCloudRoles(t *testing.T) {
 
 func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 	type testCase struct {
-		desc                  string
-		identity              *authn.Identity
-		expectedErr           error
-		expectedRolesToAdd    []string
-		expectedRolesToRemove []string
+		desc                      string
+		identity                  *authn.Identity
+		includeSupportTicketRoles bool
+		expectedErr               error
+		expectedRolesToAdd        []string
+		expectedRolesToRemove     []string
 	}
 
 	tests := []testCase{
 		{
-			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader",
+			desc: "should map Cloud Viewer to Grafana Cloud Viewer and Support ticket reader when support ticket roles are included",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
 			},
-			expectedErr: nil,
+			includeSupportTicketRoles: true,
+			expectedErr:               nil,
 			expectedRolesToAdd: []string{
 				accesscontrol.FixedCloudViewerRole,
 				accesscontrol.FixedCloudSupportTicketReader,
@@ -373,14 +437,15 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 			},
 		},
 		{
-			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin",
+			desc: "should map Cloud Editor to Grafana Cloud Editor and Support ticket admin when support ticket roles are included",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
 			},
-			expectedErr: nil,
+			includeSupportTicketRoles: true,
+			expectedErr:               nil,
 			expectedRolesToAdd: []string{
 				accesscontrol.FixedCloudEditorRole,
 				accesscontrol.FixedCloudSupportTicketAdmin,
@@ -392,14 +457,15 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 			},
 		},
 		{
-			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin",
+			desc: "should map Cloud Admin to Grafana Cloud Admin and Support ticket admin when support ticket roles are included",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 			},
-			expectedErr: nil,
+			includeSupportTicketRoles: true,
+			expectedErr:               nil,
 			expectedRolesToAdd: []string{
 				accesscontrol.FixedCloudAdminRole,
 				accesscontrol.FixedCloudSupportTicketAdmin,
@@ -411,22 +477,99 @@ func TestRBACSync_cloudRolesToAddAndRemove(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return an error for not supported role",
+			desc: "should map Cloud Viewer to only the base Grafana Cloud Viewer role when support ticket roles are excluded",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+			},
+			includeSupportTicketRoles: false,
+			expectedErr:               nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudViewerRole,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudAdminRole,
+			},
+		},
+		{
+			desc: "should map Cloud Admin to only the base Grafana Cloud Admin role when support ticket roles are excluded",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+			},
+			includeSupportTicketRoles: false,
+			expectedErr:               nil,
+			expectedRolesToAdd: []string{
+				accesscontrol.FixedCloudAdminRole,
+			},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudEditorRole,
+			},
+		},
+		{
+			desc: "should map None to no cloud roles and remove all others when support ticket roles are included",
 			identity: &authn.Identity{
 				ID:       "1",
 				Type:     claims.TypeUser,
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
 			},
-			expectedErr:           errInvalidCloudRole,
-			expectedRolesToAdd:    []string{},
-			expectedRolesToRemove: []string{},
+			includeSupportTicketRoles: true,
+			expectedErr:               nil,
+			expectedRolesToAdd:        []string{},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudSupportTicketReader,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+				accesscontrol.FixedCloudAdminRole,
+				accesscontrol.FixedCloudSupportTicketAdmin,
+			},
+		},
+		{
+			desc: "should map None to no cloud roles and remove only base roles when support ticket roles are excluded",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleNone},
+			},
+			includeSupportTicketRoles: false,
+			expectedErr:               nil,
+			expectedRolesToAdd:        []string{},
+			expectedRolesToRemove: []string{
+				accesscontrol.FixedCloudViewerRole,
+				accesscontrol.FixedCloudEditorRole,
+				accesscontrol.FixedCloudAdminRole,
+			},
+		},
+		{
+			desc: "should return an error for an unrecognized role",
+			identity: &authn.Identity{
+				ID:       "1",
+				Type:     claims.TypeUser,
+				OrgID:    1,
+				OrgRoles: map[int64]org.RoleType{1: org.RoleType("something else")},
+			},
+			includeSupportTicketRoles: true,
+			expectedErr:               errInvalidCloudRole,
+			expectedRolesToAdd:        []string{},
+			expectedRolesToRemove:     []string{},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			rolesToAdd, rolesToRemove, err := cloudRolesToAddAndRemove(tt.identity)
+			setCloudRBACRolesFlag(t, tt.includeSupportTicketRoles)
+			s := &RBACSync{}
+
+			rolesToAdd, rolesToRemove, err := s.cloudRolesToAddAndRemove(context.Background(), tt.identity)
 			assert.ErrorIs(t, tt.expectedErr, err)
 			assert.ElementsMatch(t, tt.expectedRolesToAdd, rolesToAdd)
 			assert.ElementsMatch(t, tt.expectedRolesToRemove, rolesToRemove)

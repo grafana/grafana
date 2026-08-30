@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -59,7 +60,7 @@ func (k *SqlKV) saveLastImportTime(ctx context.Context, key string) error {
 	default:
 		return fmt.Errorf("unknown dialect: %v", k.dialect.Name())
 	}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to save last import time: %w", err)
 	}
@@ -85,7 +86,7 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 		k.dialect.QuoteIdent("resource"),
 	)
 
-	rows, err := k.db.QueryContext(ctx, query)
+	rows, err := k.conn(ctx).QueryContext(ctx, query)
 	if err != nil {
 		yield("", err)
 		return
@@ -93,6 +94,12 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 	shouldYield := true
 	defer func() { closeRows(rows, yield, shouldYield) }()
 
+	// Keys are composite strings (namespace~group~resource~unixTimestamp). The
+	// SQL ORDER BY sorts by the separate columns, which is not the same as
+	// byte-wise ordering of the assembled key: '~' (0x7E) sorts above letters
+	// and digits, so e.g. "ns1~..." precedes "ns~...". Other KV backends return
+	// keys in full-key byte order, so sort here to match that contract.
+	keys := make([]string, 0)
 	for rows.Next() {
 		var ns, group, resource string
 		var lastImportTime time.Time
@@ -100,14 +107,19 @@ func (k *SqlKV) lastImportTimeKeys(ctx context.Context, opt ListOptions, yield f
 			shouldYield = yield("", fmt.Errorf("error reading row: %w", err))
 			return
 		}
-
-		if shouldYield = yield(LastImportTimeKey(ns, group, resource, lastImportTime), nil); !shouldYield {
-			return
-		}
+		keys = append(keys, LastImportTimeKey(ns, group, resource, lastImportTime))
 	}
 
 	if err := rows.Err(); err != nil {
 		shouldYield = yield("", fmt.Errorf("failed to read rows: %w", err))
+		return
+	}
+
+	sort.Strings(keys)
+	for _, key := range keys {
+		if shouldYield = yield(key, nil); !shouldYield {
+			return
+		}
 	}
 }
 
@@ -130,7 +142,7 @@ func (k *SqlKV) deleteLastImportTime(ctx context.Context, key string) error {
 		k.dialect.QuoteIdent("last_import_time"),
 	)
 	args := []any{group, resource, ns, lastImportTime}
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete last import time: %w", err)
 	}

@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Checkbox, EmptyState, useStyles2 } from '@grafana/ui';
 import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
@@ -75,6 +75,7 @@ export function StoredNotifications() {
       <div className={styles.topRow}>
         <Checkbox
           value={allNotificationsSelected}
+          aria-label={t('notifications.select-all', 'Select all notifications')}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
         <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>

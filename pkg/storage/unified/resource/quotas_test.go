@@ -423,6 +423,9 @@ func TestQuotaService_GetQuota(t *testing.T) {
 			require.NoError(t, err, "failed to create quota service")
 			err = service.init(ctx)
 			require.NoError(t, err, "failed to initialize quota service")
+			t.Cleanup(func() {
+				_ = service.stop(ctx)
+			})
 
 			quota, err := service.GetQuota(ctx, tt.nsr)
 

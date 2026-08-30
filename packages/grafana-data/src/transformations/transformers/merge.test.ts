@@ -1,12 +1,12 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
-import { DisplayProcessor } from '../../types/displayValue';
-import { DataTransformerConfig } from '../../types/transformations';
+import { type Field, FieldType } from '../../types/dataFrame';
+import { type DisplayProcessor } from '../../types/displayValue';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { mergeTransformer, MergeTransformerOptions } from './merge';
+import { mergeTransformer, type MergeTransformerOptions } from './merge';
 
 describe('Merge multiple to single', () => {
   const cfg: DataTransformerConfig<MergeTransformerOptions> = {

@@ -1,8 +1,8 @@
-import { Field } from '../../../types/dataFrame';
-import { ValueMatcherInfo } from '../../../types/transformations';
+import { type Field } from '../../../types/dataFrame';
+import { type ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
 
-import { BasicValueMatcherOptions } from './types';
+import { type BasicValueMatcherOptions } from './types';
 
 const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
   id: ValueMatcherID.regex,
@@ -13,7 +13,9 @@ const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
 
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
-      return regex.test(value);
+      // RegExp.test coerces its argument to a string, so without this guard null/undefined
+      // become "null"/"undefined" and match patterns like .* or .+
+      return value != null && regex.test(value);
     };
   },
   getOptionsDisplayText: (options) => {

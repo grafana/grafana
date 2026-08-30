@@ -1,5 +1,5 @@
 import { GrafanaTheme2 } from '@grafana/data';
-import { create } from '@storybook/theming';
+import { create } from 'storybook/theming';
 
 export const createStorybookTheme = (theme: GrafanaTheme2) => {
   return create({
@@ -9,9 +9,8 @@ export const createStorybookTheme = (theme: GrafanaTheme2) => {
 
     // UI
     appBg: theme.colors.background.canvas,
-    appContentBg: theme.colors.background.primary,
-    appBorderColor: theme.colors.border.medium,
-    appBorderRadius: 0,
+    appContentBg: theme.colors.background.page,
+    appBorderColor: theme.colors.border.weak,
 
     // Typography
     fontBase: theme.typography.fontFamily,

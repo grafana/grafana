@@ -1,30 +1,29 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
-import { ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  GrafanaTheme2,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type GrafanaTheme2,
   LoadingState,
-  PanelData,
-  RelativeTimeRange,
-  ThresholdsConfig,
+  type PanelData,
+  type RelativeTimeRange,
+  type ThresholdsConfig,
   getDefaultRelativeTimeRange,
   rangeUtil,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { DOCS_URL_DATA_SOURCE_ALERTING } from '../../utils/docs';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
@@ -33,8 +32,8 @@ import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQuery
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-export const DEFAULT_MAX_DATA_POINTS = 43200;
-export const DEFAULT_MIN_INTERVAL = '1s';
+const DEFAULT_MAX_DATA_POINTS = 43200;
+const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -54,9 +53,8 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   onRunQueries: () => void;
   index: number;
-  thresholds: ThresholdsConfig;
+  thresholds?: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -77,7 +75,6 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
-  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,
@@ -87,8 +84,7 @@ export const QueryWrapper = ({
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   const { getValues } = useFormContext<RuleFormValues>();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,
@@ -225,28 +221,7 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-export function MaxDataPointsOption({
-  options,
-  onChange,
-}: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
-}) {
-  const value = options.maxDataPoints ?? '';
-
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
-    const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
-
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
-        maxDataPoints,
-      });
-    }
-  };
-
+export function MaxDataPointsOption({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <InlineField
       labelWidth={24}
@@ -261,32 +236,24 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
     </InlineField>
   );
 }
 
 export function MinIntervalOption({
-  options,
+  value,
   onChange,
+  invalid,
+  error,
 }: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  value: string;
+  onChange: (value: string) => void;
+  invalid?: boolean;
+  error?: string;
 }) {
-  const value = options.minInterval ?? '';
-
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
-      });
-    }
-  };
-
   return (
     <InlineField
       label={t('alerting.min-interval-option.label-interval', 'Interval')}
@@ -297,14 +264,16 @@ export function MinIntervalOption({
           your data is written every minute.
         </Trans>
       }
+      invalid={invalid}
+      error={error}
     >
       <Input
         type="text"
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
     </InlineField>
   );
@@ -313,7 +282,6 @@ export function MinIntervalOption({
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     label: 'AlertingQueryWrapper',
-    marginBottom: theme.spacing(1),
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
 

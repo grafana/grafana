@@ -1,8 +1,8 @@
-import { Field } from '../../../types/dataFrame';
-import { ValueMatcherInfo } from '../../../types/transformations';
+import { type Field } from '../../../types/dataFrame';
+import { type ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
 
-import { ValueMatcherOptions } from './types';
+import { type ValueMatcherOptions } from './types';
 
 const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   id: ValueMatcherID.isNull,

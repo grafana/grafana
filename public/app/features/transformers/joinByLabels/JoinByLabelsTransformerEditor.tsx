@@ -1,22 +1,13 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import {
-  PluginState,
-  SelectableValue,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
+import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/joinByLabels.svg';
-import lightImage from '../images/light/joinByLabels.svg';
 import { getDistinctLabels } from '../utils';
 
-import { getJoinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
+import { type JoinByLabelsTransformOptions } from './joinByLabels';
 
 export interface Props extends TransformerUIProps<JoinByLabelsTransformOptions> {}
 
@@ -179,19 +170,3 @@ export function JoinByLabelsTransformerEditor({ input, options, onChange }: Prop
     </div>
   );
 }
-
-export const getJoinByLabelsTransformRegistryItem: () => TransformerRegistryItem<JoinByLabelsTransformOptions> = () => {
-  const joinByLabelsTransformer = getJoinByLabelsTransformer();
-  return {
-    id: joinByLabelsTransformer.id,
-    editor: JoinByLabelsTransformerEditor,
-    transformation: joinByLabelsTransformer,
-    name: joinByLabelsTransformer.name,
-    description: joinByLabelsTransformer.description,
-    state: PluginState.beta,
-    categories: new Set([TransformerCategory.Combine]),
-    help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
-    imageDark: darkImage,
-    imageLight: lightImage,
-  };
-};

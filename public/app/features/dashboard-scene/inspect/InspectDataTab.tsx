@@ -1,17 +1,18 @@
 import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useFlagTableInspectDataTableNG } from '@grafana/runtime/internal';
 import {
-  SceneComponentProps,
-  SceneDataProvider,
+  type SceneComponentProps,
+  type SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
 } from '@grafana/scenes';
 import { InspectTab } from 'app/features/inspector/types';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
 
@@ -43,33 +44,37 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     this.setState({ options });
   };
 
-  static Component = ({ model }: SceneComponentProps<InspectDataTab>) => {
-    const { options } = model.useState();
-    const panel = model.state.panelRef.resolve();
-    const dataProvider = sceneGraph.getData(panel);
-    const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
-    const timeRange = sceneGraph.getTimeRange(panel);
+  static Component = InspectDataTabComponent;
+}
 
-    if (!data) {
-      <div>
-        <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
-      </div>;
-    }
+function InspectDataTabComponent({ model }: SceneComponentProps<InspectDataTab>) {
+  const { options } = model.useState();
+  const panel = model.state.panelRef.resolve();
+  const dataProvider = sceneGraph.getData(panel);
+  const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+  const timeRange = sceneGraph.getTimeRange(panel);
+  const useTableNG = useFlagTableInspectDataTableNG();
 
-    return (
-      <InspectDataTabOld
-        isLoading={data?.state === LoadingState.Loading}
-        data={data?.series}
-        options={options}
-        hasTransformations={hasTransformations(dataProvider)}
-        timeZone={timeRange.getTimeZone()}
-        panelPluginId={panel.state.pluginId}
-        dataName={sceneGraph.interpolate(panel, panel.state.title)}
-        fieldConfig={panel.state.fieldConfig}
-        onOptionsChange={model.onOptionsChange}
-      />
-    );
-  };
+  if (!data) {
+    <div>
+      <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
+    </div>;
+  }
+
+  return (
+    <InspectDataTabOld
+      isLoading={data?.state === LoadingState.Loading}
+      data={data?.series}
+      options={options}
+      hasTransformations={hasTransformations(dataProvider)}
+      timeZone={timeRange.getTimeZone()}
+      panelPluginId={panel.state.pluginId}
+      dataName={sceneGraph.interpolate(panel, panel.state.title)}
+      fieldConfig={panel.state.fieldConfig}
+      onOptionsChange={model.onOptionsChange}
+      useTableNG={useTableNG}
+    />
+  );
 }
 
 function hasTransformations(dataProvider: SceneDataProvider) {

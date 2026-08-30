@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { AsyncSelect } from '@grafana/ui';
-import { Organization } from 'app/types/organization';
-import { UserOrg } from 'app/types/user';
+import { type Organization } from 'app/types/organization';
+import { type UserOrg } from 'app/types/user';
 
 export type OrgSelectItem = SelectableValue<Organization>;
 

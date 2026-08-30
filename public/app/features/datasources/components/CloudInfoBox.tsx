@@ -1,4 +1,4 @@
-import { DataSourceSettings, LocalStorageValueProvider } from '@grafana/data';
+import { type DataSourceSettings, LocalStorageValueProvider } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';

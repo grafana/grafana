@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
@@ -24,7 +24,6 @@ export function ExplainScorePopup({ name, explain, frame, row }: Props) {
   const modalHeader = (
     <ModalTabsHeader
       title={name}
-      icon={'info'}
       tabs={tabs}
       activeTab={activeTab}
       onChangeTab={(t) => {

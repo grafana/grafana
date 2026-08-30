@@ -3,19 +3,19 @@
   please then rebuild the markdown by doing the following:
 
   $ cd /docs (from the root of the repository)
-  $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+  $ make sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md
   $ make docs
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
-  Refer to ./docs/README.md for more information about building docs. 
+  Refer to ./docs/README.md for more information about building docs.
 */
 
 interface Link {
   title: string;
   url: string;
 }
-export interface TransformationInfo {
+interface TransformationInfo {
   name: string;
   getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
@@ -203,6 +203,7 @@ This transformation has the following options:
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
       You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
     - Will show a table to manage the enums
@@ -297,8 +298,8 @@ This transformation allows you to extract and format data in various ways. You c
     name: 'Lookup fields from resource',
     getHelperDocs: function () {
       return `
-Use this transformation to enrich a field value by looking up additional fields from an external source. 
-  
+Use this transformation to enrich a field value by looking up additional fields from an external source.
+
 This transformation has the following fields:
 
 - **Field** - Select a text field from your dataset.
@@ -451,7 +452,7 @@ Use this transformation to selectively remove parts of your query results. There
 
 #### Use a regular expression
 
-When you filter using a regular expression, field names that match the regular expression are included. 
+When you filter using a regular expression, field names that match the regular expression are included.
 
 For example, from the input data:
 
@@ -660,7 +661,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
-    
+
   To calculate a statistic for a field, click the selection box next to it and select the **Calculate** option:
 
   ${buildImageContent(
@@ -708,7 +709,14 @@ Use this transformation to construct a matrix by specifying fields from your que
   | server 1 | 82 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>Shutdown</td></tr><tr><td>2020-07-07 09:28:06</td><td>OK</td></tr><tr><td>2020-07-07 09:23:07</td><td>OK</td></tr></tbody></table> |
   | server 2 | 88.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 10:32:20</td><td>Overload</td></tr><tr><td>2020-07-07 09:30:05</td><td>OK</td></tr><tr><td>2020-07-07 09:25:05</td><td>OK</td></tr></tbody></table> |
   | server 3 | 59.6 | <table><th><tr><td>Time</td><td>Server Status</td></tr></th><tbody><tr><td>2020-07-07 11:34:20</td><td>OK</td></tr><tr><td>2020-07-07 10:31:22</td><td>OK</td></tr><tr><td>2020-07-07 09:30:57</td><td>Rebooting</td></tr></tbody></table> |
-      `;
+
+  #### Display options
+
+  | Option                            | Description                                                                                                                |
+  | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+  | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                   |
+  | Expand nested rows by default     | Expand all nested rows automatically when the panel loads, instead of starting with all columns collapsed. Off by default. |
+  `;
     },
     links: [
       {
@@ -1260,7 +1268,7 @@ Multi-frame time series break data into multiple frames that all contain two fie
 
 ##### Long time series
 
-A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one. 
+A long time series combines data into one frame, with the first field being an ascending time field. The time field might have duplicates. String values are in separate fields, and there might be more than one.
 
 **Example: Converting to long format**
 
@@ -1542,19 +1550,12 @@ ${buildImageContent(
   imageRenderType,
   'A select box showing available statistics that can be calculated.'
 )}
-
-
-> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
   `;
     },
     links: [
       {
         title: 'sparkline cell type',
         url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
-      },
-      {
-        title: 'configuration file',
-        url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
       },
     ],
   },

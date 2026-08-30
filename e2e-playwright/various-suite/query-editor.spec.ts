@@ -6,19 +6,12 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test('Undo should work in query editor for prometheus', async ({ page }) => {
+    test('Undo should work in query editor for prometheus', async ({ page, components }) => {
       // Visit the explore page
       await page.goto('/explore');
 
-      // Click on the data source picker
-      const dataSourcePicker = page.getByTestId('data-testid Data source picker select container');
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
       // Select the prometheus data source
-      const prometheusOption = page.getByText('gdev-prometheus');
-      await expect(prometheusOption).toBeVisible();
-      await prometheusOption.click();
+      await components.dataSourcePicker.set('gdev-prometheus');
 
       const queryText = `rate(http_requests_total{job="grafana"}[5m])`;
 

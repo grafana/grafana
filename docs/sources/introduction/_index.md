@@ -16,7 +16,7 @@ weight: 5
 
 [Grafana open source software](/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
 
-After you have [installed Grafana](../setup-grafana/installation/) and set up your first dashboard using instructions in [Getting started with Grafana](../getting-started/build-first-dashboard/), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist](../dashboards/create-manage-playlists/). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning](../administration/provisioning/) and [authentication](../setup-grafana/configure-access/configure-authentication/).
+After you've [installed Grafana](../setup-grafana/installation/) and set up your first dashboard using instructions in [Getting started with Grafana](../getting-started/build-first-dashboard/), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist](../dashboards/create-manage-playlists/). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning](../administration/provisioning/) and [authentication](../setup-grafana/configure-access/configure-authentication/).
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
@@ -36,6 +36,10 @@ Annotate graphs with rich events from different data sources. Hover over events 
 
 This feature, which shows up as a graph marker in Grafana, is useful for correlating data in case something goes wrong. You can create the annotations manually—just control-click on a graph and input some text—or you can fetch data from any data source. Refer to [Annotations](../dashboards/build-dashboards/annotate-visualizations/) for more information.
 
+## Import dashboards and plugins
+
+Discover hundreds of [dashboards](/grafana/dashboards) and [plugins](/grafana/plugins) in the official library. Thanks to the passion and momentum of community members, new ones are added every week.
+
 ## Dashboard variables
 
 [Template variables](../dashboards/variables/) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both.
@@ -48,21 +52,17 @@ If you're a Grafana administrator, then you'll want to thoroughly familiarize yo
 
 Configuration covers both config files and environment variables. You can set up default ports, logging levels, email IP addresses, security, and more.
 
-## Import dashboards and plugins
+## Provisioning
 
-Discover hundreds of [dashboards](/grafana/dashboards) and [plugins](/grafana/plugins) in the official library. Thanks to the passion and momentum of community members, new ones are added every week.
+While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana.
+
+For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards. Refer to [Provisioning](../administration/provisioning/) for more information.
 
 ## Authentication
 
 Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview](../setup-grafana/configure-access/configure-authentication/) for more information.
 
 In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise](grafana-enterprise/) for more information.
-
-## Provisioning
-
-While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana.
-
-For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards. Refer to [Provisioning](../administration/provisioning/) for more information.
 
 ## Permissions
 
@@ -91,3 +91,31 @@ For more information about Grafana Alloy, refer to the [Grafana Alloy documentat
 **Grafana k6:** Grafana k6 is an open-source load testing tool that makes performance testing easy and productive for engineering teams. For more information about Grafana k6, refer to [Grafana k6 documentation](/docs/k6/latest/).
 
 **Grafana OnCall:** Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](/docs/oncall/latest/).
+
+## Get in touch and contribute
+
+{{< docs/shared lookup="communicate.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+For more information, refer to [Contribute to Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/contribute).
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="What is Grafana and what is it used for?" >}}
+Grafana is open source software for querying, visualizing, and alerting on your metrics, logs, and traces, wherever they're stored.
+It's used for infrastructure and application monitoring, observability, and operational dashboards.
+Grafana turns time-series data into graphs, with a plugin framework that connects to many data sources so you can bring metrics, logs, and traces into one place.
+{{< /qa >}}
+{{< qa question="Is Grafana open source and free to use?" >}}
+Yes, Grafana is open source and free to use.
+You can download Grafana OSS and self-host it at no cost.
+Grafana Labs also offers two commercial editions built on the same core: Grafana Enterprise, a self-managed edition that adds enterprise features, plugins, and support; and Grafana Cloud, a fully managed service that includes a free tier.
+You can start with Grafana OSS and move to Enterprise or Cloud as your needs grow.
+{{< /qa >}}
+{{< qa question="What's the difference between Grafana OSS, Grafana Enterprise, and Grafana Cloud?" >}}
+Grafana OSS, Grafana Enterprise, and Grafana Cloud share the same Grafana core but differ in how they're hosted and what they include.
+Grafana OSS is the free, self-managed open source edition that you run and maintain yourself.
+Grafana Enterprise is also self-managed, but adds commercial features such as enterprise data source plugins, reporting, enhanced access control, and official support.
+Grafana Cloud is a fully managed platform hosted by Grafana Labs that bundles Grafana with metrics, logs, and traces backends and includes a free tier, so you don't have to run the stack yourself.
+{{< /qa >}}
+{{< /qa-list >}}

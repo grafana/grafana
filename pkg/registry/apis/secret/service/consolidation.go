@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -51,9 +52,12 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 
 	// Some debug statistics for local testing
 	consolidateStart := time.Now()
-	totalComputeTime := int64(0)
-	numberOfBatches := 0
-	numberOfValues := 0
+
+	var (
+		totalComputeTime atomic.Int64
+		numberOfBatches  atomic.Int64
+		numberOfValues   atomic.Int64
+	)
 
 	chunkSize := 100
 	if opts != nil && opts.ChunkSize > 0 {
@@ -85,13 +89,15 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 
 	// Finalize a single namespace by re-encrypting all values with a new data key
 	finalizeNamespace := func(ns string, values []*contracts.EncryptedValue) error {
-		numberOfBatches++
-		numberOfValues += len(values)
+		numberOfBatches.Add(1)
+		numberOfValues.Add(int64(len(values)))
+
 		start := time.Now()
+
 		log.Debug("ConsolidationService.Consolidate: finalizing namespace", "namespace", ns, "values", len(values))
 		defer func() {
 			log.Debug("ConsolidationService.Consolidate: finalized namespace", "namespace", ns, "values", len(values), "time", time.Since(start))
-			totalComputeTime += time.Since(start).Milliseconds()
+			totalComputeTime.Add(time.Since(start).Milliseconds())
 		}()
 
 		if len(values) == 0 {
@@ -175,6 +181,6 @@ func (s *ConsolidationService) Consolidate(ctx context.Context, opts *contracts.
 
 	// TODO: After all values are re-encrypted, we can safely remove the old data keys.
 
-	log.Info("ConsolidationService.Consolidate: finished", "duration", time.Since(consolidateStart), "totalComputeTime", totalComputeTime, "numberOfNamespaces", numberOfBatches, "numberOfValues", numberOfValues)
+	log.Info("ConsolidationService.Consolidate: finished", "duration", time.Since(consolidateStart), "totalComputeTime", totalComputeTime.Load(), "numberOfNamespaces", numberOfBatches.Load(), "numberOfValues", numberOfValues.Load())
 	return nil
 }

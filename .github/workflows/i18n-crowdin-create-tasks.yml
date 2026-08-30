@@ -8,6 +8,21 @@ on:
 
 jobs:
   create-tasks-in-crowdin:
-    uses: grafana/grafana-github-actions/.github/workflows/crowdin-create-tasks.yml@main
-    with:
-      crowdin_project_id: 5
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: 'Get vault secrets'
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+            # Vault secret paths:
+            # - ci/repo/grafana/grafana/grafana-frontend-crowdin-token
+            repo_secrets: |
+                CROWDIN_TOKEN=grafana-frontend-crowdin-token:access_token
+      - name: Create tasks in Crowdin
+        uses: grafana/grafana-github-actions/crowdin-create-tasks@main
+        with:
+          crowdin_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).CROWDIN_TOKEN }}
+          crowdin_project_id: 5

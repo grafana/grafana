@@ -1,6 +1,6 @@
 import pluginJson from './plugin.json';
 
-export const PLUGIN_BASE_URL = `/a/${pluginJson.id}`;
+const PLUGIN_BASE_URL = `/a/${pluginJson.id}`;
 
 export enum ROUTES {
   LegacyGetters = 'legacy-getters',

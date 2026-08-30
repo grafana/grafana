@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState, useCallback, useId, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
@@ -23,7 +23,7 @@ import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { HttpProxySettings } from './HttpProxySettings';
 import { SecureSocksProxySettings } from './SecureSocksProxySettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
-import { HttpSettingsProps } from './types';
+import { type HttpSettingsProps } from './types';
 
 const ACCESS_HELP_ID = 'grafana-http-access-help';
 

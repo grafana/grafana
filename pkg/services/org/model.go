@@ -201,6 +201,12 @@ type SearchOrgUsersQueryResult struct {
 	PerPage    int           `json:"perPage"`
 }
 
+type SearchOrgUsersByEmailsQuery struct {
+	OrgID              int64
+	Emails             []string
+	ExcludeHiddenUsers bool
+}
+
 type ByOrgName []*UserOrgDTO
 
 type OrgDetailsDTO struct {

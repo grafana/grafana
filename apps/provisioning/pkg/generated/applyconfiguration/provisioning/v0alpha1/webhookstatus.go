@@ -7,10 +7,13 @@ package v0alpha1
 // WebhookStatusApplyConfiguration represents a declarative configuration of the WebhookStatus type for use
 // with apply.
 type WebhookStatusApplyConfiguration struct {
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
 	ID               *int64   `json:"id,omitempty"`
+	UUID             *string  `json:"uuid,omitempty"`
 	URL              *string  `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        *int64   `json:"lastEvent,omitempty"`
+	LastRotated      *int64   `json:"lastRotated,omitempty"`
 }
 
 // WebhookStatusApplyConfiguration constructs a declarative configuration of the WebhookStatus type for use with
@@ -24,6 +27,14 @@ func WebhookStatus() *WebhookStatusApplyConfiguration {
 // If called multiple times, the ID field is set to the value of the last call.
 func (b *WebhookStatusApplyConfiguration) WithID(value int64) *WebhookStatusApplyConfiguration {
 	b.ID = &value
+	return b
+}
+
+// WithUUID sets the UUID field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the UUID field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithUUID(value string) *WebhookStatusApplyConfiguration {
+	b.UUID = &value
 	return b
 }
 
@@ -50,5 +61,13 @@ func (b *WebhookStatusApplyConfiguration) WithSubscribedEvents(values ...string)
 // If called multiple times, the LastEvent field is set to the value of the last call.
 func (b *WebhookStatusApplyConfiguration) WithLastEvent(value int64) *WebhookStatusApplyConfiguration {
 	b.LastEvent = &value
+	return b
+}
+
+// WithLastRotated sets the LastRotated field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the LastRotated field is set to the value of the last call.
+func (b *WebhookStatusApplyConfiguration) WithLastRotated(value int64) *WebhookStatusApplyConfiguration {
+	b.LastRotated = &value
 	return b
 }

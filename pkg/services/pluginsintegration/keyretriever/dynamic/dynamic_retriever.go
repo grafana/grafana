@@ -65,6 +65,7 @@ func (kr *KeyRetriever) Run(ctx context.Context) error {
 	// calculate initial send delay
 	lastUpdated, err := kr.kv.GetLastUpdated(ctx)
 	if err != nil {
+		kr.log.Error("Error reading last key update time", "error", err)
 		return err
 	}
 	nextSendInterval := time.Until(lastUpdated.Add(publicKeySyncInterval))
@@ -75,22 +76,22 @@ func (kr *KeyRetriever) Run(ctx context.Context) error {
 	downloadKeysTicker := time.NewTicker(nextSendInterval)
 	defer downloadKeysTicker.Stop()
 
-	select {
-	case <-downloadKeysTicker.C:
-		err = kr.updateKeys(ctx)
-		if err != nil {
-			kr.log.Error("Error downloading plugin manifest keys", "error", err)
-		}
+	for {
+		select {
+		case <-downloadKeysTicker.C:
+			err = kr.updateKeys(ctx)
+			if err != nil {
+				kr.log.Error("Error downloading plugin manifest keys", "error", err)
+			}
 
-		if nextSendInterval != publicKeySyncInterval {
-			nextSendInterval = publicKeySyncInterval
-			downloadKeysTicker.Reset(nextSendInterval)
+			if nextSendInterval != publicKeySyncInterval {
+				nextSendInterval = publicKeySyncInterval
+				downloadKeysTicker.Reset(nextSendInterval)
+			}
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-	case <-ctx.Done():
-		return ctx.Err()
 	}
-
-	return ctx.Err()
 }
 
 func (kr *KeyRetriever) updateKeys(ctx context.Context) error {
@@ -185,12 +186,14 @@ func (kr *KeyRetriever) ensureKeys(ctx context.Context) error {
 	}
 	keys, err := kr.kv.ListKeys(ctx)
 	if err != nil {
+		kr.log.Error("Error listing plugin signing keys", "error", err)
 		return err
 	}
 	if len(keys) == 0 {
 		// Populate with the default key
 		err := kr.kv.Set(ctx, statickey.GetDefaultKeyID(), statickey.GetDefaultKey())
 		if err != nil {
+			kr.log.Error("Error storing default plugin signing key", "error", err)
 			return err
 		}
 	}

@@ -65,7 +65,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			},
 			operation:       admission.Create,
 			minSyncInterval: 60 * time.Second,
-			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, CleanFinalizer},
+			wantFinalizers:  []string{RemoveOrphanResourcesFinalizer, RemovePendingJobsFinalizer, CleanFinalizer},
 			wantInterval:    60,
 			wantWorkflows:   []provisioning.Workflow{},
 			wantErr:         false,
@@ -276,7 +276,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			// Only set up mock if we expect it to be called
 			if tt.obj != nil {
 				if _, ok := tt.obj.(*provisioning.Repository); ok {
-					factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
+					factory.EXPECT().Mutate(mock.Anything, mock.Anything, mock.Anything).Return(tt.factoryErr).Maybe()
 				}
 			}
 
@@ -321,13 +321,36 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 	}
 }
 
+func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
+	factory := NewMockFactory(t)
+
+	oldRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{IntervalSeconds: 30},
+		},
+	}
+	newRepo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+		Spec:       provisioning.RepositorySpec{},
+	}
+
+	factory.EXPECT().Mutate(mock.Anything, mock.Anything, oldRepo).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+}
+
 func TestCopySecureValues(t *testing.T) {
 	tests := []struct {
-		name       string
-		new        *provisioning.Repository
-		old        *provisioning.Repository
-		wantToken  common.InlineSecureValue
-		wantSecret common.InlineSecureValue
+		name           string
+		new            *provisioning.Repository
+		old            *provisioning.Repository
+		wantToken      common.InlineSecureValue
+		wantSecret     common.InlineSecureValue
+		wantSigningKey common.InlineSecureValue
 	}{
 		{
 			name: "copies token from old to new when new is zero",
@@ -348,6 +371,16 @@ func TestCopySecureValues(t *testing.T) {
 				},
 			},
 			wantSecret: common.InlineSecureValue{Name: "old-secret"},
+		},
+		{
+			name: "copies commit signing key from old to new when new is zero",
+			new:  &provisioning.Repository{},
+			old: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					CommitSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
+				},
+			},
+			wantSigningKey: common.InlineSecureValue{Name: "old-signing-key"},
 		},
 		{
 			name: "does not overwrite existing token in new",
@@ -382,6 +415,7 @@ func TestCopySecureValues(t *testing.T) {
 			CopySecureValues(tt.new, tt.old)
 			assert.Equal(t, tt.wantToken, tt.new.Secure.Token)
 			assert.Equal(t, tt.wantSecret, tt.new.Secure.WebhookSecret)
+			assert.Equal(t, tt.wantSigningKey, tt.new.Secure.CommitSigningKey)
 		})
 	}
 }

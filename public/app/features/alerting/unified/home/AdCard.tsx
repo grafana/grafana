@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Divider, Icon, IconButton, useStyles2 } from '@grafana/ui';
+import { useUserStorage } from '@grafana/runtime/internal';
+import { Button, Divider, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { CloudBadge } from 'app/core/components/Branding/CloudBadge';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import { isOpenSourceBuildOrUnlicenced } from 'app/features/admin/EnterpriseAuthFeaturesCard';
+
+import { ContentBox } from './ContentBox';
 
 type AdCardProps = {
   title: string;
@@ -15,20 +16,23 @@ type AdCardProps = {
   href: string;
   logoUrl: string;
   items: string[];
-  helpFlag: number;
+  storageKey: string;
 };
 
-export default function AdCard({ title, description, href, logoUrl, items, helpFlag }: AdCardProps) {
+export default function AdCard({ title, description, href, logoUrl, items, storageKey }: AdCardProps) {
   const styles = useStyles2(getAddCardStyles);
+  const storage = useUserStorage('grafana-help-flags');
+  const [isDismissed, setDismissed] = useState<boolean>(true);
 
-  const helpFlags = contextSrv.user.helpFlags1;
-  const [isDismissed, setDismissed] = useState<boolean>(Boolean(helpFlags & helpFlag));
-
-  const onDismiss = () => {
-    backendSrv.put(`/api/user/helpflags/${helpFlag}`, undefined, { showSuccessAlert: false }).then((res) => {
-      contextSrv.user.helpFlags1 = res.helpFlags1;
-      setDismissed(true);
+  useEffect(() => {
+    storage.getItem(storageKey).then((value: string | null) => {
+      setDismissed(value === 'true');
     });
+  }, [storage, storageKey]);
+
+  const onDismiss = async () => {
+    await storage.setItem(storageKey, 'true');
+    setDismissed(true);
   };
 
   if (isDismissed || !isOpenSourceBuildOrUnlicenced()) {
@@ -36,17 +40,21 @@ export default function AdCard({ title, description, href, logoUrl, items, helpF
   }
 
   return (
-    <div className={styles.cardBody} title={title}>
+    <ContentBox title={title} flex={1}>
       <div className={styles.preHeader}>
         <CloudBadge />
         <IconButton name="times" size="sm" onClick={onDismiss} aria-label={t('alerting.ad.close', 'Close')} />
       </div>
       <header className={styles.header}>
         <img src={logoUrl} alt={title.concat(' logo')} className={styles.logo} />
-        <div className={styles.contentColumn}>
-          <h3 className={styles.title}>{title}</h3>
-          <p className={styles.description}>{description}</p>
-        </div>
+        <Stack direction="column" gap={1} flex={1}>
+          <Text element="h3" variant="h4">
+            {title}
+          </Text>
+          <Text element="p" color="secondary">
+            {description}
+          </Text>
+        </Stack>
       </header>
       <Divider />
       <div className={styles.itemsList}>
@@ -62,7 +70,7 @@ export default function AdCard({ title, description, href, logoUrl, items, helpF
         <Trans i18nKey="alerting.ad.learn-more">Learn more</Trans>
         <Icon name="external-link-alt" className={styles.buttonIcon} />
       </Button>
-    </div>
+    </ContentBox>
   );
 }
 
@@ -78,24 +86,7 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'flex-start',
     gap: theme.spacing(2),
     paddingTop: theme.spacing(2),
-    height: theme.spacing(8),
-  }),
-
-  contentColumn: css({
-    flex: 1,
-  }),
-
-  title: css({
-    marginBottom: theme.spacing(1),
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: theme.typography.h4.fontWeight,
-    color: theme.colors.text.primary,
-  }),
-
-  description: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
-    lineHeight: theme.typography.bodySmall.lineHeight,
+    minHeight: theme.spacing(8),
   }),
 
   itemsList: css({
@@ -128,14 +119,6 @@ const getAddCardStyles = (theme: GrafanaTheme2) => ({
 
   buttonIcon: css({
     marginLeft: theme.spacing(1),
-  }),
-
-  cardBody: css({
-    padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(2.25)} ${theme.spacing(4)}`,
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.lg,
-    border: `1px solid ${theme.colors.border.weak}`,
-    flex: 1,
   }),
 
   preHeader: css({

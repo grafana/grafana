@@ -1,10 +1,11 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Stack, Text } from '@grafana/ui';
 
 import { AIImproveLabelsButtonComponent } from '../../../enterprise-components/AI/AIGenImproveLabelsButton/addAIImproveLabelsButton';
-import { RuleFormValues } from '../../../types/rule-form';
+import { type RuleFormValues } from '../../../types/rule-form';
 import { isGrafanaManagedRuleByType, isRecordingRuleByType } from '../../../utils/rules';
 
 import { LabelsInRule } from './LabelsField';
@@ -73,7 +74,7 @@ export function LabelsFieldInFormV2({ onEditClick }: LabelsFieldInFormProps) {
                 variant="secondary"
                 onClick={onEditClick}
                 size="sm"
-                data-testid="add-labels-button"
+                data-testid={selectors.components.AlertRules.addLabelsButton}
               >
                 <Trans i18nKey="alerting.labels-field-in-form.add-labels">Add labels</Trans>
               </Button>

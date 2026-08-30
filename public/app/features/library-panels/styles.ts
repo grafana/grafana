@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getModalStyles(theme: GrafanaTheme2) {
   return {
@@ -17,7 +17,7 @@ export function getModalStyles(theme: GrafanaTheme2) {
       width: '100%',
 
       thead: {
-        color: '#538ade',
+        color: theme.colors.accent.text,
         fontSize: theme.typography.bodySmall.fontSize,
       },
 

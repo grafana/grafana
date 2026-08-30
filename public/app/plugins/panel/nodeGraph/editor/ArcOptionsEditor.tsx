@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { type Field, type GrafanaTheme2, type StandardEditorProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 
-import { ArcOption, Options as NodeGraphOptions } from '../panelcfg.gen';
+import { type ArcOption, type Options as NodeGraphOptions } from '../panelcfg.gen';
 
 type Settings = { filter: (field: Field) => boolean };
 type ArcOptionsEditorProps = StandardEditorProps<ArcOption[], Settings, NodeGraphOptions, undefined>;

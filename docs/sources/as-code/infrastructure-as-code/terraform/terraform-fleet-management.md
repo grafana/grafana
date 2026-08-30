@@ -22,7 +22,7 @@ This guide shows you how to create an access policy and a token for Fleet Manage
 
 ## Before you begin
 
-Before you begin, you should have the following available:
+Before you begin, ensure you have the following:
 
 - A Grafana Cloud account, as shown in [Get started](https://grafana.com/docs/grafana-cloud/get-started/)
 - [Terraform](https://www.terraform.io/downloads) installed on your machine
@@ -377,8 +377,8 @@ After you apply the changes in the Terraform configurations and run Alloy, you s
 
   {{< figure alt="A dashboard in Grafana Cloud which shows Alloy profiling data, including graphs for CPU and memory." src="/media/docs/fleet-management/screenshot-fleet-management-terraform-validate-profiles.png" >}}
 
-## Conclusion
+## Summary
 
 In this guide, you created an access policy and a token for Fleet Management and Alloy, a collector with remote attributes, and a pipeline for profiling Alloy, all using Terraform.
 
-To learn more about managing Grafana Cloud using Terraform, refer to [Grafana provider's documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+To learn more about managing Grafana Cloud using Terraform, refer to the [Grafana provider documentation](https://registry.terraform.io/providers/grafana/grafana/latest/docs).

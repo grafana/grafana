@@ -1,6 +1,6 @@
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
-import { defaultOptions as defaultOptionsBase, Options } from './panelcfg.gen';
+import { defaultOptions as defaultOptionsBase, type Options } from './panelcfg.gen';
 
 export const defaultOptions: Partial<Options> = {
   ...defaultOptionsBase,

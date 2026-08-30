@@ -1,12 +1,12 @@
-import { ReplaySubject } from 'rxjs';
+import { type ReplaySubject } from 'rxjs';
 
-import { AppPluginConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
+import { type AppPluginConfig, type PluginExtensionExposedComponentConfig } from '@grafana/data';
 
 import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isExposedComponentMetaInfoMissing } from '../validators';
 
-import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
+import { Registry, type RegistryType, type PluginExtensionConfigs } from './Registry';
 
 const logPrefix = 'Could not register exposed component. Reason:';
 

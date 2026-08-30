@@ -2,7 +2,6 @@ package repo
 
 import (
 	"errors"
-	"slices"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -15,11 +14,20 @@ type VersionData struct {
 	URL      string
 }
 
-// SelectSystemCompatibleVersion selects the most appropriate plugin version based on os + architecture
-// returns the specified version if supported.
-// returns the latest version if no specific version is specified.
-// returns error if the supplied version does not exist.
-// returns error if supplied version exists but is not supported.
+// SelectSystemCompatibleVersion selects the most appropriate plugin version for
+// the current Grafana version and OS/architecture.
+//
+//   - Returns the specified version when it's grafana-compatible and arch-compatible.
+//   - Returns the latest grafana-compatible + arch-compatible version when no version
+//     is specified.
+//
+// Errors:
+//   - ErrVersionNotFound:      specified version not present in the catalog listing
+//   - ErrVersionNotCompatible: specified version is incompatible with this Grafana version
+//   - ErrVersionUnsupported:   specified version is grafana-compatible but not built for this OS/arch
+//   - ErrNoCompatibleVersions: no version in the listing is compatible with this Grafana version
+//   - ErrArcNotFound:          some versions are grafana-compatible but none for this OS/arch
+//
 // NOTE: It expects plugin.Versions to be sorted so the newest version is first.
 func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, pluginID, version string, compatOpts CompatOpts) (VersionData, error) {
 	version = normalizeVersion(version)
@@ -29,11 +37,11 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 		return VersionData{}, errors.New("no system compatibility requirements set")
 	}
 
-	var ver Version
-	latestForArch, err := latestSupportedVersion(pluginID, versions, compatOpts)
-	if err != nil {
+	if err := validateCompatibility(pluginID, versions, compatOpts); err != nil {
 		return VersionData{}, err
 	}
+
+	latestForArch := latestSupportedVersion(versions, compatOpts)
 
 	if version == "" {
 		return VersionData{
@@ -43,6 +51,8 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 			URL:      latestForArch.URL,
 		}, nil
 	}
+
+	var ver Version
 	for _, v := range versions {
 		if normalizeVersion(v.Version) == version {
 			ver = v
@@ -51,9 +61,16 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 	}
 
 	if len(ver.Version) == 0 {
-		log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+		log.Debugf("Requested plugin version %s v%s not found in catalog; latest available is '%s'",
 			pluginID, version, latestForArch.Version)
-		return VersionData{}, ErrVersionNotFound(pluginID, version, sysCompatOpts.OSAndArch())
+		return VersionData{}, ErrVersionNotFound(pluginID, version)
+	}
+
+	if ver.IsCompatible != nil && !*ver.IsCompatible {
+		runningGrafanaVersion, _ := compatOpts.GrafanaVersion()
+		log.Debugf("Requested plugin version %s v%s is incompatible with this Grafana version; latest compatible is '%s'",
+			pluginID, version, latestForArch.Version)
+		return VersionData{}, ErrVersionNotCompatible(pluginID, version, runningGrafanaVersion)
 	}
 
 	if !supportsCurrentArch(ver, sysCompatOpts) {
@@ -93,22 +110,37 @@ func supportsCurrentArch(version Version, compatOpts SystemCompatOpts) bool {
 	return false
 }
 
-func latestSupportedVersion(pluginID string, versions []Version, compatOpts CompatOpts) (Version, error) {
-	// First check if the version are compatible with the current Grafana version
-	versions = slices.DeleteFunc(versions, func(v Version) bool {
-		return v.IsCompatible != nil && !*v.IsCompatible
-	})
-	if len(versions) == 0 {
-		return Version{}, ErrNoCompatibleVersions(pluginID, compatOpts.grafanaVersion)
-	}
-
-	// Then check if the version are compatible with the current system
+// validateCompatibility reports why no compatible version can be found, or nil
+// if at least one grafana-compatible + arch-compatible version exists in the listing.
+func validateCompatibility(pluginID string, versions []Version, compatOpts CompatOpts) error {
+	var hasGrafanaCompat bool
 	for _, v := range versions {
+		if v.IsCompatible != nil && !*v.IsCompatible {
+			continue
+		}
+		hasGrafanaCompat = true
 		if supportsCurrentArch(v, compatOpts.system) {
-			return v, nil
+			return nil
 		}
 	}
-	return Version{}, ErrArcNotFound(pluginID, compatOpts.system.OSAndArch())
+	if !hasGrafanaCompat {
+		return ErrNoCompatibleVersions(pluginID, compatOpts.grafanaVersion)
+	}
+	return ErrArcNotFound(pluginID, compatOpts.system.OSAndArch())
+}
+
+// latestSupportedVersion returns the newest grafana-compatible and arch-compatible
+// version in the listing, or Version{} if none exists.
+func latestSupportedVersion(versions []Version, compatOpts CompatOpts) Version {
+	for _, v := range versions {
+		if v.IsCompatible != nil && !*v.IsCompatible {
+			continue
+		}
+		if supportsCurrentArch(v, compatOpts.system) {
+			return v
+		}
+	}
+	return Version{}
 }
 
 func normalizeVersion(version string) string {

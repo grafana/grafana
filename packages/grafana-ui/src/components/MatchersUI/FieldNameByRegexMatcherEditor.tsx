@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { type MatcherUIProps, type FieldMatcherUIRegistryItem } from './types';
 
 export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { id, options, onChange, scope = 'series' } = props;

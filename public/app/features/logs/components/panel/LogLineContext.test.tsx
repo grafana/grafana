@@ -3,17 +3,27 @@ import { render, screen, waitFor, userEvent } from 'test/test-utils';
 import {
   createDataFrame,
   FieldType,
+  LoadingState,
   LogRowContextQueryDirection,
   LogsSortOrder,
-  SplitOpenOptions,
+  type SplitOpenOptions,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { getDisplayedFieldsForLogs, identifyOTelLanguages } from '../otel/formats';
+import {
+  getDisplayedFieldsForLogs,
+  getOtelAttributesField,
+  identifyOTelLanguage,
+  identifyOTelLanguages,
+} from '../otel/formats';
 
-import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+import { combineLoadingStates, DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  setTestFlags(flags);
+};
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -93,6 +103,10 @@ const row = logs.rows[0];
 const timeZone = 'UTC';
 
 describe('LogLineContext', () => {
+  beforeEach(() => {
+    setBooleanFlags({});
+  });
+
   let uniqueRefIdCounter = 1;
 
   beforeEach(() => {
@@ -667,15 +681,11 @@ describe('LogLineContext', () => {
   });
 
   describe('Default displayed fields', () => {
-    const originalFlagValue = config.featureToggles.otelLogsFormatting;
     beforeEach(() => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ otelLogsFormatting: true });
       jest
         .mocked(getDisplayedFieldsForLogs)
         .mockReturnValue([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
-    });
-    afterAll(() => {
-      config.featureToggles.otelLogsFormatting = originalFlagValue;
     });
 
     test('Should show "Show original logs" button when displayed fields are different than the default fields', async () => {
@@ -729,5 +739,56 @@ describe('LogLineContext', () => {
         })
       ).not.toBeInTheDocument();
     });
+  });
+
+  test('uses otelLogsFormatting flag when building reference log model', async () => {
+    setBooleanFlags({ otelLogsFormatting: true });
+    jest.mocked(identifyOTelLanguage).mockReturnValue('go');
+    jest.mocked(getOtelAttributesField).mockReturnValue('foo=bar');
+
+    const otelLog = {
+      ...row,
+      labels: {
+        ...row.labels,
+        severity_number: '9',
+        foo: 'bar',
+      },
+      entry: 'otel test log',
+    };
+
+    render(
+      <LogLineContext
+        log={otelLog}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(getOtelAttributesField).toHaveBeenCalled());
+  });
+});
+
+describe('combineLoadingStates', () => {
+  test('reports in flight while either request is Loading or Streaming', () => {
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Done)).toBe(LoadingState.Loading);
+    expect(combineLoadingStates(LoadingState.NotStarted, LoadingState.Loading)).toBe(LoadingState.Loading);
+    // Streaming must count as in flight (preserved), not be mistaken for settled.
+    expect(combineLoadingStates(LoadingState.Streaming, LoadingState.Done)).toBe(LoadingState.Streaming);
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Streaming)).toBe(LoadingState.Streaming);
+  });
+
+  test('reports Error when a settled request errored', () => {
+    expect(combineLoadingStates(LoadingState.Error, LoadingState.Done)).toBe(LoadingState.Error);
+    expect(combineLoadingStates(LoadingState.Done, LoadingState.Error)).toBe(LoadingState.Error);
+    // In flight takes precedence over a sibling error (still not settled).
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Error)).toBe(LoadingState.Loading);
+  });
+
+  test('reports Done when nothing is in flight or errored', () => {
+    expect(combineLoadingStates(LoadingState.Done, LoadingState.Done)).toBe(LoadingState.Done);
+    expect(combineLoadingStates(LoadingState.NotStarted, LoadingState.NotStarted)).toBe(LoadingState.Done);
   });
 });

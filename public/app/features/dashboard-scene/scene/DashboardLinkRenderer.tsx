@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { MenuItem, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 import {
   DashboardLinkButton,
@@ -11,21 +12,51 @@ import {
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { linkSelectionId } from '../settings/links/LinkAddEditableElement';
+import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
+import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
+
+import { type DashboardScene } from './DashboardScene';
+import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
+import { LinkEditActions } from './edit-actions-popover/LinkEditActions';
 
 export interface Props {
   link: DashboardLink;
-  dashboardUID: string;
+  dashboardUID?: string;
   inMenu?: boolean;
-  linkIndex?: number;
+  linkIndex: number;
+  dashboard: DashboardScene;
 }
 
-export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex }: Props) {
+export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, dashboard }: Props) {
   const linkInfo = getLinkSrv().getAnchorInfo(link);
   const styles = useStyles2(getStyles);
   const selectionId = linkIndex != null && linkIndex >= 0 ? linkSelectionId(linkIndex) : undefined;
-  const { isSelected } = useElementSelection(selectionId);
+  const { isSelected, isSelectable } = useElementSelection(selectionId);
+
+  const onClickEditLink = useCallback(() => {
+    openEditLinkPane(dashboard, Number(linkIndex));
+  }, [dashboard, linkIndex]);
+
+  const onClickDuplicateLink = useCallback(() => {
+    duplicateLink(dashboard, linkIndex);
+  }, [dashboard, linkIndex]);
+
+  const onClickDeleteLink = useCallback(() => {
+    linkEditActions.removeLink({ dashboard, linkIndex });
+  }, [dashboard, linkIndex]);
+
+  const editActions = useMemo(
+    () => (
+      <LinkEditActions
+        name={link.title}
+        onClickEdit={onClickEditLink}
+        onClickDuplicate={onClickDuplicateLink}
+        onClickDelete={onClickDeleteLink}
+      />
+    ),
+    [link.title, onClickEditLink, onClickDuplicateLink, onClickDeleteLink]
+  );
 
   let content: React.ReactNode;
   if (link.type === 'dashboards') {
@@ -54,12 +85,18 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex }:
     content = link.tooltip ? <Tooltip content={linkInfo.tooltip}>{linkElement}</Tooltip> : linkElement;
   }
 
-  const containerClassName = cx(styles.linkContainer, isSelected && 'dashboard-selected-element');
+  const containerClassName = cx(
+    styles.linkContainer,
+    isSelected && 'dashboard-selected-element',
+    isSelectable && !isSelected && 'dashboard-selectable-element'
+  );
 
   return (
-    <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
-      {content}
-    </div>
+    <EditActionsPopover content={editActions}>
+      <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
+        {content}
+      </div>
+    </EditActionsPopover>
   );
 }
 

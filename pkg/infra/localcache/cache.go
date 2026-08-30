@@ -49,6 +49,33 @@ func (s *CacheService) ExclusiveSet(key string, getValue func() (any, error), du
 	return nil
 }
 
+// GetOrExclusiveSet returns the value cached under key. On a miss it acquires the
+// per-key lock and re-checks the cache before computing, so a value produced by a
+// concurrent caller that finished while we waited on the lock is reused instead of
+// recomputed. Unlike ExclusiveSet it returns the resolved value, so callers don't
+// have to capture it through getValue's closure.
+func (s *CacheService) GetOrExclusiveSet(key string, getValue func() (any, error), dur time.Duration) (any, error) {
+	if v, ok := s.Get(key); ok {
+		return v, nil
+	}
+
+	unlock := s.Lock(key)
+	defer unlock()
+
+	// Another caller may have populated the cache while we waited on the lock.
+	if v, ok := s.Get(key); ok {
+		return v, nil
+	}
+
+	v, err := getValue()
+	if err != nil {
+		return nil, err
+	}
+
+	s.Set(key, v, dur)
+	return v, nil
+}
+
 func (s *CacheService) ExclusiveDelete(key string) {
 	unlock := s.Lock(key)
 	defer unlock()

@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type DateTime, dateTime, dateTimeForTimeZone } from '@grafana/data';
+import { type RichHistoryQuery } from 'app/types/explore';
 
 import { SortOrder } from '../utils/richHistoryTypes';
 
@@ -47,7 +47,7 @@ export const createRetentionPeriodBoundary = (
 };
 
 function filterQueriesByTime(queries: RichHistoryQuery[], timeFilter: [number, number]) {
-  return queries.filter((q) => q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]);
+  return queries.filter((q) => q.starred || (q.createdAt > timeFilter[0] && q.createdAt < timeFilter[1]));
 }
 
 function filterQueriesByDataSource(queries: RichHistoryQuery[], listOfDatasourceFilters: string[]) {
@@ -85,12 +85,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
       a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
   }
 
-  if (sortOrder === SortOrder.DatasourceZA) {
+  if (sortOrder === SortOrder.DatasourceAZ) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
   }
 
-  if (sortOrder === SortOrder.DatasourceAZ) {
+  if (sortOrder === SortOrder.DatasourceZA) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
   }

@@ -1,19 +1,15 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ColorDimensionConfig } from '@grafana/schema';
+import { type ColorDimensionConfig } from '@grafana/schema';
 import { Combobox, ColorPicker, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
-interface ColorDimensionSettings {
-  isClearable?: boolean;
-  baseNameMode?: FieldNamePickerBaseNameMode;
-  placeholder?: string;
-}
+import { type ColorDimensionOptions } from '../types';
 
-export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig, ColorDimensionSettings>) => {
+export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig, ColorDimensionOptions>) => {
   const fixedColorOption = useMemo(
     () => ({
       label: t('dimensions.color-dimension-editor.label-fixed-color', 'Fixed color'),

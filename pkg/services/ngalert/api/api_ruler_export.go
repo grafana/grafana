@@ -123,6 +123,14 @@ func (srv RulerSrv) getRuleGroupWithFolderFullPath(c *contextmodel.ReqContext, r
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, errors.Join(errFolderAccess, err)
 	}
+	// Folder visibility (folders:read) is checked above. The rule-level scope
+	// is separate: a user may see the folder yet be denied access to its
+	// rules. Verify it explicitly so callers without rule access get a 403
+	// instead of falling through to ErrAlertRuleNotFound below (which maps
+	// to 500 via the generic error handler).
+	if err := srv.authz.AuthorizeAccessInFolder(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{NamespaceUID: ruleGroupKey.NamespaceUID}); err != nil {
+		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
+	}
 	rules, err := srv.getAuthorizedRuleGroup(c.Req.Context(), c, ruleGroupKey)
 	if err != nil {
 		return ngmodels.AlertRuleGroupWithFolderFullpath{}, err
@@ -145,13 +153,20 @@ func (srv RulerSrv) getRulesWithFolderFullPathInFolders(c *contextmodel.ReqConte
 		NamespaceUIDs: nil,
 	}
 	if len(folderUIDs) > 0 {
+		// Verify the caller can actually read rules in each named folder.
+		// GetUserVisibleNamespaces returns folders the user can see (folders:read)
+		// but rule-level access is a separate scope — a user can see a folder yet
+		// be denied access to its rules. Without this explicit check, the
+		// downstream search silently filters out the rules and we surface a
+		// generic 404, which hides the real reason (forbidden).
 		for _, folderUID := range folderUIDs {
-			if _, ok := folders[folderUID]; ok {
-				query.NamespaceUIDs = append(query.NamespaceUIDs, folderUID)
+			if _, ok := folders[folderUID]; !ok {
+				return nil, authz.NewAuthorizationErrorGeneric(fmt.Sprintf("access rules in folder %q", folderUID))
 			}
-		}
-		if len(query.NamespaceUIDs) == 0 {
-			return nil, authz.NewAuthorizationErrorGeneric("access rules in the specified folders")
+			if err := srv.authz.AuthorizeAccessInFolder(c.Req.Context(), c.SignedInUser, &ngmodels.AlertRule{NamespaceUID: folderUID}); err != nil {
+				return nil, err
+			}
+			query.NamespaceUIDs = append(query.NamespaceUIDs, folderUID)
 		}
 	} else {
 		for _, folder := range folders {
@@ -161,7 +176,7 @@ func (srv RulerSrv) getRulesWithFolderFullPathInFolders(c *contextmodel.ReqConte
 
 	rulesByGroup, _, err := srv.searchAuthorizedAlertRules(c.Req.Context(), authorizedRuleGroupQuery{
 		User:          c.SignedInUser,
-		NamespaceUIDs: folderUIDs,
+		NamespaceUIDs: query.NamespaceUIDs,
 	})
 	if err != nil {
 		return nil, err

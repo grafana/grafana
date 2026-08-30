@@ -1,14 +1,14 @@
-import uPlot, { Axis } from 'uplot';
+import { type default as uPlot, type Axis } from 'uplot';
 
 import {
   dateTimeFormat,
-  DecimalCount,
-  GrafanaTheme2,
+  type DecimalCount,
+  type GrafanaTheme2,
   guessDecimals,
   isBooleanUnit,
   roundDecimals,
   systemDateFormats,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 
@@ -55,6 +55,11 @@ const X_TICK_VALUE_GAP = 18;
 
 const labelPad = 8;
 
+/** @internal */
+export function getGridColor(theme: GrafanaTheme2) {
+  return theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+}
+
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
     this.props.size = optMinMax('max', this.props.size, props.size);
@@ -94,7 +99,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
-    const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+    const gridColor = getGridColor(theme);
 
     // TODO: this is pretty flimsy now that scaleKey is composed from multiple parts :/
     if (isBooleanUnit(scaleKey)) {
@@ -196,13 +201,7 @@ export const timeUnitSize = {
 };
 
 /** Format time axis ticks */
-export function formatTime(
-  self: uPlot,
-  splits: number[],
-  axisIdx: number,
-  foundSpace: number,
-  foundIncr: number
-): string[] {
+function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const axis = self.axes[axisIdx];
   const timeZone = 'timeZone' in axis && typeof axis.timeZone === 'string' ? axis.timeZone : undefined;
   const scale = self.scales.x;
@@ -289,7 +288,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   return Math.ceil(axisSize);
 }
 
-export function getUPlotSideFromAxis(axis: AxisPlacement) {
+function getUPlotSideFromAxis(axis: AxisPlacement) {
   switch (axis) {
     case AxisPlacement.Top:
       return 0;

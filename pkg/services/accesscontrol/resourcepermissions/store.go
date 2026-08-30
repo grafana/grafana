@@ -748,6 +748,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 		p.Created = time.Now()
 		p.Updated = time.Now()
 		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		p.DatasourceType = cmd.DatasourceType
 		permissions = append(permissions, p)
 	}
 
@@ -828,22 +829,37 @@ func (s *InMemoryActionSets) ResolveActionSet(actionSet string) []string {
 }
 
 func (s *InMemoryActionSets) ExpandActionSetsWithFilter(permissions []accesscontrol.Permission, actionMatcher func(action string) bool) []accesscontrol.Permission {
-	var expandedPermissions []accesscontrol.Permission
+	// Count output size to avoid repeated reallocations when expanding action sets.
+	var n int
 	for _, permission := range permissions {
 		resolvedActions := s.ResolveActionSet(permission.Action)
 		if len(resolvedActions) == 0 {
-			expandedPermissions = append(expandedPermissions, permission)
+			n++
+			continue
+		}
+		for _, action := range resolvedActions {
+			if actionMatcher(action) {
+				n++
+			}
+		}
+	}
+
+	// here we know the size of the output, so we can allocate the array once
+	out := make([]accesscontrol.Permission, 0, n)
+	for _, permission := range permissions {
+		resolvedActions := s.ResolveActionSet(permission.Action)
+		if len(resolvedActions) == 0 {
+			out = append(out, permission)
 			continue
 		}
 		for _, action := range resolvedActions {
 			if !actionMatcher(action) {
 				continue
 			}
-			permission.Action = action
-			expandedPermissions = append(expandedPermissions, permission)
+			out = append(out, accesscontrol.Permission{Action: action, Scope: permission.Scope})
 		}
 	}
-	return expandedPermissions
+	return out
 }
 
 func (s *InMemoryActionSets) StoreActionSet(name string, actions []string) {

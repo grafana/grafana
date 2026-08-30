@@ -17,12 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
-	ErrFileNotExist              = errors.New("file does not exist")
+	ErrFileNotExist              = fs.ErrNotExist
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
@@ -56,9 +56,8 @@ type Plugin struct {
 
 	ExternalService *auth.ExternalService
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	client backendplugin.Plugin
+	log    log.Logger
 
 	SkipHostEnvVars bool
 
@@ -449,6 +448,14 @@ func (p *Plugin) Client() (PluginClient, bool) {
 		return p.client, true
 	}
 	return nil, false
+}
+
+func (p *Plugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+	client, ok := p.client.(backendplugin.PluginV3)
+	if !ok {
+		return nil, false
+	}
+	return client.ClientV3(ctx)
 }
 
 func (p *Plugin) ExecutablePath() string {

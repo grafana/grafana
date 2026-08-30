@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { PopValueActionMeta, RemoveValueActionMeta } from 'react-select';
+import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
 import {
-  DataSourceInstanceSettings,
-  SelectableValue,
+  type DataSourceInstanceSettings,
+  type SelectableValue,
   getDataSourceUID,
   isUnsignedPluginSignature,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { DataSourcePickerProps, DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
+import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
@@ -23,7 +23,7 @@ export interface MultipleDataSourcePickerProps extends Omit<DataSourcePickerProp
 export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) => {
   const dataSourceSrv = getDataSourceSrv();
 
-  const [state, setState] = useState<DataSourcePickerState>();
+  const [state, setState] = useState<{ error?: string }>();
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {

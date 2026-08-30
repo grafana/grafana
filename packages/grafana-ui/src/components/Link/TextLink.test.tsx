@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { GrafanaConfig, locationUtil } from '@grafana/data';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
 
 import { TextLink } from './TextLink';
 
@@ -64,5 +64,14 @@ describe('TextLink', () => {
     );
     await userEvent.click(screen.getByRole('link'));
     expect(onClick).toHaveBeenCalled();
+  });
+
+  it('sanitizes javascript: URLs in href', () => {
+    render(
+      <TextLink href="javascript:alert(1)" external>
+        Click me
+      </TextLink>
+    );
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'about:blank');
   });
 });

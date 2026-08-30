@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelPlugin, store } from '@grafana/data';
+import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import {
-  CancelActivationHandler,
+  type CancelActivationHandler,
   CustomVariable,
   SceneDataTransformer,
   sceneGraph,
@@ -120,7 +120,7 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
-    it('should clear edit pane selection', () => {
+    it('should clear sidebar selection', () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
       const panel = new VizPanel({
@@ -141,12 +141,12 @@ describe('PanelEditor', () => {
         }),
       });
 
-      dashboard.state.editPane.selectObject(panel, panel.state.key!, { force: true });
-      expect(dashboard.state.editPane.getSelection()).toBe(panel);
+      dashboard.state.sidebar.selectObject(panel, { force: true });
+      expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
 
       deactivate = activateFullSceneTree(dashboard);
 
-      expect(dashboard.state.editPane.getSelection()).toBeUndefined();
+      expect(dashboard.state.sidebar.getSelectedObject()).toBeUndefined();
     });
   });
 
@@ -214,6 +214,50 @@ describe('PanelEditor', () => {
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('When the scene is rebuilt underneath the editor', () => {
+    beforeAll(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+    });
+
+    /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
+    function swapBody(dashboard: DashboardScene) {
+      dashboard.setState({
+        body: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1', pluginId: 'text' })]),
+      });
+    }
+
+    it('Should not commit the panel edit onto the discarded layout item', async () => {
+      const { dashboard, panel } = await setup({});
+      const setPanelEditAction = jest.spyOn(dashboard.state.sidebar, 'setPanelEditAction');
+
+      panel.setState({ title: 'changed title' });
+      swapBody(dashboard);
+
+      deactivate!();
+      deactivate = undefined;
+
+      // The action's source would be the layout item of the discarded tree. It never activates
+      // again, and DashboardSidebar retries an inactive source on an unbounded setTimeout loop.
+      expect(setPanelEditAction).not.toHaveBeenCalled();
+    });
+
+    it('Should still commit when the editor is attached to the live tree', async () => {
+      const { dashboard, panel } = await setup({});
+      const setPanelEditAction = jest.spyOn(dashboard.state.sidebar, 'setPanelEditAction');
+
+      panel.setState({ title: 'changed title' });
+
+      deactivate!();
+      deactivate = undefined;
+
+      expect(setPanelEditAction).toHaveBeenCalled();
     });
   });
 
@@ -417,15 +461,7 @@ describe('PanelEditor', () => {
     });
   });
   describe('isVizPickerOpen', () => {
-    it('should not auto-open viz picker for new panels when newVizSuggestions=false', async () => {
-      config.featureToggles.newVizSuggestions = false;
-      const { panelEditor } = await setup({ isNewPanel: true });
-      const optionsPane = panelEditor.state.optionsPane;
-      expect(optionsPane?.state.isVizPickerOpen).toBe(false);
-    });
-
-    it('should auto-open viz picker for new panels when newVizSuggestions=true', async () => {
-      config.featureToggles.newVizSuggestions = true;
+    it('should auto-open viz picker for new unconfigured panels', async () => {
       const { panelEditor } = await setup({ isNewPanel: true, pluginId: UNCONFIGURED_PANEL_PLUGIN_ID });
       const optionsPane = panelEditor.state.optionsPane;
       expect(optionsPane?.state.isVizPickerOpen).toBe(true);

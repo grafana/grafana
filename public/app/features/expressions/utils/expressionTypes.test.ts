@@ -1,6 +1,6 @@
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
-import { ClassicCondition, ExpressionQuery, ExpressionQueryType } from '../types';
+import { type ClassicCondition, type ExpressionQuery, ExpressionQueryType } from '../types';
 
 import { defaultCondition, getDefaults } from './expressionTypes';
 

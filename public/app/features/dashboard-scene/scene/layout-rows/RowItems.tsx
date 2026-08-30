@@ -1,10 +1,10 @@
 import { t } from '@grafana/i18n';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
-import { EditableDashboardElementInfo, EditableDashboardElement } from '../types/EditableDashboardElement';
+import { type EditableDashboardElementInfo, type EditableDashboardElement } from '../types/EditableDashboardElement';
 
-import { RowItem } from './RowItem';
-import { getEditOptions } from './RowItemsEditor';
+import { type RowItem } from './RowItem';
+import { getSidebarOptions } from './RowItemsEditor';
 
 export class RowItems implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -12,11 +12,11 @@ export class RowItems implements EditableDashboardElement {
   public constructor(private _rows: RowItem[]) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.edit-pane.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
+    return { typeName: t('dashboard.sidebar.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
+    return getSidebarOptions(this);
   }
 
   public getRows(): RowItem[] {

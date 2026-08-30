@@ -1,8 +1,10 @@
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 
-import { EventBus, MapLayerOptions, GrafanaTheme2 } from '@grafana/data';
+import { type EventBus, type MapLayerOptions, type GrafanaTheme2 } from '@grafana/data';
+
+import { getTileSource } from '../test-utils';
 
 import { standard } from './osm';
 
@@ -28,7 +30,7 @@ describe('OSM layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<OSM>).getSource() as OSM;
+    const source = getTileSource(layer, OSM);
     expect(source).toBeInstanceOf(OSM);
     expect(source.getWrapX()).toBe(false);
   });
@@ -44,7 +46,7 @@ describe('OSM layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<OSM>).getSource() as OSM;
+    const source = getTileSource(layer, OSM);
     expect(source).toBeInstanceOf(OSM);
     expect(source.getWrapX()).toBe(true);
   });
@@ -60,7 +62,7 @@ describe('OSM layer noRepeat functionality', () => {
     const layer = result.init();
 
     expect(layer).toBeInstanceOf(TileLayer);
-    const source = (layer as TileLayer<OSM>).getSource() as OSM;
+    const source = getTileSource(layer, OSM);
     expect(source).toBeInstanceOf(OSM);
     expect(source.getWrapX()).toBe(true);
   });

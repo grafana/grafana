@@ -6,10 +6,11 @@ import (
 	"path"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -32,7 +32,6 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-			featuremgmt.FlagAlertingMultiplePolicies,
 		},
 	})
 
@@ -46,12 +45,10 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 
 	amConfig := apimodels.AlertmanagerUserConfig{
@@ -84,18 +81,18 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		Spec: v1beta1.RoutingTreeSpec{
 			Defaults: v1beta1.RoutingTreeRouteDefaults{
 				GroupBy:       []string{"alertname", "cluster"},
-				GroupWait:     util.Pointer("1s"),
-				GroupInterval: util.Pointer("5s"),
+				GroupWait:     new("1s"),
+				GroupInterval: new("5s"),
 				Receiver:      "noop",
 			},
 			Routes: []v1beta1.RoutingTreeRoute{
 				{
-					Receiver:          util.Pointer("noop-warn"),
+					Receiver:          new("noop-warn"),
 					Matchers:          []v1beta1.RoutingTreeMatcher{{Label: "severity", Type: v1beta1.RoutingTreeMatcherTypeEqual, Value: "warn"}},
 					MuteTimeIntervals: []string{"mute-interval-1"},
 				},
 				{
-					Receiver:            util.Pointer("noop-critical"),
+					Receiver:            new("noop-critical"),
 					Matchers:            []v1beta1.RoutingTreeMatcher{{Label: "severity", Type: v1beta1.RoutingTreeMatcherTypeEqual, Value: "critical"}},
 					ActiveTimeIntervals: []string{"time-interval-1"},
 				},
@@ -108,7 +105,7 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 
 	t.Run("should not be able to update", func(t *testing.T) {
 		toUpdate := importedRoute.Copy().(*v1beta1.RoutingTree)
-		toUpdate.Spec.Defaults.GroupWait = util.Pointer("10s")
+		toUpdate.Spec.Defaults.GroupWait = new("10s")
 
 		_, err = client.Update(ctx, toUpdate, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
@@ -121,27 +118,5 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		err = client.Delete(ctx, toDelete.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 		require.ErrorContains(t, err, "imported configuration")
-	})
-
-	t.Run("should not return if flag is disabled", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagAlertingMultiplePolicies,
-			},
-		})
-
-		client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-		require.NoError(t, err)
-
-		routes, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, routes.Items, 1)
-		var importedRoute *v1beta1.RoutingTree
-		for _, r := range routes.Items {
-			if r.Name == identifier {
-				importedRoute = &r
-			}
-		}
-		require.Nil(t, importedRoute)
 	})
 }

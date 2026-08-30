@@ -1,26 +1,26 @@
-import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
+import { firstValueFrom, of } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponseData,
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourceRef,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponseData,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
+  type DataSourceRef,
   createDataFrame,
-  AdHocVariableFilter,
-  ScopedVars,
+  type AdHocVariableFilter,
+  type ScopedVars,
   getDefaultTimeRange,
 } from '@grafana/data';
 
 import { config } from '../config';
+import { type BackendSrv, type BackendSrvRequest, type FetchResponse } from '../services';
 
 import {
   DataSourceWithBackend,
-  HealthCheckResult,
+  type HealthCheckResult,
   HealthStatus,
-  isExpressionReference,
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
@@ -69,13 +69,33 @@ jest.mock('../services', () => ({
     };
   },
 }));
+type MockSettings = { type: string; uid: string } | undefined;
+const defaultInstanceSettings = (ref?: DataSourceRef): MockSettings => ({
+  type: ref?.type ?? '<mocktype>',
+  uid: ref?.uid ?? '<mockuid>',
+});
+const mockGetDataSourceInstanceSettings = jest.fn<MockSettings | Promise<MockSettings>, [DataSourceRef?]>(
+  defaultInstanceSettings
+);
+jest.mock('../services/dataSource/settings', () => ({
+  ...jest.requireActual('../services/dataSource/settings'),
+  getDataSourceInstanceSettings: (ref?: DataSourceRef) => mockGetDataSourceInstanceSettings(ref),
+}));
 jest.mock('./publicDashboardQueryHandler');
 
+const mockIsQueryServiceCompatible = jest.fn().mockReturnValue(false);
+jest.mock('./qscheck', () => ({
+  ...jest.requireActual('./qscheck'),
+  isQueryServiceCompatible: (a: unknown, b: unknown) => mockIsQueryServiceCompatible(a, b),
+}));
+
 const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+const mockGetObjectValue = jest.fn().mockReturnValue({ types: ['prometheus'] });
 jest.mock('../internal/openFeature', () => ({
   ...jest.requireActual('../internal/openFeature'),
   getFeatureFlagClient: () => ({
     getBooleanValue: mockGetBooleanValue,
+    getObjectValue: mockGetObjectValue,
   }),
 }));
 
@@ -89,18 +109,20 @@ describe('DataSourceWithBackend', () => {
     jest.useRealTimers();
   });
 
-  test('check the executed queries', () => {
+  test('check the executed queries', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
-      range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -158,27 +180,94 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly passes datasource headers', () => {
+  test('surfaces an error when a query targets an unknown datasource', async () => {
+    const { ds } = createMockDatasource();
+    // the async settings lookup returning undefined means the datasource does not exist
+    mockGetDataSourceInstanceSettings.mockReturnValueOnce(undefined);
+
+    await expect(
+      firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A', datasource: { type: 'unknown', uid: 'does-not-exist' } }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      )
+    ).rejects.toThrow('Unknown Datasource');
+  });
+
+  test('does not prepare the request until the observable is subscribed to', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
+
+    const observable = ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+      targets: [{ refId: 'A', datasource: { type: 'sample', uid: 'sample' } }],
       range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-      interval: '5s',
-      scopedVars: {},
-      timezone: '',
-      requestId: 'request-123',
-      startTime: 0,
-      app: '',
-      headers: {
-        'X-Test-Header': 'test',
-      },
+    } as DataQueryRequest);
+
+    expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalled();
+    expect(mock.calls.length).toBe(0);
+
+    await firstValueFrom(observable);
+
+    expect(mockGetDataSourceInstanceSettings).toHaveBeenCalled();
+    expect(mock.calls.length).toBe(1);
+  });
+
+  test('keeps the routing headers in query order when the settings lookups resolve out of order', async () => {
+    const { mock, ds } = createMockDatasource();
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => {
+      if (ref?.uid === 'slow') {
+        // yield a few times so this lookup settles after the one for the second query
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+      return defaultInstanceSettings(ref);
     });
+
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [
+          { refId: 'A', datasource: { type: 'slow-type', uid: 'slow' } },
+          { refId: 'B', datasource: { type: 'fast-type', uid: 'fast' } },
+        ],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest)
+    );
+
+    const args = mock.calls[0][0];
+    expect(args.headers?.['X-Datasource-Uid']).toBe('slow, fast');
+    expect(args.headers?.['X-Plugin-Id']).toBe('slow-type, fast-type');
+  });
+
+  test('correctly passes datasource headers', async () => {
+    const { mock, ds } = createMockDatasource();
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        filters: [{ key: 'key1', operator: '=', value: 'val1' }],
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+        interval: '5s',
+        scopedVars: {},
+        timezone: '',
+        requestId: 'request-123',
+        startTime: 0,
+        app: '',
+        headers: {
+          'X-Test-Header': 'test',
+        },
+      })
+    );
 
     const args = mock.calls[0][0];
 
@@ -237,18 +326,20 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly passes dashboard and panel headers', () => {
+  test('correctly passes dashboard and panel headers', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }],
-      dashboardUID: 'dashA',
-      dashboardTitle: 'My Test Dashboard',
-      panelId: 123,
-      panelName: 'CPU Usage Panel',
-      range: getDefaultTimeRange(),
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }],
+        dashboardUID: 'dashA',
+        dashboardTitle: 'My Test Dashboard',
+        panelId: 123,
+        panelName: 'CPU Usage Panel',
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -290,17 +381,19 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('correctly creates expression queries', () => {
+  test('correctly creates expression queries', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      range: getDefaultTimeRange(),
-      queryGroupId: 'abc',
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: '__expr__' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        range: getDefaultTimeRange(),
+        queryGroupId: 'abc',
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -350,31 +443,35 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  test('should apply template variables only for the current data source', () => {
+  test('should apply template variables only for the current data source', async () => {
     const { mock, ds } = createMockDatasource();
     ds.applyTemplateVariables = jest.fn();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      range: getDefaultTimeRange(),
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        range: getDefaultTimeRange(),
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      } as DataQueryRequest)
+    );
 
     expect(mock.calls.length).toBe(1);
     expect(ds.applyTemplateVariables).toHaveBeenCalledTimes(1);
   });
 
-  test('check that the executed queries is hidden from inspector', () => {
+  test('check that the executed queries is hidden from inspector', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      hideFromInspector: true,
-      dashboardUID: 'dashA',
-      range: getDefaultTimeRange(),
-      panelId: 123,
-    } as DataQueryRequest);
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        hideFromInspector: true,
+        dashboardUID: 'dashA',
+        range: getDefaultTimeRange(),
+        panelId: 123,
+      } as DataQueryRequest)
+    );
 
     const args = mock.calls[0][0];
 
@@ -502,7 +599,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the new URL when feature toggle is enabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -513,7 +610,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('uses the legacy URL when feature toggle is disabled', () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -521,8 +617,29 @@ describe('DataSourceWithBackend', () => {
       expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
     });
 
+    test('uses meta.id over type in the new URL when meta is present', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { mock, ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual(
+        '/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+      );
+    });
+
+    test('falls back to type in the new URL when meta is not present', () => {
+      mockGetBooleanValue.mockReturnValueOnce(true);
+      const { mock, ds } = createMockDatasource({ meta: undefined });
+      ds.callHealthCheck();
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].url).toEqual(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+      );
+    });
+
     test('parses legacy API OK response (status, message, details)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.OK,
         message: 'Data source is working',
@@ -540,7 +657,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses legacy API ERROR response', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const response: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Connection refused',
@@ -557,7 +673,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response via toHealthCheckResult (OK)', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -579,7 +695,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -597,7 +713,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when legacy API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = false;
       const errorData: HealthCheckResult = {
         status: HealthStatus.Error,
         message: 'Network error',
@@ -614,7 +729,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when new API fetch rejects', async () => {
-      config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend = true;
+      mockGetBooleanValue.mockReturnValueOnce(true);
       const errorData = {
         status: HealthStatus.Error,
         message: 'Service unavailable',
@@ -631,23 +746,25 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
-  test('check that queries can skip the query cache', () => {
+  test('check that queries can skip the query cache', async () => {
     const { mock, ds } = createMockDatasource();
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }],
-      dashboardUID: 'dashA',
-      panelId: 123,
-      range: getDefaultTimeRange(),
-      skipQueryCache: true,
-      requestId: 'request-123',
-      interval: '5s',
-      scopedVars: {},
-      timezone: '',
-      app: '',
-      startTime: 0,
-    });
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        range: getDefaultTimeRange(),
+        skipQueryCache: true,
+        requestId: 'request-123',
+        interval: '5s',
+        scopedVars: {},
+        timezone: '',
+        app: '',
+        startTime: 0,
+      })
+    );
 
     const args = mock.calls[0][0];
 
@@ -688,18 +805,6 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
-  describe('isExpressionReference', () => {
-    test('check all possible expression references', () => {
-      expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID
-      expect(isExpressionReference('-100')).toBeTruthy(); // Legacy UID
-      expect(isExpressionReference('Expression')).toBeTruthy(); // Name
-      expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
-      expect(isExpressionReference({ type: '-100' })).toBeTruthy();
-      expect(isExpressionReference(null)).toBeFalsy();
-      expect(isExpressionReference(undefined)).toBeFalsy();
-    });
-  });
-
   describe('public dashboard scope', () => {
     test("check public dashboard handler is not executed when it's not public dashboard scope", () => {
       const { ds } = createMockDatasource();
@@ -720,6 +825,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -735,6 +841,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
@@ -757,7 +864,9 @@ describe('DataSourceWithBackend', () => {
       mockGetBooleanValue.mockReturnValue(true);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
-      expect(url).toBe('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels');
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
     });
 
     test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
@@ -765,20 +874,108 @@ describe('DataSourceWithBackend', () => {
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
+
+    test('prefers meta.id over type when meta is present', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
+      const url = ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe(
+        '/apis/canonical-id.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+
+    test('falls back to type when meta is not present', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const url = createMockDatasource({ meta: undefined }).ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
+    });
+  });
+
+  describe('queryServiceDecision', () => {
+    let oldQsUI: boolean | undefined = undefined;
+    beforeEach(() => {
+      oldQsUI = config.featureToggles.queryServiceFromUI;
+      config.featureToggles.queryServiceFromUI = true;
+    });
+    afterEach(() => {
+      config.featureToggles.queryServiceFromUI = oldQsUI;
+      mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
+      mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
+    });
+
+    const prometheus = {
+      name: 'prm',
+      id: 1,
+      uid: 'p',
+      type: 'prometheus',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    const loki = {
+      name: 'lk',
+      id: 2,
+      uid: 'l',
+      type: 'loki',
+      jsonData: {},
+    } as DataSourceInstanceSettings;
+
+    it.each([
+      [
+        'handle per-query data source references',
+        [
+          { refId: 'A', datasource: prometheus },
+          { refId: 'B', datasource: loki },
+        ],
+        ['prometheus', 'loki'],
+      ],
+      ['handle no per-query data source references', [{ refId: 'A' }, { refId: 'B' }], ['dummy', 'dummy']],
+      [
+        'handle a mix of query and no-query data source references',
+        [{ refId: 'A' }, { refId: 'B', datasource: loki }],
+        ['dummy', 'loki'],
+      ],
+      [
+        'handle a mix of query and no-query data source references, per-query first',
+        [{ refId: 'A', datasource: loki }, { refId: 'B' }],
+        ['loki', 'dummy'],
+      ],
+    ])('%s', async (_, targets, expectedTypes) => {
+      const { ds } = createMockDatasource();
+
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets,
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      const { calls } = mockIsQueryServiceCompatible.mock;
+      expect(calls).toHaveLength(1);
+
+      const [datasources, compatibilityFlag] = calls[0];
+      expect([datasources, compatibilityFlag]).toHaveLength(2);
+      expect((datasources as Array<{ type: string }>).map((ds) => ds.type)).toStrictEqual(expectedTypes);
+    });
   });
 });
 
-function createMockDatasource() {
+function createMockDatasource(settingsOverrides: Partial<DataSourceInstanceSettings<DataSourceJsonData>> = {}) {
   const settings = {
     name: 'test',
     id: 1234,
     uid: 'abc',
     type: 'dummy',
     jsonData: {},
+    ...settingsOverrides,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
   mockDatasourceRequest.mockReset();
   mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
+  mockGetDataSourceInstanceSettings.mockReset().mockImplementation(defaultInstanceSettings);
 
   const ds = new MyDataSource(settings);
   return { ds, mock: mockDatasourceRequest.mock };

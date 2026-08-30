@@ -18,28 +18,36 @@ describe('Dynamic GeoJSON Layer', () => {
     beforeEach(() => {
       source = new VectorSource();
       idToIdx = new Map();
-      
+
       // Create mock features with different IDs
       mockFeature1 = new Feature({
         geometry: new Point([0, 0]),
       });
       mockFeature1.setId('feature1');
-      
+
       mockFeature2 = new Feature({
-        geometry: new Polygon([[[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]]),
+        geometry: new Polygon([
+          [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [0, 0],
+          ],
+        ]),
       });
       mockFeature2.setId('feature2');
-      
+
       mockFeature3 = new Feature({
         geometry: new Point([2, 2]),
       });
       mockFeature3.setId('feature3');
-      
+
       // Add features to source
       source.addFeature(mockFeature1);
       source.addFeature(mockFeature2);
       source.addFeature(mockFeature3);
-      
+
       // Set up spy for forEachFeature method
       forEachFeatureSpy = jest.spyOn(source, 'forEachFeature');
     });
@@ -69,10 +77,10 @@ describe('Dynamic GeoJSON Layer', () => {
       // Check that features have frame and rowIndex properties set
       expect(mockFeature1.get('frame')).toBe(frame);
       expect(mockFeature1.get('rowIndex')).toBe(0);
-      
+
       expect(mockFeature2.get('frame')).toBe(frame);
       expect(mockFeature2.get('rowIndex')).toBe(1);
-      
+
       expect(mockFeature3.get('frame')).toBe(frame);
       expect(mockFeature3.get('rowIndex')).toBe(2);
     });
@@ -90,10 +98,10 @@ describe('Dynamic GeoJSON Layer', () => {
       // Check that only matching features have properties set
       expect(mockFeature1.get('frame')).toBe(frame);
       expect(mockFeature1.get('rowIndex')).toBe(0);
-      
+
       expect(mockFeature2.get('frame')).toBeUndefined();
       expect(mockFeature2.get('rowIndex')).toBeUndefined();
-      
+
       expect(mockFeature3.get('frame')).toBe(frame);
       expect(mockFeature3.get('rowIndex')).toBe(1);
     });
@@ -111,10 +119,10 @@ describe('Dynamic GeoJSON Layer', () => {
       // Check that no features have properties set since IDs don't match
       expect(mockFeature1.get('frame')).toBeUndefined();
       expect(mockFeature1.get('rowIndex')).toBeUndefined();
-      
+
       expect(mockFeature2.get('frame')).toBeUndefined();
       expect(mockFeature2.get('rowIndex')).toBeUndefined();
-      
+
       expect(mockFeature3.get('frame')).toBeUndefined();
       expect(mockFeature3.get('rowIndex')).toBeUndefined();
     });
@@ -141,7 +149,7 @@ describe('Dynamic GeoJSON Layer', () => {
       });
 
       updateFeaturePropertiesForTooltip(source, frame2, 'id', idToIdx);
-      
+
       // Map should be cleared and repopulated
       expect(idToIdx.size).toBe(2);
       expect(idToIdx.get('feature1')).toBeUndefined();
@@ -198,7 +206,7 @@ describe('Dynamic GeoJSON Layer', () => {
 
     it('should return early when frame is undefined', () => {
       updateFeaturePropertiesForTooltip(source, undefined, 'id', idToIdx);
-      
+
       expect(forEachFeatureSpy).not.toHaveBeenCalled();
       expect(idToIdx.size).toBe(0);
     });
@@ -210,9 +218,9 @@ describe('Dynamic GeoJSON Layer', () => {
           { name: 'value', type: FieldType.number, values: [10] },
         ],
       });
-      
+
       updateFeaturePropertiesForTooltip(source, frame, undefined, idToIdx);
-      
+
       expect(forEachFeatureSpy).not.toHaveBeenCalled();
       expect(idToIdx.size).toBe(0);
     });
@@ -224,9 +232,9 @@ describe('Dynamic GeoJSON Layer', () => {
           { name: 'value', type: FieldType.number, values: [10] },
         ],
       });
-      
+
       updateFeaturePropertiesForTooltip(source, frame, '', idToIdx);
-      
+
       expect(forEachFeatureSpy).not.toHaveBeenCalled();
       expect(idToIdx.size).toBe(0);
     });
@@ -238,9 +246,9 @@ describe('Dynamic GeoJSON Layer', () => {
           { name: 'value', type: FieldType.number, values: [10] },
         ],
       });
-      
+
       updateFeaturePropertiesForTooltip(source, frame, 'nonexistent_field', idToIdx);
-      
+
       expect(forEachFeatureSpy).not.toHaveBeenCalled();
       expect(idToIdx.size).toBe(0);
     });
@@ -262,10 +270,10 @@ describe('Dynamic GeoJSON Layer', () => {
       // Check that existing properties are preserved
       expect(mockFeature1.get('existingProperty')).toBe('existing value');
       expect(mockFeature1.get('anotherProperty')).toBe(42);
-      
+
       // Check that tooltip properties are added
       expect(mockFeature1.get('frame')).toBe(frame);
       expect(mockFeature1.get('rowIndex')).toBe(0);
     });
   });
-}); 
+});

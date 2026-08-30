@@ -52,6 +52,7 @@ v1alpha1: {
 		namespaced: {
 			"/check": {
 				"POST": {
+					name: "createCheck"
 					request: {
 						body: {
 							dashboardJson: {...}

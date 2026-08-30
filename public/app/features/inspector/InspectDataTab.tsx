@@ -1,23 +1,25 @@
 import { cloneDeep } from 'lodash';
 import { PureComponent } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
-  CoreApp,
-  DataFrame,
+  cacheFieldDisplayNames,
+  type CoreApp,
+  type DataFrame,
   DataTransformerID,
-  FieldConfigSource,
-  SelectableValue,
-  TimeZone,
+  type FieldConfigSource,
+  type SelectableValue,
+  type TimeZone,
   transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { TableNG } from '@grafana/ui/unstable';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
 
@@ -38,6 +40,8 @@ interface Props {
   hasTransformations?: boolean;
   formattedDataDescription?: string;
   onOptionsChange?: (options: GetDataOptions) => void;
+  /** Renders the data with TableNG instead of the legacy Table (TableRT), gated by the table.inspectDataTableNG feature toggle */
+  useTableNG?: boolean;
 }
 
 interface State {
@@ -81,7 +85,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
         const selectedDataFrame = this.state.selectedDataFrame;
         const dataFrameIndex = this.state.dataFrameIndex;
-        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe((data) => {
+        const input =
+          currentTransform.transformer.id === DataTransformerID.joinByField
+            ? moveFirstNonEmptyFrameToFront(this.props.data)
+            : this.props.data;
+        const subscription = transformDataFrame([currentTransform.transformer], input).subscribe((data) => {
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
@@ -92,14 +100,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+  exportCsv(dataFrames: DataFrame[]) {
     const { dataName } = this.props;
     const { transformId } = this.state;
     const dataFrame = dataFrames[this.state.dataFrameIndex];
-
-    if (hasLogs) {
-      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
-    }
 
     downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, this.state.excelCompatibilityMode);
   }
@@ -177,7 +181,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const data = this.state.transformedData;
 
     if (!options.withFieldConfig) {
-      return applyRawFieldOverrides(data);
+      const rawOverriddenData = applyRawFieldOverrides(data);
+      cacheFieldDisplayNames(rawOverriddenData);
+      return rawOverriddenData;
     }
 
     let fieldConfigCleaned = fieldConfig ?? { defaults: {}, overrides: [] };
@@ -188,13 +194,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
     // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
-    return applyFieldOverrides({
+    const overriddenData = applyFieldOverrides({
       data,
       theme: config.theme2,
       fieldConfig: fieldConfigCleaned,
       timeZone,
       replaceVariables: (value, scopedVars, format) => getTemplateSrv().replace(value, scopedVars, format),
     });
+    // applyFieldOverrides always clears any previously cached displayName (it can change during the
+    // override process), so caching has to happen here on its output — caching transformedData
+    // beforehand would just get wiped out again.
+    cacheFieldDisplayNames(overriddenData);
+    return overriddenData;
   }
 
   // Because we visualize this data in a table we have to remove any custom table display settings
@@ -219,7 +230,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
     return (
       <>
-        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
         {hasLogs && !config.exploreHideLogsDownload && (
@@ -242,7 +253,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations } = this.props;
+    const { isLoading, options, data, formattedDataDescription, onOptionsChange, hasTransformations, useTableNG } =
+      this.props;
     const { dataFrameIndex, transformationOptions, selectedDataFrame, excelCompatibilityMode } = this.state;
     const styles = getPanelInspectorStyles();
 
@@ -272,7 +284,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const hasServiceGraph = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
 
     return (
-      <div className={styles.wrap} aria-label={selectors.components.PanelInspector.Data.content}>
+      <div className={styles.wrap} data-testid={selectors.components.PanelInspector.Data.content}>
         <div className={styles.toolbar}>
           <InspectDataOptions
             data={data}
@@ -291,9 +303,19 @@ export class InspectDataTab extends PureComponent<Props, State> {
         </div>
         <div className={styles.content}>
           <AutoSizer>
-            {({ width, height }) => {
+            {({ width, height }: Size) => {
               if (width === 0) {
                 return null;
+              }
+
+              if (useTableNG) {
+                // TableNG sizes its grid to its DOM container rather than to these props,
+                // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
+                return (
+                  <div style={{ width, height }}>
+                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                  </div>
+                );
               }
 
               return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
@@ -303,6 +325,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
+  const idx = frames.findIndex((f) => f?.fields?.length);
+  if (idx <= 0) {
+    return frames;
+  }
+  return [frames[idx], ...frames.slice(0, idx), ...frames.slice(idx + 1)];
 }
 
 function buildTransformationOptions() {

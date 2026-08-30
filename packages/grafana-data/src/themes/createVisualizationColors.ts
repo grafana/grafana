@@ -1,8 +1,8 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { FALLBACK_COLOR } from '../types/fieldColor';
 
-import { ThemeColors } from './createColors';
+import { type ThemeColors } from './createColors';
 
 /**
  * @alpha

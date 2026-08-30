@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { DetailedHTMLProps, HTMLAttributes } from 'react';
+import { type DetailedHTMLProps, type HTMLAttributes } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
@@ -26,5 +26,5 @@ const getStyles = (theme: GrafanaTheme2) =>
   css({
     backgroundColor: theme.components.panel.background,
     border: `1px solid ${theme.components.panel.borderColor}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
   });

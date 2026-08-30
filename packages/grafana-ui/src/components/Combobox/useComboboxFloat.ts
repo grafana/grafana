@@ -1,5 +1,5 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
-import { useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type RefObject, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -15,7 +15,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
@@ -25,13 +25,27 @@ const POPOVER_PADDING = 16;
 
 const SCROLL_CONTAINER_PADDING = 8;
 
+interface UseComboboxFloatReturn {
+  inputRef: RefObject<HTMLInputElement | null>;
+  floatingRef: RefObject<HTMLDivElement | null>;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  floatStyles: CSSProperties & {
+    width: number;
+    maxWidth: number;
+    maxHeight: number;
+  };
+}
+
 // 16px svg width + 12px Icon padding
 const ICON_WIDTH = 28;
 
 // MessageRow uses Box padding={2} = theme.spacing(2) = 16px each side
 const MESSAGE_ROW_PADDING = 32;
 
-export const useComboboxFloat = (items: Array<ComboboxOption<string | number>>, isOpen: boolean) => {
+export const useComboboxFloat = (
+  items: Array<ComboboxOption<string | number>>,
+  isOpen: boolean
+): UseComboboxFloatReturn => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { QueryOperationRowHeader, QueryOperationRowHeaderProps } from './QueryOperationRowHeader';
+import { QueryOperationRowHeader, type QueryOperationRowHeaderProps } from './QueryOperationRowHeader';
 
 const setup = (propOverrides?: Partial<QueryOperationRowHeaderProps>) => {
   const props: QueryOperationRowHeaderProps = {
@@ -9,7 +9,6 @@ const setup = (propOverrides?: Partial<QueryOperationRowHeaderProps>) => {
     isContentVisible: true,
     id: 'test-id',
     onRowToggle: jest.fn(),
-    reportDragMousePosition: jest.fn(),
     ...propOverrides,
   };
   return render(<QueryOperationRowHeader {...props}></QueryOperationRowHeader>);
@@ -18,6 +17,17 @@ const setup = (propOverrides?: Partial<QueryOperationRowHeaderProps>) => {
 describe('QueryOperationRowHeader', () => {
   test('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
+  });
+
+  describe('drag handle', () => {
+    test('should carry its own accessible name rather than relying on the icon', () => {
+      setup();
+      expect(screen.getByLabelText('Drag and drop to reorder')).toBeInTheDocument();
+    });
+    test('should not render the drag handle when the row is not draggable', () => {
+      setup({ draggable: false });
+      expect(screen.queryByLabelText('Drag and drop to reorder')).not.toBeInTheDocument();
+    });
   });
 
   describe('collapsable property', () => {

@@ -1,16 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
-import { getFeatureToggle } from '../../utils/featureToggle';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -23,6 +22,7 @@ import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
+import { type PanelStatusItem } from './types';
 
 /**
  * @internal
@@ -32,7 +32,10 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string | React.ReactElement;
+  /** Shown in info icon tooltip next to the title, supports simple html markup */
   description?: string | (() => string);
+  /** Shown in as text below the title, supports simple html markup */
+  subtitle?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
@@ -48,6 +51,10 @@ interface BaseProps {
    * Used to display status message (used for panel errors currently)
    */
   statusMessage?: string;
+  /**
+   * Structured list of errors and notices shown in the panel header status popover.
+   */
+  statusItems?: PanelStatusItem[];
   /**
    * Handle opening error details view (like inspect / error tab)
    */
@@ -81,6 +88,11 @@ interface BaseProps {
    * Can contain text, pills, links, buttons, or any other React elements.
    */
   subHeaderContent?: ReactNode;
+  /**
+   * Minimum height (px) for the panel container. Used by content-fit layouts so
+   * the chrome still fills a floor when its content is shorter.
+   */
+  minHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -143,6 +155,7 @@ export function PanelChrome({
   hoverHeaderOffset,
   loadingState,
   statusMessage,
+  statusItems,
   statusMessageOnClick,
   leftItems,
   actions,
@@ -158,6 +171,8 @@ export function PanelChrome({
   onDragStart,
   showMenuAlways = false,
   subHeaderContent,
+  subtitle,
+  minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -181,28 +196,36 @@ export function PanelChrome({
     collapsed = !isOpen;
   }
 
+  const descriptionTitleItem = description && (
+    <PanelDescription description={description} className={dragClassCancel} />
+  );
+
+  const subtitleContent = subtitle && <PanelDescription description={subtitle} inSubHeader />;
+
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
+  const showSubHeader = !collapsed && Boolean(subHeaderContent || subtitleContent);
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  // in dashboards we always have a subHeaderContent react node that sometimes is empty so showSubHeader can be true but 0 height
+  const subHeaderHeight = showSubHeader ? measuredSubHeaderHeight : 0;
+  const headerHeight = getHeaderHeight(theme, hasHeader, subHeaderHeight);
+
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
     height,
     width
   );
 
   const headerStyles: CSSProperties = {
-    height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -244,10 +267,16 @@ export function PanelChrome({
     (evt: React.PointerEvent) => {
       // Ignore clicks inside buttons, links, canvas and svg elments
       // This does prevent a clicks inside a graphs from selecting panel as there is normal div above the canvas element that intercepts the click
+      // '[role="columnheader"]' targets table column headers (e.g. react-data-grid), preventing sort clicks
+      // and column resize drags from selecting the panel in edit mode.
+      // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
       if (
         evt.target instanceof Element &&
-        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container') ||
-          evt.target.classList.contains('u-over'))
+        (evt.target.closest(
+          'button,a,canvas,svg,[role="button"],[role="combobox"],#grafana-portal-container,[role="columnheader"]'
+        ) ||
+          evt.target.classList.contains('u-over') ||
+          evt.target.classList.contains('u-axis'))
       ) {
         // Stop propagation otherwise row config editor will get selected
         evt.stopPropagation();
@@ -307,9 +336,9 @@ export function PanelChrome({
         </div>
       )}
 
-      {(titleItems || description) && (
+      {(titleItems || descriptionTitleItem) && (
         <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          <PanelDescription description={description} className={dragClassCancel} />
+          {descriptionTitleItem}
           {titleItems}
         </div>
       )}
@@ -392,10 +421,11 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {statusMessage && (
+            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
+                  items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                 />
@@ -415,10 +445,11 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {statusMessage && (
+              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}
+                    items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                   />
@@ -438,8 +469,9 @@ export function PanelChrome({
                 />
               )}
             </div>
-            {!collapsed && subHeaderContent && (
+            {!collapsed && (subHeaderContent || subtitleContent) && (
               <div className={styles.subHeader} ref={subHeaderRef}>
+                {subtitleContent}
                 {subHeaderContent}
               </div>
             )}
@@ -467,13 +499,10 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
+const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
-    if (getFeatureToggle('newPanelPadding')) {
-      return theme.spacing.gridSize * 5;
-    }
-
-    return theme.spacing.gridSize * theme.components.panel.headerHeight;
+    // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
+    return theme.spacing.gridSize * theme.components.panel.headerHeight + subHeaderHeight;
   }
 
   return 0;
@@ -484,7 +513,6 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
-  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -500,7 +528,12 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
+    innerHeight = height - headerHeight - panelPadding - panelBorder + chromePadding;
+
+    // When there is no header the content has topPadding
+    if (headerHeight === 0) {
+      innerHeight -= chromePadding;
+    }
   }
 
   if (collapsed) {
@@ -509,6 +542,7 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    paddingTop: headerHeight > 0 ? 0 : chromePadding,
   };
 
   return { contentStyle, innerWidth, innerHeight };
@@ -516,7 +550,6 @@ const getContentStyle = (
 
 const getStyles = (theme: GrafanaTheme2) => {
   const { background, borderColor } = theme.components.panel;
-  const newPanelPadding = getFeatureToggle('newPanelPadding');
 
   return {
     container: css({
@@ -528,7 +561,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'unset',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -576,8 +609,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
-      top: 0,
-      width: '100%',
+      // inset by the panel border width, so the bar sits on the panel's padding box
+      // rather than on top of the border itself
+      top: 1,
+      left: 1,
+      right: 1,
+      // the clip box has to be at least as tall as the corner radius. On a 1px-tall box the
+      // corner-overlap rule scales the radii down to 1px and nothing is rounded
+      // see https://drafts.csswg.org/css-backgrounds/#corner-overlap
+      height: theme.shape.radius.lg,
+      overflow: 'hidden',
+      borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      // the container is taller than the bar it clips, so let hover and clicks through to the header
+      pointerEvents: 'none',
       // this is to force the loading bar container to create a new stacking context
       // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
       // see https://github.com/grafana/grafana/issues/88104
@@ -595,18 +640,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      // remove logic after newPanelPadding feature toggle is removed
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     }),
     subHeader: css({
       label: 'panel-sub-header',
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: newPanelPadding ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 0.5, 0, 1),
+      padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
+      '&:empty': {
+        display: 'none',
+      },
     }),
     pointer: css({
       cursor: 'pointer',

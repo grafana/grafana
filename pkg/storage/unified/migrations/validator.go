@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupResource) *resourcepb.BulkResponse {
@@ -53,28 +54,25 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name        string
-	client      resourcepb.ResourceIndexClient
-	resource    schema.GroupResource
-	table       string
-	whereClause string
-	driverName  string
+	name       string
+	client     resourcepb.ResourceIndexClient
+	resource   schema.GroupResource
+	opts       CountValidationOptions
+	driverName string
 }
 
 func newCountValidator(
 	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
-	table string,
-	whereClause string,
+	opts CountValidationOptions,
 	driverName string,
 ) Validator {
 	return &CountValidator{
-		name:        "CountValidator",
-		client:      client,
-		resource:    resource,
-		table:       table,
-		whereClause: whereClause,
-		driverName:  driverName,
+		name:       "CountValidator",
+		client:     client,
+		resource:   resource,
+		opts:       opts,
+		driverName: driverName,
 	}
 }
 
@@ -119,9 +117,16 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 		return fmt.Errorf("invalid namespace %s: %w", summary.Namespace, err)
 	}
 
-	legacyCount, err := sess.Table(v.table).Where(v.whereClause, orgID).Count()
+	counter := sess.Table(v.opts.Table).Where(v.opts.Where, orgID)
+	if v.opts.Join != nil {
+		counter = counter.Join("INNER", v.opts.Join.Table, v.opts.Join.On)
+	}
+	if v.opts.Distinct != "" {
+		counter = counter.Distinct(v.opts.Distinct)
+	}
+	legacyCount, err := counter.Count()
 	if err != nil {
-		return fmt.Errorf("failed to count %s: %w", v.table, err)
+		return fmt.Errorf("failed to count %s: %w", v.opts.Table, err)
 	}
 
 	var unifiedCount int64
@@ -404,11 +409,28 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Sessi
 	return parentMap, nil
 }
 
+// CountValidationJoin configures an optional INNER JOIN for the legacy count query.
+// Use []string{"tablename", "alias"} as Table to get dialect-correct quoting from xorm.
+type CountValidationJoin struct {
+	Table any    // passed directly to xorm Join(); use []string{"table", "alias"} for quoting
+	On    string // JOIN condition, may use the alias
+}
+
+type CountValidationOptions struct {
+	Table string
+	// includes org_id
+	Where    string
+	Distinct string
+	// Join optionally adds an INNER JOIN so the legacy count matches exactly what the
+	// migrator processes (e.g. excluding orphaned rows whose foreign key was deleted).
+	Join *CountValidationJoin
+}
+
 // CountValidation creates a ValidatorFactory for count-based validation.
 // It compares the count of resources in the legacy table with unified storage.
-func CountValidation(resource schema.GroupResource, table, whereClause string) ValidatorFactory {
+func CountValidation(resource schema.GroupResource, opts CountValidationOptions) ValidatorFactory {
 	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newCountValidator(client, resource, table, whereClause, driverName)
+		return newCountValidator(client, resource, opts, driverName)
 	}
 }
 

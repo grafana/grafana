@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,58 +31,19 @@ type renderJWT struct {
 }
 
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
+	if rs.perRequestRenderKeyProvider == nil {
+		// Rendering is not configured. Just reject the token; it has no reasonable use here.
+		return nil, false
+	}
+
 	var from string
 	start := time.Now()
 
-	var renderUser *RenderUser
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if looksLikeJWT(key) && rs.features.IsEnabled(ctx, featuremgmt.FlagRenderAuthJWT) {
-		from = "jwt"
-		renderUser = rs.getRenderUserFromJWT(key)
-	} else {
-		from = "cache"
-		renderUser = rs.getRenderUserFromCache(ctx, key)
-	}
-
-	found := renderUser != nil
+	renderUser, found := rs.perRequestRenderKeyProvider.validate(ctx, key)
 	success := strconv.FormatBool(found)
 	metrics.MRenderingUserLookupSummary.WithLabelValues(success, from).Observe(float64(time.Since(start)))
 
 	return renderUser, found
-}
-
-func (rs *RenderingService) getRenderUserFromJWT(key string) *RenderUser {
-	claims := new(renderJWT)
-	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (any, error) {
-		return []byte(rs.Cfg.RendererAuthToken), nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
-
-	if err != nil || !tkn.Valid {
-		rs.log.Error("Could not get render user from JWT", "err", err)
-		return nil
-	}
-
-	return claims.RenderUser
-}
-
-func (rs *RenderingService) getRenderUserFromCache(ctx context.Context, key string) *RenderUser {
-	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
-	if err != nil {
-		rs.log.Error("Could not get render user from remote cache", "err", err)
-		return nil
-	}
-
-	ru := new(RenderUser)
-	buf := bytes.NewBuffer(val)
-
-	err = gob.NewDecoder(buf).Decode(&ru)
-	if err != nil {
-		rs.log.Error("Could not decode render user from remote cache", "err", err)
-		return nil
-	}
-
-	return ru
 }
 
 func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
@@ -135,6 +95,25 @@ func (r *perRequestRenderKeyProvider) afterRequest(ctx context.Context, _ AuthOp
 	deleteRenderKey(r.cache, r.log, ctx, renderKey)
 }
 
+func (r *perRequestRenderKeyProvider) validate(ctx context.Context, key string) (*RenderUser, bool) {
+	val, err := r.cache.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	if err != nil {
+		r.log.Error("Could not get render user from remote cache", "err", err)
+		return nil, false
+	}
+
+	ru := new(RenderUser)
+	buf := bytes.NewBuffer(val)
+
+	err = gob.NewDecoder(buf).Decode(&ru)
+	if err != nil {
+		r.log.Error("Could not decode render user from remote cache", "err", err)
+		return nil, false
+	}
+
+	return ru, ru != nil
+}
+
 type jwtRenderKeyProvider struct {
 	log       log.Logger
 	authToken []byte
@@ -161,6 +140,24 @@ func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
 
 func (j *jwtRenderKeyProvider) afterRequest(_ context.Context, _ AuthOpts, _ string) {
 	// do nothing - the JWT will just expire
+}
+
+func (j *jwtRenderKeyProvider) validate(_ context.Context, key string) (*RenderUser, bool) {
+	if !looksLikeJWT(key) {
+		return nil, false
+	}
+
+	claims := new(renderJWT)
+	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (any, error) {
+		return j.authToken, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
+
+	if err != nil || !tkn.Valid {
+		j.log.Error("Could not get render user from JWT", "err", err)
+		return nil, false
+	}
+
+	return claims.RenderUser, claims.RenderUser != nil
 }
 
 func looksLikeJWT(key string) bool {

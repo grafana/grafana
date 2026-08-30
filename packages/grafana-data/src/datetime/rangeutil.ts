@@ -1,13 +1,22 @@
-import { formatDateRange, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
-import { getFeatureToggle } from '../utils/featureToggles';
+import {
+  type RawTimeRange,
+  type TimeRange,
+  type TimeZone,
+  type IntervalValues,
+  type RelativeTimeRange,
+  type TimeOption,
+} from '../types/time';
 
 import * as dateMath from './datemath';
-import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
-import { isDateTime, DateTime, dateTime } from './moment_wrapper';
+import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { isDateTime, type DateTime, dateTime, dateTimeForTimeZone } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
+// `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
+// in `describeTextRange`; `datemath.parse` itself recognizes the base unit
+// (`Q` / `y`) with a separate fiscal flag, so these keys are local to display.
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },
   m: { display: 'minute' },
@@ -15,76 +24,89 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   d: { display: 'day' },
   w: { display: 'week' },
   M: { display: 'month' },
+  Q: { display: 'quarter' },
   y: { display: 'year' },
+  fQ: { display: 'fiscal quarter' },
+  fy: { display: 'fiscal year' },
 };
 
 const getLastNMinutesDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNMinutes', 'Last {{count}} minutes', {
+  return t('grafana-data.datetime.rangeutils.lastNMinutes', '', {
     count,
     defaultValue_one: 'Last {{count}} minute',
+    defaultValue_other: 'Last {{count}} minutes',
   });
 };
 
 const getLastNHoursDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNHours', 'Last {{count}} hours', {
+  return t('grafana-data.datetime.rangeutils.lastNHours', '', {
     count,
     defaultValue_one: 'Last {{count}} hour',
+    defaultValue_other: 'Last {{count}} hours',
   });
 };
 
 const getLastNDaysDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNDays', 'Last {{count}} days', {
+  return t('grafana-data.datetime.rangeutils.lastNDays', '', {
     count,
     defaultValue_one: 'Last {{count}} day',
+    defaultValue_other: 'Last {{count}} days',
   });
 };
 
 const getLastNMonthsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNMonths', 'Last {{count}} months', {
+  return t('grafana-data.datetime.rangeutils.lastNMonths', '', {
     count,
     defaultValue_one: 'Last {{count}} month',
+    defaultValue_other: 'Last {{count}} months',
   });
 };
 
 const getLastNYearsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNYears', 'Last {{count}} years', {
+  return t('grafana-data.datetime.rangeutils.lastNYears', '', {
     count,
     defaultValue_one: 'Last {{count}} year',
+    defaultValue_other: 'Last {{count}} years',
   });
 };
 
 const getNextNMinutesDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNMinutes', 'Next {{count}} minutes', {
+  return t('grafana-data.datetime.rangeutils.nextNMinutes', '', {
     count,
     defaultValue_one: 'Next {{count}} minute',
+    defaultValue_other: 'Next {{count}} minutes',
   });
 };
 
 const getNextNHoursDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNHours', 'Next {{count}} hours', {
+  return t('grafana-data.datetime.rangeutils.nextNHours', '', {
     count,
     defaultValue_one: 'Next {{count}} hour',
+    defaultValue_other: 'Next {{count}} hours',
   });
 };
 
 const getNextNDaysDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNDays', 'Next {{count}} days', {
+  return t('grafana-data.datetime.rangeutils.nextNDays', '', {
     count,
     defaultValue_one: 'Next {{count}} day',
+    defaultValue_other: 'Next {{count}} days',
   });
 };
 
 const getNextNMonthsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNMonths', 'Next {{count}} months', {
+  return t('grafana-data.datetime.rangeutils.nextNMonths', '', {
     count,
     defaultValue_one: 'Next {{count}} month',
+    defaultValue_other: 'Next {{count}} months',
   });
 };
 
 const getNextNYearsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNYears', 'Next {{count}} years', {
+  return t('grafana-data.datetime.rangeutils.nextNYears', '', {
     count,
     defaultValue_one: 'Next {{count}} year',
+    defaultValue_other: 'Next {{count}} years',
   });
 };
 
@@ -389,7 +411,7 @@ export function describeTextRange(expr: string): TimeOption {
     opt = { from: 'now', to: expr, display: '' };
   }
 
-  const parts = /^now([-+])(\d+)(\w)/.exec(expr);
+  const parts = /^now([-+])(\d+)(f[Qy]|[yMwdhmsQ])/.exec(expr);
   if (parts) {
     const unit = parts[3];
     const amount = parseInt(parts[2], 10);
@@ -410,17 +432,6 @@ export function describeTextRange(expr: string): TimeOption {
   return opt;
 }
 
-// TODO: Should we keep these format presets somewhere common?
-const rangeFormatShort: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'short',
-};
-
-const rangeFormatFull: Intl.DateTimeFormatOptions = {
-  dateStyle: 'short',
-  timeStyle: 'medium',
-};
-
 /**
  * Use this function to get a properly formatted string representation of a {@link @grafana/data:RawTimeRange | range}.
  *
@@ -433,6 +444,7 @@ const rangeFormatFull: Intl.DateTimeFormatOptions = {
 export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]): string {
   const rangeOptions = quickRanges ? quickRanges.concat(getStandardRangeOptions()) : getStandardRangeOptions();
   const option = findRangeInOptions(range, rangeOptions);
+  const now = dateTimeForTimeZone(timeZone);
 
   if (option) {
     return option.display;
@@ -441,33 +453,19 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   const options = { timeZone };
 
   if (isDateTime(range.from) && isDateTime(range.to)) {
-    const fromDate = range.from.toDate();
-    const toDate = range.to.toDate();
-
-    if (!getFeatureToggle('localeFormatPreference')) {
-      return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
-    }
-
-    const hasSeconds = fromDate.getSeconds() !== 0 || toDate.getSeconds() !== 0;
-    const intlFormat = hasSeconds ? rangeFormatFull : rangeFormatShort;
-    const intlFormatOptions = {
-      ...intlFormat,
-      timeZone: timeZone ? toIANATimezone(timeZone) : undefined,
-    };
-
-    return formatDateRange(fromDate, toDate, intlFormatOptions);
+    return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
 
   // TODO: We could update these to all use Intl APIs.
   // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
-    const parsed = dateMath.parse(range.to, true, 'utc');
-    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
+    const parsed = dateMath.toDateTime(range.to, { roundUp: true, timezone: 'utc', now });
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + describeTimeAgo(parsed, { ...options, now }) : '';
   }
 
   if (isDateTime(range.to)) {
-    const parsed = dateMath.parse(range.from, false, 'utc');
-    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
+    const parsed = dateMath.toDateTime(range.from, { roundUp: false, timezone: 'utc', now });
+    return parsed ? describeTimeAgo(parsed, { ...options, now }) + ' to ' + dateTimeFormat(range.to, options) : '';
   }
 
   if (range.to.toString() === 'now') {
@@ -477,6 +475,17 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
+
+const describeTimeAgo = (parsed: DateTime, options: { timeZone?: TimeZone; now?: DateTime }) => {
+  const base = dateTimeForTimeZone(options.timeZone, options.now);
+  const diff = parsed.diff(base, 'seconds');
+  if (parsed.isValid() && Math.round(Math.abs(diff)) <= 44) {
+    return diff > 0
+      ? t('grafana-data.datetime.rangeutils.fewSecondsFuture', 'in a few seconds')
+      : t('grafana-data.datetime.rangeutils.fewSecondsPast', 'a few seconds ago');
+  }
+  return dateTimeFormatTimeAgo(parsed, options);
+};
 
 export const isValidTimeSpan = (value: string) => {
   if (value.indexOf('$') === 0 || value.indexOf('+$') === 0) {

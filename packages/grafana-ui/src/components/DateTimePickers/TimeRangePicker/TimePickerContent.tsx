@@ -2,14 +2,14 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
 import {
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isDateTime,
   isValidGrafanaDuration,
   rangeUtil,
-  RawTimeRange,
-  TimeOption,
-  TimeRange,
-  TimeZone,
+  type RawTimeRange,
+  type TimeOption,
+  type TimeRange,
+  type TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import { getFocusStyles } from '../../../themes/mixins';
 import { FilterInput } from '../../FilterInput/FilterInput';
 import { Icon } from '../../Icon/Icon';
 import { TextLink } from '../../Link/TextLink';
-import { WeekStart } from '../WeekStartPicker';
+import { type WeekStart } from '../WeekStartPicker';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
@@ -297,49 +297,52 @@ const getStyles = (
   hideQuickRanges?: boolean,
   isContainerTall?: boolean,
   isFullscreen?: boolean
-) => ({
-  container: css({
-    background: theme.colors.background.elevated,
-    boxShadow: theme.shadows.z3,
-    width: `${isFullscreen ? '546px' : '262px'}`,
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    [`${isReversed ? 'left' : 'right'}`]: 0,
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  body: css({
-    display: 'flex',
-    flexDirection: 'row-reverse',
-    height: `${isContainerTall ? '381px' : '217px'}`,
-    maxHeight: '100vh',
-  }),
-  leftSide: css({
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
-    width: `${!hideQuickRanges ? '60%' : '100%'}`,
-    overflow: 'auto',
-    scrollbarWidth: 'thin',
-    order: isReversed ? 1 : 0,
-  }),
-  rightSide: css({
-    width: `${isFullscreen ? '40%' : '100%'}; !important`,
-    borderRight: isReversed ? `1px solid ${theme.colors.border.weak}` : 'none',
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-  timeRangeFilter: css({
-    padding: theme.spacing(1),
-  }),
-  spacing: css({
-    marginTop: '16px',
-  }),
-  scrollContent: css({
-    overflowY: 'auto',
-    scrollbarWidth: 'thin',
-  }),
-});
+) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  return {
+    container: css({
+      background: theme.colors.background.elevated,
+      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
+      width: `${isFullscreen ? '546px' : '262px'}`,
+      borderRadius: theme.shape.radius.lg,
+      border: `1px solid ${theme.colors.border.weak}`,
+      [`${isReversed ? 'left' : 'right'}`]: 0,
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    body: css({
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      height: `${isContainerTall ? '381px' : '217px'}`,
+      maxHeight: '100vh',
+    }),
+    leftSide: css({
+      display: 'flex',
+      flexDirection: 'column',
+      borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
+      width: `${!hideQuickRanges ? '60%' : '100%'}`,
+      overflow: 'auto',
+      scrollbarWidth: 'thin',
+      order: isReversed ? 1 : 0,
+    }),
+    rightSide: css({
+      width: `${isFullscreen ? '40%' : '100%'}; !important`,
+      borderRight: isReversed ? `1px solid ${theme.colors.border.weak}` : 'none',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    timeRangeFilter: css({
+      padding: theme.spacing(1),
+    }),
+    spacing: css({
+      marginTop: '16px',
+    }),
+    scrollContent: css({
+      overflowY: 'auto',
+      scrollbarWidth: 'thin',
+    }),
+  };
+};
 
 const getNarrowScreenStyles = (theme: GrafanaTheme2) => ({
   header: css({

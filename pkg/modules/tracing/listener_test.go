@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
+	"github.com/grafana/dskit/services"
 	tracingmodule "github.com/grafana/grafana/pkg/modules/tracing"
 )
 
@@ -260,7 +260,7 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 	}
 
 	// Check the first 3 spans (service state spans)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		span := spans[i]
 		require.Equal(t, expectedNames[i], span.Name)
 		require.True(t, span.EndTime.After(span.StartTime), "Span %s should be ended", span.Name)

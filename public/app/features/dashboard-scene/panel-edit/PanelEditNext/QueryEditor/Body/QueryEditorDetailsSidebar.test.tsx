@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react';
 
-import { PanelData } from '@grafana/data';
-import { QueryGroupOptions } from 'app/types/query';
+import { type PanelData } from '@grafana/data';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { renderWithQueryEditorProvider, mockOptions, mockActions } from '../testUtils';
 

@@ -17,6 +17,8 @@ func (session *Session) Count(bean ...interface{}) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	var sqlStr string
 	var args []interface{}
 	var err error
@@ -45,8 +47,10 @@ func (session *Session) sum(res interface{}, bean interface{}, columnNames ...st
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	v := reflect.ValueOf(res)
-	if v.Kind() != reflect.Ptr {
+	if v.Kind() != reflect.Pointer {
 		return errors.New("need a pointer to a variable")
 	}
 

@@ -1,31 +1,29 @@
 import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameType,
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   FieldType,
   SupportedTransformationType,
   toDataFrame,
 } from '@grafana/data';
-import { config, CorrelationData } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { config, type CorrelationData } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema/dist/esm/index';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
+import { type ExploreItemState } from 'app/types/explore';
 
-import { EditFormDTO } from './Forms/types';
-import { Correlation } from './types';
+import { type EditFormDTO, type FormDTO } from './Forms/types';
+import { type Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn().mockReturnValue({
-    get: jest.fn().mockResolvedValue({
-      name: 'getTest',
-      getRef: () => {
-        return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
-      },
-    }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn().mockResolvedValue({
+    name: 'getTest',
+    getRef: () => {
+      return { type: 'testTypeFromLookup', uid: 'testUidFromLookup' };
+    },
   }),
 }));
 
@@ -141,7 +139,7 @@ describe('correlations utils', () => {
     config.featureToggles.lokiLogsDataplane = originalDataplaneState;
   });
 
-  it('generates a partial spec with config only when nothing is edited', () => {
+  it('generates a partial spec with config and nulled target only when nothing is edited and the correlation is external', () => {
     const correlation: Correlation = {
       uid: 'test',
       sourceUID: 'test',
@@ -152,7 +150,7 @@ describe('correlations utils', () => {
     };
     const editForm: EditFormDTO = { ...correlation, label: correlation.label! };
     const partialSpec = generatePartialEditSpec(editForm, correlation);
-    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } } });
+    expect(partialSpec).toStrictEqual({ config: { field: 'test', target: { url: 'test' } }, target: null });
   });
 
   it('generates a partial spec as expected when things are edited', () => {
@@ -226,6 +224,20 @@ describe('correlations utils', () => {
     } as unknown as ExploreItemState;
     const label = await generateDefaultLabel(sourcePane, targetPane);
     expect(label).toBe('getTest to testB');
+  });
+
+  it('does not add target data when the correlation is external', async () => {
+    const addForm = {
+      config: { field: 'test', target: { url: 'test' } },
+      sourceUID: 'test',
+      label: 'test',
+      description: 'test',
+      targetUID: undefined,
+      type: 'external',
+    };
+    // this mimics the real scenario this form gets in, even though it is technically invalid (external types shouldn't have the targetUID property)
+    const addSpec = await utils.generateAddSpec(addForm as FormDTO);
+    expect(addSpec.target).not.toBeDefined();
   });
   describe('getCorrelationsFromStorage', () => {
     const originalFeatureToggles = config.featureToggles;

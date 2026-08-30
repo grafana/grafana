@@ -1,4 +1,4 @@
-import { AppNotificationSeverity, AppNotificationsState } from 'app/types/appNotifications';
+import { AppNotificationSeverity, type AppNotificationsState } from 'app/types/appNotifications';
 
 import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 
@@ -180,7 +180,7 @@ describe('notify', () => {
   });
 
   it('persists notifications to localStorage', () => {
-    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
+    window.localStorage.clear();
 
     const id1 = '696da53b-6ae7-4824-9e0e-d6a3b54a2c74';
     const id2 = '4477fcd9-246c-45a5-8818-e22a16683dae';
@@ -213,17 +213,16 @@ describe('notify', () => {
       })
     );
 
-    expect(setItemSpy).toHaveBeenCalledTimes(1);
+    const storedValue = window.localStorage.getItem('notifications');
+    expect(storedValue).not.toBeNull();
 
-    const [calledKey, calledValue] = setItemSpy.mock.calls[0];
-    const parsedJsonCalledValue = JSON.parse(calledValue);
-    expect(calledKey).toBe('notifications');
+    const parsedJsonStoredValue = JSON.parse(storedValue!);
 
     // Assert showing toasts are not still showing after page refresh
-    expect(parsedJsonCalledValue[id1].showing).toBeFalsy(); // old notification that was false anyway
-    expect(parsedJsonCalledValue[id2].showing).toBeFalsy(); // new notification that we store as false
+    expect(parsedJsonStoredValue[id1].showing).toBeFalsy(); // old notification that was false anyway
+    expect(parsedJsonStoredValue[id2].showing).toBeFalsy(); // new notification that we store as false
 
-    expect(parsedJsonCalledValue).toEqual({
+    expect(parsedJsonStoredValue).toEqual({
       [id1]: {
         id: id1,
         severity: AppNotificationSeverity.Warning,

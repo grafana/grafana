@@ -1,15 +1,24 @@
-import { CSSProperties, ReactElement, useMemo, useState, useRef, useEffect, memo, RefObject } from 'react';
-import { DataGridHandle } from 'react-data-grid';
+import {
+  type CSSProperties,
+  type ReactElement,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  memo,
+  type RefObject,
+} from 'react';
 
-import { ActionModel, DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
+import { type ActionModel, type DataFrame, type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { TableCellTooltipPlacement } from '@grafana/schema';
+import { type DataGridHandle } from '@grafana/react-data-grid';
+import { type TableCellTooltipPlacement } from '@grafana/schema';
 
 import { Popover } from '../../../Tooltip/Popover';
-import { TableCellOptions } from '../../types';
-import { getTooltipStyles } from '../styles';
-import { TableCellRenderer, TableCellRendererProps } from '../types';
+import { type TableCellOptions } from '../../types';
+import { type getTooltipStyles } from '../styles';
+import { type TableCellRenderer, type TableCellRendererProps } from '../types';
 
 export interface TableCellTooltipProps {
   cellOptions: TableCellOptions;
@@ -27,7 +36,6 @@ export interface TableCellTooltipProps {
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;
-  tooltipField: Field;
   theme: GrafanaTheme2;
   width?: number;
 }
@@ -50,7 +58,6 @@ export const TableCellTooltip = memo(
     rowIdx,
     style,
     theme,
-    tooltipField,
     width = 300,
   }: TableCellTooltipProps) => {
     const rawValue = field.values[rowIdx];
@@ -60,7 +67,6 @@ export const TableCellTooltip = memo(
     const [pinned, setPinned] = useState(false);
 
     const show = hovered || pinned;
-    const dynamicHeight = tooltipField.config.custom?.cellOptions?.dynamicHeight;
 
     useEffect(() => {
       if (pinned) {
@@ -145,7 +151,7 @@ export const TableCellTooltip = memo(
             placement={placement}
             wrapperClassName={classes.tooltipWrapper}
             className={className}
-            style={{ ...style, width, ...(!dynamicHeight && { height }) }}
+            style={{ ...style, width }}
             referenceElement={cellElement}
             onMouseLeave={onMouseLeave}
             onMouseEnter={onMouseEnter}

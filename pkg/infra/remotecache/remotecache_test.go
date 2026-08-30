@@ -37,7 +37,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheSettings, sqlstore 
 func TestIntegrationCachedBasedOnConfig(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := sqlstore.InitTestDB(t)
+	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})

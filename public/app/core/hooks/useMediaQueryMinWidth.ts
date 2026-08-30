@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { ThemeBreakpointsKey } from '@grafana/data';
+import { type ThemeBreakpointsKey } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 export function useMediaQueryMinWidth(breakpoint: ThemeBreakpointsKey): boolean {

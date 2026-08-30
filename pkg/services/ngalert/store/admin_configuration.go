@@ -77,17 +77,45 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 
 func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Exist()
+		existing := &ngmodels.AdminConfiguration{}
+		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Get(existing)
 		if err != nil {
 			return err
 		}
 
 		if !has {
-			_, err := sess.Table("ngalert_configuration").Insert(cmd.AdminConfiguration)
+			// Partial writes (e.g. UID-only) can arrive before any row exists; send_alerts_to is
+			// NOT NULL and "no row" behaves as internal-only, so default a copy to internal.
+			cfg := *cmd.AdminConfiguration
+			if cfg.SendAlertsTo == nil {
+				internal := ngmodels.InternalAlertmanager
+				cfg.SendAlertsTo = &internal
+			}
+			_, err := sess.Table("ngalert_configuration").Insert(&cfg)
 			return err
 		}
 
-		_, err = sess.Table("ngalert_configuration").AllCols().Update(cmd.AdminConfiguration)
+		cols := buildUpdateCols(cmd.AdminConfiguration)
+		if len(cols) == 0 {
+			return nil
+		}
+		_, err = sess.Table("ngalert_configuration").ID(existing.ID).Cols(cols...).Update(cmd.AdminConfiguration)
 		return err
 	})
+}
+
+// buildUpdateCols builds a list of column names to update based on which fields of the admin configuration are set.
+// this is necessary to avoid overwriting fields with null values when they are not included in the update request.
+func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
+	var cols []string
+
+	if adminConfig.SendAlertsTo != nil {
+		cols = append(cols, "send_alerts_to")
+	}
+
+	if adminConfig.ExternalAlertmanagerUID != nil {
+		cols = append(cols, "external_alertmanager_uid")
+	}
+
+	return cols
 }

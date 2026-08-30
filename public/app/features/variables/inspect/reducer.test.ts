@@ -1,7 +1,7 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { textboxBuilder } from '../shared/testing/builders';
 
-import { initialVariableInspectState, initInspect, variableInspectReducer, VariableInspectState } from './reducer';
+import { initialVariableInspectState, initInspect, variableInspectReducer, type VariableInspectState } from './reducer';
 
 describe('variableInspectReducer', () => {
   describe('when initInspect is dispatched', () => {

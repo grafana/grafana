@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { EditorField } from '@grafana/plugin-ui';
-import { Input, PopoverContent } from '@grafana/ui';
+import { Input, type PopoverContent } from '@grafana/ui';
 
 import { removeMarginBottom } from '../styles';
 

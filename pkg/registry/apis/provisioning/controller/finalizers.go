@@ -2,11 +2,8 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
-	"sort"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -16,19 +13,26 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/util/retry"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
+//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock.go --with-expecter
+type jobQueueCleaner interface {
+	// CleanupQueue deletes all queued jobs for the repository that are not
+	// currently being executed. Returns the number of jobs deleted.
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+}
+
 type finalizer struct {
 	lister        resources.ResourceLister
 	clientFactory resources.ClientFactory
+	jobs          jobQueueCleaner
 	metrics       *finalizerMetrics
 	maxWorkers    int
 }
@@ -40,7 +44,10 @@ func (f *finalizer) process(ctx context.Context,
 	logger := logging.FromContext(ctx)
 	logger.Info("process finalizers", "finalizers", finalizers)
 
-	orderedFinalizers := [3]string{
+	// Clear the job queue first so no pending job gets picked up and starts
+	// running against the repository while the rest of the teardown proceeds.
+	orderedFinalizers := [4]string{
+		repository.RemovePendingJobsFinalizer,
 		repository.CleanFinalizer,
 		repository.ReleaseOrphanResourcesFinalizer,
 		repository.RemoveOrphanResourcesFinalizer}
@@ -56,12 +63,21 @@ func (f *finalizer) process(ctx context.Context,
 		outcome := metricutils.SuccessOutcome
 
 		switch finalizer {
+		case repository.RemovePendingJobsFinalizer:
+			logger.Info("clearing repository job queue")
+			cfg := repo.Config()
+			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
+			if err != nil {
+				err = fmt.Errorf("clear job queue: %w", err)
+				outcome = metricutils.ErrorOutcome
+			}
+
 		case repository.CleanFinalizer:
 			// NOTE: the controller loop will never get run unless a finalizer is set
 			logger.Info("running cleanup finalizer")
-			hooks, ok := repo.(repository.Hooks)
+			webhookRepo, ok := repo.(repository.WebhookRepository)
 			if ok {
-				if err = hooks.OnDelete(ctx); err != nil {
+				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
 					outcome = metricutils.ErrorOutcome
 				}
@@ -106,8 +122,12 @@ func (f *finalizer) newItemProcessor(
 	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) itemProcessor {
-	logger := logging.FromContext(ctx)
+	baseLogger := logging.FromContext(ctx)
 	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+		logger := baseLogger
+
+		// Version is left empty so the client resolves the server's preferred
+		// version via discovery (this covers folders and any other resource).
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
@@ -117,7 +137,13 @@ func (f *finalizer) newItemProcessor(
 			return err
 		}
 
-		err = cb(res, item)
+		// Retry on optimistic-concurrency conflicts from the unified storage
+		// layer ("requested RV does not match current RV"). The finalizer races
+		// with other reconciles/syncs that may mutate the same resource, and a
+		// transient RV mismatch should not fail the whole finalizer run.
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return cb(res, item)
+		})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
@@ -159,16 +185,7 @@ func (f *finalizer) processResourceItems(ctx context.Context, items []*provision
 
 // splitItems separates a sorted list into folder items and non-folder items,
 // preserving the order within each group.
-func splitItems(items *provisioning.ResourceList) (folderItems, resourceItems []*provisioning.ResourceListItem) {
-	for i := range items.Items {
-		if items.Items[i].Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &items.Items[i])
-		} else {
-			resourceItems = append(resourceItems, &items.Items[i])
-		}
-	}
-	return folderItems, resourceItems
-}
+var splitItems = resources.SplitItems
 
 // deleteExistingItems removes all resources managed by the repository.
 // Non-folder resources are deleted concurrently first, then folders are
@@ -189,7 +206,7 @@ func (f *finalizer) deleteExistingItems(
 		return 0, err
 	}
 
-	sortResourceListForDeletion(items)
+	resources.SortResourceListForDeletion(items)
 	folderItems, resourceItems := splitItems(items)
 	process := f.newItemProcessor(ctx, clients, f.removeResources(ctx, logger))
 
@@ -227,7 +244,7 @@ func (f *finalizer) releaseExistingItems(
 		return 0, err
 	}
 
-	sortResourceListForRelease(items)
+	resources.SortResourceListForRelease(items)
 	folderItems, resourceItems := splitItems(items)
 	process := f.newItemProcessor(ctx, clients, f.releaseResources(ctx, logger))
 
@@ -257,7 +274,7 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		patchAnnotations, err := getPatchedAnnotations(item)
+		patchAnnotations, err := resources.GetReleasePatch(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
 		}
@@ -283,111 +300,4 @@ func (f *finalizer) removeResources(
 		)
 		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 	}
-}
-
-type jsonPatchOperation struct {
-	Op   string `json:"op"`
-	Path string `json:"path"`
-}
-
-func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
-	annotations := []jsonPatchOperation{
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
-	}
-
-	if item.Path != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
-			},
-		)
-	}
-	if item.Hash != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
-			},
-		)
-	}
-
-	return json.Marshal(annotations)
-}
-
-func escapePatchString(s string) string {
-	s = strings.ReplaceAll(s, "~", "~0")
-	s = strings.ReplaceAll(s, "/", "~1")
-	return s
-}
-
-// sortResourceListForRelease orders items top-down by depth so that parent
-// resources are unmanaged before their children. At equal depth, folders are
-// ordered before other resources so a folder is released before anything it
-// contains at the same level.
-//
-// Example result for a repo with nested folders and dashboards:
-//
-//	folderA/                          (depth 1, folder)
-//	root-dashboard.json               (depth 1, resource)
-//	folderA/subfolderB/               (depth 2, folder)
-//	folderA/dashboard.json            (depth 2, resource)
-//	folderA/subfolderB/dashboard.json (depth 3, resource)
-func sortResourceListForRelease(list *provisioning.ResourceList) {
-	sort.SliceStable(list.Items, func(i, j int) bool {
-		depthI := len(strings.Split(list.Items[i].Path, "/"))
-		depthJ := len(strings.Split(list.Items[j].Path, "/"))
-		if depthI != depthJ {
-			return depthI < depthJ
-		}
-
-		// at equal depth, folders before non-folders
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-		if isFolderI != isFolderJ {
-			return isFolderI
-		}
-
-		return false
-	})
-}
-
-func sortResourceListForDeletion(list *provisioning.ResourceList) {
-	// FIXME: this code should be simplified once unified storage folders support recursive deletion
-	// Sort by the following logic:
-	// - Put folders at the end so that we empty them first.
-	// - Sort folders by depth so that we remove the deepest first
-	// - If the repo is created within a folder in grafana, make sure that folder is last.
-	sort.Slice(list.Items, func(i, j int) bool {
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-
-		// non-folders always go first in the order of deletion.
-		if isFolderI != isFolderJ {
-			return !isFolderI
-		}
-
-		// if both are not folders, keep order (doesn't matter)
-		if !isFolderI && !isFolderJ {
-			return false
-		}
-
-		hasFolderI := list.Items[i].Folder != ""
-		hasFolderJ := list.Items[j].Folder != ""
-		// if one folder is in the root (i.e. does not have a folder specified), put that last
-		if hasFolderI != hasFolderJ {
-			return hasFolderI
-		}
-
-		// if both are nested folder, sort by depth, with the deepest one being first
-		depthI := len(strings.Split(list.Items[i].Path, "/"))
-		depthJ := len(strings.Split(list.Items[j].Path, "/"))
-		if depthI != depthJ {
-			return depthI > depthJ
-		}
-
-		// otherwise, keep order (doesn't matter)
-		return false
-	})
 }

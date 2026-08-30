@@ -1,9 +1,12 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
+import { DashboardInteractions } from './interactions';
 import { getTestDashboardSceneFromSaveModel } from './test-utils';
 import { trackDashboardSceneCreatedOrSaved, trackDashboardSceneLoaded } from './tracking';
 
@@ -28,6 +31,12 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useSaveDashboardMutation: () => [() => Promise.resolve({ data: { version: 2, uid: 'new-uid' } })],
 }));
 
+jest.mock('../analytics/dashboard-templates/main', () => ({
+  CustomDashboardTemplateInteractions: {
+    dashboardSavedFromTemplate: jest.fn(),
+  },
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
@@ -47,7 +56,7 @@ describe('dashboard tracking', () => {
   describe('save v2 dashboard tracking', () => {
     it('should call report interaction with correct parameters when saving a new dashboard', async () => {
       const scene = buildTestScene();
-      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url' });
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'new dashboard', url: 'new-url', diff_count: 5 });
       expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboard_created', {
         isDynamicDashboard: true,
         uid: 'dashboard-test',
@@ -69,6 +78,7 @@ describe('dashboard tracking', () => {
         variable_type_query_count: 1,
         variable_type_datasource_count: 1,
         variable_type_adhoc_count: 1,
+        diff_count: 5,
       });
     });
 
@@ -77,6 +87,7 @@ describe('dashboard tracking', () => {
       await trackDashboardSceneCreatedOrSaved(true, scene, {
         name: 'new dashboard',
         url: 'new-url',
+        diff_count: 7,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
       });
@@ -103,7 +114,54 @@ describe('dashboard tracking', () => {
         variable_type_adhoc_count: 1,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
+        diff_count: 7,
       });
+    });
+  });
+
+  describe('dashboardSavedFromTemplate', () => {
+    afterEach(() => {
+      setTestFlags({});
+      locationService.push('/');
+    });
+
+    it('fires when on the template route with dashboardTemplateUid and the FF is enabled', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).toHaveBeenCalledWith({
+        dashboardUid: 'dashboard-test',
+        templateUid: 'tpl-42',
+      });
+    });
+
+    it('does not fire when the route is something other than /dashboard/template', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      locationService.push('/d/abc/my-dash?dashboardTemplateUid=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
+    });
+
+    it('does not fire when dashboardTemplateUid is missing from the URL', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      locationService.push('/dashboard/template');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
+    });
+
+    it('does not fire when the feature flag is disabled', async () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
+      locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
+      const scene = buildTestScene();
+      await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
+
+      expect(CustomDashboardTemplateInteractions.dashboardSavedFromTemplate).not.toHaveBeenCalled();
     });
   });
 
@@ -154,6 +212,38 @@ describe('dashboard tracking', () => {
         ],
         hasEditPermissions: true,
         hasSavePermissions: true,
+      });
+    });
+  });
+
+  describe('global variables interactions', () => {
+    it('reports dashboards_global_variables_loaded', () => {
+      DashboardInteractions.globalVariablesLoaded({
+        global_count: 2,
+        folder_count: 1,
+        total_count: 3,
+        mode: 'all',
+      });
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+        global_count: 2,
+        folder_count: 1,
+        total_count: 3,
+        mode: 'all',
+        isDynamicDashboard: true,
+      });
+    });
+
+    it('reports dashboards_global_variables_mode_changed', () => {
+      DashboardInteractions.globalVariablesModeChanged({
+        from_mode: 'all',
+        to_mode: 'none',
+      });
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_mode_changed', {
+        from_mode: 'all',
+        to_mode: 'none',
+        isDynamicDashboard: true,
       });
     });
   });

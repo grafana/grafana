@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin } from '../../types';
+import { type CatalogPlugin } from '../../types';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -20,7 +20,7 @@ export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElemen
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     hasUpdate: css({
       color: theme.colors.text.secondary,

@@ -1,8 +1,8 @@
-import { useEffect, useRef, RefObject, useState, useMemo } from 'react';
+import { useEffect, useRef, type RefObject, useState, useMemo } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { Bounds } from './utils';
+import { type Bounds } from './utils';
 
 export interface State {
   isPanning: boolean;
@@ -31,7 +31,7 @@ interface Options {
  */
 export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Options = {}): {
   state: State;
-  ref: RefObject<T>;
+  ref: RefObject<T | null>;
 } {
   const isMounted = useMountedState();
   const isPanning = useRef(false);

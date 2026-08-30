@@ -3,13 +3,13 @@ import { useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
-import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { type SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
-import { SaveDashboardDrawer } from './SaveDashboardDrawer';
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
-  DashboardChangeInfo,
+  type DashboardChangeInfo,
   NameAlreadyExistsError,
   SaveButton,
   isNameExistsError,
@@ -28,17 +28,38 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const { hasChanges, hasMigratedToV2, changedSaveModel } = changeInfo;
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
+  const k8sMeta = dashboard.serializer.getK8SMetadata();
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
     // we need to set the uid here in order to save the dashboard
     // in schema v2 we don't have the uid in the spec
+    // meta.k8s.annotations is the editor source of truth for the denylist / other client annotations
     k8s: {
-      ...dashboard.serializer.getK8SMetadata(),
+      ...k8sMeta,
+      annotations: {
+        ...k8sMeta?.annotations,
+        ...dashboard.state.meta.k8s?.annotations,
+      },
     },
   });
 
   const onSave = async (overwrite: boolean) => {
-    const result = await onSaveDashboard(dashboard, { ...options, rawDashboardJSON: changedSaveModel, overwrite });
+    // Re-merge annotations at save time so denylist edits after the form mounted still persist.
+    const latestK8s = dashboard.serializer.getK8SMetadata();
+    const result = await onSaveDashboard(dashboard, {
+      ...options,
+      k8s: {
+        ...latestK8s,
+        ...options.k8s,
+        annotations: {
+          ...latestK8s?.annotations,
+          ...options.k8s?.annotations,
+          ...dashboard.state.meta.k8s?.annotations,
+        },
+      },
+      rawDashboardJSON: changedSaveModel,
+      overwrite,
+    });
     if (result.status === 'success') {
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
@@ -100,7 +121,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     }
 
     if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+      return <NameAlreadyExistsError />;
     }
 
     if (isPluginDashboardError(error)) {
@@ -174,7 +195,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           </p>
         </Alert>
       )}
-      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')}>
+      <Field label={t('dashboard-scene.save-dashboard-form.label-message', 'Message')} noMargin>
         <TextArea
           aria-label={t('dashboard-scene.save-dashboard-form.aria-label-message', 'message')}
           value={options.message ?? ''}

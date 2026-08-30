@@ -1,6 +1,8 @@
 package connection
 
 import (
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -10,40 +12,48 @@ type DecryptMetrics struct {
 	decryptedDuration     *prometheus.HistogramVec
 }
 
+var (
+	decryptMetricsOnce sync.Once
+	decryptMetrics     *DecryptMetrics
+)
+
 func RegisterDecryptMetrics(reg prometheus.Registerer) *DecryptMetrics {
-	secretsDecryptedTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_connection_secret_decrypted_total",
-			Help: "Total number of connection secrets decrypted successfully",
-		},
-		[]string{"secret_type"},
-	)
-	reg.MustRegister(secretsDecryptedTotal)
+	decryptMetricsOnce.Do(func() {
+		secretsDecryptedTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_connection_secret_decrypted_total",
+				Help: "Total number of connection secrets decrypted successfully",
+			},
+			[]string{"secret_type"},
+		)
+		reg.MustRegister(secretsDecryptedTotal)
 
-	decryptErrorsTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_connection_secret_decrypt_errors_total",
-			Help: "Total number of connection secret decrypt errors",
-		},
-		[]string{"secret_type"},
-	)
-	reg.MustRegister(decryptErrorsTotal)
+		decryptErrorsTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_connection_secret_decrypt_errors_total",
+				Help: "Total number of connection secret decrypt errors",
+			},
+			[]string{"secret_type"},
+		)
+		reg.MustRegister(decryptErrorsTotal)
 
-	decryptedDuration := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_connection_secret_decrypted_duration_seconds",
-			Help:    "Duration of connection secret decrypt operations",
-			Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0},
-		},
-		[]string{"secret_type"},
-	)
-	reg.MustRegister(decryptedDuration)
+		decryptedDuration := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_connection_secret_decrypted_duration_seconds",
+				Help:    "Duration of connection secret decrypt operations",
+				Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0},
+			},
+			[]string{"secret_type"},
+		)
+		reg.MustRegister(decryptedDuration)
 
-	return &DecryptMetrics{
-		secretsDecryptedTotal: secretsDecryptedTotal,
-		decryptErrorsTotal:    decryptErrorsTotal,
-		decryptedDuration:     decryptedDuration,
-	}
+		decryptMetrics = &DecryptMetrics{
+			secretsDecryptedTotal: secretsDecryptedTotal,
+			decryptErrorsTotal:    decryptErrorsTotal,
+			decryptedDuration:     decryptedDuration,
+		}
+	})
+	return decryptMetrics
 }
 
 func (m *DecryptMetrics) recordSuccess(st secretTypeLabel, seconds float64) {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, Field, Icon, IconButton, Menu, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -9,8 +9,8 @@ import {
   useDeleteRecipientMutation,
   publicDashboardApi,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
@@ -105,7 +105,7 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
         'public-dashboard.email-sharing.recipient-list-description',
         "Only people you've directly invited can access this dashboard"
       )}
-      className={styles.listField}
+      noMargin
     >
       {!!publicDashboard?.recipients?.length ? (
         <div className={styles.listContainer}>
@@ -123,9 +123,6 @@ export const EmailListConfiguration = ({ dashboard }: { dashboard: DashboardScen
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  listField: css({
-    marginBottom: 0,
-  }),
   listContainer: css({
     maxHeight: '140px',
     overflowY: 'auto',

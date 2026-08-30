@@ -177,7 +177,8 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 	}
 
 	if q.isSearchExpression() {
-		metricExpressions := &metricExpression{Expression: q.UsedExpression}
+		// The deeplink API requires an ID for the metric expression. We use a fixed ID here because we only link to a single expression.
+		metricExpressions := &metricExpression{Expression: q.UsedExpression, ID: "a"}
 		metricExpressions.Label = q.Label
 		link.Metrics = []any{metricExpressions}
 	} else {

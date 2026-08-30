@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { CustomVariable } from '@grafana/scenes';
+import { type CustomVariable } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
 
 import { ModalEditor } from './ModalEditor';
@@ -20,7 +20,7 @@ export function PaneItem({ variable }: PaneItemProps) {
       <Box display="flex" direction="column" paddingBottom={1}>
         <Button
           tooltip={t(
-            'dashboard.edit-pane.variable.open-editor-tooltip',
+            'dashboard.sidebar.variable.open-editor-tooltip',
             'For more variable options open variable editor'
           )}
           onClick={() => setIsOpen(true)}
@@ -28,7 +28,7 @@ export function PaneItem({ variable }: PaneItemProps) {
           fullWidth
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
       {isOpen && <ModalEditor variable={variable} onClose={() => setIsOpen(false)} />}

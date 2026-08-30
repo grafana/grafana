@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -191,7 +192,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		cOpt := []cmp.Option{
-			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}),
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, time.Location{}),
 			cmpopts.IgnoreFields(apimodels.PostableGrafanaReceiver{}, "UID", "Settings"),
 		}
 		if !cmp.Equal(test, exp, cOpt...) {
@@ -225,7 +226,7 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 	})
 
 	t.Run("route GET status", func(t *testing.T) {
-		t.Run("when admin return autogen routes", func(t *testing.T) {
+		t.Run("return autogen routes", func(t *testing.T) { // Endpoint is admin-only.
 			sut, _ := createSutForAutogen(t)
 
 			rc := createRequestCtxInOrg(2)
@@ -246,28 +247,6 @@ func TestAlertmanagerAutogenConfig(t *testing.T) {
 			require.NoError(t, err)
 
 			compare(t, validConfigWithAutogen, string(configBody))
-		})
-
-		t.Run("when not admin return no autogen routes", func(t *testing.T) {
-			sut, _ := createSutForAutogen(t)
-
-			rc := createRequestCtxInOrg(2)
-
-			response := sut.RouteGetAMStatus(rc)
-			require.Equal(t, 200, response.Status())
-
-			var status struct {
-				Config apimodels.PostableApiAlertingConfig `json:"config"`
-			}
-			err := json.Unmarshal(response.Body(), &status)
-			require.NoError(t, err)
-			configBody, err := json.Marshal(apimodels.PostableUserConfig{
-				TemplateFiles:      map[string]string{"a": "template"},
-				AlertmanagerConfig: status.Config,
-			})
-			require.NoError(t, err)
-
-			compare(t, validConfigWithoutAutogen, string(configBody))
 		})
 	})
 }
@@ -482,12 +461,26 @@ var validConfig = `{
 			"grafana_managed_receiver_configs": [{
 				"uid": "receiver-uid",
 				"name": "email receiver",
+				"version": "v1",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `
@@ -509,8 +502,9 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -518,11 +512,25 @@ var validConfigWithoutAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `
@@ -558,8 +566,9 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "some email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -567,11 +576,25 @@ var validConfigWithAutogen = `{
 			"grafana_managed_receiver_configs": [{
 				"name": "other email",
 				"type": "email",
+				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
-		}]
+		}],
+		"time_intervals": [
+			{
+				"name": "test_interval",
+				"time_intervals": [{
+					"times": [{"start_time": "12:12","end_time": "23:23"}],
+					"weekdays": ["monday","wednesday","friday","sunday"],
+					"days_of_month": ["10:20","25:-1"],
+					"months": ["1:6","10:12"],
+					"years": ["2022:2054"],
+					"location": "America/Montreal"
+				}]
+			}
+		]
 	}
 }
 `
@@ -586,6 +609,7 @@ var brokenConfig = `
 			"grafana_managed_receiver_configs": [{
 				"uid": "abc",
 				"name": "default-email",
+				"version": "v1",
 				"type": "email",
 				"settings": {}
 			}]
@@ -621,7 +645,7 @@ func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisi
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.NotificationTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &v1.TemplateGroup{Title: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

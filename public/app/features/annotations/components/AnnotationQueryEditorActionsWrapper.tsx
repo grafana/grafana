@@ -1,7 +1,7 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
-import { AnnotationQuery, CoreApp, DataSourceApi } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AnnotationQuery, type DataSourceApi } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
@@ -26,12 +26,11 @@ export function AnnotationQueryEditorActionsWrapper({
 
   const savedQueryButtons = disableSavedQueries
     ? undefined
-    : renderSavedQueryButtons(
-        getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
-        CoreApp.Dashboard,
-        undefined,
-        onQueryReplace
-      );
+    : renderSavedQueryButtons({
+        query: getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
+        app: 'dashboard-annotations',
+        onSelectQuery: onQueryReplace,
+      });
 
   return (
     <Stack direction="column" gap={1}>

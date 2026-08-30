@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "moduleResolution": "nodenext",
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "extends": "../../tsconfig.json",
   "ts-node": {

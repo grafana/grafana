@@ -117,7 +117,7 @@ func (am *LotexAM) RouteGetAMStatus(ctx *contextmodel.ReqContext) response.Respo
 		"status",
 		nil,
 		nil,
-		jsonExtractor(&apimodels.GettableStatus{}),
+		jsonExtractor(&apimodels.ExternalAlertmanagerStatus{}),
 		nil,
 	)
 }
@@ -169,7 +169,7 @@ func (am *LotexAM) RouteGetAlertingConfig(ctx *contextmodel.ReqContext) response
 		"config",
 		nil,
 		nil,
-		yamlExtractor(&apimodels.GettableUserConfig{}),
+		yamlExtractor(&apimodels.ExternalAlertmanagerConfig{}),
 		nil,
 	)
 }
@@ -222,7 +222,7 @@ func (am *LotexAM) RouteGetSilences(ctx *contextmodel.ReqContext) response.Respo
 	)
 }
 
-func (am *LotexAM) RoutePostAlertingConfig(ctx *contextmodel.ReqContext, config apimodels.PostableUserConfig) response.Response {
+func (am *LotexAM) RoutePostAlertingConfig(ctx *contextmodel.ReqContext, config apimodels.ExternalAlertmanagerConfig) response.Response {
 	yml, err := yaml.Marshal(&config)
 	if err != nil {
 		return ErrResp(500, err, "Failed marshal alert manager configuration ")

@@ -1,13 +1,13 @@
 import { cx, css } from '@emotion/css';
-import { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles, mediaUp } from '../../themes/mixins';
-import { IconSize } from '../../types/icon';
+import { type IconSize } from '../../types/icon';
 import { getActiveButtonStyles, getPropertiesForVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -150,11 +150,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     '&:hover, &:focus': {
       color: theme.colors.text.primary,
       background: theme.colors.secondary.shade,
-      border: `1px solid ${theme.colors.border.medium}`,
+      border: `1px solid ${theme.colors.secondary.borderEmphasis}`,
     },
 
     '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
     },
   });
 
@@ -212,7 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
       },
     }),
     canvas: defaultOld,

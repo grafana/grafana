@@ -11,11 +11,20 @@ yarn generate:api-client
 The CLI will prompt for:
 
 1. **Enterprise or OSS API** - Whether this is an Enterprise or OSS API. This affects paths and build commands.
-2. **API group name** - The basic name for the API (e.g., `dashboard`)
-3. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
-4. **API version** - The API version (e.g., `v0alpha1`)
-5. **Reducer path** - The Redux reducer path (defaults to `<group-name>API`). This will also be used as the API's named export.
-6. **Endpoints** - Optional comma-separated list of endpoints to include (e.g., `createDashboard,updateDashboard`). If not provided, all endpoints will be included.
+2. **OpenAPI spec** - Select the OpenAPI spec file for the API group.
+3. **API group name** - The basic name for the API (e.g., `dashboard`)
+4. **API group** - The full API group name (defaults to `<group-name>.grafana.app`)
+5. **API version** - The API version (e.g., `v0alpha1`)
+6. **Reducer path** - The Redux reducer path (defaults to `<group-name>API<version>`). This will also be used as the API's named export.
+7. **Endpoints** - Optional comma-separated list of endpoints to include (e.g., `createDashboard,updateDashboard`). If not provided, all endpoints will be included.
+
+If the selected API group/version already has a complete scaffold, the CLI will prompt to update the existing client
+instead. Update mode regenerates endpoints from the existing config and does not modify config entries, Redux
+middleware/reducers/imports, package exports, or scaffold files. If only part of the scaffold exists, the CLI preserves
+existing files, fills in missing config/wiring/export entries, and regenerates endpoints.
+
+For the full end-to-end update flow from API types to OpenAPI snapshots to RTK Query endpoints, see
+[Updating generated clients](../../README.md#updating-generated-clients).
 
 ## What It Does
 
@@ -27,10 +36,13 @@ The generator automates the following:
    - `local/generate-enterprise-apis.ts` for Enterprise APIs
 3. Creates the `index.ts` file with proper exports
 4. For OSS APIs only:
-   - Exports Redux reducers and middleware in `rtkq.ts`
+   - Exports Redux reducers and middleware in `rtkq/index.ts`
    - Updates `package.json` exports to include the new API client
 5. Formats all generated files using Prettier and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
+
+For complete existing clients, the generator skips the create steps and only runs the appropriate endpoint generation
+command. For partial clients, it fills in the missing create steps first.
 
 ## Limitations
 

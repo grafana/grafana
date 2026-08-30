@@ -25,7 +25,6 @@ cards:
       height: 24
       href: /docs/grafana-cloud/visualizations/simplified-exploration/
       title: Drilldown apps
-
 weight: 500
 ---
 

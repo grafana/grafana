@@ -1,25 +1,22 @@
-import { ComponentClass } from 'react';
+import { type ComponentClass } from 'react';
 
 import {
   FieldConfigProperty,
-  PanelData,
-  PanelProps,
+  type PanelData,
+  type PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  dateTime,
-  TimeRange,
-  PanelMigrationHandler,
-  PanelTypeChangedHandler,
+  type PanelMigrationHandler,
+  type PanelTypeChangedHandler,
 } from '@grafana/data';
 import { getPanelPlugin, mockStandardFieldConfigOptions } from '@grafana/data/test';
 import { setTemplateSrv } from '@grafana/runtime';
 import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { type PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { TimeOverrideResult } from '../utils/panel';
 
 import { PanelModel } from './PanelModel';
 
@@ -606,53 +603,6 @@ describe('PanelModel', () => {
 
         model.destroy();
         expect(model.getQueryRunner().getLastResult()).toBeDefined();
-      });
-    });
-
-    describe('getDisplayTitle', () => {
-      it('when called then it should interpolate singe value variables in title', () => {
-        const model = new PanelModel({
-          title: 'Single value variable [[test3]] ${test3} ${test3:percentencode}',
-        });
-        const title = model.getDisplayTitle();
-
-        expect(title).toEqual('Single value variable Value 3 Value 3 Value%203');
-      });
-
-      it('when called then it should interpolate multi value variables in title', () => {
-        const model = new PanelModel({
-          title: 'Multi value variable [[test4]] ${test4} ${test4:percentencode}',
-        });
-        const title = model.getDisplayTitle();
-
-        expect(title).toEqual('Multi value variable A + B A + B %7BA%2CB%7D');
-      });
-    });
-
-    describe('runAllPanelQueries', () => {
-      it('when called then it should call all pending queries', () => {
-        model.getQueryRunner = jest.fn().mockReturnValue({
-          run: jest.fn(),
-        });
-        const dashboardId = 123;
-        const dashboardUID = 'ggHbN42mk';
-        const dashboardTimezone = 'browser';
-        const width = 860;
-        const timeData = {
-          timeInfo: '',
-          timeRange: {
-            from: dateTime([2019, 1, 11, 12, 0]),
-            to: dateTime([2019, 1, 11, 18, 0]),
-            raw: {
-              from: 'now-6h',
-              to: 'now',
-            },
-          } as TimeRange,
-        } as TimeOverrideResult;
-
-        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
-
-        expect(model.getQueryRunner).toBeCalled();
       });
     });
   });

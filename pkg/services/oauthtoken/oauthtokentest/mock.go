@@ -7,15 +7,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
 type MockOauthTokenService struct {
-	GetCurrentOauthTokenFunc   func(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token
-	IsOAuthPassThruEnabledFunc func(ds *datasources.DataSource) bool
-	InvalidateOAuthTokensFunc  func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) error
-	TryTokenRefreshFunc        func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error)
+	GetCurrentOauthTokenFunc  func(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token
+	InvalidateOAuthTokensFunc func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) error
+	TryTokenRefreshFunc       func(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) (*oauth2.Token, error)
 }
 
 func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token {
@@ -23,13 +21,6 @@ func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr id
 		return m.GetCurrentOauthTokenFunc(ctx, usr, sessionToken)
 	}
 	return nil
-}
-
-func (m *MockOauthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	if m.IsOAuthPassThruEnabledFunc != nil {
-		return m.IsOAuthPassThruEnabledFunc(ds)
-	}
-	return false
 }
 
 func (m *MockOauthTokenService) InvalidateOAuthTokens(ctx context.Context, usr identity.Requester, metadata *oauthtoken.TokenRefreshMetadata) error {

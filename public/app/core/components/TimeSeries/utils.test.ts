@@ -1,7 +1,43 @@
-import { createDataFrame, dateTime, DateTimeInput, EventBus, FieldType } from '@grafana/data';
+import {
+  createDataFrame,
+  createTheme,
+  type DataFrame,
+  dateTime,
+  type DateTimeInput,
+  type EventBus,
+  FieldColorModeId,
+  FieldType,
+  type TimeRange,
+} from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
+
+/** Minimal time + value frame; enough to exercise the shared x-axis and cursor config. */
+function makeTimeFrame(): DataFrame {
+  return createDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000] },
+      { name: 'Value', type: FieldType.number, config: {}, values: [10, 20, 30] },
+    ],
+  });
+}
+
+function makeTimeRange(from: number, to: number): TimeRange {
+  return { from: dateTime(from), to: dateTime(to), raw: { from: dateTime(from), to: dateTime(to) } };
+}
+
+function buildBuilder(frame: DataFrame, overrides: Partial<Parameters<typeof preparePlotConfigBuilder>[0]> = {}) {
+  return preparePlotConfigBuilder({
+    frame,
+    theme: createTheme(),
+    timeZones: ['browser'],
+    getTimeRange: () => makeTimeRange(1000, 3000),
+    allFrames: [frame],
+    renderers: [],
+    ...overrides,
+  });
+}
 
 describe('when fill below to option is used', () => {
   let eventBus: EventBus;
@@ -396,5 +432,222 @@ describe('calculateAnnotationLaneSizes', () => {
         size: 26,
       },
     });
+  });
+});
+
+describe('colorblind line style patterns', () => {
+  const eventBus: EventBus = {
+    publish: jest.fn(),
+    getStream: jest.fn() as EventBus['getStream'],
+    subscribe: jest.fn(),
+    removeAllListeners: jest.fn(),
+    newScopedBus: jest.fn(),
+  };
+
+  function buildWithLineStyle(lineStyle: object | undefined, fieldCount: number) {
+    const fields: Array<Record<string, unknown>> = [
+      {
+        config: {},
+        values: [1000, 2000, 3000],
+        name: 'Time',
+        state: { multipleFrames: false, displayName: 'Time', origin: { fieldIndex: 0, frameIndex: 0 } },
+        type: FieldType.time,
+      },
+    ];
+
+    for (let i = 0; i < fieldCount; i++) {
+      fields.push({
+        config: {
+          color: { mode: FieldColorModeId.PaletteClassic },
+          custom: lineStyle ? { lineStyle } : {},
+        },
+        values: [i + 1, i + 2, i + 3],
+        name: `Series${i}`,
+        state: {
+          multipleFrames: false,
+          displayName: `Series${i}`,
+          origin: { fieldIndex: i + 1, frameIndex: 0 },
+        },
+        type: FieldType.number,
+      });
+    }
+
+    const frame = createDataFrame({ fields });
+
+    return preparePlotConfigBuilder({
+      frame,
+      // @ts-ignore
+      theme: getTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      eventBus,
+      sync: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+  }
+
+  it('should assign different patterns per series when colorblind line style is selected', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 3);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'dash', dash: [10, 10] });
+    expect(series[2].props.lineStyle).toEqual({ fill: 'dash', dash: [20, 10] });
+  });
+
+  it('should cycle patterns after 9 series', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 10);
+    const series = builder.getSeries();
+
+    // 10th series (index 9) wraps to first pattern (9 % 9 = 0)
+    expect(series[9].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+
+  it('should assign all 9 distinct patterns before cycling', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
+    const series = builder.getSeries();
+    const styles = series.map((s) => JSON.stringify(s.props.lineStyle));
+    const unique = new Set(styles);
+    expect(unique.size).toBe(9);
+  });
+
+  it('should use only solid and dash fills (no dot patterns)', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 9);
+    const series = builder.getSeries();
+
+    for (const s of series) {
+      expect(s.props.lineStyle?.fill).toMatch(/^(solid|dash)$/);
+    }
+  });
+
+  it('should not modify non-colorblind line styles', () => {
+    const dashStyle = { fill: 'dash', dash: [50, 50] };
+    const builder = buildWithLineStyle(dashStyle, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual(dashStyle);
+    expect(series[1].props.lineStyle).toEqual(dashStyle);
+  });
+
+  it('should pass through solid line style unchanged', () => {
+    const builder = buildWithLineStyle({ fill: 'solid' }, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+
+  it('should pass through undefined line style', () => {
+    const builder = buildWithLineStyle(undefined, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toBeUndefined();
+    expect(series[1].props.lineStyle).toBeUndefined();
+  });
+
+  it('should work with any color palette (decoupled from color mode)', () => {
+    // Uses PaletteClassic (not colorblind palette) but colorblind line style
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 2);
+    const series = builder.getSeries();
+
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+    expect(series[1].props.lineStyle).toEqual({ fill: 'dash', dash: [10, 10] });
+  });
+
+  it('should handle single series', () => {
+    const builder = buildWithLineStyle({ fill: 'accessible' }, 1);
+    const series = builder.getSeries();
+
+    expect(series).toHaveLength(1);
+    expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+});
+
+describe('cursor proximity', () => {
+  // The hover.prox callback only reads `self.data`, so a minimal stand-in is enough to drive it.
+  type MockUPlot = { data: Array<Array<number | null>> };
+
+  function getHoverProx(builder: ReturnType<typeof preparePlotConfigBuilder>) {
+    const prox = builder.getConfig().cursor?.hover?.prox;
+
+    return prox as (self: MockUPlot, seriesIdx: number, hoveredIdx: number) => number | null;
+  }
+
+  it('uses no proximity limit when hovering a non-null value', () => {
+    const prox = getHoverProx(buildBuilder(makeTimeFrame()));
+    const u: MockUPlot = {
+      data: [
+        [1000, 2000, 3000],
+        [10, null, 30],
+      ],
+    };
+
+    expect(prox(u, 1, 0)).toBeNull();
+  });
+
+  it('limits proximity to 15px when hovering a null value', () => {
+    const prox = getHoverProx(buildBuilder(makeTimeFrame()));
+    const u: MockUPlot = {
+      data: [
+        [1000, 2000, 3000],
+        [10, null, 30],
+      ],
+    };
+
+    expect(prox(u, 1, 1)).toBe(15);
+  });
+
+  it('uses the configured hoverProximity for both hover and focus when provided', () => {
+    const builder = buildBuilder(makeTimeFrame(), { hoverProximity: 42 });
+    const prox = getHoverProx(builder);
+    const u: MockUPlot = { data: [[1000], [null]] };
+
+    // an explicit proximity overrides the null-value default
+    expect(prox(u, 1, 0)).toBe(42);
+    expect(builder.getConfig().cursor?.focus?.prox).toBe(42);
+  });
+
+  it('defaults focus proximity to 30px', () => {
+    const builder = buildBuilder(makeTimeFrame());
+
+    expect(builder.getConfig().cursor?.focus?.prox).toBe(30);
+  });
+});
+
+describe('x-axis time range', () => {
+  // The range callback ignores its uPlot arguments, so it can be called with none.
+  function getXTimeRange(builder: ReturnType<typeof preparePlotConfigBuilder>) {
+    const range = builder.getConfig().scales?.x?.range;
+    return range as () => [number, number];
+  }
+
+  it('returns the current time range when not panning', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+
+    expect(getXTimeRange(builder)()).toEqual([1000, 5000]);
+  });
+
+  it('returns the panned min/max while panning', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000 });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+  });
+
+  it('keeps panning while the props time range has not caught up', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000, isTimeRangePending: true });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+    expect(builder.getState().isPanning).toBe(true);
+  });
+
+  it('commits the props time range and stops panning once it catches up', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(2000, 4000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000, isTimeRangePending: true });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+    expect(builder.getState().isPanning).toBe(false);
   });
 });

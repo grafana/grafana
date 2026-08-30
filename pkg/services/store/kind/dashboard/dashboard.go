@@ -4,12 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+const (
+	// A resource has exactly one spec (the k8s wrapper). Anything deeper is untrusted nesting.
+	maxSpecDepth = 1
+	// Classic dashboards nest rows one level; allow generous headroom while bounding recursion.
+	maxPanelDepth = 4
 )
 
 type templateVariable struct {
@@ -119,11 +127,11 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardSummary
 
 func ReadDashboardWithLogContext(stream io.Reader, lookup DatasourceLookup, logContext map[string]any) (*DashboardSummaryInfo, error) {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
-	return readDashboardIter("$", iter, lookup, logContext)
+	return readDashboardIter("$", iter, lookup, logContext, 0)
 }
 
 // nolint:gocyclo
-func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup DatasourceLookup, lc map[string]any) (*DashboardSummaryInfo, error) {
+func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup DatasourceLookup, lc map[string]any, specDepth int) (*DashboardSummaryInfo, error) {
 	dash := &DashboardSummaryInfo{}
 
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
@@ -146,7 +154,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 
 		// recursively read the spec as dashboard json
 		case "spec":
-			return readDashboardIter(jsonPath+".spec", iter, lookup, lc)
+			if specDepth >= maxSpecDepth {
+				logRecursionLimit(jsonPath+".spec", "spec", lc)
+				iter.Skip()
+				continue
+			}
+			return readDashboardIter(jsonPath+".spec", iter, lookup, lc, specDepth+1)
 
 		case "id":
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue) {
@@ -228,7 +241,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 					continue
 				}
 
-				dash.Tags = append(dash.Tags, iter.ReadString())
+				// An empty tag has nothing to search for or show, and it would still take a
+				// slot in the tag list a user picks from. The reader that indexes deleted
+				// dashboards skips it too, so both report the same tags for one dashboard.
+				if tag := iter.ReadString(); tag != "" {
+					dash.Tags = append(dash.Tags, tag)
+				}
 			}
 
 		case "links":
@@ -263,7 +281,7 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 			}
 
 			for ix := 0; iter.ReadArray(); ix++ {
-				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s[%d]", panelsPath, ix), lc)
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s[%d]", panelsPath, ix), lc, 0)
 				if ok {
 					dash.Panels = append(dash.Panels, p)
 				}
@@ -377,6 +395,9 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 	for idx, panel := range dash.Panels {
 		if panel.Type == "row" {
 			dash.Panels[idx].Datasource = nil
+			for _, collapsed := range panel.Collapsed {
+				targets.addPanel(collapsed)
+			}
 			continue
 		}
 
@@ -393,10 +414,8 @@ var logger = log.New("services.store.kind.dashboard")
 // If the type matches, it returns true, otherwise it skips the element, logs an error, and returns false.
 func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, logContext map[string]any, allowedValues ...jsoniter.ValueType) bool {
 	next := iter.WhatIsNext()
-	for _, a := range allowedValues {
-		if next == a {
-			return true
-		}
+	if slices.Contains(allowedValues, next) {
+		return true
 	}
 
 	// Skip unexpected element.
@@ -416,6 +435,17 @@ func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, log
 
 	logger.Error("Unexpected element in Dashboard JSON", params...)
 	return false
+}
+
+// logRecursionLimit logs when a nested element is skipped because it exceeds the maximum
+// allowed nesting depth, mirroring how checkAndSkipUnexpectedElement appends log context.
+func logRecursionLimit(jsonPath, field string, logContext map[string]any) {
+	params := make([]any, 0, 4+2*len(logContext))
+	params = append(params, "jsonPath", jsonPath, "field", field)
+	for k, v := range logContext {
+		params = append(params, k, v)
+	}
+	logger.Error("Dashboard JSON nesting exceeds maximum depth", params...)
 }
 
 func valueTypesToString(allowedValues ...jsoniter.ValueType) string {
@@ -535,7 +565,7 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // nolint:gocyclo
-func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) (PanelSummaryInfo, bool) {
+func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any, depth int) (PanelSummaryInfo, bool) {
 	panel := PanelSummaryInfo{}
 
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
@@ -654,12 +684,18 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath st
 
 		// Rows have nested panels
 		case "panels":
+			if depth >= maxPanelDepth {
+				logRecursionLimit(jsonPath+".panels", "panels", lc)
+				iter.Skip()
+				continue
+			}
+
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".panels", lc, jsoniter.ArrayValue) {
 				continue
 			}
 
 			for ix := 0; iter.ReadArray(); ix++ {
-				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s.panels[%d]", jsonPath, ix), lc)
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s.panels[%d]", jsonPath, ix), lc, depth+1)
 				if ok {
 					panel.Collapsed = append(panel.Collapsed, p)
 				}
@@ -745,7 +781,15 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 			}
 		case "vizConfig":
 			if iter.WhatIsNext() == jsoniter.ObjectValue {
-				if k, ok := readObjectValueGetString(iter, "kind"); ok && k != "" {
+				vc, _ := iter.Read().(map[string]any)
+				// In the stable v2 envelope the panel plugin id lives in
+				// vizConfig.group; kind is the literal "VizConfig". Older
+				// v2alpha1 dashboards carry the plugin id directly in kind.
+				if g, ok := vc["group"].(string); ok && g != "" {
+					panel.Type = g
+				} else if k, ok := vc["kind"].(string); ok && k != "" && k != "VizConfig" {
+					// Guard the fallback: on a stable v2 panel with a missing or empty
+					// group, kind is the literal "VizConfig" - never index that as a type.
 					panel.Type = k
 				}
 			} else {

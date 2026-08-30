@@ -3,7 +3,7 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -11,142 +11,30 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestSearchFallback(t *testing.T) {
-	t.Run("should hit legacy search handler on mode 0", func(t *testing.T) {
+func TestSearch(t *testing.T) {
+	t.Run("should hit unified storage search handler", func(t *testing.T) {
 		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 1", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode1},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 2", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode2},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit legacy search handler on mode 3", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode3},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-		if mockLegacyClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 4", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode4},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("GET", "/search", nil)
@@ -157,129 +45,267 @@ func TestSearchFallback(t *testing.T) {
 
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
-		}
-	})
-
-	t.Run("should hit unified storage search handler on mode 5", func(t *testing.T) {
-		mockClient := &MockClient{}
-		mockLegacyClient := &MockClient{}
-
-		cfg := &setting.Cfg{
-			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			},
-		}
-		dual := dualwrite.ProvideStaticServiceForTests(cfg)
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil)
-
-		rr := httptest.NewRecorder()
-		req := httptest.NewRequest("GET", "/search", nil)
-		req.Header.Add("content-type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-		searchHandler.DoSearch(rr, req)
-
-		if mockClient.LastSearchRequest == nil {
-			t.Fatalf("expected Search to be called, but it was not")
-		}
-		if mockLegacyClient.LastSearchRequest != nil {
-			t.Fatalf("expected Search NOT to be called, but it was")
 		}
 	})
 }
 
-func TestSearchHandlerPagination(t *testing.T) {
-	t.Run("should calculate offset and page parameters", func(t *testing.T) {
-		limit := 50
-		for i, tt := range []struct {
-			offset         int
-			page           int
-			expectedOffset int
-			expectedPage   int
-		}{
-			{
-				offset:         0,
-				page:           0,
-				expectedOffset: 0,
-				expectedPage:   1,
-			},
-			{
-				offset:         0,
-				page:           1,
-				expectedOffset: 0,
-				expectedPage:   1,
-			},
-			{
-				offset:         0,
-				page:           2,
-				expectedOffset: 50,
-				expectedPage:   2,
-			},
-			{
-				offset:         0,
-				page:           3,
-				expectedOffset: 100,
-				expectedPage:   3,
-			},
-			{
-				offset:         50,
-				page:           0,
-				expectedOffset: 50,
-				expectedPage:   2,
-			},
-			{
-				offset:         100,
-				page:           0,
-				expectedOffset: 100,
-				expectedPage:   3,
-			},
-			{
-				offset:         149,
-				page:           0,
-				expectedOffset: 149,
-				expectedPage:   3,
-			},
-			{
-				offset:         150,
-				page:           0,
-				expectedOffset: 150,
-				expectedPage:   4,
-			},
-		} {
-			mockClient := &MockClient{}
-
-			cfg := &setting.Cfg{
-				UnifiedStorage: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode0},
-				},
-			}
-			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil)
-
-			rr := httptest.NewRecorder()
-			endpoint := fmt.Sprintf("/search?limit=%d", limit)
-			if tt.offset > 0 {
-				endpoint = fmt.Sprintf("%s&offset=%d", endpoint, tt.offset)
-			}
-			if tt.page > 0 {
-				endpoint = fmt.Sprintf("%s&page=%d", endpoint, tt.page)
-			}
-			req := httptest.NewRequest("GET", endpoint, nil)
-			req.Header.Add("content-type", "application/json")
-			req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-
-			searchHandler.DoSearch(rr, req)
-
-			if mockClient.LastSearchRequest == nil {
-				t.Fatalf("expected Search to be called, but it was not")
-			}
-
-			require.Equal(t, int(mockClient.LastSearchRequest.Offset), tt.expectedOffset, fmt.Sprintf("mismatch offset in test %d", i))
-			require.Equal(t, int(mockClient.LastSearchRequest.Page), tt.expectedPage, fmt.Sprintf("mismatch page in test %d", i))
+func TestVectorSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
 		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search/vector?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoVectorSearch(rr, req)
+		return rr
+	}
+
+	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchResponse: &resourcepb.VectorSearchResponse{
+				Results: []*resourcepb.VectorSearchResult{
+					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12, Subresource: "panel/3", Content: "CPU usage\nTags: infra"},
+					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34, Subresource: "panel/1", Content: "Memory usage"},
+					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51, Subresource: "panel/7", Content: "Disk I/O"},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&folder=f1&limit=10")
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search should not be called")
+		assert.Equal(t, "cpu", mockClient.LastVectorSearchRequest.Query)
+		assert.Equal(t, int64(10), mockClient.LastVectorSearchRequest.Limit)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 3)
+		assert.Equal(t, int64(3), p.TotalHits)
+
+		assert.Equal(t, []string{"d1", "d2", "d3"}, []string{p.Hits[0].Name, p.Hits[1].Name, p.Hits[2].Name})
+		assert.Equal(t, []float64{0.12, 0.34, 0.51}, []float64{p.Hits[0].Score, p.Hits[1].Score, p.Hits[2].Score})
+		assert.Equal(t, 0.12, p.MaxScore)
+
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+
+		require.NotNil(t, p.Hits[0].Field)
+		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
+		assert.Equal(t, "CPU usage\nTags: infra", p.Hits[0].Field.Object["snippet"])
+		assert.Equal(t, 0.12, p.Hits[0].Field.Object["score"])
+	})
+
+	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			VectorSearchErr: status.Error(codes.Unimplemented, "vector search not configured"),
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("normalizes the general root folder to the legacy empty UID", func(t *testing.T) {
+		mockClient := &MockClient{VectorSearchResponse: &resourcepb.VectorSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&folder="+folder.GeneralFolderUID)
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{""}, mockClient.LastVectorSearchRequest.Filters[0].Values)
+	})
+
+	t.Run("maps gRPC status codes to HTTP statuses instead of 500", func(t *testing.T) {
+		cases := map[codes.Code]int{
+			codes.ResourceExhausted: http.StatusTooManyRequests,
+			codes.Unavailable:       http.StatusServiceUnavailable,
+		}
+		for code, wantStatus := range cases {
+			mockClient := &MockClient{VectorSearchErr: status.Error(code, "boom")}
+			rr := doRequest(newHandler(mockClient), "query=cpu")
+			assert.Equal(t, wantStatus, rr.Result().StatusCode, "grpc code %s", code)
+		}
+	})
+
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/vector" {
+					return true
+				}
+			}
+			return false
+		}
+
+		assert.False(t, hasVectorRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasVectorRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
+	})
+}
+
+func TestHybridSearch(t *testing.T) {
+	newHandler := func(client *MockClient) SearchHandler {
+		return SearchHandler{
+			log:      log.New("test", "test"),
+			client:   client,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch),
+		}
+	}
+
+	doRequest := func(handler SearchHandler, rawQuery string) *httptest.ResponseRecorder {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search/hybrid?"+rawQuery, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoHybridSearch(rr, req)
+		return rr
+	}
+
+	t.Run("calls HybridSearch and maps fused results to hits", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchResponse: &resourcepb.HybridSearchResponse{
+				Results: []*resourcepb.HybridSearchResult{
+					{
+						Key:           &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"},
+						Title:         "CPU usage",
+						Folder:        "f1",
+						Score:         0.032,
+						ManagedByKind: "repo",
+						ManagedById:   "m1",
+						Chunks: []*resourcepb.HybridSearchChunk{
+							{Subresource: "panel/3", Content: "CPU usage by host"},
+							{Subresource: "panel/7", Content: "CPU saturation"},
+						},
+					},
+					{
+						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d2"},
+						Title:  "Memory usage",
+						Folder: "f2",
+						Score:  0.016,
+						Chunks: []*resourcepb.HybridSearchChunk{
+							{Subresource: "", Content: "Memory usage"}, // lexical-only: synthesized title chunk
+						},
+					},
+				},
+			},
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu&semanticQuery=cpu+usage+by+host&folder=f1&limit=10&minRelevance=low")
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		assert.Equal(t, 1, mockClient.HybridSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "lexical search endpoint must not be called")
+		assert.Equal(t, 0, mockClient.VectorSearchCallCount, "vector search must not be called")
+		assert.Equal(t, "cpu", mockClient.LastHybridSearchRequest.Query)
+		assert.Equal(t, "cpu usage by host", mockClient.LastHybridSearchRequest.SemanticQuery)
+		assert.Equal(t, int64(10), mockClient.LastHybridSearchRequest.Limit)
+		assert.Equal(t, "low", mockClient.LastHybridSearchRequest.MinRelevance)
+		assert.False(t, mockClient.LastHybridSearchRequest.SkipRerank)
+		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{"f1"}, mockClient.LastHybridSearchRequest.Filters[0].Values)
+
+		resp := rr.Result()
+		defer func() { require.NoError(t, resp.Body.Close()) }()
+		p := &v0alpha1.SearchResults{}
+		require.NoError(t, json.NewDecoder(resp.Body).Decode(p))
+		require.Len(t, p.Hits, 2)
+		assert.Equal(t, int64(2), p.TotalHits)
+		assert.Equal(t, 0.032, p.MaxScore)
+
+		assert.Equal(t, "d1", p.Hits[0].Name)
+		assert.Equal(t, "CPU usage", p.Hits[0].Title)
+		assert.Equal(t, "f1", p.Hits[0].Folder)
+		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+		assert.Equal(t, 0.032, p.Hits[0].Score)
+		assert.Equal(t, v0alpha1.ManagedBy{Kind: utils.ManagerKind("repo"), ID: "m1"}, p.Hits[0].ManagedBy)
+		assert.True(t, p.Hits[1].ManagedBy.IsZero(), "unmanaged hit must not fabricate a manager")
+
+		require.NotNil(t, p.Hits[0].Field)
+		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
+		assert.Equal(t, "CPU usage by host", p.Hits[0].Field.Object["snippet"])
+		chunks, ok := p.Hits[0].Field.Object["chunks"].([]any)
+		require.True(t, ok)
+		require.Len(t, chunks, 2)
+
+		// lexical-only hit still carries its synthesized title chunk
+		assert.Equal(t, "Memory usage", p.Hits[1].Field.Object["snippet"])
+	})
+
+	t.Run("returns 501 and does not fall back when hybrid search is unimplemented", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchErr: status.Error(codes.Unimplemented, "hybrid search not configured"),
+		}
+		handler := newHandler(mockClient)
+
+		rr := doRequest(handler, "query=cpu")
+
+		assert.Equal(t, 1, mockClient.HybridSearchCallCount)
+		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
+		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("normalizes the general root folder to the legacy empty UID", func(t *testing.T) {
+		mockClient := &MockClient{HybridSearchResponse: &resourcepb.HybridSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&folder="+folder.GeneralFolderUID)
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		require.Len(t, mockClient.LastHybridSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastHybridSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{""}, mockClient.LastHybridSearchRequest.Filters[0].Values)
+		// Omitted minRelevance stays empty = server keeps every result.
+		assert.Equal(t, "", mockClient.LastHybridSearchRequest.MinRelevance)
+	})
+
+	t.Run("passes skipRerank through to the RPC", func(t *testing.T) {
+		mockClient := &MockClient{HybridSearchResponse: &resourcepb.HybridSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&skipRerank=true")
+
+		require.NotNil(t, mockClient.LastHybridSearchRequest)
+		assert.True(t, mockClient.LastHybridSearchRequest.SkipRerank)
+	})
+
+	t.Run("maps InvalidArgument validation errors to 400", func(t *testing.T) {
+		mockClient := &MockClient{
+			HybridSearchErr: status.Error(codes.InvalidArgument, "query must not be empty"),
+		}
+		rr := doRequest(newHandler(mockClient), "query=")
+		assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
+	})
+
+	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
+		hasHybridRoute := func(features featuremgmt.FeatureToggles) bool {
+			h := SearchHandler{features: features}
+			for _, route := range h.GetAPIRoutes(nil).Namespace {
+				if route.Path == "search/hybrid" {
+					return true
+				}
+			}
+			return false
+		}
+
+		assert.False(t, hasHybridRoute(featuremgmt.WithFeatures()), "route should be absent when toggle off")
+		assert.True(t, hasHybridRoute(featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch)), "route should be present when toggle on")
 	})
 }
 
@@ -344,6 +370,43 @@ func TestSearchHandler(t *testing.T) {
 		assert.Equal(t, len(mockResults), len(p.Hits))
 		assert.Equal(t, mockResults[2].Value, p.Hits[0].Title)
 		assert.Equal(t, mockResults[1].Value, p.Hits[3].Title)
+	})
+
+	t.Run("filters k6 technical folder from results for non-service accounts", func(t *testing.T) {
+		mockResponse := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE},
+				},
+				Rows: []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse},
+		}
+
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoSearch(rr, req)
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		assert.Equal(t, string(selection.NotIn), mockClient.MockCalls[0].Options.Fields[0].Operator)
+		assert.Equal(t, []string{"k6-app"}, mockClient.MockCalls[0].Options.Fields[0].Values)
 	})
 }
 
@@ -589,7 +652,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		allPermissions := make(map[int64]map[string][]string)
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:sharedfolder"}
 		allPermissions[1] = permissions
 		// "Permissions" is where we store the uid of dashboards shared with the user
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
@@ -600,7 +663,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		// first call gets all dashboards user has permission for
 		firstCall := mockClient.MockCalls[0]
-		assert.Equal(t, firstCall.Options.Fields[0].Values, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinroot", "dashboardinprivatefolder", "dashboardinpublicfolder", "sharedfolder"}, firstCall.Options.Fields[0].Values)
 		// verify federated field is set to include folders
 		assert.NotNil(t, firstCall.Federated)
 		assert.Equal(t, 1, len(firstCall.Federated))
@@ -608,11 +671,11 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, "folders", firstCall.Federated[0].Resource)
 		// second call gets folders associated with the previous dashboards
 		secondCall := mockClient.MockCalls[1]
-		assert.Equal(t, secondCall.Options.Fields[0].Values, []string{"privatefolder", "publicfolder"})
+		assert.Equal(t, []string{"privatefolder", "publicfolder"}, secondCall.Options.Fields[0].Values)
 		// lastly, search ONLY for dashboards and folders user has permission to read that are within folders the user does NOT have
 		// permission to read
 		thirdCall := mockClient.MockCalls[2]
-		assert.Equal(t, thirdCall.Options.Fields[0].Values, []string{"dashboardinprivatefolder", "sharedfolder"})
+		assert.Equal(t, []string{"dashboardinprivatefolder", "sharedfolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -722,7 +785,7 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		permissions := make(map[string][]string)
 		permissions[dashboards.ActionDashboardsWrite] = []string{"dashboards:uid:dashboardinprivatefolder", "dashboards:uid:dashboardinpublicfolder"}
 		// user can view the private folder, but cannot edit it. This should still classify dashboards in it as "shared with me" for edit.
-		permissions[dashboards.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
+		permissions[folder.ActionFoldersRead] = []string{"folders:uid:privatefolder"}
 		allPermissions[1] = permissions
 		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
 
@@ -740,7 +803,91 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 		thirdCall := mockClient.MockCalls[2]
 		assert.Equal(t, int64(dashboardaccess.PERMISSION_EDIT), thirdCall.Permission)
-		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[0].Values)
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
+	})
+
+	t.Run("should treat the canonical 'general' folder as root", func(t *testing.T) {
+		// dashboardSearchRequest: one dashboard parented to root via the canonical
+		// "general" sentinel, and one parented to a private folder.
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinroot", Resource: "dashboard"},
+						Cells: [][]byte{[]byte(folder.GeneralFolderUID)}, // root reported as "general"
+					},
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: user has access to no parent folders.
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// final dashboardSearchRequest: only the dashboard whose parent folder the
+		// user cannot access is shared; the root dashboard is excluded.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures()
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinroot", "dashboards:uid:dashboardinprivatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		assert.Equal(t, 3, mockClient.CallCount)
+		// the root ("general") dashboard contributes no parent folder to look up
+		secondCall := mockClient.MockCalls[1]
+		assert.Equal(t, []string{"privatefolder"}, secondCall.Options.Fields[0].Values)
+		// and the root dashboard is not treated as shared
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, []string{"dashboardinprivatefolder"}, thirdCall.Options.Fields[1].Values)
 
 		resp := rr.Result()
 		defer func() {
@@ -758,8 +905,9 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 
 func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 	testUser := &user.SignedInUser{
-		Namespace: "test-namespace",
-		OrgID:     1,
+		Namespace:        "test-namespace",
+		OrgID:            1,
+		IsServiceAccount: true,
 	}
 
 	dashboardKey := &resourcepb.ResourceKey{
@@ -772,7 +920,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 		Resource:  "folders",
 		Namespace: "test-namespace",
 	}
-	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
+	defaultFields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES} //nolint:prealloc
 
 	tests := map[string]struct {
 		queryString           string
@@ -953,8 +1101,36 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"sort ascending dashboard-specific field": {
+			queryString: "sort=views_total",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: false}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"sort descending dashboard-specific field": {
+			queryString: "sort=-views_total",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options:   &resourcepb.ListOptions{Key: dashboardKey},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				SortBy:    []*resourcepb.ResourceSearchRequest_Sort{{Field: "views_total", Desc: true}},
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 		"facet fields": {
-			queryString: "facet=tags&facet=folder",
+			queryString: "facet=tags",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{Key: dashboardKey},
 				Query:   "",
@@ -964,8 +1140,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Explain: false,
 				Fields:  defaultFields,
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-					"tags":   {Field: "tags", Limit: 50},
-					"folder": {Field: "folder", Limit: 50},
+					"tags": {Field: "tags", Limit: 50},
 				},
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
@@ -1018,6 +1193,38 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
+		"panel type filter": {
+			queryString: "panelType=timeseries",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "panel_types", Operator: "=", Values: []string{"timeseries"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
+		"data source type filter": {
+			queryString: "dataSourceType=prometheus",
+			expected: &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    dashboardKey,
+					Fields: []*resourcepb.Requirement{{Key: "ds_types", Operator: "=", Values: []string{"prometheus"}}},
+				},
+				Query:     "",
+				Limit:     50,
+				Offset:    0,
+				Page:      1,
+				Explain:   false,
+				Fields:    defaultFields,
+				Federated: []*resourcepb.ResourceKey{folderKey},
+			},
+		},
 		"folder filter": {
 			queryString: "folder=my-folder",
 			expected: &resourcepb.ResourceSearchRequest{
@@ -1053,7 +1260,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				Federated: []*resourcepb.ResourceKey{folderKey},
 			},
 		},
-		"root folder should be converted to empty string": {
+		"canonical root folder is collapsed to the legacy empty sentinel": {
 			queryString: "folder=general",
 			expected: &resourcepb.ResourceSearchRequest{
 				Options: &resourcepb.ListOptions{
@@ -1210,6 +1417,90 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+
+	t.Run("names the logical title field once", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		// The stored forms of the title and their weights are the server's business.
+		assert.Equal(t, []string{"title"}, names)
+	})
+
+	t.Run("panel title search asks for the panel_title field", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("query=cpu&panelTitleSearch=true")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotEmpty(t, result.QueryFields)
+		names := make([]string, 0, len(result.QueryFields))
+		for _, f := range result.QueryFields {
+			names = append(names, f.Name)
+		}
+		assert.Contains(t, names, "panel_title")
+	})
+
+	t.Run("rejects unsupported facet fields", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("facet=folder")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, testUser, func(dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.Nil(t, result)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err))
+		assert.ErrorContains(t, err, `faceting is not supported for field "folder"`)
+	})
+
+	t.Run("adds k6 exclusion for non-service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace: "test-namespace",
+			OrgID:     1,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Len(t, result.Options.Fields, 1)
+		assert.Equal(t, resource.SEARCH_FIELD_NAME, result.Options.Fields[0].Key)
+		assert.Equal(t, string(selection.NotIn), result.Options.Fields[0].Operator)
+		assert.Equal(t, []string{accesscontrol.K6FolderUID}, result.Options.Fields[0].Values)
+	})
+
+	t.Run("keeps k6 folder visible for service accounts", func(t *testing.T) {
+		queryParams, err := url.ParseQuery("")
+		require.NoError(t, err)
+
+		result, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, &user.SignedInUser{
+			Namespace:        "test-namespace",
+			OrgID:            1,
+			IsServiceAccount: true,
+		}, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+			return nil, nil
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Empty(t, result.Options.Fields)
+	})
 }
 
 // MockClient implements the ResourceIndexClient interface for testing
@@ -1223,6 +1514,28 @@ type MockClient struct {
 	MockResponses []*resourcepb.ResourceSearchResponse
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
+
+	LastVectorSearchRequest *resourcepb.VectorSearchRequest
+	VectorSearchResponse    *resourcepb.VectorSearchResponse
+	VectorSearchErr         error
+	VectorSearchCallCount   int
+
+	LastHybridSearchRequest *resourcepb.HybridSearchRequest
+	HybridSearchResponse    *resourcepb.HybridSearchResponse
+	HybridSearchErr         error
+	HybridSearchCallCount   int
+}
+
+func (m *MockClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	m.LastVectorSearchRequest = in
+	m.VectorSearchCallCount++
+	return m.VectorSearchResponse, m.VectorSearchErr
+}
+
+func (m *MockClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	m.LastHybridSearchRequest = in
+	m.HybridSearchCallCount++
+	return m.HybridSearchResponse, m.HybridSearchErr
 }
 
 type MockResult struct {
@@ -1270,6 +1583,12 @@ func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRe
 func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
 	return nil, nil
 }
+func (m *MockClient) RecordEvent(ctx context.Context, in *resourcepb.RecordEventRequest, opts ...grpc.CallOption) (*resourcepb.RecordEventResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetResourceDailyStats(ctx context.Context, in *resourcepb.GetResourceDailyStatsRequest, opts ...grpc.CallOption) (resourcepb.ResourceStats_GetResourceDailyStatsClient, error) {
+	return nil, nil
+}
 func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
 	return nil, nil
 }
@@ -1298,6 +1617,10 @@ func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts 
 	return nil, nil
 }
 func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+
+func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
 	return nil, nil
 }
 func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {

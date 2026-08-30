@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { chain } from 'lodash';
 import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Stack, Toggletip, useStyles2 } from '@grafana/ui';
 
 import { findCommonLabels, isPrivateLabel } from '../../utils/labels';
 
-import { AlertLabel, LabelSize } from './AlertLabel';
+import { AlertLabel, type LabelSize } from './AlertLabel';
 
 export interface AlertLabelsProps {
   labels: Record<string, string>;
@@ -83,14 +83,28 @@ export const AlertLabels = ({
               tooltipPlacement="top"
               size="sm"
             >
-              <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+              <Trans
+                i18nKey="alerting.alert-labels.common-labels-count"
+                count={commonLabelsCount}
+                tOptions={{
+                  defaultValue_one: '+{{count}} common labels',
+                  defaultValue_other: '+{{count}} common labels',
+                }}
+              >
                 +{'{{count}}'} common labels
               </Trans>
             </Button>
           ) : (
             <Toggletip content={commonLabelsTooltip} closeButton={false} fitContent={true}>
               <Button data-testid="common-labels-tooltip-trigger" variant="secondary" fill="text" size="sm">
-                <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+                <Trans
+                  i18nKey="alerting.alert-labels.common-labels-count"
+                  count={commonLabelsCount}
+                  tOptions={{
+                    defaultValue_one: '+{{count}} common labels',
+                    defaultValue_other: '+{{count}} common labels',
+                  }}
+                >
                   +{'{{count}}'} common labels
                 </Trans>
               </Button>

@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { SQLOptions } from '../../types';
+import { type SQLOptions } from '../../types';
 import { sqlPluginLogger } from '../../utils/logging';
 
 /**

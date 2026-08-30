@@ -3,12 +3,11 @@ package dtos
 import (
 	"time"
 
-	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
 	IsSnapshot bool      `json:"isSnapshot,omitempty"`
 	Type       string    `json:"type,omitempty"`
 	CanSave    bool      `json:"canSave"`

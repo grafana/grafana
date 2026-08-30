@@ -1,7 +1,7 @@
-import { AnnotationQuery } from '@grafana/data';
+import { type AnnotationQuery } from '@grafana/data';
 
 import { applyQueryDefaults } from '../defaults';
-import { SQLQuery } from '../types';
+import { type SQLQuery } from '../types';
 
 export default function migrateAnnotation(annotation: AnnotationQuery<SQLQuery>) {
   const oldQuery = typeof annotation.rawQuery === 'string' ? annotation.rawQuery : null;

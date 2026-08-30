@@ -1,5 +1,7 @@
 import { throttle } from 'lodash';
 
+import { store } from '@grafana/data';
+
 type Args = Parameters<typeof console.log>;
 
 /**
@@ -24,7 +26,7 @@ export const createLogger = (name: string): Logger => {
   let loggingEnabled = false;
 
   if (typeof window !== 'undefined') {
-    loggingEnabled = window.localStorage.getItem('grafana.debug') === 'true';
+    loggingEnabled = store.get('grafana.debug') === 'true';
   }
 
   return {

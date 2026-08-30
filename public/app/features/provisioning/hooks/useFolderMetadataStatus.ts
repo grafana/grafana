@@ -32,8 +32,12 @@ export function useFolderMetadataStatus(folderUID: string): FolderMetadataResult
   const repoName = repository?.name ?? '';
   const folderJsonPath = getFolderMetadataPath(sourcePath);
 
+  // Root folders of folder-targeted repos have stable identity (UID = repo name)
+  // and never have a _folder.json file. Skip the metadata check for them.
+  const isRootRepoFolder = repository?.target === 'folder' && repoName === folderUID;
+
   const { error, isLoading: isFileLoading } = useGetRepositoryFilesWithPathQuery(
-    repoName ? { name: repoName, path: folderJsonPath } : skipToken
+    repoName && !isRootRepoFolder ? { name: repoName, path: folderJsonPath } : skipToken
   );
 
   if (isRepoViewLoading || isFileLoading) {

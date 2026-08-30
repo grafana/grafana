@@ -2,6 +2,7 @@ import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -9,15 +10,28 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { dashboardEditActions } from '../../edit-pane/shared';
+import {
+  getSectionFiltersCount,
+  AddSectionFilterButton,
+  SectionFiltersCategoryTitle,
+  SectionFiltersList,
+} from '../../sidebar/SectionFiltersList';
+import {
+  getSectionVariablesCount,
+  AddSectionVariableButton,
+  SectionVariablesCategoryTitle,
+  SectionVariablesList,
+} from '../../sidebar/SectionVariablesList';
+import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 
-export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
   const { layout } = model.useState();
 
@@ -71,7 +85,61 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
+      id: SidebarCategoryType.RowSectionVariables,
+      isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionVariablesCount(model),
+      headerActions: <AddSectionVariableButton sectionOwner={model} />,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: SidebarCategoryType.RowSectionVariablesList,
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const sectionFiltersCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
+      id: SidebarCategoryType.RowSectionFilters,
+      isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: getSectionFiltersCount(model),
+      headerActions: <AddSectionFilterButton sectionOwner={model} />,
+      renderTitle: () => <SectionFiltersCategoryTitle />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: SidebarCategoryType.RowSectionFiltersList,
+        skipField: true,
+        render: () => <SectionFiltersList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = [
+    rowCategory,
+    ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+    sectionVariablesCategory,
+    ...layoutCategory,
+    repeatCategory,
+  ];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -89,7 +157,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   const { title } = row.useState();
   const prevTitle = useRef('');
 
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useSidebarInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
@@ -187,7 +255,7 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
     title = generateUniqueTitle('New row', existingNames);
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.row-title', 'Change row title'),
     source: row,
     perform: () => row.onChangeTitle(title),

@@ -270,6 +270,8 @@ func (session *Session) InsertMulti(rowsSlicePtr any) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 	if sliceValue.Kind() != reflect.Slice {
 		return 0, ErrParamsType
@@ -565,6 +567,8 @@ func (session *Session) InsertOne(bean any) (int64, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	return session.innerInsert(bean)
 }
 
@@ -615,7 +619,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 				if len(fieldValue.String()) == 0 {
 					continue
 				}
-			case reflect.Ptr:
+			case reflect.Pointer:
 				if fieldValue.Pointer() == 0 {
 					continue
 				}

@@ -1,19 +1,19 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
 
-import { isEmptyObject, SelectableValue, VariableRefresh } from '@grafana/data';
+import { isEmptyObject, type SelectableValue, VariableRefresh } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner, Stack } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
-import { ShareModalTabProps } from './types';
+import { type ShareModalTabProps } from './types';
 import { getTrackingSource } from './utils';
 
 interface Props extends ShareModalTabProps {}

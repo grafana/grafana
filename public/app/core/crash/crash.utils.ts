@@ -1,6 +1,6 @@
-import { LogContext } from '@grafana/faro-core/dist/types/api/logs/types';
+import { type LogContext } from '@grafana/faro-core/dist/types/api/logs/types';
 
-export interface ChromePerformanceMemory {
+interface ChromePerformanceMemory {
   totalJSHeapSize: number;
   usedJSHeapSize: number;
   jsHeapSizeLimit: number;

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"slices"
 )
 
 //go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
@@ -32,12 +33,7 @@ type FeatureToggles interface {
 }
 
 func AnyEnabled(f FeatureToggles, flags ...string) bool {
-	for _, flag := range flags {
-		if f.IsEnabledGlobally(flag) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(flags, f.IsEnabledGlobally)
 }
 
 // FeatureFlagStage indicates the quality level
@@ -126,6 +122,13 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+type Generate struct {
+	LegacyGo       bool
+	LegacyFrontend bool
+	Go             bool
+	React          bool
+}
+
 // These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
@@ -145,11 +148,13 @@ type FeatureFlag struct {
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
 	// The server must be initialized with the value
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
+
+	// Generate instructs codegen on what clients to generate for this feature flag.
+	Generate Generate `json:"-"`
 }
 
 type FeatureToggleWebhookPayload struct {

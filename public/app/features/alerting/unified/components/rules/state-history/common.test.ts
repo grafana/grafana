@@ -1,6 +1,6 @@
-import { DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON } from '@grafana/data';
 
-import { Label, extractCommonLabels, historyDataFrameToLogRecords, omitLabels } from './common';
+import { type Label, extractCommonLabels, historyDataFrameToLogRecords, omitLabels } from './common';
 
 test('extractCommonLabels', () => {
   const labels: Label[][] = [

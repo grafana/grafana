@@ -24,7 +24,7 @@ import { fromCombinedRule } from 'app/features/alerting/unified/utils/rule-id';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { AlertRuleAction } from '../../hooks/useAbilities';
+import { RuleAction } from '../../hooks/abilities/types';
 
 const mockOpenAssistant = jest.fn();
 jest.mock('@grafana/assistant', () => ({
@@ -253,7 +253,7 @@ describe('AlertRuleMenu', () => {
     // Generalized test to reduce repetition for menu item visibility
     type MenuItemTestCase = {
       description: string;
-      action: AlertRuleAction;
+      action: RuleAction;
       menuItem: keyof typeof ui.menuItems;
       granted: boolean;
       shouldShow: boolean;
@@ -269,22 +269,34 @@ describe('AlertRuleMenu', () => {
 
         if (granted) {
           switch (action) {
-            case AlertRuleAction.Pause:
-            case AlertRuleAction.Update:
-              permissions.push(AccessControlAction.AlertingRuleUpdate);
+            case RuleAction.Pause:
+            case RuleAction.Update:
+              permissions.push(
+                AccessControlAction.AlertingRuleRead,
+                AccessControlAction.AlertingRuleUpdate,
+                AccessControlAction.FoldersRead
+              );
+              folderAccessControl[AccessControlAction.AlertingRuleRead] = true;
               folderAccessControl[AccessControlAction.AlertingRuleUpdate] = true;
+              folderAccessControl[AccessControlAction.FoldersRead] = true;
               break;
-            case AlertRuleAction.Delete:
-              permissions.push(AccessControlAction.AlertingRuleDelete);
+            case RuleAction.Delete:
+              permissions.push(
+                AccessControlAction.AlertingRuleRead,
+                AccessControlAction.AlertingRuleDelete,
+                AccessControlAction.FoldersRead
+              );
+              folderAccessControl[AccessControlAction.AlertingRuleRead] = true;
               folderAccessControl[AccessControlAction.AlertingRuleDelete] = true;
+              folderAccessControl[AccessControlAction.FoldersRead] = true;
               break;
-            case AlertRuleAction.Duplicate:
+            case RuleAction.Duplicate:
               permissions.push(AccessControlAction.AlertingRuleCreate);
               break;
-            case AlertRuleAction.Silence:
+            case RuleAction.Silence:
               permissions.push(AccessControlAction.AlertingInstanceCreate, AccessControlAction.AlertingSilenceCreate);
               break;
-            case AlertRuleAction.ModifyExport:
+            case RuleAction.ModifyExport:
               permissions.push(AccessControlAction.AlertingRuleRead);
               break;
           }
@@ -327,7 +339,7 @@ describe('AlertRuleMenu', () => {
     describe('Pause/Resume visibility', () => {
       testMenuItemVisibility({
         description: 'shows Pause when pause permission is granted',
-        action: AlertRuleAction.Pause,
+        action: RuleAction.Pause,
         menuItem: 'pause',
         granted: true,
         shouldShow: true,
@@ -335,7 +347,7 @@ describe('AlertRuleMenu', () => {
 
       testMenuItemVisibility({
         description: 'hides Pause when pause permission is denied',
-        action: AlertRuleAction.Pause,
+        action: RuleAction.Pause,
         menuItem: 'pause',
         granted: false,
         shouldShow: false,
@@ -345,7 +357,7 @@ describe('AlertRuleMenu', () => {
     describe('Delete visibility', () => {
       testMenuItemVisibility({
         description: 'shows Delete when delete permission is granted',
-        action: AlertRuleAction.Delete,
+        action: RuleAction.Delete,
         menuItem: 'delete',
         granted: true,
         shouldShow: true,
@@ -353,7 +365,7 @@ describe('AlertRuleMenu', () => {
 
       testMenuItemVisibility({
         description: 'hides Delete when delete permission is denied',
-        action: AlertRuleAction.Delete,
+        action: RuleAction.Delete,
         menuItem: 'delete',
         granted: false,
         shouldShow: false,
@@ -363,7 +375,7 @@ describe('AlertRuleMenu', () => {
     describe('Duplicate visibility', () => {
       testMenuItemVisibility({
         description: 'shows Duplicate when duplicate permission is granted',
-        action: AlertRuleAction.Duplicate,
+        action: RuleAction.Duplicate,
         menuItem: 'duplicate',
         granted: true,
         shouldShow: true,
@@ -371,7 +383,7 @@ describe('AlertRuleMenu', () => {
 
       testMenuItemVisibility({
         description: 'hides Duplicate when duplicate permission is denied',
-        action: AlertRuleAction.Duplicate,
+        action: RuleAction.Duplicate,
         menuItem: 'duplicate',
         granted: false,
         shouldShow: false,
@@ -381,7 +393,7 @@ describe('AlertRuleMenu', () => {
     describe('Silence visibility', () => {
       testMenuItemVisibility({
         description: 'shows Silence when silence permission is granted',
-        action: AlertRuleAction.Silence,
+        action: RuleAction.Silence,
         menuItem: 'silence',
         granted: true,
         shouldShow: true,
@@ -389,7 +401,7 @@ describe('AlertRuleMenu', () => {
 
       testMenuItemVisibility({
         description: 'hides Silence when silence permission is denied',
-        action: AlertRuleAction.Silence,
+        action: RuleAction.Silence,
         menuItem: 'silence',
         granted: false,
         shouldShow: false,
@@ -399,7 +411,7 @@ describe('AlertRuleMenu', () => {
     describe('Export visibility', () => {
       testMenuItemVisibility({
         description: 'shows Export when export permission is granted',
-        action: AlertRuleAction.ModifyExport,
+        action: RuleAction.ModifyExport,
         menuItem: 'export',
         granted: true,
         shouldShow: true,
@@ -407,7 +419,7 @@ describe('AlertRuleMenu', () => {
 
       testMenuItemVisibility({
         description: 'hides Export when export permission is denied',
-        action: AlertRuleAction.ModifyExport,
+        action: RuleAction.ModifyExport,
         menuItem: 'export',
         granted: false,
         shouldShow: false,
@@ -444,12 +456,15 @@ describe('AlertRuleMenu', () => {
         AccessControlAction.AlertingRuleUpdate,
         AccessControlAction.AlertingRuleDelete,
         AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.FoldersRead,
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingSilenceCreate,
       ]);
       setFolderAccessControl({
+        [AccessControlAction.AlertingRuleRead]: true,
         [AccessControlAction.AlertingRuleUpdate]: true,
         [AccessControlAction.AlertingRuleDelete]: true,
+        [AccessControlAction.FoldersRead]: true,
       });
       mockFolderApi(server).folder(
         'namespace-uid',
@@ -457,8 +472,10 @@ describe('AlertRuleMenu', () => {
           uid: 'namespace-uid',
           title: 'Test Folder',
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
             [AccessControlAction.AlertingRuleDelete]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -786,14 +803,26 @@ describe('AlertRuleMenu', () => {
 
     describe('handleDelete', () => {
       it('calls handleDelete with correct identifier and groupIdentifier when Delete menu item is clicked', async () => {
-        grantUserPermissions([AccessControlAction.AlertingRuleDelete]);
-        setFolderAccessControl({ [AccessControlAction.AlertingRuleDelete]: true });
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleDelete,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl({
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleDelete]: true,
+          [AccessControlAction.FoldersRead]: true,
+        });
         mockFolderApi(server).folder(
           'namespace-uid',
           mockFolder({
             uid: 'namespace-uid',
             title: 'Test Folder',
-            accessControl: { [AccessControlAction.AlertingRuleDelete]: true },
+            accessControl: {
+              [AccessControlAction.AlertingRuleRead]: true,
+              [AccessControlAction.AlertingRuleDelete]: true,
+              [AccessControlAction.FoldersRead]: true,
+            },
           })
         );
 
@@ -886,14 +915,26 @@ describe('AlertRuleMenu', () => {
     describe('onPauseChange', () => {
       it('calls onPauseChange after pause state change when Pause menu item is clicked', async () => {
         const onPauseChange = jest.fn();
-        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
-        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleUpdate,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl({
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        });
         mockFolderApi(server).folder(
           'namespace-uid',
           mockFolder({
             uid: 'namespace-uid',
             title: 'Test Folder',
-            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+            accessControl: {
+              [AccessControlAction.AlertingRuleRead]: true,
+              [AccessControlAction.AlertingRuleUpdate]: true,
+              [AccessControlAction.FoldersRead]: true,
+            },
           })
         );
 
@@ -927,14 +968,26 @@ describe('AlertRuleMenu', () => {
 
       it('calls onPauseChange after resume state change when Resume menu item is clicked', async () => {
         const onPauseChange = jest.fn();
-        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
-        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleUpdate,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl({
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        });
         mockFolderApi(server).folder(
           'namespace-uid',
           mockFolder({
             uid: 'namespace-uid',
             title: 'Test Folder',
-            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+            accessControl: {
+              [AccessControlAction.AlertingRuleRead]: true,
+              [AccessControlAction.AlertingRuleUpdate]: true,
+              [AccessControlAction.FoldersRead]: true,
+            },
           })
         );
 
@@ -1407,14 +1460,26 @@ describe('AlertRuleMenu', () => {
       });
 
       it('pause still works when onPauseChange is not provided', async () => {
-        grantUserPermissions([AccessControlAction.AlertingRuleUpdate]);
-        setFolderAccessControl({ [AccessControlAction.AlertingRuleUpdate]: true });
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleUpdate,
+          AccessControlAction.FoldersRead,
+        ]);
+        setFolderAccessControl({
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        });
         mockFolderApi(server).folder(
           'namespace-uid',
           mockFolder({
             uid: 'namespace-uid',
             title: 'Test Folder',
-            accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+            accessControl: {
+              [AccessControlAction.AlertingRuleRead]: true,
+              [AccessControlAction.AlertingRuleUpdate]: true,
+              [AccessControlAction.FoldersRead]: true,
+            },
           })
         );
 

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13">
+  <defs>
+    <marker id="a-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2970FF"/>
+    </marker>
+    <marker id="a-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#04BC4C"/>
+    </marker>
+    <marker id="a-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#D444F1"/>
+    </marker>
+    <marker id="a-gray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#696969"/>
+    </marker>
+  </defs>
+
+  <rect width="880" height="520" fill="#FFFFFF" rx="4"/>
+
+  <!-- Title -->
+  <text x="440" y="28" text-anchor="middle" font-size="16" font-weight="600" fill="#171717">Linking traces to other signals</text>
+  <text x="440" y="48" text-anchor="middle" font-size="13" fill="#696969">Grouped by where each link is configured. Arrows show navigation direction.</text>
+
+  <!-- ROW 1: From traces to other signals -->
+  <rect x="28" y="64" width="824" height="186" rx="8" fill="#FFF5EE" stroke="#FF671D" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="48" y="84" font-size="14"><tspan font-weight="600" fill="#FF671D">From traces to other signals</tspan><tspan fill="#3A3A3A">, configured in Tempo data source settings</tspan></text>
+
+  <!-- Pair 1: Trace to logs -> Loki -->
+  <rect x="56" y="98" width="260" height="40" rx="6" fill="#FFF" stroke="#2970FF" stroke-width="1.5"/>
+  <text x="186" y="123" text-anchor="middle" font-size="14" fill="#2970FF">Trace to logs</text>
+  <line x1="324" y1="118" x2="588" y2="118" stroke="#2970FF" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <rect x="596" y="98" width="230" height="40" rx="6" fill="#FFF" stroke="#2970FF" stroke-width="1.5"/>
+  <text x="711" y="123" text-anchor="middle" font-size="14" font-weight="600" fill="#2970FF">Loki</text>
+
+  <!-- Pair 2: Trace to metrics -> Prometheus -->
+  <rect x="56" y="148" width="260" height="40" rx="6" fill="#FFF" stroke="#04BC4C" stroke-width="1.5"/>
+  <text x="186" y="173" text-anchor="middle" font-size="14" fill="#04BC4C">Trace to metrics</text>
+  <line x1="324" y1="168" x2="588" y2="168" stroke="#04BC4C" stroke-width="1.5" marker-end="url(#a-green)"/>
+  <rect x="596" y="148" width="230" height="40" rx="6" fill="#FFF" stroke="#04BC4C" stroke-width="1.5"/>
+  <text x="711" y="173" text-anchor="middle" font-size="14" font-weight="600" fill="#04BC4C">Prometheus</text>
+
+  <!-- Pair 3: Trace to profiles -> Pyroscope -->
+  <rect x="56" y="198" width="260" height="40" rx="6" fill="#FFF" stroke="#D444F1" stroke-width="1.5"/>
+  <text x="186" y="223" text-anchor="middle" font-size="14" fill="#D444F1">Trace to profiles</text>
+  <line x1="324" y1="218" x2="588" y2="218" stroke="#D444F1" stroke-width="1.5" marker-end="url(#a-purple)"/>
+  <rect x="596" y="198" width="230" height="40" rx="6" fill="#FFF" stroke="#D444F1" stroke-width="1.5"/>
+  <text x="711" y="223" text-anchor="middle" font-size="14" font-weight="600" fill="#D444F1">Pyroscope</text>
+
+  <!-- ROW 2: From other signals to traces -->
+  <rect x="28" y="262" width="824" height="136" rx="8" fill="#FFFBE6" stroke="#FFAB29" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="48" y="282" font-size="14"><tspan font-weight="600" fill="#996600">From other signals to traces</tspan><tspan fill="#3A3A3A">, configured in Loki and Prometheus settings</tspan></text>
+
+  <!-- Pair 1: Derived fields -> Tempo -->
+  <rect x="56" y="296" width="260" height="40" rx="6" fill="#FFF" stroke="#2970FF" stroke-width="1.5"/>
+  <text x="186" y="321" text-anchor="middle" font-size="14" fill="#2970FF">Derived fields</text>
+  <line x1="324" y1="316" x2="588" y2="342" stroke="#2970FF" stroke-width="1.5" marker-end="url(#a-blue)"/>
+  <rect x="596" y="322" width="230" height="40" rx="6" fill="#FFF" stroke="#FF671D" stroke-width="1.5"/>
+  <text x="711" y="347" text-anchor="middle" font-size="14" font-weight="600" fill="#FF671D">Tempo</text>
+
+  <!-- Pair 2: Exemplars -> Tempo -->
+  <rect x="56" y="348" width="260" height="40" rx="6" fill="#FFF" stroke="#04BC4C" stroke-width="1.5"/>
+  <text x="186" y="373" text-anchor="middle" font-size="14" fill="#04BC4C">Exemplars</text>
+  <line x1="324" y1="368" x2="588" y2="342" stroke="#04BC4C" stroke-width="1.5" marker-end="url(#a-green)"/>
+
+  <!-- ROW 3: Flexible correlations -->
+  <rect x="28" y="410" width="824" height="98" rx="8" fill="#E8F8FD" stroke="#3FC6EB" stroke-width="1" stroke-opacity="0.4" stroke-dasharray="6,3"/>
+  <text x="48" y="430" font-size="14"><tspan font-weight="600" fill="#1A8AAF">Flexible correlations</tspan><tspan fill="#3A3A3A">, configured in Grafana &gt; Correlations</tspan></text>
+
+  <rect x="56" y="444" width="260" height="48" rx="6" fill="#FFF" stroke="#696969" stroke-width="1.5"/>
+  <text x="186" y="473" text-anchor="middle" font-size="14" fill="#3A3A3A">Trace correlations</text>
+  <line x1="324" y1="468" x2="588" y2="468" stroke="#696969" stroke-width="1.5" marker-end="url(#a-gray)" stroke-dasharray="6,3"/>
+  <rect x="596" y="444" width="230" height="48" rx="6" fill="#FFF" stroke="#696969" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="711" y="464" text-anchor="middle" font-size="14" fill="#3A3A3A">Any data source</text>
+  <text x="711" y="480" text-anchor="middle" font-size="13" fill="#696969">or external URL</text>
+</svg>

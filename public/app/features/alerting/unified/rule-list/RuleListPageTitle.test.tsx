@@ -55,6 +55,19 @@ describe('RuleListPageTitle', () => {
     expect(ui.revertButton.query()).not.toBeInTheDocument();
   });
 
+  describe('when alertingListViewV2PreviewToggle is enabled', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
+
+    beforeEach(() => {
+      setPreviewToggle('alertingListViewV2', true);
+    });
+
+    it('should show the revert toggle button', () => {
+      renderRuleListPageTitle();
+      expect(ui.revertButton.get()).toBeInTheDocument();
+    });
+  });
+
   describe('when on OLD view (alertingListViewV2PreviewToggle enabled, alertingListViewV2 disabled)', () => {
     testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'] });
 
@@ -91,65 +104,78 @@ describe('RuleListPageTitle', () => {
       expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
     });
 
-    it('should show confirmation modal when clicking revert button', async () => {
-      const { user } = renderRuleListPageTitle();
+    describe('when alertingTriage is disabled', () => {
+      it('should revert directly without showing a modal', async () => {
+        const { user } = renderRuleListPageTitle();
 
-      await user.click(ui.revertButton.get());
+        await user.click(ui.revertButton.get());
 
-      // Modal should appear
-      await waitFor(() => {
-        expect(ui.modal.dialog.get()).toBeInTheDocument();
-      });
-      expect(withinModal().getByRole('button', { name: /revert to previous experience/i })).toBeInTheDocument();
-      expect(withinModal().getByRole('button', { name: /see alert activity/i })).toBeInTheDocument();
-    });
-
-    it('should revert to old experience when confirming in modal', async () => {
-      const { user } = renderRuleListPageTitle();
-
-      await user.click(ui.revertButton.get());
-      await waitFor(() => {
-        expect(ui.modal.dialog.get()).toBeInTheDocument();
-      });
-
-      await user.click(withinModal().getByRole('button', { name: /revert to previous experience/i }));
-
-      expect(getPreviewToggle('alertingListViewV2')).toBe(false);
-      expect(mockReload).toHaveBeenCalled();
-    });
-
-    it('should close modal when clicking "See Alert Activity"', async () => {
-      const { user } = renderRuleListPageTitle();
-
-      await user.click(ui.revertButton.get());
-      await waitFor(() => {
-        expect(ui.modal.dialog.get()).toBeInTheDocument();
-      });
-
-      await user.click(withinModal().getByRole('button', { name: /see alert activity/i }));
-
-      // Modal should close
-      await waitFor(() => {
         expect(ui.modal.dialog.query()).not.toBeInTheDocument();
+        expect(getPreviewToggle('alertingListViewV2')).toBe(false);
+        expect(mockReload).toHaveBeenCalled();
       });
-
-      // Should NOT switch view
-      expect(mockReload).not.toHaveBeenCalled();
     });
 
-    it('should close modal when dismissed via escape', async () => {
-      const { user } = renderRuleListPageTitle();
+    describe('when alertingTriage is enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2', 'alertingTriage'] });
 
-      await user.click(ui.revertButton.get());
-      await waitFor(() => {
-        expect(ui.modal.dialog.get()).toBeInTheDocument();
+      it('should show confirmation modal when clicking revert button', async () => {
+        const { user } = renderRuleListPageTitle();
+
+        await user.click(ui.revertButton.get());
+
+        await waitFor(() => {
+          expect(ui.modal.dialog.get()).toBeInTheDocument();
+        });
+        expect(withinModal().getByRole('button', { name: /revert to previous experience/i })).toBeInTheDocument();
+        expect(withinModal().getByRole('button', { name: /see alert activity/i })).toBeInTheDocument();
       });
 
-      // Press escape to close
-      await user.keyboard('{Escape}');
+      it('should revert to old experience when confirming in modal', async () => {
+        const { user } = renderRuleListPageTitle();
 
-      await waitFor(() => {
-        expect(ui.modal.dialog.query()).not.toBeInTheDocument();
+        await user.click(ui.revertButton.get());
+        await waitFor(() => {
+          expect(ui.modal.dialog.get()).toBeInTheDocument();
+        });
+
+        await user.click(withinModal().getByRole('button', { name: /revert to previous experience/i }));
+
+        expect(getPreviewToggle('alertingListViewV2')).toBe(false);
+        expect(mockReload).toHaveBeenCalled();
+      });
+
+      it('should close modal when clicking "See Alert Activity"', async () => {
+        const { user } = renderRuleListPageTitle();
+
+        await user.click(ui.revertButton.get());
+        await waitFor(() => {
+          expect(ui.modal.dialog.get()).toBeInTheDocument();
+        });
+
+        await user.click(withinModal().getByRole('button', { name: /see alert activity/i }));
+
+        await waitFor(() => {
+          expect(ui.modal.dialog.query()).not.toBeInTheDocument();
+        });
+
+        // Should NOT switch view
+        expect(mockReload).not.toHaveBeenCalled();
+      });
+
+      it('should close modal when dismissed via escape', async () => {
+        const { user } = renderRuleListPageTitle();
+
+        await user.click(ui.revertButton.get());
+        await waitFor(() => {
+          expect(ui.modal.dialog.get()).toBeInTheDocument();
+        });
+
+        await user.keyboard('{Escape}');
+
+        await waitFor(() => {
+          expect(ui.modal.dialog.query()).not.toBeInTheDocument();
+        });
       });
     });
   });

@@ -4,11 +4,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
-  DataFrame,
-  DataLinkClickEvent,
-  Field,
+  type DataFrame,
+  type DataLinkClickEvent,
+  type Field,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
 } from '@grafana/data';
@@ -16,17 +16,17 @@ import {
   IconButton,
   Table,
   TableCellDisplayMode,
-  TableCustomCellOptions,
-  TableFieldOptions,
-  TableSortByFieldState,
+  type TableCustomCellOptions,
+  type TableFieldOptions,
+  type TableSortByFieldState,
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
-import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
-import { ColorScheme, ColorSchemeDiff, TableData } from '../types';
+import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;

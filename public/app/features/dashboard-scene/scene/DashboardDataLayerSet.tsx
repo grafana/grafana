@@ -1,18 +1,18 @@
-import { AnnotationQuery, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
-  SceneDataLayerProviderState,
-  SceneDataLayerProvider,
+  type SceneDataLayerProviderState,
+  type SceneDataLayerProvider,
   SceneDataLayerSetBase,
-  SceneComponentProps,
+  type SceneComponentProps,
 } from '@grafana/scenes';
 
-import { AlertStatesDataLayer } from './AlertStatesDataLayer';
+import { type AlertStatesDataLayer } from './AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
 
 export const NEW_ANNOTATION_NAME = 'New annotation';
-export const NEW_ANNOTATION_COLOR = 'red';
+const NEW_ANNOTATION_COLOR = 'red';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;
@@ -56,8 +56,8 @@ export class DashboardDataLayerSet
     this.setState({ annotationLayers: [...this.state.annotationLayers, layer] });
   }
 
-  public createDefaultAnnotationLayer(): DashboardAnnotationsDataLayer {
-    const defaultDatasource = getDataSourceSrv().getInstanceSettings(null);
+  public async createDefaultAnnotationLayer(): Promise<DashboardAnnotationsDataLayer> {
+    const defaultDatasource = await getDataSourceInstanceSettings(null);
     const datasourceRef = defaultDatasource?.meta.annotations ? getDataSourceRef(defaultDatasource) : undefined;
 
     const newAnnotationQuery: AnnotationQuery = {

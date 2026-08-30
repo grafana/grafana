@@ -12,11 +12,16 @@ import (
 
 type extra struct {
 	decrypter repository.Decrypter
+	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
+	allowInsecure bool
+	metrics       *repository.OperationMetrics
 }
 
-func Extra(decrypter repository.Decrypter) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *repository.OperationMetrics) repository.Extra {
 	return &extra{
-		decrypter: decrypter,
+		decrypter:     decrypter,
+		allowInsecure: allowInsecure,
+		metrics:       metrics,
 	}
 }
 
@@ -36,20 +41,28 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.CommitSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	return NewRepository(ctx, r, RepositoryConfig{
-		URL:           cfg.URL,
-		Branch:        cfg.Branch,
-		Path:          cfg.Path,
-		TokenUser:     cfg.TokenUser,
-		Token:         token,
-		SkipGitSuffix: true,
-	})
+		URL:              cfg.URL,
+		Branch:           cfg.Branch,
+		Path:             cfg.Path,
+		TokenUser:        cfg.TokenUser,
+		Token:            token,
+		CommitSigningKey: signingKey,
+		SigningMethod:    SigningMethodFromSpec(r),
+		SMIMECertificate: SMIMECertificateFromSpec(r),
+		SkipGitSuffix:    true,
+	}, e.metrics)
 }
 
-func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	return Mutate(ctx, obj)
 }
 
 func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(ctx, obj)
+	return Validate(ctx, obj, e.allowInsecure)
 }

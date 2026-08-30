@@ -6,14 +6,14 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func addDropAllIndicesMigrations(mg *Migrator, versionSuffix string, table Table) {
+func addDropAllIndicesMigrations(mg Migrations, versionSuffix string, table Table) {
 	for _, index := range table.Indices {
 		migrationId := fmt.Sprintf("drop index %s - %s", index.XName(table.Name), versionSuffix)
 		mg.AddMigration(migrationId, NewDropIndexMigration(table, index))
 	}
 }
 
-func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) {
+func addTableIndicesMigrations(mg Migrations, versionSuffix string, table Table) {
 	for _, index := range table.Indices {
 		migrationId := fmt.Sprintf("create index %s - %s", index.XName(table.Name), versionSuffix)
 		mg.AddMigration(migrationId, NewAddIndexMigration(table, index))
@@ -22,12 +22,12 @@ func addTableIndicesMigrations(mg *Migrator, versionSuffix string, table Table) 
 
 // addTableRenameMigration may cause breaking changes.
 // DEPRECATED: It should no longer be used. Kept only for legacy reasons.
-func addTableRenameMigration(mg *Migrator, oldName string, newName string, versionSuffix string) {
+func addTableRenameMigration(mg Migrations, oldName string, newName string, versionSuffix string) {
 	migrationId := fmt.Sprintf("Rename table %s to %s - %s", oldName, newName, versionSuffix)
 	mg.AddMigration(migrationId, NewRenameTableMigration(oldName, newName))
 }
 
-func addTableReplaceMigrations(mg *Migrator, from Table, to Table, migrationVersion int64, tableDataMigration map[string]string) {
+func addTableReplaceMigrations(mg Migrations, from Table, to Table, migrationVersion int64, tableDataMigration map[string]string) {
 	fromV := version(migrationVersion - 1)
 	toV := version(migrationVersion)
 	tmpTableName := to.Name + "_tmp_qwerty"

@@ -2,14 +2,14 @@ import { fireEvent, render, screen, getByText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { ExploreState, RichHistoryQuery } from 'app/types/explore';
+import { type ExploreState, type RichHistoryQuery } from 'app/types/explore';
 
-import { RichHistoryCard, Props } from './RichHistoryCard';
+import { RichHistoryCard, type Props } from './RichHistoryCard';
 
 const starRichHistoryMock = jest.fn();
 const deleteRichHistoryMock = jest.fn();

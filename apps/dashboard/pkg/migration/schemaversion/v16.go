@@ -149,7 +149,7 @@ func upgradeToGridLayout(dashboard map[string]interface{}) {
 
 			panelWidth, panelHeight := calculatePanelDimensionsFromSpan(span, panel, widthFactor, rowGridHeight)
 
-			panelPos := rowArea.getPanelPosition(panelHeight, panelWidth)
+			panelPos := rowArea.getPanelPosition(panelHeight, panelWidth, false)
 			yPos = rowArea.yPos
 
 			// Set gridPos (lines 1072-1077 in TS)
@@ -228,7 +228,7 @@ func (r *rowArea) addPanel(gridPos map[string]interface{}) {
 	}
 }
 
-func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int) map[string]interface{} {
+func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int, callOnce bool) map[string]interface{} {
 	var startPlace, endPlace int
 	found := false
 
@@ -264,10 +264,18 @@ func (r *rowArea) getPanelPosition(panelHeight int, panelWidth int) map[string]i
 		}
 	}
 
-	// Wrap to next row
-	r.yPos += r.height
-	r.reset()
-	return r.getPanelPosition(panelHeight, panelWidth)
+	// Wrap to next row, but only once. Matches the frontend's callOnce guard
+	// (DashboardMigrator.ts). Without it, a panel too wide to ever fit the grid
+	// (e.g. span > 12, yielding panelWidth > gridColumnCount) recurses forever.
+	if !callOnce {
+		r.yPos += r.height
+		r.reset()
+		return r.getPanelPosition(panelHeight, panelWidth, true)
+	}
+
+	// Panel cannot be placed; return nil like the frontend returns null. The
+	// caller reads x/y via GetIntValue, which falls back to 0 for a nil map.
+	return nil
 }
 
 func getMaxPanelID(dashboard map[string]interface{}, rows []interface{}) int {

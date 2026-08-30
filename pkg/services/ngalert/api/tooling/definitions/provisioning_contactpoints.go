@@ -8,6 +8,8 @@ import (
 //
 // Get all the contact points.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: ContactPoints
 //       403: ForbiddenError
@@ -31,6 +33,8 @@ import (
 //
 // Create a contact point.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -38,10 +42,13 @@ import (
 //       202: EmbeddedContactPoint
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route PUT /v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
 // Update an existing contact point.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -50,10 +57,13 @@ import (
 //       202: Ack
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -61,6 +71,7 @@ import (
 //     Responses:
 //       202: description: The contact point was deleted successfully.
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {

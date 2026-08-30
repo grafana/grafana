@@ -7,7 +7,7 @@ import { dispatch } from 'app/store/store';
  * Get k8s dashboard metadata based on the selected folder
  */
 export async function getProvisionedMeta(folderUid?: string) {
-  if (!folderUid || !config.featureToggles.provisioning) {
+  if (!folderUid || !config.provisioningEnabled) {
     return {};
   }
   const folderQuery = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUid })).unwrap();

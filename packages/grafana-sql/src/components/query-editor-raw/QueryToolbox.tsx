@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Stack, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 
-import { QueryValidator, QueryValidatorProps } from './QueryValidator';
+import { QueryValidator, type QueryValidatorProps } from './QueryValidator';
 
 interface QueryToolboxProps extends Omit<QueryValidatorProps, 'onValidate'> {
   showTools?: boolean;

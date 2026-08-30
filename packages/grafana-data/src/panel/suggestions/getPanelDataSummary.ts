@@ -1,6 +1,6 @@
-import { PreferredVisualisationType } from '../../types/data';
-import { DataFrame, FieldType } from '../../types/dataFrame';
-import { DataFrameType } from '../../types/dataFrameTypes';
+import { type PreferredVisualisationType } from '../../types/data';
+import { type DataFrame, FieldType } from '../../types/dataFrame';
+import { type DataFrameType } from '../../types/dataFrameTypes';
 
 export interface PanelDataSummary {
   hasData?: boolean;

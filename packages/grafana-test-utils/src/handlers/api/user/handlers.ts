@@ -1,40 +1,12 @@
 import { HttpResponse, http } from 'msw';
 
-import { wellFormedTree } from '../../../fixtures/folders';
-import { mockStarredDashboardsMap } from '../../../fixtures/starred';
-const [_, { dashbdD }] = wellFormedTree();
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
-const getStarsHandler = () =>
-  http.get('/api/user/stars', async () => {
-    return HttpResponse.json(Array.from(mockStarredDashboardsMap.keys()));
-  });
-
-const deleteDashboardStarHandler = () =>
-  http.delete<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
-    const { uid } = params;
-    mockStarredDashboardsMap.delete(uid);
-    return HttpResponse.json({ message: 'Dashboard unstarred' });
-  });
-
-const addDashboardStarHandler = () =>
-  http.post<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
-    const { uid } = params;
-    mockStarredDashboardsMap.set(uid, true);
-    return HttpResponse.json({ message: 'Dashboard starred!' });
-  });
+import { mockUserPreferences, setMockUserPreferences } from '../../../fixtures/preferences';
 
 const getPreferencesHandler = () =>
   http.get('/api/user/preferences', async () => {
-    return HttpResponse.json({
-      homeDashboardUID: dashbdD.item.uid,
-      theme: 'light',
-      timezone: 'browser',
-      weekStart: 'monday',
-      queryHistory: {
-        homeTab: '',
-      },
-      language: '',
-    });
+    return HttpResponse.json(mockUserPreferences);
   });
 
 const updatePreferencesHandler = () =>
@@ -42,12 +14,25 @@ const updatePreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
+const patchPreferencesHandler = () =>
+  http.patch('/api/user/preferences', async ({ request }) => {
+    // Merge the patch into the stored preferences so a subsequent GET reflects it. The patch
+    // command sends the whole `navbar` object, so a shallow merge replaces it correctly.
+    const patch = (await request.json()) as Partial<PreferencesSpec>;
+    setMockUserPreferences(patch);
+    return HttpResponse.json({ message: 'Preferences updated' });
+  });
+
+export const getSignedInUserTeamListHandler = (teams: Array<{ uid: string; name: string }> = []) =>
+  http.get('/api/user/teams', async () => {
+    return HttpResponse.json(teams);
+  });
+
 const handlers = [
   getPreferencesHandler(),
   updatePreferencesHandler(),
-  getStarsHandler(),
-  deleteDashboardStarHandler(),
-  addDashboardStarHandler(),
+  patchPreferencesHandler(),
+  getSignedInUserTeamListHandler(),
 ];
 
 export default handlers;

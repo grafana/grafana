@@ -789,9 +789,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	}
 
 	if rule.NotificationSettings != nil {
-		for k, v := range rule.NotificationSettings.ToLabels(features) {
-			extraLabels[k] = v
-		}
+		maps.Copy(extraLabels, rule.NotificationSettings.ToLabels(features))
 	}
 	return extraLabels
 }
@@ -873,7 +871,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 	// Set Resolved property so the scheduler knows to send a postable alert
 	// to Alertmanager.
 	newlyResolved := false
-	if oldState == eval.Alerting && a.State == eval.Normal || oldState == eval.Recovering && a.State == eval.Normal {
+	if a.State == eval.Normal && (oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData || oldState == eval.Recovering) {
 		a.ResolvedAt = &result.EvaluatedAt
 		newlyResolved = true
 	} else if a.State != eval.Normal && a.State != eval.Pending { // Retain the last resolved time for Normal->Normal and Normal->Pending.
@@ -887,9 +885,7 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		}
 	}
 
-	for key, val := range extraAnnotations {
-		a.Annotations[key] = val
-	}
+	maps.Copy(a.Annotations, extraAnnotations)
 
 	nextState := StateTransition{
 		State:               a,

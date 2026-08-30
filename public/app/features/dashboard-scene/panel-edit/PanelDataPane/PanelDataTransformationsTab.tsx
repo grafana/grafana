@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
-import { DragDropContext, DropResult, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { throttle } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
 
-import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
+import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneDataTransformer,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
+  type VizPanel,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
@@ -27,10 +27,8 @@ import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { PanelDataPane } from './PanelDataPane';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTab, PanelDataTabHeaderProps, TabId } from './types';
-import { scrollToQueryRow } from './utils';
+import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 
-const SET_TIMEOUT = 750;
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
   reportInteraction('grafana_panel_transformations_clicked', {
     context,
@@ -111,22 +109,12 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
     }
 
     // Always create a new SQL expression (it will be added to the end of the queries array)
-    queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+    const refId = queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
 
-    // Navigate to the Queries tab
+    // Navigate to the Queries tab. The tab renders asynchronously (datasource loading),
+    // so the new query row scrolls itself into view once it appears, driven by this state.
     parent.onChangeTab(queriesTab);
-
-    // Scroll to the newly created SQL query after tab renders
-    setTimeout(() => {
-      const queries = queriesTab.getQueries();
-      // The newly added query is the last one in the array
-      if (queries.length > 0) {
-        const newQuery = queries[queries.length - 1];
-        if (newQuery?.refId) {
-          scrollToQueryRow(newQuery.refId);
-        }
-      }
-    }, SET_TIMEOUT);
+    queriesTab.setState({ scrollToRefId: refId });
   }, [model]);
 
   const onAddTransformation = useCallback(

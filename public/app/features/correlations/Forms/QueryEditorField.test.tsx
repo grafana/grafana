@@ -1,12 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { setDataSourceSrv } from '@grafana/runtime';
-import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { QueryEditorField } from './QueryEditorField';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
+}));
 
 const Wrapper = ({ children }: { children: ReactNode }) => {
   const methods = useForm({ defaultValues: { query: {} } });
@@ -25,17 +29,14 @@ const renderWithContext = (
   children: ReactNode,
   getHandler: (name: string) => Promise<MockDataSourceApi> = defaultGetHandler
 ) => {
-  const dsServer = setupDataSources();
-  dsServer.get = getHandler;
-
-  setDataSourceSrv(dsServer);
+  jest.mocked(getDataSourceInstance).mockImplementation((ref) => getHandler(ref as string));
 
   render(<Wrapper>{children}</Wrapper>);
 };
 
 describe('QueryEditorField', () => {
-  afterAll(() => {
-    jest.restoreAllMocks();
+  afterEach(() => {
+    jest.mocked(getDataSourceInstance).mockReset();
   });
 
   it('should render the query editor', async () => {

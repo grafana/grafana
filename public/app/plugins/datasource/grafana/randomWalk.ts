@@ -1,6 +1,6 @@
-import { DataFrame, DataFrameType, DataQueryRequest, FieldType } from '@grafana/data';
+import { type DataFrame, DataFrameType, type DataQueryRequest, FieldType } from '@grafana/data';
 
-import { GrafanaQuery } from './types';
+import { type GrafanaQuery } from './types';
 
 const MAX_POINTS = 10000;
 
@@ -66,6 +66,7 @@ export function randomWalk(query: GrafanaQuery, request: DataQueryRequest<Grafan
         { name: seriesName, type: FieldType.number, values: floatValues, config: {} },
       ],
       length: timeValues.length,
+      refId: query.refId,
       meta: { type: DataFrameType.TimeSeriesMulti },
     });
   }

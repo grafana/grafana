@@ -1,4 +1,4 @@
-import { LocalPlugin } from '../types';
+import { type LocalPlugin } from '../types';
 
 // Copied from /api/plugins
 export default {
@@ -63,10 +63,10 @@ export default {
   },
   hasUpdate: false,
   defaultNavUrl: '/plugins/alexanderzobnin-zabbix-app/',
-  category: '',
   state: '',
   signature: 'valid',
   signatureType: 'community',
   signatureOrg: 'Alexander Zobnin',
   angularDetected: false,
+  category: 'Custom category',
 } as LocalPlugin;

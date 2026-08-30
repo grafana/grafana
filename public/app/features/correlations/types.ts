@@ -1,17 +1,7 @@
-import { CorrelationExternal, CorrelationQuery } from '@grafana/runtime';
+import { type CorrelationExternal, type CorrelationQuery } from '@grafana/runtime';
 
-export interface AddCorrelationResponse {
-  correlation: Correlation;
-}
-
-export type GetCorrelationsResponse = Correlation[];
-
-export interface CorrelationsApiResponse {
+interface CorrelationsApiResponse {
   message: string;
-}
-
-export interface CorrelationsErrorResponse extends CorrelationsApiResponse {
-  error: string;
 }
 
 export interface CreateCorrelationResponse extends CorrelationsApiResponse {

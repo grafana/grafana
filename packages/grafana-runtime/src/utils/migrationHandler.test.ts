@@ -1,12 +1,11 @@
-import { BackendSrv, BackendSrvRequest } from 'src/services';
-
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { config } from '../config';
+import { type BackendSrv, type BackendSrvRequest } from '../services';
 
 import { DataSourceWithBackend } from './DataSourceWithBackend';
-import { isMigrationHandler, migrateQuery, migrateRequest, MigrationHandler } from './migrationHandler';
+import { isMigrationHandler, migrateQuery, migrateRequest, type MigrationHandler } from './migrationHandler';
 
 let mockDatasourcePost = jest.fn();
 

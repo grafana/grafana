@@ -1,24 +1,32 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-import { InstructionAvailability } from '../Wizard/types';
+import { type InstructionAvailability } from '../Wizard/types';
+import { getServerOrigin } from '../utils/git';
 
-export function TokenPermissionsInfo({ type }: { type: InstructionAvailability }) {
+export function TokenPermissionsInfo({ type, url }: { type: InstructionAvailability; url?: string }) {
   const styles = useStyles2(getStyles);
-  const { tokenText, createTokenLink, createTokenButtonText } = connectStepInstruction()[type];
+  const { tokenText, createTokenLink, createTokenButtonText } = connectStepInstruction({
+    type,
+    serverUrl: getServerOrigin(url),
+  });
 
   return (
     <div className={styles.container}>
       <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
-        <TextLink external href={createTokenLink}>
-          {tokenText}
-        </TextLink>
+        {createTokenLink ? (
+          <TextLink external href={createTokenLink}>
+            {tokenText}
+          </TextLink>
+        ) : (
+          <strong>&nbsp;{tokenText}</strong>
+        )}
         <Trans i18nKey="provisioning.token-permissions-info.and-click">and click</Trans>
-        <strong>"{createTokenButtonText}".</strong>
+        <strong>&quot;{createTokenButtonText}&quot;.</strong>
         <Trans i18nKey="provisioning.token-permissions-info.make-sure">Create a token with these permissions</Trans>:
       </Stack>
 
@@ -68,12 +76,14 @@ type Permission = {
 function getPermissionsForProvider(type: InstructionAvailability): Permission[] {
   switch (type) {
     case 'github':
+    case 'githubEnterprise':
       // GitHub UI is English only, so these strings are not translated
       return [
         { name: 'Contents', access: 'Read and write' },
         { name: 'Metadata', access: 'Read only' },
         { name: 'Pull requests', access: 'Read and write' },
         { name: 'Webhooks', access: 'Read and write' },
+        { name: 'Administration', access: 'Read-only' },
       ];
     case 'gitlab':
       return [
@@ -102,7 +112,7 @@ function getPermissionsForProvider(type: InstructionAvailability): Permission[] 
         },
         {
           name: t('provisioning.bitbucket.permissions.webhooks-label', 'Webhooks'),
-          access: t('provisioning.bitbucket.permissions.webhooks-read-write', 'Read and write'),
+          access: t('provisioning.bitbucket.permissions.webhooks-read-write-delete', 'Read, write, and delete'),
         },
       ];
     default:
@@ -119,26 +129,38 @@ function AccessLevelField({ label, access }: { label: string; access: string }) 
   );
 }
 
-function connectStepInstruction() {
-  return {
-    bitbucket: {
-      createTokenLink: 'https://id.atlassian.com/manage-profile/security/api-tokens',
-      tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket API tokens'),
-      createTokenButtonText: t(
-        'provisioning.token-permissions-info.bitbucket.create-token-button',
-        'Create API Token with scopes'
-      ),
-    },
-    gitlab: {
-      createTokenLink: 'https://gitlab.com/-/user_settings/personal_access_tokens',
-      tokenText: t('provisioning.token-permissions-info.gitlab.token-text', 'GitLab Personal Access Token'),
-      createTokenButtonText: t('provisioning.token-permissions-info.gitlab.create-token-button', 'Add new token'),
-    },
-    // GitHub UI is English only, so these strings are not translated
-    github: {
-      createTokenLink: 'https://github.com/settings/personal-access-tokens/new',
-      tokenText: 'GitHub Personal Access Token',
-      createTokenButtonText: 'Fine-grained token',
-    },
-  };
+function connectStepInstruction({ type, serverUrl }: { type: InstructionAvailability; serverUrl?: string }) {
+  switch (type) {
+    case 'bitbucket':
+      return {
+        createTokenLink: 'https://id.atlassian.com/manage-profile/security/api-tokens',
+        tokenText: t('provisioning.token-permissions-info.bitbucket.token-text', 'Bitbucket API tokens'),
+        createTokenButtonText: t(
+          'provisioning.token-permissions-info.bitbucket.create-token-button',
+          'Create API Token with scopes'
+        ),
+      };
+    case 'gitlab':
+      return {
+        createTokenLink: 'https://gitlab.com/-/user_settings/personal_access_tokens',
+        tokenText: t('provisioning.token-permissions-info.gitlab.token-text', 'GitLab Personal Access Token'),
+        createTokenButtonText: t('provisioning.token-permissions-info.gitlab.create-token-button', 'Add new token'),
+      };
+    case 'githubEnterprise':
+      // GitHub Enterprise hosts the token settings on its own server, derived from the repository URL.
+      // GitHub UI is English only, so these strings are not translated.
+      return {
+        createTokenButtonText: 'Fine-grained token',
+        createTokenLink: serverUrl ? `${serverUrl}/settings/personal-access-tokens/new` : '',
+        tokenText: 'Settings -> Personal Access Tokens',
+      };
+    case 'github':
+    default:
+      // GitHub UI is English only, so these strings are not translated
+      return {
+        createTokenLink: 'https://github.com/settings/personal-access-tokens/new',
+        tokenText: 'GitHub Personal Access Token',
+        createTokenButtonText: 'Fine-grained token',
+      };
+  }
 }

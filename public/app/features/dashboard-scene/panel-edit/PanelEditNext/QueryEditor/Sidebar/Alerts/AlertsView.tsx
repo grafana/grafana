@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { ScenesNewRuleFromPanelButton } from '../../../../PanelDataPane/NewAlertRuleButton';
 import { useAlertingContext, usePanelContext } from '../../QueryEditorContext';
-import { AlertRule } from '../../types';
+import { type AlertRule } from '../../types';
 
 import { AlertCard } from './AlertCard';
 

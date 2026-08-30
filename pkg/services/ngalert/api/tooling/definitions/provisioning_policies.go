@@ -8,6 +8,8 @@ import (
 //
 // Get the notification policy tree.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: Route
 //         description: The currently active notification routing tree
@@ -17,6 +19,8 @@ import (
 //
 // Sets the notification policy tree.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -24,10 +28,13 @@ import (
 //       202: Ack
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/policies provisioning stable RouteResetPolicyTree
 //
 // Clears the notification policy tree.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
@@ -35,6 +42,7 @@ import (
 //     Responses:
 //       202: Ack
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route GET /v1/provisioning/policies/export provisioning stable RouteGetPolicyTreeExport
 //

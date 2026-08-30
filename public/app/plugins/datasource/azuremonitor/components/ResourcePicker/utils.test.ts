@@ -1,6 +1,6 @@
 import createMockQuery from '../../mocks/query';
 
-import { ResourceRowGroup, ResourceRowType } from './types';
+import { type ResourceRowGroup, ResourceRowType } from './types';
 import {
   findRow,
   findRows,

@@ -18,12 +18,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -716,28 +716,15 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 func TestIntegrationAlertRulePostExport(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
-	// Setup Grafana and its Database
-	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	grafanaListedAddr, env := getStandardSharedEnv(t)
 	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
-
-	// Create a user to make authenticated requests
-	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       "password",
-		Login:          "grafana",
-	})
+	userID := standardGrafanaUserID
 
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
-	// Create the namespace we'll save our alerts to.
-	apiClient.CreateFolder(t, "folder1", "folder1")
+	folderUID := util.GenerateShortUID()
+	apiClient.CreateFolder(t, folderUID, folderUID)
+	t.Cleanup(func() { deleteFolder(t, grafanaListedAddr, folderUID) })
 
 	var group1 apimodels.PostableRuleGroupConfig
 
@@ -751,7 +738,7 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, json.Unmarshal(getGroup1Raw, &expected))
 
-		status, actualRaw := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, actualRaw := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})
@@ -776,14 +763,14 @@ func TestIntegrationAlertRulePostExport(t *testing.T) {
 
 		require.Empty(t, diff)
 
-		require.Equal(t, actual.Groups[0].Folder, "folder1")
+		require.Equal(t, actual.Groups[0].Folder, folderUID)
 	})
 
 	t.Run("should return 403 when no access to folder", func(t *testing.T) {
-		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, folderUID)
 		apiClient.ReloadCachedPermissions(t)
 
-		status, _ := apiClient.PostRulesExportWithStatus(t, "folder1", &group1, &apimodels.ExportQueryParams{
+		status, _ := apiClient.PostRulesExportWithStatus(t, folderUID, &group1, &apimodels.ExportQueryParams{
 			Download: false,
 			Format:   "json",
 		})
@@ -1561,8 +1548,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:           util.Pointer(model.Duration(2 * time.Minute)),
-						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
+						For:           new(model.Duration(2 * time.Minute)),
+						KeepFiringFor: new(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1595,8 +1582,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.GettableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:           util.Pointer(model.Duration(2 * time.Minute)),
-						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
+						For:           new(model.Duration(2 * time.Minute)),
+						KeepFiringFor: new(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1768,34 +1755,34 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 			{
 				name:           "should be able to set missing_series_evals_to_resolve to 5",
 				initialValue:   nil,
-				updatedValue:   util.Pointer[int64](5),
-				expectedValue:  util.Pointer[int64](5),
+				updatedValue:   new(int64(5)),
+				expectedValue:  new(int64(5)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should be able to update missing_series_evals_to_resolve",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](2),
-				expectedValue:  util.Pointer[int64](2),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(2)),
+				expectedValue:  new(int64(2)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should preserve missing_series_evals_to_resolve when it's set nil",
-				initialValue:   util.Pointer[int64](5),
+				initialValue:   new(int64(5)),
 				updatedValue:   nil,
-				expectedValue:  util.Pointer[int64](5),
+				expectedValue:  new(int64(5)),
 				expectedStatus: http.StatusAccepted,
 			},
 			{
 				name:           "should reject missing_series_evals_to_resolve < 0",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](-1),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(-1)),
 				expectedStatus: http.StatusBadRequest,
 			},
 			{
 				name:           "should be able to reset missing_series_evals_to_resolve by setting it to 0",
-				initialValue:   util.Pointer[int64](1),
-				updatedValue:   util.Pointer[int64](0),
+				initialValue:   new(int64(1)),
+				updatedValue:   new(int64(0)),
 				expectedValue:  nil,
 				expectedStatus: http.StatusAccepted,
 			},
@@ -3471,7 +3458,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 						NoDataState:                 apimodels.NoDataState(ngmodels.Alerting),
 						ExecErrState:                apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
-						MissingSeriesEvalsToResolve: util.Pointer[int64](2), // If UID is specified, this field is required
+						MissingSeriesEvalsToResolve: new(int64(2)), // If UID is specified, this field is required
 					},
 				},
 			},
@@ -4849,7 +4836,7 @@ func TestIntegrationRuleSoftDelete(t *testing.T) {
 		require.NotEmptyf(t, response.Created, "Expected created to be set")
 
 		// create some versions of the rule
-		for i := 0; i < 3; i++ {
+		for range 3 {
 			groups, status := adminClient.GetRulesGroup(t, "folder1", group1.Name)
 			require.Equal(t, http.StatusAccepted, status)
 			group1 = convertGettableRuleGroupToPostable(groups.GettableRuleGroupConfig)

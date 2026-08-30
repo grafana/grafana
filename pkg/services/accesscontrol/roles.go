@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -285,6 +284,23 @@ var (
 		},
 	}
 
+	smtpSettingsWriterRole = RoleDTO{
+		Name:        "fixed:smtp.settings:writer",
+		DisplayName: "SMTP settings writer",
+		Description: "Read and update the Grafana instance's SMTP configuration.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSMTP,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSMTP,
+			},
+		},
+	}
+
 	generalAuthConfigWriterRole = RoleDTO{
 		Name:        "fixed:general.auth.config:writer",
 		DisplayName: "General authentication config writer",
@@ -313,8 +329,8 @@ var (
 	}
 )
 
-// Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
+// FixedRoleRegistrations returns all OSS core role registrations declared by this package.
+func FixedRoleRegistrations() []RoleRegistration {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -357,16 +373,26 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
+	smtpSettingsWriter := RoleRegistration{
+		Role:   smtpSettingsWriterRole,
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	usageStatsReader := RoleRegistration{
 		Role:   usagestatsReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return service.DeclareFixedRoles(
+	return []RoleRegistration{
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
-		authenticationConfigWriter, generalAuthConfigWriter, usageStatsReader,
-	)
+		authenticationConfigWriter, generalAuthConfigWriter, smtpSettingsWriter, usageStatsReader,
+	}
+}
+
+// Declare OSS roles to the accesscontrol service
+func DeclareFixedRoles(service Service) error {
+	return service.DeclareFixedRoles(FixedRoleRegistrations()...)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {

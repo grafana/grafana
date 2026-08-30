@@ -1,7 +1,7 @@
-import { getMinMaxAndDelta, DataFrame, Field } from '@grafana/data';
-import { ScaleDimensionConfig, ScaleDimensionMode } from '@grafana/schema';
+import { getMinMaxAndDelta, type DataFrame, type Field } from '@grafana/data';
+import { type ScaleDimensionConfig, ScaleDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier, ScaleDimensionOptions } from './types';
+import { type DimensionSupplier, type ScaleDimensionOptions } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -15,7 +15,7 @@ export function getScaledDimension(
   return getScaledDimensionForField(findField(frame, config?.field), config);
 }
 
-export function getScaledDimensionForField(
+function getScaledDimensionForField(
   field: Field | undefined,
   config: ScaleDimensionConfig,
   mode?: ScaleDimensionMode
@@ -53,8 +53,7 @@ export function getScaledDimensionForField(
     };
   }
 
-  const get = (i: number) => {
-    const value = field.values[i];
+  const scaleValue = (value: number) => {
     let percent = 0;
     if (value !== -Infinity) {
       percent = (value - info.min!) / info.delta;
@@ -68,8 +67,9 @@ export function getScaledDimensionForField(
   };
 
   return {
-    get,
-    value: () => get(getLastNotNullFieldValue(field)),
+    get: (i: number) => scaleValue(field.values[i]),
+    // value() scales the last non-null field value, not an index into it
+    value: () => scaleValue(getLastNotNullFieldValue(field)),
     field,
   };
 }

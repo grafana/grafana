@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { MuteTimingFields } from '../../types/mute-timing-form';
+import { type MuteTimingFields } from '../../types/mute-timing-form';
 import ConditionalWrap from '../ConditionalWrap';
 
 import { isValidStartAndEndTime, isvalidTimeFormat } from './util';
@@ -36,7 +36,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   return (
     <div>
       <Field
-        className={styles.field}
+        noMargin
         label={t('alerting.mute-timing-time-range.label-time-range', 'Time range')}
         description={t(
           'alerting.mute-timing-time-range.description-time-range',
@@ -173,9 +173,6 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css({
-    marginBottom: 0,
-  }),
   timeRange: css({
     marginBottom: theme.spacing(1),
   }),

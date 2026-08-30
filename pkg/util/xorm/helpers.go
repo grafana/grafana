@@ -56,7 +56,7 @@ func isZeroValue(v reflect.Value) bool {
 		return true
 	}
 	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
 		return v.IsNil()
 	}
 	return false
@@ -70,7 +70,7 @@ func isStructZero(v reflect.Value) bool {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {
-		case reflect.Ptr:
+		case reflect.Pointer:
 			field = field.Elem()
 			fallthrough
 		case reflect.Struct:
@@ -124,7 +124,7 @@ func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 	var v any
 	kind := tp.Kind()
 
-	if kind == reflect.Ptr {
+	if kind == reflect.Pointer {
 		kind = tp.Elem().Kind()
 	}
 
@@ -155,7 +155,7 @@ func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 		v = &temp
 	}
 
-	if tp.Kind() == reflect.Ptr {
+	if tp.Kind() == reflect.Pointer {
 		return reflect.ValueOf(v).Convert(tp)
 	}
 	return reflect.ValueOf(v).Elem().Convert(tp)

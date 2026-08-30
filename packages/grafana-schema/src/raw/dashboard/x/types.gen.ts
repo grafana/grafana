@@ -151,6 +151,10 @@ export interface VariableModel {
    */
   description?: string;
   /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
+  /**
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
@@ -219,6 +223,7 @@ export interface VariableModel {
 
 export const defaultVariableModel: Partial<VariableModel> = {
   allowCustomValue: true,
+  enableGroupBy: false,
   includeAll: false,
   multi: false,
   options: [],
@@ -615,6 +620,10 @@ export interface Threshold {
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
   value: (number | null);
+  /**
+   * Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+   */
+  valueExpr?: string;
 }
 
 /**

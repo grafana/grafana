@@ -30,7 +30,7 @@ span A is on critical path(+++++)        |
 */
 
 import transformTraceData from '../../model/transform-trace-data';
-import { TraceResponse } from '../../types/trace';
+import { type TraceResponse } from '../../types/trace';
 
 const trace: TraceResponse = {
   traceID: 'trace-abc',

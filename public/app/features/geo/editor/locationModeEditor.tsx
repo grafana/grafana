@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { StandardEditorProps, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { type StandardEditorProps, type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, Icon, Select, useStyles2 } from '@grafana/ui';
+import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
+import { Alert, Icon, LinkButton, Select, useStyles2 } from '@grafana/ui';
 
-import { FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
+import { type FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
 interface ModeEditorSettings {
   data?: DataFrame[];
@@ -78,14 +78,21 @@ export const LocationModeEditor = ({
           <Alert
             title={info.warning}
             severity="warning"
-            buttonContent={<Icon name="question-circle" size="xl" />}
             className={styles.alert}
-            onRemove={() => {
-              const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
-              if (newWindow) {
-                newWindow.opener = null;
-              }
-            }}
+            action={
+              <LinkButton
+                aria-label={t(
+                  'geo.location-more-editor.aria-label-open-documentation',
+                  'Open geospatial data documentation'
+                )}
+                variant="secondary"
+                href={helpUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <Icon name="question-circle" size="xl" />
+              </LinkButton>
+            }
           />
         );
       } else if (value === FrameGeometrySourceMode.Auto && info.description) {

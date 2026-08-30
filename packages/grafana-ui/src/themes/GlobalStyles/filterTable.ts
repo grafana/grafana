@@ -1,6 +1,6 @@
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getFilterTableStyles(theme: GrafanaTheme2) {
   return css({
@@ -14,7 +14,9 @@ export function getFilterTableStyles(theme: GrafanaTheme2) {
 
       tbody: {
         'tr:nth-of-type(odd)': {
-          background: theme.colors.emphasize(theme.colors.background.primary, 0.02),
+          background: theme.flags.visualDesignRefresh
+            ? theme.colors.background.primary
+            : theme.colors.emphasize(theme.colors.background.primary, 0.02),
         },
       },
 
@@ -32,6 +34,7 @@ export function getFilterTableStyles(theme: GrafanaTheme2) {
         lineHeight: '30px',
         height: '30px',
         whiteSpace: 'nowrap',
+        verticalAlign: 'middle',
       },
 
       '.link-td': {

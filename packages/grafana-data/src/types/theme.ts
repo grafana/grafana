@@ -1,4 +1,4 @@
-import { ThemeVisualizationColors } from '../themes/createVisualizationColors';
+import { type ThemeVisualizationColors } from '../themes/createVisualizationColors';
 
 export enum GrafanaThemeType {
   Light = 'light',

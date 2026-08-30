@@ -1,72 +1,76 @@
 import { omit } from 'lodash';
 
-import { AnnotationQuery, isEmptyObject, TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
   dataLayers,
-  QueryVariable,
+  LocalValueVariable,
+  type QueryVariable,
   sceneGraph,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneDataTransformer,
-  SceneQueryRunner,
-  SceneVariables,
+  type SceneObject,
+  type SceneQueryRunner,
+  type SceneVariables,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultFieldConfigSource,
-  PanelKind,
-  PanelQueryKind,
-  TransformationKind,
-  FieldConfigSource,
-  DataTransformerConfig,
-  PanelQuerySpec,
-  DataQueryKind,
-  QueryOptionsSpec,
-  QueryVariableKind,
-  TextVariableKind,
-  IntervalVariableKind,
-  DatasourceVariableKind,
-  CustomVariableKind,
-  ConstantVariableKind,
-  GroupByVariableKind,
-  AdhocVariableKind,
-  AnnotationQueryKind,
-  DataLink,
-  LibraryPanelKind,
-  Element,
-  DashboardCursorSync,
-  FieldColor,
+  type PanelKind,
+  type PanelQueryKind,
+  type TransformationKind,
+  type FieldConfigSource,
+  type TransformationSpec,
+  type PanelQuerySpec,
+  type DataQueryKind,
+  type QueryOptionsSpec,
+  type QueryVariableKind,
+  type TextVariableKind,
+  type IntervalVariableKind,
+  type DatasourceVariableKind,
+  type CustomVariableKind,
+  type ConstantVariableKind,
+  type GroupByVariableKind,
+  type AdhocVariableKind,
+  type AnnotationQueryKind,
+  type DataLink,
+  type LibraryPanelKind,
+  type Element,
+  type DashboardCursorSync,
+  type FieldColor,
   defaultFieldConfig,
   defaultDataQueryKind,
-  SwitchVariableKind,
-  defaultTimeSettingsSpec,
+  type SwitchVariableKind,
   defaultDashboardLinkType,
   defaultDashboardLink,
+  type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getLibraryPanelBehavior, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
-import { DSReferencesMapping } from './DashboardSceneSerializer';
+import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { buildTimeSettingsSpec } from './shared/timeSettings';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
-
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
@@ -81,18 +85,26 @@ type DeepPartial<T> = T extends object
  */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
-  const timeRange = sceneDash.$timeRange!.state;
-
   const controlsState = sceneDash.controls?.state;
-  const refreshPicker = controlsState?.refreshPicker;
 
   const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
 
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
+  let preferences: Preferences | undefined = undefined;
+
+  if (sceneDash.preferences?.defaultLayoutTemplate) {
+    const template = sceneDash.preferences.defaultLayoutTemplate;
+    const serialized = template.serialize();
+    if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {
+      preferences = {
+        layout: serialized,
+      };
+    }
+  }
 
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
+    preferences,
     description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
@@ -119,18 +131,11 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF dashboard settings
 
     // time settings
-    timeSettings: {
-      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
-      from: timeRange.from,
-      to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
-      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
-      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
-      weekStart: timeRange.weekStart,
-      fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-      quickRanges: controlsState?.timePicker.state.quickRanges,
-    },
+    timeSettings: buildTimeSettingsSpec(sceneDash.$timeRange!, {
+      timePicker: controlsState?.timePicker,
+      refreshPicker: controlsState?.refreshPicker,
+      hideTimeControls: controlsState?.hideTimeControls,
+    }),
     // EOF time settings
 
     // variables
@@ -146,6 +151,10 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
+    // Not type-checked: body is AnyDashboardLayoutManager, so serialize() is typed `any` and any
+    // layout kind assigns here. validateDashboardSchemaV2 only dispatches on GridLayout and
+    // RowsLayout, so a sibling kind like the notebook layout passes and is written out silently.
+    // A save path for a sibling resource should narrow to its own manager instead of reusing this.
     layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };
@@ -186,29 +195,61 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
   const panels = scene.state.body.getVizPanels() ?? [];
 
   // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,
-  // not as layout children), otherwise the snapshot layout will reference elements that are missing.
+  // not as layout children) and the panels inside repeated row clones, otherwise the snapshot layout will
+  // reference elements that are missing.
   if (isSnapshot) {
     panels.push(...getRepeatedPanelsForSnapshot(scene));
+    panels.push(...getRepeatedSectionPanelsForSnapshot(scene));
   }
 
   return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
     const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
 
-    // Snapshot layout expands repeaters into explicit panels and references repeat clones by their `key`.
-    // Non-clone panels should keep their stable element identifier.
-    const elementKey =
-      isSnapshot && vizPanel.state.repeatSourceKey
-        ? (() => {
-            if (!vizPanel.state.key) {
-              throw new Error('Snapshot serialization expected repeat clone to have a key');
-            }
-            return vizPanel.state.key;
-          })()
-        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+    // Snapshot layout expands repeaters into explicit panels and references clones by a disambiguated key
+    // (panel clones by their own `key`, panels inside a repeated row clone additionally prefixed with the
+    // enclosing clone's key). Non-clone panels keep their stable element identifier.
+    const elementKey = isSnapshot
+      ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel)
+      : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
 
     elements[elementKey] = element;
     return elements;
   }, {});
+}
+
+// A repeated row/tab clone: duck-typed (rather than importing RowItem/TabItem, which would create a circular
+// dependency through the layout serializers). Sections expose `dashboardLayoutItemType` and `getLayout()`;
+// VizPanels also carry `repeatSourceKey` but have no `getLayout`, so they're excluded.
+type RepeatCloneSection = SceneObject & {
+  dashboardLayoutItemType: 'row' | 'tab';
+  getLayout: () => { getVizPanels: () => VizPanel[] };
+};
+
+function isRepeatCloneSection(obj: SceneObject): obj is RepeatCloneSection {
+  const layoutItemType = 'dashboardLayoutItemType' in obj ? obj.dashboardLayoutItemType : undefined;
+  const repeatSourceKey = 'repeatSourceKey' in obj.state ? obj.state.repeatSourceKey : undefined;
+  return (
+    (layoutItemType === 'row' || layoutItemType === 'tab') &&
+    Boolean(repeatSourceKey) &&
+    'getLayout' in obj &&
+    typeof obj.getLayout === 'function'
+  );
+}
+
+// Panels inside a repeated row/tab clone are not returned by the layout's getVizPanels() (which only walks
+// source sections), so collect them explicitly for snapshot serialization.
+function getRepeatedSectionPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
+  const panels: VizPanel[] = [];
+
+  const cloneSections = sceneGraph.findAllObjects(scene.getRoot(), isRepeatCloneSection);
+
+  for (const section of cloneSections) {
+    if (isRepeatCloneSection(section)) {
+      panels.push(...section.getLayout().getVizPanels());
+    }
+  }
+
+  return panels;
 }
 
 function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
@@ -245,6 +286,24 @@ function getRepeatedPanelsForSnapshot(scene: DashboardScene): VizPanel[] {
   return panels;
 }
 
+// A panel is in a repeat context when it (or an ancestor) carries a repeat's LocalValueVariable. Such
+// values are not persisted in the snapshot, so titles referencing them (e.g. "server = $server") must be
+// interpolated at serialization time or they would fall back to the global variable value (e.g. "All").
+function panelHasRepeatLocalVariable(vizPanel: VizPanel): boolean {
+  let current: SceneObject | undefined = vizPanel;
+  while (current) {
+    const variables = current.state.$variables;
+    if (
+      variables instanceof SceneVariableSet &&
+      variables.state.variables.some((variable) => variable instanceof LocalValueVariable)
+    ) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
 export function vizPanelToSchemaV2(
   vizPanel: VizPanel,
   dsReferencesMapping?: DSReferencesMapping,
@@ -273,24 +332,42 @@ export function vizPanelToSchemaV2(
     overrides: vizPanel.state.fieldConfig?.overrides ?? [],
   };
 
+  // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`), and panels inside
+  // repeated row clones reuse the source panels' keys/ids, so snapshots must assign a stable unique id
+  // derived from the disambiguated element identifier.
+  const isDisambiguatedSnapshotPanel =
+    isSnapshot &&
+    (Boolean(vizPanel.state.repeatSourceKey && vizPanel.state.key) ||
+      dashboardSceneGraph.getEnclosingRepeatCloneKeys(vizPanel).length > 0);
+
+  // Bake the interpolated title/description for repeated panels so per-repeat values survive in the
+  // snapshot. Match the panel renderer's formats so the snapshot matches the live dashboard: the title
+  // uses the 'text' format (display label, e.g. "Bob") while the description uses the default format
+  // (raw value, e.g. "1").
+  const bakeRepeatValues = isSnapshot && panelHasRepeatLocalVariable(vizPanel);
+  const title = bakeRepeatValues
+    ? sceneGraph.interpolate(vizPanel, vizPanel.state.title, undefined, 'text')
+    : vizPanel.state.title;
+  const description =
+    bakeRepeatValues && vizPanel.state.description
+      ? sceneGraph.interpolate(vizPanel, vizPanel.state.description)
+      : (vizPanel.state.description ?? '');
+
   const elementSpec: PanelKind = {
     kind: 'Panel',
     spec: {
-      // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`),
-      // so snapshots must assign a stable unique id per clone.
-      id:
-        isSnapshot && vizPanel.state.repeatSourceKey && vizPanel.state.key
-          ? djb2Hash(vizPanel.state.key)
-          : getPanelIdForVizPanel(vizPanel),
-      title: vizPanel.state.title,
-      description: vizPanel.state.description ?? '',
+      id: isDisambiguatedSnapshotPanel
+        ? djb2Hash(dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel))
+        : getPanelIdForVizPanel(vizPanel),
+      title,
+      description,
       links: getPanelLinks(vizPanel),
       transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
         kind: 'QueryGroup',
         spec: {
           queries: getVizPanelQueries(vizPanel, dsReferencesMapping, isSnapshot),
-          transformations: getVizPanelTransformations(vizPanel),
+          transformations: getVizPanelTransformations(vizPanel, bakeRepeatValues),
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
       },
@@ -483,7 +560,8 @@ export function getDataQueryKind(query: SceneDataQuery | string | undefined, que
   return defaultDS?.type || '';
 }
 
-function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
+// bakeRepeatValues is true only when saving a snapshot of a panel that sits inside a repeat.
+function getVizPanelTransformations(vizPanel: VizPanel, bakeRepeatValues = false): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
   if (dataProvider instanceof SceneDataTransformer) {
@@ -497,17 +575,18 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
       const transformation = transformationItem;
 
       if ('id' in transformation) {
-        // Transformation is a DataTransformerConfig
-        const transformationSpec: DataTransformerConfig = {
-          id: transformation.id,
+        const transformationSpec: TransformationSpec = {
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
-          options: transformation.options,
+          options: bakeRepeatValues
+            ? interpolateRepeatValues(dataProvider, transformation.options)
+            : transformation.options,
         };
 
         transformations.push({
-          kind: transformation.id,
+          kind: 'Transformation',
+          group: transformation.id,
           spec: transformationSpec,
         });
       } else {
@@ -516,6 +595,33 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
     }
   }
   return transformations;
+}
+
+// A repeat gives each copy a private value for its variable. That value only exists while the
+// dashboard is running, so it is not part of what gets saved. Any transformation using $var has to be
+// handed the value at save time. Without this the snapshot interpolates against the dashboard
+// variable, and a multi-value one gives back the whole array instead of this copy's value.
+// Keys too, not just values: organize transformation keeps field names in excludeByName.
+// Copies rather than mutates, because the dashboard stays open after saving.
+function interpolateRepeatValues(sceneObject: SceneObject, value: unknown): unknown {
+  if (typeof value === 'string') {
+    return sceneGraph.interpolate(sceneObject, value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => interpolateRepeatValues(sceneObject, item));
+  }
+
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        sceneGraph.interpolate(sceneObject, key),
+        interpolateRepeatValues(sceneObject, item),
+      ])
+    );
+  }
+
+  return value;
 }
 
 function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
@@ -630,19 +736,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   }
 
   return annotations;
-}
-
-export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string {
-  if (annotationQuery.datasource?.type) {
-    return annotationQuery.datasource.type;
-  } else {
-    const ds = getDefaultDataSourceRef();
-    if (ds) {
-      return ds.type!; // in the datasource list from bootData "id" is the type
-    }
-    // if we can't find the default datasource, return grafana as default
-    return 'grafana';
-  }
 }
 
 export function getDefaultDataSourceRef(): DataSourceRef {
@@ -942,6 +1035,23 @@ export function getAutoAssignedDSRef(
   throw new Error(`Invalid type ${type} for getAutoAssignedDSRef`);
 }
 
+export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undefined): DataSourceRef | undefined {
+  if (!ds) {
+    return undefined;
+  }
+
+  if (typeof ds === 'string') {
+    if (ds.startsWith('$')) {
+      return { uid: ds };
+    }
+
+    const instance = getDataSourceSrv().getInstanceSettings(ds);
+    return instance ? getDataSourceRef(instance) : { uid: ds };
+  }
+
+  return Object.keys(ds).length === 0 ? undefined : ds;
+}
+
 /**
  * Returns the datasource value that should be persisted for a panel query, variable or annotation
  * - Undefined if the datasource was not defined in the initial save model
@@ -959,15 +1069,9 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
 
   // First, try to resolve from the element's current datasource if it has one
   if (type === 'query') {
-    if ('datasource' in element && element.datasource) {
-      const isEmptyDatasourceObject =
-        typeof element.datasource === 'object' && Object.keys(element.datasource).length === 0;
-      if (!isEmptyDatasourceObject) {
-        datasource = element.datasource;
-      }
-    }
+    datasource = normalizeDataSourceRef('datasource' in element ? element.datasource : undefined);
 
-    const panelDS = context?.state?.datasource;
+    const panelDS = normalizeDataSourceRef(context?.state?.datasource);
     if (panelDS?.uid) {
       const notMixed = panelDS?.uid !== MIXED_DATASOURCE_NAME;
       const notExpr =
@@ -981,11 +1085,11 @@ export function getPersistedDSFor<T extends SceneDataQuery | QueryVariable | Ann
   }
 
   if (type === 'variable' && 'state' in element && 'datasource' in element.state) {
-    datasource = element.state.datasource || undefined;
+    datasource = normalizeDataSourceRef(element.state.datasource);
   }
 
   if (type === 'annotation' && 'datasource' in element) {
-    datasource = element.datasource || undefined;
+    datasource = normalizeDataSourceRef(element.datasource);
   }
 
   // If a datasource was resolved from the element, use it

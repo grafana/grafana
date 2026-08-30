@@ -1,16 +1,20 @@
 import { css } from '@emotion/css';
 import { memo, useEffect } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
+import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { useFlagDashboardRecentlyDeletedViaTrash } from '@grafana/runtime/internal';
+import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
 
+import { deletedDashboardsCache } from '../search/service/deletedDashboardsCache';
+
 import { useRecentlyDeletedStateManager } from './api/useRecentlyDeletedStateManager';
+import { DeletedDashboardsLimitBanner } from './components/DeletedDashboardsLimitBanner';
 import { RecentlyDeletedActions } from './components/RecentlyDeletedActions';
 import { RecentlyDeletedEmptyState } from './components/RecentlyDeletedEmptyState';
 import { SearchView } from './components/SearchView';
@@ -24,6 +28,9 @@ const RecentlyDeletedPage = memo(() => {
 
   const [searchState, stateManager] = useRecentlyDeletedStateManager();
   const hasSelection = useHasSelection();
+
+  const viaTrash = useFlagDashboardRecentlyDeletedViaTrash();
+  const trashUnavailable = viaTrash && deletedDashboardsCache.isTrashUnavailable();
 
   const { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards } = getFolderPermissions();
   const permissions = { canEditFolders, canEditDashboards, canDeleteFolders, canDeleteDashboards };
@@ -43,6 +50,7 @@ const RecentlyDeletedPage = memo(() => {
   return (
     <Page navId="dashboards/recently-deleted">
       <Page.Contents className={styles.pageContents}>
+        <DeletedDashboardsLimitBanner resultToken={searchState.result} />
         <div>
           <FilterInput
             placeholder={t('recentlyDeleted.filter.placeholder', 'Search for dashboards')}
@@ -71,14 +79,34 @@ const RecentlyDeletedPage = memo(() => {
 
         <div className={styles.subView}>
           <AutoSizer>
-            {({ width, height }) => (
+            {({ width, height }: Size) => (
               <SearchView
                 permissions={permissions}
                 width={width}
                 height={height}
                 searchStateManager={stateManager}
                 searchState={searchState}
-                emptyState={<RecentlyDeletedEmptyState searchState={searchState} />}
+                // Trash being unavailable produces an empty result, which would otherwise
+                // read as "nothing was deleted" — the wrong answer, so it replaces the
+                // empty state rather than sitting above it.
+                emptyState={
+                  trashUnavailable ? (
+                    <Alert
+                      severity="warning"
+                      title={t('recently-deleted.unavailable.title', 'Recently deleted is unavailable')}
+                    >
+                      {/* Covers both reasons the server reports: an index still being built,
+                          which clears on its own, and deleted-document indexing turned off,
+                          which does not. The two are one status code, so one message. */}
+                      <Trans i18nKey="recently-deleted.unavailable.body">
+                        The list of deleted dashboards could not be loaded. If it does not appear shortly, ask an
+                        administrator to check the search index configuration.
+                      </Trans>
+                    </Alert>
+                  ) : (
+                    <RecentlyDeletedEmptyState searchState={searchState} />
+                  )
+                }
               />
             )}
           </AutoSizer>

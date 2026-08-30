@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ResourcePermission } from './types';
+import { type ResourcePermission } from './types';
 
 interface Props {
   item: ResourcePermission;
@@ -58,8 +58,8 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
         {item.isManaged ? (
           <Button
             size="sm"
-            icon="times"
-            variant="destructive"
+            icon="trash-alt"
+            variant="secondary"
             disabled={!canSet}
             onClick={() => onRemove(item)}
             aria-label={t(
@@ -78,11 +78,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
                 : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
             }
           >
-            <Button
-              size="sm"
-              icon="lock"
-              aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-            />
+            <Icon name="lock" />
           </Tooltip>
         )}
       </td>

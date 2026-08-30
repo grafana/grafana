@@ -2,11 +2,11 @@
 // Migrations applied by the DashboardMigrator are performed before the plugin is loaded.
 // DashboardMigrator migrations are tied to a certain minimum version of a dashboard which means they will only be ran once.
 
-import { AnnotationQuery, getNextRefId } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { type AnnotationQuery, getNextRefId } from '@grafana/data';
+import { type DataQuery } from '@grafana/schema';
 
-import { CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
-import { LegacyAnnotationQuery } from '../types';
+import { type CloudWatchMetricsQuery, MetricQueryType, MetricEditorMode } from '../dataquery.gen';
+import { type LegacyAnnotationQuery } from '../types';
 
 // E.g query.statistics = ['Max', 'Min'] will be migrated to two queries - query1.statistic = 'Max' and query2.statistic = 'Min'
 export function migrateMultipleStatsMetricsQuery(

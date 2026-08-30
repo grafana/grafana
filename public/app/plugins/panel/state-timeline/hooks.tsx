@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 import { Pagination } from '@grafana/ui';
 import { makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
 
@@ -61,6 +61,7 @@ export function usePagination(frames?: DataFrame[], perPage?: number) {
         className={paginationStyles.paginationElement}
         currentPage={currentPageCapped}
         numberOfPages={numberOfPages}
+        hideWhenSinglePage
         showSmallVersion={showSmallVersion}
         onNavigate={setCurrentPage}
       />

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useState, type JSX } from 'react';
 
-import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type PanelPluginMeta, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
@@ -11,13 +11,15 @@ export interface Props {
   maxMenuHeight?: number;
 }
 
+const collator = new Intl.Collator();
+
 export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
   const { value: plugins = [] } = useListedPanelPluginMetas();
   const options = useMemo(
     () =>
       plugins
         .map((p) => ({ label: p.name, imgUrl: p.info.logos.small, value: p }))
-        .sort((a, b) => a.label?.localeCompare(b.label)),
+        .sort((a, b) => collator.compare(a.label, b.label)),
     [plugins]
   );
   const [value, setValue] = useState<Array<SelectableValue<PanelPluginMeta>>>([]);

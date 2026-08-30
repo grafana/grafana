@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,7 +40,7 @@ type fakeDataSourceRequestValidator struct {
 	err error
 }
 
-func (rv *fakeDataSourceRequestValidator) Validate(dsURL string, dsJsonData *simplejson.Json, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(dsURL string, dsJsonData map[string]any, req *http.Request) error {
 	return rv.err
 }
 

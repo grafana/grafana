@@ -3,8 +3,8 @@
  */
 
 import { isDateTime } from '../datetime/moment_wrapper';
-import { ExploreUrlState, URLRange } from '../types/explore';
-import { RawTimeRange } from '../types/time';
+import { type ExploreUrlState, type URLRange } from '../types/explore';
+import { type RawTimeRange } from '../types/time';
 
 /**
  * Type to represent the value of a single query variable.
@@ -155,7 +155,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * Attribution: Code dervived from https://github.com/angular/angular.js/master/src/Angular.js#L1396
  * @returns {Object.<string,boolean|Array>}
  */
-export function parseKeyValue(keyValue: string) {
+function parseKeyValue(keyValue: string) {
   const obj: any = {};
   const parts = (keyValue || '').split('&');
 

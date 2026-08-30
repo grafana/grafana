@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -38,9 +39,12 @@ type SignedInUser struct {
 	IsGrafanaAdmin   bool
 	IsAnonymous      bool
 	IsDisabled       bool
-	HelpFlags1       HelpFlags1
 	LastSeenAt       time.Time
-	Teams            []int64
+	// Deprecated: use TeamUIDs instead
+	TeamIDs  []int64
+	TeamUIDs []string
+	// ExternalGroups holds groups asserted by the external IdP (SAML/OIDC/LDAP).
+	ExternalGroups []string `json:"-" xorm:"-"`
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 
@@ -141,11 +145,11 @@ func (u *SignedInUser) GetExtra() map[string][]string {
 }
 
 func (u *SignedInUser) GetGroups() []string {
-	groups := make([]string, 0, len(u.Teams))
-	for _, t := range u.Teams {
-		groups = append(groups, strconv.FormatInt(t, 10))
-	}
-	return groups
+	return u.TeamUIDs
+}
+
+func (u *SignedInUser) GetExternalGroups() []string {
+	return u.ExternalGroups
 }
 
 func (u *SignedInUser) GetTokenPermissions() []string {
@@ -278,7 +282,7 @@ func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
 // DEPRECATED: GetTeams returns the teams the entity is a member of
 // Retrieve the teams from the team service instead of using this method.
 func (u *SignedInUser) GetTeams() []int64 {
-	return u.Teams
+	return u.TeamIDs
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
@@ -312,12 +316,7 @@ func (u *SignedInUser) GetAuthenticatedBy() string {
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if u.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, u.AuthenticatedBy)
 }
 
 // FIXME: remove this method once all services are using an interface

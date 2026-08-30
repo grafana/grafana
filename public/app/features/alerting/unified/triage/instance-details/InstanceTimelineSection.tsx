@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateNotificationqueryMutation } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { Labels, TimeRange } from '@grafana/data';
+import { type Labels, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, Box, LoadingPlaceholder, RadioButtonGroup, Stack, Text } from '@grafana/ui';
 
-import { LogRecord } from '../../components/rules/state-history/common';
+import { type LogRecord } from '../../components/rules/state-history/common';
 
 import { InstanceTimeline, type TimelineFilter } from './InstanceTimeline';
 import { labelsToMatchers } from './timelineUtils';
@@ -76,7 +77,13 @@ export function InstanceTimelineSection({
       <Stack direction="column" gap={1}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Text variant="h5">{t('alerting.instance-details.instance-history-heading', 'History')}</Text>
-          <RadioButtonGroup options={filterOptions} value={filter} onChange={setFilter} size="sm" />
+          <RadioButtonGroup
+            options={filterOptions}
+            value={filter}
+            onChange={setFilter}
+            size="sm"
+            data-testid={selectors.pages.Alerting.Triage.historyFilterRadioGroup}
+          />
         </Stack>
 
         {isLoading && (

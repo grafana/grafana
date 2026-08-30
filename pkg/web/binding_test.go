@@ -2,6 +2,10 @@ package web
 
 import (
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -59,6 +63,60 @@ func (sv *StructWithPointerValidation) Validate() error {
 		return errors.New("too small")
 	}
 	return nil
+}
+
+type BindTarget struct {
+	Message string `json:"message"`
+}
+
+// Used to verify that Bind does not try to allocate the whole body on the heap
+type endlessReader struct {
+	prefix []byte
+	read   int64
+}
+
+func (r *endlessReader) Read(p []byte) (int, error) {
+	if len(r.prefix) > 0 {
+		n := copy(p, r.prefix)
+		r.prefix = r.prefix[n:]
+		r.read += int64(n)
+		return n, nil
+	}
+	for i := range p {
+		p[i] = 'A'
+	}
+	r.read += int64(len(p))
+	return len(p), nil
+}
+
+func TestBindRejectsOversizedBody(t *testing.T) {
+	body := &endlessReader{prefix: []byte(`{"message":"`)}
+	req := httptest.NewRequest(http.MethodPost, "/", body)
+	req.Header.Set("Content-Type", "application/json")
+
+	var target BindTarget
+	err := Bind(req, &target)
+	if err == nil {
+		t.Fatal("expected Bind to reject oversized body, got nil error")
+	}
+
+	if body.read > MaxBindBodyBytes+(1<<20) {
+		t.Fatalf("Bind read %d bytes, want at most ~%d", body.read, MaxBindBodyBytes)
+	}
+}
+
+func TestBindAcceptsBodyWithinLimit(t *testing.T) {
+	payload := `{"message":"` + strings.Repeat("A", 1024) + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+
+	var target BindTarget
+	if err := Bind(req, &target); err != nil && !errors.Is(err, io.EOF) {
+		t.Fatalf("Bind failed on small body: %v", err)
+	}
+	if len(target.Message) != 1024 {
+		t.Fatalf("unexpected message length: got %d, want 1024", len(target.Message))
+	}
 }
 
 func TestValidationSuccess(t *testing.T) {

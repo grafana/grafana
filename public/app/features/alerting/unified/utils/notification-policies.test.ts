@@ -1,10 +1,10 @@
 import {
   AlertState,
-  AlertmanagerAlert,
-  AlertmanagerGroup,
+  type AlertmanagerAlert,
+  type AlertmanagerGroup,
   MatcherOperator,
-  ObjectMatcher,
-  RouteWithID,
+  type ObjectMatcher,
+  type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { findMatchingAlertGroups, normalizeRoute, unquoteRouteMatchers } from './notification-policies';

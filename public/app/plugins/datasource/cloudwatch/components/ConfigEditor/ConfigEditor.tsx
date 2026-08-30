@@ -5,20 +5,21 @@ import { useDebounce } from 'react-use';
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
   rangeUtil,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
   DataSourceTestSucceeded,
   DataSourceTestFailed,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
-import { Alert, Input, FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
+import { getAppEvents, usePluginInteractionReporter, config } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { Alert, Input, type FieldProps, Field, Divider, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
-import { SelectableResourceValue } from '../../resources/types';
-import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../../types';
+import { type SelectableResourceValue } from '../../resources/types';
+import { type CloudWatchJsonData, type CloudWatchSecureJsonData } from '../../types';
 import { LogGroupsFieldWrapper } from '../shared/LogGroups/LogGroupsField';
 
 import { SecureSocksProxySettingsNewStyling } from './SecureSocksProxySettingsNewStyling';
@@ -208,15 +209,22 @@ function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
-    if (props.options.version) {
-      getDataSourceSrv()
-        .get(props.options.name)
-        .then((datasource) => {
-          if (datasource instanceof CloudWatchDatasource) {
-            setDatasource(datasource);
-          }
-        });
+    if (!props.options.version) {
+      return;
     }
+
+    let cancelled = false;
+    getDataSourceInstance(props.options.name)
+      .then((ds) => {
+        if (!cancelled && ds instanceof CloudWatchDatasource) {
+          setDatasource(ds);
+        }
+      })
+      .catch((err) => console.error('Could not load CloudWatch data source instance', err));
+
+    return () => {
+      cancelled = true;
+    };
   }, [props.options.version, props.options.name]);
 
   return datasource;

@@ -71,8 +71,9 @@ func (PutBlobRequest_Method) EnumDescriptor() ([]byte, []int) {
 
 type PutBlobRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The resource that will use this blob
-	// NOTE: the name may not yet exist, but group+resource are required
+	// The resource this blob attaches to. The resource MUST already exist;
+	// the caller must be authorized to update it. PutBlob is not a staging
+	// primitive -- create the resource first, then attach a blob to it.
 	Resource *ResourceKey `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// How to upload
 	Method PutBlobRequest_Method `protobuf:"varint,2,opt,name=method,proto3,enum=resource.PutBlobRequest_Method" json:"method,omitempty"`

@@ -1,6 +1,6 @@
 package v1beta1
 
-TemplateKind:  *"grafana" | "mimir"
+TemplateKind: *"grafana" | "mimir"
 
 TemplateGroupSpec: {
 	title:   string

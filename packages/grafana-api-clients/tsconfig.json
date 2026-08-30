@@ -1,7 +1,6 @@
 {
   "extends": "../../scripts/tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "./",
     "declaration": true,
     "jsx": "react-jsx",
     "declarationDir": "./dist/types",

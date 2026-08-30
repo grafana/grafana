@@ -4,15 +4,15 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import {
-  CreateNotificationqueryNotificationEntry,
-  CreateNotificationsqueryalertsNotificationEntryAlert,
+  type CreateNotificationqueryNotificationEntry,
+  type CreateNotificationsqueryalertsNotificationEntryAlert,
   useCreateNotificationqueryMutation,
   useCreateNotificationsqueryalertsMutation,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder, TabContent, useStyles2 } from '@grafana/ui';
-import { PageInfoItem } from 'app/core/components/Page/types';
+import { type PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';

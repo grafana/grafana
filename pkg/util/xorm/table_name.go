@@ -17,7 +17,7 @@ func getTableName(mapper core.IMapper, v reflect.Value) string {
 	if v.Type().Implements(tpTableName) {
 		return v.Interface().(TableName).TableName()
 	}
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 		if t, ok := v.Interface().(TableName); ok {
 			return t.TableName()

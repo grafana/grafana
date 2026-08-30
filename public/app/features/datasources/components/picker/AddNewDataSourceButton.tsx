@@ -1,6 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, ButtonVariant } from '@grafana/ui';
+import { LinkButton, type ButtonVariant } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { AccessControlAction } from 'app/types/accessControl';

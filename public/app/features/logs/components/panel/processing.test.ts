@@ -1,11 +1,18 @@
-import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  createTheme,
+  type Field,
+  FieldType,
+  LogLevel,
+  type LogRowModel,
+  LogsSortOrder,
+  toDataFrame,
+} from '@grafana/data';
 
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogListFontSize } from './LogList';
+import { type LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
@@ -95,7 +102,11 @@ describe('preProcessLogs', () => {
         entry: `35.191.12.195 - accounts.google.com:test@grafana.com [18/Mar/2025:08:58:38 +0000] 200 "POST /grafana/api/ds/query?ds_type=prometheus&requestId=SQR461 HTTP/1.1" 59460 "https://test.example.com/?orgId=1" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" "95.91.240.90, 34.107.247.24"`,
         logLevel: LogLevel.critical,
       });
-      const logListModel = new LogListModel(logRowModel, { escape: false, timeZone: 'browser ', wrapLogMessage: true });
+      const logListModel = new LogListModel(
+        logRowModel,
+        { escape: false, timeZone: 'browser ', wrapLogMessage: true },
+        0
+      );
       expect(logListModel).toMatchObject(logRowModel);
     });
 
@@ -188,6 +199,29 @@ describe('preProcessLogs', () => {
       );
       expect(logListModel.entry).toBe(entry);
       expect(logListModel.body).not.toBe(entry);
+    });
+
+    test('clone can enable JSON prettify independently of the original log', () => {
+      const entry = '{"key": "value"}';
+      const logListModel = createLogLine(
+        { entry },
+        {
+          escape: false,
+          order: LogsSortOrder.Descending,
+          timeZone: 'browser',
+          wrapLogMessage: false,
+          prettifyJSON: false,
+        }
+      );
+      expect(logListModel.body).toBe(entry);
+
+      const pretty = logListModel.clone({ prettifyJSON: true });
+      expect(pretty.body).toBe(`{
+  "key": "value"
+}`);
+
+      const compact = logListModel.clone({ prettifyJSON: false });
+      expect(compact.body).toBe(entry);
     });
 
     test('Prettifies JSON with duplicate keys', () => {
@@ -312,15 +346,12 @@ Value"
     });
 
     describe('OTel logs', () => {
-      const originalState = config.featureToggles.otelLogsFormatting;
-
       test('Does not create the OTel attribute field when not enabled', () => {
-        config.featureToggles.otelLogsFormatting = false;
-
         const logListModel = createLogLine(
           { entry: 'the log' },
           {
             escape: false,
+            otelLogsFormattingEnabled: false,
             order: LogsSortOrder.Descending,
             timeZone: 'browser',
             wrapLogMessage: true, // wrapped
@@ -329,17 +360,14 @@ Value"
         );
         expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBeUndefined();
         expect(logListModel.highlightedLogAttributesTokens).toHaveLength(0);
-
-        config.featureToggles.otelLogsFormatting = originalState;
       });
 
       test('Does not create the OTel attribute field when is not an OTel log', () => {
-        config.featureToggles.otelLogsFormatting = false;
-
         const logListModel = createLogLine(
           { entry: 'the log', labels: {} },
           {
             escape: false,
+            otelLogsFormattingEnabled: false,
             order: LogsSortOrder.Descending,
             timeZone: 'browser',
             wrapLogMessage: true, // wrapped
@@ -348,17 +376,14 @@ Value"
         );
         expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBeUndefined();
         expect(logListModel.highlightedLogAttributesTokens).toHaveLength(0);
-
-        config.featureToggles.otelLogsFormatting = originalState;
       });
 
       test('Generates and highlights an OTel log line attributes field', () => {
-        config.featureToggles.otelLogsFormatting = true;
-
         const logListModel = createLogLine(
           { entry: 'the log', labels: { [OTEL_PROBE_FIELD]: '1', field: 'value' } },
           {
             escape: false,
+            otelLogsFormattingEnabled: true,
             order: LogsSortOrder.Descending,
             timeZone: 'browser',
             wrapLogMessage: true, // wrapped
@@ -367,8 +392,6 @@ Value"
         );
         expect(logListModel.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toEqual('field=value');
         expect(logListModel.highlightedLogAttributesTokens).toHaveLength(2);
-
-        config.featureToggles.otelLogsFormatting = originalState;
       });
     });
   });

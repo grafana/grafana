@@ -5,7 +5,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
+import { type FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {
   index: number;
   value: Record<string, string>;

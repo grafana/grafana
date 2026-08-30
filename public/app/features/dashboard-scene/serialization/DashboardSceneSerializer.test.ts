@@ -1,30 +1,35 @@
 import { config } from '@grafana/runtime';
 import {
-  AdHocFiltersVariable,
-  GroupByVariable,
-  MultiValueVariable,
+  type AdHocFiltersVariable,
+  type GroupByVariable,
+  type MultiValueVariable,
   sceneGraph,
   SceneRefreshPicker,
 } from '@grafana/scenes';
-import { Dashboard, VariableModel } from '@grafana/schema';
+import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
-  Spec as DashboardV2Spec,
+  type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
   defaultDataQueryKind,
   defaultPanelQueryKind,
   defaultPanelSpec,
-  GridLayoutKind,
-  PanelKind,
-  PanelSpec,
-  QueryVariableKind,
+  type GridLayoutKind,
+  type PanelKind,
+  type PanelSpec,
+  type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
-import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import {
+  AnnoKeyDashboardSnapshotOriginalUrl,
+  AnnoKeyIgnorePredefinedVariables,
+  DENY_ALL_PREDEFINED,
+} from 'app/features/apiserver/types';
+import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -105,6 +110,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasChanges).toBe(true);
       expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
       expect(result.hasFolderChanges).toBe(true);
+    });
+
+    it('Can detect predefined variables denylist change', () => {
+      const dashboard = setup();
+      dashboard.onEnterEditMode();
+
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
     });
 
     it('Can detect refresh changed', () => {
@@ -526,6 +555,30 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
+    it('Can detect predefined variables denylist change', () => {
+      const dashboard = setupV2();
+      dashboard.onEnterEditMode();
+
+      const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: annotation,
+            },
+          },
+        },
+      });
+
+      const result = dashboard.getDashboardChanges(false);
+      expect(result.hasChanges).toBe(true);
+      expect(result.diffCount).toBe(0);
+      expect(result.hasPredefinedVariablesChanges).toBe(true);
+    });
+
     it('Can detect refresh changed', () => {
       const dashboard = setupV2();
 
@@ -577,7 +630,7 @@ describe('DashboardSceneSerializer', () => {
 
         expect(result.hasVariableValueChanges).toBe(true);
         expect(result.hasChanges).toBe(true);
-        expect(result.diffCount).toBe(2);
+        expect(result.diffCount).toBe(3);
       });
 
       describe('Experimental variables', () => {
@@ -1454,6 +1507,11 @@ describe('DashboardSceneSerializer', () => {
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
+      serializer.metadata = {
+        name: 'source-uid',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+      };
       const saveModel = defaultDashboardV2Spec();
       const response = {
         id: 1,
@@ -1469,6 +1527,9 @@ describe('DashboardSceneSerializer', () => {
       expect(serializer.initialSaveModel).toEqual({
         ...saveModel,
       });
+      // Save As create must update metadata.name so follow-up saves don't PUT the source.
+      expect(serializer.metadata?.name).toBe('aa');
+      expect(serializer.metadata?.generation).toBe(2);
     });
 
     it('should allow retrieving snapshot url', () => {

@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -38,13 +40,34 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // AuthzServiceAudience is the audience for the authz service.
 const AuthzServiceAudience = "authzService"
 
-// ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
-func ProvideAuthZClient(
+// AuthZClients exposes the authorization capabilities that may use different concrete clients.
+type AuthZClients struct {
+	accessClient          authlib.AccessClient
+	userPermissionsClient authlib.UserPermissionsClient
+}
+
+func newAuthZClients(accessClient authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient) *AuthZClients {
+	return &AuthZClients{accessClient: accessClient, userPermissionsClient: userPermissionsClient}
+}
+
+// ProvideAuthZAccessClient returns the client used for authorization checks.
+func ProvideAuthZAccessClient(clients *AuthZClients) authlib.AccessClient {
+	return clients.accessClient
+}
+
+// ProvideAuthZUserPermissionsClient returns the RBAC client that implements GetUserPermissions.
+func ProvideAuthZUserPermissionsClient(clients *AuthZClients) authlib.UserPermissionsClient {
+	return clients.userPermissionsClient
+}
+
+// ProvideAuthZClients provides AuthZ clients and creates the AuthZ service.
+func ProvideAuthZClients(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
@@ -54,9 +77,12 @@ func ProvideAuthZClient(
 	acService accesscontrol.Service,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
-) (authlib.AccessClient, error) {
+	eventualResourceClient *resource.EventualClient,
+) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	zanzanaNoLegacy := zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient)
 
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {
@@ -68,45 +94,57 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if zanzanaEnabled && features.IsEnabledGlobally(featuremgmt.FlagZanzanaNoLegacyClient) {
-		return zanzanaClient, nil
-	}
-
-	// Provisioning uses mode 4 (read+write only to unified storage)
-	// For G12 launch, we can disable caching for this and find a more scalable solution soon
-	// most likely this would involve passing the RV (timestamp!) in each check method
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		authCfg.cacheTTL = 0
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
-		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+		if err != nil {
+			return nil, err
 		}
-		return rbacClient, err
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		var accessClient authlib.AccessClient = rbacClient
+		if zanzanaNoLegacy {
+			accessClient = zanzanaClient
+		} else if zanzanaEnabled {
+			accessClient, err = newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return newAuthZClients(accessClient, rbacClient), nil
 	default:
+		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
+		if !ok {
+			return nil, errors.New("access control service does not support local user permission evaluation")
+		}
 		sql := legacysql.NewDatabaseProvider(db)
-		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		rbacSettings := rbac.Settings{
+			CacheTTL: authCfg.cacheTTL,
+		}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
+		}
+
+		// When running in-proc we get an injection cycle between authz client,
+		// resource client and apiserver, so the folder store resolves the rest
+		// config (and, when search is enabled, the resource client) lazily.
+		folderStore := store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if features.IsEnabledGlobally(featuremgmt.FlagAuthzListFoldersViaSearch) {
+			folderStore = folderStore.WithSearcher(eventualResourceClient)
 		}
 
 		// Register the server
 		server := rbac.NewService(
 			sql,
-			// When running in-proc we get a injection cycle between
-			// authz client, resource client and apiserver so we need to use
-			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig),
+			folderStore,
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
 				store.NewSQLPermissionStore(sql, tracer),
 			),
+			userPermissionsEvaluator,
+			nil,
+			nil,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
@@ -116,14 +154,18 @@ func ProvideAuthZClient(
 
 		channel := &inprocgrpc.Channel{}
 
-		authInterceptor := grpcAuth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+		authenticate := func(ctx context.Context) (context.Context, error) {
 			ctx = authlib.WithAuthInfo(ctx, authnlib.NewAccessTokenAuthInfo(authnlib.Claims[authnlib.AccessTokenClaims]{
 				Rest: authnlib.AccessTokenClaims{
-					Namespace: "*",
+					Namespace:   "*",
+					Permissions: []string{userPermissionsDelegatedGrant},
 				},
 			}))
 			return ctx, nil
-		})
+		}
+		authInterceptor := grpcAuth.UnaryServerInterceptor(authenticate)
+		streamAuthInterceptor := grpcAuth.StreamServerInterceptor(authenticate)
+		channel.WithServerStreamInterceptor(inProcessStreamInterceptor(streamAuthInterceptor))
 
 		// Chain trace propagation with the auth interceptor.
 		// inprocgrpc.Channel wraps the server context with noValuesContext which
@@ -132,12 +174,7 @@ func ProvideAuthZClient(
 		// the original client context so that server-side spans are properly
 		// linked to the calling trace.
 		channel.WithServerUnaryInterceptor(func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-			if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
-				if sc := trace.SpanContextFromContext(clientCtx); sc.IsValid() {
-					ctx = trace.ContextWithRemoteSpanContext(ctx, sc)
-				}
-			}
-			return authInterceptor(ctx, req, info, handler)
+			return authInterceptor(inProcessContextWithClientSpan(ctx), req, info, handler)
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
 		rbacClient := authzlib.NewClient(
@@ -146,12 +183,35 @@ func ProvideAuthZClient(
 			authzlib.WithTracerClientOption(tracer),
 		)
 
-		if zanzanaEnabled {
-			return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		var accessClient authlib.AccessClient = rbacClient
+		if zanzanaNoLegacy {
+			accessClient = zanzanaClient
+		} else if zanzanaEnabled {
+			accessClient, err = newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
+			if err != nil {
+				return nil, err
+			}
 		}
-
-		return rbacClient, nil
+		return newAuthZClients(accessClient, rbacClient), nil
 	}
+}
+
+func inProcessStreamInterceptor(next grpc.StreamServerInterceptor) grpc.StreamServerInterceptor {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		wrapped := grpcMiddleware.WrapServerStream(stream)
+		wrapped.WrappedContext = inProcessContextWithClientSpan(stream.Context())
+		return next(srv, wrapped, info, handler)
+	}
+}
+
+func inProcessContextWithClientSpan(ctx context.Context) context.Context {
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+		if spanContext := trace.SpanContextFromContext(clientCtx); spanContext.IsValid() {
+			return trace.ContextWithRemoteSpanContext(ctx, spanContext)
+		}
+	}
+	return ctx
 }
 
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
@@ -188,13 +248,42 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if zanzanaEnabled {
-		return zClient.WithShadowClient(remoteRBACClient, zanzanaClient, reg)
+		return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, remoteRBACClient, zanzanaClient, reg)
 	}
 
 	return remoteRBACClient, nil
 }
 
-func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (authlib.AccessClient, error) {
+// newZanzanaAwareClient returns the appropriate access client when Zanzana is
+// enabled. If a rollout map is configured it wraps rbacClient in a shadow
+// comparison client and routes per-resource tenants deterministically via the
+// rollout percentages; otherwise it delegates to newShadowClient.
+func newZanzanaAwareClient(cfg *setting.Cfg, rbacClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if len(cfg.ZanzanaRollout.ResourcePercentages) > 0 {
+		shadowClient, err := zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+		if err != nil {
+			return nil, err
+		}
+		return newRolloutAccessClient(rbacClient, shadowClient, cfg.ZanzanaRollout.ResourcePercentages), nil
+	}
+	return newShadowClient(cfg.ZanzanaClient.PrimaryEngine, rbacClient, zanzanaClient, reg)
+}
+
+// newShadowClient returns either a ShadowClient (RBAC primary) or a
+// ShadowRBACClient (Zanzana primary) depending on the configured primary engine.
+func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.AccessClient, zanzanaClient authlib.AccessClient, reg prometheus.Registerer) (authlib.AccessClient, error) {
+	if engine == setting.ZanzanaPrimaryEngineZanzana {
+		return zClient.WithShadowRBACClient(zanzanaClient, rbacClient, reg)
+	}
+	return zClient.WithShadowClient(rbacClient, zanzanaClient, reg)
+}
+
+type remoteRBACClient struct {
+	authlib.AccessClient
+	authlib.UserPermissionsClient
+}
+
+func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, reg prometheus.Registerer) (*remoteRBACClient, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
 		Token:            clientCfg.token,
 		TokenExchangeURL: clientCfg.tokenExchangeURL,
@@ -228,6 +317,7 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		),
 		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 
 	// // if we serve the client as a load balancer
@@ -254,9 +344,20 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 		})
 	}
 
-	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
-
-	return client, nil
+	return &remoteRBACClient{
+		AccessClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(authzCache),
+			authzlib.WithTracerClientOption(tracer),
+		),
+		// Keep permission snapshots out of the process-local cache. The standalone
+		// AuthZ server owns their bounded-staleness caching strategy.
+		UserPermissionsClient: authzlib.NewClient(
+			conn,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		),
+	}, nil
 }
 
 func RegisterRBACAuthZService(
@@ -265,6 +366,8 @@ func RegisterRBACAuthZService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	actionResolver accesscontrol.ActionResolver,
+	userPermissionsResolver rbac.UserPermissionsResolver,
 	exchangeClient authnlib.TokenExchanger,
 	cfg RBACServerSettings,
 ) {
@@ -297,11 +400,17 @@ func RegisterRBACAuthZService(
 		folderStore,
 		legacy.NewLegacySQLStores(db),
 		store.NewSQLPermissionStore(db, tracer),
+		nil,
+		userPermissionsResolver,
+		actionResolver,
 		log.New("authz-grpc-server"),
 		tracer,
 		reg,
 		cache,
-		rbac.Settings{CacheTTL: cfg.CacheTTL, LocalFolderCacheTTL: cfg.LocalFolderCacheTTL}, // anonymous org role can only be set in-proc
+		rbac.Settings{
+			CacheTTL:            cfg.CacheTTL,
+			LocalFolderCacheTTL: cfg.LocalFolderCacheTTL,
+		}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

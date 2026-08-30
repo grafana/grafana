@@ -1,10 +1,10 @@
-import { createEmpty, extend, Extent } from 'ol/extent';
+import { createEmpty, extend, type Extent } from 'ol/extent';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 import VectorImage from 'ol/layer/VectorImage';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
 
-import { MapLayerState } from '../types';
+import { type MapLayerState } from '../types';
 
 export function getLayersExtent(
   layers: MapLayerState[] = [],

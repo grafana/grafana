@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
-  FetchDataFunc,
+  type CellProps,
+  type Column,
+  type FetchDataFunc,
   Icon,
   InteractiveTable,
   LinkButton,
@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { UserDTO } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
 
@@ -201,7 +201,7 @@ export const UsersTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.uid} fetchData={fetchData} />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

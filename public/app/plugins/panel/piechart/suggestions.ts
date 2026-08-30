@@ -2,14 +2,14 @@ import { defaultsDeep } from 'lodash';
 
 import {
   FieldType,
-  VisualizationSuggestion,
+  type VisualizationSuggestion,
   VisualizationSuggestionScore,
-  VisualizationSuggestionsSupplier,
+  type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { defaultNumericVizOptions, SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
-import { PieChartLabels, Options, PieChartType } from './panelcfg.gen';
+import { PieChartLabels, type Options, PieChartType } from './panelcfg.gen';
 
 const withDefaults = (suggestion: VisualizationSuggestion<Options>): VisualizationSuggestion<Options> =>
   defaultsDeep(suggestion, {

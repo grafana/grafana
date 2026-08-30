@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 import Calendar from 'react-calendar';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -68,11 +68,11 @@ const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
 
 Body.displayName = 'Body';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       zIndex: theme.zIndex.modal,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       backgroundColor: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,

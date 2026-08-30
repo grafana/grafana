@@ -1,12 +1,15 @@
-import { MemoryHistoryBuildOptions } from 'history';
-import { ComponentProps, ReactNode } from 'react';
+import { type MemoryHistoryBuildOptions } from 'history';
+import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
@@ -23,7 +26,7 @@ import setupMimirFlavoredServer from './mocks/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './mocks/vanillaAlertmanagerServer';
-import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
+import { type ContactPointWithMetadata, type ReceiverConfigWithMetadata, type RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -377,7 +380,7 @@ describe('contact points', () => {
     it('should be able to search', async () => {
       const { user } = renderWithProvider(<ContactPointsPageContents />);
 
-      const searchInput = await screen.findByRole('textbox', { name: 'search contact points' });
+      const searchInput = await screen.findByRole('textbox', { name: 'Search by name or type' });
       await user.type(searchInput, 'slack');
       expect(searchInput).toHaveValue('slack');
 
@@ -387,7 +390,7 @@ describe('contact points', () => {
       });
 
       // ⚠️ for some reason, the query params are preserved for all tests so don't forget to clear the input
-      const clearButton = screen.getByRole('button', { name: 'clear' });
+      const clearButton = screen.getByRole('button', { name: /clear/i });
       await user.click(clearButton);
       expect(searchInput).toHaveValue('');
     });
@@ -536,6 +539,8 @@ describe('contact points', () => {
         metadata: {
           annotations: {
             [K8sAnnotations.InUseRules]: '1',
+            // User has delete permission, but the contact point is still blocked by an in-use rule reference.
+            [K8sAnnotations.AccessDelete]: 'true',
           },
         },
       };

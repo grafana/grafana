@@ -1,20 +1,21 @@
-import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 import { merge } from 'lodash';
-import { CSSProperties, useState, ReactNode } from 'react';
+import { type CSSProperties, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
+import { action } from 'storybook/actions';
 
 import { LoadingState } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Button } from '../Button/Button';
+import { Combobox } from '../Combobox/Combobox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
 import { TextLink } from '../Link/TextLink';
 import { Menu } from '../Menu/Menu';
 
-import { PanelChromeProps } from './PanelChrome';
+import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
 
 import { PanelChrome } from '.';
@@ -144,7 +145,15 @@ export const Examples = () => {
           })}
           {renderPanel('Content', {
             loadingState: LoadingState.Error,
-            title: 'No title, loadingState is Error, no statusMessage',
+            title: 'loadingState is Error, no statusMessage',
+          })}
+          {renderPanel('Content', {
+            title: 'With description',
+            description: 'This is a description',
+          })}
+          {renderPanel('Content', {
+            title: 'With a subtitle',
+            subtitle: 'This is a sub title with',
           })}
           {renderPanel('Content', {
             title: 'loadingState is Streaming',
@@ -221,6 +230,15 @@ export const Examples = () => {
             ),
           })}
           {renderPanel('Content', {
+            title: 'Actions with button',
+            subtitle: 'And a is a subtitle that has more detail',
+            actions: (
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>
+            ),
+          })}
+          {renderPanel('Content', {
             title: 'Panel with two actions',
             actions: [
               <Button size="sm" variant="secondary" key="A">
@@ -268,6 +286,22 @@ export const Examples = () => {
                 Breakdown
               </Button>
             ),
+          })}
+          {renderPanel('Not ideal as the space in header does not fit inputs', {
+            title: 'With select in header',
+            actions: (
+              <Combobox
+                value="Hello"
+                options={[{ label: 'hello', value: 'Hello' }]}
+                onChange={() => {}}
+                aria-label="Select option"
+              />
+            ),
+          })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
           })}
         </Stack>
       </div>
@@ -340,7 +374,9 @@ export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChro
     width: 400,
     height: 200,
     title: 'Very long title that should get ellipsis when there is no more space',
-    description,
+    description:
+      overrides?.description ??
+      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
     menu,
     children: () => undefined,
   };
@@ -365,11 +401,10 @@ const LoadingIcon = [
 
 const leftItems = { LoadingIcon, Default };
 
-const description =
-  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
-
 Basic.argTypes = {
   description: { control: { type: 'text' } },
+  title: { control: { type: 'text' } },
+  subtitle: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,

@@ -1,12 +1,12 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 
-import { RawTimeRange, TimeRange } from '@grafana/data';
+import { type RawTimeRange, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ClipboardButton, Field, Label, Stack, Switch, TextArea } from '@grafana/ui';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ThemePicker } from './ThemePicker';
-import { ShareModalTabProps } from './types';
+import { type ShareModalTabProps } from './types';
 import { buildIframeHtml, getTrackingSource } from './utils';
 
 interface Props extends Omit<ShareModalTabProps, 'panel' | 'dashboard'> {

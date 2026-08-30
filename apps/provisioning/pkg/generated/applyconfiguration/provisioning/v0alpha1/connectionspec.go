@@ -22,12 +22,19 @@ type ConnectionSpecApplyConfiguration struct {
 	// GitHub connection configuration
 	// Only applicable when provider is "github"
 	GitHub *GitHubConnectionConfigApplyConfiguration `json:"github,omitempty"`
+	// GitHub Enterprise Server connection configuration
+	// Only applicable when provider is "githubEnterprise"
+	GitHubEnterprise *GitHubEnterpriseConnectionConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
+	// GitHub Enterprise Server OAuth app connection configuration
+	// Only applicable when provider is "githubEnterpriseOAuth"
+	GitHubEnterpriseOAuth *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration `json:"githubEnterpriseOAuth,omitempty"`
 	// Bitbucket connection configuration
-	// Only applicable when provider is "bitbucket"
+	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
-	// Gitlab connection configuration
-	// Only applicable when provider is "gitlab"
-	Gitlab *GitlabConnectionConfigApplyConfiguration `json:"gitlab,omitempty"`
+	// OAuth app configuration shared by all OAuth app providers
+	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
+	// Webhook configuration for this connection
+	Webhook *ConnectionWebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 }
 
 // ConnectionSpecApplyConfiguration constructs a declarative configuration of the ConnectionSpec type for use with
@@ -76,6 +83,22 @@ func (b *ConnectionSpecApplyConfiguration) WithGitHub(value *GitHubConnectionCon
 	return b
 }
 
+// WithGitHubEnterprise sets the GitHubEnterprise field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubEnterprise field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.GitHubEnterprise = value
+	return b
+}
+
+// WithGitHubEnterpriseOAuth sets the GitHubEnterpriseOAuth field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubEnterpriseOAuth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithGitHubEnterpriseOAuth(value *GitHubEnterpriseOAuthConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.GitHubEnterpriseOAuth = value
+	return b
+}
+
 // WithBitbucket sets the Bitbucket field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Bitbucket field is set to the value of the last call.
@@ -84,10 +107,18 @@ func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnect
 	return b
 }
 
-// WithGitlab sets the Gitlab field in the declarative configuration to the given value
+// WithOAuth sets the OAuth field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Gitlab field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitlab(value *GitlabConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.Gitlab = value
+// If called multiple times, the OAuth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithOAuth(value *ConnectionOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.OAuth = value
+	return b
+}
+
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithWebhook(value *ConnectionWebhookConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Webhook = value
 	return b
 }

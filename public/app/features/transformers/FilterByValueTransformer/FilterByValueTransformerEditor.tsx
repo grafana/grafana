@@ -2,32 +2,25 @@ import { cloneDeep } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
 import {
-  DataTransformerID,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
+  type TransformerUIProps,
   getFieldDisplayName,
-  DataFrame,
-  SelectableValue,
+  type DataFrame,
+  type SelectableValue,
   FieldType,
   ValueMatcherID,
   valueMatchers,
-  TransformerCategory,
 } from '@grafana/data';
 import {
-  FilterByValueFilter,
+  type FilterByValueFilter,
   FilterByValueMatch,
-  FilterByValueTransformerOptions,
+  type FilterByValueTransformerOptions,
   FilterByValueType,
 } from '@grafana/data/internal';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, RadioButtonGroup, InlineField, Box } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/filterByValue.svg';
-import lightImage from '../images/light/filterByValue.svg';
-
-import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
+import { type DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
 export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
   const { input, options, onChange } = props;
@@ -138,35 +131,26 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
         {options.filters.map((filter, idx) => (
           <FilterByValueFilterEditor
             key={idx}
+            index={idx}
             filter={filter}
             fieldsInfo={fieldsInfo}
             onChange={(filter) => onChangeFilter(filter, idx)}
             onDelete={() => onDeleteFilter(idx)}
           />
         ))}
-        <Button icon="plus" size="sm" onClick={onAddFilter} variant="secondary">
+        <Button
+          icon="plus"
+          size="sm"
+          onClick={onAddFilter}
+          variant="secondary"
+          data-testid={selectors.components.Transforms.FilterByValue.addConditionButton}
+        >
           <Trans i18nKey="transformers.filter-by-value-transformer-editor.add-condition">Add condition</Trans>
         </Button>
       </Box>
     </div>
   );
 };
-
-export const getFilterByValueTransformRegistryItem: () => TransformerRegistryItem<FilterByValueTransformerOptions> =
-  () => ({
-    id: DataTransformerID.filterByValue,
-    editor: FilterByValueTransformerEditor,
-    transformation: standardTransformers.filterByValueTransformer,
-    name: t('transformers.filter-by-value-transformer-editor.name.filter-data-by-values', 'Filter data by values'),
-    description: t(
-      'transformers.filter-by-value-transformer-editor.description.remove-rows-query-results-user-defined-filters',
-      'Remove rows from the query results using user-defined filters.'
-    ),
-    categories: new Set([TransformerCategory.Filter]),
-    help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });
 
 const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {
   return useMemo(() => {

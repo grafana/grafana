@@ -2,29 +2,32 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   getTimeZone,
-  InterpolateFunction,
-  LinkModel,
+  type InterpolateFunction,
+  type LinkModel,
   locationUtil,
-  PanelMenuItem,
-  PanelPlugin,
-  PluginExtensionPanelContext,
+  type PanelMenuItem,
+  type PanelPlugin,
+  type PluginExtensionPanelContext,
   PluginExtensionPoints,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
-import { LocalValueVariable, sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
-import { DataQuery, OptionsWithLegend } from '@grafana/schema';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
+import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
-import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
-import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
+import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
+import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -34,11 +37,13 @@ import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
+import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
@@ -92,7 +97,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
-          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
     }
@@ -101,7 +106,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     subMenu.push({
       text: t('share-panel.menu.share-link-title', 'Share link'),
       iconClassName: 'link',
-      shortcut: 'p u',
       onClick: () => {
         DashboardInteractions.sharingCategoryClicked({
           item: shareDashboardType.link,
@@ -190,6 +194,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
           dashboard.copyPanel(panel);
         },
+        shortcut: 'p c',
       });
     }
 
@@ -230,13 +235,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       }
     }
 
-    const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
+    const isCreateAlertMenuOptionAvailable =
+      config.unifiedAlertingEnabled &&
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+      contextSrv.hasPermission(AccessControlAction.AlertingRuleUpdate);
 
     if (isCreateAlertMenuOptionAvailable) {
       moreSubMenu.push({
         text: t('panel.header-menu.new-alert-rule', `New alert rule`),
         iconClassName: 'bell',
-        onClick: (e) => onCreateAlert(panel),
+        onClick: () => onCreateAlert(panel, dashboard),
       });
     }
 
@@ -261,6 +269,26 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           dashboard.showModal(new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: InspectTab.Help }));
+        },
+      });
+    }
+
+    if (
+      isOnPrem() &&
+      contextSrv.isGrafanaAdmin &&
+      plugin &&
+      !plugin.meta.skipDataQuery &&
+      !isReadOnlyRepeat &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOnDemandDiagnostics, false)
+    ) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.download-diagnostics', 'Download diagnostics'),
+        iconClassName: 'download-alt',
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          dashboard.showModal(
+            new ShareDrawer({ shareView: shareDashboardType.downloadDiagnostics, panelRef: panel.getRef() })
+          );
         },
       });
     }
@@ -306,7 +334,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (panel.state.pluginId === 'timeseries' && config.featureToggles.panelStyleActions && dashboard.state.isEditing) {
+    if (getPanelStyleConfig(panel.state.pluginId) && dashboard.state.isEditing) {
       const stylesSubMenu: PanelMenuItem[] = [];
 
       stylesSubMenu.push({
@@ -322,7 +350,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
       });
 
-      if (DashboardScene.hasPanelStylesToPaste('timeseries')) {
+      if (DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)) {
         stylesSubMenu.push({
           text: t('panel.header-menu.paste-styles', `Paste styles`),
           iconClassName: 'clipboard-alt',
@@ -356,6 +384,23 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         subMenu: moreSubMenu,
         onClick: (e) => {
           e.preventDefault();
+        },
+      });
+    }
+
+    // Not gated on edit mode: putting a panel into a notebook writes to the notebook, not to the
+    // dashboard, so it needs no right to edit the dashboard you happen to be reading.
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false) && canAddPanelToNotebook()) {
+      items.push({
+        text: '',
+        type: 'divider',
+      });
+
+      items.push({
+        text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
+        iconClassName: 'search',
+        onClick: () => {
+          dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
       });
     }
@@ -522,6 +567,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     targets,
     scopedVars,
     data: queryRunner?.state.data,
+    panelPathId: panel.getPathId(),
   };
 }
 
@@ -530,26 +576,67 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
       text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })
   );
 }
 
-const onCreateAlert = async (panel: VizPanel) => {
+const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
+  let formValues: Partial<RuleFormValues> | undefined;
   try {
-    const formValues = await scenesPanelToRuleFormValues(panel);
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(formValues),
-      returnTo: window.location.pathname + window.location.search,
-    });
-    locationService.push(ruleFormUrl);
+    const { scenesPanelToRuleFormValues } = await import(
+      /* webpackChunkName: "DashboardAlertingCreate" */ 'app/features/alerting/unified/utils/rule-form'
+    );
+    formValues = await scenesPanelToRuleFormValues(panel);
   } catch (err) {
     const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
     dispatch(notifyApp(createErrorNotification(message)));
     return;
   }
+
+  // When the drawer flow is disabled, fall back to the legacy full-page rule editor.
+  // This preserves the historical behaviour of navigating with whatever defaults are available
+  // (including undefined, which simply lands the user in a blank form).
+  if (!config.featureToggles.createAlertRuleFromPanel) {
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: window.location.pathname + window.location.search,
+    });
+    locationService.push(ruleFormUrl);
+    return;
+  }
+
+  // The drawer is intentionally narrower than the full rule editor and has no datasource picker,
+  // so a blank drawer would leave the user with no way to recover. Surface the same info as the
+  // edit-panel button's inline Alert and skip opening the drawer.
+  if (!formValues) {
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          t(
+            'alerting.new-rule-from-panel-button.title-no-alerting-capable-query-found',
+            'No alerting capable query found'
+          ),
+          t(
+            'alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found',
+            'Cannot create alerts from this panel because no query to an alerting capable datasource is found.'
+          )
+        )
+      )
+    );
+    return;
+  }
+
+  const [{ LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened }, { NewAlertRuleDrawer }] = await Promise.all([
+    import(/* webpackChunkName: "DashboardAlertingCreate" */ 'app/features/alerting/unified/Analytics'),
+    import(/* webpackChunkName: "DashboardAlertingCreate" */ './NewAlertRuleDrawer'),
+  ]);
+
+  logInfo(LogMessages.alertRuleFromPanel);
+  trackCreateRuleFromPanelDrawerOpened();
+
+  dashboard.showModal(new NewAlertRuleDrawer({ prefill: formValues }));
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {

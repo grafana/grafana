@@ -68,7 +68,7 @@ type FakeRouteAccessService[T models.Identified] struct {
 	SetDefaultPermissionsFunc func(context.Context, identity.Requester, T) error
 	AccessFunc                func(context.Context, identity.Requester, ...T) (map[string]models.RoutePermissionSet, error)
 
-	Calls []Call
+	Calls Calls
 }
 
 func (s *FakeRouteAccessService[T]) FilterRead(ctx context.Context, user identity.Requester, routes ...T) ([]T, error) {

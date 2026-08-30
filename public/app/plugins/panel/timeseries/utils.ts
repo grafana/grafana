@@ -1,23 +1,54 @@
 import {
-  DataFrame,
-  Field,
+  type DataFrame,
+  type Field,
   FieldType,
+  formatLabels,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   isBooleanUnit,
-  TimeRange,
+  type TimeRange,
   cacheFieldDisplayNames,
   applyNullInsertThreshold,
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
-import { AdHocFilterItem } from '@grafana/ui';
-import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
-
-import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
+import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { buildScaleKey } from '@grafana/ui/internal';
 
 type ScaleKey = string;
+
+/**
+ * Stable identity for pairing a compare-series field with its current-period counterpart.
+ * Can't reuse getFieldDisplayName since compare series get a " (comparison)" suffix.
+ * Labels come first (precise per-series identity); config.displayName is not preferred over
+ * them because it's often a shared, un-interpolated template that collapses all series.
+ */
+export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
+  // The compare request runs under a distinct `<refId>-compare` refId (see PanelTimeRange.getExtraQueries)
+  // so query caches/panels don't collide. Datasources that embed the refId in the series name (e.g. TestData)
+  // then emit compare names like `A-compare-series1` while the current period is `A-series1`. Strip that
+  // infix so a compare series still pairs with its current-period counterpart. Label-based datasources
+  // (e.g. Prometheus) are unaffected since their names don't start with the refId.
+  const refId = frame?.refId ?? '';
+  const baseRefId = refId.replace(/-compare$/, '');
+  const name =
+    baseRefId !== refId && field.name.startsWith(refId) ? `${baseRefId}${field.name.slice(refId.length)}` : field.name;
+
+  const labels = field.labels ? formatLabels(field.labels) : '';
+  if (labels) {
+    return `${name} ${labels}`;
+  }
+  if (field.config?.displayName) {
+    return field.config.displayName;
+  }
+  if (field.config?.displayNameFromDS) {
+    return field.config.displayNameFromDS;
+  }
+  if (frame?.name) {
+    return `${frame.name} ${name}`;
+  }
+  return name;
+}
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
@@ -128,12 +159,18 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
+    // Compare frames still sit in their own earlier window at this point - they are only shifted onto
+    // the current range afterwards, by the panel. Offsetting the pseudo range by the same amount keeps
+    // gap filling from reading the whole compare offset as a gap and padding it with nulls that end up
+    // outside the visible range once the frame is shifted.
+    const compareOffsetMs = Math.abs(frame.meta?.timeCompare?.diffMs ?? 0);
+
     let nulledFrame = useNumericX
       ? frame
       : applyNullInsertThreshold({
           frame,
-          refFieldPseudoMin: timeRange?.from.valueOf(),
-          refFieldPseudoMax: timeRange?.to.valueOf(),
+          refFieldPseudoMin: timeRange == null ? undefined : timeRange.from.valueOf() - compareOffsetMs,
+          refFieldPseudoMax: timeRange == null ? undefined : timeRange.to.valueOf() - compareOffsetMs,
         });
 
     const frameFields = nullToValue(nulledFrame).fields;
@@ -148,14 +185,27 @@ export function prepareGraphableFields(
           break;
         case FieldType.number:
           hasValueField = useNumericX ? fieldIdx > 0 : true;
+
+          // we need to make sure all values in the array are numbers or null
+          // so, check all values and if we encounter a bad one, copy the array and
+          // replace all further-occuring non-numbers with null to make safe values array
+          let values = field.values;
+          let safeValues: unknown[] | undefined = undefined;
+
+          for (let i = 0; i < values.length; i++) {
+            let v = values[i];
+
+            if (!(Number.isFinite(v) || v == null)) {
+              safeValues ??= values.slice();
+              safeValues[i] = null;
+            }
+          }
+
+          safeValues ??= values;
+
           copy = {
             ...field,
-            values: field.values.map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            }),
+            values: safeValues,
           };
 
           fields.push(copy);
@@ -256,67 +306,48 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
     );
   };
 
-  // Pre-pass to group main frames by refId
-  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  // Identity -> seriesIndex for current-period fields, keyed by refId so multi-query panels stay isolated.
+  const seriesIndexByIdentity = new Map<string, number>();
+
+  // Assign palette indices to current-period series first so compare frames can look them up by identity.
   for (const frame of frames) {
-    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
-      if (!mainFramesByRefId.has(frame.refId)) {
-        mainFramesByRefId.set(frame.refId, []);
-      }
-      mainFramesByRefId.get(frame.refId)!.push(frame);
+    if (frame.meta?.timeCompare?.isTimeShiftQuery) {
+      continue;
     }
+
+    const refId = frame.refId ?? '';
+    frame.fields.forEach((field, fieldIdx) => {
+      if (!shouldProcessField(field, fieldIdx)) {
+        return;
+      }
+
+      const idx = seriesIndex++;
+      updateFieldDisplay(field, idx);
+
+      const identityKey = `${refId}\0${getCompareSeriesIdentityKey(field, frame)}`;
+      if (!seriesIndexByIdentity.has(identityKey)) {
+        seriesIndexByIdentity.set(identityKey, idx);
+      }
+    });
   }
 
-  // Counter for comparison indices per baseRefId
-  const compareIndicesByRefId = new Map<string, number>();
-
+  // Pair compare series to the matching current-period series by labels/name, not result-list position.
   for (const frame of frames) {
-    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
-
-    if (isCompareFrame) {
-      const baseRefId = frame.refId?.replace('-compare', '');
-
-      if (baseRefId) {
-        // Get and increment the comparison index
-        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
-        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
-
-        // Get the matching main frame using the index
-        const mainFrames = mainFramesByRefId.get(baseRefId);
-        const mainFrame = mainFrames?.[compareIndex];
-
-        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
-          // Match series indices with main frame
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              const mainField = mainFrame.fields[fieldIdx];
-              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
-            }
-          });
-        } else {
-          // Fallback
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              updateFieldDisplay(field, seriesIndex++);
-            }
-          });
-        }
-      } else {
-        // Fallback when no baseRefId
-        frame.fields.forEach((field, fieldIdx) => {
-          if (shouldProcessField(field, fieldIdx)) {
-            updateFieldDisplay(field, seriesIndex++);
-          }
-        });
-      }
-    } else {
-      // Main frames
-      frame.fields.forEach((field, fieldIdx) => {
-        if (shouldProcessField(field, fieldIdx)) {
-          updateFieldDisplay(field, seriesIndex++);
-        }
-      });
+    if (!frame.meta?.timeCompare?.isTimeShiftQuery) {
+      continue;
     }
+
+    const baseRefId = frame.refId?.replace(/-compare$/, '') ?? '';
+
+    frame.fields.forEach((field, fieldIdx) => {
+      if (!shouldProcessField(field, fieldIdx)) {
+        return;
+      }
+
+      const identityKey = `${baseRefId}\0${getCompareSeriesIdentityKey(field, frame)}`;
+      const matchedIndex = seriesIndexByIdentity.get(identityKey);
+      updateFieldDisplay(field, matchedIndex ?? seriesIndex++);
+    });
   }
 };
 
@@ -327,31 +358,41 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
 
-export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
-  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
-};
+/**
+ * Bidirectional pairing between a time-comparison series and its current-period counterpart, keyed
+ * by index into `alignedFrame.fields`.
+ */
+export function getComparisonFieldPairs(alignedFrame: DataFrame, allFrames: DataFrame[]): Map<number, number> {
+  const pairs = new Map<number, number>();
+  const bySeriesIndex = new Map<number, number[]>();
 
-export function getGroupedFilters(
-  frame: DataFrame,
-  seriesIdx: number,
-  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
-) {
-  const groupingFilters: AdHocFilterItem[] = [];
-  const xField = frame.fields[seriesIdx];
-
-  if (xField && xField.labels && xField.config.filterable) {
-    const seriesFilters: AdHocFilterItem[] = [];
-
-    Object.entries(xField.labels).forEach(([key, value]) => {
-      seriesFilters.push({
-        key,
-        operator: FILTER_FOR_OPERATOR,
-        value,
-      });
-    });
-
-    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
+  // field 0 is the join/x field and has no counterpart
+  for (let i = 1; i < alignedFrame.fields.length; i++) {
+    const seriesIndex = alignedFrame.fields[i].state?.seriesIndex;
+    if (seriesIndex == null) {
+      continue;
+    }
+    const group = bySeriesIndex.get(seriesIndex);
+    group == null ? bySeriesIndex.set(seriesIndex, [i]) : group.push(i);
   }
 
-  return groupingFilters;
+  const isCompare = (fieldIdx: number) => {
+    const frameIndex = alignedFrame.fields[fieldIdx].state?.origin?.frameIndex;
+    return frameIndex == null ? false : allFrames[frameIndex]?.meta?.timeCompare?.isTimeShiftQuery === true;
+  };
+
+  for (const group of bySeriesIndex.values()) {
+    // Only create pairs of two, in case a custom palette makes series with unrelated series on an index
+    if (group.length !== 2) {
+      continue;
+    }
+    const [a, b] = group;
+    if (isCompare(a) === isCompare(b)) {
+      continue;
+    }
+    pairs.set(a, b);
+    pairs.set(b, a);
+  }
+
+  return pairs;
 }

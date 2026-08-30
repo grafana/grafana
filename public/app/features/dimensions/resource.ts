@@ -1,7 +1,7 @@
-import { DataFrame } from '@grafana/data';
-import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { type DataFrame } from '@grafana/data';
+import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -15,9 +15,10 @@ export function getPublicOrAbsoluteUrl(path: unknown): string {
   // NOTE: The value of `path` could be either an URL string or a relative
   //       path to a Grafana CDN asset served from the CDN.
   const isUrl = path.indexOf(':/') > 0;
-  const publicPath = window.__grafana_public_path__ || '/';
+  // Falls back to the default build directory when no entry point has set the global.
+  const buildPath = window.__grafana_build_path__ || 'public/build/';
 
-  return isUrl ? path : `${publicPath}build/${path}`;
+  return isUrl ? path : `${buildPath}${path}`;
 }
 
 export function getResourceDimension(

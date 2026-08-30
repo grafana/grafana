@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, useStyles2 } from '@grafana/ui';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
-import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
-import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
+import { type BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { mapMultiSelectValueToStrings } from 'app/features/alerting/unified/utils/amroutes';
 
 /** Provides a form field for use in simplified routing, for selecting appropriate mute timings */

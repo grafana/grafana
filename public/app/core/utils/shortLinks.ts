@@ -1,21 +1,23 @@
 import memoizeOne from 'memoize-one';
 
-import { AbsoluteTimeRange, LogRowModel, UrlQueryMap } from '@grafana/data';
+import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
-import { sceneGraph, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dispatch } from 'app/store/store';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { extractErrorMessage } from '../../api/utils';
-import { ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
+import { type ShareLinkConfiguration } from '../../features/dashboard-scene/sharing/ShareButton/utils';
 import { notifyApp } from '../reducers/appNotification';
 
 import { copyStringToClipboard } from './explore';
+import { isOnPrem } from './isOnPrem';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
@@ -23,9 +25,16 @@ function buildHostUrl() {
 
 export function buildShortUrl(k8sShortUrl: ShortURL) {
   const key = k8sShortUrl.metadata.name;
-  const orgId = k8sShortUrl.metadata.namespace;
   const hostUrl = buildHostUrl();
-  return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  // The resource namespace is not the org ID — it is `default`, `org-<id>` or
+  // `stacks-<id>`. On-prem is multi-org, so carry the current user's org ID in
+  // the query param; Cloud doesn't support multi-org, so the param would just
+  // be noise (`orgId=1`) and is omitted.
+  if (isOnPrem()) {
+    const orgId = config.bootData.user.orgId;
+    return `${hostUrl}/goto/${key}?orgId=${orgId}`;
+  }
+  return `${hostUrl}/goto/${key}`;
 }
 
 function getRelativeURLPath(url: string) {
@@ -44,7 +53,7 @@ const createShortLinkLegacy = async (path: string): Promise<string> => {
 // this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (config.featureToggles.useKubernetesShortURLsAPI) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, false)) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
         shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
@@ -86,7 +95,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
  * @param path - The long path to share.
  * @returns A ClipboardItem for the shortened link.
  */
-export const createShortLinkClipboardItem = (path: string) => {
+const createShortLinkClipboardItem = (path: string) => {
   return new ClipboardItem({
     'text/plain': createShortLink(path),
   });
@@ -128,12 +137,15 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
 
   const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
 
+  const isSnapshot = dashboard.state.meta.isSnapshot;
+
   return getDashboardUrl({
-    uid: dashboard.state.uid,
-    slug: dashboard.state.meta.slug,
+    uid: isSnapshot ? (dashboard.state.meta.snapshotKey ?? dashboard.state.uid) : dashboard.state.uid,
+    slug: isSnapshot ? undefined : dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
     absolute: !opts.useShortUrl,
+    isSnapshot,
   });
 };
 

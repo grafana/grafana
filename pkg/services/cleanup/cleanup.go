@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type AlertRuleService interface {
@@ -130,7 +131,6 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 	cleanupJobs := []cleanUpJob{
 		{"clean up temporary files", srv.cleanUpTmpFiles},
 		{"delete expired snapshots", srv.deleteExpiredSnapshots},
-		{"delete expired dashboard versions", srv.deleteExpiredDashboardVersions},
 		{"delete expired images", srv.deleteExpiredImages},
 		{"cleanup old annotations", srv.cleanUpOldAnnotations},
 		{"expire old user invites", srv.expireOldUserInvites},
@@ -240,8 +240,10 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+	evalCtx := openfeature.NewEvaluationContext("cluster", openfeature.TransactionContext(ctx).Attributes())
+	isKubeSnapshotsEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, evalCtx)
+
+	if isKubeSnapshotsEnabled {
 		srv.deleteKubernetesExpiredSnapshots(ctx)
 	} else {
 		cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
@@ -327,16 +329,6 @@ func (srv *CleanUpService) deleteKubernetesExpiredSnapshots(ctx context.Context)
 	logger.Debug("Deleted expired Kubernetes snapshots", "count", deletedCount)
 }
 
-func (srv *CleanUpService) deleteExpiredDashboardVersions(ctx context.Context) {
-	logger := srv.log.FromContext(ctx)
-	cmd := dashver.DeleteExpiredVersionsCommand{}
-	if err := srv.dashboardVersionService.DeleteExpired(ctx, &cmd); err != nil {
-		logger.Error("Failed to delete expired dashboard versions", "error", err.Error())
-	} else {
-		logger.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
-	}
-}
-
 func (srv *CleanUpService) deleteExpiredImages(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	if !srv.Cfg.UnifiedAlerting.IsEnabled() {
@@ -380,23 +372,6 @@ func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
 }
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
-	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		srv.deleteStaleKubernetesShortURLs(ctx)
-	} else {
-		cmd := shorturls.DeleteShortUrlCommand{
-			OlderThan: time.Now().Add(-time.Duration(srv.Cfg.ShortLinkExpiration*24) * time.Hour),
-		}
-		if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {
-			logger.Error("Problem deleting stale short urls", "error", err.Error())
-		} else {
-			logger.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
-		}
-	}
-}
-
-func (srv *CleanUpService) deleteStaleKubernetesShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	logger.Debug("Starting deleting expired Kubernetes shortURLs")
 

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import { RawListValue } from './RawListItem';
+import { type RawListValue } from './RawListItem';
 import RawListItemAttributes from './RawListItemAttributes';
 
 const getDefaultProps = (

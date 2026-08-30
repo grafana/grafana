@@ -1,22 +1,23 @@
 // Libraries
 import { css } from '@emotion/css';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Alert, Box, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
-import { DashboardScene } from '../scene/DashboardScene';
-import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { useScenesFlickeringFix } from '../utils/utils';
 
+import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 
 export interface Props
@@ -29,6 +30,8 @@ export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, loadError } = stateManager.useState();
   const { uid = '', type, slug } = useParams();
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     stateManager.loadDashboard({ uid, type, slug, route: DashboardRoutes.Embedded });

@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	notificationHistorian "github.com/grafana/alerting/notify/historian"
-	"github.com/grafana/alerting/notify/historian/lokiclient"
-	"github.com/grafana/alerting/notify/nfstatus"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
+
+	notificationHistorian "github.com/grafana/alerting/notify/historian"
+	"github.com/grafana/alerting/notify/historian/lokiclient"
+	"github.com/grafana/alerting/notify/nfstatus"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
@@ -21,7 +23,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -48,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/rulesync"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -55,12 +58,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -74,8 +79,9 @@ func ProvideService(
 	kvStore kvstore.KVStore,
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
+	ruleMutationValidator provisioning.RuleMutationValidator,
 	quotaService quota.Service,
-	secretsService secrets.Service,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
 	m *metrics.NGAlert,
 	folderService folder.Service,
@@ -92,38 +98,45 @@ func ProvideService(
 	pluginContextProvider *plugincontext.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
+	folderResourcePermissions accesscontrol.FolderPermissionsService,
 	userService user.Service,
+	orgService org.Service,
+	clientGenerator resource.ClientGenerator,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                      cfg,
-		FeatureToggles:           featureToggles,
-		DataSourceCache:          dataSourceCache,
-		DataSourceService:        dataSourceService,
-		RouteRegister:            routeRegister,
-		SQLStore:                 sqlStore,
-		KVStore:                  kvStore,
-		ExpressionService:        expressionService,
-		DataProxy:                dataProxy,
-		QuotaService:             quotaService,
-		SecretsService:           secretsService,
-		Metrics:                  m,
-		Log:                      log.New("ngalert"),
-		NotificationService:      notificationService,
-		folderService:            folderService,
-		accesscontrol:            ac,
-		dashboardService:         dashboardService,
-		renderService:            renderService,
-		bus:                      bus,
-		AccesscontrolService:     accesscontrolService,
-		annotationsRepo:          annotationsRepo,
-		pluginsStore:             pluginsStore,
-		tracer:                   tracer,
-		store:                    ruleStore,
-		httpClientProvider:       httpClientProvider,
-		pluginContextProvider:    pluginContextProvider,
-		ResourcePermissions:      resourcePermissions,
-		RouteResourcePermissions: routeResourcePermissions,
-		userService:              userService,
+		Cfg:                       cfg,
+		FeatureToggles:            featureToggles,
+		DataSourceCache:           dataSourceCache,
+		DataSourceService:         dataSourceService,
+		RouteRegister:             routeRegister,
+		SQLStore:                  sqlStore,
+		KVStore:                   kvStore,
+		ExpressionService:         expressionService,
+		DataProxy:                 dataProxy,
+		ruleMutationValidator:     ruleMutationValidator,
+		QuotaService:              quotaService,
+		SecretsService:            secretsService,
+		Metrics:                   m,
+		Log:                       log.New("ngalert"),
+		NotificationService:       notificationService,
+		folderService:             folderService,
+		accesscontrol:             ac,
+		dashboardService:          dashboardService,
+		renderService:             renderService,
+		bus:                       bus,
+		AccesscontrolService:      accesscontrolService,
+		annotationsRepo:           annotationsRepo,
+		pluginsStore:              pluginsStore,
+		tracer:                    tracer,
+		store:                     ruleStore,
+		httpClientProvider:        httpClientProvider,
+		pluginContextProvider:     pluginContextProvider,
+		clientGenerator:           clientGenerator,
+		ResourcePermissions:       resourcePermissions,
+		RouteResourcePermissions:  routeResourcePermissions,
+		FolderResourcePermissions: folderResourcePermissions,
+		userService:               userService,
+		orgService:                orgService,
 	}
 
 	if ng.IsDisabled() {
@@ -148,8 +161,9 @@ type AlertNG struct {
 	KVStore               kvstore.KVStore
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
+	ruleMutationValidator provisioning.RuleMutationValidator
 	QuotaService          quota.Service
-	SecretsService        secrets.Service
+	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
 	NotificationService   notifications.Service
 	Log                   log.Logger
@@ -168,22 +182,36 @@ type AlertNG struct {
 	StartupInstanceReader state.InstanceReader
 
 	// Alerting notification services
-	MultiOrgAlertmanager     *notifier.MultiOrgAlertmanager
-	AlertsRouter             *sender.AlertsRouter
-	accesscontrol            accesscontrol.AccessControl
-	AccesscontrolService     accesscontrol.Service
-	ResourcePermissions      accesscontrol.ReceiverPermissionsService
-	RouteResourcePermissions accesscontrol.RoutePermissionsService
-	annotationsRepo          annotations.Repository
-	store                    *store.DBstore
-	userService              user.Service
+	MultiOrgAlertmanager      *notifier.MultiOrgAlertmanager
+	AlertsRouter              *sender.AlertsRouter
+	externalRulerSyncer       *rulesync.ExternalRulerSyncer
+	accesscontrol             accesscontrol.AccessControl
+	AccesscontrolService      accesscontrol.Service
+	ResourcePermissions       accesscontrol.ReceiverPermissionsService
+	RouteResourcePermissions  accesscontrol.RoutePermissionsService
+	FolderResourcePermissions accesscontrol.FolderPermissionsService
+	annotationsRepo           annotations.Repository
+	store                     *store.DBstore
+	userService               user.Service
+	orgService                org.Service
 
-	bus          bus.Bus
-	pluginsStore pluginstore.Store
-	tracer       tracing.Tracer
+	bus             bus.Bus
+	pluginsStore    pluginstore.Store
+	tracer          tracing.Tracer
+	clientGenerator resource.ClientGenerator
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
+}
+
+// newRuleSequenceStore returns a RuleSequenceStore backed by the k8s API if a
+// ClientGenerator is available, or nil otherwise (which causes NewScheduler
+// to fall back to the NoopRuleSequenceStore).
+func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
+	if ng.clientGenerator == nil {
+		return nil
+	}
+	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
 }
 
 func (ng *AlertNG) init() error {
@@ -202,6 +230,7 @@ func (ng *AlertNG) init() error {
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
 	var opts []notifier.Option
+	var skipClustering bool
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -244,7 +273,8 @@ func (ng *AlertNG) init() error {
 		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
-			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, ng.store, m, ng.tracer, ng.FeatureToggles)
+			override = remote.NewRemotePrimaryFactory(cfg, ng.KVStore, crypto, m, ng.tracer, ng.FeatureToggles)
+			skipClustering = true
 		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
@@ -253,7 +283,6 @@ func (ng *AlertNG) init() error {
 				ng.store,
 				ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 				crypto,
-				ng.store,
 				m,
 				ng.tracer,
 				remoteSecondaryWithRemoteState,
@@ -278,6 +307,26 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+	// Reuse the validator wired into the user-driven datasource proxy so the sync
+	// worker honours the same allow/deny rules. Tests construct ngalert without a
+	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
+	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
+	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
+		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
+	}
+
+	externalAMSyncer := notifier.NewExternalAMSyncer(
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
+		ng.Cfg,
+		multiOrgMetrics,
+		moaLogger,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
+		ng.store,
+	)
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -288,10 +337,13 @@ func (ng *AlertNG) init() error {
 		multiOrgMetrics,
 		ng.NotificationService,
 		ng.ResourcePermissions,
+		ng.RouteResourcePermissions,
 		moaLogger,
 		ng.SecretsService,
 		ng.FeatureToggles,
 		notificationHistorian,
+		skipClustering,
+		externalAMSyncer,
 		opts...,
 	)
 	if err != nil {
@@ -320,7 +372,7 @@ func (ng *AlertNG) init() error {
 
 	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService, ng.FeatureToggles,
-		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation)
+		ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation, ng.Metrics.GetSenderMetrics())
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
 	if err := alertsRouter.SyncAndApplyConfigFromDatabase(initCtx); err != nil {
@@ -353,6 +405,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
+		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
@@ -383,7 +436,8 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 
-	ng.InstanceStore, ng.StartupInstanceReader = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
+	ng.InstanceStore = initInstanceStore(ng.store.SQLStore, ng.Log, ng.FeatureToggles)
+	ng.StartupInstanceReader = ng.InstanceStore
 
 	stateManagerCfg := state.ManagerCfg{
 		Metrics:                        ng.Metrics.GetStateMetrics(),
@@ -403,17 +457,13 @@ func (ng *AlertNG) init() error {
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 
 		IgnorePendingForNoDataAndError: ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingIgnorePendingForNoDataAndError),
+		RequireWarm:                    ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingStateManagerRequireWarm),
 	}
-	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
+	statePersister := initStatePersister(stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
 
-	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
-	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
-		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
-	}
-
 	var apiStateManager state.AlertInstanceManager
-	var apiStatusReader apiprometheus.StatusReader
+	var ruleMutator apiprometheus.RuleMutator
 	if ng.Cfg.UnifiedAlerting.HASingleNodeEvaluation {
 		peer := ng.MultiOrgAlertmanager.Peer()
 		if peer == nil {
@@ -429,7 +479,7 @@ func (ng *AlertNG) init() error {
 		// because non-primary nodes have no in-memory state
 		storeStateReader := state.NewStoreStateReader(ng.InstanceStore, ng.Log)
 		apiStateManager = storeStateReader
-		apiStatusReader = storeStateReader
+		ruleMutator = apiprometheus.NewDBRuleMutator(storeStateReader)
 	} else {
 		// No need for a real evaluation coordinator in non-HA mode.
 		ng.evaluationCoordinator = cluster.NewNoopEvaluationCoordinator()
@@ -437,12 +487,26 @@ func (ng *AlertNG) init() error {
 		// Use in-memory state/scheduler for API calls
 		apiStateManager = ng.stateManager
 		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
-		apiStatusReader = ng.schedule
+		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
 
-	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.ValidateProvenanceRelaxed, ng.tracer)
+	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
+	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
+	provisionRouteService := routes.NewService(
+		configStore,
+		ng.store,
+		ng.store,
+		ng.Cfg.UnifiedAlerting,
+		ng.FeatureToggles,
+		ng.Log,
+		validation.NewPermissionAwareValidator(ng.accesscontrol),
+		ng.tracer,
+		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
+	)
+
+	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
 
 	receiverAccess := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false)
 	receiverService := notifier.NewReceiverService(
@@ -456,14 +520,19 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
 		ng.MultiOrgAlertmanager,
 		ng.SecretsService,
 		receiverAccess,
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	provisioningReceiverAuthz := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true)
@@ -478,7 +547,10 @@ func (ng *AlertNG) init() error {
 		ng.Log,
 		ng.ResourcePermissions,
 		ng.tracer,
+		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		false, // imported resources are not exposed via provisioning APIs
+		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
+		emailValidator,
 	)
 
 	// Create limits provider based on alertmanager mode.
@@ -514,17 +586,33 @@ func (ng *AlertNG) init() error {
 	}
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, routeService, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
-	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
+	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
-	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)
-	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles)
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
-		ac.NewRuleService(ng.accesscontrol))
+		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
+
+	// External Mimir ruler sync worker. Routes the ruler config GET through
+	// the datasource proxy service (same transport, auth and egress validation as
+	// the user-driven proxy). It only runs when the operator has set the
+	// external_ruler_uid setting (the enable signal; no separate feature flag).
+	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
+		&ng.Cfg.UnifiedAlerting,
+		log.New("ngalert.rulesync"),
+		rulesync.NewMetrics(ng.Metrics.Registerer),
+		ng.DataSourceService,
+		ng.DataProxy,
+		alertRuleService,
+		ng.store,
+		ng.store,
+		ng.FolderResourcePermissions,
+	)
 
 	ng.Api = &api.API{
 		Cfg:                   ng.Cfg,
@@ -540,7 +628,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:       ng.store,
 		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
 		StateManager:          apiStateManager,
-		RuleStatusReader:      apiStatusReader,
+		RuleMutator:           ruleMutator,
 		AccessControl:         ng.accesscontrol,
 		Policies:              policyService,
 		RouteService:          routeService,
@@ -552,6 +640,7 @@ func (ng *AlertNG) init() error {
 		InhibitionRules:       inhibitionRuleService,
 		AlertRules:            alertRuleService,
 		AlertsRouter:          alertsRouter,
+		ExternalRulerSync:     ng.externalRulerSyncer,
 		EvaluatorFactory:      evalFactory,
 		ConditionValidator:    conditionValidator,
 		FeatureManager:        ng.FeatureToggles,
@@ -576,87 +665,30 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return ac.DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
+	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
 
-// initInstanceStore initializes the instance store based on the feature toggles.
-// It returns two vales: the instance store that should be used for writing alert instances,
-// and an alert instance reader that can be used to read alert instances on startup.
-func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) (state.InstanceStore, state.InstanceReader) {
-	var instanceStore state.InstanceStore
-
-	// We init both stores here, but only one will be used based on the feature toggles.
-	// Two stores are needed for the multi-instance reader to work correctly.
-	// It's used to read the state of alerts on startup, and allows switching the feature
-	// flags seamlessly without losing the state of alerts.
-	protoInstanceStore := store.ProtoInstanceDBStore{
+// initInstanceStore initializes the instance store used for writing and reading alert instances.
+func initInstanceStore(sqlStore db.DB, logger log.Logger, featureToggles featuremgmt.FeatureToggles) state.InstanceStore {
+	return store.ProtoInstanceDBStore{
 		SQLStore:       sqlStore,
 		Logger:         logger,
 		FeatureToggles: featureToggles,
 	}
-	simpleInstanceStore := store.InstanceDBStore{
-		SQLStore: sqlStore,
-		Logger:   logger,
-	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed) {
-		logger.Info("Using protobuf-based alert instance store")
-		instanceStore = protoInstanceStore
-	} else {
-		logger.Info("Using simple database alert instance store")
-		instanceStore = simpleInstanceStore
-	}
-
-	return instanceStore, state.NewMultiInstanceReader(logger, protoInstanceStore, simpleInstanceStore)
 }
 
-func initStatePersister(uaCfg setting.UnifiedAlertingSettings, cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
+func initStatePersister(cfg state.ManagerCfg, featureToggles featuremgmt.FeatureToggles) state.StatePersister {
 	logger := log.New("ngalert.state.manager.persist")
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	compressed := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStateCompressed)
-	//nolint:staticcheck // not yet migrated to OpenFeature
 	periodic := featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic)
 
-	switch {
-	case compressed && periodic:
-		logger.Info("Using async rule state persister (compressed + periodic)")
+	if periodic {
+		logger.Info("Using async rule state persister (periodic)")
 		return state.NewAsyncRuleStatePersister(logger, clock.New(), cfg.StatePeriodicSaveInterval, cfg)
-	case compressed:
-		logger.Info("Using sync rule state persister (compressed)")
-		return state.NewSyncRuleStatePersister(logger, cfg)
-	case periodic:
-		logger.Info("Using async state persister (periodic)")
-		return state.NewAsyncStatePersister(logger, clock.New(), uaCfg.StatePeriodicSaveInterval, cfg)
-	default:
-		logger.Info("Using sync state persister")
-		return state.NewSyncStatePersisiter(logger, cfg)
 	}
-}
-
-func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
-	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
-	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
-		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
-
-		// Increment version for all rules
-		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
-		if err != nil {
-			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
-			return err
-		}
-		logger.Info("Updated version for alert rules", "keys", updatedKeys)
-
-		// Update folder fullpaths for all rules
-		if err := dbStore.UpdateFolderFullpathsForFolders(ctx, evt.OrgID, evt.UIDs); err != nil {
-			logger.Error("Failed to update folder fullpaths for alert rules", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
-			return err
-		}
-		logger.Info("Updated folder fullpaths for alert rules", "folderUIDs", evt.UIDs)
-
-		return nil
-	})
+	logger.Info("Using sync rule state persister")
+	return state.NewSyncRuleStatePersister(logger, cfg)
 }
 
 // BackfillFolderFullpaths populates folder_fullpath for all existing alert rules.
@@ -734,6 +766,11 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	children.Go(func() error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
+	if ng.externalRulerSyncer != nil {
+		children.Go(func() error {
+			return ng.externalRulerSyncer.Run(subCtx)
+		})
+	}
 
 	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
 		children.Go(func() error {

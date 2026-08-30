@@ -3,7 +3,6 @@ package httpclientprovider
 import (
 	"testing"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
@@ -64,7 +63,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		require.Equal(t, sdkhttpclient.ResponseLimitMiddlewareName, o.Middlewares[6].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, HostRedirectValidationMiddlewareName, o.Middlewares[7].(sdkhttpclient.MiddlewareName).MiddlewareName())
 		require.Equal(t, sdkhttpclient.ErrorSourceMiddlewareName, o.Middlewares[8].(sdkhttpclient.MiddlewareName).MiddlewareName())
-		require.Equal(t, awsauth.NewSigV4Middleware().(sdkhttpclient.MiddlewareName).MiddlewareName(), o.Middlewares[9].(sdkhttpclient.MiddlewareName).MiddlewareName())
+		require.Equal(t, "sigv4-aws-config", o.Middlewares[9].(sdkhttpclient.MiddlewareName).MiddlewareName())
 	})
 
 	t.Run("When creating new provider and http logging is enabled for one plugin, it should apply expected middleware", func(t *testing.T) {

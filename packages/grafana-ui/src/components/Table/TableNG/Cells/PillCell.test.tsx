@@ -1,6 +1,6 @@
-import { render, RenderResult } from '@testing-library/react';
+import { render, type RenderResult } from '@testing-library/react';
 
-import { Field, FieldType, MappingType, createTheme } from '@grafana/data';
+import { type Field, FieldType, MappingType, createTheme } from '@grafana/data';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 

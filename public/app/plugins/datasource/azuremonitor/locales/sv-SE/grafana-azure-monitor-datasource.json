@@ -4,7 +4,6 @@
       "label-advanced": "Avancerat"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Lägg till",
       "aria-label-remove": "Ta bort",
       "button-add-resource": "Lägg till resurs",
       "button-add-resource-uri": "Lägg till resurs-URI",
@@ -34,22 +33,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
-      "aria-label-client-certificate": "",
+      "aria-label-client-certificate": "Klientcertifikat",
       "aria-label-client-id": "Kund-ID",
       "aria-label-client-secret": "Kundhemlighet",
-      "aria-label-private-key": "",
-      "aria-label-private-key-password": "",
+      "aria-label-private-key": "Privat nyckel",
+      "aria-label-private-key-password": "Certifikatlösenord",
       "aria-label-symbol-client-secret": "Kundhemlighet",
       "aria-label-tenant-id": "Tenant ID",
-      "description-certificate-format": "",
+      "description-certificate-format": "Välj formatet för certifikatet (PEM-certifikat ska vara i PEM-format med oformaterad text, PFX-certifikat ska vara i base64-kodat PFX-format)",
       "label-azure-cloud": "Azure Cloud",
-      "label-certificate-format": "",
-      "label-client-certificate": "",
+      "label-certificate-format": "Format",
+      "label-client-certificate": "Klientcertifikat",
       "label-client-id": "Program- (klient-) ID",
       "label-client-secret": "Kundhemlighet",
-      "label-private-key": "",
+      "label-private-key": "Privat nyckel",
       "label-symbol-client-secret": "Kundhemlighet",
-      "label-symbol-private-key-password": "",
+      "label-symbol-private-key-password": "Certifikatlösenord",
       "label-tenant-id": "Katalog- (klientorganisations-) ID",
       "placeholder-symbol-client-secret": "konfigurerad",
       "reset-symbol-client-secret": "Återställ"
@@ -71,13 +70,18 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Välj typ av autentisering till Azure-tjänster",
-      "label-authentication": "",
+      "label-authentication": "Behörighetskontrolltyp",
       "title-authentication": "Autentisering"
     },
     "basic-logs-toggle": {
       "aria-label-enable-basic-logs": "Grundläggande loggar",
       "description-basic-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>basloggar</2>.",
       "label-enable-basic-logs": "Aktivera basloggar"
+    },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "Batch-API",
+      "description-batch-api": "Frågar flera resurser i en enda begäran, vilket förbättrar prestandan för stora instrumentpaneler. Kräver rollen <2>Monitoring Reader</2> vid prenumerationsomfånget för <6>metrics.monitor.azure.com</6>. Ytterligare <9>kostnader kan tillkomma</9> utöver den kostnadsfria nivån.",
+      "label-enable-batch-api": "Aktivera Batch-API"
     },
     "config-editor": {
       "description-additional-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för att få mer kontroll över din datakälla. Detta inkluderar Secure Socks Proxy, tidsgräns för begäran och vidarebefordrade cookies.",
@@ -101,7 +105,11 @@
       "load-subscriptions": "Ladda prenumerationer"
     },
     "dimension-fields": {
-      "aria-label-remove": "Ta bort",
+      "aria-label-field": "",
+      "aria-label-operator": "",
+      "aria-label-remove": "",
+      "aria-label-value": "",
+      "aria-label-values": "",
       "label-dimensions": "Mått",
       "placeholder-field": "Fält",
       "placeholder-operation": "Drift",
@@ -194,6 +202,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Mätvärdesnamnrymd"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "Du kan välja objekt av samma resurstyp över flera prenumerationer och regioner. Resurser i olika prenumerationer eller regioner frågas i separata begäranden och kan misslyckas oberoende av varandra. För att välja resurser av en annan resurstyp behöver du först avmarkera ditt nuvarande val.",
+      "selection-notice-standard": "Du kan välja objekt av samma resurstyp och plats. För att välja resurser av en annan resurstyp eller plats behöver du först avmarkera ditt nuvarande val."
+    },
+    "monitor-config": {
+      "title-features": "Funktioner"
+    },
     "nested-row": {
       "text-loading": "Laddar …"
     },
@@ -205,6 +220,10 @@
       "label-by": "AV",
       "label-order-by": "Ordnad efter",
       "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
+    },
+    "pagination": {
+      "results-truncated-message": "Slutade ladda efter {{maxPages}} sidor. Vissa resultat kan ha utelämnats.",
+      "results-truncated-title": "Azure Monitor"
     },
     "query-editor": {
       "alert-error-occurred": "Ett fel uppstod vid begäran av metadata från Azure Monitor"
@@ -285,7 +304,7 @@
       "tooltip-time-range": "<0>Anger tidsintervallet som används för att fråga. Alternativet <1>Fråga</1> använder endast de tidsintervall som anges i frågan. <3>Instrumentpanelen</3> kommer endast att använda Grafanas tidsintervall.</0>"
     },
     "top-field": {
-      "label-top": "Topp"
+      "label-top": "Överst"
     },
     "trace-type-field": {
       "label-event-type": "Händelsetyp",

@@ -28,4 +28,11 @@ describe('Pagination component', () => {
     expect(screen.getAllByRole('button')[0]).toBeEnabled();
     expect(screen.getAllByRole('button')[1]).toBeDisabled();
   });
+  it('should mark only the current page button with aria-current', () => {
+    render(<Pagination currentPage={2} numberOfPages={3} onNavigate={() => {}} />);
+    const currentPageButton = screen.getByRole('button', { name: '2' });
+    expect(currentPageButton).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: '1' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: '3' })).not.toHaveAttribute('aria-current');
+  });
 });

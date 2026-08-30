@@ -17,15 +17,17 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import SpanBar, { Props } from './SpanBar';
+import SpanBar, { type Props } from './SpanBar';
 
 describe('<SpanBar>', () => {
   const shortLabel = 'omg-so-awesome';
   const longLabel = 'omg-awesome-long-label';
+  const labelDetail = 'my-service::my-operation';
 
   const props = {
     longLabel,
     shortLabel,
+    labelDetail,
     color: '#fff',
     hintSide: 'right',
     viewEnd: 1,
@@ -88,9 +90,105 @@ describe('<SpanBar>', () => {
     expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
   });
 
+  it('keeps the summary bar layout when a summary span has no min/max stats', async () => {
+    // isSummary is true but getSummaryDurationStats() is null (no min/max). The bar must still use
+    // the summary layout (fixed shortLabel + detail revealed as a sibling on hover), matching the
+    // row, rather than reverting to the normal-span longLabel swap.
+    const summaryProps = { ...props, span: { ...props.span, aggregation: { isSummary: true, spanCount: 3 } } };
+    render(<SpanBar {...(summaryProps as unknown as Props)} />);
+    await userEvent.hover(screen.getByTestId(selectors.components.TraceViewer.spanBar));
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.getByText(labelDetail, { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(longLabel)).not.toBeInTheDocument();
+  });
+
   it('log markers count', () => {
     // 3 log entries, two grouped together with the same timestamp
     render(<SpanBar {...(props as unknown as Props)} />);
     expect(screen.getAllByTestId('SpanBar--logMarker')).toHaveLength(2);
+  });
+
+  it('applies the summary bar styling to summary spans', () => {
+    const summarySpan = { ...props.span, aggregation: { isSummary: true } };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    expect(screen.getByTestId('SpanBar--bar').className).toMatch(/barSummary/);
+  });
+
+  it('does not apply summary bar styling to normal spans', () => {
+    render(<SpanBar {...(props as unknown as Props)} />);
+    expect(screen.getByTestId('SpanBar--bar').className).not.toMatch(/barSummary/);
+  });
+
+  it('threads the service color into the summary bar gradient via a CSS variable', () => {
+    const summarySpan = { ...props.span, aggregation: { isSummary: true } };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    const bar = screen.getByTestId('SpanBar--bar');
+    expect(bar.style.getPropertyValue('--span-summary-color')).toBe(props.color);
+  });
+
+  it('does not show a duration-stats tooltip for normal spans', async () => {
+    render(<SpanBar {...(props as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('keeps the aria-hidden summary bar free of focusable elements (guards aria-hidden-focus)', () => {
+    const summarySpan = {
+      ...props.span,
+      aggregation: {
+        isSummary: true,
+        durationMinNs: 4_000_000,
+        durationMedianNs: 9_000_000,
+        durationMaxNs: 60_000_000,
+      },
+    };
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    const wrapper = screen.getByTestId(selectors.components.TraceViewer.spanBar);
+    expect(wrapper).toHaveAttribute('aria-hidden', 'true');
+    // A focusable trigger inside this aria-hidden subtree (e.g. Grafana's Tooltip
+    // clones its child with tabIndex=0) would be keyboard-reachable while hidden
+    // from assistive tech, which axe reports as aria-hidden-focus.
+    expect(wrapper.querySelector('[tabindex]')).toBeNull();
+  });
+
+  it('reveals the service::operation detail on hover while keeping the stats label permanently visible', async () => {
+    const summarySpan = {
+      ...props.span,
+      aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
+    };
+    // The detail is rendered as its own span sibling (not merged into the stats label).
+    const detailSpan = (content: string, el: Element | null) => el?.tagName === 'SPAN' && content.includes(labelDetail);
+
+    render(<SpanBar {...({ ...props, span: summarySpan } as unknown as Props)} />);
+    expect(screen.queryByText(detailSpan)).not.toBeInTheDocument();
+
+    await userEvent.hover(screen.getByText(shortLabel));
+    expect(screen.getByText(shortLabel)).toBeInTheDocument();
+    expect(screen.getByText(detailSpan)).toBeInTheDocument();
+  });
+
+  // detailBeforeStats = viewStart > 1 - viewEnd, mirroring SpanBarRow's longLabel
+  // ordering: detail before the stats when the bar sits near the right edge,
+  // after them otherwise. Both cases exercise the flip so the duplicated
+  // condition cannot drift unnoticed.
+  const summaryStatsSpan = {
+    ...props.span,
+    aggregation: { isSummary: true, durationMinNs: 4_000_000, durationMaxNs: 60_000_000 },
+  };
+
+  it('orders the detail before the stats when the bar sits near the right edge', async () => {
+    // viewStart (0.9) > 1 - viewEnd (0) -> detail before stats
+    render(<SpanBar {...({ ...props, viewStart: 0.9, viewEnd: 1, span: summaryStatsSpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    const text = screen.getByTestId('SpanBar--label').textContent ?? '';
+    expect(text.indexOf(labelDetail)).toBeLessThan(text.indexOf(shortLabel));
+  });
+
+  it('orders the detail after the stats when the bar sits near the left edge', async () => {
+    // viewStart (0) <= 1 - viewEnd (0.8) -> detail after stats
+    render(<SpanBar {...({ ...props, viewStart: 0, viewEnd: 0.2, span: summaryStatsSpan } as unknown as Props)} />);
+    await userEvent.hover(screen.getByText(shortLabel));
+    const text = screen.getByTestId('SpanBar--label').textContent ?? '';
+    expect(text.indexOf(labelDetail)).toBeGreaterThan(text.indexOf(shortLabel));
   });
 });

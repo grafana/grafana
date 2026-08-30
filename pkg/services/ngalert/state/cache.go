@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"errors"
+	"maps"
 	"net/url"
 	"strings"
 	"sync"
@@ -173,12 +174,8 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 
 	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(resultLabels)+len(errorLabels))
 	dupes := make(data.Labels)
-	for key, val := range extraLabels {
-		lbs[key] = val
-	}
-	for key, val := range errorLabels {
-		lbs[key] = val
-	}
+	maps.Copy(lbs, extraLabels)
+	maps.Copy(lbs, errorLabels)
 	for key, val := range labels {
 		ruleVal, ok := lbs[key]
 		// if duplicate labels exist, reserved label will take precedence
@@ -393,9 +390,7 @@ func (c *cache) GetAlertInstances() []ngModels.AlertInstance {
 // if duplicate labels exist, keep the value from the first set
 func mergeLabels(a, b data.Labels) data.Labels {
 	newLbs := make(data.Labels, len(a)+len(b))
-	for k, v := range a {
-		newLbs[k] = v
-	}
+	maps.Copy(newLbs, a)
 	for k, v := range b {
 		if _, ok := newLbs[k]; !ok {
 			newLbs[k] = v

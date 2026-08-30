@@ -1,10 +1,14 @@
-import { clsx } from 'clsx';
-import { memo, MemoExoticComponent, NamedExoticComponent } from 'react';
+import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
-import { Field, FieldType, GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
+import { type Field, FieldType, type GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
 
-import { TableCellDisplayMode, TableCellOptions, TableCustomCellOptions } from '../../types';
-import { TableCellRenderer, TableCellRendererProps, TableCellStyleOptions, TableCellStyles } from '../types';
+import { TableCellDisplayMode, type TableCellOptions, type TableCustomCellOptions } from '../../types';
+import {
+  type TableCellRenderer,
+  type TableCellRendererProps,
+  type TableCellStyleOptions,
+  type TableCellStyles,
+} from '../types';
 import { getCellOptions } from '../utils';
 
 import { ActionsCell, getStyles as getActionsCellStyles } from './ActionsCell';
@@ -32,13 +36,6 @@ function isCustomCellOptions(options: TableCellOptions): options is TableCustomC
   return options.type === TableCellDisplayMode.Custom;
 }
 
-function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
-  return (theme, options) => {
-    const styles = fn(theme, options);
-    return clsx(styles, getAutoCellStyles(theme, options));
-  };
-}
-
 interface CellRegistryEntry {
   renderer: MemoExoticComponent<TableCellRenderer> | NamedExoticComponent<TableCellRendererProps>;
   getStyles?: TableCellStyles;
@@ -60,7 +57,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   },
   [TableCellDisplayMode.JSONView]: {
     renderer: AutoCellRenderer,
-    getStyles: mixinAutoCellStyles(getJsonCellStyles),
+    getStyles: getJsonCellStyles,
   },
   [TableCellDisplayMode.Actions]: {
     renderer: wrapComponentInMemo(
@@ -199,11 +196,7 @@ export function getCellSpecificStyles(
 }
 
 /** @internal */
-export function getAutoRendererStyles(
-  theme: GrafanaTheme2,
-  options: TableCellStyleOptions,
-  field: Field
-): string | undefined {
+function getAutoRendererStyles(theme: GrafanaTheme2, options: TableCellStyleOptions, field: Field): string | undefined {
   const impliedDisplayMode = getAutoRendererDisplayMode(field);
   if (impliedDisplayMode !== TableCellDisplayMode.Auto) {
     return CELL_REGISTRY[impliedDisplayMode]?.getStyles?.(theme, options);
@@ -221,6 +214,10 @@ export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
       return TableCellDisplayMode.Sparkline;
     }
+  }
+  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
+  if (field.type === FieldType.other) {
+    return TableCellDisplayMode.JSONView;
   }
   return TableCellDisplayMode.Auto;
 }

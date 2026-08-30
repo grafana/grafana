@@ -1,6 +1,9 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { faro } from '@grafana/faro-web-sdk';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -26,14 +29,22 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legacy';
 
-export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_query',
-    source: querySource,
-    card_source: cardSource,
-  });
+export function trackAddQuery(
+  querySource: 'saved_query' | 'new_query',
+  cardSource: AddCardSource,
+  options?: { silent?: boolean }
+) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_query',
+      source: querySource,
+      card_source: cardSource,
+    },
+    options
+  );
 }
 
 export function trackOpenSavedQueryPicker(source: AddCardSource) {
@@ -50,11 +61,15 @@ export function trackAddExpressionInitiated(source: AddCardSource) {
   });
 }
 
-export function trackAddTransformationInitiated(source: AddCardSource) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'add_transformation_initiated',
-    source,
-  });
+export function trackAddTransformationInitiated(source: AddCardSource, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'add_transformation_initiated',
+      source,
+    },
+    options
+  );
 }
 
 export type CardActionSource = 'content_header' | 'sidebar_card';
@@ -62,13 +77,18 @@ export type CardActionSource = 'content_header' | 'sidebar_card';
 export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
   itemType: QueryEditorType,
-  source: CardActionSource
+  source: CardActionSource,
+  options?: { silent?: boolean }
 ) {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action,
-    item_type: itemType,
-    source,
-  });
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action,
+      item_type: itemType,
+      source,
+    },
+    options
+  );
 }
 
 export function trackTransformationToolAction(action: 'toggle_help' | 'toggle_filter' | 'toggle_debug') {
@@ -88,18 +108,25 @@ export function trackQueryMenuAction(
   });
 }
 
-export function trackReorder(itemType: 'query' | 'transformation') {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'reorder',
-    item_type: itemType,
-  });
+export function trackReorder(itemType: 'query' | 'transformation', options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'reorder',
+      item_type: itemType,
+    },
+    options
+  );
 }
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+  const payload: Record<string, string> = {
     action: 'toggle_editor_version',
     direction,
-  });
+    'paneledit.buttonLabels': String(getFeatureFlagClient().getBooleanValue(FlagKeys.PaneleditButtonLabels, false)),
+  };
+  faro.api.pushEvent(EVENT_PANEL_EDIT_NEXT, payload);
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, payload);
 }
 
 export function trackBannerDismiss() {
@@ -121,17 +148,39 @@ export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   });
 }
 
-export function trackSidebarViewChange(view: QueryEditorType) {
+export function trackSidebarViewChange(view: string, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'change_sidebar_view',
+      view,
+    },
+    options
+  );
+}
+
+export function trackStackedViewToggle(direction: 'enter' | 'exit') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'change_sidebar_view',
-    view,
+    action: 'toggle_stacked_view',
+    direction,
   });
 }
 
-export function trackQueryOptionsToggle(open: boolean) {
+export function trackQueryOptionsToggle(open: boolean, options?: { silent?: boolean }) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    {
+      action: 'toggle_query_options',
+      open,
+    },
+    options
+  );
+}
+
+export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'toggle_query_options',
-    open,
+    action: 'toggle_multi_select',
+    direction,
   });
 }
 
@@ -140,4 +189,16 @@ export function trackRenameInitiated() {
     action: 'rename_initiated',
     item_type: QueryEditorType.Query,
   });
+}
+
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
+  }
 }

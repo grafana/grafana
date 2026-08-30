@@ -3,9 +3,11 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
-import { AdHocVariableForm, AdHocVariableFormProps } from './AdHocVariableForm';
+import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -29,6 +31,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('AdHocVariableForm', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   const onDataSourceChange = jest.fn();
   const defaultProps: AdHocVariableFormProps = {
     datasource: defaultDatasource,
@@ -145,6 +151,28 @@ describe('AdHocVariableForm', () => {
     expect(dataSourcePicker).toBeInTheDocument();
     expect(allowCustomValueCheckbox).not.toBeInTheDocument();
     expect(alertText).toBeInTheDocument();
+  });
+
+  describe('enable group by', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('should show Enable group by toggle as on when no datasource is selected', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+
+      const { renderer } = await setup({
+        ...defaultProps,
+        datasource: undefined,
+        enableGroupBy: true,
+        onEnableGroupByChange: jest.fn(),
+      });
+
+      expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      expect(
+        renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle)
+      ).toBeChecked();
+    });
   });
 });
 

@@ -47,7 +47,7 @@ func TestReceiver_EncryptDecrypt(t *testing.T) {
 			typeVersion, ok := alertingNotify.GetSchemaVersionForIntegration(integrationType, schema.V1)
 			require.True(t, ok)
 			for _, key := range typeVersion.GetSecretFieldsPaths() {
-				val, ok, err := extractField(encrypted.Settings, key)
+				val, ok, err := extractFieldCaseInsensitive(encrypted.Settings, key)
 				assert.NoError(t, err)
 				if ok {
 					encryptedVal, err := encryptFn(val)
@@ -275,7 +275,7 @@ func TestIntegration_SecureFields(t *testing.T) {
 					if validIntegration.Config.IsSecureField(path) {
 						expected[path.String()] = true
 						validIntegration.SecureSettings[path.String()] = "test"
-						_, _, err := extractField(validIntegration.Settings, path)
+						_, _, err := extractFieldCaseInsensitive(validIntegration.Settings, path)
 						require.NoError(t, err)
 						continue
 					}
@@ -411,5 +411,74 @@ func TestReceiver_Fingerprint(t *testing.T) {
 			f2 := cp.Fingerprint()
 			assert.NotEqualf(t, fingerprint, f2, "Integration field %s does not seem to be used in fingerprint", field)
 		}
+	})
+}
+
+func TestExtractFieldCaseInsensitive(t *testing.T) {
+	t.Run("exact match", func(t *testing.T) {
+		settings := map[string]any{
+			"apiKey": "test",
+		}
+
+		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "test", field)
+
+		_, ok = settings["apiKey"]
+		assert.False(t, ok)
+	})
+
+	t.Run("case-insensitive match", func(t *testing.T) {
+		settings := map[string]any{
+			"APIKEY": "test",
+		}
+
+		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "test", field)
+
+		_, ok = settings["APIKEY"]
+		assert.False(t, ok)
+	})
+
+	t.Run("no match", func(t *testing.T) {
+		settings := map[string]any{
+			"someKey": "test",
+		}
+
+		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("apiKey"))
+		require.NoError(t, err)
+		assert.False(t, ok)
+		assert.Equal(t, "", field)
+
+		_, ok = settings["someKey"]
+		assert.True(t, ok)
+	})
+
+	t.Run("nested match", func(t *testing.T) {
+		settings := map[string]any{
+			"nested": map[string]any{
+				"apiKey":   "test",
+				"auth_key": "test2",
+			},
+		}
+
+		field, ok, err := extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("nested.apiKey"))
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "test", field)
+
+		_, ok = settings["nested"].(map[string]any)["apiKey"]
+		assert.False(t, ok)
+
+		field, ok, err = extractFieldCaseInsensitive(settings, schema.ParseIntegrationPath("nested.AUTH_KEY"))
+		require.NoError(t, err)
+		assert.True(t, ok)
+		assert.Equal(t, "test2", field)
+
+		_, ok = settings["nested"].(map[string]any)["auth_key"]
+		assert.False(t, ok)
 	})
 }

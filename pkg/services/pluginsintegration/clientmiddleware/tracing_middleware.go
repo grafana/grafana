@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -49,7 +50,7 @@ func (m *TracingMiddleware) traceWrap(
 	ctx, span := m.tracer.Start(ctx, "PluginClient."+string(endpoint), trace.WithAttributes(
 		// Attach some plugin context information to span
 		attribute.String("plugin_id", pluginContext.PluginID),
-		attribute.Int64("org_id", pluginContext.OrgID),
+		attribute.Int64("org_id", pluginContext.OrgID), // nolint:staticcheck
 	))
 
 	if settings := pluginContext.DataSourceInstanceSettings; settings != nil {
@@ -85,6 +86,14 @@ func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	defer func() { end(err) }()
 	resp, err := m.BaseHandler.QueryData(ctx, req)
 	return resp, err
+}
+
+func (m *TracingMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext)
+	defer func() { end(err) }()
+	err = m.BaseHandler.QueryChunkedData(ctx, req, w)
+	return err
 }
 
 func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

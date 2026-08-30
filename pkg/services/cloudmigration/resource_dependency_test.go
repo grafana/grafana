@@ -7,31 +7,33 @@ import (
 )
 
 func TestResourceDependencyParse(t *testing.T) {
+	depMap := ResourceDependency(true)
+
 	t.Run("empty input returns an empty set", func(t *testing.T) {
-		result, err := ResourceDependency.Parse(nil)
+		result, err := depMap.Parse(nil)
 		require.NoError(t, err)
 		require.Empty(t, result)
 	})
 
 	t.Run("input with duplicates returns an error", func(t *testing.T) {
-		_, err := ResourceDependency.Parse([]MigrateDataType{FolderDataType, FolderDataType})
+		_, err := depMap.Parse([]MigrateDataType{FolderDataType, FolderDataType})
 		require.ErrorIs(t, err, ErrDuplicateResourceType)
 	})
 
 	t.Run("unknown resource type returns an error", func(t *testing.T) {
-		_, err := ResourceDependency.Parse([]MigrateDataType{"does not exist"})
+		_, err := depMap.Parse([]MigrateDataType{"does not exist"})
 		require.ErrorIs(t, err, ErrUnknownResourceType)
 	})
 
 	t.Run("PluginDataType has no dependencies", func(t *testing.T) {
-		result, err := ResourceDependency.Parse([]MigrateDataType{PluginDataType})
+		result, err := depMap.Parse([]MigrateDataType{PluginDataType})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		require.Contains(t, result, PluginDataType)
 	})
 
 	t.Run("FolderDataType has no dependencies", func(t *testing.T) {
-		result, err := ResourceDependency.Parse([]MigrateDataType{FolderDataType})
+		result, err := depMap.Parse([]MigrateDataType{FolderDataType})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		require.Contains(t, result, FolderDataType)
@@ -39,14 +41,14 @@ func TestResourceDependencyParse(t *testing.T) {
 
 	t.Run("DatasourceDataType requires PluginDataType", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
-			_, err := ResourceDependency.Parse([]MigrateDataType{DatasourceDataType})
+			_, err := depMap.Parse([]MigrateDataType{DatasourceDataType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 			require.Contains(t, err.Error(), string(PluginDataType))
 		})
 
 		t.Run("when the dependency is present returns the correct set", func(t *testing.T) {
 			input := []MigrateDataType{DatasourceDataType, PluginDataType}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, 2)
 		})
@@ -54,14 +56,14 @@ func TestResourceDependencyParse(t *testing.T) {
 
 	t.Run("LibraryElementDataType requires FolderDataType", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
-			_, err := ResourceDependency.Parse([]MigrateDataType{LibraryElementDataType})
+			_, err := depMap.Parse([]MigrateDataType{LibraryElementDataType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 			require.Contains(t, err.Error(), string(FolderDataType))
 		})
 
 		t.Run("when the dependency is present returns the correct set", func(t *testing.T) {
 			input := []MigrateDataType{LibraryElementDataType, FolderDataType}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, 2)
 		})
@@ -70,11 +72,11 @@ func TestResourceDependencyParse(t *testing.T) {
 	t.Run("DashboardDataType requires multiple dependencies", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
 			// Missing: FolderDataType, DatasourceDataType, LibraryElementDataType, PluginDataType
-			_, err := ResourceDependency.Parse([]MigrateDataType{DashboardDataType})
+			_, err := depMap.Parse([]MigrateDataType{DashboardDataType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 
 			// Missing: DatasourceDataType, PluginDataType
-			_, err = ResourceDependency.Parse([]MigrateDataType{
+			_, err = depMap.Parse([]MigrateDataType{
 				DashboardDataType,
 				LibraryElementDataType,
 				FolderDataType,
@@ -90,21 +92,21 @@ func TestResourceDependencyParse(t *testing.T) {
 				LibraryElementDataType,
 				PluginDataType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, len(input))
 		})
 	})
 
 	t.Run("MuteTimingType has no dependencies", func(t *testing.T) {
-		result, err := ResourceDependency.Parse([]MigrateDataType{MuteTimingType})
+		result, err := depMap.Parse([]MigrateDataType{MuteTimingType})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		require.Contains(t, result, MuteTimingType)
 	})
 
 	t.Run("NotificationTemplateType has no dependencies", func(t *testing.T) {
-		result, err := ResourceDependency.Parse([]MigrateDataType{NotificationTemplateType})
+		result, err := depMap.Parse([]MigrateDataType{NotificationTemplateType})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
 		require.Contains(t, result, NotificationTemplateType)
@@ -112,14 +114,14 @@ func TestResourceDependencyParse(t *testing.T) {
 
 	t.Run("ContactPointType requires NotificationTemplateType", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
-			_, err := ResourceDependency.Parse([]MigrateDataType{ContactPointType})
+			_, err := depMap.Parse([]MigrateDataType{ContactPointType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 			require.Contains(t, err.Error(), string(NotificationTemplateType))
 		})
 
 		t.Run("when the dependency is present returns the correct set", func(t *testing.T) {
 			input := []MigrateDataType{ContactPointType, NotificationTemplateType}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, 2)
 		})
@@ -128,11 +130,11 @@ func TestResourceDependencyParse(t *testing.T) {
 	t.Run("NotificationPolicyType requires multiple dependencies", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
 			// Missing: ContactPointType, NotificationTemplateType
-			_, err := ResourceDependency.Parse([]MigrateDataType{NotificationPolicyType})
+			_, err := depMap.Parse([]MigrateDataType{NotificationPolicyType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 
 			// Missing: NotificationTemplateType
-			_, err = ResourceDependency.Parse([]MigrateDataType{
+			_, err = depMap.Parse([]MigrateDataType{
 				NotificationPolicyType,
 				ContactPointType,
 			})
@@ -146,7 +148,7 @@ func TestResourceDependencyParse(t *testing.T) {
 				NotificationTemplateType,
 				MuteTimingType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, len(input))
 		})
@@ -155,11 +157,11 @@ func TestResourceDependencyParse(t *testing.T) {
 	t.Run("AlertRuleType requires multiple dependencies", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
 			// Missing all dependencies
-			_, err := ResourceDependency.Parse([]MigrateDataType{AlertRuleType})
+			_, err := depMap.Parse([]MigrateDataType{AlertRuleType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 
 			// Missing some dependencies
-			_, err = ResourceDependency.Parse([]MigrateDataType{
+			_, err = depMap.Parse([]MigrateDataType{
 				AlertRuleType,
 				DatasourceDataType,
 				FolderDataType,
@@ -180,7 +182,7 @@ func TestResourceDependencyParse(t *testing.T) {
 				LibraryElementDataType,
 				NotificationTemplateType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, len(input))
 		})
@@ -189,11 +191,11 @@ func TestResourceDependencyParse(t *testing.T) {
 	t.Run("AlertRuleGroupType requires AlertRuleType and all its dependencies", func(t *testing.T) {
 		t.Run("when the dependency is missing returns an error", func(t *testing.T) {
 			// Missing all dependencies
-			_, err := ResourceDependency.Parse([]MigrateDataType{AlertRuleGroupType})
+			_, err := depMap.Parse([]MigrateDataType{AlertRuleGroupType})
 			require.ErrorIs(t, err, ErrMissingDependency)
 
 			// With partial dependencies
-			_, err = ResourceDependency.Parse([]MigrateDataType{
+			_, err = depMap.Parse([]MigrateDataType{
 				AlertRuleGroupType,
 				AlertRuleType,
 				FolderDataType,
@@ -217,7 +219,7 @@ func TestResourceDependencyParse(t *testing.T) {
 				LibraryElementDataType,
 				NotificationTemplateType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, len(input))
 		})
@@ -231,7 +233,7 @@ func TestResourceDependencyParse(t *testing.T) {
 				MuteTimingType,
 				NotificationTemplateType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, 4)
 		})
@@ -249,7 +251,7 @@ func TestResourceDependencyParse(t *testing.T) {
 				ContactPointType,
 				NotificationTemplateType,
 			}
-			result, err := ResourceDependency.Parse(input)
+			result, err := depMap.Parse(input)
 			require.NoError(t, err)
 			require.Len(t, result, 7)
 		})
@@ -261,8 +263,41 @@ func TestResourceDependencyParse(t *testing.T) {
 				ContactPointType,
 				DatasourceDataType,
 			}
-			_, err := ResourceDependency.Parse(input)
+			_, err := depMap.Parse(input)
 			require.ErrorIs(t, err, ErrMissingDependency)
 		})
+	})
+}
+
+func TestResourceDependency(t *testing.T) {
+	alertingTypes := []MigrateDataType{
+		MuteTimingType,
+		NotificationTemplateType,
+		ContactPointType,
+		NotificationPolicyType,
+		AlertRuleType,
+		AlertRuleGroupType,
+	}
+
+	t.Run("when alerting is enabled the alerting resources are included", func(t *testing.T) {
+		depMap := ResourceDependency(true)
+		for _, resourceType := range alertingTypes {
+			require.Contains(t, depMap, resourceType)
+		}
+	})
+
+	t.Run("when alerting is disabled the alerting resources are excluded", func(t *testing.T) {
+		depMap := ResourceDependency(false)
+		for _, resourceType := range alertingTypes {
+			require.NotContains(t, depMap, resourceType)
+		}
+		// Base resources are still present.
+		require.Contains(t, depMap, DashboardDataType)
+	})
+
+	t.Run("when alerting is disabled selecting an alerting resource is rejected", func(t *testing.T) {
+		depMap := ResourceDependency(false)
+		_, err := depMap.Parse([]MigrateDataType{ContactPointType, NotificationTemplateType})
+		require.ErrorIs(t, err, ErrUnknownResourceType)
 	})
 }

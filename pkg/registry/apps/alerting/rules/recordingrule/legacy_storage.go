@@ -4,22 +4,55 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
+	"strconv"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"k8s.io/apimachinery/pkg/types"
 )
+
+// onlyRecordingVersions filters versions to those representing recording rules. Versions of
+// alerting rules share storage but should not surface through the RecordingRule resource.
+func onlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
+	out := versions[:0]
+	for _, v := range versions {
+		if v == nil {
+			continue
+		}
+		if v.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// onlyRecordingRules filters deleted rules to those representing recording rules.
+func onlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
+	out := rules[:0]
+	for _, r := range rules {
+		if r == nil {
+			continue
+		}
+		if r.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
 
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
@@ -64,18 +97,95 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
-		RuleType:      ngmodels.RuleTypeFilterRecording,
-		Limit:         opts.Limit,
-		ContinueToken: opts.Continue,
-		// TODO: add field selectors for filtering
-		// TODO: add label selectors for filtering on group and folders
+	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
+	if err != nil {
+		return nil, k8serrors.NewBadRequest(err.Error())
+	}
+	switch mode {
+	case common.ListModeHistory:
+		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		if err != nil {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
+			}
+			return nil, err
+		}
+		return convertVersionsToK8sResources(info.OrgID, onlyRecordingVersions(versions), s.namespacer)
+	case common.ListModeTrash:
+		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+		return convertDeletedToK8sResources(info.OrgID, onlyRecordingRules(deleted), s.namespacer)
+	case common.ListModeNormal:
+		// fall through to the normal list pipeline below.
+	}
+
+	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
+	if err != nil {
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.GroupLabelKey, err))
+	}
+	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.FolderLabelKey)
+	if err != nil {
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.FolderLabelKey, err))
+	}
+
+	var (
+		titleFilter               provisioning.ListRuleStringFilter
+		pausedFilter              provisioning.ListRuleBoolFilter
+		metricFilter              provisioning.ListRuleStringFilter
+		targetDatasourceUIDFilter provisioning.ListRuleStringFilter
+	)
+	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
+		for _, r := range opts.FieldSelector.Requirements() {
+			switch r.Field {
+			case "spec.title":
+				if err := common.ApplyFieldSelectorRequirement(&titleFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			case "spec.paused":
+				v, err := strconv.ParseBool(r.Value)
+				if err != nil {
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.paused: %s", r.Value))
+				}
+				switch r.Operator {
+				case selection.Equals, selection.DoubleEquals:
+					pausedFilter.Value = &v
+				case selection.NotEquals:
+					negated := !v
+					pausedFilter.Value = &negated
+				default:
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("unsupported operator %q for spec.paused (only =, ==, != are supported)", r.Operator))
+				}
+			case "spec.metric":
+				if err := common.ApplyFieldSelectorRequirement(&metricFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			case "spec.targetDatasourceUID":
+				if err := common.ApplyFieldSelectorRequirement(&targetDatasourceUIDFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			default:
+				return nil, k8serrors.NewBadRequest(fmt.Sprintf("unknown field selector: %s", r.Field))
+			}
+		}
+	}
+
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+		RuleType:                  ngmodels.RuleTypeFilterRecording,
+		Limit:                     opts.Limit,
+		ContinueToken:             opts.Continue,
+		GroupFilter:               groupFilter,
+		FolderFilter:              folderFilter,
+		TitleFilter:               titleFilter,
+		PausedFilter:              pausedFilter,
+		MetricFilter:              metricFilter,
+		TargetDatasourceUIDFilter: targetDatasourceUIDFilter,
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	return convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -89,7 +199,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	rule, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
@@ -97,7 +207,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	obj, err := convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 	if err != nil && errors.Is(err, errInvalidRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
@@ -133,17 +243,17 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("cannot set group label when creating recording rule")
 	}
 
-	model, provenance, err := convertToDomainModel(info.OrgID, p)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
 	if err != nil {
 		return nil, err
 	}
 
-	rule, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	rule, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	return convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -181,23 +291,22 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		new.UID = types.UID(new.Name)
 	}
 
-	model, provenance, err := convertToDomainModel(info.OrgID, new)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// ignore returned rule as it doesn't contain the updated version
-	_, err = s.service.UpdateAlertRule(ctx, user, *model, provenance)
+	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, false, err
 	}
 
-	updated, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		return nil, false, err
 	}
 
-	rule, err := convertToK8sResource(info.OrgID, &updated, provenance, s.namespacer)
+	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
 	if err != nil {
 		return nil, false, err
 	}
@@ -206,6 +315,11 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
@@ -225,13 +339,15 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
 	}
 
-	sourceProv := p.GetProvenanceStatus()
-	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
-		return nil, false, fmt.Errorf("invalid provenance status: %s", sourceProv)
+	// Derive manager properties the same way create/update do, so a resource managed
+	// by a specific manager (e.g. Terraform) is deleted with the matching manager and
+	// not the coarser provenance-derived equivalent.
+	_, managerProps, err := convertToDomainModel(info.OrgID, p)
+	if err != nil {
+		return nil, false, err
 	}
-	provenance := ngmodels.Provenance(sourceProv)
 
-	err = s.service.DeleteAlertRule(ctx, user, name, provenance)
+	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
 	if err != nil {
 		return old, false, err
 	}

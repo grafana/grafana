@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginMeta, type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
@@ -23,7 +23,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       {/* Name */}
       <Card.Heading
         className={styles.heading}
-        aria-label={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
+        data-testid={e2eSelectors.pages.AddDataSource.dataSourcePluginsV2(dataSourcePlugin.name)}
       >
         {dataSourcePlugin.name}
       </Card.Heading>

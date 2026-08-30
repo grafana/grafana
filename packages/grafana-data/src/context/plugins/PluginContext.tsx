@@ -1,8 +1,8 @@
 import { createContext } from 'react';
 
-import { KeyValue } from '../../types/data';
-import { DataSourceInstanceSettings } from '../../types/datasource';
-import { PluginMeta } from '../../types/plugin';
+import { type KeyValue } from '../../types/data';
+import { type DataSourceInstanceSettings } from '../../types/datasource';
+import { type PluginMeta } from '../../types/plugin';
 
 export interface PluginContextType<T extends KeyValue = KeyValue> {
   meta: PluginMeta<T>;

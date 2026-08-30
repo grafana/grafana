@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { News } from 'app/plugins/panel/news/component/News';
@@ -15,7 +14,6 @@ interface NewsWrapperProps {
 export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
   const styles = useStyles2(getStyles);
   const { state, getNews } = useNewsFeed(feedUrl);
-  const [widthRef, widthMeasure] = useMeasure<HTMLDivElement>();
 
   useEffect(() => {
     getNews();
@@ -26,21 +24,20 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
   }
 
   return (
-    <div ref={widthRef}>
+    <div>
       {state.loading ? (
         <>
-          <News.Skeleton showImage width={widthMeasure.width} />
-          <News.Skeleton showImage width={widthMeasure.width} />
-          <News.Skeleton showImage width={widthMeasure.width} />
-          <News.Skeleton showImage width={widthMeasure.width} />
-          <News.Skeleton showImage width={widthMeasure.width} />
+          <News.Skeleton showImage />
+          <News.Skeleton showImage />
+          <News.Skeleton showImage />
+          <News.Skeleton showImage />
+          <News.Skeleton showImage />
         </>
       ) : (
         <>
-          {widthMeasure.width > 0 &&
-            state.value?.map((_, index) => (
-              <News key={index} index={index} showImage width={widthMeasure.width} data={state.value} />
-            ))}
+          {state.value?.map((_, index) => (
+            <News key={index} index={index} showImage data={state.value} />
+          ))}
         </>
       )}
       <div className={styles.grot}>

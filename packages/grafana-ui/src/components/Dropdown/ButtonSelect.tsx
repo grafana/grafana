@@ -1,12 +1,13 @@
-import { memo, HTMLAttributes, useState } from 'react';
+import { memo, type HTMLAttributes, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
-import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
-import { PopoverContent } from '../Tooltip/types';
+import { ToolbarButton, type ToolbarButtonVariant } from '../ToolbarButton/ToolbarButton';
+import { type PopoverContent } from '../Tooltip/types';
 
 import { Dropdown } from './Dropdown';
 
@@ -35,19 +36,30 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
   const renderMenu = () => (
     <Menu tabIndex={-1} onClose={() => setIsOpen(false)}>
       <ScrollContainer maxHeight="100vh">
-        {options.map((item) => (
-          <MenuItem
-            key={`${item.value}`}
-            label={item.label ?? String(item.value)}
-            onClick={() => onChange(item)}
-            active={item.value === value?.value}
-            ariaChecked={item.value === value?.value}
-            ariaLabel={item.ariaLabel || item.label}
-            disabled={item.isDisabled}
-            component={item.component}
-            role="menuitemradio"
-          />
-        ))}
+        {options.map((item) => {
+          // Keyed on the option's value, not its label, so the selector survives translation.
+          // Objects and undefined have no meaningful string form, so those options get the
+          // bare selector without a disambiguator.
+          const testIdValue =
+            typeof item.value === 'string' || typeof item.value === 'number' || typeof item.value === 'boolean'
+              ? String(item.value)
+              : undefined;
+
+          return (
+            <MenuItem
+              key={`${item.value}`}
+              testId={selectors.components.ButtonSelect.option(testIdValue ?? '')}
+              label={item.label ?? String(item.value)}
+              onClick={() => onChange(item)}
+              active={item.value === value?.value}
+              ariaChecked={item.value === value?.value}
+              ariaLabel={item.ariaLabel || item.label}
+              disabled={item.isDisabled}
+              component={item.component}
+              role="menuitemradio"
+            />
+          );
+        })}
       </ScrollContainer>
     </Menu>
   );

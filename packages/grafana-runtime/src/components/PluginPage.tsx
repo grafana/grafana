@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { NavModelItem, PageLayoutType } from '@grafana/data';
+import { type NavModelItem, type PageLayoutType } from '@grafana/data';
 
 export interface PageInfoItem {
   label: string;
@@ -23,7 +23,7 @@ export interface PluginPageProps {
   background?: PluginPageBackground;
 }
 
-export type PluginPageBackground = 'primary' | 'canvas';
+export type PluginPageBackground = 'primary' | 'gradient' | 'canvas';
 export type PluginPageType = React.ComponentType<PluginPageProps>;
 
 export let PluginPage: PluginPageType = ({ children }) => {

@@ -1,11 +1,11 @@
 package migrations
 
 import (
-	dashboardFolderMigrations "github.com/grafana/grafana/pkg/services/dashboards/database/migrations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/externalsession"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/obsolete"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ssosettings"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
@@ -19,6 +19,11 @@ import (
 // 4. Putting migrations behind feature flags is no longer recommended as broken
 //    migrations may not be caught by integration tests unless feature flags are
 //    specifically added
+// 5. Adding a migration is a last resort. Resources are moving to the app
+//    platform, so schema added here is a dead end. Every migration also runs on
+//    every instance that upgrades and can never be rolled back or changed
+//    afterwards. New migrations require regenerating testdata/migration_ids.txt,
+//    which a human has to do deliberately; see migration_ids_golden_test.go
 
 type OSSMigrations struct {
 	features featuremgmt.FeatureToggles
@@ -75,8 +80,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	addCorrelationsMigrations(mg)
 
-	addEntityEventsTableMigration(mg)
-
 	addPublicDashboardMigration(mg)
 	addDbFileStorageMigration(mg)
 
@@ -90,6 +93,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddSeedAssignmentMigrations(mg)
 	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
 	accesscontrol.AddManagedFolderLibraryPanelActionsMigration(mg)
+	accesscontrol.AddManagedFolderVariableActionsMigration(mg)
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
@@ -101,7 +105,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.MigrationServiceMigration(mg)
 	ualert.CreatedFoldersMigration(mg)
 
-	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+	AddDashboardFolderMigrations(mg)
 
 	ssosettings.AddMigration(mg)
 
@@ -116,6 +120,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddRuleNotificationSettingsColumns(mg)
 
 	accesscontrol.AddAlertingScopeRemovalMigration(mg)
+	accesscontrol.AddAnnotationsAllScopeReplacementMigration(mg)
 
 	accesscontrol.AddManagedFolderAlertingSilencesActionsMigrator(mg)
 
@@ -130,6 +135,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddOrphanedMigrations(mg)
 
 	accesscontrol.AddActionSetPermissionsMigrator(mg)
+
+	accesscontrol.AddSAActionSetPermissionsMigrator(mg)
 
 	externalsession.AddMigration(mg)
 
@@ -174,4 +181,14 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddAlertRuleFolderFullpath(mg)
 
 	ualert.AddRuleAlertRoutingColumns(mg)
+
+	accesscontrol.AddManagedRoutesPermissions(mg)
+
+	addNatsDiscoveryMigrations(mg)
+
+	ualert.AddAlertRuleStateBigIntMigration(mg)
+
+	mg.AddObsoleteMigration(obsolete.PlaylistMigrations())
+
+	ualert.CollateBinAlertRuleFolderFullpath(mg)
 }

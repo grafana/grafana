@@ -1,7 +1,7 @@
-import { FC, type JSX } from 'react';
-import { useFieldArray, UseFieldArrayProps } from 'react-hook-form';
+import { type FC, type JSX } from 'react';
+import { useFieldArray, type UseFieldArrayProps } from 'react-hook-form';
 
-import { FieldArrayApi } from '../../types/forms';
+import { type FieldArrayApi } from '../../types/forms';
 
 export interface FieldArrayProps extends UseFieldArrayProps {
   children: (api: FieldArrayApi) => JSX.Element;

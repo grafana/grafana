@@ -47,6 +47,12 @@ func TestStarsQueries(t *testing.T) {
 					Data: getStarQuery(0, ""),
 				},
 			},
+			sqlListUsersWithStars: {
+				{
+					Name: "list distinct users in org 3",
+					Data: getStarQuery(3, ""),
+				},
+			},
 		},
 	})
 }

@@ -1,16 +1,16 @@
 import { of } from 'rxjs';
 
 import {
-  DataQueryRequest,
-  DataSourceApi,
+  type DataQueryRequest,
+  type DataSourceApi,
   getDefaultTimeRange,
-  QueryVariableModel,
-  StandardVariableQuery,
+  type QueryVariableModel,
+  type StandardVariableQuery,
   VariableRefresh,
   VariableSupportType,
 } from '@grafana/data';
 
-import { QueryRunners, RunnerArgs, variableDummyRefId } from './queryRunners';
+import { QueryRunners, type RunnerArgs, variableDummyRefId } from './queryRunners';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {

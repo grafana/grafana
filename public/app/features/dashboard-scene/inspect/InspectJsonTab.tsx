@@ -1,23 +1,23 @@
 import { isEqual } from 'lodash';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
+  type SceneComponentProps,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridItemStateLike,
+  type SceneGridItemStateLike,
   SceneGridLayout,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneQueryRunner,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type SceneQueryRunner,
   sceneUtils,
-  VizPanel,
+  type VizPanel,
 } from '@grafana/scenes';
-import { LibraryPanel } from '@grafana/schema';
+import { type LibraryPanel } from '@grafana/schema';
 import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -27,7 +27,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { buildVizPanel } from '../serialization/layoutSerializers/utils';
@@ -35,13 +35,8 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames' | 'panel-layout';

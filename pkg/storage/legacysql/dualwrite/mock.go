@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func ProvideTestService(status ...StorageStatus) Service {
@@ -30,19 +29,14 @@ func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.Storage, s
 	return nil, fmt.Errorf("not implemented")
 }
 
+// ValidateServedVersions implements Service.
+func (m *mockService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	return nil
+}
+
 // ReadFromUnified implements Service.
 func (m *mockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	return m.status.ReadUnified, nil
-}
-
-// ShouldManage implements Service.
-func (m *mockService) ShouldManage(gr schema.GroupResource) bool {
-	return true
-}
-
-// StartMigration implements Service.
-func (m *mockService) StartMigration(ctx context.Context, gr schema.GroupResource, key int64) (StorageStatus, error) {
-	return StorageStatus{}, fmt.Errorf("not implemented")
 }
 
 // Status implements Service.

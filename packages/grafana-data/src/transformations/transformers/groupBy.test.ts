@@ -1,6 +1,6 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerConfig } from '../../types/transformations';
+import { FieldType, type Field } from '../../types/dataFrame';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
@@ -8,7 +8,7 @@ import { transformDataFrame } from '../transformDataFrame';
 import {
   GroupByOperationID,
   groupByTransformer,
-  GroupByTransformerOptions,
+  type GroupByTransformerOptions,
   groupValuesByKey,
   shouldCalculateField,
 } from './groupBy';
@@ -427,7 +427,7 @@ describe('GroupBy transformer', () => {
     });
   });
 
-  it('should match on base name if did not match on displayName', async () => {
+  it('should match on base name for group if did not match on displayName', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -451,6 +451,57 @@ describe('GroupBy transformer', () => {
           name: 'values (sum)',
           type: FieldType.number,
           values: [3],
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
+
+  it('should match on base name for aggregate if did not match on displayName', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'raw-group',
+          type: FieldType.string,
+          values: ['GroupA', 'GroupA', 'GroupB'],
+          config: { displayName: 'display-group' },
+        },
+        { name: 'raw-agg', type: FieldType.string, values: ['a', 'b', 'c'], config: { displayName: 'display-agg' } },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          'raw-agg': {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.count],
+          },
+          'raw-group': {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'raw-group',
+          type: FieldType.string,
+          values: ['GroupA', 'GroupB'],
+          config: { displayName: 'display-group' },
+        },
+        {
+          name: 'display-agg (count)',
+          type: FieldType.number,
+          values: [2, 1],
           config: {},
         },
       ];

@@ -1,6 +1,6 @@
 import { fuzzySearch } from '@grafana/data';
 
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 
 export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
   if (item == null) {

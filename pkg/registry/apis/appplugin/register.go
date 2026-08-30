@@ -3,20 +3,28 @@ package appplugin
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apppluginv0alpha1 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -24,141 +32,275 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
-	_ builder.APIGroupBuilder         = (*AppPluginAPIBuilder)(nil)
-	_ builder.APIGroupVersionProvider = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupBuilder          = (*AppPluginAPIBuilder)(nil)
+	_ builder.APIGroupVersionsProvider = (*AppPluginAPIBuilder)(nil)
 )
+
+// Direct access to read objects directly from storage.
+type getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error)
+
+// PluginClient is a subset of the plugins.Client interface with only the
+// functions supported by the app plugins
+type PluginClient interface {
+	backend.CheckHealthHandler
+	backend.CallResourceHandler
+}
+
+// PluginContext requires adding system settings (feature flags, etc) to the datasource config
+type PluginContextWrapper interface {
+	// Get the plugin context for an app plugin request
+	PluginContextForApp(ctx context.Context, pluginID string, appSettings *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error)
+}
+
+type AppPluginRunnerOptions struct {
+	RegisterProxy bool
+
+	DataProxyLogging         bool // from cfg
+	SendUserHeader           bool // from cfg
+	PluginsAppsSkipVerifyTLS bool // from cfg
+
+	// When this exists, dual write settings will be used
+	LegacyStore grafanarest.Storage
+
+	// Direct access to legacy access control (required for proxy)
+	AccessControl ac.AccessControl
+}
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
 type AppPluginAPIBuilder struct {
-	pluginID       string
-	groupVersion   schema.GroupVersion
-	pluginSettings pluginsettings.Service
-	accessControl  ac.AccessControl
+	// the API group -- the group defined in manifest data or the pluginID
+	group           string
+	manifest        *app.ManifestData
+	pluginJSON      plugins.JSONData
+	client          PluginClient // will only ever be called with the same plugin id!
+	clientV3        v3.ClientV3
+	contextProvider PluginContextWrapper
+	schemas         map[string]*pluginschema.PluginSchema
+	decrypter       decrypt.DecryptService // Used with unified storage
+	accessChecker   PluginAccessChecker
+	features        featuremgmt.FeatureToggles
+	search          resourcepb.ResourceIndexClient
+	tracer          tracing.Tracer
+
+	// optional configuration
+	opts AppPluginRunnerOptions
+
+	// Get values from storage
+	getter getter
 }
 
+func NewAppPluginAPIBuilder(
+	plugin definition.PluginDefinition,
+	client PluginClient, // will only ever be called with the same plugin id!
+	clientV3 v3.ClientV3,
+	contextProvider PluginContextWrapper,
+	decrypter decrypt.DecryptService, // when not reading legacy
+	accessChecker PluginAccessChecker,
+	search resourcepb.ResourceIndexClient,
+	opts AppPluginRunnerOptions, // can change without updating wire :)
+	tracer tracing.Tracer, // needed for proxy
+	features featuremgmt.FeatureToggles, // needed for proxy
+) (*AppPluginAPIBuilder, error) {
+	return &AppPluginAPIBuilder{
+		group:           apiGroupForPlugin(plugin),
+		manifest:        plugin.Manifest,
+		pluginJSON:      plugin.JSONData,
+		client:          client,
+		clientV3:        clientV3,
+		contextProvider: contextProvider,
+		schemas:         plugin.Schemas,
+		decrypter:       decrypter,
+		accessChecker:   accessChecker,
+		search:          search,
+		opts:            opts,
+		features:        features,
+		tracer:          tracer,
+	}, nil
+}
+
+// Called in ST Grafana to register
 func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
+	pluginClient plugins.Client, // access to everything
+	contextProvider PluginContextWrapper,
+	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
+	acService ac.Service, // Required to declare roles from a manifest
 	accessControl ac.AccessControl,
+	unified resource.ResourceClient,
+	decrypter decrypt.DecryptService,
+	tracer tracing.Tracer, // needed for proxy
+	features featuremgmt.FeatureToggles, // needed for proxy
+	cfg *setting.Cfg,
 ) (*AppPluginAPIBuilder, error) {
 	ctx := context.Background()
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAppPluginAPIServer, false, openfeature.TransactionContext(ctx)) {
+	getflag := func(f string) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
+	}
+	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
 
-	pluginJSONs, err := getAppPlugins(ctx, pluginSources)
+	// Find all local plugins
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
+		Filter: func(jsonData plugins.JSONData) bool {
+			if jsonData.Type == plugins.TypeApp {
+				// TODO? should we fail more loudly
+				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
+					logging.FromContext(ctx).Warn("invalid app plugin id: %s", jsonData.ID)
+					return false
+				}
+				return true
+			}
+			return false
+		},
+		Schemas:     true,
+		AppManifest: getflag(featuremgmt.FlagApppluginsLoadAppManifest),
+	})
+
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
 	var last *AppPluginAPIBuilder
-	for _, pluginJSON := range pluginJSONs {
-		groupName := pluginJSON.ID + ".grafana.app"
-		b := &AppPluginAPIBuilder{
-			pluginID: pluginJSON.ID,
-			groupVersion: schema.GroupVersion{
-				Group:   groupName,
-				Version: apppluginv0alpha1.VERSION,
+	for _, plugin := range pluginDefs {
+		b, err := NewAppPluginAPIBuilder(plugin,
+			pluginClient, // scoped to a single plugin!
+			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),
+			contextProvider,
+			decrypter,
+			NewPluginAccessChecker(accessControl),
+			unified, // search support
+			AppPluginRunnerOptions{
+				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
+				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
+				AccessControl: accessControl,
+
+				DataProxyLogging:         cfg.DataProxyLogging,
+				SendUserHeader:           cfg.SendUserHeader,
+				PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			},
-			pluginSettings: pluginSettings,
-			accessControl:  accessControl,
+			tracer,
+			features,
+		)
+		if err != nil {
+			return nil, err
 		}
+
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
 	return last, nil
 }
 
-// getAppPlugins discovers all installed app plugins.
-func getAppPlugins(ctx context.Context, pluginSources sources.Registry) ([]plugins.JSONData, error) {
-	var pluginJSONs []plugins.JSONData
-	uniquePlugins := map[string]bool{}
-
-	for _, pluginSource := range pluginSources.List(ctx) {
-		res, err := pluginSource.Discover(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range res {
-			if p.Primary.JSONData.Type != plugins.TypeApp {
-				continue
-			}
-
-			if _, found := uniquePlugins[p.Primary.JSONData.ID]; found {
-				backend.Logger.Debug("Found duplicate app plugin %s when registering API groups.", p.Primary.JSONData.ID)
-				continue
-			}
-
-			uniquePlugins[p.Primary.JSONData.ID] = true
-			pluginJSONs = append(pluginJSONs, p.Primary.JSONData)
-		}
+// apiGroupForPlugin returns the API group the plugin is served under: the group
+// declared in the manifest when it has one, otherwise the plugin id.
+func apiGroupForPlugin(plugin definition.PluginDefinition) string {
+	if plugin.Manifest != nil && plugin.Manifest.Group != "" {
+		return plugin.Manifest.Group
 	}
-	return pluginJSONs, nil
+	return plugin.JSONData.ID
 }
 
-func (b *AppPluginAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.groupVersion
+// GetGroupVersions returns the served versions, preferred version first.
+// The settings kind is registered in every version so it is always reachable.
+func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	return []schema.GroupVersion{{
+		Group:   b.group,
+		Version: apppluginV0.VERSION,
+	}}
 }
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	if err := apppluginv0alpha1.AddKnownTypes(scheme, b.groupVersion); err != nil {
-		return err
+	gvs := b.GetGroupVersions()
+	for _, gv := range gvs {
+		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
+			return err
+		}
 	}
-	return scheme.SetVersionPriority(b.groupVersion)
+
+	return scheme.SetVersionPriority(gvs...)
 }
 
 func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	settingsRI := apppluginv0alpha1.SettingsResourceInfo.WithGroupAndShortName(
-		b.groupVersion.Group, b.pluginID,
+	registerSubresourceMetrics(opts.MetricsRegister)
+
+	settingsRI := apppluginV0.SettingsResourceInfo.WithGroupAndShortName(
+		b.group, b.pluginJSON.ID,
 	)
 
-	if opts.StorageOptsRegister != nil {
-		opts.StorageOptsRegister(settingsRI.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: false,
-			Scheme:              opts.Scheme,
-		})
+	if opts.StorageOptsRegister == nil {
+		return fmt.Errorf("apps require storage opts")
 	}
+	opts.StorageOptsRegister(settingsRI.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: false,
+		Scheme:              opts.Scheme,
+	})
 
 	b.applyDefaultStorageConfig(opts, settingsRI)
 
-	storage := map[string]rest.Storage{}
-
-	if opts.DualWriteBuilder != nil {
-		legacyStore := &settingsStorage{
-			pluginID:       b.pluginID,
-			pluginSettings: b.pluginSettings,
-			resourceInfo:   &settingsRI,
-		}
-		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
+	// The settings store is version-independent
+	var settingsStorage rest.Storage
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	settingsStorage = unified
+	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
+		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
-		}
-		storage[settingsRI.StoragePath()], err = opts.DualWriteBuilder(settingsRI.GroupResource(), legacyStore, unified)
-		if err != nil {
-			return err
-		}
-	} else {
-		storage[settingsRI.StoragePath()] = &settingsStorage{
-			pluginID:       b.pluginID,
-			pluginSettings: b.pluginSettings,
-			resourceInfo:   &settingsRI,
 		}
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[b.groupVersion.Version] = storage
+	for _, gv := range b.GetGroupVersions() {
+		storage := map[string]rest.Storage{}
+		storage[settingsRI.StoragePath()] = settingsStorage
+
+		provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
+			return b.getPluginContext(ctx, gv.Version)
+		}
+
+		storage[settingsRI.StoragePath("health")] = &subHealthREST{
+			client:          b.client,
+			contextProvider: provider,
+		}
+		storage[settingsRI.StoragePath("resources")] = &subResourceREST{
+			pluginID:        b.pluginJSON.ID,
+			client:          b.client,
+			contextProvider: provider,
+		}
+		if len(b.pluginJSON.Routes) > 0 && b.opts.RegisterProxy {
+			storage[settingsRI.StoragePath("proxy")] = newProxy(b)
+		}
+
+		apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+	}
+
+	// Direct reads of this plugin's own storage, by group version resource.
+	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
+		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
+			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
+		}
+
+		return nil, fmt.Errorf("unknown grv")
+	}
+
 	return nil
 }
 
 // appPluginSettingsWildcard is a config key that applies to all app plugin settings
 // resources when no plugin-specific override exists. Configure it as:
 //
-//	[unified_storage.settings.*.grafana.app]
-//	dualWriterMode = 2
-const appPluginSettingsWildcard = "settings.*.grafana.app"
+//	[unified_storage.app.*-app]
+//	dualWriterMode = 1 // or 5
+const appPluginSettingsWildcard = "app.*-app"
 
 // applyDefaultStorageConfig injects a wildcard unified storage config entry for this
 // plugin's settings resource if no plugin-specific config exists. This allows operators
@@ -178,10 +320,6 @@ func (b *AppPluginAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOpt
 	opts.StorageOpts.UnifiedStorageConfig[key] = setting.UnifiedStorageConfig{
 		DualWriterMode: fallback.DualWriterMode,
 	}
-}
-
-func (b *AppPluginAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return apppluginv0alpha1.GetOpenAPIDefinitions
 }
 
 func (b *AppPluginAPIBuilder) AllowedV0Alpha1Resources() []string {

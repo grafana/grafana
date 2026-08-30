@@ -18,10 +18,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -193,14 +193,20 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 	return false
 }
 
-// IsNonRetryableError indicates whether an error is considered persistent and not worth performing evaluation retries.
-// Currently it is true if err is `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
+// IsNonRetryableError reports whether an error is persistent and not worth retrying within an
+// evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
 func IsNonRetryableError(err error) bool {
 	var nonRetryableError *invalidEvalResultFormatError
 	if errors.As(err, &nonRetryableError) {
 		return true
 	}
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {
+		return true
+	}
+	if errors.Is(err, expr.ErrQueryLimit) {
+		return true
+	}
+	if errors.Is(err, writer.ErrNonRetryableWrite) {
 		return true
 	}
 	return false
@@ -331,12 +337,28 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
+// sanitizeHeaderValue strips ASCII control characters (including CRLF) and
+// truncates to 128 bytes to prevent header injection and oversized headers.
+func sanitizeHeaderValue(v string) string {
+	s := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, v)
+	const maxLen = 128
+	if len(s) > maxLen {
+		s = s[:maxLen]
+	}
+	return s
+}
+
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
 	headers := make(map[string]string, len(metadata)+3)
 
 	if len(metadata) > 0 {
 		for key, value := range metadata {
-			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
+			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(sanitizeHeaderValue(value))
 		}
 	}
 
@@ -545,43 +567,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	}
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
-	for _, frame := range result.Condition {
-		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
-		if frame.Meta != nil && frame.Meta.Custom != nil {
-			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
-				continue // do not overwrite EvalMatch from classic condition.
-			}
-		}
-
-		frame.SetMeta(&data.FrameMeta{}) // overwrite metadata
-
-		if len(frame.Fields) == 1 {
-			theseLabels := frame.Fields[0].Labels
-			fp := theseLabels.Fingerprint()
-
-			for _, fps := range captures {
-				// First look for a capture whose labels are an exact match
-				if v, ok := fps[fp]; ok {
-					if frame.Meta.Custom == nil {
-						frame.Meta.Custom = []NumberValueCapture{}
-					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-				} else {
-					// If no exact match was found, look for captures whose labels are either subsets
-					// or supersets
-					for _, v := range fps {
-						// matching labels are equal labels, or when one set of labels includes the labels of the other.
-						if theseLabels.Equals(v.Labels) || theseLabels.Contains(v.Labels) || v.Labels.Contains(theseLabels) {
-							if frame.Meta.Custom == nil {
-								frame.Meta.Custom = []NumberValueCapture{}
-							}
-							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
-						}
-					}
-				}
-			}
-		}
-	}
+	attachCaptureValues(result.Condition, captures)
 
 	return result
 }

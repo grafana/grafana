@@ -31,7 +31,6 @@ func (in *AnnotationActions) DeepCopy() *AnnotationActions {
 func (in *AnnotationPermission) DeepCopyInto(out *AnnotationPermission) {
 	*out = *in
 	out.Dashboard = in.Dashboard
-	out.Organization = in.Organization
 	return
 }
 

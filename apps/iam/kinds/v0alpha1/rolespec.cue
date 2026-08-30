@@ -16,9 +16,9 @@ RoleSpec: {
 	}
 
 	// Display name of the role
-	title: string
+	title:       string
 	description: string
-	group: string
+	group:       string
 
 	// Added permissions (permissions in actual role but NOT in seed) - for basic roles only. For custom roles, this contains all permissions.
 	permissions?: [...#Permission]

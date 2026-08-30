@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -63,6 +65,17 @@ func matchesQueryKey(query *resourcepb.ResourceKey, key *resourcepb.ResourceKey)
 		return false
 	}
 	return true
+}
+
+// LowerGroupResource is a schema.GroupResource with lower-cased Group and
+// Resource. A distinct type so keys can only be built via NewLowerGroupResource;
+// it keys the search-fields wiring maps.
+type LowerGroupResource schema.GroupResource
+
+// NewLowerGroupResource returns a LowerGroupResource, lower-casing group and
+// resource so lookups are case-insensitive.
+func NewLowerGroupResource(group, resource string) LowerGroupResource {
+	return LowerGroupResource{Group: strings.ToLower(group), Resource: strings.ToLower(resource)}
 }
 
 const clusterNamespace = "**cluster**"

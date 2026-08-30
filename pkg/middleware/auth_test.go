@@ -37,6 +37,8 @@ func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr err
 
 func TestAuth_Middleware(t *testing.T) {
 	ac := &actest.FakeAccessControl{}
+	acGrant := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	acErr := &actest.FakeAccessControl{ExpectedErr: errors.New("ac backend down")}
 
 	type testCase struct {
 		desc           string
@@ -104,15 +106,23 @@ func TestAuth_Middleware(t *testing.T) {
 			expectedCode:   http.StatusOK,
 		},
 		{
-			desc:           "snapshot public mode disabled should return 200 for authenticated user",
+			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 200 for authenticated user with snapshots:create",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, acGrant),
 			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
 		},
 		{
-			desc:           "snapshot public mode disabled should return 401 for unauthenticated request",
+			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 403 for authenticated user without snapshots:create",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			expecedReached: false,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 401 for unauthenticated request",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
 			authErr:        errors.New("no auth"),
@@ -120,12 +130,60 @@ func TestAuth_Middleware(t *testing.T) {
 			expectedCode:   http.StatusUnauthorized,
 		},
 		{
-			desc:           "snapshot public mode enabled should return 200 for unauthenticated request",
+			desc:           "SnapshotPublicModeOrCreate public mode enabled should return 200 for unauthenticated request",
 			path:           "/api/secure",
 			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: true}, ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:           "SnapshotPublicModeOrCreate public mode disabled should return 500 when access control engine errors",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, acErr),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			expecedReached: false,
+			expectedCode:   http.StatusInternalServerError,
+		},
+		{
+			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 200 for authenticated user with snapshots:delete",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, acGrant),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			expecedReached: true,
+			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 403 for authenticated user without snapshots:delete",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			expecedReached: false,
+			expectedCode:   http.StatusForbidden,
+		},
+		{
+			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 401 for unauthenticated request",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, ac),
+			authErr:        errors.New("no auth"),
+			expecedReached: false,
+			expectedCode:   http.StatusUnauthorized,
+		},
+		{
+			desc:           "SnapshotPublicModeOrDelete public mode enabled should return 200 for unauthenticated request",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: true}, ac),
+			authErr:        errors.New("no auth"),
+			expecedReached: true,
+			expectedCode:   http.StatusOK,
+		},
+		{
+			desc:           "SnapshotPublicModeOrDelete public mode disabled should return 500 when access control engine errors",
+			path:           "/api/secure",
+			authMiddleware: SnapshotPublicModeOrDelete(&setting.Cfg{SnapshotPublicMode: false}, acErr),
+			identity:       &authn.Identity{ID: "1", Type: authlib.TypeUser},
+			expecedReached: false,
+			expectedCode:   http.StatusInternalServerError,
 		},
 	}
 

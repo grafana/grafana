@@ -72,7 +72,7 @@ func (_c *MockExportFn_Execute_Call) Return(_a0 error) *MockExportFn_Execute_Cal
 	return _c
 }
 
-func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, string, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder) error) *MockExportFn_Execute_Call {
+func (_c *MockExportFn_Execute_Call) RunAndReturn(run func(context.Context, string, v0alpha1.ExportJobOptions, resources.ResourceClients, resources.RepositoryResources, jobs.JobProgressRecorder, string) error) *MockExportFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

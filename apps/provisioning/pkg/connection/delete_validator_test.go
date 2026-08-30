@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,6 +123,49 @@ func TestReferencedByRepositoriesValidator_Validate(t *testing.T) {
 			},
 			wantErr:         true,
 			wantErrContains: "referenced by 2 repository(s)",
+		},
+		{
+			name:           "allows deletion when the only referencing repository is being deleted",
+			connectionName: "test-connection",
+			namespace:      "default",
+			operation:      admission.Delete,
+			repos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "repo-1",
+						DeletionTimestamp: &metav1.Time{Time: time.Unix(1, 0)},
+					},
+					Spec: provisioning.RepositorySpec{
+						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:           "blocks deletion counting only repositories that are not being deleted",
+			connectionName: "test-connection",
+			namespace:      "default",
+			operation:      admission.Delete,
+			repos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "repo-deleting",
+						DeletionTimestamp: &metav1.Time{Time: time.Unix(1, 0)},
+					},
+					Spec: provisioning.RepositorySpec{
+						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "repo-live"},
+					Spec: provisioning.RepositorySpec{
+						Connection: &provisioning.ConnectionInfo{Name: "test-connection"},
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: "referenced by 1 repository(s): [repo-live]",
 		},
 		{
 			name:           "allows deletion when repositories reference different connections",

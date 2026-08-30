@@ -1,9 +1,9 @@
-import { Controller, FieldArrayWithId, useFormContext } from 'react-hook-form';
+import { Controller, type FieldArrayWithId, useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Stack, Text } from '@grafana/ui';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
 import CustomAnnotationHeaderField from './CustomAnnotationHeaderField';

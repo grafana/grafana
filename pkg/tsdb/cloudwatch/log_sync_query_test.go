@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -266,8 +265,8 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}), mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{
 			// this result will only be returned when the argument is QueryId = "queryId for A"
 			Results: [][]cloudwatchlogstypes.ResultField{{{
-				Field: utils.Pointer("@log"),
-				Value: utils.Pointer("A result"),
+				Field: new("@log"),
+				Value: new("A result"),
 			}}},
 			Status: "Complete"}, nil)
 		cli.On("GetQueryResults", mock.Anything, mock.MatchedBy(func(input *cloudwatchlogs.GetQueryResultsInput) bool {
@@ -275,8 +274,8 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}), mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{
 			// this result will only be returned when the argument is QueryId = "queryId for B"
 			Results: [][]cloudwatchlogstypes.ResultField{{{
-				Field: utils.Pointer("@log"),
-				Value: utils.Pointer("B result"),
+				Field: new("@log"),
+				Value: new("B result"),
 			}}},
 			Status: "Complete"}, nil)
 
@@ -305,13 +304,13 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			},
 		})
 
-		expectedLogFieldFromFirstCall := data.NewField("@log", nil, []*string{utils.Pointer("A result")}) // verifies the response from GetQueryResults matches the input RefId A
+		expectedLogFieldFromFirstCall := data.NewField("@log", nil, []*string{new("A result")}) // verifies the response from GetQueryResults matches the input RefId A
 		assert.NoError(t, err)
 		respA, ok := res.Responses["A"]
 		require.True(t, ok)
 		assert.Equal(t, []*data.Field{expectedLogFieldFromFirstCall}, respA.Frames[0].Fields)
 
-		expectedLogFieldFromSecondCall := data.NewField("@log", nil, []*string{utils.Pointer("B result")}) // verifies the response from GetQueryResults matches the input RefId B
+		expectedLogFieldFromSecondCall := data.NewField("@log", nil, []*string{new("B result")}) // verifies the response from GetQueryResults matches the input RefId B
 		respB, ok := res.Responses["B"]
 		require.True(t, ok)
 		assert.Equal(t, []*data.Field{expectedLogFieldFromSecondCall}, respB.Frames[0].Fields)

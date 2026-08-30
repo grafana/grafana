@@ -1,8 +1,8 @@
-import { renderHook, RenderHookResult } from '@testing-library/react';
+import { renderHook, type RenderHookResult } from '@testing-library/react';
 
 import {
   RestrictedGrafanaApisContextProvider,
-  RestrictedGrafanaApisContextType,
+  type RestrictedGrafanaApisContextType,
   useRestrictedGrafanaApis,
 } from './RestrictedGrafanaApis';
 

@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Avatar,
-  CellProps,
-  Column,
+  type CellProps,
+  type Column,
   InteractiveTable,
   Pagination,
   Stack,
@@ -17,8 +17,8 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';
-import { Role, AccessControlAction } from 'app/types/accessControl';
-import { ServiceAccountDTO } from 'app/types/serviceaccount';
+import { type Role, AccessControlAction } from 'app/types/accessControl';
+import { type ServiceAccountDTO } from 'app/types/serviceaccount';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
 
@@ -212,30 +212,37 @@ const getActionsCell = (
     return !original.isExternal ? (
       <Stack alignItems="center" justifyContent="flex-end">
         {contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) && !original.tokens && (
-          <Button onClick={() => onAddTokenClick(original)} disabled={original.isDisabled}>
+          <Button
+            onClick={() => onAddTokenClick(original)}
+            disabled={original.isDisabled}
+            variant="secondary"
+            size="sm"
+            icon="plus"
+          >
             <Trans i18nKey="serviceaccounts.get-actions-cell.add-token">Add token</Trans>
           </Button>
         )}
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
           (original.isDisabled ? (
-            <Button variant="secondary" size="md" onClick={() => onEnable(original)}>
+            <Button variant="secondary" size="sm" onClick={() => onEnable(original)} icon="check">
               <Trans i18nKey="serviceaccounts.get-actions-cell.enable">Enable</Trans>
             </Button>
           ) : (
-            <Button variant="secondary" size="md" onClick={() => onDisable(original)}>
+            <Button variant="secondary" size="sm" onClick={() => onDisable(original)} icon="ban">
               <Trans i18nKey="serviceaccounts.get-actions-cell.disable">Disable</Trans>
             </Button>
           ))}
 
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
-          <IconButton
-            name="trash-alt"
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="trash-alt"
             aria-label={t(
               'serviceaccounts.get-actions-cell.aria-label-delete-button',
               'Delete service account {{serviceAccountName}}',
               { serviceAccountName: original.name }
             )}
-            variant="secondary"
             onClick={() => onRemoveButtonClick(original)}
           />
         )}

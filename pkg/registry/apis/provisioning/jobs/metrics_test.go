@@ -3,6 +3,7 @@ package jobs
 import (
 	"errors"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -13,25 +14,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Shared registry for all tests to work with sync.Once singleton pattern
+var testRegistry = prometheus.NewRegistry()
+var testMetrics = RegisterJobMetrics(testRegistry)
+
 func TestRegisterJobMetrics(t *testing.T) {
 	t.Run("does not panic on pedantic registry", func(t *testing.T) {
 		require.NotPanics(t, func() {
+			// This will use the singleton, won't actually register with the new registry
 			RegisterJobMetrics(prometheus.NewPedanticRegistry())
 		})
 	})
 
-	t.Run("double registration panics", func(t *testing.T) {
-		reg := prometheus.NewPedanticRegistry()
-		RegisterJobMetrics(reg)
-		require.Panics(t, func() {
-			RegisterJobMetrics(reg)
+	t.Run("double registration is safe with sync.Once", func(t *testing.T) {
+		// Use the shared registry
+		RegisterJobMetrics(testRegistry)
+		// Should not panic - sync.Once prevents double registration
+		require.NotPanics(t, func() {
+			RegisterJobMetrics(testRegistry)
 		})
 	})
 }
 
 func TestRecordResourceOperation(t *testing.T) {
-	reg := prometheus.NewPedanticRegistry()
-	m := RegisterJobMetrics(reg)
+	// Use the shared registry and metrics
+	reg := testRegistry
+	m := testMetrics
 
 	successCreated := NewResourceResult().
 		WithGroup("dashboard.grafana.app").WithKind("Dashboard").
@@ -51,12 +59,12 @@ func TestRecordResourceOperation(t *testing.T) {
 		WithGroup("dashboard.grafana.app").WithKind("Dashboard").
 		WithAction(repository.FileActionDeleted).Build()
 
-	m.RecordResourceOperation(provisioning.JobActionPull, successCreated)
-	m.RecordResourceOperation(provisioning.JobActionPull, successCreated)
-	m.RecordResourceOperation(provisioning.JobActionPull, successUpdated)
-	m.RecordResourceOperation(provisioning.JobActionPull, warningCreated)
-	m.RecordResourceOperation(provisioning.JobActionPull, errorCreated)
-	m.RecordResourceOperation(provisioning.JobActionPush, successDeleted)
+	m.RecordResourceOperation(provisioning.JobActionPull, successCreated, 0)
+	m.RecordResourceOperation(provisioning.JobActionPull, successCreated, 0)
+	m.RecordResourceOperation(provisioning.JobActionPull, successUpdated, 0)
+	m.RecordResourceOperation(provisioning.JobActionPull, warningCreated, 0)
+	m.RecordResourceOperation(provisioning.JobActionPull, errorCreated, 0)
+	m.RecordResourceOperation(provisioning.JobActionPush, successDeleted, 0)
 
 	metrics, err := reg.Gather()
 	require.NoError(t, err)
@@ -93,7 +101,123 @@ func TestRecordResourceOperation(t *testing.T) {
 	})], 0.001)
 }
 
+func TestRecordResourceOperationDuration(t *testing.T) {
+	reg := testRegistry
+	m := testMetrics
+
+	// Unique group/kind so this test's series don't collide with other tests
+	// sharing the singleton registry.
+	const group = "durationtest.grafana.app"
+	const kind = "DurationProbe"
+
+	created := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionCreated).Build()
+	ignored := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionIgnored).Build()
+
+	m.RecordResourceOperation(provisioning.JobActionPull, created, 50*time.Millisecond)
+	m.RecordResourceOperation(provisioning.JobActionPull, created, 50*time.Millisecond)
+	m.RecordResourceOperation(provisioning.JobActionPull, created, 0)                   // zero duration -> not observed
+	m.RecordResourceOperation(provisioning.JobActionPull, ignored, 10*time.Millisecond) // ignored op -> not observed
+
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+
+	hist := findMetric(metrics, "grafana_provisioning_jobs_resource_operation_duration_seconds")
+	require.NotNil(t, hist, "resource_operation_duration_seconds histogram should be registered")
+
+	createdCount := histogramSampleCount(hist, map[string]string{
+		"action": "pull", "operation": "created", "outcome": "success",
+		"group": group, "kind": kind,
+	})
+	assert.Equal(t, uint64(2), createdCount, "only the two non-zero-duration created ops should be observed")
+
+	ignoredCount := histogramSampleCount(hist, map[string]string{
+		"action": "pull", "operation": "ignored", "outcome": "success",
+		"group": group, "kind": kind,
+	})
+	assert.Equal(t, uint64(0), ignoredCount, "ignored operations must not be observed")
+}
+
+func TestRecordResourceOperationBytes(t *testing.T) {
+	reg := testRegistry
+	m := testMetrics
+
+	// Unique group/kind so this test's series don't collide with other tests
+	// sharing the singleton registry.
+	const group = "bytestest.grafana.app"
+	const kind = "ByteProbe"
+
+	created := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionCreated).
+		WithBytes(2048).Build()
+	zeroBytes := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionCreated).Build() // no WithBytes -> 0
+	deleted := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionDeleted).
+		WithBytes(4096).Build() // deletes still carry no meaningful size, but exercise the real-op gate
+	ignored := NewResourceResult().
+		WithGroup(group).WithKind(kind).
+		WithAction(repository.FileActionIgnored).
+		WithBytes(4096).Build()
+
+	m.RecordResourceOperation(provisioning.JobActionPull, created, 10*time.Millisecond)
+	m.RecordResourceOperation(provisioning.JobActionPull, created, 10*time.Millisecond)
+	m.RecordResourceOperation(provisioning.JobActionPull, zeroBytes, 10*time.Millisecond) // zero bytes -> not observed
+	m.RecordResourceOperation(provisioning.JobActionPull, ignored, 10*time.Millisecond)   // ignored op -> not observed
+	m.RecordResourceOperation(provisioning.JobActionPush, deleted, 10*time.Millisecond)
+
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+
+	hist := findMetric(metrics, "grafana_provisioning_jobs_resource_operation_bytes")
+	require.NotNil(t, hist, "resource_operation_bytes histogram should be registered")
+
+	createdCount := histogramSampleCount(hist, map[string]string{
+		"action": "pull", "operation": "created", "outcome": "success",
+		"group": group, "kind": kind,
+	})
+	assert.Equal(t, uint64(2), createdCount, "only the two non-zero-byte created ops should be observed")
+
+	ignoredCount := histogramSampleCount(hist, map[string]string{
+		"action": "pull", "operation": "ignored", "outcome": "success",
+		"group": group, "kind": kind,
+	})
+	assert.Equal(t, uint64(0), ignoredCount, "ignored operations must not be observed")
+
+	deletedCount := histogramSampleCount(hist, map[string]string{
+		"action": "push", "operation": "deleted", "outcome": "success",
+		"group": group, "kind": kind,
+	})
+	assert.Equal(t, uint64(1), deletedCount, "a delete with a byte count is still a real op and observed")
+}
+
 // --- helpers ---
+
+func histogramSampleCount(mf *dto.MetricFamily, labels map[string]string) uint64 {
+	for _, m := range mf.GetMetric() {
+		got := make(map[string]string)
+		for _, lp := range m.GetLabel() {
+			got[lp.GetName()] = lp.GetValue()
+		}
+		match := len(got) == len(labels)
+		for k, v := range labels {
+			if got[k] != v {
+				match = false
+				break
+			}
+		}
+		if match {
+			return m.GetHistogram().GetSampleCount()
+		}
+	}
+	return 0
+}
 
 func findMetric(families []*dto.MetricFamily, name string) *dto.MetricFamily {
 	for _, mf := range families {

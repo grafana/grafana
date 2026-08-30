@@ -21,7 +21,7 @@ var (
 					return "", errors.New("provided object must be of type *User")
 				}
 
-				return cast.Spec.Email, nil
+				return string(cast.Spec.Email), nil
 			},
 		},
 			{
@@ -32,7 +32,7 @@ var (
 						return "", errors.New("provided object must be of type *User")
 					}
 
-					return cast.Spec.Login, nil
+					return string(cast.Spec.Login), nil
 				},
 			},
 		}))

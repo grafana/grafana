@@ -107,6 +107,7 @@ func (s *AccessControlStore) SetRole(ctx context.Context, existingRole *accessco
 				"description":  wantedRole.Description,
 				"group_name":   wantedRole.Group,
 				"hidden":       wantedRole.Hidden,
+				"version":      existingRole.Version + 1,
 				"updated":      time.Now(),
 			})
 		return err
@@ -182,7 +183,7 @@ func (s *AccessControlStore) CreateRole(ctx context.Context, role accesscontrol.
 	}
 	r := accesscontrol.Role{
 		OrgID:       accesscontrol.GlobalOrgID,
-		Version:     role.Version,
+		Version:     1,
 		UID:         uid,
 		Name:        role.Name,
 		DisplayName: role.DisplayName,
@@ -191,9 +192,6 @@ func (s *AccessControlStore) CreateRole(ctx context.Context, role accesscontrol.
 		Hidden:      role.Hidden,
 		Created:     now,
 		Updated:     now,
-	}
-	if r.Version == 0 {
-		r.Version = 1
 	}
 
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {

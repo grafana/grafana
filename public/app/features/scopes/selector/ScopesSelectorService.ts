@@ -1,13 +1,15 @@
-import { Scope, ScopeNode, store as storeImpl } from '@grafana/data';
+import { type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { performanceUtils } from '@grafana/scenes';
+import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
-import { ScopesApiClient } from '../ScopesApiClient';
+import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
-import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
+import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { isCurrentPath } from '../dashboards/scopeNavgiationUtils';
 
+import { writeRecentScope } from './recentScopesStorage';
 import {
   closeNodes,
   expandNodes,
@@ -18,9 +20,7 @@ import {
   modifyTreeNodeAtPath,
   treeNodeAtPath,
 } from './scopesTreeUtils';
-import { NodesMap, RecentScope, RecentScopeSchema, ScopeSchema, ScopesMap, SelectedScope, TreeNode } from './types';
-
-export const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
+import { type NodesMap, type ScopesMap, type SelectedScope, type TreeNode } from './types';
 
 export interface ScopesSelectorServiceState {
   // Used to indicate loading of the scopes themselves for example when applying them.
@@ -84,10 +84,6 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
         children: undefined,
       },
     });
-
-    // Load nodes from recent scopes so they are readily available
-    const parentNodes = this.getNodesFromRecentScopes();
-    this.updateState({ nodes: { ...this.state.nodes, ...parentNodes } });
   }
 
   // Loads a node from the API and adds it to the nodes cache
@@ -411,88 +407,117 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Apply the scopes right away even though we don't have the metadata yet.
     this.updateState({ appliedScopes: scopes, selectedScopes: scopes, loading: scopes.length > 0 });
 
-    // Fetches both dashboards and scope navigations
-    // We call this even if we have 0 scope because in that case it also closes the dashboard drawer.
-    // Only fetch dashboards based on the scopes if we don't have a navigation scope set.
-    if (!this.dashboardsService.state.navigationScope) {
-      this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId)).then(() => {
-        const selectedScopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
-        if (redirectOnApply) {
-          this.redirectAfterApply(selectedScopeNode);
-        }
-      });
+    // Start loading scope navigations in parallel with scope metadata. Later
+    // awaits on dashboardsPromise only wait for this in-flight request — they
+    // do not trigger a new fetch.
+    const shouldFetchDashboards = !this.dashboardsService.state.navigationScope;
+    const dashboardsPromise = shouldFetchDashboards
+      ? this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId))
+      : undefined;
+
+    if (scopes.length === 0) {
+      if (dashboardsPromise) {
+        // fetchDashboards([]) clears the drawer — wait for that reset to finish.
+        await dashboardsPromise;
+      }
+      return;
     }
 
-    if (scopes.length > 0) {
-      const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
+    const fetchedScopes = await this.apiClient.fetchMultipleScopes(scopes.map((s) => s.scopeId));
 
-      // Fetch the scope node if it is not available
-      let newNodesState = { ...this.state.nodes };
-      let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
+    // Fetch the scope node if it is not available
+    let newNodesState = { ...this.state.nodes };
+    let scopeNode = scopes[0]?.scopeNodeId ? this.state.nodes[scopes[0]?.scopeNodeId] : undefined;
 
-      if (!scopeNode && config.featureToggles.useScopeSingleNodeEndpoint && scopes[0]?.scopeNodeId) {
-        scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
-        if (scopeNode) {
-          newNodesState[scopeNode.metadata.name] = scopeNode;
-        }
+    if (!scopeNode && scopes[0]?.scopeNodeId) {
+      scopeNode = await this.apiClient.fetchScopeNode(scopes[0]?.scopeNodeId);
+      if (scopeNode) {
+        newNodesState[scopeNode.metadata.name] = scopeNode;
       }
+    }
 
-      const newScopesState = { ...this.state.scopes };
+    const newScopesState = { ...this.state.scopes };
 
-      // Validate API response is an array
-      if (!Array.isArray(fetchedScopes)) {
-        console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
-        this.updateState({ scopes: newScopesState, loading: false });
-        return;
-      }
-
-      for (const scope of fetchedScopes) {
-        newScopesState[scope.metadata.name] = scope;
-      }
-
-      // Pre-fetch the first scope's defaultPath to improve performance
-      // This makes the selector open instantly since all nodes are already cached
-      // We only need the first scope since that's what's used for expansion
-      const firstScope = fetchedScopes[0];
-      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
-        // Deduplicate and filter out already cached nodes
-        const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
-        const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
-
-        if (nodesToFetch.length > 0) {
-          await this.getScopeNodes(nodesToFetch);
-        }
-      }
-
-      // Get scopeNode and parentNode, preferring defaultPath as the source of truth
-      let parentNode: ScopeNode | undefined;
-      let scopeNodeId: string | undefined;
-
-      if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 1) {
-        // Extract from defaultPath (most reliable source)
-        // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
-        scopeNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 1];
-        const parentNodeId = firstScope.spec.defaultPath[firstScope.spec.defaultPath.length - 2];
-
-        scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
-        parentNode = parentNodeId && parentNodeId !== '' ? this.state.nodes[parentNodeId] : undefined;
-      } else {
-        // Fallback to next in priority order
-        scopeNodeId = scopes[0]?.scopeNodeId;
-        scopeNode = scopeNodeId ? this.state.nodes[scopeNodeId] : undefined;
-
-        const parentNodeId = scopes[0]?.parentNodeId ?? scopeNode?.spec.parentName;
-        parentNode = parentNodeId ? this.state.nodes[parentNodeId] : undefined;
-      }
-
-      this.addRecentScopes(fetchedScopes, parentNode, scopeNodeId);
+    // Validate API response is an array
+    if (!Array.isArray(fetchedScopes)) {
+      console.error('Expected fetchedScopes to be an array, got:', typeof fetchedScopes);
       this.updateState({ scopes: newScopesState, loading: false });
+      return;
+    }
+
+    for (const scope of fetchedScopes) {
+      newScopesState[scope.metadata.name] = scope;
+    }
+
+    // Pre-fetch the first scope's defaultPath to improve performance
+    // This makes the selector open instantly since all nodes are already cached
+    // We only need the first scope since that's what's used for expansion
+    const firstScope = fetchedScopes[0];
+    if (firstScope?.spec.defaultPath && firstScope.spec.defaultPath.length > 0) {
+      // Deduplicate and filter out already cached nodes
+      const uniqueNodeIds = [...new Set(firstScope.spec.defaultPath)];
+      const nodesToFetch = uniqueNodeIds.filter((nodeId) => !this.state.nodes[nodeId]);
+
+      if (nodesToFetch.length > 0) {
+        await this.getScopeNodes(nodesToFetch);
+      }
+    }
+
+    // Derive scopeNodeId, preferring defaultPath as the source of truth
+    let scopeNodeId: string | undefined;
+    const defaultPath = firstScope?.spec.defaultPath || [];
+
+    if (defaultPath.length > 1) {
+      // Extract from defaultPath (most reliable source)
+      // defaultPath format: ['', 'parent-id', 'scope-node-id', ...]
+      scopeNodeId = defaultPath[defaultPath.length - 1];
+    } else {
+      // Fallback to the scopeNodeId passed in
+      scopeNodeId = scopes[0]?.scopeNodeId;
+    }
+
+    // Backfill scopeNodeId from defaultPath so open() can expand the tree.
+    if (scopeNodeId && scopes[0] && !scopes[0].scopeNodeId) {
+      scopes[0] = { ...scopes[0], scopeNodeId };
+    }
+
+    let scopeNodeForRedirect =
+      scopeNodeId != null ? (newNodesState[scopeNodeId] ?? this.state.nodes[scopeNodeId]) : undefined;
+
+    if (!scopeNodeForRedirect && scopeNodeId) {
+      scopeNodeForRedirect = await this.apiClient.fetchScopeNode(scopeNodeId);
+      if (scopeNodeForRedirect) {
+        newNodesState[scopeNodeForRedirect.metadata.name] = scopeNodeForRedirect;
+      }
+    }
+
+    writeRecentScope(this.store, fetchedScopes, scopeNodeId);
+    this.updateState({ appliedScopes: scopes, selectedScopes: scopes, scopes: newScopesState, loading: false });
+
+    if (dashboardsPromise) {
+      // scopeNavigations must be loaded before redirectAfterApply checks active navigation.
+      await dashboardsPromise;
+    }
+
+    if (redirectOnApply && shouldFetchDashboards) {
+      this.redirectAfterApply(scopeNodeForRedirect);
     }
   };
 
-  // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
+  // Redirect only when the scope node has an explicit redirectPath configured.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
     if (!this.redirectEnabled) {
+      return;
+    }
+
+    // Never redirect during image/PDF capture — the renderer must stay on the requested dashboard
+    // so its panels can render. Checked synchronously here (not via setRedirectEnabled) because
+    // applyScopes runs during ScopesService boot, before any React effect can toggle the flag.
+    if (isRenderTarget()) {
+      return;
+    }
+
+    if (!scopeNode?.spec.redirectPath) {
       return;
     }
 
@@ -508,89 +533,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
 
     // Only redirect to redirectPath if we are not currently on an active scope navigation
-    if (
-      !activeScopeNavigation &&
-      scopeNode &&
-      scopeNode.spec.redirectPath &&
-      // Don't redirect if we're already on the target path
-      !isCurrentPath(currentPath, scopeNode.spec.redirectPath)
-    ) {
+    // and not already on the target path.
+    if (!activeScopeNavigation && !isCurrentPath(currentPath, scopeNode.spec.redirectPath)) {
       locationService.push(scopeNode.spec.redirectPath);
-      return;
-    }
-
-    // Redirect to first scopeNavigation if current URL isn't a scopeNavigation
-    if (!activeScopeNavigation && this.dashboardsService.state.scopeNavigations.length > 0) {
-      // Redirect to the first available scopeNavigation
-      const firstScopeNavigation = this.dashboardsService.state.scopeNavigations[0];
-
-      if (
-        firstScopeNavigation &&
-        'url' in firstScopeNavigation.spec &&
-        // Only redirect to dashboards TODO: Remove this once Logs Drilldown has Scopes support
-        firstScopeNavigation.spec.url.includes('/d/') &&
-        // Don't redirect if we're already on the target path
-        !isCurrentPath(currentPath, firstScopeNavigation.spec.url)
-      ) {
-        locationService.push(firstScopeNavigation.spec.url);
-      }
     }
   };
 
   public removeAllScopes = () => {
     this.applyScopes([], false);
     this.dashboardsService.setNavigationScope(undefined, undefined, undefined);
-  };
-
-  private addRecentScopes = (scopes: Scope[], parentNode?: ScopeNode, scopeNodeId?: string) => {
-    if (scopes.length === 0) {
-      return;
-    }
-
-    const newScopes: RecentScope[] = structuredClone(scopes);
-    // Set parent node and scopeNodeId for the first scope. We don't currently support multiple parent nodes being displayed, hence we only add for the first one
-    if (parentNode) {
-      newScopes[0].parentNode = parentNode;
-    }
-    if (scopeNodeId) {
-      newScopes[0].scopeNodeId = scopeNodeId;
-    }
-
-    const RECENT_SCOPES_MAX_LENGTH = 5;
-
-    const recentScopes = this.getRecentScopes();
-    recentScopes.unshift(newScopes);
-    this.store.set(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
-  };
-
-  /**
-   * Returns recent scopes from local storage. It is array of array cause each item can represent application of
-   * multiple different scopes.
-   */
-  public getRecentScopes = (): RecentScope[][] => {
-    const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
-    const recentScopes = parseScopesFromLocalStorage(content);
-
-    // Filter out the current selection from recent scopes to avoid duplicates
-    return recentScopes.filter((scopes: RecentScope[]) => {
-      if (scopes.length !== this.state.appliedScopes.length) {
-        return true;
-      }
-      const scopeSet = new Set(scopes.map((s) => s.metadata.name));
-      return !this.state.appliedScopes.every((s) => scopeSet.has(s.scopeId));
-    });
-  };
-
-  private getNodesFromRecentScopes = (): Record<string, ScopeNode> => {
-    const content: string | undefined = this.store.get(RECENT_SCOPES_KEY);
-    const recentScopes = parseScopesFromLocalStorage(content);
-
-    // Load parent nodes for recent scopes
-    return Object.fromEntries(
-      recentScopes
-        .map((scopes) => [scopes[0]?.parentNode?.metadata?.name, scopes[0]?.parentNode])
-        .filter(([key, parentNode]) => parentNode !== undefined && key !== undefined)
-    );
   };
 
   /**
@@ -606,11 +557,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     // If the scopeNode isn't avilable, fetch it and add it to the nodes cache
-    if (
-      config.featureToggles.useScopeSingleNodeEndpoint &&
-      this.state.selectedScopes[0]?.scopeNodeId &&
-      !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]
-    ) {
+    if (this.state.selectedScopes[0]?.scopeNodeId && !this.state.nodes[this.state.selectedScopes[0].scopeNodeId]) {
       const scopeNode = await this.apiClient.fetchScopeNode(this.state.selectedScopes[0].scopeNodeId);
       if (scopeNode) {
         this.updateState({ nodes: { ...this.state.nodes, [scopeNode.metadata.name]: scopeNode } });
@@ -720,47 +667,4 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.updateState({ nodes: newNodes });
     return scopeNodeNames.map((name) => nodesMap[name]).filter((node) => node !== undefined);
   };
-}
-
-function isScopeLocalStorageV1(obj: unknown): obj is { scope: Scope } {
-  return typeof obj === 'object' && obj !== null && 'scope' in obj && isScopeObj(obj['scope']);
-}
-
-function isScopeObj(obj: unknown): obj is Scope {
-  return ScopeSchema.safeParse(obj).success;
-}
-
-function hasValidScopeParentNode(obj: unknown): obj is RecentScope {
-  return RecentScopeSchema.safeParse(obj).success;
-}
-
-function parseScopesFromLocalStorage(content: string | undefined): RecentScope[][] {
-  let recentScopes;
-  try {
-    recentScopes = JSON.parse(content || '[]');
-  } catch (e) {
-    console.error('Failed to parse recent scopes', e, content);
-    return [];
-  }
-  if (!(Array.isArray(recentScopes) && Array.isArray(recentScopes[0]))) {
-    return [];
-  }
-
-  if (isScopeLocalStorageV1(recentScopes[0]?.[0])) {
-    // Backward compatibility
-    recentScopes = recentScopes.map((s: Array<{ scope: Scope }>) => s.map((scope) => scope.scope));
-  } else if (!isScopeObj(recentScopes[0]?.[0])) {
-    return [];
-  }
-
-  // Verify the structure of the parent node for all recent scope sets, and remove it if it is not valid
-  for (const scopeSet of recentScopes) {
-    if (scopeSet[0]?.parentNode) {
-      if (!hasValidScopeParentNode(scopeSet[0])) {
-        scopeSet[0].parentNode = undefined;
-      }
-    }
-  }
-
-  return recentScopes;
 }

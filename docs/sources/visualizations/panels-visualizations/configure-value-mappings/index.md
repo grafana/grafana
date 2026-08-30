@@ -144,6 +144,12 @@ A **Range** mapping maps numerical ranges to text and a color. For example, if a
 A **Regex** mapping maps regular expressions to text and a color. For example, if a value is `www.example.com`, you can configure a regular expression value mapping so that Grafana displays **www** and truncates the domain. Use the **Regex** mapping when you want to format the text and color of a regular expression value.
 ![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
 
+{{< admonition type="note" >}}
+The character `.` doesn't match newline characters `\n` and `\r` by default.
+If your data contains multiline strings, use `[\s\S]` in place of `.` to match any character including newlines.
+For more detailed information, refer to the [Multiline regular expression example](#multiline-regular-expression-example).
+{{< /admonition >}}
+
 ### Special
 
 A **Special** mapping maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Use the **Special** mapping when you want to format uncommon, boolean, or empty values.
@@ -177,6 +183,23 @@ The following image shows a table visualization with value mappings. If you want
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
 
+### Multiline regular expression example
+
+If your data source returns multiline strings—such as Windows event log entries that contain `\r\n` line breaks—a regular expression pattern using `.` won't match across those line breaks. Use `[\s\S]` to match any character including newlines.
+
+| Pattern   | Matches                        |
+| --------- | ------------------------------ |
+| `.*`      | Single-line text only          |
+| `[\s\S]*` | Single-line and multiline text |
+
+For example, if you wanted to map any multiline log entry that starts with `ERROR` to the display text **Error**, using `ERROR.*` would only match text up to the first newline and would fail to map the full entry.
+
+Instead, you should use the pattern:
+
+```text
+ERROR[\s\S]*
+```
+
 ## Add a value mapping
 
 1. Navigate to the panel you want to update.
@@ -198,4 +221,4 @@ The following image shows a table visualization with value mappings. If you want
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
 
 1. Click **Save dashboard**.
-1. Click **Back to dashboard** and then **Exit edit**.
+1. Click **Back** and then **Exit edit**.

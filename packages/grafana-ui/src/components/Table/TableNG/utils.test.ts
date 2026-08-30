@@ -1,39 +1,44 @@
-import { Point } from 'ol/geom';
-import { SortColumn } from 'react-data-grid';
+import WKT from 'ol/format/WKT';
+import { type Geometry, Point } from 'ol/geom';
 
 import {
   createDataFrame,
   createTheme,
-  DataFrame,
-  DataFrameWithValue,
-  DataLink,
-  DisplayValue,
-  Field,
+  type DataFrame,
+  type DataFrameWithValue,
+  type DataLink,
+  type DisplayValue,
+  type Field,
   FieldType,
-  GrafanaTheme2,
-  LinkModel,
-  ValueLinkConfig,
+  type GrafanaTheme2,
+  type LinkModel,
+  type ValueLinkConfig,
 } from '@grafana/data';
+import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
-import { TableCellDisplayMode } from '../types';
+import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { MeasureCellHeightEntry, TableRow } from './types';
+import { getJustifyContent } from './styles';
+import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
   buildCellHeightMeasurers,
   buildHeaderHeightMeasurers,
   buildInspectValue,
+  buildNestedColumnWidthsMap,
   calculateFooterHeight,
   compileFrameToRecords,
   computeColWidths,
+  computeContentAwareColWidths,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
   getAlignment,
   getAlignmentFactor,
+  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
@@ -42,20 +47,95 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
-  getIsNestedTable,
-  getJustifyContent,
   getPillCellHeightMeasurer,
   getRowHeight,
+  inferPills,
+  createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
+  rendersAsJson,
+  shouldTextOverflow,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
 describe('TableNG utils', () => {
+  describe('inferPills', () => {
+    it('returns an empty array for empty/nullish values', () => {
+      expect(inferPills('')).toEqual([]);
+      expect(inferPills(null)).toEqual([]);
+      expect(inferPills(undefined)).toEqual([]);
+    });
+
+    it('trims entries and drops nullish items from an array value', () => {
+      expect(inferPills([' a ', 'b', null, 'c '])).toEqual(['a', 'b', 'c']);
+    });
+
+    it('parses a JSON-array string', () => {
+      expect(inferPills('["a","b","c"]')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('splits a comma-separated string, tolerating surrounding whitespace', () => {
+      expect(inferPills('a, b ,c')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('falls back to comma-splitting when a bracketed value is not valid JSON', () => {
+      expect(inferPills('[a, b')).toEqual(['[a', 'b']);
+    });
+
+    it('memoizes by input so repeated calls (per resize tick) reuse the same array', () => {
+      // string inputs compare by value
+      expect(inferPills('a,b,c')).toBe(inferPills('a,b,c'));
+      // array inputs compare by reference — the stable field.values[i] ref hits the cache
+      const arr = ['x', 'y'];
+      expect(inferPills(arr)).toBe(inferPills(arr));
+    });
+  });
+
+  describe('createBoundedCache', () => {
+    it('returns stored values and undefined for absent keys', () => {
+      const cache = createBoundedCache<string, number>(8);
+      cache.set('a', 1);
+      expect(cache.get('a')).toBe(1);
+      expect(cache.get('missing')).toBeUndefined();
+    });
+
+    it('evicts the oldest entries once churn exceeds capacity', () => {
+      const cache = createBoundedCache<number, number>(4);
+      for (let i = 0; i < 100; i++) {
+        cache.set(i, i);
+      }
+      // early keys have rotated out; the most recent ones are still present
+      expect(cache.get(0)).toBeUndefined();
+      expect(cache.get(99)).toBe(99);
+    });
+
+    it('stays within ~2x maxSize even when reads continuously promote from the secondary generation', () => {
+      // Regression: promotion in get() must run the same rotation check as set(); otherwise a run of
+      // promoting reads grows the primary map past maxSize and the ~2x bound is lost.
+      const maxSize = 8;
+      const cache = createBoundedCache<number, number>(maxSize);
+      const total = 2000;
+      for (let i = 0; i < total; i++) {
+        cache.set(i, i);
+        // re-read a window of recent keys to exercise the secondary->primary promotion path
+        for (let j = Math.max(0, i - 2 * maxSize); j <= i; j++) {
+          cache.get(j);
+        }
+      }
+      let retained = 0;
+      for (let i = 0; i < total; i++) {
+        if (cache.get(i) !== undefined) {
+          retained++;
+        }
+      }
+      expect(retained).toBeLessThanOrEqual(2 * maxSize);
+    });
+  });
+
   describe('alignment', () => {
     it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
       expect(getAlignment({ name: 'Value', type: FieldType.string, values: [], config: { custom: { align } } })).toBe(
@@ -214,6 +294,46 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('getApplyToRowBgFn', () => {
+    const theme = createTheme();
+
+    const makeColorBackgroundField = (color: string, applyToRow: boolean): Field => ({
+      name: color,
+      type: FieldType.number,
+      values: [1],
+      config: {
+        custom: {
+          cellOptions: {
+            type: TableCellDisplayMode.ColorBackground,
+            mode: TableCellBackgroundDisplayMode.Basic,
+            applyToRow,
+          },
+        },
+      },
+      display: () => ({ text: '1', numeric: 1, color }),
+    });
+
+    it('returns undefined when no field has applyToRow enabled', () => {
+      const fields = [makeColorBackgroundField('#ff0000', false), makeColorBackgroundField('#0000ff', false)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      expect(getApplyToRowBgFn(fields, getCellColorInlineStyles)).toBeUndefined();
+    });
+
+    it('uses the color of the first (leftmost) field with applyToRow enabled', () => {
+      const fields = [makeColorBackgroundField('#ff0000', true), makeColorBackgroundField('#0000ff', true)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const rowBgFn = getApplyToRowBgFn(fields, getCellColorInlineStyles);
+      expect(rowBgFn?.(0).background).toBe('#ff0000');
+    });
+
+    it('skips fields without applyToRow when picking the winning field', () => {
+      const fields = [makeColorBackgroundField('#ff0000', false), makeColorBackgroundField('#0000ff', true)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const rowBgFn = getApplyToRowBgFn(fields, getCellColorInlineStyles);
+      expect(rowBgFn?.(0).background).toBe('#0000ff');
+    });
+  });
+
   describe('frame to records conversion', () => {
     it('should convert DataFrame to TableRows', () => {
       const frame = createDataFrame({
@@ -223,10 +343,12 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
+      // Columns are exposed via prototype getters, not own properties, so assert with
+      // toMatchObject (walks the prototype chain) rather than toEqual (own-props only).
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
     });
 
     it('should handle nested frames', () => {
@@ -249,12 +371,12 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(parentFrame, 'nested');
+      const frameToRecords = compileFrameToRecords(parentFrame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(parentFrame);
       expect(records).toHaveLength(4);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, id: 100 });
       expect(records[1]).toEqual({ __depth: 1, __index: 0 });
-      expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 1, id: 200 });
       expect(records[3]).toEqual({ __depth: 1, __index: 1 });
     });
 
@@ -266,12 +388,40 @@ describe('TableNG utils', () => {
         ],
       });
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
-      expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+    });
+
+    it('should infer length from field values when frame.length is not set', () => {
+      const frame: DataFrame = {
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
+          { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+        ],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+      const records = frameToRecords(frame);
+
+      expect(records).toHaveLength(3);
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, time: 2, value: 20 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 2, time: 3, value: 30 });
+    });
+
+    it('should produce no rows when frame.length is not set and the nested frame has no fields', () => {
+      const frame: DataFrame = {
+        fields: [],
+      } as unknown as DataFrame;
+
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+      const records = frameToRecords(frame, 3);
+
+      expect(records).toHaveLength(0);
     });
   });
 
@@ -471,32 +621,6 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('getIsNestedTable', () => {
-    it('should detect nested frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.nestedFrames, name: 'nestedCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(true);
-    });
-
-    it('should return false for regular frames', () => {
-      const frame: DataFrame = {
-        fields: [
-          { type: FieldType.string, name: 'stringCol', config: {}, values: [] },
-          { type: FieldType.number, name: 'numberCol', config: {}, values: [] },
-        ],
-        length: 0,
-        name: 'test',
-      };
-      expect(getIsNestedTable(frame.fields)).toBe(false);
-    });
-  });
-
   describe('getComparator', () => {
     it('should compare numbers correctly', () => {
       const comparator = getComparator(FieldType.number);
@@ -582,6 +706,78 @@ describe('TableNG utils', () => {
     it('should handle other display modes', () => {
       const result = migrateTableDisplayModeToCellOptions(TableCellDisplayMode.ColorText);
       expect(result).toEqual({ type: TableCellDisplayMode.ColorText });
+    });
+  });
+
+  describe('rendersAsJson', () => {
+    const field = (type: FieldType, cellOptions?: TableCellOptions, custom?: Record<string, unknown>): Field => ({
+      name: 'f',
+      type,
+      values: [],
+      config: { custom: { ...(cellOptions ? { cellOptions } : {}), ...custom } },
+    });
+
+    it('is true for an explicit JSONView cell, whatever the field type', () => {
+      expect(rendersAsJson(field(FieldType.string, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+    });
+
+    it('is true for an `other` field left on the default cell type', () => {
+      expect(rendersAsJson(field(FieldType.other))).toBe(true);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Auto }))).toBe(true);
+    });
+
+    it('is true for an `other` field whose cellOptions carry no type', () => {
+      expect(rendersAsJson(field(FieldType.other, {} as TableCellOptions))).toBe(true);
+    });
+
+    it('is false for an `other` field with an explicit non-JSON cell type', () => {
+      // the chosen renderer ignores the JSON display processor, so attaching it would clobber the
+      // field's own formatting for nothing.
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Pill }))).toBe(false);
+      expect(rendersAsJson(field(FieldType.other, { type: TableCellDisplayMode.Markdown }))).toBe(false);
+    });
+
+    it('is false for ordinary scalar fields', () => {
+      expect(rendersAsJson(field(FieldType.string))).toBe(false);
+      expect(rendersAsJson(field(FieldType.number))).toBe(false);
+      expect(rendersAsJson(field(FieldType.time))).toBe(false);
+    });
+
+    it('honors an explicitly passed cell type over the field config', () => {
+      const jsonByConfig = field(FieldType.other, { type: TableCellDisplayMode.JSONView });
+      expect(rendersAsJson(jsonByConfig, TableCellDisplayMode.Pill)).toBe(false);
+    });
+  });
+
+  describe('shouldTextOverflow', () => {
+    const field = (type: FieldType, cellOptions?: TableCellOptions, custom?: Record<string, unknown>): Field => ({
+      name: 'f',
+      type,
+      values: [],
+      config: { custom: { ...(cellOptions ? { cellOptions } : {}), ...custom } },
+    });
+
+    it('is true for a plain string cell but not an image one', () => {
+      expect(shouldTextOverflow(field(FieldType.string))).toBe(true);
+      expect(shouldTextOverflow(field(FieldType.string, { type: TableCellDisplayMode.Image }))).toBe(false);
+    });
+
+    it('is true for JSON cells, whose collapsed block is otherwise unreadable', () => {
+      expect(shouldTextOverflow(field(FieldType.other))).toBe(true);
+      expect(shouldTextOverflow(field(FieldType.string, { type: TableCellDisplayMode.JSONView }))).toBe(true);
+    });
+
+    it('is false for a wrapped JSON cell, which already shows the whole value', () => {
+      expect(shouldTextOverflow(field(FieldType.other, undefined, { wrapText: true }))).toBe(false);
+    });
+
+    it('is false for a JSON cell with inspect enabled, matching string cells', () => {
+      expect(shouldTextOverflow(field(FieldType.other, undefined, { inspect: true }))).toBe(false);
+    });
+
+    it('is false for an `other` field explicitly rendered as something else', () => {
+      expect(shouldTextOverflow(field(FieldType.other, { type: TableCellDisplayMode.Pill }))).toBe(false);
     });
   });
 
@@ -957,10 +1153,8 @@ describe('TableNG utils', () => {
     it('calculates height based on theme when cellHeight is undefined', () => {
       const result = getDefaultRowHeight(theme, []);
 
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
+      // default theme: CELL_PADDING*2 (12) + fontSize 14 * body.lineHeight ≈ 34
+      expect(result).toBe(34);
     });
   });
 
@@ -1017,6 +1211,14 @@ describe('TableNG utils', () => {
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
       expect(estimator('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0, 20)).toBe(60);
     });
+
+    it('counts embedded newlines as forced line breaks rather than folding them into the total length', () => {
+      // Each short line is far under charsPerLine (200/10 = 20), so length-based estimation across
+      // the whole string would collapse them into far fewer wrapped lines than the value actually
+      // renders as. A pretty-printed JSON value looks like this: many short, newline-delimited lines.
+      const json = '{\n  "a": 1,\n  "b": 2,\n  "c": 3\n}';
+      expect(estimator(json, 200, field, 0, 20)).toBe(5 * 20);
+    });
   });
 
   describe('getDataLinksHeightMeasurer', () => {
@@ -1068,6 +1270,41 @@ describe('TableNG utils', () => {
       measurer('tag2', 200, {} as Field, 0, 20);
       measurer('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
+    });
+
+    it('does not re-measure pill text when only the column width changes (resize)', () => {
+      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const value = 'aaaa,bbbb,cccc';
+      measurer(value, 100, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
+      // resizing re-runs only the wrap arithmetic; pill text is not measured again
+      measurer(value, 60, {} as Field, 0, 20);
+      measurer(value, 300, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3);
+    });
+
+    it('returns a consistent height when the same value and width are measured repeatedly', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      // react-data-grid re-measures every row on each layout pass; repeats must be stable
+      expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
+    });
+
+    it('wraps to more lines as the column narrows', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
+      const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      expect(narrow).toBeGreaterThan(wide);
+    });
+
+    it('scales the height with the caller line height at the same width', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
+      // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
+      expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
+      // a different line height applies to the same 3 lines: 3*30 + 2*4 = 98.
+      expect(measurer(value, 100, {} as Field, 0, 30)).toBe(98);
     });
   });
 
@@ -1163,8 +1400,7 @@ describe('TableNG utils', () => {
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
-      expect(measurers![0].estimate).toEqual(expect.any(Function));
-      expect(measurers![0].estimate!('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
+      // pills are measured precisely (the cheap estimate was removed because it mis-ranked columns)
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
       expect(measurers![0].fieldIdxs).toEqual([0]);
@@ -1189,14 +1425,53 @@ describe('TableNG utils', () => {
       expect(measurers![0].fieldIdxs).toEqual([0]);
     });
 
-    it('does not enable text counting for non-string fields', () => {
+    it('enables text counting for Time fields rendered by AutoCellRenderer', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
-        { name: 'Age', type: FieldType.number, values: [], config: { custom: { wrapText: true } } },
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: '2024-03-26 14:30:00', numeric: v as number, color: undefined, title: undefined }),
+        },
       ];
 
       const measurers = buildCellHeightMeasurers(fields, ctx);
-      // empty array - we had one column that indicated it wraps, but it was numeric, so we just ignore it
+      // Time fields use AutoCellRenderer (same as string fields) and can produce long formatted strings
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([1]);
+    });
+
+    it('enables text counting for Number fields rendered by AutoCellRenderer', () => {
+      const fields: Field[] = [
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true } },
+          display: (v) => ({ text: String(v), numeric: v as number, color: undefined, title: undefined }),
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      expect(measurers).toBeDefined();
+      expect(measurers![0].fieldIdxs).toEqual([0]);
+    });
+
+    it('does not enable text counting for non-AutoCellRenderer fields like Gauge', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: [], config: { custom: {} } },
+        {
+          name: 'Score',
+          type: FieldType.number,
+          values: [],
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Gauge } } },
+        },
+      ];
+
+      const measurers = buildCellHeightMeasurers(fields, ctx);
+      // Gauge cells don't use AutoCellRenderer, so no measurer is set up
       expect(measurers).toBeUndefined();
     });
 
@@ -1249,7 +1524,7 @@ describe('TableNG utils', () => {
         },
       ];
       const frame = createDataFrame({ fields });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       rows = frameToRecords(frame);
       measurers = [
         {
@@ -1328,10 +1603,12 @@ describe('TableNG utils', () => {
         ];
       });
 
-      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
-      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
-      // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
+      // the `estimate` function picks `123456` as the tallest (6 lines), then the `measure` function is
+      // used to calculate its true height (2 lines). measurers[0] is forced to a single short line so it
+      // doesn't set the row-height floor — this test is only about the estimate-then-remeasure selection.
+      // 2 lines @ 20px (123,456) + 10px vertical padding = 50.
       it('uses the estimate value rather than the precise value to select the row height', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(20);
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
@@ -1354,6 +1631,106 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      });
+
+      // measurers[0] has no estimate, so it runs precisely in the first pass (like a pill column).
+      // measurers[1] over-estimates and wins the pass, but its precise remeasure comes back shorter
+      // than measurers[0]'s precise height. The row must stay tall enough for measurers[0] rather
+      // than adopting the shrunken winner height and clipping that column.
+      it('does not discard a precise measurer height when the estimated winner remeasures shorter', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(60); // precise height of the non-estimating column
+        jest.mocked(measurers[1].estimate!).mockReturnValue(100); // over-estimate wins the first pass
+        jest.mocked(measurers[1].measure).mockReturnValue(30); // true height of the winner is short
+
+        // max(remeasured winner 30, precise 60) = 60, + 10px vertical padding = 70
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
+      });
+    });
+
+    describe('non-string fields with display processor', () => {
+      it('measures the display-formatted string for Time fields, not the raw epoch number', () => {
+        const FORMATTED_TIME = '2024-03-26 14:30:00';
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: FORMATTED_TIME, numeric: EPOCH_MS, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: timeFields });
+        const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+        const timeRows = frameToRecords(frame);
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(timeFields, timeRows[0], [100], 36, [timeMeasurer], 20, 10);
+
+        // Must be called with the formatted string, not the raw epoch number
+        expect(timeMeasurer.measure).toHaveBeenCalledWith(FORMATTED_TIME, 100, timeFields[0], 0, 20);
+        expect(timeMeasurer.measure).not.toHaveBeenCalledWith(EPOCH_MS, 100, timeFields[0], 0, 20);
+      });
+
+      it('still passes the raw value for string fields (no display transformation)', () => {
+        const stringFields: Field[] = [
+          {
+            name: 'Name',
+            type: FieldType.string,
+            values: ['hello world'],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({ text: 'SHOULD NOT BE USED', numeric: NaN, color: undefined, title: undefined })),
+          },
+        ];
+        const frame = createDataFrame({ fields: stringFields });
+        const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+        const stringRows = frameToRecords(frame);
+
+        const stringMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        getRowHeight(stringFields, stringRows[0], [100], 36, [stringMeasurer], 20, 10);
+
+        // String fields pass through the raw value, not the display-formatted value
+        expect(stringMeasurer.measure).toHaveBeenCalledWith('hello world', 100, stringFields[0], 0, 20);
+      });
+
+      it('uses the display name for header rows (rowIdx === -1) regardless of field type', () => {
+        const EPOCH_MS = 1711462200000;
+
+        const timeFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [EPOCH_MS],
+            config: { custom: { wrapText: true } },
+            display: jest.fn(() => ({
+              text: '2024-03-26 14:30:00',
+              numeric: EPOCH_MS,
+              color: undefined,
+              title: undefined,
+            })),
+          },
+        ];
+
+        const timeMeasurer = {
+          measure: jest.fn((_value, _width, _field, _rowIdx, lineHeight) => lineHeight),
+          fieldIdxs: [0],
+        };
+
+        // rowIdx -1 = header row; value should be the field display name
+        getRowHeight(timeFields, { __index: -1, __depth: 0 }, [100], 36, [timeMeasurer], 20, 10);
+
+        expect(timeMeasurer.measure).toHaveBeenCalledWith('Time', 100, timeFields[0], -1, 20);
+        // display() should not have been called for header rows
+        expect(timeFields[0].display).not.toHaveBeenCalled();
       });
     });
   });
@@ -1409,6 +1786,624 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('computeContentAwareColWidths', () => {
+    // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
+    // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
+    // estimated from avgCharWidth, so we pin that to CHAR_W too (jsdom's real measureText returns
+    // 0, which would otherwise make both meaningless). CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
+    const CHAR_W = 8;
+    const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
+
+    const makeTypographyCtx = () => {
+      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      jest
+        .spyOn(typographyCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({
+          width: String(text).length * CHAR_W,
+        })) as typeof typographyCtx.ctx.measureText);
+      typographyCtx.avgCharWidth = CHAR_W;
+      return typographyCtx;
+    };
+
+    const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
+      computeContentAwareColWidths(fields, availWidth, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        showTypeIcons,
+      });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it('sizes a numeric column to its content, well under the 150px even-split default (#634)', () => {
+      // header "Value" (5) => 5*8 + sort arrow 22 + 13 = 75; content "999" (3) => 3*8+13 = 37; so 75 wins.
+      // availWidth == content total, so there is no leftover to grow into.
+      const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [1, 42, 999], config: {} }];
+
+      const [width] = compute(fields, 75);
+
+      expect(width).toBe(75);
+      expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: { custom: { width: 100 } } },
+        { name: 'B', type: FieldType.string, values: ['hi'], config: {} },
+      ];
+      // B content "hi" (2) => 29, header "B" (1) => 21 => floored to MIN_WIDTH 50.
+      // leftover = 300 - 100 - 50 = 150, one auto column, so it absorbs all of it: 50 + 150 = 200.
+      expect(compute(fields, 300)).toEqual([100, 200]);
+    });
+
+    it('grows text columns far more than numeric columns, but still lets numeric grow a little', () => {
+      const fields: Field[] = [
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floor 50 (no text wiggle)
+        { name: 'AAAA', type: FieldType.string, values: ['hello world'], config: {} }, // 11*8+13+6 = 107
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} }, // 27 => floor 50
+      ];
+      // content widths [50, 107, 50] total 207; availWidth 401 => leftover 194 split by growth share
+      // growthWeight × √(content) (numeric 0.35, string 1): N 0.35√50=2.47, AAAA √107=10.34,
+      // B √50=7.07 => total 19.89.
+      //   N: 50 + 194*(2.47/19.89) = 74; AAAA: 107 + 194*(10.34/19.89) = 208; B: 50 + 194*(7.07/19.89) = 119.
+      const result = compute(fields, 401);
+
+      expect(result).toEqual([74, 208, 119]);
+      // numeric grew, but much less than either text column; and the wider text column (AAAA) grew
+      // more than the narrower one (B) since growth scales with √(content width).
+      expect(result[0] - 50).toBeGreaterThan(0);
+      expect(result[1] - 107).toBeGreaterThan(result[0] - 50);
+      expect(result[1] - 107).toBeGreaterThan(result[2] - 50);
+    });
+
+    it('grows numeric and boolean columns only modestly while a string column takes most of the leftover', () => {
+      const fields: Field[] = [
+        { name: 'N', type: FieldType.number, values: [1], config: {} }, // floor 50
+        { name: 'B', type: FieldType.boolean, values: [true], config: {} }, // floor 50
+        { name: 'S', type: FieldType.string, values: ['x'], config: {} }, // floor 50
+      ];
+      // All three have content width 50, so √(content) is shared and only the weight differs
+      // (N/B 0.35, S 1 => total 1.7): N/B 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
+      expect(compute(fields, 350)).toEqual([91, 91, 168]);
+    });
+
+    it('grows every auto column equally when they share a type (all-numeric table still fills the panel)', () => {
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.number, values: [1], config: {} }, // floor 50
+        { name: 'B', type: FieldType.number, values: [2], config: {} }, // floor 50
+      ];
+      // The shared weight cancels out, so both numeric columns split the leftover equally: 150 each.
+      expect(compute(fields, 300)).toEqual([150, 150]);
+    });
+
+    it('honors a configured minWidth as the floor for an auto column', () => {
+      const fields: Field[] = [
+        { name: 'x', type: FieldType.string, values: ['a'], config: { custom: { minWidth: 120 } } },
+      ];
+      // content is tiny but minWidth floors it; availWidth == floor so no growth.
+      expect(compute(fields, 120)).toEqual([120]);
+    });
+
+    it('caps a very long value at MAX_AUTO_WIDTH and keeps it (grid scrolls) when it overflows', () => {
+      const longValue = 'x'.repeat(100); // 100*8+13 = 813, well over the 400 cap
+      const fields: Field[] = [{ name: 's', type: FieldType.string, values: [longValue], config: {} }];
+      // availWidth < cap, so leftover is negative: width stays at the cap and the grid scrolls.
+      expect(compute(fields, 100)).toEqual([COLUMN.MAX_AUTO_WIDTH]);
+    });
+
+    it('measures the display-formatted string, not the raw value', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.number,
+          values: [1],
+          config: {},
+          // formats 1 -> "1 MiB" (length 5); the raw "1" would only be length 1.
+          display: (v) => ({ text: `${v} MiB`, numeric: Number(v) }),
+        },
+      ];
+      // "1 MiB" (5) => 5*8+13 = 53, which beats header "S" (1) => 21. availWidth < content so the
+      // column can't grow to fill it (which would mask the difference): the raw "1" would size to
+      // 50 (floored), so landing on 53 proves we measured the display string.
+      expect(compute(fields, 40)).toEqual([53]);
+    });
+
+    it('measures a string field through its display processor, not the raw value', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['fast'],
+          config: {},
+          // string fields can still carry units/value mappings; here "fast" renders as
+          // "fast response time" (length 18) — AutoCell would show that, so we measure it.
+          display: (v) => ({ text: `${v} response time`, numeric: NaN }),
+        },
+      ];
+      // "fast response time" (18) => 18*8+13 + 6 text wiggle = 163, beating header "S" (1) => 21.
+      // availWidth 100 is below the content width, so the column overflows and keeps 163 (grid
+      // scrolls). The raw "fast" (4 => floored to 50) would instead grow to fill 100, so 163 proves
+      // we used the display processor.
+      expect(compute(fields, 100)).toEqual([163]);
+    });
+
+    it('uses a fixed default width for graphical (non-text) cells regardless of content', () => {
+      const fields: Field[] = [
+        {
+          name: 'spark',
+          type: FieldType.number,
+          values: [999999999999],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } } },
+        },
+      ];
+      expect(compute(fields, COLUMN.DEFAULT_WIDTH)).toEqual([COLUMN.DEFAULT_WIDTH]);
+    });
+
+    it('uses a small fixed width for image columns rather than the graphical default', () => {
+      const fields: Field[] = [
+        {
+          name: 'img',
+          type: FieldType.string,
+          values: ['http://example.com/a-very-long-image-url-that-should-not-widen-the-column.png'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Image } } },
+        },
+      ];
+      // Images take IMAGE_WIDTH regardless of the URL length; availWidth == it, so no growth.
+      expect(compute(fields, COLUMN.IMAGE_WIDTH)).toEqual([COLUMN.IMAGE_WIDTH]);
+    });
+
+    it('sizes a markdown column to its header, not its (wrapping) source string', () => {
+      const fields: Field[] = [
+        {
+          name: 'md',
+          type: FieldType.string,
+          values: ['# A long heading with [a link](http://example.com/really/long/url) and **bold** text'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown } } },
+        },
+      ];
+      // Markdown always wraps and renders formatted, so it contributes no content width: header "md"
+      // (2*8 + sort arrow 22 + 13 = 51) wins. The long source would otherwise stretch it to the cap.
+      expect(compute(fields, 51)).toEqual([51]);
+    });
+
+    // render-hooks attaches displayJsonValue to JSONView / `other` fields, so the value renders as
+    // pretty-printed JSON. How it's measured depends on wrapping (see measureJsonColWidth).
+    const jsonField = (value: unknown, wrap: boolean): Field => {
+      const field: Field = {
+        name: 'j',
+        type: FieldType.other,
+        values: [value],
+        config: { custom: { ...(wrap ? { wrapText: true } : {}) } },
+        display: (v) => ({ text: String(v), numeric: NaN }),
+      };
+      field.display = displayJsonValue(field);
+      return field;
+    };
+
+    it('sizes a wrapped JSON column to its widest line, not the whole pretty-printed blob', () => {
+      // With wrapText on the JSON renders as `pre`, one visible line per JSON line, so the column is
+      // sized to its widest line. Measuring total length here would pin it to MAX_AUTO_WIDTH.
+      const value = { name: 'x', nested: { alpha: 1, beta: 2 } };
+      const pretty = JSON.stringify(value, null, ' ');
+      const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
+      const expected = longestLine * CHAR_W + CELL_CHROME;
+
+      // availWidth below the content so it can't grow to fill (which would mask the difference).
+      expect(compute([jsonField(value, true)], 40)).toEqual([expected]);
+      // the widest line is far narrower than the whole blob, which would hit the cap.
+      expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
+      expect(pretty.length * CHAR_W + CELL_CHROME).toBeGreaterThan(COLUMN.MAX_AUTO_WIDTH);
+    });
+
+    it('sizes an unwrapped JSON column to the whole collapsed value, not just its widest line', () => {
+      // Without wrapText the newlines collapse and the JSON renders on a single line, so sizing to
+      // the widest line would under-measure and clip it. Size to the whole value (bounded by the cap).
+      const value = { a: 1, b: 2 };
+      const pretty = JSON.stringify(value, null, ' ');
+      const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
+      const expected = pretty.length * CHAR_W + CELL_CHROME;
+
+      expect(compute([jsonField(value, false)], 40)).toEqual([expected]);
+      // small enough to stay under the cap, and wider than the widest-line sizing would give.
+      expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
+      expect(expected).toBeGreaterThan(longestLine * CHAR_W + CELL_CHROME);
+    });
+
+    it('sizes an actions column to fit its buttons via getActions (fuzzy width)', () => {
+      const fields: Field[] = [
+        {
+          name: 'act',
+          type: FieldType.other,
+          values: [0],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
+        },
+      ];
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const getActions = (() => [{ title: 'Edit' }, { title: 'Delete' }]) as unknown as GetActionsFunctionLocal;
+      // "Edit" (4*8+20=52) + gap 6 + "Delete" (6*8+20=68) => rowTotal 126; +CELL_CHROME 13 = 139.
+      const widths = computeContentAwareColWidths(fields, 139, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        getActions,
+      });
+      expect(widths).toEqual([139]);
+    });
+
+    it('falls back to header/floor width for an actions column when getActions is not wired', () => {
+      const fields: Field[] = [
+        {
+          name: 'act',
+          type: FieldType.other,
+          values: [0],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
+        },
+      ];
+      // No getActions => measurer returns 0, so the column falls back to its header width
+      // ("act" 3*8 + sort arrow 22 + 13 = 59).
+      expect(
+        computeContentAwareColWidths(fields, 59, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        })
+      ).toEqual([59]);
+    });
+
+    it('sizes a data links column to fit its links via getCellLinks (fuzzy width)', () => {
+      const mockLinks: LinkModel[] = [
+        { title: 'Open dashboard', href: 'http://x/1', target: '_blank', origin: { datasourceUid: 'test' } },
+      ];
+      const fields: Field[] = [
+        {
+          name: 'lnk',
+          type: FieldType.string,
+          values: ['x'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks } } },
+          getLinks: () => mockLinks,
+        },
+      ];
+      // "Open dashboard" (14*8+8=120); one link => rowTotal 120; +CELL_CHROME 13 = 133.
+      expect(
+        computeContentAwareColWidths(fields, 133, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        })
+      ).toEqual([133]);
+    });
+
+    it('sizes a wrapped data links column to the widest single link, not the summed run', () => {
+      const mockLinks: LinkModel[] = [
+        { title: 'Open dashboard', href: 'http://x/1', target: '_blank', origin: { datasourceUid: 'test' } },
+        { title: 'Docs', href: 'http://x/2', target: '_blank', origin: { datasourceUid: 'test' } },
+      ];
+      const field = (wrap: boolean): Field => ({
+        name: 'lnk',
+        type: FieldType.string,
+        values: ['x'],
+        config: {
+          custom: { cellOptions: { type: TableCellDisplayMode.DataLinks }, ...(wrap ? { wrapText: true } : {}) },
+        },
+        getLinks: () => mockLinks,
+      });
+      // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
+      // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
+      const wrapped = computeContentAwareColWidths([field(true)], 50, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      const inline = computeContentAwareColWidths([field(false)], 50, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      expect(wrapped).toEqual([133]);
+      expect(inline[0]).toBeGreaterThan(wrapped[0]);
+    });
+
+    it('sizes an auto column wide enough for its footer reducer value', () => {
+      const withFooter: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [100000, 200000, 300000],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      const noFooter: Field = { ...withFooter, config: {} };
+      // The footer sum (600000) plus its reducer label is wider than the body values, so the column
+      // with a footer is sized wider than the same column without one (which just hugs its cells).
+      const [withW] = compute([withFooter], 60);
+      const [withoutW] = compute([noFooter], 60);
+      expect(withW).toBeGreaterThan(withoutW);
+    });
+
+    it('canvas-measures the footer with the medium-weight (header) context, matching how it renders', () => {
+      // SummaryCell renders the footer value at fontWeightMedium, so it's measured exactly with the
+      // header (medium-weight) context, not estimated from the body avgCharWidth — otherwise the
+      // value ellipsizes. A header context that measures wider must therefore widen a footer column.
+      const field: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [100000, 200000, 300000],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      const wideHeaderCtx = makeTypographyCtx();
+      jest
+        .spyOn(wideHeaderCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((t: string) => ({
+          width: String(t).length * CHAR_W * 2,
+        })) as typeof wideHeaderCtx.ctx.measureText);
+
+      const [baseline] = computeContentAwareColWidths([field], 40, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      const [wideHeader] = computeContentAwareColWidths([field], 40, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: wideHeaderCtx,
+      });
+
+      // the footer ("SUM" + "600000") drives the width, so the wider header context widens the column.
+      expect(wideHeader).toBeGreaterThan(baseline);
+    });
+
+    it('does not mutate the shared field state.calcs while measuring a footer', () => {
+      const field: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [1, 2, 3],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      compute([field], 200);
+      // reduceField caches into field.state.calcs and the footer reuses it; the width calc must not
+      // poison that cache with whole-dataset stats.
+      expect(field.state?.calcs).toBeUndefined();
+    });
+
+    it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {
+      // No explicit cellOptions, so the cell type is Auto; getAutoRendererDisplayMode maps a geo
+      // field to Geo, which is graphical. availWidth < the default leaves no room to grow, so text
+      // measurement (which would floor to MIN_WIDTH) is distinguishable from the graphical default.
+      const fields: Field[] = [{ name: 'g', type: FieldType.geo, values: [new Point([0, -74.1])], config: {} }];
+
+      expect(compute(fields, 40)).toEqual([COLUMN.DEFAULT_WIDTH]);
+    });
+
+    it('sizes a wrapped column to its content (capped) so content-heavy columns stay wider', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['x'],
+          config: { custom: { wrapText: true } },
+        },
+        {
+          name: 'Desc',
+          type: FieldType.string,
+          values: ['a very long value that would wrap across multiple lines'], // 54 chars
+          config: { custom: { wrapText: true } },
+        },
+      ];
+      // Wrapped columns are still measured by content: the sparse "S" floors to MIN_WIDTH 50, while
+      // the long "Desc" value (54*8+13 = 445) is capped at MAX_AUTO_WIDTH. availWidth == their sum,
+      // so no growth — the content-heavy wrapped column is much wider than the sparse one.
+      expect(compute(fields, 50 + COLUMN.MAX_AUTO_WIDTH)).toEqual([50, COLUMN.MAX_AUTO_WIDTH]);
+    });
+
+    it('reserves header icon space so the label is not truncated by the type icon', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + sort-arrow space 22 + chrome 13 = 89.
+      expect(compute(fields, 89, /* showTypeIcons */ true)).toEqual([89]);
+    });
+
+    it('reserves header space for the sort arrow on every sortable column, sorted or not', () => {
+      // Reserving it up front (rather than when the column becomes sorted) is what keeps auto widths
+      // from changing when the user clicks a header to sort.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + sort-arrow space 22 + chrome 13 = 67; content "a" is tiny.
+      expect(compute(fields, 67)).toEqual([67]);
+    });
+
+    it('reserves no sort-arrow space on a column with sorting disabled', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { sortable: false } } },
+      ];
+      // header "Name" (4) => 32 + chrome 13 = 45, so the column floors to MIN_WIDTH 50 instead of 67.
+      expect(compute(fields, 50)).toEqual([50]);
+    });
+
+    it('measures header labels with the medium-weight header context when provided', () => {
+      // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
+      // them. This mock context measures every glyph 2px wider than the body's CHAR_W.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: String(text).length * (CHAR_W + 2) })) as never);
+
+      const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [9], config: {} }];
+      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font
+      // => 5*10 + sort arrow 22 + 13 = 85 wins. Regular-weight measurement would give 5*8+22+13 = 75,
+      // so landing on 85 proves the header context was used. availWidth == 85 leaves no room to grow.
+      const widths = computeContentAwareColWidths(fields, 85, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      expect(widths).toEqual([85]);
+    });
+
+    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
+      // Real canvas measurement returns fractional widths, unlike this suite's integer CHAR_W mock.
+      // With no leftover to distribute (the auto columns already overflow availWidth), the second
+      // column's cumulative running sum can cross a whole-pixel boundary the "wrong" way and shave
+      // its own fractional need down — even though it has zero slack to give up, being sized to its
+      // header's exact minimum. Ceiling each column independently in that branch avoids that.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: headerWidths[String(text)] })) as never);
+
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
+      ];
+      // header "A" => 37.5 + sort arrow 22 + chrome 13 = 72.5; header "B" => 47.4 + 22 + 13 = 82.4.
+      // Content "x" is tiny, so the header drives both. availWidth 154 < their 154.9 total, so the
+      // columns overflow and there is no leftover to distribute.
+      const widths = computeContentAwareColWidths(fields, 154, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
+      expect(widths).toEqual([73, 83]);
+    });
+
+    it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
+      const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
+      const fields: Field[] = [
+        {
+          name: 'big',
+          type: FieldType.number,
+          values: Array.from({ length: 100_000 }, (_, i) => i),
+          config: {},
+          display,
+        },
+      ];
+
+      compute(fields, 1000);
+
+      // one auto column => sample size clamps to the MAX_SAMPLE of 100, spread over the 100k rows.
+      expect(display).toHaveBeenCalledTimes(100);
+    });
+
+    it('spreads the sample across the field so a sorted column is sized beyond its first rows', () => {
+      // Ascending-style layout: many short values, then one long value in the last row. A
+      // front-biased sample would miss the long tail; the evenly-spaced sample includes the last row.
+      const values = [...new Array(50).fill('x'), 'X'.repeat(30)]; // 51 rows, long value at index 50
+      const fields: Field[] = [{ name: 'c', type: FieldType.string, values, config: {} }];
+      // sampleSize 5 => indices [0, 13, 25, 38, 50]; index 50 (30 chars) drives width:
+      // 30*8+13 + 6 text wiggle = 259.
+      const widths = computeContentAwareColWidths(fields, 259, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        sampleSize: 5,
+      });
+      expect(widths).toEqual([259]);
+    });
+
+    describe('pill columns', () => {
+      // Pill chip text is estimated from character count using the body ctx's avgCharWidth (no
+      // separate pill-font measurement), which makeTypographyCtx pins to CHAR_W. Pill geometry:
+      // 12px chip padding + 4px inter-pill gap (see the per-case comments below).
+      const pillField = (name: string, values: unknown[]): Field => ({
+        name,
+        type: FieldType.other,
+        values,
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill } } },
+      });
+
+      const computeWithPills = (fields: Field[], availWidth: number) =>
+        computeContentAwareColWidths(fields, availWidth, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        });
+
+      it('sizes to fit an average row of pills across a couple of entries, not the longest value', () => {
+        // one row: "AB" (2*8+12=28) + gap 4 + "CDE" (3*8+12=36) => rowTotal 68; +CELL_CHROME 13 = 81.
+        const [width] = computeWithPills([pillField('a', [['AB', 'CDE']])], 81);
+        expect(width).toBe(81);
+      });
+
+      it('never sizes below the widest single pill, so no chip is clipped', () => {
+        // avg row total is small (short and long rows), but the widest pill floors the width so it
+        // is not truncated: "A".repeat(20) => 20*8+12 = 172; +CELL_CHROME 13 = 185.
+        const [width] = computeWithPills([pillField('a', [['X'], ['A'.repeat(20)]])], 185);
+        expect(width).toBe(185);
+        // (average row total would only be (20 + 172) / 2 = 96, well below what we return)
+        expect(width).toBeGreaterThan(96 + CELL_CHROME);
+      });
+
+      it('caps a many-pill column at MAX_AUTO_WIDTH so it wraps to a few lines and scrolls', () => {
+        const manyPills = Array.from({ length: 10 }, () => 'XXXXXXXX'); // 10 pills, 8 chars each
+        const [width] = computeWithPills([pillField('a', [manyPills])], 100);
+        expect(width).toBe(COLUMN.MAX_AUTO_WIDTH);
+      });
+
+      it('measures the display-formatted pill text, not the raw value', () => {
+        const field = pillField('a', [['x']]);
+        // PillCell renders field.display(pill); a value mapping turns the raw "x" (1 char) into
+        // "mapped" (6 chars) => 6*8+12 = 60; +CELL_CHROME 13 = 73. The raw "x" would only be
+        // 1*8+12=20 (+13=33), so landing on 73 proves we measured the formatted text.
+        field.display = (v) => ({ text: v === 'x' ? 'mapped' : String(v), numeric: NaN });
+        const [width] = computeWithPills([field], 73);
+        expect(width).toBe(73);
+      });
+
+      it('grows a pill column with more entries wider than a sparser pill column', () => {
+        const fields: Field[] = [
+          // 3 pills (4*8+12=44 each) + 2 gaps of 4 => 140; +CELL_CHROME 13 = 153
+          pillField('A', [['xxxx', 'yyyy', 'zzzz']]),
+          // 1 pill (4*8+12=44) => 44; +CELL_CHROME 13 = 57
+          pillField('D', [['wwww']]),
+        ];
+        // contentTotal 210; availWidth 410 => leftover 200. Growth share is √(content) (both weight
+        // 1): √153=12.37 vs √57=7.55 => total 19.92. The busier column takes the larger share:
+        //   A: 153 + 200*(12.37/19.92) = 277; D: 57 + 200*(7.55/19.92) = 133.
+        expect(computeWithPills(fields, 410)).toEqual([277, 133]);
+      });
+
+      it('measures wrapped pill columns by content instead of collapsing them to the header', () => {
+        const wrappedPill = (name: string, values: unknown[]): Field => ({
+          ...pillField(name, values),
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
+        });
+        // Wrapping is on, but pills are wrap-aware so they still size to their pill content — the
+        // result matches the non-wrapped case above ([277, 133]). Before the fix, wrapText collapsed
+        // both columns to their (equal, 21px) header width, so pill count made no difference.
+        const fields = [wrappedPill('A', [['xxxx', 'yyyy', 'zzzz']]), wrappedPill('D', [['wwww']])];
+        expect(computeWithPills(fields, 410)).toEqual([277, 133]);
+      });
+    });
+  });
+
+  describe('buildNestedColumnWidthsMap', () => {
+    it('maps field display names to ColumnWidth entries', () => {
+      const fields: Field[] = [
+        { name: 'Time', type: FieldType.time, values: [], config: {}, state: { displayName: 'Time' } },
+        { name: 'Value', type: FieldType.number, values: [], config: {}, state: { displayName: 'Value' } },
+      ];
+      const widths = [120, 200];
+
+      const result = buildNestedColumnWidthsMap(fields, widths);
+
+      expect(result.get('Time')).toEqual({ type: 'resized', width: 120 });
+      expect(result.get('Value')).toEqual({ type: 'resized', width: 200 });
+      expect(result.size).toBe(2);
+    });
+
+    it('uses the field display name (from state.displayName) as the map key', () => {
+      const fields: Field[] = [
+        {
+          name: 'raw_name',
+          type: FieldType.string,
+          values: [],
+          config: {},
+          state: { displayName: 'Pretty Name' },
+        },
+      ];
+
+      const result = buildNestedColumnWidthsMap(fields, [150]);
+
+      expect(result.has('Pretty Name')).toBe(true);
+      expect(result.has('raw_name')).toBe(false);
+    });
+
+    it('returns an empty map for empty inputs', () => {
+      expect(buildNestedColumnWidthsMap([], []).size).toBe(0);
+    });
+  });
+
   describe('displayJsonValue', () => {
     let field: Field;
     beforeEach(() => {
@@ -1457,7 +2452,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [30, 20, 10] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, [], getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 30 },
@@ -1478,7 +2473,7 @@ describe('TableNG utils', () => {
         { columnKey: 'time', direction: 'ASC' },
         { columnKey: 'value2', direction: 'DESC' },
       ];
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
       expect(sorted).toMatchObject([
         { time: 1, value: 10, value2: 40 },
@@ -1495,7 +2490,7 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const rows = frameToRecords(frame);
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
       const sorted = applySort(rows, frame.fields, sortColumns, getColumnTypes(frame.fields), false);
@@ -1527,7 +2522,7 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const sorted = applySort(
         frameToRecords(frame),
         frame.fields,
@@ -1560,7 +2555,7 @@ describe('TableNG utils', () => {
 
       const sortColumns: SortColumn[] = [{ columnKey: 'time', direction: 'ASC' }];
 
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const sorted = applySort(frameToRecords(frame), frame.fields, sortColumns, getColumnTypes(frame.fields), false);
 
       expect(sorted).toMatchObject([
@@ -1579,8 +2574,8 @@ describe('TableNG utils', () => {
           { name: 'value', values: [10, 20, 30] },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(frameToRecords(frame), {}, frame.fields, false);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+      const { filteredRows: filtered } = applyFilter(frameToRecords(frame), {}, frame.fields, false);
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
         { time: 1, value: 20 },
@@ -1605,9 +2600,9 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1636,8 +2631,8 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
-      const filtered = applyFilter(
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
+      const { filteredRows: filtered } = applyFilter(
         frameToRecords(frame),
         {
           time: { filteredSet: new Set(['1', '2']), displayName: 'time' },
@@ -1675,9 +2670,9 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         {
           time: { filteredSet: new Set(['1']), displayName: 'time' },
@@ -1694,6 +2689,44 @@ describe('TableNG utils', () => {
         { time: 1, value: 20, __depth: 0 },
         { __index: 1, __depth: 1 },
       ]);
+    });
+
+    it('ignores scoped filter entries when parentIndex is not passed (regression: useNestedRows must pass parentIndex)', () => {
+      // This is the bug: calling applyFilter without parentIndex when all filter entries have
+      // parentIndex set causes them to be treated as top-level and silently skipped, leaving
+      // the nested table unfiltered. The fix is to always pass parentRow.__index.
+      const frame = createDataFrame({
+        fields: [
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20, 30],
+            display: (v) => ({ text: String(v), numeric: NaN }),
+          },
+        ],
+      });
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
+      const records = frameToRecords(frame, 5);
+
+      // Bug: no parentIndex arg — scoped filter is ignored, all rows returned
+      const { filteredRows: buggy } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false
+      );
+      expect(buggy).toHaveLength(3); // filter had no effect
+
+      // Fix: pass parentIndex — scoped filter is applied correctly
+      const { filteredRows: fixed } = applyFilter(
+        records,
+        { value: { filteredSet: new Set(['10']), displayName: 'value', parentIndex: 5 } },
+        frame.fields,
+        false,
+        5
+      );
+      expect(fixed).toHaveLength(1);
+      expect(fixed).toMatchObject([{ value: 10 }]);
     });
 
     it('filters the records by the filter columns with a nested frame and a parent index', () => {
@@ -1713,13 +2746,14 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame, 'nested');
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName), 'nested');
       const records = frameToRecords(frame, 3);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 3 } },
         frame.fields,
-        false
+        false,
+        3
       );
       expect(filtered).toMatchObject([
         { time: 1, value: 10 },
@@ -1727,7 +2761,7 @@ describe('TableNG utils', () => {
       ]);
 
       // using a parent index that doesn't match the rows in the set, the rows should not be filtered.
-      const filtered2 = applyFilter(
+      const { filteredRows: filtered2 } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time', parentIndex: 2 } },
         frame.fields,
@@ -1757,9 +2791,9 @@ describe('TableNG utils', () => {
           },
         ],
       });
-      const frameToRecords = compileFrameToRecords(frame);
+      const frameToRecords = compileFrameToRecords(frame.fields.map(getDisplayName));
       const records = frameToRecords(frame);
-      const filtered = applyFilter(
+      const { filteredRows: filtered } = applyFilter(
         records,
         { time: { filteredSet: new Set(['1']), displayName: 'time' } },
         frame.fields,
@@ -1774,6 +2808,114 @@ describe('TableNG utils', () => {
         { time: 1, value: 10 },
         { time: 1, value: 20 },
       ]);
+    });
+  });
+
+  describe('cross-filter metadata', () => {
+    const makeField = (name: string, values: unknown[]) => ({
+      name,
+      type: FieldType.string,
+      values,
+      config: {},
+      display: (v: unknown) => ({ text: String(v), numeric: NaN }),
+    });
+
+    const makeRows = (values: Array<{ category: string; status: string }>): TableRow[] =>
+      values.map((v, i) => ({ __depth: 0, __index: i, category: v.category, status: v.status }));
+
+    const rows = makeRows([
+      { category: 'A', status: 'up' },
+      { category: 'A', status: 'down' },
+      { category: 'B', status: 'up' },
+      { category: 'B', status: 'down' },
+      { category: 'C', status: 'up' },
+    ]);
+
+    const fields = [
+      makeField('category', ['A', 'A', 'B', 'B', 'C']),
+      makeField('status', ['up', 'down', 'up', 'down', 'up']),
+    ];
+
+    it('returns empty crossFilterOrder and full rows as tail when no filters active', () => {
+      const { crossFilterOrder, crossFilterTailRows } = applyFilter(rows, {}, fields);
+      expect(crossFilterOrder).toEqual([]);
+      expect(crossFilterTailRows).toHaveLength(rows.length);
+    });
+
+    it('stores all rows before the first filter and the filtered subset as tail', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category']);
+      // before the first filter: all rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // tail: only rows with category A
+      expect(crossFilterTailRows).toHaveLength(2);
+      expect(crossFilterTailRows.every((r) => r['category'] === 'A')).toBe(true);
+    });
+
+    it('builds a cascading chain for multiple filters', () => {
+      const filter = {
+        category: { filteredSet: new Set(['A', 'B']), displayName: 'category' },
+        status: { filteredSet: new Set(['up']), displayName: 'status' },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(rows, filter, fields);
+      expect(crossFilterOrder).toEqual(['category', 'status']);
+      // before category filter: all 5 rows
+      expect(crossFilterRows['category']).toHaveLength(5);
+      // before status filter: rows passing category (A or B) = 4 rows
+      expect(crossFilterRows['status']).toHaveLength(4);
+      // tail: rows passing both = A-up and B-up
+      expect(crossFilterTailRows).toHaveLength(2);
+    });
+
+    it('scopes top-level cross-filter to depth-0 rows only', () => {
+      const mixedRows: TableRow[] = [
+        ...rows,
+        // simulate a depth-1 nested container row that should be ignored
+        { __depth: 1, __index: 0 },
+      ];
+      const filter = {
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+      };
+      const { crossFilterRows } = applyFilter(mixedRows, filter, fields);
+      // depth-1 row must not be counted
+      expect(crossFilterRows['category']).toHaveLength(5);
+    });
+
+    it('scopes nested cross-filter to matching parentIndex only', () => {
+      const nestedRows: TableRow[] = [
+        { __depth: 0, __index: 0, __parentIndex: 7, category: 'A', status: 'up' },
+        { __depth: 0, __index: 1, __parentIndex: 7, category: 'B', status: 'down' },
+        { __depth: 0, __index: 2, __parentIndex: 7, category: 'A', status: 'down' },
+      ];
+      const filter = {
+        'category-7': { filteredSet: new Set(['A']), displayName: 'category', parentIndex: 7 },
+      };
+      const { crossFilterOrder, crossFilterRows, crossFilterTailRows } = applyFilter(
+        nestedRows,
+        filter,
+        fields,
+        false,
+        7
+      );
+      expect(crossFilterOrder).toEqual(['category-7']);
+      // before the filter: all 3 nested rows
+      expect(crossFilterRows['category-7']).toHaveLength(3);
+      // tail: only the 2 rows with category A
+      expect(crossFilterTailRows).toHaveLength(2);
+    });
+
+    it('ignores filters from a different nesting scope', () => {
+      const filter = {
+        // top-level filter — should be ignored when parentIndex=7 is requested
+        category: { filteredSet: new Set(['A']), displayName: 'category' },
+        'status-7': { filteredSet: new Set(['up']), displayName: 'status', parentIndex: 7 },
+      };
+      const { crossFilterOrder } = applyFilter(rows, filter, fields, false, 7);
+      // only the nested filter for parentIndex 7 should appear
+      expect(crossFilterOrder).toEqual(['status-7']);
     });
   });
 
@@ -2031,6 +3173,19 @@ describe('TableNG utils', () => {
       values: [new Point([0, -74.1])],
       config: {},
     };
+    const geoFieldInvalid: Field = {
+      name: 'geo-field',
+      type: FieldType.geo,
+      values: ['6y4h9b'],
+      config: {},
+    };
+
+    const formatGeometry = (val: Geometry) =>
+      new WKT().writeGeometry(val, {
+        featureProjection: 'EPSG:3857',
+        dataProjection: 'EPSG:4326',
+      });
+
     it.each([
       { name: 'numbers', input: { valueIdx: 0, field: numberFieldWithNulls } },
       { name: 'string', input: { valueIdx: 0, field: stringField } },
@@ -2045,9 +3200,11 @@ describe('TableNG utils', () => {
       { name: 'sparkline (no x)', input: { valueIdx: 0, field: sparklineFieldNoX } },
       { name: 'array', input: { valueIdx: 0, field: arrayField } },
       { name: 'object', input: { valueIdx: 0, field: objectField } },
-      { name: 'geo', input: { valueIdx: 0, field: geoField } },
-    ])('should handle $name', ({ input: { field, valueIdx = 0 } }) => {
-      expect(buildInspectValue(field.values[valueIdx], field)).toMatchSnapshot();
+      { name: 'geo', input: { valueIdx: 0, field: geoField, formatGeometry } },
+      { name: 'geo w/out formatGeometry', input: { valueIdx: 0, field: geoField } },
+      { name: 'geo w/ invalid format', input: { valueIdx: 0, field: geoFieldInvalid, formatGeometry } },
+    ])('should handle $name', ({ input: { field, valueIdx = 0, formatGeometry } }) => {
+      expect(buildInspectValue(field.values[valueIdx], field, formatGeometry)).toMatchSnapshot();
     });
   });
 });

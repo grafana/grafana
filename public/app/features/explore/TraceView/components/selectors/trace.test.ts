@@ -14,10 +14,10 @@
 
 import { values as _values } from 'lodash';
 
-import TreeNode from 'app/features/explore/TraceView/components/utils/TreeNode';
+import type TreeNode from 'app/features/explore/TraceView/components/utils/TreeNode';
 
 import traceGenerator from '../demo/trace-generators';
-import { TraceResponse } from '../types/trace';
+import { type TraceResponse } from '../types/trace';
 
 import { getSpanId, getSpanParentId } from './span';
 import * as traceSelectors from './trace';

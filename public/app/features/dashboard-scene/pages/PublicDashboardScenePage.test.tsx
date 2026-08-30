@@ -1,21 +1,21 @@
-import { screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
-import { PublicDashboardScenePage, Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
+import { PublicDashboardScenePage, type Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -129,6 +129,19 @@ describe('PublicDashboardScenePage', () => {
     // // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
+  });
+
+  it('syncs config.publicDashboardAccessToken from the URL and restores the previous value on unmount', async () => {
+    config.publicDashboardAccessToken = 'token-before-navigation';
+    const view = setup('token-from-route');
+
+    await waitFor(() => {
+      expect(config.publicDashboardAccessToken).toBe('token-from-route');
+    });
+
+    view.unmount();
+
+    expect(config.publicDashboardAccessToken).toBe('token-before-navigation');
   });
 
   it('can render public dashboard', async () => {

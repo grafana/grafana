@@ -48,7 +48,7 @@ To create a library panel, follow these steps:
 1. In the **Library panel name** field, enter the name.
 1. In the **Save in folder** drop-down list, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
@@ -62,14 +62,15 @@ Add a Grafana library panel to a dashboard when you want to provide visualizatio
 To add a library panel, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Click **New** and select **New Dashboard** in the drop-down list.
-1. On the empty dashboard, click **+ Add library panel**.
+1. Click **New** and select **New dashboard** in the drop-down list.
+1. On the empty dashboard, click or drag the panel onto the dashboard.
+1. Click **Use library panel**.
 
    The **Add panel from panel library** drawer opens.
 
 1. Filter the list or search to find the panel you want to add.
 1. Click a panel to add it to the dashboard.
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 
@@ -89,7 +90,9 @@ To unlink a library panel, follow these steps:
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Unlink library panel**.
 1. Click **Yes, unlink**.
-1. Click **Save dashboard** and **Exit edit**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
 
 Alternatively, if you know where the library panel is being used, you can go directly to that dashboard and start at step 7.
 
@@ -107,7 +110,7 @@ To replace a library panel with a different one, follow these steps:
 1. Hover over any part of the panel you want to unlink to display the menu icon on the top-right corner.
 1. Click the menu icon and select **More > Replace library panel**.
 1. Select the replacement library panel.
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** and **Exit edit**.
 

@@ -4,13 +4,13 @@ import { useRef, useMemo } from 'react';
 import * as React from 'react';
 import { useClickAway } from 'react-use';
 
-import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+import { type VariableSuggestion, type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
-  activeRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement | null>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
@@ -103,7 +103,7 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
-  activeRef?: React.RefObject<HTMLDivElement>;
+  activeRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const DataLinkSuggestionsList = React.memo(

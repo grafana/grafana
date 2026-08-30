@@ -1,10 +1,10 @@
-import { getDataSourceSrv } from '@grafana/runtime';
-import { RichHistoryQuery } from 'app/types/explore';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
+import { type RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
 
-export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
-  const datasource = getDataSourceSrv().getInstanceSettings({ uid: dto.datasourceUid });
+export const fromDTO = async (dto: RichHistoryRemoteStorageDTO): Promise<RichHistoryQuery> => {
+  const datasource = await getDataSourceInstanceSettings({ uid: dto.datasourceUid });
 
   return {
     id: dto.uid,

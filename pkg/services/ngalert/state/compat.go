@@ -17,7 +17,6 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -36,10 +35,25 @@ const (
 // - if evaluation state is either NoData or Error, the resulting set of labels is changed:
 //   - original alert name (label: model.AlertNameLabel) is backed up to OriginalAlertName
 //   - label model.AlertNameLabel is overwritten to either NoDataAlertName or ErrorAlertName
-func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureToggles featuremgmt.FeatureToggles) *models.PostableAlert {
+func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.PostableAlert {
 	alertState := transition.State
 	nL := alertState.Labels.Copy()
 	nA := data.Labels(alertState.Annotations).Copy()
+
+	// Drop labels and annotations with an empty name or empty value. An empty name makes the
+	// Alertmanager reject the alert ("invalid label set: invalid name"); an empty value is
+	// equivalent to the label being absent. The namespace UID label is kept here - it is
+	// propagated into an annotation below.
+	for k, v := range nL {
+		if len(k) == 0 || len(v) == 0 {
+			delete(nL, k)
+		}
+	}
+	for k, v := range nA {
+		if len(k) == 0 || len(v) == 0 {
+			delete(nA, k)
+		}
+	}
 
 	// encode the values as JSON where it will be expanded later
 	if len(alertState.Values) > 0 {
@@ -98,11 +112,8 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL, featureTo
 	}
 
 	startsAt := strfmt.DateTime(alertState.StartsAt)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleUseFiredAtForStartsAt) {
-		if alertState.FiredAt != nil {
-			startsAt = strfmt.DateTime(*alertState.FiredAt)
-		}
+	if alertState.FiredAt != nil {
+		startsAt = strfmt.DateTime(*alertState.FiredAt)
 	}
 
 	return &models.PostableAlert{
@@ -158,14 +169,14 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 
 // FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
 // and converts them to models.PostableAlert with EndsAt set to time.Now
-func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock, featureToggles featuremgmt.FeatureToggles) apimodels.PostableAlerts {
+func FromAlertsStateToStoppedAlert(firingStates []StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
 	for _, transition := range firingStates {
 		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := StateToPostableAlert(transition, appURL, featureToggles)
+		postableAlert := StateToPostableAlert(transition, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}

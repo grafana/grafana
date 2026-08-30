@@ -5,15 +5,15 @@ import { useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
-import { GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { type PreviewRuleRequest, type PreviewRuleResponse } from '../../types/preview';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
@@ -25,23 +25,29 @@ export function PreviewRule(): React.ReactElement | null {
   const [preview, onPreview] = usePreview();
   const { watch } = useFormContext<RuleFormValues>();
   const [type, condition, queries] = watch(['type', 'condition', 'queries']);
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
+  const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
 
   if (!type || isDataSourceManagedRuleByType(type)) {
     return null;
   }
 
-  const isPreviewAvailable = Boolean(condition) && allDataSourcesAvailable;
+  const isPreviewAvailable = Boolean(condition) && !isDsLoading && allDataSourcesAvailable;
 
   return (
     <div className={styles.container}>
       <Stack>
-        {allDataSourcesAvailable && (
-          <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
+        {(isDsLoading || allDataSourcesAvailable) && (
+          <Button
+            disabled={!isPreviewAvailable}
+            type="button"
+            variant="primary"
+            icon={isDsLoading ? 'spinner' : undefined}
+            onClick={onPreview}
+          >
             <Trans i18nKey="alerting.preview-rule.preview-alerts">Preview alerts</Trans>
           </Button>
         )}
-        {!allDataSourcesAvailable && (
+        {!isDsLoading && !allDataSourcesAvailable && (
           <Alert
             title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
             severity="warning"

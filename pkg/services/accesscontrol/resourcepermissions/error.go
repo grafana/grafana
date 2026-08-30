@@ -9,6 +9,7 @@ const (
 	invalidAssignmentMessage = `Assignment [{{ .Public.assignment }}] is invalid for this resource type`
 	invalidParamMessage      = `Param [{{ .Public.param }}] is invalid`
 	invalidRequestBody       = `Request body is invalid: {{ .Public.reason }}`
+	invalidResourceIDMessage = `Resource ID [{{ .Public.resourceID }}] is not valid: wildcard "*" is not allowed`
 )
 
 var (
@@ -20,6 +21,10 @@ var (
 				MustTemplate(invalidPermissionMessage, errutil.WithPublic(invalidPermissionMessage))
 	ErrInvalidAssignment = errutil.BadRequest("resourcePermissions.invalidAssignment").
 				MustTemplate(invalidAssignmentMessage, errutil.WithPublic(invalidAssignmentMessage))
+	ErrInvalidResourceID = errutil.BadRequest("resourcePermissions.invalidResourceID").
+				MustTemplate(invalidResourceIDMessage, errutil.WithPublic(invalidResourceIDMessage))
+	ErrExternalTeamMember = errutil.BadRequest("resourcePermissions.externalTeamMember",
+		errutil.WithPublicMessage("Cannot modify permission of externally-synced team member"))
 )
 
 func ErrInvalidParamData(param string, err error) errutil.TemplateData {
@@ -51,6 +56,14 @@ func ErrInvalidAssignmentData(assignment string) errutil.TemplateData {
 	return errutil.TemplateData{
 		Public: map[string]any{
 			"assignment": assignment,
+		},
+	}
+}
+
+func ErrInvalidResourceIDData(resourceID string) errutil.TemplateData {
+	return errutil.TemplateData{
+		Public: map[string]any{
+			"resourceID": resourceID,
 		},
 	}
 }

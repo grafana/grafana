@@ -1,34 +1,50 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
-import { type MonitoringLogger } from '../../utils/logging';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { TracedError } from '../../utils/TracedError';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
+import { getLogger, setLogger } from '../logging/registry';
 
-import { initPluginMetas, refetchPluginMetas } from './plugins';
+import {
+  getPluginMetaFromCache,
+  getPluginMetasUrl,
+  initPluginMetas,
+  installPluginMeta,
+  refetchPluginMeta,
+  refetchPluginMetas,
+  uninstallPluginMeta,
+} from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
-let loggerMock: MonitoringLogger;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  invalidateCache();
-  loggerMock = {
+  invalidateCachedPromisesCache();
+  // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+  setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning: jest.fn(),
-  };
-  setLogger(loggerMock);
+  });
+  setLogger('grafana/runtime.plugins.meta', {
+    logDebug: jest.fn(),
+    logError: jest.fn(),
+    logInfo: jest.fn(),
+    logMeasurement: jest.fn(),
+    logWarning: jest.fn(),
+  });
 });
 
 afterEach(() => {
   global.fetch = originalFetch;
 });
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
   afterAll(() => {
@@ -45,8 +61,9 @@ describe('when useMTPlugins flag is enabled', () => {
 
       const response = await initPluginMetas();
 
-      expect(response.items).toHaveLength(1);
-      expect(response.items[0]).toBe(v0alpha1Meta);
+      expect(response).not.toBeNull();
+      expect(response?.items).toHaveLength(1);
+      expect(response?.items[0]).toBe(v0alpha1Meta);
       expect(global.fetch).toHaveBeenCalledTimes(1);
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
     });
@@ -85,7 +102,7 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 
   describe('and errors occur', () => {
-    it('initPluginMetas should log when fetch fails', async () => {
+    it('initPluginMetas should log and resolve to null when fetch fails', async () => {
       global.fetch = jest
         .fn()
         .mockResolvedValueOnce({
@@ -99,21 +116,32 @@ describe('when useMTPlugins flag is enabled', () => {
           json: () => Promise.resolve({ items: [v0alpha1Meta] }),
         });
 
-      await initPluginMetas();
-      await initPluginMetas();
-      await initPluginMetas();
+      const first = await initPluginMetas();
+      const second = await initPluginMetas();
+      const third = await initPluginMetas();
 
+      expect(first).toBeNull();
+      expect(second).toStrictEqual({ items: [v0alpha1Meta] });
+      expect(third).toStrictEqual({ items: [v0alpha1Meta] });
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Failed to load plugin metas 500:Internal Server Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Failed to load plugin metas 500:Internal Server Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
+      const metaLogErrorMock = getLogger('grafana/runtime.plugins.meta').logError as jest.Mock;
+      expect(metaLogErrorMock).toHaveBeenCalledTimes(1);
+      expect(metaLogErrorMock).toHaveBeenCalledWith(expect.any(TracedError), {
+        requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas',
+        status: '500',
+        statusText: 'Internal Server Error',
       });
     });
 
-    it('initPluginMetas should log when fetch rejects', async () => {
+    it('initPluginMetas should log and resolve to null when fetch rejects', async () => {
       global.fetch = jest
         .fn()
         .mockRejectedValueOnce(new Error('Network Error'))
@@ -123,25 +151,239 @@ describe('when useMTPlugins flag is enabled', () => {
           json: () => Promise.resolve({ items: [v0alpha1Meta] }),
         });
 
-      await initPluginMetas();
-      await initPluginMetas();
-      await initPluginMetas();
+      const first = await initPluginMetas();
+      const second = await initPluginMetas();
+      const third = await initPluginMetas();
 
+      expect(first).toBeNull();
+      expect(second).toStrictEqual({ items: [v0alpha1Meta] });
+      expect(third).toStrictEqual({ items: [v0alpha1Meta] });
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Network Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
+    });
+
+    it('refetchPluginMetas should resolve to null when fetch fails', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
       });
+
+      const response = await refetchPluginMetas();
+
+      expect(response).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('initPluginMetas should resolve to empty items when the API returns empty items', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [] }),
+      });
+
+      const response = await initPluginMetas();
+
+      expect(response).toStrictEqual({ items: [] });
+    });
+
+    it('getPluginMetaFromCache should return null when fetch fails', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('refetchPluginMeta should return null when fetch fails', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toBeNull();
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('installPluginMeta', () => {
+    it('should post correct body, headers and method to the correct url', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins', {
+        body: JSON.stringify({
+          apiVersion: 'plugins.grafana.app/v0alpha1',
+          kind: 'Plugin',
+          metadata: {
+            name: 'myorg-test-panel',
+            namespace: 'default',
+          },
+          spec: {
+            id: 'myorg-test-panel',
+            version: '1.5.0',
+          },
+          status: {},
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+    });
+
+    it('should throw an error if response is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow(
+        'Failed to install plugin myorg-test-panel 500:Internal Server Error'
+      );
+    });
+
+    it('should throw an error if fetch throws', async () => {
+      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network Error'));
+
+      await expect(installPluginMeta('myorg-test-panel', '1.5.0')).rejects.toThrow('Network Error');
+    });
+  });
+
+  describe('uninstallPluginMeta', () => {
+    it('should post correct body, headers and method to the correct url', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await uninstallPluginMeta('myorg-test-panel');
+
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'apis/plugins.grafana.app/v0alpha1/namespaces/default/plugins/myorg-test-panel',
+        { method: 'DELETE' }
+      );
+    });
+
+    it('should throw an error if response is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Internal Server Error',
+        status: 500,
+      });
+
+      await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow(
+        'Failed to uninstall plugin myorg-test-panel 500:Internal Server Error'
+      );
+    });
+
+    it('should throw an error if fetch throws', async () => {
+      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network Error'));
+
+      await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow('Network Error');
+    });
+  });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should get meta from cache if that exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should not get meta from cache if that does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always refetch meta even if cache exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await refetchPluginMeta('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
     });
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
@@ -156,7 +398,7 @@ describe('when useMTPlugins flag is disabled', () => {
     it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
       const response = await initPluginMetas();
 
-      expect(response.items).toHaveLength(0);
+      expect(response).toStrictEqual({ items: [] });
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });
@@ -173,5 +415,65 @@ describe('when useMTPlugins flag is disabled', () => {
       expect(original).toBe(cached);
       expect(global.fetch).not.toHaveBeenCalled();
     });
+  });
+
+  describe('installPluginMeta', () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await installPluginMeta('myorg-test-panel', '1.5.0');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('uninstallPluginMeta', () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      await uninstallPluginMeta('myorg-test-panel');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe('getPluginMetasUrl', () => {
+  it('should build the metas request url from api version and namespace', () => {
+    expect(getPluginMetasUrl()).toBe('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
   });
 });

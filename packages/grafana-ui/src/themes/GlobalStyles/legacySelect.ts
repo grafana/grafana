@@ -2,7 +2,7 @@
 // TODO we should aim to remove this for Grafana 12
 import { css } from '@emotion/react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export function getLegacySelectStyles(theme: GrafanaTheme2) {
   return css({
@@ -46,7 +46,7 @@ export function getLegacySelectStyles(theme: GrafanaTheme2) {
 
     '.gf-form-select-box__menu': {
       background: theme.colors.background.primary,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       position: 'absolute',
       zIndex: theme.zIndex.dropdown,
       minWidth: '100%',

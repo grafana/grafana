@@ -1,6 +1,6 @@
-import { SceneGridItemLike } from '@grafana/scenes';
+import { type SceneGridItemLike } from '@grafana/scenes';
 
-import { DashboardLayoutManager } from './DashboardLayoutManager';
+import { type DashboardLayoutManager } from './DashboardLayoutManager';
 
 export interface DashboardLayoutGrid extends DashboardLayoutManager {
   /**

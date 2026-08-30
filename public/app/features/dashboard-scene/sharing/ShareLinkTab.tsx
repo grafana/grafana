@@ -1,9 +1,15 @@
-import { dateTime, UrlQueryMap } from '@grafana/data';
+import { dateTime, type UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
+import {
+  type SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  type SceneObjectRef,
+  type VizPanel,
+} from '@grafana/scenes';
+import { type TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch, TextLink } from '@grafana/ui';
 import { createDashboardShareUrl, createShortLink, getShareUrlParams } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
@@ -13,13 +19,13 @@ import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { SceneShareTabState, ShareView } from './types';
+import { type SceneShareTabState, type ShareView } from './types';
 
 export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
 
-export interface ShareLinkConfiguration {
+interface ShareLinkConfiguration {
   useLockedTime: boolean;
   useShortUrl: boolean;
   selectedTheme: string;
@@ -28,6 +34,7 @@ export interface ShareLinkConfiguration {
 interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
+  absoluteImageUrl: string;
   isBuildUrlLoading: boolean;
 }
 
@@ -44,6 +51,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       selectedTheme: state.selectedTheme ?? 'current',
       shareUrl: '',
       imageUrl: '',
+      absoluteImageUrl: '',
       isBuildUrlLoading: false,
     });
 
@@ -82,8 +90,6 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     if (panel) {
       delete imageQueryParams.viewPanel;
       imageQueryParams.panelId = panel.getPathId();
-      // force solo route to use scenes
-      imageQueryParams['__feature.dashboardScene'] = true;
     }
 
     // hide Grafana logo in the rendered image
@@ -93,13 +99,14 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
-      absolute: true,
+      absolute: false,
       soloRoute: true,
       render: true,
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),
     });
+    const absoluteImageUrl = config.appUrl + imageUrl.replace(/^\//, '');
 
-    this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
+    this.setState({ shareUrl, imageUrl, absoluteImageUrl, isBuildUrlLoading: false });
   };
 
   public getTabLabel() {
@@ -147,7 +154,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
   const isRelativeTime = timeRange.state.to === 'now' ? true : false;
 
-  const { useLockedTime, useShortUrl, selectedTheme, shareUrl, imageUrl } = state;
+  const { useLockedTime, useShortUrl, selectedTheme, shareUrl, absoluteImageUrl } = state;
 
   const selectors = e2eSelectors.pages.SharePanelModal;
   const isDashboardSaved = Boolean(dashboard.state.uid);
@@ -197,7 +204,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
         <>
           {isDashboardSaved && (
             <div className="gf-form">
-              <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+              <a href={absoluteImageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                 <Icon name="camera" />
                 &nbsp;
                 <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>

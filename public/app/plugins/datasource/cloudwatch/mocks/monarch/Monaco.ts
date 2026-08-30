@@ -1,8 +1,8 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { CLOUDWATCH_LOGS_SQL_LANGUAGE_DEFINITION_ID } from '../../language/cloudwatch-logs-sql/definition';
 import { CLOUDWATCH_PPL_LANGUAGE_DEFINITION_ID } from '../../language/cloudwatch-ppl/language';
-import { Monaco } from '../../language/monarch/types';
+import { type Monaco } from '../../language/monarch/types';
 import { commentOnlyQuery as cloudwatchLogsSQLCommentOnlyQuery } from '../cloudwatch-logs-sql-test-data/commentOnlyQuery';
 import { multiLineFullQuery as cloudwatchLogsSQLMultiLineFullQuery } from '../cloudwatch-logs-sql-test-data/multiLineFullQuery';
 import { multiLineFullQueryWithCaseClause as cloudwatchLogsSQLMultiLineFullQueryWithCaseClause } from '../cloudwatch-logs-sql-test-data/multiLineFullQueryWithCaseClause';

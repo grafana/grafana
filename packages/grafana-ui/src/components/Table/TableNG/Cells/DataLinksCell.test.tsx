@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { Field, FieldType, LinkModel } from '@grafana/data';
+import { type Field, FieldType, type LinkModel } from '@grafana/data';
 
 import { TableCellDisplayMode } from '../../types';
 

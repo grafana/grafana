@@ -16,6 +16,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "provisioning",
+	AppDisplayName:   "provisioning",
 	Group:            "provisioning.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions:         []app.ManifestVersion{},

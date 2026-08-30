@@ -1,4 +1,4 @@
-import { Plugin } from 'slate-react';
+import { type Plugin } from 'slate-react';
 
 const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: number) => {
   if (!textBlocks.length) {

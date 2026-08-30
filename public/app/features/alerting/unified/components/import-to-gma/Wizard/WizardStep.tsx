@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, Stack, useStyles2 } from '@grafana/ui';
 
 import { CancelButton } from './CancelButton';
 import { NextButton } from './NextButton';
 import { PreviousButton } from './PreviousButton';
 import { useStepperState } from './StepperState';
-import { StepKey } from './types';
+import { type StepKey } from './types';
 
 interface WizardStepProps {
   /** Step identifier */
@@ -31,6 +31,8 @@ interface WizardStepProps {
   onBack?: () => void;
   /** Disable the next button */
   disableNext?: boolean;
+  /** Tooltip shown on the next button while it is disabled, explaining why */
+  disabledNextTooltip?: string;
   /** Handler called when the wizard is cancelled */
   onCancel?: () => void;
 }
@@ -55,6 +57,7 @@ export const WizardStep = ({
   onSkip,
   onBack,
   disableNext = false,
+  disabledNextTooltip,
   onCancel,
 }: WizardStepProps) => {
   const styles = useStyles2(getStyles);
@@ -103,6 +106,7 @@ export const WizardStep = ({
             skipLabel={skipLabel}
             onSkip={handleSkip}
             disabled={disableNext}
+            disabledTooltip={disabledNextTooltip}
           />
         </Stack>
         <CancelButton onCancel={onCancel} />

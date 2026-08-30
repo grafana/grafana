@@ -4,14 +4,14 @@ import { byLabelText, byRole } from 'testing-library-selector';
 import { useAssistant } from '@grafana/assistant';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
-import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import {
-  GrafanaPromRuleDTO,
-  GrafanaPromRuleGroupDTO,
+  type GrafanaPromRuleDTO,
+  type GrafanaPromRuleGroupDTO,
   PromAlertingRuleState,
   PromRuleType,
-  RulerGrafanaRuleDTO,
-  RulerRuleGroupDTO,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';

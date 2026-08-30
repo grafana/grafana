@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 
-import { Action, DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
@@ -73,7 +73,13 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
               tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
             />
             <div className={styles.dragIcon} {...provided.dragHandleProps}>
-              <Icon name="draggabledots" size="lg" />
+              <Icon
+                name="draggabledots"
+                size="lg"
+                title={t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
+                  title: hasTitle ? title : url,
+                })}
+              />
             </div>
           </div>
         </div>

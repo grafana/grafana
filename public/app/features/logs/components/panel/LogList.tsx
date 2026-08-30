@@ -1,45 +1,48 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { debounce } from 'lodash';
-import { Grammar } from 'prismjs';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, MouseEvent } from 'react';
-import { Align, VariableSizeList } from 'react-window';
+import { type Grammar } from 'prismjs';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { type Align, VariableSizeList } from 'react-window';
 
 import {
   CoreApp,
-  DataFrame,
-  EventBus,
+  type DataFrame,
+  type EventBus,
   EventBusSrv,
-  GrafanaTheme2,
-  LogLevel,
-  LogRowModel,
+  type GrafanaTheme2,
+  type LoadingState,
+  type LogLevel,
+  type LogRowModel,
   LogsDedupStrategy,
-  LogsMetaItem,
-  LogsSortOrder,
+  type LogsMetaItem,
+  type LogsSortOrder,
   store,
-  TimeRange,
+  type TimeRange,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { ConfirmModal, Icon, PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
+import { ConfirmModal, Icon, type PopoverContent, useStyles2, useTheme2 } from '@grafana/ui';
 import { PopoverMenu } from 'app/features/explore/Logs/PopoverMenu';
-import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogListFieldSelector } from '../fieldSelector/LogListFieldSelector';
 
-import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './InfiniteScroll';
+import { type InfiniteScrollMode, InfiniteScroll, type LoadMoreLogsType } from './InfiniteScroll';
 import { LogDetailsContextProvider, useLogDetailsContext } from './LogDetailsContext';
-import { getGridTemplateColumns, LogLineTimestampResolution } from './LogLine';
-import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
-import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
+import { getGridTemplateColumns, type LogLineTimestampResolution } from './LogLine';
+import { LogLineDetails, type LogLineDetailsMode } from './LogLineDetails';
+import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { LogListContextProvider, type LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
-import { preProcessLogs, LogListModel, getLevelsFromLogs } from './processing';
+import { preProcessLogs, type LogListModel, getLevelsFromLogs } from './processing';
 import { useKeyBindings } from './useKeyBindings';
 import { usePopoverMenu } from './usePopoverMenu';
-import { LogLineVirtualization, getLogLineSize, LogFieldDimension, ScrollToLogsEvent } from './virtualization';
+import { LogLineVirtualization, getLogLineSize, type LogFieldDimension, ScrollToLogsEvent } from './virtualization';
 
 export interface Props {
+  allowDownload?: boolean;
   app: CoreApp;
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
@@ -56,7 +59,7 @@ export interface Props {
   infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  loading?: boolean;
+  loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
@@ -122,6 +125,7 @@ type LogListComponentProps = Omit<
 
 export const LogList = ({
   app,
+  allowDownload,
   displayedFields,
   dataFrames,
   containerElement,
@@ -138,7 +142,7 @@ export const LogList = ({
   infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
-  loading,
+  loadingState,
   loadMore,
   logLineMenuCustomItems,
   logs,
@@ -178,6 +182,7 @@ export const LogList = ({
 }: Props) => {
   return (
     <LogListContextProvider
+      allowDownload={allowDownload}
       app={app}
       containerElement={containerElement}
       dedupStrategy={dedupStrategy}
@@ -239,7 +244,7 @@ export const LogList = ({
             grammar={grammar}
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
-            loading={loading}
+            loadingState={loadingState}
             loadMore={loadMore}
             logs={logs}
             showControls={showControls}
@@ -261,7 +266,7 @@ const LogListComponent = ({
   grammar,
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
-  loading,
+  loadingState,
   loadMore,
   logs,
   showControls,
@@ -322,7 +327,8 @@ const LogListComponent = ({
       wrapLogMessage,
     ]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -379,6 +385,7 @@ const LogListComponent = ({
         {
           getFieldLinks,
           escape: forceEscape ?? false,
+          otelLogsFormattingEnabled,
           prettifyJSON,
           order: sortOrder,
           timeZone,
@@ -390,7 +397,18 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [
+    forceEscape,
+    getFieldLinks,
+    grammar,
+    logs,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -454,10 +472,10 @@ const LogListComponent = ({
   );
 
   const focusLogLine = useCallback(
-    (log: LogListModel) => {
-      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uid === log.uid);
+    (log: LogListModel, align: Align = 'start') => {
+      const index = filteredLogs.findIndex((filteredLog) => filteredLog.uniqueKey === log.uniqueKey);
       if (index >= 0) {
-        debouncedScrollToItem(index, 'start');
+        debouncedScrollToItem(index, align);
       }
     },
     [debouncedScrollToItem, filteredLogs]
@@ -522,7 +540,6 @@ const LogListComponent = ({
               </>
             }
             confirmText={t('logs.log-rows.disable-popover.confirm', 'Confirm')}
-            icon="exclamation-triangle"
             onConfirm={onDisableConfirm}
             onDismiss={onDisableCancel}
           />
@@ -532,7 +549,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
-          loading={loading}
+          loadingState={loadingState}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
@@ -582,7 +599,8 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[] = [],
-  { unwrappedColumns }: { unwrappedColumns: boolean }
+  { unwrappedColumns }: { unwrappedColumns: boolean },
+  listHeight: number
 ) {
   return {
     logList: css({
@@ -597,6 +615,8 @@ function getStyles(
     logListContainer: css({
       display: 'flex',
       flexDirection: 'row-reverse',
+      // A definite height is required, otherwise the tallest child sets it and the controls never overflow.
+      height: listHeight,
       // Minimum width to prevent rendering issues and a sausage-like logs panel.
       minWidth: theme.spacing(35),
     }),

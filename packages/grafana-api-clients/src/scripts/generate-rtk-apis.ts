@@ -1,6 +1,6 @@
 // Generates Redux Toolkit API slices for certain APIs from the OpenAPI spec
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
-import { OpenAPIV3 } from 'openapi-types';
+import { type OpenAPIV3 } from 'openapi-types';
 import path from 'path';
 
 // Grafana root path - navigate up from this script's directory
@@ -9,18 +9,31 @@ const basePath = path.resolve(__dirname, '../../../..');
 // Include some types that are used inside the @rtk-query/codegen-openapi package
 // but not exported
 declare const operationKeys: readonly ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-type OperationDefinition = {
+export type OperationDefinition = {
   path: string;
   verb: (typeof operationKeys)[number];
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
-type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
+export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
   lazyQueries: true,
   mutations: true,
+};
+
+// Every namespaced kind can serve /search and /trash, and no frontend calls them yet, so
+// generating a hook per kind would add clients nobody imports. The dashboard search at
+// `/search` is a different, older endpoint and stays.
+const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
+
+export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+  if (Array.isArray(filterEndpoints)) {
+    return filterEndpoints;
+  }
+  return (name, operation) =>
+    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**
@@ -32,7 +45,7 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
-      filterEndpoints,
+      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
       ...additional,
@@ -92,17 +105,24 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/user/baseAPI.ts',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
-    '../clients/rtkq/user/endpoints.gen.ts': {
+    '../clients/rtkq/preferences/org/endpoints.gen.ts': {
       schemaFile: path.join(basePath, 'public/openapi3.json'),
       hooks: defaultHooksOptions,
-      apiFile: '../clients/rtkq/user/baseAPI.ts',
-      filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
+      apiFile: '../clients/rtkq/preferences/org/baseAPI.ts',
+      filterEndpoints: ['getOrgPreferences', 'updateOrgPreferences', 'patchOrgPreferences'],
+    },
+    '../clients/rtkq/preferences/team/endpoints.gen.ts': {
+      schemaFile: path.join(basePath, 'public/openapi3.json'),
+      hooks: defaultHooksOptions,
+      apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
+      filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
     },
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
+    ...createAPIConfig('dashboard', 'v2'),
     ...createAPIConfig('folder', 'v1beta1'),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
@@ -117,7 +137,9 @@ const config: ConfigFile = {
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     ...createAPIConfig('quotas', 'v0alpha1'),
-    // PLOP_INJECT_API_CLIENT - Used by the API client generator
+    ...createAPIConfig('plugins', 'v0alpha1'),
+    ...createAPIConfig('preferences', 'v1'),
+    // GENERATED:API_CLIENT — used by the API client generator
   },
 };
 

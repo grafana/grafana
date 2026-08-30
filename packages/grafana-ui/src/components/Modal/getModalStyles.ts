@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 export const getModalStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css({
       position: 'fixed',
       zIndex: theme.zIndex.modal,
-      background: theme.colors.background.primary,
+      background: theme.components.modal.background,
       boxShadow: theme.shadows.z3,
       borderRadius: theme.shape.radius.lg,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.components.modal.borderColor}`,
       backgroundClip: 'padding-box',
       outline: 'none',
       width: '750px',
@@ -30,7 +30,15 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
         top: '50%',
         transform: 'translateY(-50%)',
       },
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['opacity', 'scale'], {
+          duration: theme.transitions.duration.shortest,
+          easing: theme.transitions.easing.easeIn,
+        }),
+      },
     }),
+    modalAppear: css({ opacity: 0, scale: 0.85 }),
+    modalAppearActive: css({ opacity: 1, scale: 1 }),
     modalBackdrop: css({
       position: 'fixed',
       zIndex: theme.zIndex.modalBackdrop,
@@ -39,7 +47,12 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
       bottom: 0,
       left: 0,
       backgroundColor: theme.components.overlay.background,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create('opacity', { duration: theme.transitions.duration.standard }),
+      },
     }),
+    modalBackdropAppear: css({ opacity: 0 }),
+    modalBackdropActive: css({ opacity: 1 }),
     modalHeader: css({
       label: 'modalHeader',
       display: 'flex',
@@ -87,9 +100,14 @@ export const getModalStyles = (theme: GrafanaTheme2) => {
         padding: theme.spacing(1, 2, 0, 2),
         marginBottom: theme.spacing(2),
       },
+
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.accent.main}`,
+        outlineOffset: '-2px',
+      },
     }),
     modalButtonRow: css({
-      background: theme.colors.background.primary,
+      background: theme.components.modal.background,
       position: 'sticky',
       bottom: 0,
       paddingTop: theme.spacing(2),

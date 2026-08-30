@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { Row, UseExpandedRowProps } from 'react-table';
+import { type Row, type UseExpandedRowProps } from 'react-table';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { CallTreeNode } from './utils';
+import { type CallTreeNode } from './utils';
 
 export function FunctionCellWithExpander({
   row,

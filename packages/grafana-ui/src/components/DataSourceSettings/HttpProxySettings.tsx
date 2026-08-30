@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -8,7 +8,7 @@ import { InlineField } from '../Forms/InlineField';
 import { Stack } from '../Layout/Stack/Stack';
 import { InlineSwitch } from '../Switch/Switch';
 
-import { HttpSettingsBaseProps } from './types';
+import { type HttpSettingsBaseProps } from './types';
 
 const LABEL_WIDTH = 26;
 

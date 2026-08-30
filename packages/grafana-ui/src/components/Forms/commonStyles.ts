@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 
 export const getFocusStyle = (theme: GrafanaTheme2) =>
   css({
@@ -11,8 +11,13 @@ export const getFocusStyle = (theme: GrafanaTheme2) =>
   });
 
 export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
-  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
-  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+  let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  if (visualRefreshEnabled) {
+    borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+    borderColorHover = invalid ? theme.colors.error.borderEmphasis : theme.components.input.borderHover;
+  }
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 
@@ -25,6 +30,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
     css({
       background,
       lineHeight: theme.typography.body.lineHeight,
+      minHeight: theme.spacing(theme.components.height.md),
       fontSize: theme.typography.size.md,
       color: textColor,
       border: `1px solid ${borderColor}`,
@@ -72,37 +78,6 @@ export const inputPadding = (theme: GrafanaTheme2) => {
   return css({
     padding: theme.spacing(0, 1, 0, 1),
   });
-};
-
-export const inputSizes = () => {
-  return {
-    sm: css({
-      width: inputSizesPixels('sm'),
-    }),
-    md: css({
-      width: inputSizesPixels('md'),
-    }),
-    lg: css({
-      width: inputSizesPixels('lg'),
-    }),
-    auto: css({
-      width: inputSizesPixels('auto'),
-    }),
-  };
-};
-
-export const inputSizesPixels = (size: string) => {
-  switch (size) {
-    case 'sm':
-      return '200px';
-    case 'md':
-      return '320px';
-    case 'lg':
-      return '580px';
-    case 'auto':
-    default:
-      return 'auto';
-  }
 };
 
 export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {

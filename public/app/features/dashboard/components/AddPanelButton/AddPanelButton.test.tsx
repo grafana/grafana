@@ -5,7 +5,7 @@ import { defaultDashboard } from '@grafana/schema';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import AddPanelButton, { Props } from './AddPanelButton';
+import AddPanelButton, { type Props } from './AddPanelButton';
 jest.mock('./AddPanelMenu', () => ({
   ...jest.requireActual('./AddPanelMenu'),
   __esModule: true,

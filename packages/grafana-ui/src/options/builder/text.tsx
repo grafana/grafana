@@ -1,6 +1,6 @@
-import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { OptionsWithTextFormatting } from '@grafana/schema';
+import { type OptionsWithTextFormatting } from '@grafana/schema';
 
 /**
  * Adds common text control options to a visualization options

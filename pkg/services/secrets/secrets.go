@@ -14,6 +14,10 @@ import (
 // the secrets every time the encryption key has been rotated. Please add your database
 // secrets to the migrator slice available in ./migrator/migrator.go.
 //
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
+//
 //go:generate mockery --name Service --structname MockService --outpkg fakes --filename mock_service.go --output ./fakes/
 type Service interface {
 	// Encrypt MUST NOT be used within database transactions, it may cause database locks.
@@ -35,6 +39,10 @@ type Service interface {
 }
 
 // Store defines methods to interact with secrets storage
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type Store interface {
 	GetDataKey(ctx context.Context, id string) (*DataKey, error)
 	GetCurrentDataKey(ctx context.Context, label string) (*DataKey, error)
@@ -46,6 +54,10 @@ type Store interface {
 }
 
 // Provider is a key encryption key provider for envelope encryption
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type Provider interface {
 	Encrypt(ctx context.Context, blob []byte) ([]byte, error)
 	Decrypt(ctx context.Context, blob []byte) ([]byte, error)
@@ -69,11 +81,19 @@ func KeyLabel(scope string, providerID ProviderID) string {
 }
 
 // BackgroundProvider should be implemented for a provider that has a task that needs to be run in the background.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type BackgroundProvider interface {
 	Run(ctx context.Context) error
 }
 
 // Migrator is responsible for secrets migrations like re-encrypting or rolling back secrets.
+//
+// Deprecated: Multi-tenant APIs should not use imports from pkg/services/secrets/, as it creates a dependency on the legacy database.
+//
+// If you need to encrypt data in a multi-tenant API, use Grafana Secrets Manager (GSM) instead.
 type Migrator interface {
 	// ReEncryptSecrets decrypts and re-encrypts the secrets with most recent
 	// available data key. If a secret-specific decryption / re-encryption fails,

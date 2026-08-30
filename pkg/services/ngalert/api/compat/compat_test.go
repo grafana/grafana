@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestToModel(t *testing.T) {
@@ -142,7 +141,7 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 		Record: &definitions.AlertRuleRecordExport{
 			Metric:              recordingRule.Record.Metric,
 			From:                recordingRule.Record.From,
-			TargetDatasourceUID: util.Pointer(recordingRule.Record.TargetDatasourceUID),
+			TargetDatasourceUID: new(recordingRule.Record.TargetDatasourceUID),
 		},
 	}
 
@@ -162,8 +161,8 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 		ExecErrState:                &execErrState,
 		For:                         prommodel.Duration(alertingRule.For),
 		KeepFiringFor:               prommodel.Duration(alertingRule.KeepFiringFor),
-		ForString:                   util.Pointer(prommodel.Duration(alertingRule.For).String()),
-		KeepFiringForString:         util.Pointer(prommodel.Duration(alertingRule.KeepFiringFor).String()),
+		ForString:                   new(prommodel.Duration(alertingRule.For).String()),
+		KeepFiringForString:         new(prommodel.Duration(alertingRule.KeepFiringFor).String()),
 		Annotations:                 &alertingRule.Annotations,
 		Labels:                      &alertingRule.Labels,
 		NotificationSettings:        AlertRuleNotificationSettingsExportFromNotificationSettings(alertingRule.NotificationSettings),

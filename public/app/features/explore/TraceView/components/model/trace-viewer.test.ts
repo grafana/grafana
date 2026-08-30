@@ -1,4 +1,4 @@
-import { TraceSpan } from '../types/trace';
+import { type TraceSpan } from '../types/trace';
 
 import { findHeaderTags } from './trace-viewer';
 

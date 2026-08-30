@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 import { usePluginDetailsTabs } from './usePluginDetailsTabs';
 
@@ -120,5 +120,18 @@ describe('usePluginDetailsTabs', () => {
     const configTab = result.current.navModel.children?.find((tab) => tab.id === 'config-page-1');
     expect(configTab).toBeDefined();
     expect(configTab?.text).toBe('Configuration');
+  });
+
+  it('should default to overview tab for grafana-assistant-app', () => {
+    mockUsePluginConfig.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: mockPluginConfig,
+    });
+
+    const assistantPlugin = { ...mockPlugin, id: 'grafana-assistant-app' };
+    const { result } = renderHook(() => usePluginDetailsTabs(assistantPlugin, undefined, false));
+
+    expect(result.current.activePageId).toBe('overview');
   });
 });

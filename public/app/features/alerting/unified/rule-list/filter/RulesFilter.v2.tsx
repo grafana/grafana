@@ -2,21 +2,25 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
 
 import { trackAlertRuleFilterEvent, trackRulesSearchInputCleared } from '../../Analytics';
 import { PopupCard } from '../../components/HoverCard';
-import { RulesViewModeSelector } from '../../components/rules/Filter/RulesViewModeSelector';
+import { RulesViewModeSelector, type SupportedView } from '../../components/rules/Filter/RulesViewModeSelector';
 import { SavedSearches } from '../../components/saved-searches/SavedSearches';
-import { SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
-import { shouldUseSavedSearches } from '../../featureToggles';
+import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { getSearchFilterFromQuery } from '../../search/rulesSearchParser';
 
-import { RulesFilterProps } from './RulesFilter';
 import { trackSavedSearchApplied, useSavedSearches } from './useSavedSearches';
+
+export interface RulesFilterProps {
+  viewMode?: SupportedView;
+  onViewModeChange?: (viewMode: SupportedView) => void;
+}
 
 type SearchQueryForm = {
   query: string;
@@ -24,9 +28,6 @@ type SearchQueryForm = {
 
 export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterProps) {
   const { searchQuery, updateFilters } = useRulesFilter();
-
-  // Feature toggle for saved searches
-  const savedSearchesEnabled = shouldUseSavedSearches();
 
   const {
     savedSearches,
@@ -88,7 +89,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               render={({ field }) => (
                 <FilterInput
                   id="rulesSearchInput"
-                  data-testid="search-query-input"
+                  data-testid={selectors.pages.Alerting.searchInput}
                   placeholder={t(
                     'alerting.rules-filter.filter-options.placeholder-search-input',
                     'Search by name or enter filter query...'
@@ -120,18 +121,16 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               )}
             />
           </Box>
-          {savedSearchesEnabled && (
-            <SavedSearches
-              savedSearches={savedSearches}
-              currentSearchQuery={searchQuery}
-              onSave={saveSearch}
-              onRename={renameSearch}
-              onDelete={deleteSearch}
-              onApply={handleApplySearch}
-              onSetDefault={setDefaultSearch}
-              isLoading={savedSearchesLoading}
-            />
-          )}
+          <SavedSearches
+            savedSearches={savedSearches}
+            currentSearchQuery={searchQuery}
+            onSave={saveSearch}
+            onRename={renameSearch}
+            onDelete={deleteSearch}
+            onApply={handleApplySearch}
+            onSetDefault={setDefaultSearch}
+            isLoading={savedSearchesLoading}
+          />
           <RulesViewModeSelector viewMode={viewMode} onViewModeChange={onViewModeChange} />
         </Stack>
       </Stack>
@@ -185,6 +184,7 @@ function SearchQueryHelp() {
           title={t('alerting.search-query-help.title-contact-point', 'Contact point')}
           expr="contactPoint:slack"
         />
+        <HelpRow title={t('alerting.search-query-help.title-policy', 'Policy')} expr="policy:team-a-policy" />
       </div>
     </div>
   );

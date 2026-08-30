@@ -1,13 +1,13 @@
-import { ProxyTarget } from '@locker/near-membrane-shared';
+import { type ProxyTarget } from '@locker/near-membrane-shared';
 import DOMPurify from 'dompurify';
 import { cloneDeep, isFunction } from 'lodash';
 
-import { Monaco } from '@grafana/ui';
+import { type Monaco } from '@grafana/ui';
 
 import { loadScriptIntoSandbox } from './codeLoader';
 import { forbiddenElements } from './constants';
 import { recursivePatchObjectAsLiveTarget } from './documentSandbox';
-import { SandboxEnvironment, SandboxPluginMeta } from './types';
+import { type SandboxEnvironment, type SandboxPluginMeta } from './types';
 import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 /**
@@ -516,7 +516,7 @@ export function distortLiveApis(_originalValue: ProxyTarget): ProxyTarget | unde
   return;
 }
 
-export function distortLodash(distortions: DistortionMap) {
+function distortLodash(distortions: DistortionMap) {
   /**
    * This is a distortion for lodash clone Deep function
    * because lodash deep clones execute in the blue realm

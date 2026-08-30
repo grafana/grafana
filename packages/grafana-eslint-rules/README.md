@@ -233,3 +233,127 @@ When a violation is detected, the rule reports:
 ```
 Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
 ```
+
+### `zod-import-namespace`
+
+Require all zod imports to use a namespace named `z` from the root `zod` package.
+
+This rule allows only:
+
+```ts
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
+It disallows any other zod import style, including named/default imports and all zod subpath imports such as `zod/mini`. This ensures that all zod imports are consistent, allowing for a smaller bundle size.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { z } from 'zod';
+import z from 'zod';
+import * as zod from 'zod';
+import type { ZodType } from 'zod';
+import * as z from 'zod/mini';
+
+// Good ✅
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
+### `define-feature-events`
+
+Enforces best practices when using `defineFeatureEvents` from `@grafana/runtime/internal`.
+Only activates in files that import `defineFeatureEvents`.
+
+#### Rules enforced:
+
+- **`literalArgsRequired`** — `repo` and `feature` args must be string literals so the analytics scanner script can statically extract event names.
+
+```ts
+// Bad ❌
+const feature = 'dashboard_library';
+defineFeatureEvents('grafana', feature);
+
+// Good ✅
+defineFeatureEvents('grafana', 'dashboard_library');
+```
+
+- **`missingOwnerTag`** — Exported events objects must have a JSDoc block with `@owner`.
+
+```ts
+// Bad ❌
+export const MyInteractions = { loaded: createEvent('loaded') };
+
+// Good ✅
+/** @owner grafana-dashboards */
+export const MyInteractions = { loaded: createEvent('loaded') };
+```
+
+- **`missingEventComment`** — Each event in the object must be documented.
+
+```ts
+// Bad ❌
+export const MyInteractions = {
+  loaded: createEvent('loaded'),
+};
+
+// Good ✅
+export const MyInteractions = {
+  /** Fires when the library finishes rendering. */
+  loaded: createEvent('loaded'),
+};
+```
+
+- **`interfaceMustExtend`** — Event property interfaces must extend `EventProperty`.
+
+- **`missingPropertyComment`** — Each property in the interface must have a JSDoc comment, enabling the analytics report scanner to extract descriptions automatically.
+
+```ts
+// Bad ❌
+interface LoadedProperties extends EventProperty {
+  numberOfItems: number;
+}
+
+// Good ✅
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library at load time. */
+  numberOfItems: number;
+}
+```
+
+- **`stackedJSDocComment`** — Each event and interface property must be documented with a single JSDoc block. TypeScript allows stacking several blocks on one declaration, and the analytics report concatenates them into one description, which is rarely what the author intended. Merge the text, and move tags such as `@owner` into the same block.
+
+```ts
+// Bad ❌
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library. */
+  /** Only counts the ones rendered at load time. */
+  numberOfItems: number;
+}
+
+// Good ✅
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library, counting only the ones rendered at load time. */
+  numberOfItems: number;
+}
+```
+
+### `no-direct-create-monitoring-logger`
+
+Disallow direct named imports of `createMonitoringLogger` from `@grafana/runtime`. New loggers must be registered in `packages/grafana-runtime/src/services/logging/loggers.ts` and retrieved via `getLogger` from `@grafana/runtime/unstable`.
+
+This keeps every valid logger source declared in one place so its defaults (context, console output) are discoverable and the registry can initialize it at app boot.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { createMonitoringLogger } from '@grafana/runtime';
+const logger = createMonitoringLogger('features.my-area');
+
+// Good ✅ — register the source in loggers.ts, then:
+import { getLogger } from '@grafana/runtime/unstable';
+const logger = getLogger('features.my-area');
+```

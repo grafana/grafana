@@ -1,4 +1,4 @@
-import { SceneGridRow, SceneObject } from '@grafana/scenes';
+import { SceneGridRow, type SceneObject } from '@grafana/scenes';
 
 import { RowItem } from '../layout-rows/RowItem';
 import { TabItem } from '../layout-tabs/TabItem';
@@ -8,7 +8,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
  * Will scroll element into view. If element is not connected yet, it will try to expand rows
  * and switch tabs to make it visible.
  */
-export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React.RefObject<HTMLElement>) {
+export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React.RefObject<HTMLElement | null>) {
   if (ref.current?.isConnected) {
     scrollIntoView(ref.current);
     return;

@@ -6,8 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // PluginBackendProvider is a function type for initializing a Plugin backend.
@@ -33,18 +31,6 @@ func (s *Service) BackendFactory(ctx context.Context, p *plugins.Plugin) backend
 		}
 	}
 	return nil
-}
-
-var RendererProvider PluginBackendProvider = func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	if !p.IsRenderer() {
-		return nil
-	}
-	return grpcplugin.NewRendererPlugin(p.ID, p.ExecutablePath(),
-		func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error {
-			p.Renderer = renderer
-			return nil
-		},
-	)
 }
 
 var DefaultProvider = PluginBackendProvider(func(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {

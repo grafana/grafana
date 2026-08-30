@@ -7,14 +7,14 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: Configure Organisation mapping for SAML
-title: Configure Organisation mapping for SAML
+menuTitle: Configure organization mapping for SAML
+title: Configure organization mapping for SAML
 weight: 550
 ---
 
 # Configure organization mapping for SAML
 
-Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
+Organization mapping allows you to assign users to a particular organization in Grafana depending on attribute value obtained from the identity provider.
 
 1. In configuration file, set [`assertion_attribute_org`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_org) to the attribute name you store organization info in. This attribute can be an array if you want a user to be in multiple organizations.
 1. Set [`org_mapping`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#org_mapping) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by ID. If you want users to have different roles in multiple organizations, you can set this option to a comma-separated list of `Organization:OrgId:Role` mappings.

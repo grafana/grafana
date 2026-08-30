@@ -1,10 +1,11 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
@@ -64,11 +65,11 @@ const mockMeta = {
 };
 
 beforeEach(() => {
-  config.featureToggles.provisioning = true;
+  config.provisioningEnabled = true;
 });
 
 afterEach(() => {
-  config.featureToggles.provisioning = false;
+  config.provisioningEnabled = false;
 });
 
 describe('useDefaultValues', () => {
@@ -126,7 +127,7 @@ describe('useDefaultValues', () => {
     expect(result.current.error).toBeDefined();
   });
 
-  it('returns Error with null values when no repository matches', async () => {
+  it('returns Orphaned with null values when no repository matches', async () => {
     server.use(
       http.get(`${BASE}/settings`, () =>
         HttpResponse.json({
@@ -153,9 +154,9 @@ describe('useDefaultValues', () => {
       wrapper: getWrapper({}),
     });
 
-    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Error));
-    expect(result.current.error).toBeDefined();
+    await waitFor(() => expect(result.current.status).toBe(RepoViewStatus.Orphaned));
     expect(result.current.values).toBeNull();
+    expect(result.current.error).toBeUndefined();
   });
 
   it('returns Ready with form values when repository is resolved', async () => {
@@ -244,5 +245,87 @@ describe('useProvisionedDashboardData', () => {
     expect(result.current.defaultValues?.repo).toBe('my-repo');
     expect(result.current.repository?.name).toBe('my-repo');
     expect(result.current.readOnly).toBe(false);
+  });
+
+  describe('enforced branch name template', () => {
+    // write-first repo: without the enforced-template override the default workflow would be `write`.
+    const enforcedSettings = {
+      ...settingsWithRepo,
+      items: [
+        {
+          ...settingsWithRepo.items[0],
+          workflows: ['write', 'branch'],
+          branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
+        },
+      ],
+    };
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('switches to the branch workflow when the template is enforced and the flag is on', async () => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
+      expect(result.current.defaultValues?.workflow).toBe('branch');
+    });
+
+    it('keeps the default write workflow when the gitConventions flag is off', async () => {
+      setTestFlags({ 'provisioning.gitConventions': false });
+      server.use(
+        http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('write');
+    });
+
+    it('keeps the default write workflow when enforcement has no usable template', async () => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({
+            ...settingsWithRepo,
+            items: [
+              {
+                ...settingsWithRepo.items[0],
+                workflows: ['write', 'branch'],
+                // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so
+                // the workflow must not switch (nothing to enforce).
+                branchOptions: { enforceTemplate: true },
+              },
+            ],
+          })
+        ),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('write');
+    });
   });
 });

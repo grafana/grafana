@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -167,7 +167,7 @@ func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	})
 
 	t.Run("listing existing keys", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
@@ -242,7 +242,7 @@ func TestIntegrationSecretsKVStoreSQL(t *testing.T) {
 	})
 
 	t.Run("getting all secrets", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := manager.SetupTestService(t, fakes.NewFakeSecretsStore())
 		kv := NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 

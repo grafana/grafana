@@ -1,7 +1,7 @@
 import {
   isHistogramFrameBucketMinFieldName,
   isHistogramFrameBucketMaxFieldName,
-  DataFrame,
+  type DataFrame,
   FieldType,
 } from '@grafana/data';
 

@@ -39,7 +39,7 @@ func (in *DataSource) DeepCopyInto(out *DataSource) {
 		in, out := &in.Secure, &out.Secure
 		*out = make(map[string]commonv0alpha1.InlineSecureValue, len(*in))
 		for key, val := range *in {
-			(*out)[key] = val
+			(*out)[key] = *val.DeepCopy()
 		}
 	}
 	return

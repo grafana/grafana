@@ -24,19 +24,21 @@ func ExportAllWithNewUIDs(ctx context.Context, repoName string, options provisio
 
 func exportAll(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	// FIXME: should we sign with grafana user?
-
-	folderClient, err := clients.Folder(ctx)
+	folderClient, _, err := clients.Folder(ctx)
 	if err != nil {
 		return err
+	}
+
+	// A selective export must not pull in the entire instance folder tree: only
+	// the folders needed to place the requested resources are written, and each
+	// resource's missing parent folder is generated on demand from its ancestry.
+	if len(options.Resources) > 0 {
+		return ExportSpecificResources(ctx, options, folderClient, clients, repositoryResources, progress, generateNewUIDs)
 	}
 
 	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
 		return err
 	}
 
-	if err := ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs); err != nil {
-		return err
-	}
-
-	return nil
+	return ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
 }

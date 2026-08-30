@@ -1,13 +1,20 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, DataTransformerID, DataTransformerInfo, Field, getFieldDisplayName, Labels } from '@grafana/data';
+import {
+  type DataFrame,
+  DataTransformerID,
+  type DataTransformerInfo,
+  type Field,
+  getFieldDisplayName,
+  type Labels,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import {
-  EvaluatedMappingResult,
+  type EvaluatedMappingResult,
   evaluateFieldMappings,
   FieldConfigHandlerKey,
-  FieldToConfigMapping,
+  type FieldToConfigMapping,
   getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 

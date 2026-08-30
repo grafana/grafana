@@ -28,6 +28,13 @@ describe('DatePicker', () => {
     expect(screen.getByText('December 2020')).toBeInTheDocument();
   });
 
+  it('exposes the selected state of the selected date', () => {
+    render(<DatePicker isOpen={true} value={new Date(1607431703363)} onChange={jest.fn()} onClose={jest.fn()} />);
+
+    expect(screen.getByRole('button', { name: 'December 8, 2020', pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'December 9, 2020', pressed: false })).toBeInTheDocument();
+  });
+
   it('calls onChange when date is selected', async () => {
     const onChange = jest.fn();
     const user = userEvent.setup();

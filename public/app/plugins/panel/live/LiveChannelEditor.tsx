@@ -3,19 +3,23 @@ import { useEffect, useMemo, useState } from 'react';
 
 import {
   LiveChannelScope,
-  LiveChannelAddress,
-  SelectableValue,
-  StandardEditorProps,
-  GrafanaTheme2,
+  type LiveChannelAddress,
+  type SelectableValue,
+  type StandardEditorProps,
+  type GrafanaTheme2,
   parseLiveChannelAddress,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Select, Alert, Label, stylesFactory, Combobox } from '@grafana/ui';
-import { discoveryResources, getAPIGroupDiscoveryList, GroupDiscoveryResource } from 'app/features/apiserver/discovery';
+import { Select, Alert, Label, stylesFactory, Combobox, useStyles2 } from '@grafana/ui';
+import {
+  discoveryResources,
+  getAPIGroupDiscoveryList,
+  type GroupDiscoveryResource,
+} from 'app/features/apiserver/discovery';
 import { getManagedChannelInfo } from 'app/features/live/info';
 
-import { LivePanelOptions } from './types';
+import { type LivePanelOptions } from './types';
 
 type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
 
@@ -28,6 +32,7 @@ const scopes: Array<SelectableValue<LiveChannelScope>> = [
 ];
 
 export function LiveChannelEditor(props: Props) {
+  const style = useStyles2(getStyles);
   const [channels, setChannels] = useState<Array<SelectableValue<string>>>([]);
   const [streams, paths] = useMemo(() => {
     const streams: Array<SelectableValue<string>> = [];
@@ -107,7 +112,6 @@ export function LiveChannelEditor(props: Props) {
   };
 
   const { scope, stream, path } = props.value;
-  const style = getStyles(config.theme2);
 
   return (
     <>

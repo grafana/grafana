@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
 import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
-import { OnFolderUpdate, SuggestedNavigationsFoldersMap } from './types';
+import { type OnFolderUpdate, type SuggestedNavigationsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeProps {
   subScope?: string;
@@ -52,6 +52,9 @@ export function ScopesDashboardsTree({
       {regularFolders.map(([subFolderId, subFolder]) => (
         <ScopesDashboardsTreeFolderItem
           key={subFolderId}
+          // Inherit parent subScope so dashboards under group folders still write nav_scope_path.
+          subScope={subScope}
+          subScopePath={subScopePath}
           folder={subFolder}
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}

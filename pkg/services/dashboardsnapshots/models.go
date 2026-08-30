@@ -8,6 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+const (
+	ActionSnapshotsCreate = "snapshots:create"
+	ActionSnapshotsDelete = "snapshots:delete"
+	ActionSnapshotsRead   = "snapshots:read"
+)
+
 // DashboardSnapshot model
 type DashboardSnapshot struct {
 	ID                int64 `xorm:"pk autoincr 'id'"`

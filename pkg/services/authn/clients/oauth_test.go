@@ -128,7 +128,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthEmailNotAllowed,
 		},
@@ -146,7 +146,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			stateCookieValue: "some-state",
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
-			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
+			userInfo:         &social.BasicUserInfo{Email: "some@example.com"},
 			isEmailAllowed:   false,
 			expectedErr:      errOAuthUserInfo,
 		},
@@ -167,16 +167,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -190,7 +190,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return identity for valid request - and lookup user by email",
+			desc: "should use the runtime settings override to look up the user by email",
 			req: &authn.Request{
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{},
@@ -207,16 +207,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -225,7 +225,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
 					SyncOrgRoles:    true,
-					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
+					LookUpParams:    login.UserLookupParams{Email: new("some@example.com")},
 				},
 			},
 		},
@@ -245,11 +245,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:    "123",
 				Name:  "name",
-				Email: "some@email.com",
+				Email: "some@example.com",
 				Role:  "Admin",
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
@@ -300,16 +300,16 @@ func TestOAuth_Authenticate(t *testing.T) {
 			userInfo: &social.BasicUserInfo{
 				Id:     "123",
 				Name:   "name",
-				Email:  "some@email.com",
+				Email:  "some@example.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:           "some@email.com",
+				Email:           "some@example.com",
 				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
-				Groups:          []string{"grp1", "grp2"},
+				ExternalGroups:  []string{"grp1", "grp2"},
 				OAuthToken:      &oauth2.Token{},
 				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
@@ -326,13 +326,14 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			// Keep ConfigProvider at its false default. runtimeCfg models the
+			// database-backed override written through /api/admin/settings.
 			cfg := setting.NewCfg()
-			auth, err := cfg.Raw.NewSection("auth")
+			runtimeCfg := setting.NewCfg()
+			auth, err := runtimeCfg.Raw.NewSection("auth")
 			assert.NoError(t, err)
 			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
 			assert.NoError(t, err)
-
-			settingsProvider := &setting.OSSImpl{Cfg: cfg}
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -356,7 +357,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider, featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, setting.ProvideProvider(runtimeCfg), featuremgmt.WithFeatures(tt.features...), tracing.InitializeTracerForTest())
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -367,7 +368,8 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
 				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
-				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
+				assert.Equal(t, tt.expectedIdentity.ExternalGroups, identity.ExternalGroups)
+				assert.Empty(t, identity.Groups, "IdP groups must not leak into Identity.Groups")
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
@@ -436,7 +438,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 			cfg := setting.NewCfg()
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, cfg), nil, fakeSocialSvc, nil, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -549,7 +551,7 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), testConfigProvider(t, tt.cfg), mockService, fakeSocialSvc, nil, featuremgmt.WithFeatures(), tracing.InitializeTracerForTest())
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, &usertoken.UserToken{})
 
@@ -605,15 +607,43 @@ func TestIsEnabled(t *testing.T) {
 			cfg := setting.NewCfg()
 			c := ProvideOAuth(
 				social.GitHubProviderName,
-				cfg,
+				testConfigProvider(t, cfg),
 				nil,
 				fakeSocialSvc,
-				&setting.OSSImpl{Cfg: cfg},
+				nil,
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest())
-			assert.Equal(t, tt.expected, c.IsEnabled())
+			assert.Equal(t, tt.expected, c.IsEnabled(t.Context()))
 		})
 	}
+}
+
+func TestOAuthProviderLookupUsesCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	lookupCount := 0
+	fakeSocialSvc := &socialtest.FakeSocialService{
+		GetOAuthInfoProviderFunc: func(gotCtx context.Context, provider string) (*social.OAuthInfo, error) {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			assert.Equal(t, social.GitHubProviderName, provider)
+			lookupCount++
+			return &social.OAuthInfo{Enabled: true}, nil
+		},
+	}
+	c := ProvideOAuth(
+		social.GitHubProviderName,
+		testConfigProvider(t, setting.NewCfg()),
+		nil,
+		fakeSocialSvc,
+		nil,
+		featuremgmt.WithFeatures(),
+		tracing.InitializeTracerForTest(),
+	)
+
+	assert.True(t, c.IsEnabled(ctx))
+	assert.NotNil(t, c.GetConfig(ctx))
+	assert.Equal(t, 2, lookupCount)
 }
 
 type mockConnector struct {

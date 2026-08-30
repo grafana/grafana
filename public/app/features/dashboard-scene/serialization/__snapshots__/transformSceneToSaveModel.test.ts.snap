@@ -193,7 +193,6 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
       "type": "text",
     },
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [
@@ -209,6 +208,7 @@ exports[`Given a scene with custom quick ranges should save quick ranges to save
           "type": "prometheus",
           "uid": "wc2AL7L7k",
         },
+        "enableGroupBy": false,
         "filters": [],
         "name": "Filters",
         "type": "adhoc",
@@ -654,7 +654,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [
@@ -923,7 +922,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
-  "preload": false,
   "refresh": "5m",
   "schemaVersion": 42,
   "tags": [
@@ -938,6 +936,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
           "type": "prometheus",
           "uid": "wc2AL7L7k",
         },
+        "enableGroupBy": false,
         "filters": [],
         "name": "Filters",
         "type": "adhoc",
@@ -1296,7 +1295,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
-  "preload": false,
   "refresh": "5m",
   "schemaVersion": 42,
   "tags": [
@@ -1311,6 +1309,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
           "type": "prometheus",
           "uid": "wc2AL7L7k",
         },
+        "enableGroupBy": false,
         "filters": [],
         "name": "Filters",
         "type": "adhoc",
@@ -1655,7 +1654,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should no
       "type": "text",
     },
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [
@@ -1671,6 +1669,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should no
           "type": "prometheus",
           "uid": "wc2AL7L7k",
         },
+        "enableGroupBy": false,
         "filters": [],
         "name": "Filters",
         "type": "adhoc",
@@ -2019,7 +2018,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
-  "preload": false,
   "refresh": "",
   "schemaVersion": 42,
   "tags": [
@@ -2035,6 +2033,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "type": "prometheus",
           "uid": "wc2AL7L7k",
         },
+        "enableGroupBy": false,
         "filters": [],
         "name": "Filters",
         "type": "adhoc",

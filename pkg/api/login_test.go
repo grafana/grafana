@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -329,11 +330,8 @@ func TestLoginViewRedirect(t *testing.T) {
 					expCookieMaxAge = 0
 				}
 				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, expCookiePath, expCookieMaxAge)
-				for _, cookieValue := range setCookie {
-					if cookieValue == expCookie {
-						redirectToCookieFound = true
-						break
-					}
+				if slices.Contains(setCookie, expCookie) {
+					redirectToCookieFound = true
 				}
 				assert.True(t, redirectToCookieFound)
 			}
@@ -486,11 +484,8 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
 			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", expCookiePath)
-			for _, cookieValue := range setCookie {
-				if cookieValue == expCookieValue {
-					redirectToCookieFound = true
-					break
-				}
+			if slices.Contains(setCookie, expCookieValue) {
+				redirectToCookieFound = true
 			}
 			assert.True(t, redirectToCookieFound)
 		})
@@ -707,7 +702,7 @@ func TestLogoutSaml(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
+	assert.Equal(t, true, hs.samlSingleLogoutEnabled(t.Context()))
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.SignedInUser = &user.SignedInUser{
 			UserID:          1,
@@ -836,7 +831,7 @@ func TestIsExternallySynced(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
+			assert.Equal(t, tc.expected, hs.isExternallySynced(t.Context(), tc.cfg, tc.provider))
 		})
 	}
 }
@@ -882,9 +877,34 @@ func TestIsProviderEnabled(t *testing.T) {
 					EnabledClients: tc.enabledAuthnClients,
 				},
 			}
-			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(t.Context(), setting.NewCfg(), tc.provider))
 		})
 	}
+}
+
+// countingAuthnService counts calls per client name to the two methods that
+// trigger an SSO settings read, so tests can assert the resolver caches per
+// module and keys the cache correctly.
+type countingAuthnService struct {
+	*authntest.FakeService
+	enabledCalls map[string]int
+	configCalls  map[string]int
+}
+
+func (s *countingAuthnService) IsClientEnabled(ctx context.Context, name string) bool {
+	if s.enabledCalls == nil {
+		s.enabledCalls = map[string]int{}
+	}
+	s.enabledCalls[name]++
+	return s.FakeService.IsClientEnabled(ctx, name)
+}
+
+func (s *countingAuthnService) GetClientConfig(ctx context.Context, name string) (authn.SSOClientConfig, bool) {
+	if s.configCalls == nil {
+		s.configCalls = map[string]int{}
+	}
+	s.configCalls[name]++
+	return s.FakeService.GetClientConfig(ctx, name)
 }
 
 type mockSocialService struct {
@@ -896,22 +916,22 @@ type mockSocialService struct {
 	err             error
 }
 
-func (m *mockSocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
-	return m.oAuthInfo
+func (m *mockSocialService) GetOAuthInfoProvider(context.Context, string) (*social.OAuthInfo, error) {
+	return m.oAuthInfo, m.err
 }
 
-func (m *mockSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
-	return m.oAuthInfos
+func (m *mockSocialService) GetOAuthInfoProviders(context.Context) (map[string]*social.OAuthInfo, error) {
+	return m.oAuthInfos, m.err
 }
 
-func (m *mockSocialService) GetOAuthProviders() map[string]bool {
-	return m.oAuthProviders
+func (m *mockSocialService) GetOAuthProviders(context.Context) (map[string]bool, error) {
+	return m.oAuthProviders, m.err
 }
 
-func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+func (m *mockSocialService) GetOAuthHttpClient(context.Context, string) (*http.Client, error) {
 	return m.httpClient, m.err
 }
 
-func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
+func (m *mockSocialService) GetConnector(context.Context, string) (social.SocialConnector, error) {
 	return m.socialConnector, m.err
 }

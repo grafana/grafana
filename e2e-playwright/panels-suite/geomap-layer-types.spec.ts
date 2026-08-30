@@ -5,6 +5,42 @@ const DASHBOARD_ID = 'P2jR04WVk';
 const MAP_LAYERS_TYPE = 'Map layers Layer type';
 const MAP_LAYERS_DATA = 'Map layers Data';
 const MAP_LAYERS_GEOJSON = 'Map layers GeoJSON URL';
+const AIRPORTS_GEOJSON_URL = 'public/gazetteer/airports.geojson';
+
+type SetupFixtures = Pick<Parameters<Parameters<typeof test>[2]>[0], 'gotoDashboardPage' | 'selectors' | 'page'>;
+
+async function setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page }: SetupFixtures) {
+  const dashboardPage = await gotoDashboardPage({});
+  const editPage = await dashboardPage.addPanel();
+
+  // Select Geomap visualization — handle case where viz picker may be auto-opened
+  await editPage.setVisualization('Geomap');
+
+  // Switch the map layer type to GeoJSON
+  const layerTypeField = editPage.getByGrafanaSelector(
+    selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE)
+  );
+  const layerTypeInput = layerTypeField.locator('input');
+  await layerTypeInput.fill('GeoJSON');
+  await layerTypeInput.press('Enter');
+  await expect(
+    editPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
+  ).toBeVisible();
+
+  // Select airports.geojson as the data source (contains Point features)
+  const geojsonUrlInput = editPage
+    .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
+    .locator('input');
+  await geojsonUrlInput.fill(AIRPORTS_GEOJSON_URL);
+  const airportsOption = page.getByText(AIRPORTS_GEOJSON_URL, { exact: true }).first();
+  if (await airportsOption.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await airportsOption.click();
+  } else {
+    await geojsonUrlInput.press('Enter');
+  }
+
+  return dashboardPage;
+}
 
 test.describe(
   'Panels test: Geomap layer types',
@@ -45,8 +81,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
 
-      // Open Street Map
-      await input.fill('Open Street Map');
+      // OpenStreetMap
+      await input.fill('OpenStreetMap');
       await input.press('Enter');
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(
@@ -132,6 +168,79 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('Map layers Style'))
       ).toBeVisible();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
+    });
+
+    test('ResourcePicker in GeoJSON Default style - select icon from marker set', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
+
+      // airports.geojson contains Point features — wait for the Symbol field to appear
+      // (StyleEditor only shows Symbol when the layer detects point geometry)
+      const symbolInput = page.getByPlaceholder(/select a symbol/i);
+      await expect(symbolInput).toBeVisible({ timeout: 15000 });
+
+      // Open the ResourcePickerPopover by clicking the symbol input
+      await symbolInput.click();
+
+      // Verify the popover opened (Folder tab is active by default for non-URL values)
+      const resourcePickerDialog = page.getByRole('dialog');
+      await expect(resourcePickerDialog).toBeVisible();
+
+      // Filter to x-mark (in the default img/icons/marker folder)
+      await resourcePickerDialog.getByPlaceholder('Search').fill('x-mark');
+      await resourcePickerDialog.getByRole('button', { name: 'x-mark' }).click();
+
+      // Confirm the selection
+      await resourcePickerDialog.getByRole('button', { name: 'Select' }).click();
+      await expect(resourcePickerDialog).toBeHidden();
+
+      // Verify the symbol input now reflects the selected icon
+      await expect(symbolInput).toHaveValue('x-mark');
+
+      // Re-open the picker to confirm the selected value is preserved
+      await symbolInput.click();
+      const dialog2 = page.getByRole('dialog');
+      await expect(dialog2).toBeVisible();
+      await dialog2.getByRole('button', { name: 'Cancel' }).click();
+      await expect(page.getByRole('dialog')).toBeHidden();
+    });
+
+    // Switching the icon folder and picking an icon from the new folder should persist the selection.
+    test('ResourcePicker in GeoJSON Default style - switching icon folder', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
+
+      const symbolInput = page.getByPlaceholder(/select a symbol/i);
+      await expect(symbolInput).toBeVisible({ timeout: 15000 });
+      await symbolInput.click();
+
+      const resourcePickerDialog = page.getByRole('dialog');
+      await expect(resourcePickerDialog).toBeVisible();
+
+      // Switch from the default img/icons/marker folder to img/icons/unicons
+      await resourcePickerDialog.getByRole('combobox').click();
+      await page.getByText('img/icons/unicons', { exact: true }).click();
+
+      // Switching folders clears the grid; wait for the new folder's icons to load before searching
+      // so the filter + click run against the loaded folder rather than racing the in-flight request.
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.ResourcePicker.card).first()).toBeVisible();
+
+      // Pick an icon from the new folder
+      await resourcePickerDialog.getByPlaceholder('Search').fill('0-plus');
+      await resourcePickerDialog.getByRole('button', { name: '0-plus', exact: true }).click();
+
+      // Confirm the selection
+      await resourcePickerDialog.getByRole('button', { name: 'Select' }).click();
+      await expect(resourcePickerDialog).toBeHidden();
+
+      // The symbol input should reflect the newly selected icon from the unicons folder
+      await expect(symbolInput).toHaveValue('0-plus');
     });
   }
 );

@@ -11,6 +11,76 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+func ruleKeys(uids ...string) []models.AlertRuleKey {
+	keys := make([]models.AlertRuleKey, 0, len(uids))
+	for _, uid := range uids {
+		keys = append(keys, models.AlertRuleKey{OrgID: 1, UID: uid})
+	}
+	return keys
+}
+
+func TestMakeErrTimeIntervalInUse(t *testing.T) {
+	tests := []struct {
+		name                  string
+		usedByRoutes          bool
+		rules                 []models.AlertRuleKey
+		expectedLogMessage    string
+		expectedPublicMessage string
+		expectedPayloadRules  any
+	}{
+		{
+			name:                  "routes only",
+			usedByRoutes:          true,
+			rules:                 nil,
+			expectedLogMessage:    "[alerting.notifications.time-intervals.used] Time interval 'my-interval' is used by notification policies",
+			expectedPublicMessage: "Time interval is used by notification policies",
+			expectedPayloadRules:  nil,
+		},
+		{
+			name:                  "single rule",
+			usedByRoutes:          false,
+			rules:                 ruleKeys("uid-1"),
+			expectedLogMessage:    "[alerting.notifications.time-intervals.used] Time interval 'my-interval' is used by alert rules uid-1",
+			expectedPublicMessage: "Time interval is used by alert rules",
+			expectedPayloadRules:  "uid-1",
+		},
+		{
+			name:                  "rules and routes",
+			usedByRoutes:          true,
+			rules:                 ruleKeys("uid-1"),
+			expectedLogMessage:    "[alerting.notifications.time-intervals.used] Time interval 'my-interval' is used by alert rules uid-1 and notification policies",
+			expectedPublicMessage: "Time interval is used by alert rules and notification policies",
+			expectedPayloadRules:  "uid-1",
+		},
+		{
+			name:                  "exactly five rules lists all of them",
+			usedByRoutes:          false,
+			rules:                 ruleKeys("uid-1", "uid-2", "uid-3", "uid-4", "uid-5"),
+			expectedLogMessage:    "[alerting.notifications.time-intervals.used] Time interval 'my-interval' is used by alert rules uid-1, uid-2, uid-3, uid-4, uid-5",
+			expectedPublicMessage: "Time interval is used by alert rules",
+			expectedPayloadRules:  "uid-1, uid-2, uid-3, uid-4, uid-5",
+		},
+		{
+			name:                  "more than five rules keeps full log but truncates payload",
+			usedByRoutes:          false,
+			rules:                 ruleKeys("uid-1", "uid-2", "uid-3", "uid-4", "uid-5", "uid-6", "uid-7"),
+			expectedLogMessage:    "[alerting.notifications.time-intervals.used] Time interval 'my-interval' is used by alert rules uid-1, uid-2, uid-3, uid-4, uid-5, uid-6, uid-7",
+			expectedPublicMessage: "Time interval is used by alert rules",
+			expectedPayloadRules:  "uid-1, uid-2, uid-3, uid-4, uid-5 and 2 others",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := MakeErrTimeIntervalInUse("my-interval", tt.usedByRoutes, tt.rules)
+			assert.Equal(t, tt.expectedLogMessage, err.Error())
+			var e errutil.Error
+			require.True(t, errors.As(err, &e))
+			assert.Equal(t, tt.expectedPublicMessage, e.PublicMessage)
+			assert.Equal(t, tt.expectedPayloadRules, e.PublicPayload["UsedByRules"])
+		})
+	}
+}
+
 func TestMakeErrTimeIntervalDependentResourcesProvenance(t *testing.T) {
 	tests := []struct {
 		name                   string

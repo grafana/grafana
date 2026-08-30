@@ -1,16 +1,14 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 function useVariableHasMultiProps(variable: MultiValueVariable) {
   const state = variable.useState();
-  const hasMultiProps =
-    config.featureToggles.multiPropsVariables && 'valuesFormat' in state && state.valuesFormat === 'json';
+  const hasMultiProps = 'valuesFormat' in state && state.valuesFormat === 'json';
   return hasMultiProps;
 }
 
@@ -22,23 +20,23 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
 
   return useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.edit-pane.variable.selection-options.category', 'Selection options'),
+      title: t('dashboard.sidebar.variable.selection-options.category', 'Selection options'),
       id: 'selection-options-category',
       isOpenDefault: true,
     })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.multi-value', 'Multi-value'),
+          title: t('dashboard.sidebar.variable.selection-options.multi-value', 'Multi-value'),
           id: multiValueId,
           render: (descriptor) => <MultiValueSwitch id={descriptor.props.id} variable={variable} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.include-all', 'Include All value'),
+          title: t('dashboard.sidebar.variable.selection-options.include-all', 'Include All value'),
           id: includeAllId,
           description: t(
-            'dashboard.edit-pane.variable.selection-options.include-all-description',
+            'dashboard.sidebar.variable.selection-options.include-all-description',
             'Enables a single option that represent all values'
           ),
           render: (descriptor) => <IncludeAllSwitch id={descriptor.props.id} variable={variable} />,
@@ -46,10 +44,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.custom-all-value', 'Custom all value'),
+          title: t('dashboard.sidebar.variable.selection-options.custom-all-value', 'Custom all value'),
           id: customAllValueId,
           description: t(
-            'dashboard.edit-pane.variable.selection-options.custom-all-value-description',
+            'dashboard.sidebar.variable.selection-options.custom-all-value-description',
             'A wildcard regex or other value to represent All'
           ),
           useShowIf: () => {
@@ -62,10 +60,10 @@ export function useVariableSelectionOptionsCategory(variable: MultiValueVariable
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values'),
+          title: t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values'),
           id: allowCustomId,
           description: t(
-            'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+            'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           ),
           useShowIf: () => {
@@ -87,7 +85,11 @@ function MultiValueSwitch({ variable, id }: InputProps) {
   const { isMulti } = variable.useState();
 
   return (
-    <Switch id={id} value={isMulti} onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })} />
+    <Switch
+      id={id}
+      value={Boolean(isMulti)}
+      onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })}
+    />
   );
 }
 
@@ -97,7 +99,7 @@ function IncludeAllSwitch({ variable, id }: InputProps) {
   return (
     <Switch
       id={id}
-      value={includeAll}
+      value={Boolean(includeAll)}
       onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
     />
   );

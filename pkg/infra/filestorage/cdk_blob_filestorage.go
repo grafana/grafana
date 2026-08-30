@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 
 	"gocloud.dev/blob"
@@ -113,9 +114,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 
 		metadata = make(map[string]string)
 		if command.Properties != nil {
-			for k, v := range command.Properties {
-				metadata[k] = v
-			}
+			maps.Copy(metadata, command.Properties)
 		}
 		metadata[originalPathAttributeKey] = command.Path
 		return c.bucket.WriteAll(ctx, strings.ToLower(command.Path), contents, &blob.WriterOptions{
@@ -130,9 +129,7 @@ func (c cdkBlobStorage) Upsert(ctx context.Context, command *UpsertFileCommand) 
 
 	if command.Properties != nil {
 		metadata = make(map[string]string)
-		for k, v := range command.Properties {
-			metadata[k] = v
-		}
+		maps.Copy(metadata, command.Properties)
 	} else {
 		metadata = existing.Properties
 	}

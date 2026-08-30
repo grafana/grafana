@@ -4,15 +4,15 @@ import {
   CoreApp,
   FieldType,
   getPanelDataSummary,
-  GrafanaTheme2,
-  PanelData,
-  PanelDataSummary,
-  PanelPluginVisualizationSuggestion,
+  type GrafanaTheme2,
+  type PanelData,
+  type PanelDataSummary,
+  type PanelPluginVisualizationSuggestion,
   store,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { PanelDataErrorViewProps, locationService, config } from '@grafana/runtime';
+import { type PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Icon, usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
@@ -21,7 +21,8 @@ import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/s
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { useDispatch } from 'app/types/store';
 
 import { changePanelPlugin } from '../state/actions';
@@ -100,9 +101,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
   const noData = !hasData(props.data);
   const noQueryConfigured = hasNoQueryConfigured(props.data);
-  const showEmptyState = Boolean(
-    config.featureToggles.newVizSuggestions && context.app === CoreApp.PanelEditor && noQueryConfigured && noData
-  );
+  const showEmptyState = Boolean(context.app === CoreApp.PanelEditor && noQueryConfigured && noData);
   const message = getMessageFor(props, dataSummary, showEmptyState);
 
   return (

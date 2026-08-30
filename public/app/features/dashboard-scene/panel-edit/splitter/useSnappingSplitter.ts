@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-import { ComponentSize, DragHandlePosition, useSplitter } from '@grafana/ui';
+import { type ComponentSize, type DragHandlePosition, useSplitter } from '@grafana/ui';
 
 export interface UseSnappingSplitterOptions {
   /**
@@ -119,6 +119,13 @@ export function useSnappingSplitter({
   secondaryProps.style.overflow = 'hidden';
   secondaryProps.style.minWidth = 'unset';
   secondaryProps.style.minHeight = 'unset';
+
+  if (usePixels) {
+    // Otherwise this pane can only grow until the primary one hits its `min-content` floor. A literal 0
+    // is required: `unset` resolves to `auto`, still the content minimum for a flex item whose own
+    // overflow is visible.
+    primaryProps.style[direction === 'row' ? 'minWidth' : 'minHeight'] = 0;
+  }
 
   if (state.snapSize) {
     if (usePixels) {

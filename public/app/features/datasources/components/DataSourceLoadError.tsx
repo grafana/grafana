@@ -1,17 +1,18 @@
 import { t, Trans } from '@grafana/i18n';
-import { Button, EmptyState, Stack } from '@grafana/ui';
+import { Alert, Button, EmptyState, Stack } from '@grafana/ui';
 
-import { DataSourceRights } from '../types';
+import { type DataSourceRights } from '../types';
 
 import { DataSourceReadOnlyMessage } from './DataSourceReadOnlyMessage';
 
 export type Props = {
+  errorMsg?: string | null;
   dataSourceRights: DataSourceRights;
   onDelete: () => void;
   notFound: boolean;
 };
 
-export function DataSourceLoadError({ dataSourceRights, onDelete, notFound }: Props) {
+export function DataSourceLoadError({ dataSourceRights, onDelete, notFound, errorMsg }: Props) {
   const { readOnly, hasDeleteRights } = dataSourceRights;
   const canDelete = !readOnly && hasDeleteRights;
   const navigateBack = () => window.history.back();
@@ -20,12 +21,21 @@ export function DataSourceLoadError({ dataSourceRights, onDelete, notFound }: Pr
     <>
       {readOnly && <DataSourceReadOnlyMessage />}
       <Stack direction="column">
-        <Stack direction="column" alignItems="center">
-          {notFound && (
+        <Stack direction="column" alignItems={notFound ? 'center' : 'flex-start'}>
+          {notFound ? (
             <EmptyState
               variant="not-found"
               message={t('datasources.data-source-load-error.not-found', 'Data source not found')}
             />
+          ) : (
+            <Alert
+              severity="error"
+              title={errorMsg ?? t('datasources.data-source-load-error.load-error-title', 'Error loading plugin')}
+            >
+              <Trans i18nKey="datasources.data-source-load-error.check-updates">
+                An unknown error occurred while loading the plugin. Please check for updates.
+              </Trans>
+            </Alert>
           )}
         </Stack>
         <Stack direction="row" gap={2}>

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useForm, Controller } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { FieldSet, Button, ButtonGroup, Field, Input, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
@@ -14,12 +14,12 @@ import {
   useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardAccessMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
+import { type PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
   shareType: PublicDashboardShareType;
@@ -144,7 +144,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
       <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
         <Field
           label={t('public-dashboard.config.can-view-dashboard-radio-button-label', 'Can view dashboard')}
-          className={styles.field}
+          noMargin
         >
           <Controller
             name="shareType"
@@ -185,7 +185,7 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               description={t('public-dashboard.email-sharing.invite-field-desc', 'Invite people by email')}
               error={errors.email?.message}
               invalid={!!errors.email?.message || undefined}
-              className={styles.field}
+              noMargin
             >
               <div className={styles.emailContainer}>
                 <Input
@@ -234,10 +234,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flexWrap: 'wrap',
     gap: theme.spacing(3),
-  }),
-  field: css({
-    label: 'field-noMargin',
-    marginBottom: 0,
   }),
   emailContainer: css({
     label: 'emailContainer',

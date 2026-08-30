@@ -1,86 +1,25 @@
-import React, { FC, useMemo, useState } from 'react';
+import React, { type FC, useMemo, useState } from 'react';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Button, ConfirmModal, Modal, ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
+import { Button, ConfirmModal, Modal, type ModalProps, Space, Spinner, Stack, Text } from '@grafana/ui';
 
-import { RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
-import { FormAmRoute } from '../../../types/amroutes';
+import { type RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
+import { type FormAmRoute } from '../../../types/amroutes';
 import { defaultGroupBy } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
+import { countChildRoutes } from '../../../utils/routeTree';
+import { ErrorModal } from '../../ErrorModal';
 import { AmRootRouteForm } from '../EditDefaultPolicyForm';
 import { NotificationPoliciesErrorAlert } from '../PolicyUpdateErrorAlert';
 import {
   trackNotificationPolicyCreateError,
   trackNotificationPolicyCreated,
-  trackNotificationPolicyDeleteError,
-  trackNotificationPolicyDeleted,
   trackNotificationPolicyReset,
   trackNotificationPolicyResetError,
 } from '../notificationPolicyAnalytics';
-
-export interface DeleteModalProps {
-  isOpen: boolean;
-  onConfirm: () => Promise<unknown>;
-  onDismiss: () => void;
-  routeName: string;
-}
-
-export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, routeName }: DeleteModalProps) => {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<unknown | undefined>();
-
-  const onDeleteDismiss = () => {
-    onDismiss();
-    setError(undefined);
-  };
-
-  const onDeleteConfirm = async () => {
-    setIsDeleting(true);
-    onConfirm()
-      .then(() => {
-        trackNotificationPolicyDeleted();
-        onDeleteDismiss();
-      })
-      .catch((err) => {
-        trackNotificationPolicyDeleteError({ error: stringifyErrorLike(err) });
-        setError(err);
-      })
-      .finally(() => {
-        setIsDeleting(false);
-      });
-  };
-  if (error) {
-    return <ErrorModal isOpen={isOpen} onDismiss={onDeleteDismiss} error={error} />;
-  }
-
-  return (
-    <ConfirmModal
-      body={
-        <>
-          <Text element="p">
-            <Trans
-              i18nKey="alerting.policies.delete-modal.permanently-remove"
-              values={{ routeName: routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName }}
-            >
-              This action will permanently remove the <code>{'{{routeName}}'}</code> notification policy.
-            </Trans>
-          </Text>
-          <Space v={2} />
-        </>
-      }
-      confirmationText={t('alerting.common.delete', 'Delete')}
-      confirmText={isDeleting ? t('alerting.common.deleting', 'Deleting...') : t('alerting.common.delete', 'Delete')}
-      onDismiss={onDeleteDismiss}
-      onConfirm={onDeleteConfirm}
-      title={t('alerting.policies.delete-modal.title-delete-notification-policy', 'Delete notification policy')}
-      isOpen={isOpen}
-    />
-  );
-});
-DeleteModal.displayName = 'DeleteModal';
 
 function getConfirmText(isResetting: boolean, isActualDefaultPolicy: boolean): string {
   if (isResetting) {
@@ -98,14 +37,16 @@ export interface ResetModalProps {
   onConfirm: () => Promise<unknown>;
   onDismiss: () => void;
   routeName: string;
+  route: RouteWithID | null;
   /** When true (default), shows "Reset" language. When false, shows "Delete" language for non-default policy trees. */
   isActualDefaultPolicy?: boolean;
 }
 
 export const ResetModal = React.memo(
-  ({ onConfirm, onDismiss, isOpen, routeName, isActualDefaultPolicy = true }: ResetModalProps) => {
+  ({ onConfirm, onDismiss, isOpen, routeName, route, isActualDefaultPolicy = true }: ResetModalProps) => {
     const [isResetting, setIsResetting] = useState(false);
     const [error, setError] = useState<unknown | undefined>();
+    const childRouteCount = route ? countChildRoutes(route) : 0;
 
     const onResetDismiss = () => {
       onDismiss();
@@ -131,7 +72,7 @@ export const ResetModal = React.memo(
       return <ErrorModal isOpen={isOpen} onDismiss={onResetDismiss} error={error} />;
     }
 
-    const displayName = routeName === ROOT_ROUTE_NAME || !routeName ? 'Default Policy' : routeName;
+    const displayName = isDefaultRoutingTreeName(routeName) ? 'Default Policy' : routeName;
 
     return (
       <ConfirmModal
@@ -149,6 +90,23 @@ export const ResetModal = React.memo(
                 </Trans>
               )}
             </Text>
+            {childRouteCount > 0 && (
+              <>
+                <Space v={2} />
+                <Text element="p" color="error" weight="bold">
+                  <Trans
+                    i18nKey="alerting.policies.reset-modal.warning-child-routes"
+                    count={childRouteCount}
+                    tOptions={{
+                      defaultValue_one: 'This will also remove {{count}} child route.',
+                      defaultValue_other: 'This will also remove {{count}} child routes.',
+                    }}
+                  >
+                    This will also remove {{ count: childRouteCount }} child routes.
+                  </Trans>
+                </Text>
+              </>
+            )}
             <Space v={2} />
           </>
         }
@@ -256,30 +214,6 @@ export const CreateModal = React.memo(({ existingPolicyNames, onConfirm, onDismi
   );
 });
 CreateModal.displayName = 'CreateModal';
-
-interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
-  error: unknown;
-}
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
-  return (
-    <Modal
-      isOpen={isOpen}
-      onDismiss={onDismiss}
-      closeOnBackdropClick={true}
-      closeOnEscape={true}
-      title={t('alerting.policies.error-modal.title-something-went-wrong', 'Something went wrong')}
-    >
-      <p>
-        <Trans i18nKey="alerting.policies.error-modal.failed-to-update-your-configuration">
-          Failed to update your configuration:
-        </Trans>
-      </p>
-      <pre>
-        <code>{stringifyErrorLike(error)}</code>
-      </pre>
-    </Modal>
-  );
-};
 
 const CreatingModal: FC<Pick<ModalProps, 'isOpen' | 'onDismiss'>> = ({ isOpen, onDismiss = () => {} }) => (
   <Modal

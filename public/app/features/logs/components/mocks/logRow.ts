@@ -1,8 +1,8 @@
 import type { Grammar } from 'prismjs';
 
-import { FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, type LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 
-import { LogListModel, preProcessLogs, PreProcessOptions } from '../panel/processing';
+import { type LogListModel, preProcessLogs, type PreProcessOptions } from '../panel/processing';
 
 export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
   const uid = overrides?.uid || '1';

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { ItemValues } from './ItemValues';
-import { RawListValue } from './RawListItem';
+import { type RawListValue } from './RawListItem';
 import { RawPrometheusListItemEmptyValue } from './utils/getRawPrometheusListItemsFromDataFrame';
 
 const value1 = 'value 1';
@@ -35,6 +35,7 @@ describe('ItemValues', () => {
     const itemValues = render(<ItemValues {...defaultProps} />);
     expect(screen.getByText(value1)).toBeVisible();
     expect(screen.getByText(value2)).toBeVisible();
+    expect(screen.getByText(value1).parentElement).toHaveStyle({ minWidth: '80px' });
     expect(itemValues?.baseElement?.children?.item(0)?.children?.item(0)?.children.length).toBe(3);
   });
 

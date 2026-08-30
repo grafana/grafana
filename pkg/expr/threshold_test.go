@@ -3,19 +3,20 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"math"
 	"slices"
 	"sort"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/maps"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestNewThresholdCommand(t *testing.T) {
@@ -262,6 +263,77 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
 		},
+		{
+			// A caller that re-serialises the query through a map sorts the keys, which puts "data" ahead
+			// of "schema" — an order the frame decoder cannot read in its single pass.
+			description: "frame loaded dimensions ordered data first are reordered and read",
+			query: `{
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "loadedDimensions": {"data":{"values":[[18446744073709551615,2,3,4,5]]},"schema":{"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}],"meta":{"type":"fingerprints","typeVersion":[1,0]},"name":"test"}},
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      }
+				    }
+				  ],
+				  "expression": "B"
+				}`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				slices.Sort(actual)
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+			},
+		},
+		{
+			description: "unmarshal as hysteresis command from loadedFingerprints",
+			query: `{
+				  "expression": "B",
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      },
+				      "loadedFingerprints": ["18446744073709551615","2","3","4","5"]
+				    }
+				  ]
+				}`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				sort.Slice(actual, func(i, j int) bool {
+					return actual[i] < actual[j]
+				})
+
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -397,6 +469,11 @@ func TestIsHysteresisExpression(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "false if unloadEvaluator is null",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : null}] }`),
+			expected: false,
+		},
+		{
 			name:     "true type is threshold and a single condition has unloadEvaluator field",
 			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}}] }`),
 			expected: true,
@@ -472,6 +549,68 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 	})
 }
 
+func TestLoadedFingerprintsEncoding(t *testing.T) {
+	const model = `{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt" }, "unloadEvaluator" : {"params": [2], "type": "lt"}}], "expression": "A" }`
+
+	// A query reaches the expression service through callers that re-serialise it via simplejson,
+	// which sorts object keys on the way out — the ordering the frame encoding cannot survive.
+	t.Run("survives JSON round-trips", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		fingerprints := Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}}
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, fingerprints))
+
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+		sj, err := simplejson.NewJson(raw)
+		require.NoError(t, err)
+		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+
+		var generic map[string]any
+		require.NoError(t, json.Unmarshal(raw, &generic))
+		raw, err = json.Marshal(generic)
+		require.NoError(t, err)
+
+		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
+		require.NoError(t, err)
+		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+
+	t.Run("writes both encodings", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
+
+		condition := query["conditions"].([]any)[0].(map[string]any)
+		require.ElementsMatch(t, []string{"2", "3"}, condition["loadedFingerprints"])
+		require.NotNil(t, condition["loadedDimensions"], "the frame is still written for readers that predate loadedFingerprints")
+	})
+
+	// When both encodings are present the array wins, so a stale or mangled frame beside it cannot
+	// change the outcome. Distinct fingerprints in each, otherwise the assertion cannot tell them apart.
+	t.Run("array takes precedence over the frame beside it", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{7: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
+
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+		// simplejson sorts object keys, which puts the frame's "data" ahead of its "schema".
+		sj, err := simplejson.NewJson(raw)
+		require.NoError(t, err)
+		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+		require.Regexp(t, `"loadedDimensions":\{"data"`, string(raw), "frame must be reordered for this test to mean anything")
+
+		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
+		require.NoError(t, err)
+		require.Equal(t, Fingerprints{2: {}, 3: {}}, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+}
+
 func TestThresholdExecute(t *testing.T) {
 	input := map[string]mathexp.Value{
 		//
@@ -480,27 +619,26 @@ func TestThresholdExecute(t *testing.T) {
 		"series - numbers":     newSeries(8, 9, 10, 11, 12),
 		"series - empty":       newSeriesPointer(),
 		"series - all nils":    newSeriesPointer(nil, nil, nil),
-		"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(9)), nil, util.Pointer(float64(11)), nil),
+		"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, new(float64(9)), nil, new(float64(11)), nil),
 		"series - with NaNs":   newSeries(math.NaN(), math.NaN(), math.NaN()),
 		//
 		"scalar - nil": newScalar(nil),
-		"scalar - NaN": newScalar(util.Pointer(math.NaN())),
-		"scalar - 8":   newScalar(util.Pointer(float64(8))),
-		"scalar - 9":   newScalar(util.Pointer(float64(9))),
-		"scalar - 10":  newScalar(util.Pointer(float64(10))),
-		"scalar - 11":  newScalar(util.Pointer(float64(11))),
-		"scalar - 12":  newScalar(util.Pointer(float64(12))),
+		"scalar - NaN": newScalar(new(math.NaN())),
+		"scalar - 8":   newScalar(new(float64(8))),
+		"scalar - 9":   newScalar(new(float64(9))),
+		"scalar - 10":  newScalar(new(float64(10))),
+		"scalar - 11":  newScalar(new(float64(11))),
+		"scalar - 12":  newScalar(new(float64(12))),
 		//
 		"number - nil": newNumber(data.Labels{"number": "test"}, nil),
-		"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(math.NaN())),
-		"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(8))),
-		"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(9))),
-		"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(10))),
-		"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(11))),
-		"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(12))),
+		"number - NaN": newNumber(data.Labels{"number": "test"}, new(math.NaN())),
+		"number - 8":   newNumber(data.Labels{"number": "test"}, new(float64(8))),
+		"number - 9":   newNumber(data.Labels{"number": "test"}, new(float64(9))),
+		"number - 10":  newNumber(data.Labels{"number": "test"}, new(float64(10))),
+		"number - 11":  newNumber(data.Labels{"number": "test"}, new(float64(11))),
+		"number - 12":  newNumber(data.Labels{"number": "test"}, new(float64(12))),
 	}
-	keys := maps.Keys(input)
-	slices.Sort(keys)
+	keys := slices.Sorted(maps.Keys(input))
 	testCases := []struct {
 		name     string
 		pred     predicate
@@ -517,24 +655,24 @@ func TestThresholdExecute(t *testing.T) {
 				"series - numbers":     newSeries(0, 0, 0, 1, 1),
 				"series - empty":       newSeriesPointer(),
 				"series - all nils":    newSeriesPointer(nil, nil, nil),
-				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(0)), nil, util.Pointer(float64(1)), nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, new(float64(0)), nil, new(float64(1)), nil),
 				"series - with NaNs":   newSeries(0, 0, 0),
 				//
 				"scalar - nil": newScalar(nil),
-				"scalar - NaN": newScalar(util.Pointer(float64(0))),
-				"scalar - 8":   newScalar(util.Pointer(float64(0))),
-				"scalar - 9":   newScalar(util.Pointer(float64(0))),
-				"scalar - 10":  newScalar(util.Pointer(float64(0))),
-				"scalar - 11":  newScalar(util.Pointer(float64(1))),
-				"scalar - 12":  newScalar(util.Pointer(float64(1))),
+				"scalar - NaN": newScalar(new(float64(0))),
+				"scalar - 8":   newScalar(new(float64(0))),
+				"scalar - 9":   newScalar(new(float64(0))),
+				"scalar - 10":  newScalar(new(float64(0))),
+				"scalar - 11":  newScalar(new(float64(1))),
+				"scalar - 12":  newScalar(new(float64(1))),
 				//
 				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
-				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
-				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, new(float64(1))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, new(float64(1))),
 			},
 		},
 		{
@@ -547,24 +685,24 @@ func TestThresholdExecute(t *testing.T) {
 				"series - numbers":     newSeries(1, 1, 0, 0, 0),
 				"series - empty":       newSeriesPointer(),
 				"series - all nils":    newSeriesPointer(nil, nil, nil),
-				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(1)), nil, util.Pointer(float64(0)), nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, new(float64(1)), nil, new(float64(0)), nil),
 				"series - with NaNs":   newSeries(0, 0, 0),
 				//
 				"scalar - nil": newScalar(nil),
-				"scalar - NaN": newScalar(util.Pointer(float64(0))),
-				"scalar - 8":   newScalar(util.Pointer(float64(1))),
-				"scalar - 9":   newScalar(util.Pointer(float64(1))),
-				"scalar - 10":  newScalar(util.Pointer(float64(0))),
-				"scalar - 11":  newScalar(util.Pointer(float64(0))),
-				"scalar - 12":  newScalar(util.Pointer(float64(0))),
+				"scalar - NaN": newScalar(new(float64(0))),
+				"scalar - 8":   newScalar(new(float64(1))),
+				"scalar - 9":   newScalar(new(float64(1))),
+				"scalar - 10":  newScalar(new(float64(0))),
+				"scalar - 11":  newScalar(new(float64(0))),
+				"scalar - 12":  newScalar(new(float64(0))),
 				//
 				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
-				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
-				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
-				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, new(float64(1))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, new(float64(1))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
 			},
 		},
 		{
@@ -577,24 +715,24 @@ func TestThresholdExecute(t *testing.T) {
 				"series - numbers":     newSeries(0, 1, 1, 0, 0),
 				"series - empty":       newSeriesPointer(),
 				"series - all nils":    newSeriesPointer(nil, nil, nil),
-				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(1)), nil, util.Pointer(float64(0)), nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, new(float64(1)), nil, new(float64(0)), nil),
 				"series - with NaNs":   newSeries(0, 0, 0),
 				//
 				"scalar - nil": newScalar(nil),
-				"scalar - NaN": newScalar(util.Pointer(float64(0))),
-				"scalar - 8":   newScalar(util.Pointer(float64(0))),
-				"scalar - 9":   newScalar(util.Pointer(float64(1))),
-				"scalar - 10":  newScalar(util.Pointer(float64(1))),
-				"scalar - 11":  newScalar(util.Pointer(float64(0))),
-				"scalar - 12":  newScalar(util.Pointer(float64(0))),
+				"scalar - NaN": newScalar(new(float64(0))),
+				"scalar - 8":   newScalar(new(float64(0))),
+				"scalar - 9":   newScalar(new(float64(1))),
+				"scalar - 10":  newScalar(new(float64(1))),
+				"scalar - 11":  newScalar(new(float64(0))),
+				"scalar - 12":  newScalar(new(float64(0))),
 				//
 				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
-				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
-				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
-				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, new(float64(1))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, new(float64(1))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
 			},
 		},
 		{
@@ -607,24 +745,24 @@ func TestThresholdExecute(t *testing.T) {
 				"series - numbers":     newSeries(0, 0, 0, 0, 1),
 				"series - empty":       newSeriesPointer(),
 				"series - all nils":    newSeriesPointer(nil, nil, nil),
-				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, util.Pointer(float64(0)), nil, util.Pointer(float64(0)), nil),
+				"series - with labels": newSeriesWithLabels(data.Labels{"test": "test"}, nil, new(float64(0)), nil, new(float64(0)), nil),
 				"series - with NaNs":   newSeries(0, 0, 0),
 				//
 				"scalar - nil": newScalar(nil),
-				"scalar - NaN": newScalar(util.Pointer(float64(0))),
-				"scalar - 8":   newScalar(util.Pointer(float64(0))),
-				"scalar - 9":   newScalar(util.Pointer(float64(0))),
-				"scalar - 10":  newScalar(util.Pointer(float64(0))),
-				"scalar - 11":  newScalar(util.Pointer(float64(0))),
-				"scalar - 12":  newScalar(util.Pointer(float64(1))),
+				"scalar - NaN": newScalar(new(float64(0))),
+				"scalar - 8":   newScalar(new(float64(0))),
+				"scalar - 9":   newScalar(new(float64(0))),
+				"scalar - 10":  newScalar(new(float64(0))),
+				"scalar - 11":  newScalar(new(float64(0))),
+				"scalar - 12":  newScalar(new(float64(1))),
 				//
 				"number - nil": newNumber(data.Labels{"number": "test"}, nil),
-				"number - NaN": newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 8":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 9":   newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 10":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 11":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(0))),
-				"number - 12":  newNumber(data.Labels{"number": "test"}, util.Pointer(float64(1))),
+				"number - NaN": newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 8":   newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 9":   newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 10":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 11":  newNumber(data.Labels{"number": "test"}, new(float64(0))),
+				"number - 12":  newNumber(data.Labels{"number": "test"}, new(float64(1))),
 			},
 		},
 	}

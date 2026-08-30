@@ -1,9 +1,12 @@
-import { render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { useDeleteFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { mockFolderDTO } from '../fixtures/folder.fixture';
 import * as permissions from '../permissions';
 
@@ -14,6 +17,11 @@ import { FolderActionsButton } from './FolderActionsButton';
 // Mock out the Permissions component for now
 jest.mock('app/core/components/AccessControl/Permissions', () => ({
   Permissions: () => <div>Hello!</div>,
+}));
+
+jest.mock('../../../api/clients/folder/v1beta1/hooks', () => ({
+  ...jest.requireActual('../../../api/clients/folder/v1beta1/hooks'),
+  useDeleteFolderMutationFacade: jest.fn(),
 }));
 
 const managePermissionsLabel = /Manage permissions/i;
@@ -35,6 +43,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
   beforeEach(() => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
+    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(jest.fn());
   });
 
   afterEach(() => {
@@ -152,6 +161,53 @@ describe('browse-dashboards FolderActionsButton', () => {
     );
   });
 
+  it('shows backend delete error message when folder deletion fails', async () => {
+    const backendMessage = 'Folder cannot be deleted: folder is not empty';
+    const mockDeleteFolder = jest.fn().mockResolvedValue({
+      error: { status: 400, data: { message: backendMessage } },
+    });
+    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(mockDeleteFolder);
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+
+    render(<FolderActionsButton folder={mockFolder} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
+
+    const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
+    await showModalEvent.payload.props.onConfirm();
+
+    expect(publishSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: AppEvents.alertError.name,
+        payload: [backendMessage],
+      })
+    );
+  });
+
+  it('falls back to generic delete error message when backend message is missing', async () => {
+    const mockDeleteFolder = jest.fn().mockResolvedValue({
+      error: { status: 500 },
+    });
+    (useDeleteFolderMutationFacade as jest.Mock).mockReturnValue(mockDeleteFolder);
+    const publishSpy = jest.spyOn(appEvents, 'publish');
+
+    render(<FolderActionsButton folder={mockFolder} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: deleteMenuItemLabel }));
+
+    const showModalEvent = publishSpy.mock.calls[0][0] as ShowModalReactEvent;
+    await showModalEvent.payload.props.onConfirm();
+
+    expect(publishSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: AppEvents.alertError.name,
+        payload: ['Error deleting folder. Please try again later.'],
+      })
+    );
+  });
+
   // Git sync related tests
   it('does not render the "Manage permissions" option if folder is provisioned', async () => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
@@ -201,7 +257,9 @@ describe('browse-dashboards FolderActionsButton', () => {
   });
 
   describe('with provisioningFolderMetadata feature flag', () => {
-    testWithFeatureToggles({ enable: ['provisioningFolderMetadata'] });
+    beforeEach(() => {
+      setTestFlags({ provisioningFolderMetadata: true });
+    });
 
     it('renders the "Manage permissions" option for provisioned folders', async () => {
       render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} />);

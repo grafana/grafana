@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/resource"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/youmark/pkcs8"
@@ -32,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -40,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -49,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
@@ -64,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -88,9 +94,9 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -105,7 +111,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -159,7 +164,6 @@ type HTTPServer struct {
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
-	StorageService               store.StorageService
 	ContextHandler               *contexthandler.ContextHandler
 	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
@@ -168,9 +172,9 @@ type HTTPServer struct {
 	SocialService                social.Service
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
-	SecretsService               secrets.Service
+	SecretsService               secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore                 secretsKV.SecretsKVStore
-	SecretsMigrator              secrets.Migrator
+	SecretsMigrator              secrets.Migrator //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider      spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
@@ -179,6 +183,7 @@ type HTTPServer struct {
 	pluginsUpdateChecker         *updatemanager.PluginsService
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
+	diagnosticsMetrics           *diagnostics.Metrics
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
 	NotificationService          notifications.Service
@@ -190,11 +195,12 @@ type HTTPServer struct {
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
+	preferenceK8sHandler         *prefapi.K8sHandler
 	Csrf                         csrf.Service
 	folderPermissionsService     accesscontrol.FolderPermissionsService
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
-	PublicDashboardsApi          *publicdashboardsApi.Api
+	PublicDashboardsApi          *publicdashboards.Api
 	starService                  star.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
@@ -217,12 +223,14 @@ type HTTPServer struct {
 	promRegister                    prometheus.Registerer
 	promGatherer                    prometheus.Gatherer
 	clientConfigProvider            grafanaapiserver.DirectRestConfigProvider
+	clientGenerator                 resource.ClientGenerator
 	namespacer                      request.NamespaceMapper
 	anonService                     anonymous.Service
 	userVerifier                    user.Verifier
 	tlsCerts                        TLSCerts
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsEndpointRedirects             *prometheus.CounterVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
 }
@@ -256,29 +264,37 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatemanager.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService,
+	authInfoService login.AuthInfoService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
+	preferenceK8sHandler *prefapi.K8sHandler,
+	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
-	apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsService secrets.Service,
+	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
+	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretMigrationProvider spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
+	pubdashApi *publicdashboards.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, orgDeletionService org.DeletionService, teamService team.Service,
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
-	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
+	starApi *starApi.API, promRegister prometheus.Registerer, anonService anonymous.Service,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
+	var diagnosticsMetrics *diagnostics.Metrics
+	if cfg.StackID == "" {
+		diagnosticsMetrics = diagnostics.NewMetrics(sqlStore, usageStats, promRegister)
+	}
 	hs := &HTTPServer{
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
@@ -308,7 +324,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features, // a read only view of the managers state
-		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
 		AccessControl:                accessControl,
@@ -335,6 +350,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		queryDataService:             queryDataService,
+		diagnosticsMetrics:           diagnosticsMetrics,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
 		NotificationService:          notificationService,
@@ -346,6 +362,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
+		preferenceK8sHandler:         preferenceK8sHandler,
 		Csrf:                         csrfService,
 		folderPermissionsService:     folderPermissionsService,
 		dashboardPermissionsService:  dashboardPermissionsService,
@@ -353,7 +370,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		starService:                  starService,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
-		PublicDashboardsApi:          publicDashboardsApi,
+		PublicDashboardsApi:          pubdashApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
@@ -362,7 +379,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
-		annotationsRepo:              annotationRepo,
+		annotationsRepo:              annotationsapi.NewMigrationRepository(annotationRepo, annotationMigrationProxy, cfg, userService),
 		tagService:                   tagService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
@@ -373,6 +390,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
 		clientConfigProvider:         clientConfigProvider,
+		clientGenerator:              clientGenerator,
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
@@ -387,11 +405,17 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
+		dsEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "ds_endpoint_redirects_total",
+			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
+		}, []string{"route", "plugin_type", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsEndpointRedirects)
 
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -678,7 +702,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, webassets.BuildDir, "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")

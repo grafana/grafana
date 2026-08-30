@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
 
-import { Step } from '../Stepper';
-import { WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type WizardStep } from '../types';
 
-import { useWizardButtons, UseWizardButtonsParams } from './useWizardButtons';
+import { useWizardButtons, type UseWizardButtonsParams } from './useWizardButtons';
 
 jest.mock('@grafana/i18n', () => ({
   t: jest.fn((key: string, defaultValue: string) => defaultValue),
@@ -111,6 +111,42 @@ describe('useWizardButtons', () => {
         activeStep: 'authType',
         isSubmitting: true,
         hasStepError: true,
+      });
+      expect(result.current.isNextDisabled).toBe(false);
+    });
+
+    it('should disable next on authType step when creating a new GitHub App connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'github-app',
+        githubAppMode: 'new',
+      });
+      expect(result.current.isNextDisabled).toBe(true);
+    });
+
+    it('should disable next on authType step when creating a new OAuth app connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'oauth-app',
+        githubAppMode: 'new',
+      });
+      expect(result.current.isNextDisabled).toBe(true);
+    });
+
+    it('should enable next on authType step when using an existing OAuth app connection', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'oauth-app',
+        githubAppMode: 'existing',
+      });
+      expect(result.current.isNextDisabled).toBe(false);
+    });
+
+    it('should enable next on authType step for PAT even in new connection mode', () => {
+      const { result } = setup({
+        activeStep: 'authType',
+        githubAuthType: 'pat',
+        githubAppMode: 'new',
       });
       expect(result.current.isNextDisabled).toBe(false);
     });

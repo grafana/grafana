@@ -1,7 +1,7 @@
-import { TemplateSrv } from '@grafana/runtime';
+import { type TemplateSrv } from '@grafana/runtime';
 
-import { AzureMonitorResource } from '../dataquery.gen';
-import { GetMetricNamespacesQuery, GetMetricNamesQuery } from '../types/types';
+import { type AzureMonitorResource } from '../dataquery.gen';
+import { type GetMetricNamespacesQuery, type GetMetricNamesQuery } from '../types/types';
 
 export default class UrlBuilder {
   static buildResourceUri(templateSrv: TemplateSrv, resource: AzureMonitorResource, multipleResources?: boolean) {
@@ -80,9 +80,15 @@ export default class UrlBuilder {
     query: GetMetricNamesQuery,
     templateSrv: TemplateSrv,
     multipleResources?: boolean,
-    region?: string
+    region?: string,
+    batchAPIEnabled?: boolean
   ) {
     let resourceUri: string;
+    // The subscription-level metricdefinitions API is not used when the batch API is enabled,
+    // as the batch API handles multi-resource queries via regional endpoints.
+    if (batchAPIEnabled) {
+      multipleResources = false;
+    }
     const { customNamespace, metricNamespace } = query;
     if ('resourceUri' in query) {
       resourceUri = query.resourceUri;

@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import * as runtime from '@grafana/runtime';

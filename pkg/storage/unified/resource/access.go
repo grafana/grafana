@@ -3,10 +3,12 @@ package resource
 import (
 	"context"
 	"fmt"
-	"sync"
+	"maps"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -18,13 +20,6 @@ import (
 
 type groupResource map[string]map[string]interface{}
 
-const (
-	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authz_limited_client"
-)
-
-var metOnce sync.Once
-
 type accessMetrics struct {
 	checkDuration      *prometheus.HistogramVec
 	compileDuration    *prometheus.HistogramVec
@@ -33,47 +28,66 @@ type accessMetrics struct {
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
-	m := &accessMetrics{
-		checkDuration: prometheus.NewHistogramVec(
+	return &accessMetrics{
+		checkDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "check_duration_seconds",
-				Help:      "duration of the access check calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_check_duration_seconds",
+				Help: "duration of the access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb", "allowed"}),
-		compileDuration: prometheus.NewHistogramVec(
+		compileDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "compile_duration_seconds",
-				Help:      "duration of the access compile calls going through the authz service",
+				Name: "grafana_grpc_authz_limited_client_compile_duration_seconds",
+				Help: "duration of the access compile calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
 			}, []string{"group", "resource", "verb"}),
-		batchCheckDuration: prometheus.NewHistogramVec(
+		batchCheckDuration: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "batch_check_duration_seconds",
-				Help:      "duration of the batch access check calls going through the authz service",
-			}, []string{"check_count"}),
-		errorsTotal: prometheus.NewCounterVec(
+				Name: "grafana_grpc_authz_limited_client_batch_check_duration_seconds",
+				Help: "duration of the batch access check calls going through the authz service",
+
+				NativeHistogramBucketFactor:     1.1,
+				NativeHistogramMaxBucketNumber:  160,
+				NativeHistogramMinResetDuration: time.Hour,
+			}, []string{"check_count_bucket"}),
+		errorsTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace: metricsNamespace,
-				Subsystem: metricsSubSystem,
-				Name:      "errors_total",
-				Help:      "Number of errors",
+				Name: "grafana_grpc_authz_limited_client_errors_total",
+				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
 	}
+}
 
-	if reg != nil {
-		metOnce.Do(func() {
-			reg.MustRegister(m.checkDuration)
-			reg.MustRegister(m.compileDuration)
-			reg.MustRegister(m.batchCheckDuration)
-			reg.MustRegister(m.errorsTotal)
-		})
+// batchSizeBucket keeps the batch size out of the label value, which would
+// otherwise add a series per size. Ranges cover 1 to batchCheckChunkSize (50),
+// the sizes search produces, and are spelled out so changing that constant
+// cannot reshape existing series unnoticed.
+func batchSizeBucket(n int) string {
+	switch {
+	case n <= 1:
+		return "1"
+	case n <= 10:
+		return "2-10"
+	case n <= 25:
+		return "11-25"
+	case n <= 50:
+		return "26-50"
+	default:
+		return "51+"
 	}
+}
 
-	return m
+// rbacAllowlist is a map of group to resources that are compatible with RBAC.
+var rbacAllowlist = groupResource{
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
+	"folder.grafana.app":    map[string]interface{}{"folders": nil},
+	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }
 
 // authzLimitedClient is a client that enforces RBAC for the limited number of groups and resources.
@@ -82,31 +96,73 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 // For now, it makes one call to the authz service for each list items. This is known to be inefficient.
 type authzLimitedClient struct {
 	client claims.AccessClient
-	// allowlist is a map of group to resources that are compatible with RBAC.
-	allowlist groupResource
-	logger    log.Logger
-	metrics   *accessMetrics
+	// exemptionEnabled inverts the gate: every group and resource is enforced,
+	// except the exemptions below. Temporary, until every resource is mapped.
+	exemptionEnabled bool
+	exemptions       groupResource
+	logger           log.Logger
+	metrics          *accessMetrics
 }
 
 type AuthzOptions struct {
-	Registry prometheus.Registerer
+	// Registry is where the client's metrics are registered. A nil Registry
+	// leaves them unregistered, which is what tests want.
+	Registry         prometheus.Registerer
+	ExemptionEnabled bool
+	ExemptResources  []string
 }
 
 // NewAuthzLimitedClient creates a new authzLimitedClient.
 func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims.AccessClient {
 	logger := log.New("limited-authz-client")
-	if opts.Registry == nil {
-		opts.Registry = prometheus.DefaultRegisterer
+	exemptions, err := parseAuthzExemptions(opts.ExemptResources)
+	if err != nil {
+		// Callers validate with ValidateAuthzOptions first. Drop the whole list
+		// rather than apply part of one that did not parse.
+		logger.Error("Ignoring unified storage authz exemptions", "error", err)
 	}
 	return &authzLimitedClient{
-		client: client,
-		allowlist: groupResource{
-			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
-			"folder.grafana.app":    map[string]interface{}{"folders": nil},
-		},
-		logger:  logger,
-		metrics: newMetrics(opts.Registry),
+		client:           client,
+		exemptionEnabled: opts.ExemptionEnabled,
+		exemptions:       exemptions,
+		logger:           logger,
+		metrics:          newMetrics(opts.Registry),
 	}
+}
+
+// ValidateAuthzOptions reports exemptions the client would refuse to apply, so
+// startup fails instead of running with a list that is silently ignored.
+func ValidateAuthzOptions(opts AuthzOptions) error {
+	_, err := parseAuthzExemptions(opts.ExemptResources)
+	return err
+}
+
+// parseAuthzExemptions validates the configured exemptions, whether or not the
+// exemption gate is enabled, so a bad value never silently drops enforcement.
+func parseAuthzExemptions(values []string) (groupResource, error) {
+	exemptions := make(groupResource)
+	for _, value := range values {
+		group, resource, _ := strings.Cut(value, "/")
+		if strings.Count(value, "/") != 1 || strings.Contains(value, "*") || group == "" || resource == "" {
+			return nil, fmt.Errorf("invalid unified storage authz exemption %q: expecting an exact group/resource", value)
+		}
+		if alwaysEnforced(group, resource) {
+			return nil, fmt.Errorf("invalid unified storage authz exemption %q: it is already enforced", value)
+		}
+		if exemptions[group] == nil {
+			exemptions[group] = make(map[string]interface{})
+		}
+		exemptions[group][resource] = nil
+	}
+	return exemptions, nil
+}
+
+func alwaysEnforced(group, resource string) bool {
+	if strings.HasSuffix(group, ".ext.grafana.app") {
+		return true
+	}
+	_, ok := rbacAllowlist[group][resource]
+	return ok
 }
 
 // Check implements claims.AccessClient.
@@ -183,12 +239,19 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
-	if _, ok := c.allowlist[group]; ok {
-		if _, ok := c.allowlist[group][resource]; ok {
-			return true
-		}
+	// When the allow list is disabled, *.ext.grafana.app groups are additionally
+	// forwarded to the underlying authz client so the new dual-check path runs
+	// for K8s-native CRDs. This mirrors narrowing in
+	// rbac.Service.checkPermission and keeps folder/dashboard/iam flow on the
+	// existing allow-list path.
+	if alwaysEnforced(group, resource) {
+		return true
 	}
-	return false
+	if !c.exemptionEnabled {
+		return false
+	}
+	_, exempt := c.exemptions[group][resource]
+	return !exempt
 }
 
 func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
@@ -242,11 +305,9 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	}
 
 	// Merge results from underlying client
-	for correlationID, result := range resp.Results {
-		results[correlationID] = result
-	}
+	maps.Copy(results, resp.Results)
 
-	c.metrics.batchCheckDuration.WithLabelValues(fmt.Sprintf("%d", len(req.Checks))).Observe(time.Since(t).Seconds())
+	c.metrics.batchCheckDuration.WithLabelValues(batchSizeBucket(len(req.Checks))).Observe(time.Since(t).Seconds())
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 

@@ -1,5 +1,6 @@
 import { PluginExtensionPoints } from '@grafana/data';
 import { renderLimitedComponents } from '@grafana/runtime';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 /**
@@ -20,6 +21,6 @@ export function TopBarExtensionPoint() {
     props: {},
     components: components,
     limit: 1,
-    pluginId: 'grafana-setupguide-app',
+    pluginId: SETUPGUIDE_PLUGIN_ID,
   });
 }

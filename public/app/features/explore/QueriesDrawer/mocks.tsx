@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from 'react';
+import { type PropsWithChildren, useState } from 'react';
 
 import { QueriesDrawerContext, Tabs } from './QueriesDrawerContext';
 

@@ -1,26 +1,21 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
+import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { importTestDashboard, saveDashboard, switchToAutoGrid } from './utils';
+import { test, expect } from './fixtures';
+import { flows } from './helpers';
+import { type Panels } from './page-objects';
 
 const repeatTitleBase = 'repeat - ';
 const repeatOptions = [1, 2, 3, 4];
 
-async function expectRepeatPanelsRendered(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  expectedCount: number
-) {
+async function expectRepeatPanelsRendered(panels: Panels, expectedCount: number) {
   // Snapshot rendering can interpolate the repeat variable differently (for example, as a single multi-value string),
   // so assert on the number of repeated panels rather than exact per-clone titles.
-  const repeatedPanels = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: new RegExp(`^${repeatTitleBase}`) });
-
+  const repeatedPanels = panels.getHeaders(new RegExp(`^${repeatTitleBase}`));
   await expect(repeatedPanels).toHaveCount(expectedCount);
   await expect(repeatedPanels.first()).toBeVisible();
 }
@@ -34,10 +29,11 @@ async function publishDashboardSnapshot(
     (response) => response.url().includes('/api/snapshots') && response.request().method() === 'POST'
   );
 
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot)
-  ).toBeVisible();
-  await dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot).click();
+  const publishSnapshotButton = dashboardPage.getByGrafanaSelector(
+    selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot
+  );
+  await expect(publishSnapshotButton).toBeVisible();
+  await publishSnapshotButton.click();
 
   const createResponse = await createSnapshotPromise;
   expect(createResponse.status()).toBe(200);
@@ -48,8 +44,6 @@ async function publishDashboardSnapshot(
 
 test.use({
   featureToggles: {
-    scenes: true,
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },
@@ -62,8 +56,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('dashboard snapshot renders repeated panels (custom grid)', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
+    test('dashboard snapshot renders repeated panels (custom grid)', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      panels,
+    }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Snapshots repeats - custom grid',
@@ -71,24 +71,27 @@ test.describe(
       );
 
       // Sanity check: repeats exist before snapshot.
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
-      // Open share drawer -> Share snapshot.
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
-        .click();
+      await controls.openShareSnapshotDrawer();
 
       const snapshotUrl = await publishDashboardSnapshot(page, dashboardPage, selectors);
       await page.goto(snapshotUrl);
-      await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
+      await expect(controls.getContainer()).toBeVisible();
 
       // Regression: snapshot must include repeat clones; otherwise panels are missing / fail to render.
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
 
-    test('dashboard snapshot renders repeated panels (auto grid)', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
+    test('dashboard snapshot renders repeated panels (auto grid)', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+    }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Snapshots repeats - auto grid',
@@ -96,24 +99,20 @@ test.describe(
       );
 
       // Convert layout to auto grid and persist it, then snapshot.
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await switchToAutoGrid(page, dashboardPage);
-      await saveDashboard(dashboardPage, page, selectors);
-      await page.reload();
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Options');
+      await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+      await flows.dashboards.saveDashboard(page, controls);
 
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
-        .click();
+      await controls.openShareSnapshotDrawer();
 
       const snapshotUrl = await publishDashboardSnapshot(page, dashboardPage, selectors);
       await page.goto(snapshotUrl);
-      await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
+      await expect(controls.getContainer()).toBeVisible();
 
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
   }
 );

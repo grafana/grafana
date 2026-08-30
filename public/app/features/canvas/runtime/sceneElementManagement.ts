@@ -1,12 +1,12 @@
 import { first } from 'rxjs/operators';
 
-import { Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
+import { type Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
-import { ElementState } from './element';
+import { type ElementState } from './element';
 import { FrameState } from './frame';
-import { RootElement } from './root';
-import { Scene } from './scene';
+import { type RootElement } from './root';
+import { type Scene } from './scene';
 
 // TODO: Consider whether or not reorderElements + updateElements should be moved to TreeNavigationEditor
 // Reorder elements in the DOM when rearranging them in the tree navigation editor

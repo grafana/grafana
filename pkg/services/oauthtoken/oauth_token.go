@@ -18,12 +18,12 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -41,7 +41,7 @@ var (
 )
 
 type Service struct {
-	Cfg             *setting.Cfg
+	cfgProvider     configprovider.ConfigProvider
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
 	sessionService  auth.UserTokenService
@@ -57,7 +57,6 @@ var _ OAuthTokenService = (*Service)(nil)
 //go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
-	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	TryTokenRefresh(context.Context, identity.Requester, *TokenRefreshMetadata) (*oauth2.Token, error)
 	InvalidateOAuthTokens(context.Context, identity.Requester, *TokenRefreshMetadata) error
 }
@@ -68,13 +67,13 @@ type TokenRefreshMetadata struct {
 	AuthID            string
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfgProvider configprovider.ConfigProvider, registerer prometheus.Registerer,
 	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
 ) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
 		sessionService:       sessionService,
-		Cfg:                  cfg,
+		cfgProvider:          cfgProvider,
 		SocialService:        socialService,
 		features:             features,
 		serverLock:           serverLockService,
@@ -189,11 +188,6 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	return token
 }
 
-// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return IsOAuthPassThruEnabled(ds)
-}
-
 // hasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
 func (o *Service) hasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.hasOAuthEntry")
@@ -275,7 +269,14 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
-	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
+	currentOAuthInfo, err := o.SocialService.GetOAuthInfoProvider(ctx, provider)
+	if err != nil {
+		// Provider configuration is resolved dynamically and can fail independently
+		// of the OAuth refresh credentials. Skip this refresh attempt so a transient
+		// configuration lookup failure does not revoke an otherwise valid session.
+		ctxLogger.Warn("Unable to resolve OAuth provider configuration; skipping token refresh", "provider", provider, "error", err)
+		return nil, nil
+	}
 	if currentOAuthInfo == nil {
 		ctxLogger.Warn("OAuth provider not found", "provider", provider)
 		return nil, nil
@@ -293,10 +294,18 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 		lockKey = fmt.Sprintf("oauth-refresh-token-%d-%d", userID, tokenRefreshMetadata.ExternalSessionID)
 	}
 
+	cfg, err := o.cfgProvider.Get(ctx)
+	if err != nil {
+		// As with provider resolution above, configuration lookup failure is not
+		// evidence that the refresh token is invalid and must not revoke the session.
+		ctxLogger.Warn("Unable to resolve OAuth token refresh configuration; skipping token refresh", "provider", provider, "error", err)
+		return nil, nil
+	}
+
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
-		MaxWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
+		MinWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
+		MaxWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
 	}
 
 	retryOpt := func(attempts int) error {
@@ -426,14 +435,14 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		return persistedToken, nil
 	}
 
-	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)
+	connect, err := o.SocialService.GetConnector(ctx, tokenRefreshMetadata.AuthModule)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", tokenRefreshMetadata.AuthModule, "error", err)
 		span.SetStatus(codes.Error, "Failed to get oauth connector: "+err.Error())
 		return nil, err
 	}
 
-	client, err := o.SocialService.GetOAuthHttpClient(tokenRefreshMetadata.AuthModule)
+	client, err := o.SocialService.GetOAuthHttpClient(ctx, tokenRefreshMetadata.AuthModule)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", tokenRefreshMetadata.AuthModule, "error", err)
 		span.SetStatus(codes.Error, "Failed to get oauth http client")
@@ -445,7 +454,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	// TokenSource handles refreshing the token if it has expired
 	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
-	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, tokenRefreshSuccessLabel(refreshErr)).Observe(duration.Seconds())
 
 	if refreshErr != nil {
 		span.SetAttributes(attribute.Bool("token_refreshed", false))
@@ -464,12 +473,13 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
-		if o.Cfg.Env == setting.Dev {
+		cfg, cfgErr := o.cfgProvider.Get(ctx)
+		if cfgErr == nil && cfg.Env == setting.Dev {
 			ctxLogger.Debug("Oauth got token",
 				"auth_module", usr.GetAuthenticatedBy(),
 				"expiry", fmt.Sprintf("%v", token.Expiry),
-				"access_token", fmt.Sprintf("%v", token.AccessToken),
-				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
+				"access_token_present", token.AccessToken != "",
+				"refresh_token_present", token.RefreshToken != "",
 			)
 		}
 
@@ -513,9 +523,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	return token, nil
 }
 
-// IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
-	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
+func tokenRefreshSuccessLabel(err error) string {
+	return fmt.Sprintf("%t", err == nil)
 }
 
 func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {
@@ -526,8 +535,18 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 		Help:      "Time taken to fetch access token using refresh token",
 	},
 		[]string{"auth_provider", "success"})
-	if registerer != nil {
-		registerer.MustRegister(tokenRefreshDuration)
+	if registerer == nil {
+		return tokenRefreshDuration
+	}
+
+	if err := registerer.Register(tokenRefreshDuration); err != nil {
+		var alreadyRegistered prometheus.AlreadyRegisteredError
+		if errors.As(err, &alreadyRegistered) {
+			if existing, ok := alreadyRegistered.ExistingCollector.(*prometheus.HistogramVec); ok {
+				return existing
+			}
+		}
+		panic(err)
 	}
 	return tokenRefreshDuration
 }

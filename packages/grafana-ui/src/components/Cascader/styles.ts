@@ -1,6 +1,6 @@
 import { css, keyframes } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getIconPath } from '../Icon/utils';
 
@@ -78,8 +78,8 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => {
           overflow: 'hidden',
           background: theme.colors.background.elevated,
           border: `none`,
-          borderRadius: theme.shape.radius.default,
-          boxShadow: theme.shadows.z3,
+          borderRadius: theme.shape.radius.lg,
+          boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
           whiteSpace: 'nowrap',
 
           '&.slide-up-enter, &.slide-up-appear': {

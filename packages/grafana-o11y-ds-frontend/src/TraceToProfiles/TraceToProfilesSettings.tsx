@@ -4,18 +4,19 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  DataSourceJsonData,
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourceJsonData,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSection } from '@grafana/plugin-ui';
-import { DataSourcePicker, DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker, DataSourceWithBackend } from '@grafana/runtime';
+import { useDataSourceInstance } from '@grafana/runtime/unstable';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 import { ProfileTypesCascader } from '../pyroscope/ProfileTypesCascader';
-import { ProfileTypeMessage } from '../pyroscope/types';
+import { type ProfileTypeMessage } from '../pyroscope/types';
 
 export interface TraceToProfilesOptions {
   datasourceUid?: string;
@@ -43,9 +44,7 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
     return placeholder;
   }, [options.jsonData.tracesToProfiles?.datasourceUid, profileTypes]);
 
-  const { value: dataSource } = useAsync(async () => {
-    return await getDataSourceSrv().get(options.jsonData.tracesToProfiles?.datasourceUid);
-  }, [options.jsonData.tracesToProfiles?.datasourceUid]);
+  const { dataSource } = useDataSourceInstance(options.jsonData.tracesToProfiles?.datasourceUid);
 
   const { value: pTypes } = useAsync(async () => {
     if (

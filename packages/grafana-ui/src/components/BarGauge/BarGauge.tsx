@@ -1,29 +1,35 @@
 // Library
 import { cx } from '@emotion/css';
-import { CSSProperties, memo, type JSX } from 'react';
+import { type CSSProperties, memo, type JSX } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
-  DisplayProcessor,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
+  colorManipulator,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
   FALLBACK_COLOR,
   FieldColorModeId,
-  FieldConfig,
-  FormattedValue,
+  type FieldConfig,
+  type FormattedValue,
   formattedValueToString,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getFieldColorMode,
   ThresholdsMode,
-  TimeSeriesValue,
+  type TimeSeriesValue,
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
+import {
+  BarGaugeDisplayMode,
+  BarGaugeNamePlacement,
+  BarGaugeValueMode,
+  type VizTextDisplayOptions,
+} from '@grafana/schema';
 
-import { Themeable2 } from '../../types/theme';
+import { type Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
@@ -534,7 +540,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const emptyBar: CSSProperties = {
-    background: theme.colors.background.secondary,
+    background: colorManipulator.emphasize(theme.components.panel.background, 0.07),
     flexGrow: 1,
     display: 'flex',
     borderRadius: theme.shape.radius.sm,

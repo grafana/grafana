@@ -1,10 +1,9 @@
-import { Spinner } from '@grafana/ui';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
-import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
 
 export interface Props {
@@ -33,27 +32,26 @@ export function MoveProvisionedDashboardDrawer({
     error,
   } = useProvisionedDashboardData(dashboard);
 
-  if (repoDataStatus === RepoViewStatus.Loading) {
-    return <Spinner />;
-  }
-
-  if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {
-    return <FormLoadingErrorAlert error={error} />;
-  }
-
   return (
-    <MoveProvisionedDashboardForm
-      dashboard={dashboard}
-      defaultValues={defaultValues}
-      loadedFromRef={loadedFromRef}
-      readOnly={readOnly}
-      repository={repository}
-      isNew={isNew}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      targetFolderUID={targetFolderUID}
-      targetFolderTitle={targetFolderTitle}
-      onDismiss={onDismiss}
-      onSuccess={onSuccess}
-    />
+    <ProvisionedFormGate
+      isLoading={repoDataStatus === RepoViewStatus.Loading}
+      isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
+      isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
+      error={error}
+    >
+      <MoveProvisionedDashboardForm
+        dashboard={dashboard}
+        defaultValues={defaultValues!}
+        loadedFromRef={loadedFromRef}
+        readOnly={readOnly}
+        repository={repository}
+        isNew={isNew}
+        canPushToConfiguredBranch={canPushToConfiguredBranch}
+        targetFolderUID={targetFolderUID}
+        targetFolderTitle={targetFolderTitle}
+        onDismiss={onDismiss}
+        onSuccess={onSuccess}
+      />
+    </ProvisionedFormGate>
   );
 }

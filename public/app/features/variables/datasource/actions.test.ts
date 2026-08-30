@@ -1,34 +1,30 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
-import { getRootReducer, RootReducerType } from '../state/helpers';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-import {
-  DataSourceVariableActionDependencies,
-  initDataSourceVariableEditor,
-  updateDataSourceVariableOptions,
-} from './actions';
+import { type DataSourceVariableActionDependencies, updateDataSourceVariableOptions } from './actions';
 import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions } from './reducer';
 
 interface Args {
-  sources?: DataSourceInstanceSettings[];
+  sources?: DataSourceInstanceListItem[];
   query?: string;
   regex?: string;
 }
 
 function getTestContext({ sources = [], query, regex }: Args = {}) {
-  const getListMock = jest.fn().mockReturnValue(sources);
-  const getDatasourceSrvMock = jest.fn().mockReturnValue({ getList: getListMock });
-  const dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrvMock };
+  const getDataSourceInstanceListMock = jest.fn().mockResolvedValue(sources);
+  const dependencies: DataSourceVariableActionDependencies = {
+    getDataSourceInstanceList: getDataSourceInstanceListMock,
+  };
   const datasource = datasourceBuilder()
     .withId('0')
     .withRootStateKey('key')
@@ -36,7 +32,19 @@ function getTestContext({ sources = [], query, regex }: Args = {}) {
     .withRegEx(regex!)
     .build();
 
-  return { getListMock, getDatasourceSrvMock, dependencies, datasource };
+  return { getDataSourceInstanceListMock, dependencies, datasource };
+}
+
+function toListItem(name: string, meta: ReturnType<typeof getMockPlugin>): DataSourceInstanceListItem {
+  const settings = getDataSourceInstanceSetting(name, meta);
+  return {
+    uid: settings.uid,
+    type: settings.type,
+    name: settings.name,
+    meta: settings.meta,
+    readOnly: settings.readOnly,
+    isDefault: settings.isDefault ?? false,
+  };
 }
 
 describe('data source actions', () => {
@@ -46,11 +54,8 @@ describe('data source actions', () => {
     describe('and there is no regex', () => {
       it('then the correct actions are dispatched', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-        const sources: DataSourceInstanceSettings[] = [
-          getDataSourceInstanceSetting('first-name', meta),
-          getDataSourceInstanceSetting('second-name', meta),
-        ];
-        const { datasource, dependencies, getListMock, getDatasourceSrvMock } = getTestContext({
+        const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
+        const { datasource, dependencies, getDataSourceInstanceListMock } = getTestContext({
           sources,
           query: 'mock-data-id',
         });
@@ -92,21 +97,17 @@ describe('data source actions', () => {
           )
         );
 
-        expect(getListMock).toHaveBeenCalledTimes(1);
-        expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
-        expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
       });
     });
 
     describe('and there is a regex', () => {
       it('then the correct actions are dispatched', async () => {
         const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-        const sources: DataSourceInstanceSettings[] = [
-          getDataSourceInstanceSetting('first-name', meta),
-          getDataSourceInstanceSetting('second-name', meta),
-        ];
+        const sources: DataSourceInstanceListItem[] = [toListItem('first-name', meta), toListItem('second-name', meta)];
 
-        const { datasource, dependencies, getListMock, getDatasourceSrvMock } = getTestContext({
+        const { datasource, dependencies, getDataSourceInstanceListMock } = getTestContext({
           sources,
           query: 'mock-data-id',
           regex: '/.*(second-name).*/',
@@ -149,41 +150,9 @@ describe('data source actions', () => {
           )
         );
 
-        expect(getListMock).toHaveBeenCalledTimes(1);
-        expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
-        expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledTimes(1);
+        expect(getDataSourceInstanceListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
       });
-    });
-  });
-
-  describe('when initDataSourceVariableEditor is dispatched', () => {
-    it('then the correct actions are dispatched', () => {
-      const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-      const sources: DataSourceInstanceSettings[] = [
-        getDataSourceInstanceSetting('first-name', meta),
-        getDataSourceInstanceSetting('second-name', meta),
-      ];
-
-      const { dependencies, getListMock, getDatasourceSrvMock } = getTestContext({ sources });
-
-      reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initDataSourceVariableEditor('key', dependencies))
-        .thenDispatchedActionsShouldEqual(
-          toKeyedAction(
-            'key',
-            changeVariableEditorExtended({
-              dataSourceTypes: [
-                { text: '', value: '' },
-                { text: 'mock-data-name', value: 'mock-data-id' },
-              ],
-            })
-          )
-        );
-
-      expect(getListMock).toHaveBeenCalledTimes(1);
-      expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: true });
-      expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
     });
   });
 });

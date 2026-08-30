@@ -316,7 +316,7 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-For more information, refer to [Reporting docs](../../dashboards/share-dashboards-panels/#reporting).
+For more information, refer to [Reporting docs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/create-reports/).
 
 ### License restrictions clarification in the docs
 

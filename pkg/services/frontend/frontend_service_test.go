@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -26,6 +27,15 @@ import (
 func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 	t.Helper()
 
+	service, err := newTestService(cfg)
+	require.NoError(t, err)
+
+	return service
+}
+
+// newTestService builds a test service and returns the construction error, for tests
+// that assert the service refuses to start.
+func newTestService(cfg *setting.Cfg) (*frontendService, error) {
 	features := featuremgmt.WithFeatures()
 	license := &licensing.OSSLicensingService{}
 	hooksService := hooks.ProvideService()
@@ -37,10 +47,7 @@ func createTestService(t *testing.T, cfg *setting.Cfg) *frontendService {
 		cfg.BuildVersion = "10.3.0"
 	}
 
-	service, err := ProvideFrontendService(cfg, features, promGatherer, promRegister, license, hooksService)
-	require.NoError(t, err)
-
-	return service
+	return ProvideFrontendService(cfg, features, promGatherer, promRegister, license, hooksService)
 }
 
 func TestFrontendService_ServerCreation(t *testing.T) {
@@ -212,10 +219,10 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		service.registerRoutes(mux)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		// Set the login_error cookie (with some encrypted-looking value)
+		// Valid hex string simulates the encrypted cookie written by OSS trySetEncryptedCookie.
 		req.AddCookie(&http.Cookie{
 			Name:  "login_error",
-			Value: "abc123encryptedvalue",
+			Value: "deadbeef0123456789abcdef",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -225,7 +232,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		body := recorder.Body.String()
 
 		// Check that the generic error message is in the response
-		assert.Contains(t, body, "loginError", "Should contain loginError when cookie is present")
+		assert.Contains(t, body, `"loginError"`, "Should contain loginError when cookie is present")
 		assert.Contains(t, body, "oauth.login.error", "Should contain the generic OAuth error message")
 
 		// Check that the cookie was deleted (MaxAge=-1)
@@ -261,8 +268,10 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		// The page should render but without the login error
 		assert.Contains(t, body, "window.grafanaBootData")
 		// Check that loginError is not set (or is empty/omitted in JSON)
-		// Since it's omitempty, it shouldn't appear at all
-		assert.NotContains(t, body, "loginError", "Should not contain loginError when cookie is absent")
+		// Since it's omitempty, it shouldn't appear at all.
+		// Note: the static JS in the template contains "loginError" as a property accessor,
+		// so we check for the JSON-quoted form which only appears when the value is serialized.
+		assert.NotContains(t, body, `"loginError":`, "Should not contain loginError when cookie is absent")
 	})
 
 	t.Run("should handle custom OAuth error message from config", func(t *testing.T) {
@@ -285,7 +294,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  "login_error",
-			Value: "abc123encryptedvalue",
+			Value: "deadbeef0123456789abcdef",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -296,6 +305,30 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 
 		// Check that the custom error message is used
 		assert.Contains(t, body, "Oh no a boo-boo happened!", "Should use custom OAuth error message from config")
+	})
+
+	t.Run("should use plain-text cookie value from multi-tenant authn-service", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Non-hex value simulates the plain-text cookie written by the authn-service.
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "login provider denied login request",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		assert.Contains(t, body, "login provider denied login request",
+			"Should use the plain-text error from the cookie")
 	})
 }
 
@@ -504,6 +537,226 @@ func TestFrontendService_CSP(t *testing.T) {
 		// Verify the nonce in context matches the one in the CSP header
 		cspHeader := recorder.Header().Get("Content-Security-Policy")
 		assert.Contains(t, cspHeader, "'nonce-"+capturedNonce+"'", "Nonce in header should match context nonce")
+	})
+
+	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with specific hosts", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com foo.example.com")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors wiki.example.com foo.example.com")
+	})
+
+	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with wildcard", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("*")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors *")
+	})
+
+	t.Run("should disallow iframing when allow_embedding_hosts is empty", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors 'none'")
+	})
+
+	t.Run("should apply per-tenant allow_embedding_hosts override to CSP header", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+		service.settingsService = &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "allow_embedding_hosts", Value: "tenant.example.com wiki.example.com"},
+			},
+		}
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-tenant-1")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors tenant.example.com wiki.example.com")
+	})
+
+	t.Run("should expand $FORM_ACTION_ADDITIONAL_HOSTS in CSP template with specific hosts", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("form_action_additional_hosts").SetValue("login.example.com auth.example.com")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' login.example.com auth.example.com")
+	})
+
+	t.Run("should keep just 'self' in form-action when form_action_additional_hosts is empty", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self'")
+	})
+
+	t.Run("should expand $FORM_ACTION_ADDITIONAL_HOSTS in CSP template with wildcard", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("form_action_additional_hosts").SetValue("*")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' *")
+	})
+
+	t.Run("should apply per-tenant form_action_additional_hosts override to CSP header", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'; form-action 'self' $FORM_ACTION_ADDITIONAL_HOSTS",
+		}
+		service := createTestService(t, cfg)
+		service.settingsService = &mockSettingsService{
+			settings: []*settingservice.Setting{
+				{Section: "security", Key: "form_action_additional_hosts", Value: "tenant-login.example.com tenant-auth.example.com"},
+			},
+		}
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-tenant-1")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "form-action 'self' tenant-login.example.com tenant-auth.example.com")
 	})
 
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {

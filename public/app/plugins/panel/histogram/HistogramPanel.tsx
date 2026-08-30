@@ -1,26 +1,35 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
   histogramFieldsToFrame,
   joinHistograms,
+  type DataFrame,
   DataFrameType,
-  PanelProps,
+  type PanelProps,
   buildHistogram,
   cacheFieldDisplayNames,
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { TooltipDisplayMode, TooltipPlugin2, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode, TooltipPlugin2, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
+import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 
 export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
+  const { getFiltersBasedOnGrouping, onAddAdHocFilters } = usePanelContext();
+
+  const getFilterByGroupedLabelsModel = useCallback(
+    (frame: DataFrame, seriesIdx: number | null | undefined) =>
+      getFilterByGroupedLabels(frame, seriesIdx, getFiltersBasedOnGrouping, onAddAdHocFilters),
+    [getFiltersBasedOnGrouping, onAddAdHocFilters]
+  );
 
   const histogram = useMemo(() => {
     if (!data.series.length) {
@@ -109,6 +118,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       maxHeight={options.tooltip.maxHeight}
+                      filterByGroupedLabels={getFilterByGroupedLabelsModel(xMinOnlyFrame, seriesIdx)}
                     />
                   );
                 }}

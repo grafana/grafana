@@ -2,18 +2,18 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
 import { locationService, logMeasurement } from '@grafana/runtime';
-import { AlertManagerCortexConfig, AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { ThunkResult } from 'app/types/store';
-import { RuleIdentifier, RuleNamespace, StateHistoryItem } from 'app/types/unified-alerting';
-import { RulerRuleDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type AlertManagerCortexConfig, type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ThunkResult } from 'app/types/store';
+import { type RuleIdentifier, type RuleNamespace, type StateHistoryItem } from 'app/types/unified-alerting';
+import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { withPromRulesMetadataLogging, withRulerRulesMetadataLogging } from '../Analytics';
-import { deleteAlertManagerConfig, fetchAlertGroups, updateAlertManagerConfig } from '../api/alertmanager';
+import { deleteAlertManagerConfig, updateAlertManagerConfig } from '../api/alertmanager';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
-import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
-import { FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
+import { type FetchPromRulesFilter, fetchRules } from '../api/prometheus';
+import { type FetchRulerRulesFilter, fetchRulerRules } from '../api/ruler';
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { getAllRulesSourceNames } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
@@ -21,8 +21,10 @@ import { withAppEvents, withSerializedError } from '../utils/redux';
 import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
+import { alertingActionTypePrefix } from './actionTypes';
+
 export const fetchPromRulesAction = createAsyncThunk(
-  'unifiedalerting/fetchPromRules',
+  alertingActionTypePrefix.fetchPromRules,
   async (
     {
       rulesSourceName,
@@ -53,7 +55,7 @@ export const fetchPromRulesAction = createAsyncThunk(
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
-  'unifiedalerting/fetchRulerRules',
+  alertingActionTypePrefix.fetchRulerRules,
   async (
     {
       rulesSourceName,
@@ -169,7 +171,7 @@ export function fetchAllPromRulesAction(
 }
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
-  'unifiedalerting/fetchGrafanaAnnotations',
+  alertingActionTypePrefix.fetchGrafanaAnnotations,
   (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
 );
 
@@ -183,7 +185,7 @@ interface UpdateAlertManagerConfigActionOptions {
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
-  'unifiedalerting/updateAMConfig',
+  alertingActionTypePrefix.updateAlertManagerConfig,
   (
     { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch },
     thunkAPI
@@ -228,15 +230,8 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     )
 );
 
-export const fetchAlertGroupsAction = createAsyncThunk(
-  'unifiedalerting/fetchAlertGroups',
-  (alertManagerSourceName: string): Promise<AlertmanagerGroup[]> => {
-    return withSerializedError(fetchAlertGroups(alertManagerSourceName));
-  }
-);
-
 export const deleteAlertManagerConfigAction = createAsyncThunk(
-  'unifiedalerting/deleteAlertManagerConfig',
+  alertingActionTypePrefix.deleteAlertManagerConfig,
   async (alertManagerSourceName: string, thunkAPI): Promise<void> => {
     return withAppEvents(
       withSerializedError(

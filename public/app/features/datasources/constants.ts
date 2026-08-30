@@ -1,4 +1,4 @@
-import { DataSourcesRoutes } from './types';
+import { type DataSourcesRoutes } from './types';
 
 /**
  * Default routes for data sources pages.

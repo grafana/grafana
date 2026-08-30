@@ -11,6 +11,7 @@ type SetResourcePermissionCommand struct {
 	ResourceID        string
 	ResourceAttribute string
 	Permission        string
+	DatasourceType    string
 }
 
 type SetResourcePermissionsCommand struct {

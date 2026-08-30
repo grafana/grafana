@@ -1,4 +1,4 @@
-import { GrafanaRulesSourceSymbol, RulesSource } from 'app/types/unified-alerting';
+import { type GrafanaRulesSourceSymbol, type RulesSource } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesSourceName } from '../utils/datasource';

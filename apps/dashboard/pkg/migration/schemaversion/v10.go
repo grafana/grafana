@@ -50,48 +50,46 @@ import "context"
 func V10(_ context.Context, dashboard map[string]interface{}) error {
 	dashboard["schemaVersion"] = 10
 
-	panels, ok := dashboard["panels"].([]interface{})
-	if !ok {
-		return nil
-	}
-
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Only process table panels
-		panelType := GetStringValue(panel, "type")
-		if panelType != "table" {
-			continue
-		}
-
-		styles, ok := panel["styles"].([]interface{})
-		if !ok {
-			continue
-		}
-
-		// Process each style in the table panel
-		for _, s := range styles {
-			style, ok := s.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			thresholds, ok := style["thresholds"].([]interface{})
-			if !ok {
-				continue
-			}
-
-			// Only modify thresholds if they have 3 or more values
-			if len(thresholds) >= 3 {
-				// Remove the first threshold value
-				newThresholds := thresholds[1:]
-				style["thresholds"] = newThresholds
-			}
-		}
+	// This migration runs before V16 hoists row panels to the top level, so in
+	// pre-v16 dashboards the panels still live inside rows. Visit both locations
+	// to match the frontend, which applies this upgrade after the row->grid
+	// conversion.
+	for _, panel := range collectPanelsIncludingRows(dashboard) {
+		migrateTableThresholdsInPanel(panel)
 	}
 
 	return nil
+}
+
+func migrateTableThresholdsInPanel(panel map[string]interface{}) {
+	// Only process table panels
+	panelType := GetStringValue(panel, "type")
+	if panelType != "table" {
+		return
+	}
+
+	styles, ok := panel["styles"].([]interface{})
+	if !ok {
+		return
+	}
+
+	// Process each style in the table panel
+	for _, s := range styles {
+		style, ok := s.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		thresholds, ok := style["thresholds"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		// Only modify thresholds if they have 3 or more values
+		if len(thresholds) >= 3 {
+			// Remove the first threshold value
+			newThresholds := thresholds[1:]
+			style["thresholds"] = newThresholds
+		}
+	}
 }

@@ -1,13 +1,13 @@
 import memoizeOne from 'memoize-one';
 import { useId } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import { type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 
 import { useLinks } from '../../../features/explore/utils/links';
 
 import { NodeGraph } from './NodeGraph';
-import { Options as NodeGraphOptions } from './panelcfg.gen';
+import { type Options as NodeGraphOptions } from './panelcfg.gen';
 import { getNodeGraphDataFrames } from './utils';
 
 export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {

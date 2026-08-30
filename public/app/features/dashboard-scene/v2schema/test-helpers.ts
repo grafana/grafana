@@ -4,20 +4,21 @@ import {
   DataSourceVariable,
   QueryVariable,
   SceneDataTransformer,
-  SceneObject,
+  type SceneObject,
   SceneQueryRunner,
-  SceneVariable,
-  SceneVariableState,
+  type SceneVariable,
+  type SceneVariableState,
   SwitchVariable,
-  VizPanel,
+  type VizPanel,
 } from '@grafana/scenes';
-import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { VizPanelLinks } from '../scene/PanelLinks';
-import { TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
-import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { type VizPanelLinks } from '../scene/PanelLinks';
+import { type TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { getLibraryPanelBehavior, getQueryRunnerFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 type SceneVariableConstructor<T extends SceneVariableState, V extends SceneVariable<T>> = new (
   initialState: Partial<T>
@@ -83,7 +84,12 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
 
     expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
     const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-    expect(dataTransformer.state.transformations[0]).toEqual(panel.spec.data.spec.transformations[0].spec);
+    const expectedTransformation = panel.spec.data.spec.transformations[0];
+    expect(dataTransformer.state.transformations[0]).toEqual({
+      id: expectedTransformation.group,
+      ...expectedTransformation.spec,
+      topic: undefined,
+    });
 
     expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
     const queryRunner = getQueryRunnerFor(vizPanel)!;

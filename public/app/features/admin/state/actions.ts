@@ -2,14 +2,14 @@ import { debounce } from 'lodash';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { FetchDataArgs } from '@grafana/ui';
+import { type FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
-import { LdapUser } from 'app/types/ldap';
-import { ThunkResult } from 'app/types/store';
-import { UserDTO, UserSession, UserFilter, AnonUserFilter } from 'app/types/user';
+import { type LdapUser } from 'app/types/ldap';
+import { type ThunkResult } from 'app/types/store';
+import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
 import {
   userAdminPageLoadedAction,
@@ -64,7 +64,7 @@ export function loadAdminUserPage(userUid: string): ThunkResult<void> {
   };
 }
 
-export function loadUserProfile(userUid: string): ThunkResult<void> {
+function loadUserProfile(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     const user = await getBackendSrv().get(`/api/users/${userUid}`, accessControlQueryParam());
     dispatch(userProfileLoadedAction(user));
@@ -115,7 +115,7 @@ export function updateUserPermissions(userUid: string, isGrafanaAdmin: boolean):
   };
 }
 
-export function loadUserOrgs(userUid: string): ThunkResult<void> {
+function loadUserOrgs(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     const orgs = await getBackendSrv().get(`/api/users/${userUid}/orgs`);
     dispatch(userOrgsLoadedAction(orgs));
@@ -148,7 +148,7 @@ export function deleteOrgUser(userUid: string, orgId: number): ThunkResult<void>
   };
 }
 
-export function loadUserSessions(userUid: string): ThunkResult<void> {
+function loadUserSessions(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
       return;

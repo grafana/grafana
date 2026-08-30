@@ -1,12 +1,11 @@
 import { isString, sortBy } from 'lodash';
 
-import { Labels, UrlQueryMap } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
+import { type Labels, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, isFetchError } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
+import { type FetchError, isFetchError } from '@grafana/runtime';
+import { type DataSourceRef } from '@grafana/schema';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
+import kbn from 'app/core/utils/kbn';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import {
   alertInstanceKey,
@@ -16,26 +15,27 @@ import {
 } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
-  Alert,
-  CombinedRule,
-  DataSourceRuleGroupIdentifier,
-  FilterState,
-  RuleIdentifier,
-  RuleWithLocation,
-  RulesSource,
-  SilenceFilterState,
+  type Alert,
+  type CombinedRule,
+  type DataSourceRuleGroupIdentifier,
+  type FilterState,
+  type RuleIdentifier,
+  type RuleWithLocation,
+  type RulesSource,
+  type SilenceFilterState,
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
-  PromRuleDTO,
+  type PromRuleDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import * as environment from './environment';
 import {
-  KnownErrorCodes,
+  type KnownErrorCodes,
   getErrorMessageFromApiMachineryErrorResponse,
   getErrorMessageFromCode,
   isApiMachineryError,
@@ -185,7 +185,8 @@ export function makeFolderLink(folderUID: string): string {
 }
 
 export function makeFolderAlertsLink(folderUID: string, title: string): string {
-  return createRelativeUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
+  const slug = kbn.slugifyForUrl(title).replace(/^-+|-+$/g, '') || folderUID;
+  return createRelativeUrl(`/dashboards/f/${folderUID}/${slug}/alerting`);
 }
 
 export function makeFolderSettingsLink(uid: string): string {
@@ -271,22 +272,23 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
 }
 
 export function isOpenSourceEdition() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.edition === GrafanaEdition.OpenSource;
+  return environment.isOpenSourceEdition();
 }
 
 export function isAdmin() {
-  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  return environment.isAdmin();
 }
 
 export function isLocalDevEnv() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.env === 'development';
+  return environment.isLocalDevEnv();
 }
 
 export function isErrorLike(error: unknown): error is Error {
   return Boolean(error && typeof error === 'object' && 'message' in error);
 }
+
+export const isClientFetchError = (error: unknown): error is FetchError =>
+  isFetchError(error) && error.status >= 400 && error.status < 500;
 
 // Small composable guards to safely inspect nested shapes without broad assertions
 function isObject(value: unknown): value is object {

@@ -39,17 +39,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse"
                 }
               }
             }
@@ -77,15 +77,6 @@
         "description": "list or watch objects of kind Dummy",
         "operationId": "listDummy",
         "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
           {
             "name": "continue",
             "in": "query",
@@ -132,24 +123,6 @@
             }
           },
           {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -174,17 +147,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList"
                 }
               }
             }
@@ -236,12 +209,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             }
           },
@@ -253,12 +226,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -268,12 +241,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -283,12 +256,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -417,6 +390,15 @@
             }
           },
           {
+            "name": "shardSelector",
+            "in": "query",
+            "description": "shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:\n\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000')\n  shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n\nField paths use CEL-style object-rooted syntax (e.g. \"object.metadata.uid\"), NOT the fieldSelector format (\"metadata.uid\"). Currently supported paths:\n  - object.metadata.uid\n  - object.metadata.namespace\n\nhexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.\n\nExamples:\n  2-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')\n  4-shard split:\n    shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')\n    shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')\n    shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')\n    shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')\n\nThis is an alpha field and requires enabling the ShardedListAndWatch feature gate.",
+            "schema": {
+              "type": "string",
+              "uniqueItems": true
+            }
+          },
+          {
             "name": "timeoutSeconds",
             "in": "query",
             "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
@@ -485,12 +467,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -542,12 +524,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             }
           },
@@ -559,12 +541,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -574,12 +556,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -759,12 +741,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -774,12 +756,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -837,12 +819,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -894,12 +876,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
               }
             }
           },
@@ -911,12 +893,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -926,12 +908,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -1019,12 +1001,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -1034,12 +1016,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               }
             }
@@ -1091,12 +1073,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody"
               }
             }
           },
@@ -1108,17 +1090,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse"
                 }
               }
             }
@@ -1145,12 +1127,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody"
               }
             }
           },
@@ -1162,17 +1144,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse"
                 }
               }
             }
@@ -1195,7 +1177,7 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher": {
         "type": "object",
         "required": [
           "type",
@@ -1220,13 +1202,13 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers": {
         "type": "array",
         "items": {
-          "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher"
+          "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatcher"
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount": {
         "type": "object",
         "required": [
           "count",
@@ -1247,7 +1229,7 @@
             "type": "integer"
           },
           "outcome": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
+            "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
           },
           "receiver": {
             "type": "string"
@@ -1256,18 +1238,18 @@
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
+            "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
           },
           "values": {
             "description": "Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue"
             }
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry": {
         "type": "object",
         "required": [
           "timestamp",
@@ -1295,7 +1277,7 @@
             "description": "Alerts are the alerts grouped into the notification. Deprecated: not populated, will be removed.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert"
             }
           },
           "duration": {
@@ -1329,7 +1311,7 @@
             "description": "Outcome indicaes if the notificaion attempt was successful or if it failed.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
               }
             ]
           },
@@ -1357,7 +1339,7 @@
             "description": "Status indicates if the notification contains one or more firing alerts.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
               }
             ]
           },
@@ -1372,7 +1354,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntryAlert": {
         "type": "object",
         "required": [
           "status",
@@ -1411,14 +1393,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome": {
         "type": "string",
         "enum": [
           "success",
           "error"
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationRangeValue": {
         "description": "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
         "type": "object",
         "required": [
@@ -1436,14 +1418,14 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus": {
         "type": "string",
         "enum": [
           "firing",
           "resolved"
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryRequestBody": {
         "type": "object",
         "properties": {
           "from": {
@@ -1491,7 +1473,7 @@
             "description": "GroupLabels optionally filters the entries by matching group labels.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers"
               }
             ]
           },
@@ -1499,7 +1481,7 @@
             "description": "Labels optionally filters the entries by matching alert labels.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryMatchers"
               }
             ]
           },
@@ -1511,7 +1493,7 @@
             "description": "Outcome optionally filters the entries to only either successful or failed attempts.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationOutcome"
               }
             ]
           },
@@ -1527,7 +1509,7 @@
             "description": "Status optionally filters the entries to only either firing or resolved.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
+                "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationStatus"
               }
             ]
           },
@@ -1551,7 +1533,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryResponse": {
         "type": "object",
         "required": [
           "entries",
@@ -1561,18 +1543,18 @@
           "counts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationCount"
             }
           },
           "entries": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationqueryNotificationEntry"
             }
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert": {
         "type": "object",
         "required": [
           "status",
@@ -1611,7 +1593,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsRequestBody": {
         "type": "object",
         "properties": {
           "from": {
@@ -1634,7 +1616,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsResponse": {
         "type": "object",
         "required": [
           "alerts"
@@ -1643,12 +1625,12 @@
           "alerts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.CreateNotificationsqueryalertsNotificationEntryAlert"
             }
           }
         }
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy": {
         "type": "object",
         "required": [
           "kind",
@@ -1674,10 +1656,10 @@
             ]
           },
           "spec": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummySpec"
+            "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummySpec"
           },
           "status": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus"
+            "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus"
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -1688,7 +1670,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyList": {
         "type": "object",
         "required": [
           "metadata",
@@ -1705,7 +1687,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
+                  "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.Dummy"
                 }
               ]
             }
@@ -1731,7 +1713,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyOperatorState": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -1763,7 +1745,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummySpec": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummySpec": {
         "description": "Spec is the schema of our resource. The spec should include all the user-editable information for the kind.",
         "type": "object",
         "required": [
@@ -1776,7 +1758,7 @@
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyStatus": {
         "type": "object",
         "properties": {
           "additionalFields": {
@@ -1788,13 +1770,13 @@
             "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.DummyOperatorState"
+              "$ref": "#/components/schemas/com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.DummyOperatorState"
             }
           }
         },
         "additionalProperties": false
       },
-      "com.github.grafana.grafana.apps.alerting.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse": {
+      "com.github.grafana.alerting.apps.historian.pkg.apis.alertinghistorian.v0alpha1.GetAlertstatehistoryResponse": {
         "type": "object",
         "required": [
           "body"

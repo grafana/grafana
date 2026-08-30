@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { type CreateNotificationqueryNotificationEntry } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
+import { type GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -29,8 +29,10 @@ export function NotificationHeader({ notification }: NotificationHeaderProps) {
           ·
         </Text>
         <Text variant="bodySmall" color="secondary">
-          {t('alerting.notification-detail.alert-count-inline', '{{count}} alert(s)', {
+          {t('alerting.notification-detail.alert-count-inline', '', {
             count: notification.alertCount,
+            defaultValue_one: '{{count}} alert(s)',
+            defaultValue_other: '{{count}} alert(s)',
           })}
         </Text>
       </Stack>

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 
-import { ActionVariable, ActionVariableType } from '@grafana/data';
+import { type ActionVariable, ActionVariableType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Input, Stack, Combobox, ComboboxOption } from '@grafana/ui';
+import { IconButton, Input, Stack, Combobox, type ComboboxOption } from '@grafana/ui';
 
 interface Props {
   onChange: (v: ActionVariable[]) => void;
   value: ActionVariable[];
 }
+
+const collator = new Intl.Collator();
 
 export const ActionVariablesEditor = ({ value, onChange }: Props) => {
   const [key, setKey] = useState('');
@@ -37,7 +39,7 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
     }
 
     newVariables.push({ key, name, type });
-    newVariables.sort((a, b) => a.key.localeCompare(b.key));
+    newVariables.sort((a, b) => collator.compare(a.key, b.key));
     onChange(newVariables);
 
     setKey('');

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AbsoluteTimeRange, FieldConfigSource, PanelData } from '@grafana/data';
+import { type AbsoluteTimeRange, type FieldConfigSource, type PanelData } from '@grafana/data';
 
 /**
  * Describes the properties that can be passed to the PanelRenderer.
@@ -29,9 +29,7 @@ export interface PanelRendererProps<P extends object = {}, F extends object = {}
  *
  * @internal
  */
-export type PanelRendererType<P extends object = {}, F extends object = {}> = React.ComponentType<
-  PanelRendererProps<P, F>
->;
+type PanelRendererType<P extends object = {}, F extends object = {}> = React.ComponentType<PanelRendererProps<P, F>>;
 
 /**
  * PanelRenderer component that will be set via the {@link setPanelRenderer} function

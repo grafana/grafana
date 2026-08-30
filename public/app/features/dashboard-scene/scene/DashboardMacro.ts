@@ -1,4 +1,4 @@
-import { FormatVariable, SceneObject, sceneUtils } from '@grafana/scenes';
+import { type FormatVariable, type SceneObject, sceneUtils } from '@grafana/scenes';
 
 import { getDashboardSceneFor } from '../utils/utils';
 

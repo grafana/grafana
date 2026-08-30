@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
+import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { CONTENT_SIDE_BAR } from '../../constants';
@@ -14,6 +15,7 @@ export function QueryEditorBody() {
   const styles = useStyles2(getStyles);
   const { queryOptions } = useQueryEditorUIContext();
   const { isQueryOptionsOpen } = queryOptions;
+  const transitionRef = useRef(null);
 
   return (
     <div className={styles.container}>
@@ -26,8 +28,9 @@ export function QueryEditorBody() {
         mountOnEnter
         timeout={CONTENT_SIDE_BAR.sidebarTransitionMs}
         unmountOnExit
+        nodeRef={transitionRef}
       >
-        <div className={styles.sidebar}>
+        <div className={styles.sidebar} ref={transitionRef}>
           <QueryEditorDetailsSidebar />
         </div>
       </CSSTransition>

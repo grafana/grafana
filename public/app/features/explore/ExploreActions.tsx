@@ -1,4 +1,4 @@
-import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
+import { useRegisterActions, useKBar, type Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -39,7 +39,7 @@ export const ExploreActions = () => {
         },
         section: exploreSection,
       });
-      if (panes[1]) {
+      if (panes[keys[1]]) {
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',

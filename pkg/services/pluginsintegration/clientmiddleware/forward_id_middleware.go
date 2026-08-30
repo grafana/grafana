@@ -70,6 +70,19 @@ func (m *ForwardIDMiddleware) QueryData(ctx context.Context, req *backend.QueryD
 	return m.BaseHandler.QueryData(ctx, req)
 }
 
+func (m *ForwardIDMiddleware) QueryChunkedData(ctx context.Context, req *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+	if req == nil {
+		return m.BaseHandler.QueryChunkedData(ctx, req, w)
+	}
+
+	err := m.applyToken(ctx, req.PluginContext, req)
+	if err != nil {
+		return err
+	}
+
+	return m.BaseHandler.QueryChunkedData(ctx, req, w)
+}
+
 func (m *ForwardIDMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
 		return m.BaseHandler.CallResource(ctx, req, sender)

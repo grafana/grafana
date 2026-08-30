@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-import { ActionModel, Field, ActionVariableInput } from '@grafana/data';
+import { type ActionModel, type Field, type ActionVariableInput } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { Button, ButtonProps } from '../Button/Button';
+import { Button, type ButtonProps } from '../Button/Button';
 import { ConfirmModal } from '../ConfirmModal/ConfirmModal';
 
 import { VariablesInputModal } from './VariablesInputModal';
@@ -65,7 +65,7 @@ export function ActionButton({ action, ...buttonProps }: ActionButtonProps) {
           title={t('grafana-ui.action-editor.button.confirm-action', 'Confirm action')}
           body={action.confirmation(actionVars)}
           confirmText={t('grafana-ui.action-editor.button.confirm', 'Confirm')}
-          confirmButtonVariant="primary"
+          confirmVariant="primary"
           onConfirm={() => {
             setShowConfirm(false);
             action.onClick(new MouseEvent('click'), null, actionVars);

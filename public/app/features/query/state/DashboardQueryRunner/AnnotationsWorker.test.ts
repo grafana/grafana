@@ -1,9 +1,9 @@
 import { Subject, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { AnnotationQuery } from '@grafana/data';
-import { DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type AnnotationQuery } from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv, config } from '@grafana/runtime';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
@@ -11,12 +11,12 @@ import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import {
   createDashboardQueryRunner,
-  DashboardQueryRunnerFactoryArgs,
+  type DashboardQueryRunnerFactoryArgs,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner';
 import { PublicAnnotationsDataSource } from './PublicAnnotationsDataSource';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from './types';
+import { type DashboardQueryRunnerOptions, type DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
 
 function getTestContext(dataSourceSrvRejects = false) {

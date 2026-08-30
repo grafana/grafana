@@ -255,12 +255,17 @@ describe('getExtensionPointPluginDependenciesSync', () => {
     ]);
   });
 
-  test('should not return (recursively) the app plugin ids that register extensions to a function extension point', () => {
+  test('should return (recursively) the app plugin ids that register extensions to a function extension point', () => {
     const extensionPointId = 'grafana-exploretraces-app/get-logs-drilldown-link/v1';
 
     const appPluginIds = getExtensionPointPluginDependenciesSync(extensionPointId, apps);
 
-    expect(appPluginIds).toEqual([]);
+    expect(appPluginIds).toEqual([
+      'grafana-lokiexplore-app',
+      'grafana-adaptivelogs-app',
+      'grafana-asserts-app',
+      'grafana',
+    ]);
   });
 
   test('should return an empty array if there are no apps that that extend the extension point', () => {

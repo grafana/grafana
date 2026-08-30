@@ -19,6 +19,8 @@ func (session *Session) Exist(bean ...any) (bool, error) {
 		defer session.Close()
 	}
 
+	defer session.resetStatement()
+
 	if session.statement.lastError != nil {
 		return false, session.statement.lastError
 	}
@@ -61,7 +63,7 @@ func (session *Session) Exist(bean ...any) (bool, error) {
 			}
 		} else {
 			beanValue := reflect.ValueOf(bean[0])
-			if beanValue.Kind() != reflect.Ptr {
+			if beanValue.Kind() != reflect.Pointer {
 				return false, errors.New("needs a pointer")
 			}
 

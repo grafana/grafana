@@ -1,26 +1,26 @@
 import { isEmpty } from 'lodash';
 import { createElement } from 'react';
-import { catchError, map, Observable, of } from 'rxjs';
+import { catchError, map, type Observable, of } from 'rxjs';
 
 import {
   AppEvents,
-  DataFrame,
-  DataQueryError,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
+  type DataFrame,
+  type DataQueryError,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
   dateTimeFormat,
   FieldType,
   rangeUtil,
-  ScopedVars,
+  type ScopedVars,
 } from '@grafana/data';
-import { TemplateSrv, getAppEvents } from '@grafana/runtime';
+import { type TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
-import { CloudWatchMetricsQuery } from '../dataquery.gen';
+import { type CloudWatchMetricsQuery } from '../dataquery.gen';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import { CloudWatchJsonData, CloudWatchQuery } from '../types';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';

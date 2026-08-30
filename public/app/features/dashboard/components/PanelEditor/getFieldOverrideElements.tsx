@@ -1,29 +1,29 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import * as React from 'react';
 
 import {
-  FieldConfigOptionsRegistry,
-  SelectableValue,
+  type FieldConfigOptionsRegistry,
+  type SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
-  VariableSuggestionsScope,
-  DynamicConfigValue,
-  ConfigOverrideRule,
-  GrafanaTheme2,
+  type VariableSuggestionsScope,
+  type DynamicConfigValue,
+  type ConfigOverrideRule,
   fieldMatchers,
-  FieldConfigSource,
-  DataFrame,
+  type FieldConfigSource,
+  type DataFrame,
+  FieldType,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { MatcherScope } from '@grafana/schema';
+import { type MatcherScope } from '@grafana/schema';
 import {
+  Alert,
   fieldMatchersUI,
   getUniqueMatcherScopes,
   MatcherScopeSelector,
   buildScopeOptions,
   useStyles2,
   ValuePicker,
+  useFieldMatchersOptions,
 } from '@grafana/ui';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -32,12 +32,21 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 
-const ALLOWED_SCOPES: MatcherScope[] = ['series'];
-if (config.featureToggles.nestedFramesFieldOverrides) {
-  ALLOWED_SCOPES.push('nested');
-}
+const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
-// [FIXME] Is there something else we need to do in here?
+function getFramesForMatcherScope(data: DataFrame[], scope?: MatcherScope): DataFrame[] {
+  if (scope !== 'nested') {
+    return data;
+  }
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.nestedFrames && field.values.length > 0) {
+        return field.values[0];
+      }
+    }
+  }
+  return data;
+}
 
 export function getFieldOverrideCategories(
   fieldConfig: FieldConfigSource,
@@ -66,7 +75,7 @@ export function getFieldOverrideCategories(
   };
 
   const onOverrideAdd = (value: SelectableValue<string>) => {
-    const info = fieldMatchers.get(value.value!);
+    const info = fieldMatchers.getIfExists(value.value!);
     if (!info) {
       return;
     }
@@ -80,12 +89,6 @@ export function getFieldOverrideCategories(
     });
   };
 
-  const context = {
-    data,
-    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
-    isOverride: true,
-  };
-
   const uniqueMatcherScopes = getUniqueMatcherScopes(data);
 
   /**
@@ -93,12 +96,97 @@ export function getFieldOverrideCategories(
    */
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
+    const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
+    const context = {
+      data: overrideData,
+      getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
+      isOverride: true,
+    };
     const overrideName = t('dashboard.get-field-override-categories.override-name', 'Override {{overrideNum}}', {
       overrideNum: idx + 1,
     });
     const overrideId = `panel-options-override-${idx}`;
-    const matcherUi = fieldMatchersUI.get(override.matcher.id);
-    const configPropertiesOptions = getOverrideProperties(registry);
+    const matcherUi = fieldMatchersUI.getIfExists(override.matcher.id);
+
+    // No options-pane editor for this matcher id. Either the matcher exists in the runtime
+    // registry but has no UI (e.g. numeric, byTypes - the override still applies), or the id is
+    // truly unknown (hand-edited or generated dashboard JSON - the override has no effect).
+    // Render a non-crashing state for both so the override can still be removed.
+    if (!matcherUi) {
+      const runtimeMatcher = fieldMatchers.getIfExists(override.matcher.id);
+      const category = new OptionsPaneCategoryDescriptor({
+        title: overrideName,
+        id: overrideId,
+        forceOpen: true,
+        renderTitle: function renderOverrideTitle(isExpanded: boolean) {
+          return (
+            <OverrideCategoryTitle
+              override={override}
+              isExpanded={isExpanded}
+              registry={registry}
+              overrideName={overrideName}
+              onOverrideRemove={() => onOverrideRemove(idx)}
+            />
+          );
+        },
+      });
+
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          skipField: true,
+          id: `${overrideId}-unknown-matcher`,
+          render: function renderUnknownMatcher() {
+            if (runtimeMatcher) {
+              return (
+                <Alert
+                  severity="info"
+                  title={t(
+                    'dashboard.get-field-override-categories.title-matcher-no-editor',
+                    'Matcher "{{matcherName}}" has no visual editor',
+                    { matcherName: runtimeMatcher.name }
+                  )}
+                >
+                  {t(
+                    'dashboard.get-field-override-categories.body-matcher-no-editor',
+                    'This override is active, but this matcher type can only be edited in the dashboard JSON.'
+                  )}
+                </Alert>
+              );
+            }
+            return (
+              <Alert
+                severity="error"
+                title={t(
+                  'dashboard.get-field-override-categories.title-unknown-matcher',
+                  'Unknown matcher type "{{matcherId}}"',
+                  { matcherId: override.matcher.id }
+                )}
+              >
+                {t(
+                  'dashboard.get-field-override-categories.body-unknown-matcher',
+                  'This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.'
+                )}
+              </Alert>
+            );
+          },
+        })
+      );
+
+      categories.push(category);
+      continue;
+    }
+
+    const configPropertiesOptions = registry.selectOptions(
+      undefined,
+      (item) => !item.hideFromOverrides,
+      (item) => {
+        let label = item.name;
+        if (item.category) {
+          label = [...item.category, item.name].join(' > ');
+        }
+        return label;
+      }
+    ).options;
     const isSystemOverride = isSystemOverrideGuard(override);
     // A way to force open new override categories
     const forceOpen = override.properties.length === 0;
@@ -277,49 +365,35 @@ export function getFieldOverrideCategories(
     new OptionsPaneCategoryDescriptor({
       title: t('dashboard.get-field-override-categories.title.add-button', 'add button'),
       id: 'add button',
-      customRender: function renderAddButton() {
-        return (
-          <AddOverrideButtonContainer key="Add override">
-            <ValuePicker
-              icon="plus"
-              label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
-              variant="secondary"
-              menuPlacement="auto"
-              isFullWidth={true}
-              size="md"
-              options={fieldMatchersUI
-                .list()
-                .filter((o) => !o.excludeFromPicker)
-                .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
-              onChange={(value) => onOverrideAdd(value)}
-            />
-          </AddOverrideButtonContainer>
-        );
-      },
+      customRender: () => <AddButtonWrapper key="Add override" onOverrideAdd={onOverrideAdd} />,
     })
   );
 
   return categories;
 }
 
-function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
-  return registry
-    .list()
-    .filter((o) => !o.hideFromOverrides)
-    .map((item) => {
-      let label = item.name;
-      if (item.category) {
-        label = [...item.category, item.name].join(' > ');
-      }
-      return { label, value: item.id, description: item.description };
-    });
-}
+function AddButtonWrapper({ onOverrideAdd }: { onOverrideAdd: (value: SelectableValue<string>) => void }) {
+  const options = useFieldMatchersOptions();
+  const styles = useStyles2((theme) =>
+    css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      padding: `${theme.spacing(2)}`,
+      display: 'flex',
+    })
+  );
 
-function AddOverrideButtonContainer({ children }: { children: React.ReactNode }) {
-  const styles = useStyles2(getBorderTopStyles);
-  return <div className={styles}>{children}</div>;
-}
-
-function getBorderTopStyles(theme: GrafanaTheme2) {
-  return css({ borderTop: `1px solid ${theme.colors.border.weak}`, padding: `${theme.spacing(2)}`, display: 'flex' });
+  return (
+    <div className={styles}>
+      <ValuePicker
+        icon="plus"
+        label={t('dashboard.get-field-override-categories.label-add-field-override', 'Add field override')}
+        variant="secondary"
+        menuPlacement="auto"
+        isFullWidth={true}
+        size="md"
+        options={options}
+        onChange={(value) => onOverrideAdd(value)}
+      />
+    </div>
+  );
 }

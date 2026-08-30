@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -359,7 +359,7 @@ func TestCache_GetAlertInstances(t *testing.T) {
 		},
 		{
 			name:   "returns alert instances",
-			states: []*State{util.Pointer(randomState(ruleKey)), util.Pointer(randomState(ruleKey))},
+			states: []*State{randomState(ruleKey), randomState(ruleKey)},
 		},
 	}
 
@@ -536,8 +536,8 @@ func TestCache_reset(t *testing.T) {
 	})
 }
 
-func randomState(ruleKey models.AlertRuleKey) State {
-	return State{
+func randomState(ruleKey models.AlertRuleKey) *State {
+	return &State{
 		OrgID:             ruleKey.OrgID,
 		AlertRuleUID:      ruleKey.UID,
 		CacheID:           data.Fingerprint(rand.Int63()),
@@ -564,8 +564,8 @@ func randomState(ruleKey models.AlertRuleKey) State {
 		},
 		StartsAt:             randomTimeInPast(),
 		EndsAt:               randomTimeInFuture(),
-		ResolvedAt:           util.Pointer(randomTimeInPast()),
-		LastSentAt:           util.Pointer(randomTimeInPast()),
+		ResolvedAt:           new(randomTimeInPast()),
+		LastSentAt:           new(randomTimeInPast()),
 		LastEvaluationString: util.GenerateShortUID(),
 		LastEvaluationTime:   randomTimeInPast(),
 		EvaluationDuration:   time.Duration(6000),

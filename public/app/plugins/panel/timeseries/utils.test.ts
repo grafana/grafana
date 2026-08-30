@@ -1,9 +1,13 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, dateTime, type TimeRange } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
-
-import { getGroupedFilters, prepareGraphableFields } from './utils';
+import {
+  getCompareSeriesIdentityKey,
+  getComparisonFieldPairs,
+  getTimezones,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -17,6 +21,21 @@ describe('prepare timeseries graph', () => {
     ];
     const frames = prepareGraphableFields(input, createTheme());
     expect(frames).toBeNull();
+  });
+
+  it('does not needlessly copy clean arrays', () => {
+    const values = [1, 2];
+
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', values },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values).toBe(values);
   });
 
   it('requires a number or boolean value', () => {
@@ -82,7 +101,7 @@ describe('prepare timeseries graph', () => {
     const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
-        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity, null] },
       ],
     });
     const frames = prepareGraphableFields([df], createTheme());
@@ -93,6 +112,7 @@ describe('prepare timeseries graph', () => {
         -10,
         null,
         10,
+        null,
         null,
         null,
       ]
@@ -146,6 +166,19 @@ describe('prepare timeseries graph', () => {
     expect(frames![0].length).toEqual(6);
   });
 
+  it('converts string time values to numeric', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: ['2020-01-01T00:00:00Z', '2020-01-02T00:00:00Z'] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+
+    const frames = prepareGraphableFields([df], createTheme());
+    expect(frames).not.toBeNull();
+    expect(typeof frames![0].fields[0].values[0]).toBe('number');
+  });
+
   describe('boolean fields', () => {
     it('will set line interpolation to an appropriate mode for boolean fields', () => {
       const df = createDataFrame({
@@ -179,84 +212,825 @@ describe('prepare timeseries graph', () => {
       expect(df.fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.Smooth);
       expect(frames![0].fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
     });
+
+    it('preserves StepBefore interpolation', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'flag',
+            type: FieldType.boolean,
+            values: [true, false, true],
+            config: { custom: { lineInterpolation: LineInterpolation.StepBefore } },
+          },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames![0].fields[1].config.custom.lineInterpolation).toBe(LineInterpolation.StepBefore);
+    });
+
+    it('converts null values correctly', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'flag', type: FieldType.boolean, values: [true, null, false] },
+        ],
+      });
+
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames![0].fields[1].values).toEqual([1, null, 0]);
+    });
   });
 
-  describe('getGroupedFilters', () => {
-    it('returns empty array if no field', () => {
-      const df = createDataFrame({
-        fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
-      });
-
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
-    });
-
-    it('returns empty array if no labels', () => {
+  describe('enum fields', () => {
+    it('handles a single enum field', () => {
       const df = createDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
+            name: 'status',
+            type: FieldType.enum,
+            values: [0, 1, 0],
+            config: { type: { enum: { text: ['ok', 'error'] } } },
           },
         ],
       });
 
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
+      const frames = prepareGraphableFields([df], createTheme());
+      expect(frames).not.toBeNull();
+      expect(frames![0].fields[1].type).toBe(FieldType.enum);
     });
 
-    it('returns empty array if field not filterable', () => {
-      const df = createDataFrame({
+    it('re-enumerates multiple enum fields across frames', () => {
+      const df1 = createDataFrame({
         fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'time', type: FieldType.time, values: [1, 2] },
           {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
-            labels: {
-              test: 'value',
-              label: 'value2',
-            },
+            name: 'e1',
+            type: FieldType.enum,
+            values: [0, 1],
+            config: { type: { enum: { text: ['a', 'b'] } } },
+          },
+        ],
+      });
+      const df2 = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [3, 4] },
+          {
+            name: 'e2',
+            type: FieldType.enum,
+            values: [0, 1],
+            config: { type: { enum: { text: ['c', 'd'] } } },
           },
         ],
       });
 
-      expect(getGroupedFilters(df, 1, jest.fn())).toEqual([]);
+      const frames = prepareGraphableFields([df1, df2], createTheme());
+      expect(frames).not.toBeNull();
+      // Second enum field values should be offset by the length of the first enum's text
+      expect(frames![1].fields[1].values).toEqual([2, 3]);
+    });
+  });
+});
+
+describe('getTimezones', () => {
+  it('returns defaultTimezone when timezones is undefined', () => {
+    expect(getTimezones(undefined, 'browser')).toEqual(['browser']);
+  });
+
+  it('returns defaultTimezone when timezones is empty', () => {
+    expect(getTimezones([], 'browser')).toEqual(['browser']);
+  });
+
+  it('replaces empty strings with the default timezone', () => {
+    expect(getTimezones(['', 'UTC', ''], 'browser')).toEqual(['browser', 'UTC', 'browser']);
+  });
+
+  it('returns all provided timezones unchanged when non-empty', () => {
+    expect(getTimezones(['UTC', 'America/New_York'], 'browser')).toEqual(['UTC', 'America/New_York']);
+  });
+});
+
+describe('getCompareSeriesIdentityKey', () => {
+  it('prefers labels (with field name) when present', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: [],
+      labels: { pod: 'a' },
+    });
+    expect(key).toBe('Value {pod="a"}');
+  });
+
+  it('prefers labels over config.displayName to avoid collapsing series with a shared template', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayName: '${__field.labels.pod}' },
+      values: [],
+      labels: { pod: 'a' },
+    });
+    expect(key).toBe('Value {pod="a"}');
+  });
+
+  it('falls back to config.displayName when there are no labels', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayName: 'My Series', displayNameFromDS: 'ServerA' },
+      values: [],
+    });
+    expect(key).toBe('My Series');
+  });
+
+  it('falls back to displayNameFromDS when there are no labels or config.displayName', () => {
+    const key = getCompareSeriesIdentityKey({
+      name: 'Value',
+      type: FieldType.number,
+      config: { displayNameFromDS: 'ServerA' },
+      values: [],
+    });
+    expect(key).toBe('ServerA');
+  });
+
+  it('falls back to frame name + field name when no labels or display names', () => {
+    const frame = toDataFrame({ name: 'B', fields: [{ name: 'Value', type: FieldType.number, values: [] }] });
+    const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] }, frame);
+    expect(key).toBe('B Value');
+  });
+
+  it('falls back to the field name when nothing else is available', () => {
+    const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] });
+    expect(key).toBe('Value');
+  });
+
+  it('strips the compare refId infix from TestData-style field names', () => {
+    const frame = toDataFrame({
+      refId: 'A-compare',
+      fields: [{ name: 'A-compare-series1', type: FieldType.number, values: [] }],
+    });
+    expect(getCompareSeriesIdentityKey(frame.fields[0], frame)).toBe('A-series1');
+  });
+
+  it('does not alter field names on current-period frames', () => {
+    const frame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: 'A-series1', type: FieldType.number, values: [] }],
+    });
+    expect(getCompareSeriesIdentityKey(frame.fields[0], frame)).toBe('A-series1');
+  });
+});
+
+describe('setClassicPaletteIdxs', () => {
+  it('assigns sequential seriesIndex to number and boolean fields', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.boolean, values: [true, false, true] },
+        ],
+      }),
+    ];
+    setClassicPaletteIdxs(frames, createTheme(), 0);
+    expect(frames[0].fields[1].state?.seriesIndex).toBe(0);
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(1);
+  });
+
+  it('skips the field at skipFieldIdx', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+        ],
+      }),
+    ];
+    // Skip field index 1 ('a')
+    setClassicPaletteIdxs(frames, createTheme(), 1);
+    expect(frames[0].fields[1].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches compare frame series indices to the corresponding main frame', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 15] },
+      ],
     });
 
-    it('returns grouped filters', () => {
-      const df = createDataFrame({
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+
+    // Main frame gets index 0
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    // Compare frame should match the main frame's series index
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('assigns sequential indices across multiple frames', () => {
+    const frame1 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'a', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+    const frame2 = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'b', type: FieldType.number, values: [3, 4] },
+      ],
+    });
+    setClassicPaletteIdxs([frame1, frame2], createTheme(), 0);
+    expect(frame1.fields[1].state?.seriesIndex).toBe(0);
+    expect(frame2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('falls back to sequential indices for compare frame without matching main', () => {
+    const compareFrame = toDataFrame({
+      refId: 'B-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([compareFrame], createTheme(), 0);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches compare fields by name when field counts differ across windows', () => {
+    const mainFrame = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val1', type: FieldType.number, values: [10, 20] },
+        { name: 'val2', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compareFrame = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val1', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+
+    setClassicPaletteIdxs([mainFrame, compareFrame], createTheme(), 0);
+    expect(mainFrame.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainFrame.fields[2].state?.seriesIndex).toBe(1);
+    // val1 still pairs with the current-period val1 even though compare is missing val2
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('falls back to sequential indices for compare frame without refId', () => {
+    const compareFrame = toDataFrame({
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'val', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    compareFrame.refId = undefined;
+
+    setClassicPaletteIdxs([compareFrame], createTheme(), 0);
+    expect(compareFrame.fields[1].state?.seriesIndex).toBe(0);
+  });
+
+  it('matches multiple compare frames to their respective main frames by identity', () => {
+    const main1 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v1', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const main2 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v2', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compare1 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v1', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    const compare2 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'v2', type: FieldType.number, values: [25, 35] },
+      ],
+    });
+
+    setClassicPaletteIdxs([main1, main2, compare1, compare2], createTheme(), 0);
+    expect(main1.fields[1].state?.seriesIndex).toBe(0);
+    expect(main2.fields[1].state?.seriesIndex).toBe(1);
+    expect(compare1.fields[1].state?.seriesIndex).toBe(0);
+    expect(compare2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  // TestData random walk names fields `{refId}-series{N}` (see frameNameForQuery). The compare
+  // query uses refId `A-compare`, so names become `A-compare-series` vs current `A-series`.
+  it('pairs TestData random-walk names that embed the compare refId', () => {
+    const main0 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-series', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const main1 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-series1', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compare0 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-compare-series', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    const compare1 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-compare-series1', type: FieldType.number, values: [25, 35] },
+      ],
+    });
+
+    setClassicPaletteIdxs([main0, main1, compare0, compare1], createTheme(), 0);
+
+    expect(main0.fields[1].state?.seriesIndex).toBe(0);
+    expect(main1.fields[1].state?.seriesIndex).toBe(1);
+    expect(compare0.fields[1].state?.seriesIndex).toBe(0);
+    expect(compare1.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('does not assign seriesIndex to string or time fields', () => {
+    const frames = [
+      toDataFrame({
         fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [1, 2, 3],
-            labels: {
-              test: 'value',
-              label: 'value2',
-            },
-            config: {
-              filterable: true,
-            },
-          },
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
         ],
-      });
+      }),
+    ];
+    setClassicPaletteIdxs(frames, createTheme(), 0);
+    expect(frames[0].fields[0].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[1].state?.seriesIndex).toBeUndefined();
+    expect(frames[0].fields[2].state?.seriesIndex).toBe(0);
+  });
+});
 
-      const filtersGroupingFn = (filters: AdHocFilterItem[]) => filters;
+describe('prepareGraphableFields with xNumFieldIdx', () => {
+  it('uses numeric x axis when xNumFieldIdx is provided', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'x', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'y', type: FieldType.number, values: [10, 20, 30] },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 0);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
+  });
 
-      expect(getGroupedFilters(df, 1, filtersGroupingFn)).toEqual([
+  it('reorders fields so the numeric x field is first', () => {
+    const df = createDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.number, values: [1, 2, 3] },
+        { name: 'x', type: FieldType.number, values: [10, 20, 30] },
+        { name: 'b', type: FieldType.number, values: [4, 5, 6] },
+      ],
+    });
+
+    const frames = prepareGraphableFields([df], createTheme(), undefined, 1);
+    expect(frames).not.toBeNull();
+    expect(frames![0].fields[0].name).toBe('x');
+  });
+});
+
+/**
+ * #126181 / #125103 — High-cardinality time comparison mismatch
+ *
+ * Symptoms when compare window label sets/order differ from the current window:
+ * - Colors: compare series pick up the color of whichever current series sits at the same
+ *   result-list index, so e.g. pod=b (comparison) can render in pod=a's color.
+ * - Legend: names stay correct ("a (comparison)") but the series icon color is wrong,
+ *   so legend pairing looks broken even though labels are right.
+ * - Series pairing: dashed compare lines no longer visually track their solid counterparts.
+ *
+ * Root cause: setClassicPaletteIdxs previously matched compare frames to main frames by
+ * position within a refId group. Fix: match by labels/name identity.
+ *
+ * Manual UI repro (Prometheus / similar):
+ * 1. Enable panel time settings + time comparison (e.g. compare to 1 day ago).
+ * 2. Query something like: sum by (pod) (rate(container_cpu_usage_seconds_total[5m]))
+ *    on a workload where pods restart between windows (or force unstable series order).
+ * 3. Before the fix: legend colors for "<pod> (comparison)" often disagree with "<pod>".
+ * 4. After the fix: each compare series shares the classic-palette color of the same labels.
+ */
+describe('TimeComparison high cardinality (#126181)', () => {
+  const compareMeta = { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } };
+
+  function makePodFrames(order: Array<'a' | 'b' | 'c'>, opts: { compare?: boolean; refId?: string } = {}) {
+    const refId = opts.refId ?? (opts.compare ? 'A-compare' : 'A');
+    return order.map((pod) =>
+      toDataFrame({
+        refId,
+        meta: opts.compare ? compareMeta : undefined,
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          { name: 'Value', type: FieldType.number, values: [10, 20], labels: { pod } },
+        ],
+      })
+    );
+  }
+
+  /**
+   * Previous position-based pairing (pre-fix). Kept here so the mismatch stays reproducible
+   * in CI even after the production code matches by identity.
+   */
+  function setClassicPaletteIdxsByPosition(frames: Array<ReturnType<typeof toDataFrame>>, skipFieldIdx?: number) {
+    let seriesIndex = 0;
+    const updateFieldDisplay = (field: (typeof frames)[0]['fields'][0], idx: number) => {
+      field.state = { ...field.state, seriesIndex: idx };
+    };
+    const shouldProcessField = (field: (typeof frames)[0]['fields'][0], fieldIdx: number) =>
+      fieldIdx !== skipFieldIdx && field.type === FieldType.number;
+
+    const mainFramesByRefId = new Map<string, typeof frames>();
+    for (const frame of frames) {
+      if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
+        if (!mainFramesByRefId.has(frame.refId)) {
+          mainFramesByRefId.set(frame.refId, []);
+        }
+        mainFramesByRefId.get(frame.refId)!.push(frame);
+      }
+    }
+
+    const compareIndicesByRefId = new Map<string, number>();
+    for (const frame of frames) {
+      if (frame.meta?.timeCompare?.isTimeShiftQuery) {
+        const baseRefId = frame.refId?.replace('-compare', '') ?? '';
+        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
+        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
+        const mainFrame = mainFramesByRefId.get(baseRefId)?.[compareIndex];
+        frame.fields.forEach((field, fieldIdx) => {
+          if (!shouldProcessField(field, fieldIdx)) {
+            return;
+          }
+          if (mainFrame && mainFrame.fields.length === frame.fields.length) {
+            updateFieldDisplay(field, mainFrame.fields[fieldIdx].state?.seriesIndex ?? seriesIndex++);
+          } else {
+            updateFieldDisplay(field, seriesIndex++);
+          }
+        });
+      } else {
+        frame.fields.forEach((field, fieldIdx) => {
+          if (shouldProcessField(field, fieldIdx)) {
+            updateFieldDisplay(field, seriesIndex++);
+          }
+        });
+      }
+    }
+  }
+
+  it('repro: position pairing mis-colors when compare window returns series in a different order', () => {
+    const [mainA, mainB] = makePodFrames(['a', 'b']);
+    // Compare window returns b then a — common with Prometheus high-cardinality results.
+    const [compareB, compareA] = makePodFrames(['b', 'a'], { compare: true });
+
+    setClassicPaletteIdxsByPosition([mainA, mainB, compareB, compareA], 0);
+
+    expect(mainA.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainB.fields[1].state?.seriesIndex).toBe(1);
+    // Bug: compare frames take the Nth main frame's color, not the matching pod's.
+    expect(compareB.fields[1].state?.seriesIndex).toBe(0); // should be 1 (pod b)
+    expect(compareA.fields[1].state?.seriesIndex).toBe(1); // should be 0 (pod a)
+  });
+
+  it('fix: identity pairing keeps colors aligned when compare series are reordered', () => {
+    const [mainA, mainB] = makePodFrames(['a', 'b']);
+    const [compareB, compareA] = makePodFrames(['b', 'a'], { compare: true });
+
+    setClassicPaletteIdxs([mainA, mainB, compareB, compareA], createTheme(), 0);
+
+    expect(mainA.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainB.fields[1].state?.seriesIndex).toBe(1);
+    expect(compareA.fields[1].state?.seriesIndex).toBe(0);
+    expect(compareB.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('fix: identity pairing survives a missing series in the compare window', () => {
+    const [mainA, mainB] = makePodFrames(['a', 'b']);
+    const [compareB] = makePodFrames(['b'], { compare: true });
+
+    setClassicPaletteIdxs([mainA, mainB, compareB], createTheme(), 0);
+
+    expect(mainA.fields[1].state?.seriesIndex).toBe(0);
+    expect(mainB.fields[1].state?.seriesIndex).toBe(1);
+    expect(compareB.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('fix: compare-only series get their own palette index instead of stealing another color', () => {
+    const [mainA] = makePodFrames(['a']);
+    const [compareA, compareC] = makePodFrames(['a', 'c'], { compare: true });
+
+    setClassicPaletteIdxs([mainA, compareA, compareC], createTheme(), 0);
+
+    expect(mainA.fields[1].state?.seriesIndex).toBe(0);
+    expect(compareA.fields[1].state?.seriesIndex).toBe(0);
+    expect(compareC.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  it('prepareGraphableFields: matching labels share classic palette colors after compare reorder', () => {
+    const theme = createTheme();
+    const [mainA, mainB] = makePodFrames(['a', 'b']);
+    const [compareB, compareA] = makePodFrames(['b', 'a'], { compare: true });
+
+    for (const frame of [mainA, mainB, compareB, compareA]) {
+      for (const field of frame.fields) {
+        field.config = { ...field.config, custom: {} };
+      }
+    }
+
+    const frames = prepareGraphableFields([mainA, mainB, compareB, compareA], theme);
+    expect(frames).not.toBeNull();
+
+    const mainFields = frames!.filter((f) => !f.meta?.timeCompare?.isTimeShiftQuery).map((f) => f.fields[1]);
+    const compareFields = frames!.filter((f) => f.meta?.timeCompare?.isTimeShiftQuery).map((f) => f.fields[1]);
+
+    const mainAField = mainFields.find((f) => f.labels?.pod === 'a')!;
+    const mainBField = mainFields.find((f) => f.labels?.pod === 'b')!;
+    const compareAField = compareFields.find((f) => f.labels?.pod === 'a')!;
+    const compareBField = compareFields.find((f) => f.labels?.pod === 'b')!;
+
+    expect(compareAField.state?.seriesIndex).toBe(mainAField.state?.seriesIndex);
+    expect(compareBField.state?.seriesIndex).toBe(mainBField.state?.seriesIndex);
+
+    const palette = theme.visualization.palette;
+    const colorAt = (idx: number) => theme.visualization.getColorByName(palette[idx % palette.length]);
+    expect(colorAt(compareAField.state!.seriesIndex!)).toBe(colorAt(mainAField.state!.seriesIndex!));
+    expect(colorAt(compareBField.state!.seriesIndex!)).toBe(colorAt(mainBField.state!.seriesIndex!));
+  });
+});
+
+describe('prepareGraphableFields gap filling for compare frames (#125104)', () => {
+  const HOUR = 60 * 60 * 1000;
+  const INTERVAL = 60 * 1000;
+  const FROM = 1700000000000;
+  const TO = FROM + 2 * HOUR;
+  const OFFSET = 24 * HOUR;
+
+  const timeRange: TimeRange = {
+    from: dateTime(FROM),
+    to: dateTime(TO),
+    raw: { from: dateTime(FROM), to: dateTime(TO) },
+  };
+
+  const seriesFrame = (start: number, isCompare: boolean) => {
+    const times: number[] = [];
+    for (let t = start; t <= start + 2 * HOUR; t += INTERVAL) {
+      times.push(t);
+    }
+    return toDataFrame({
+      refId: isCompare ? 'A-compare' : 'A',
+      meta: isCompare ? { timeCompare: { isTimeShiftQuery: true, diffMs: OFFSET } } : undefined,
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: INTERVAL }, values: times },
+        { name: 'value', type: FieldType.number, values: times.map((_, i) => i) },
+      ],
+    });
+  };
+
+  it('does not pad a compare frame across its compare offset', () => {
+    // The compare frame covers its own earlier window and is only shifted onto the current range
+    // afterwards. Measuring it against the unshifted current range would read the whole offset as a
+    // gap and pad it with nulls, which then land outside the visible range once the frame is shifted.
+    const current = seriesFrame(FROM, false);
+    const compare = seriesFrame(FROM - OFFSET, true);
+
+    const frames = prepareGraphableFields([current, compare], createTheme(), timeRange)!;
+
+    expect(frames[1].length).toBe(compare.length);
+    expect(frames[1].length).toBe(frames[0].length);
+  });
+
+  it('still fills genuine gaps inside a compare frame', () => {
+    const compare = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, diffMs: OFFSET } },
+      fields: [
         {
-          key: 'test',
-          operator: '=',
-          value: 'value',
+          name: 'time',
+          type: FieldType.time,
+          config: { interval: INTERVAL },
+          values: [FROM - OFFSET, FROM - OFFSET + INTERVAL, FROM - OFFSET + 5 * INTERVAL],
         },
-        {
-          key: 'label',
-          operator: '=',
-          value: 'value2',
-        },
-      ]);
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
     });
+
+    const frames = prepareGraphableFields([compare], createTheme(), timeRange)!;
+
+    expect(frames[0].length).toBeGreaterThan(3);
+    expect(frames[0].fields[1].values).toContain(null);
+  });
+});
+
+describe('getComparisonFieldPairs', () => {
+  /**
+   * Aligned frames arrive from GraphNG's outer join: `state.origin` points back into the
+   * pre-join frames, and `state.seriesIndex` has already been assigned by setClassicPaletteIdxs
+   * (which runs regardless of palette and gives a compare series the same index as its current-period counterpart).
+   */
+  function alignedField(seriesIndex: number | undefined, frameIndex: number, fieldIndex = 1) {
+    return {
+      name: 'value',
+      type: FieldType.number,
+      config: {},
+      values: [1, 2],
+      state: { seriesIndex, origin: { frameIndex, fieldIndex } },
+    };
+  }
+
+  function timeField() {
+    return {
+      name: 'time',
+      type: FieldType.time,
+      config: {},
+      values: [1, 2],
+      state: { origin: { frameIndex: 0, fieldIndex: 0 } },
+    };
+  }
+
+  function currentFrame(refId = 'A') {
+    return { refId, length: 2, fields: [] };
+  }
+
+  function compareFrame(refId = 'A-compare') {
+    return {
+      refId,
+      length: 2,
+      meta: { timeCompare: { diffMs: -86400000, isTimeShiftQuery: true } },
+      fields: [],
+    };
+  }
+
+  it('pairs a compare field with its current-period counterpart in both directions', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    const pairs = getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]);
+
+    expect(pairs).toEqual(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+  });
+
+  it('returns an empty map when no frame is a comparison frame', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(1, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+  });
+
+  it('pairs each series independently when one query returns multiple series', () => {
+    // two current-period series (seriesIndex 0 and 1) each with a compare counterpart
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0, 1), alignedField(1, 0, 2), alignedField(0, 1, 1), alignedField(1, 1, 2)],
+    };
+
+    const pairs = getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]);
+
+    expect(pairs).toEqual(
+      new Map([
+        [1, 3],
+        [3, 1],
+        [2, 4],
+        [4, 2],
+      ])
+    );
+  });
+
+  it('does not pair two current-period series that share an index', () => {
+    // a shared seriesIndex only means "same color" - without a compare frame it is not a pair
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+  });
+
+  it('does not pair two compare series that share a series index', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [compareFrame('A-compare'), compareFrame('B-compare')]).size).toBe(0);
+  });
+
+  it('skips a group of more than two fields sharing one index', () => {
+    // ambiguous - we cannot tell which compare series belongs to which current-period one
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(0, 0), alignedField(0, 1), alignedField(0, 1, 2)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(0);
+  });
+
+  it('ignores fields with no assigned series index', () => {
+    const alignedFrame = {
+      length: 2,
+      fields: [timeField(), alignedField(undefined, 0), alignedField(undefined, 1)],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(0);
+  });
+
+  it('pairs against the real seriesIndex assignment', () => {
+    // Guards the coupling this relies on: setClassicPaletteIdxs is what makes a compare field
+    // share its counterpart's seriesIndex, and getComparisonFieldPairs reads that back.
+    const main = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [10, 20], labels: { host: 'a' } },
+      ],
+    });
+    const compare = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'value', type: FieldType.number, values: [5, 8], labels: { host: 'a' } },
+      ],
+    });
+
+    setClassicPaletteIdxs([main, compare], createTheme(), 0);
+
+    const alignedFrame = {
+      length: 2,
+      fields: [
+        timeField(),
+        { ...main.fields[1], state: { ...main.fields[1].state, origin: { frameIndex: 0, fieldIndex: 1 } } },
+        { ...compare.fields[1], state: { ...compare.fields[1].state, origin: { frameIndex: 1, fieldIndex: 1 } } },
+      ],
+    };
+
+    expect(getComparisonFieldPairs(alignedFrame, [main, compare])).toEqual(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+  });
+
+  it('reads compare-ness from the source frames, not the aligned frame', () => {
+    const alignedFrame = { length: 2, fields: [timeField(), alignedField(0, 0), alignedField(0, 1)] };
+
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame(), compareFrame()]).size).toBe(2);
+
+    // same aligned frame, but neither source frame is a comparison query now
+    expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
   });
 });

@@ -70,6 +70,7 @@ func ValidateRelativePath(rawPath string) error {
 }
 
 type DeleteShortUrlCommand struct {
+	OrgId     int64
 	Uid       string
 	OlderThan time.Time
 

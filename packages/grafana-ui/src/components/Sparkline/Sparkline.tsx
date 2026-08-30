@@ -1,9 +1,9 @@
 import React, { memo } from 'react';
 
-import { FieldConfig, FieldSparkline } from '@grafana/data';
-import { GraphFieldConfig } from '@grafana/schema';
+import { type FieldConfig, type FieldSparkline } from '@grafana/data';
+import { type GraphFieldConfig } from '@grafana/schema';
 
-import { Themeable2 } from '../../types/theme';
+import { type Themeable2 } from '../../types/theme';
 import { UPlotChart } from '../uPlot/Plot';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
 

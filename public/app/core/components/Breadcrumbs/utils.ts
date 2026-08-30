@@ -1,6 +1,6 @@
-import { NavModelItem } from '@grafana/data';
+import { locationUtil, type NavModelItem } from '@grafana/data';
 
-import { Breadcrumb } from './types';
+import { type Breadcrumb } from './types';
 
 export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [];
@@ -39,10 +39,10 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       if (activeChildIndex > 0) {
         const activeChild = node.children?.[activeChildIndex];
         if (activeChild) {
-          crumbs.unshift({ text: activeChild.text, href: activeChild.url ?? '' });
+          crumbs.unshift({ text: activeChild.text, href: locationUtil.assureBaseUrl(activeChild.url ?? '') });
         }
       }
-      crumbs.unshift({ text: node.text, href: node.url ?? '' });
+      crumbs.unshift({ text: node.text, href: locationUtil.assureBaseUrl(node.url ?? '') });
     }
 
     if (node.parentItem) {

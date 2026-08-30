@@ -1,34 +1,37 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {
-  DisplayProcessor,
-  Field,
+  type DisplayProcessor,
+  type Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
-import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { QueryResponse, SearchResultMeta } from '../../service/types';
-import { getIconForKind } from '../../service/utils';
-import { SelectionChecker, SelectionToggle } from '../selection';
+import { DescriptionTooltip } from '../../components/DescriptionTooltip';
+import { type QueryResponse, type SearchResultMeta } from '../../service/types';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
+import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { TableColumn } from './SearchResultsTable';
+import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -118,6 +121,7 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
+      const description = access.description?.values[p.row.index];
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -125,10 +129,11 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
+      const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={styles.cell} {...cellProps}>
-          {!response.isItemLoaded(p.row.index) ? (
+        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
+          {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
@@ -137,6 +142,7 @@ export const generateColumns = (
               {name}
             </a>
           )}
+          {isLoaded ? <DescriptionTooltip description={description} /> : null}
         </div>
       );
     },
@@ -157,6 +163,46 @@ export const generateColumns = (
   } else {
     width = TYPE_COLUMN_WIDTH;
     columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
+    availableWidth -= width;
+  }
+
+  const deletedByField = access.deletedBy;
+  if (deletedByField && hasValue(deletedByField)) {
+    width = DELETED_BY_COLUMN_WIDTH;
+    columns.push({
+      id: `column-deleted-by`,
+      field: deletedByField,
+      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+      width,
+      Cell: (p) => {
+        const rawValue = deletedByField.values[p.row.index];
+        const { key, ...cellProps } = p.cellProps;
+        return (
+          <div key={key} {...cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : rawValue === DELETED_BY_UNKNOWN ? (
+              <Tooltip
+                content={t(
+                  'search.results-table.deleted-by-unknown-tooltip',
+                  'Failed to look up the account that deleted this dashboard'
+                )}
+              >
+                <Text variant="body" truncate>
+                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                    <Icon name="exclamation-triangle" /> Unknown
+                  </Trans>
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text variant="body" truncate>
+                {formatDeletedByDisplayValue(rawValue, t)}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    });
     availableWidth -= width;
   }
 
@@ -320,6 +366,43 @@ function hasValue(f: Field): boolean {
   return false;
 }
 
+interface DataSourceItemProps {
+  dsUid: string;
+  iconClass: string;
+  invalidDatasourceItemClass: string;
+  onDatasourceChange: (datasource?: string) => void;
+}
+
+function DataSourceItem({ dsUid, iconClass, invalidDatasourceItemClass, onDatasourceChange }: DataSourceItemProps) {
+  const { isLoading, settings } = useDataSourceInstanceSettings(dsUid);
+  const icon = settings?.meta?.info?.logos?.small;
+
+  // While the settings are being resolved we don't yet know whether the datasource
+  // is valid, so avoid flashing the invalid-datasource fallback.
+  if (isLoading) {
+    return null;
+  }
+
+  if (settings && icon) {
+    return (
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDatasourceChange(settings.uid);
+        }}
+      >
+        <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
+        {settings.name}
+      </span>
+    );
+  }
+
+  return <span className={invalidDatasourceItemClass}>{dsUid}</span>;
+}
+
 function makeDataSourceColumn(
   field: Field<string[]>,
   width: number,
@@ -328,7 +411,6 @@ function makeDataSourceColumn(
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
-  const srv = getDataSourceSrv();
   return {
     id: `column-datasource`,
     field,
@@ -341,32 +423,15 @@ function makeDataSourceColumn(
       const { key, ...cellProps } = p.cellProps;
       return (
         <div key={key} {...cellProps} className={cx(datasourceItemClass)}>
-          {dslist.map((v, i) => {
-            const settings = srv.getInstanceSettings(v);
-            const icon = settings?.meta?.info?.logos?.small;
-            if (icon) {
-              return (
-                // TODO: fix keyboard a11y
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <span
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onDatasourceChange(settings.uid);
-                  }}
-                >
-                  <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
-                  {settings.name}
-                </span>
-              );
-            }
-            return (
-              <span className={invalidDatasourceItemClass} key={i}>
-                {v}
-              </span>
-            );
-          })}
+          {dslist.map((v, i) => (
+            <DataSourceItem
+              key={i}
+              dsUid={v}
+              iconClass={iconClass}
+              invalidDatasourceItemClass={invalidDatasourceItemClass}
+              onDatasourceChange={onDatasourceChange}
+            />
+          ))}
         </div>
       );
     },

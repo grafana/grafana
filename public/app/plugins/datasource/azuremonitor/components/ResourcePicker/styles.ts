@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
-import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
+import { type ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css({

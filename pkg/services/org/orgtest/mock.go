@@ -284,11 +284,6 @@ func (_m *MockService) InsertOrgUser(_a0 context.Context, _a1 *org.OrgUser) (int
 	return r0, r1
 }
 
-// RegisterDelete provides a mock function with given fields: query
-func (_m *MockService) RegisterDelete(query string) {
-	_m.Called(query)
-}
-
 // RemoveOrgUser provides a mock function with given fields: _a0, _a1
 func (_m *MockService) RemoveOrgUser(_a0 context.Context, _a1 *org.RemoveOrgUserCommand) error {
 	ret := _m.Called(_a0, _a1)
@@ -359,6 +354,36 @@ func (_m *MockService) SearchOrgUsers(_a0 context.Context, _a1 *org.SearchOrgUse
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *org.SearchOrgUsersQuery) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SearchOrgUsersByEmails provides a mock function with given fields: _a0, _a1
+func (_m *MockService) SearchOrgUsersByEmails(_a0 context.Context, _a1 *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchOrgUsersByEmails")
+	}
+
+	var r0 []*org.OrgUserDTO
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *org.SearchOrgUsersByEmailsQuery) []*org.OrgUserDTO); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*org.OrgUserDTO)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *org.SearchOrgUsersByEmailsQuery) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

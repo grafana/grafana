@@ -7,16 +7,17 @@ import (
 	"testing"
 	"time"
 
+	prom_model "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	prom_model "github.com/prometheus/common/model"
-	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
@@ -58,10 +59,10 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
 						From: v0alpha1.AlertRulePromDurationWMillis("5m"),
 						To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
@@ -71,6 +72,8 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -248,8 +251,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// change the title of the rule and check that it's updated in k8s and provisioning API
 			updatedRule := retrievedRule.DeepCopy()
@@ -280,6 +283,156 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioning(t *testing.T) {
 			require.Error(t, err, "Expected error when getting deleted rule")
 			require.Contains(t, err.Error(), "not found", "Expected 'not found' error, got %s", err.Error())
 		}
+	})
+}
+
+// TestIntegrationAlertRuleManagerPropertiesRoundTrip verifies that ManagerProperties set via the
+// k8s API survive a round-trip through legacy storage and are visible in both APIs.
+//
+// Write path (k8s → legacy SQL):
+//   - Create rule via k8s with ManagerKindTerraform annotation.
+//   - Verify legacy provisioning API reports ProvenanceAPI (the coarse mapping for terraform).
+//   - Read rule back via k8s; verify ManagerKindTerraform is still present.
+//
+// Write path (legacy → k8s):
+//   - Create rule via legacy provisioning API (ProvenanceAPI).
+//   - Read back via k8s; verify ManagerProperties maps to ManagerKindClassicAPI.
+func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+
+	k8sClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+	legacyClient := alerting.NewAlertingLegacyAPIClient(helper.GetListenerAddress(), "admin", "admin")
+
+	common.CreateTestFolder(t, helper, "mp-test-folder")
+
+	t.Run("k8s ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID("mp-test-folder"),
+			ngmodels.RuleMuts.WithGroupName("mp-test-group"),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+
+		alertRule := &v0alpha1.AlertRule{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					"grafana.app/folder": "mp-test-folder",
+					// Set ManagerKindTerraform so the storage layer persists manager_kind="terraform"
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v0alpha1.AlertRuleSpec{
+				Title: rule.Title,
+				Expressions: v0alpha1.AlertRuleExpressionMap{
+					"A": {
+						QueryType:     new(rule.Data[0].QueryType),
+						DatasourceUID: new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+						Model:         rule.Data[0].Model,
+						Source:        new(true),
+						RelativeTimeRange: &v0alpha1.AlertRuleRelativeTimeRange{
+							From: v0alpha1.AlertRulePromDurationWMillis("5m"),
+							To:   v0alpha1.AlertRulePromDurationWMillis("0s"),
+						},
+					},
+				},
+				Trigger: v0alpha1.AlertRuleIntervalTrigger{
+					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+				},
+				NoDataState:  v0alpha1.AlertRuleNoDataStateKeepLast,
+				ExecErrState: v0alpha1.AlertRuleExecErrStateKeepLast,
+			},
+		}
+
+		created, err := k8sClient.Create(ctx, alertRule, v1.CreateOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		// The create response itself should reflect the manager-derived provenance and
+		// preserve the manager annotations, without requiring a follow-up GET.
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus(),
+			"create response provenance should reflect terraform→api mapping")
+		require.Equal(t, string(utils.ManagerKindTerraform), created.Annotations[utils.AnnoKeyManagerKind],
+			"create response should preserve ManagerKindTerraform")
+		require.Equal(t, "my-terraform-workspace", created.Annotations[utils.AnnoKeyManagerIdentity],
+			"create response should preserve manager identity")
+
+		// Legacy API should show ProvenanceAPI (coarse mapping of terraform → api)
+		legacyRule, status, _ := legacyClient.GetProvisioningAlertRule(t, created.Name)
+		require.Equal(t, 200, status)
+		require.NotNil(t, legacyRule)
+		require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), legacyRule.Provenance,
+			"terraform manager should map to ProvenanceAPI in legacy storage")
+
+		// k8s read-back should preserve ManagerKindTerraform
+		retrieved, err := k8sClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.Annotations[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.Annotations[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+
+		// Cleanup
+		require.NoError(t, k8sClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to ManagerKindClassicAPI when read via k8s", func(t *testing.T) {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUniqueUID(),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID("mp-test-folder"),
+			ngmodels.RuleMuts.WithGroupName("mp-legacy-group"),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).GenerateMany(1)
+
+		ruleGroup := apimodels.AlertRuleGroup{
+			Title:     "mp-legacy-group",
+			FolderUID: "mp-test-folder",
+			Interval:  rule[0].IntervalSeconds,
+			Rules: []apimodels.ProvisionedAlertRule{
+				{
+					UID:   rule[0].UID,
+					Title: rule[0].Title,
+					OrgID: 1,
+					Data: []apimodels.AlertQuery{
+						{
+							RefID:         "A",
+							DatasourceUID: rule[0].Data[0].DatasourceUID,
+							Model:         rule[0].Data[0].Model,
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Minute),
+								To:   apimodels.Duration(0),
+							},
+						},
+					},
+					Condition:    "A",
+					FolderUID:    "mp-test-folder",
+					NoDataState:  apimodels.NoDataState(rule[0].NoDataState),
+					ExecErrState: apimodels.ExecutionErrorState(rule[0].ExecErrState),
+				},
+			},
+		}
+
+		created, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, ruleGroup)
+		require.Equalf(t, 200, status, "Expected status 200, got %d. Body: %s", status, body)
+		require.NotNil(t, created)
+
+		// k8s read-back: ProvenanceAPI → ManagerKindClassicAPI
+		retrieved, err := k8sClient.Get(ctx, rule[0].UID, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.Annotations[utils.AnnoKeyManagerKind], //nolint:staticcheck // asserting the legacy classic-API shim mapping
+			"legacy ProvenanceAPI should map to ManagerKindClassicAPI in k8s representation")
+		// Classic kinds have no meaningful identity
+		require.Empty(t, retrieved.Annotations[utils.AnnoKeyManagerIdentity],
+			"classic API provisioning should have no manager identity")
+
+		// Cleanup
+		require.NoError(t, k8sClient.Delete(ctx, rule[0].UID, v1.DeleteOptions{}))
 	})
 }
 
@@ -388,8 +541,8 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			for k, v := range expectedModel {
 				require.EqualValues(t, v, retrievedModel[k], "Model field %s should match", k)
 			}
-			require.EqualValues(t, r.NoDataState, retrievedRule.Spec.NoDataState)
-			require.EqualValues(t, r.ExecErrState, retrievedRule.Spec.ExecErrState)
+			require.Equal(t, common.ToK8sNoDataState(ngmodels.NoDataState(r.NoDataState)), retrievedRule.Spec.NoDataState)
+			require.Equal(t, common.ToK8sExecErrState(ngmodels.ExecutionErrorState(r.ExecErrState)), retrievedRule.Spec.ExecErrState)
 
 			// - change group should be allowed and reflected in the provisioning api
 			updatedRule := retrievedRule.DeepCopy()
@@ -411,6 +564,155 @@ func TestIntegrationAlertRuleCompatCreateViaProvisioningChangeGroupInK8s(t *test
 			require.Equal(t, 200, status)
 			// verify the group label changed
 			require.Equal(t, "new-group", provisioningRetrievedRule.RuleGroup)
+		}
+	})
+}
+
+func TestIntegrationAlertRuleCompatListWithGroupLabelSelectors(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := common.GetTestHelper(t)
+	k8sClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
+	legacyClient := alerting.NewAlertingLegacyAPIClient(helper.GetListenerAddress(), "admin", "admin")
+
+	common.CreateTestFolder(t, helper, "compat-ar-group-sel-folder")
+
+	makeRule := func(uid, title, folder string) apimodels.ProvisionedAlertRule {
+		rule := ngmodels.RuleGen.With(
+			ngmodels.RuleMuts.WithUID(uid),
+			ngmodels.RuleMuts.WithUniqueTitle(),
+			ngmodels.RuleMuts.WithNamespaceUID(folder),
+			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+		).Generate()
+		return apimodels.ProvisionedAlertRule{
+			UID:   uid,
+			Title: title,
+			OrgID: 1,
+			Data: []apimodels.AlertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: rule.Data[0].DatasourceUID,
+					Model:         rule.Data[0].Model,
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Minute),
+						To:   apimodels.Duration(0),
+					},
+				},
+			},
+			Condition:    "A",
+			FolderUID:    folder,
+			NoDataState:  apimodels.NoDataState(rule.NoDataState),
+			ExecErrState: apimodels.ExecutionErrorState(rule.ExecErrState),
+		}
+	}
+
+	rulesAlpha := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).GenerateMany(2)
+	rulesBeta := ngmodels.RuleGen.With(
+		ngmodels.RuleMuts.WithUniqueUID(),
+		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
+	).GenerateMany(2)
+
+	groupAlpha := apimodels.AlertRuleGroup{
+		Title:     "group-alpha",
+		FolderUID: "compat-ar-group-sel-folder",
+		Interval:  10,
+		Rules: []apimodels.ProvisionedAlertRule{
+			makeRule(rulesAlpha[0].UID, rulesAlpha[0].Title, "compat-ar-group-sel-folder"),
+			makeRule(rulesAlpha[1].UID, rulesAlpha[1].Title, "compat-ar-group-sel-folder"),
+		},
+	}
+	groupBeta := apimodels.AlertRuleGroup{
+		Title:     "group-beta",
+		FolderUID: "compat-ar-group-sel-folder",
+		Interval:  10,
+		Rules: []apimodels.ProvisionedAlertRule{
+			makeRule(rulesBeta[0].UID, rulesBeta[0].Title, "compat-ar-group-sel-folder"),
+			makeRule(rulesBeta[1].UID, rulesBeta[1].Title, "compat-ar-group-sel-folder"),
+		},
+	}
+
+	createdAlpha, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, groupAlpha)
+	require.Equalf(t, 200, status, "Expected status 200, got %d. Response body: %s", status, body)
+	createdBeta, status, body := legacyClient.CreateOrUpdateRuleGroupProvisioning(t, groupBeta)
+	require.Equalf(t, 200, status, "Expected status 200, got %d. Response body: %s", status, body)
+
+	alphaUIDs := map[string]struct{}{createdAlpha.Rules[0].UID: {}, createdAlpha.Rules[1].UID: {}}
+	betaUIDs := map[string]struct{}{createdBeta.Rules[0].UID: {}, createdBeta.Rules[1].UID: {}}
+
+	t.Cleanup(func() {
+		legacyClient.DeleteRulesGroupProvisioning(t, "compat-ar-group-sel-folder", "group-alpha")
+		legacyClient.DeleteRulesGroupProvisioning(t, "compat-ar-group-sel-folder", "group-beta")
+	})
+
+	resultUIDs := func(list *v0alpha1.AlertRuleList) map[string]struct{} {
+		m := make(map[string]struct{}, len(list.Items))
+		for _, item := range list.Items {
+			m[item.Name] = struct{}{}
+		}
+		return m
+	}
+
+	t.Run("filter by group label include", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group=group-alpha"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.Equal(t, "group-alpha", item.Labels[v0alpha1.GroupLabelKey])
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.Contains(t, names, uid, "group-alpha rule must appear in include results")
+		}
+		for uid := range betaUIDs {
+			require.NotContains(t, names, uid, "group-beta rule must not appear in group-alpha include results")
+		}
+	})
+
+	t.Run("filter by group label exclude", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group!=group-alpha"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.NotEqual(t, "group-alpha", item.Labels[v0alpha1.GroupLabelKey])
+		}
+		names := resultUIDs(list)
+		for uid := range betaUIDs {
+			require.Contains(t, names, uid, "group-beta rule must appear in exclude results")
+		}
+		for uid := range alphaUIDs {
+			require.NotContains(t, names, uid, "group-alpha rule must not appear in exclude results")
+		}
+	})
+
+	t.Run("filter by group label exists", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "grafana.com/group"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.Contains(t, item.Labels, v0alpha1.GroupLabelKey)
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.Contains(t, names, uid, "group-alpha rule must appear in exists results")
+		}
+		for uid := range betaUIDs {
+			require.Contains(t, names, uid, "group-beta rule must appear in exists results")
+		}
+	})
+
+	t.Run("filter by group label does not exist", func(t *testing.T) {
+		list, err := k8sClient.List(ctx, v1.ListOptions{LabelSelector: "!grafana.com/group"})
+		require.NoError(t, err)
+		for _, item := range list.Items {
+			require.NotContains(t, item.Labels, v0alpha1.GroupLabelKey)
+		}
+		names := resultUIDs(list)
+		for uid := range alphaUIDs {
+			require.NotContains(t, names, uid, "group-alpha rule must not appear in does-not-exist results")
+		}
+		for uid := range betaUIDs {
+			require.NotContains(t, names, uid, "group-beta rule must not appear in does-not-exist results")
 		}
 	})
 }

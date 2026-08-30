@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
-import { clamp } from 'lodash';
 import { useCallback, useId, useRef } from 'react';
-import * as React from 'react';
+import type * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { ComponentSize } from '../../types/size';
-import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
+import { type ComponentSize } from '../../types/size';
+import { clamp } from '../../utils/clamp';
+import { type DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
   /**
@@ -106,7 +106,9 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      if (!containerSize.current || !primarySizeRef.current || !secondPaneRef.current) {
+      // A fully collapsed primary pane measures 0, which is a valid size to resize from, so only
+      // an absent measurement may bail out here — otherwise the pane could never be dragged open again.
+      if (!containerSize.current || primarySizeRef.current === null || !secondPaneRef.current) {
         return;
       }
 

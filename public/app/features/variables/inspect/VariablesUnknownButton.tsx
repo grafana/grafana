@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { IconButton } from '@grafana/ui';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
-import { UsagesToNetwork } from './types';
+import { type UsagesToNetwork } from './types';
 
 interface Props {
   id: string;

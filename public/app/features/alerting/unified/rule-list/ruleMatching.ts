@@ -1,16 +1,16 @@
 import {
-  PromRuleDTO,
-  PromRuleGroupDTO,
-  RulerCloudRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
+  type PromRuleDTO,
+  type PromRuleGroupDTO,
+  type RulerCloudRuleDTO,
+  type RulerRuleDTO,
+  type RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { getPromRuleFingerprint, getRulerRuleFingerprint } from '../utils/rule-id';
 import { getRuleName } from '../utils/rules';
 
-import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
-import { RulePositionHash, createRulePositionHash } from './rulePositionHash';
+import { type PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
+import { type RulePositionHash, createRulePositionHash } from './rulePositionHash';
 
 export function getMatchingRulerRule(
   rulerRuleGroup: RulerRuleGroupDTO<RulerCloudRuleDTO>,

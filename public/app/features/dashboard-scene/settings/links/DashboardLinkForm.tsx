@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { DashboardLink } from '@grafana/schema';
+import { type DashboardLink } from '@grafana/schema';
 import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { LINK_ICON_MAP, NEW_LINK } from './utils';

@@ -261,8 +261,16 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		version = *options.Preconditions.ResourceVersion
 	}
 
-	err = s.service.DeleteReceiver(ctx, uid, ngmodels.ProvenanceNone, version, info.OrgID, user) // TODO add support for dry-run option
-	return old, false, err                                                                       // false - will be deleted async
+	oldReceiver, ok := old.(*model.Receiver)
+	if !ok {
+		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
+	}
+	prov, err := ngmodels.ProvenanceFromString(oldReceiver.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, apierrors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteReceiver(ctx, uid, prov, version, info.OrgID, user) // TODO add support for dry-run option
+	return old, false, err                                                    // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {

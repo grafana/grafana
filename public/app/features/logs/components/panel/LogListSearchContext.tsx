@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import { createContext, type ReactNode, useCallback, useContext, useState } from 'react';
 
 export interface LogListSearchContextData {
   hideSearch: () => void;
@@ -22,11 +22,6 @@ export const LogListSearchContext = createContext<LogListSearchContextData>({
   showSearch: () => {},
   toggleFilterLogs: () => {},
 });
-
-export const useLogListSearchContextData = (key: keyof LogListSearchContextData) => {
-  const data: LogListSearchContextData = useContext(LogListSearchContext);
-  return data[key];
-};
 
 export const useLogListSearchContext = (): LogListSearchContextData => {
   return useContext(LogListSearchContext);

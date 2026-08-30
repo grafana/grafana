@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 

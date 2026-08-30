@@ -2,10 +2,13 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { mockComboboxRect } from '../../test-utils/mockDom';
+import { Drawer } from '../Drawer/Drawer';
 import { Field } from '../Forms/Field';
+import { Modal } from '../Modal/Modal';
 
 import { Combobox } from './Combobox';
-import { ComboboxOption } from './types';
+import { type ComboboxOption } from './types';
 import { DEBOUNCE_TIME_MS } from './useOptions';
 
 // Mock data for the Combobox options
@@ -45,18 +48,7 @@ describe('Combobox', () => {
 
   const onChangeHandler = jest.fn();
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   afterEach(() => {
@@ -567,6 +559,90 @@ describe('Combobox', () => {
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called only for 'abc'
     });
 
+    it('should debounce to a single request when a re-rendering parent recreates the options function', async () => {
+      const loaderSpy = jest.fn((searchTerm: string) => Promise.resolve(simpleAsyncOptions));
+
+      // Mimics consumers like query editors: the parent re-renders on every keystroke and
+      // passes an inline arrow as `options`, minting a new function identity each render.
+      const Wrapper = () => {
+        const [, setKeystrokes] = React.useState(0);
+        return (
+          <div onKeyDown={() => setKeystrokes((count) => count + 1)}>
+            <Combobox options={(inputValue: string) => loaderSpy(inputValue)} value={null} onChange={onChangeHandler} />
+          </div>
+        );
+      };
+
+      render(<Wrapper />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+
+      await user.keyboard('a');
+      await act(async () => jest.advanceTimersByTime(10));
+      await user.keyboard('b');
+      await act(async () => jest.advanceTimersByTime(10));
+      await user.keyboard('c');
+      await act(async () => jest.advanceTimersByTime(DEBOUNCE_TIME_MS));
+
+      expect(loaderSpy).toHaveBeenCalledTimes(1);
+      expect(loaderSpy).toHaveBeenCalledWith('abc');
+    });
+
+    it('should not show an error when a stale request rejects after a newer request has succeeded', async () => {
+      jest.spyOn(console, 'error').mockImplementation();
+
+      const asyncOptions = jest.fn(async (searchTerm: string) => {
+        if (searchTerm === 'a') {
+          return new Promise<ComboboxOption[]>((_resolve, reject) =>
+            setTimeout(() => reject(new Error('slow failure')), 1500)
+          );
+        }
+        return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'fresh result' }]), 500));
+      });
+
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await act(async () => {
+        await user.keyboard('a');
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS); // Start request A (slow, will reject)
+        await user.keyboard('b');
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS); // Start request B (fast, will resolve)
+        jest.advanceTimersByTime(500); // Resolve request B
+      });
+
+      expect(await screen.findByRole('option', { name: 'fresh result' })).toBeInTheDocument();
+
+      await act(async () => {
+        jest.advanceTimersByTime(1500); // Reject request A, long after B already rendered
+      });
+
+      expect(screen.queryByText('An error occurred while loading options.')).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'fresh result' })).toBeInTheDocument();
+    });
+
+    it('should not load options if unmounted while a debounced load is pending', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      const { unmount } = render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.keyboard('a'); // Schedule a debounced load
+
+      unmount();
+
+      await act(async () => {
+        jest.advanceTimersByTime(DEBOUNCE_TIME_MS * 2);
+      });
+
+      expect(asyncOptions).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+    });
+
     it('should allow custom value while async is being run', async () => {
       const asyncOptions = jest.fn(async () => {
         return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
@@ -681,6 +757,34 @@ describe('Combobox', () => {
     });
   });
 
+  describe('onBlur', () => {
+    it('calls onBlur when the input loses focus', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onBlur when tabbing away with the menu open', async () => {
+      const onBlurHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onBlur={onBlurHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      // Menu should be open
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
+
+      await userEvent.tab();
+
+      expect(onBlurHandler).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('with RTL selectors', () => {
     it('can be selected by label with HTML <label>', () => {
       render(
@@ -716,6 +820,87 @@ describe('Combobox', () => {
 
       const inputByPlaceholderText = screen.getByPlaceholderText('Country');
       expect(inputByPlaceholderText).toBeInTheDocument();
+    });
+  });
+
+  describe('open state isOpen / onIsOpenChange', () => {
+    it('opens the dropdown when parent sets isOpen after interaction (controlled)', async () => {
+      const { rerender } = render(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={false} onIsOpenChange={jest.fn()} />
+      );
+      expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+
+      rerender(
+        <Combobox options={options} value={null} onChange={onChangeHandler} isOpen onIsOpenChange={jest.fn()} />
+      );
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('calls onIsOpenChange when the dropdown opens and closes', async () => {
+      const onIsOpenChange = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} onIsOpenChange={onIsOpenChange} />);
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      expect(onIsOpenChange).toHaveBeenLastCalledWith(false);
+    });
+
+    it('supports controlled isOpen with onIsOpenChange', async () => {
+      function Controlled() {
+        const [open, setOpen] = React.useState(true);
+        return (
+          <Combobox options={options} value={null} onChange={onChangeHandler} isOpen={open} onIsOpenChange={setOpen} />
+        );
+      }
+      render(<Controlled />);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => {
+        expect(screen.queryByRole('option', { name: 'Option 1' })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Escape key behavior in overlays', () => {
+    it('should not close a Modal when pressing Escape while the menu is open', async () => {
+      const onDismiss = jest.fn();
+      render(
+        <Modal title="Test Modal" isOpen onDismiss={onDismiss}>
+          <Combobox options={options} value={null} onChange={jest.fn()} />
+        </Modal>
+      );
+
+      // Modal auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onDismiss).not.toHaveBeenCalled();
+    });
+
+    it('should not close a Drawer when pressing Escape while the menu is open', async () => {
+      const onClose = jest.fn();
+      render(
+        <div className="main-view">
+          <Drawer title="Test Drawer" onClose={onClose}>
+            <Combobox options={options} value={null} onChange={jest.fn()} />
+          </Drawer>
+        </div>
+      );
+
+      // Drawer auto-focuses the close button on open — wait for focus to settle
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus());
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(onClose).not.toHaveBeenCalled();
     });
   });
 });

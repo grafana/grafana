@@ -1,4 +1,4 @@
-import { FieldType, LoadingState, PanelData } from '@grafana/data';
+import { type FieldType, type LoadingState, type PanelData } from '@grafana/data';
 
 type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;

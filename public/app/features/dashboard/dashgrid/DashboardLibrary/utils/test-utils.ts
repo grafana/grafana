@@ -1,6 +1,7 @@
-import { PluginDashboard } from 'app/types/plugins';
+import { type PluginDashboard } from 'app/types/plugins';
 
-import { GnetDashboard } from '../types';
+import { type CustomTemplateDashboard } from '../DashboardCard';
+import { type GnetDashboard } from '../types';
 
 /**
  * Creates a complete mock PluginDashboard with all fields.
@@ -48,5 +49,18 @@ export const createMockGnetDashboard = (overrides: Partial<GnetDashboard> = {}):
   userId: 100,
   userName: 'testuser',
   panelTypeSlugs: ['timeseries', 'stat', 'gauge'],
+  ...overrides,
+});
+
+/**
+ * Creates a mock `CustomTemplateDashboard` (the lightweight shape `DashboardCard` accepts when
+ * `kind="custom_dashboard_template"`).
+ */
+export const createMockCustomTemplateDashboard = (
+  overrides: Partial<CustomTemplateDashboard> = {}
+): CustomTemplateDashboard => ({
+  id: 'custom-template-1',
+  name: 'Test Custom Template',
+  description: 'Test custom template description',
   ...overrides,
 });

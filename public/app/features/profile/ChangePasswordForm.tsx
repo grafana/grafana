@@ -9,11 +9,11 @@ import {
   strongPasswordValidationRegister,
 } from 'app/core/components/ValidationLabels/ValidationLabels';
 import config from 'app/core/config';
-import { UserDTO } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
 import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
-import { ChangePasswordFields } from './types';
+import { type ChangePasswordFields } from './types';
 
 export interface Props {
   user: UserDTO;

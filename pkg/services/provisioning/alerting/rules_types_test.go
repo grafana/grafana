@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestRuleGroup(t *testing.T) {
@@ -240,9 +239,9 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 			expected: models.NotificationSettingsFromContact(models.ContactPointRouting{
 				Receiver:            "test-receiver",
 				GroupBy:             []string{"test-group_by"},
-				GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
-				GroupInterval:       util.Pointer(model.Duration(2 * time.Second)),
-				RepeatInterval:      util.Pointer(model.Duration(3 * time.Second)),
+				GroupWait:           new(model.Duration(1 * time.Second)),
+				GroupInterval:       new(model.Duration(2 * time.Second)),
+				RepeatInterval:      new(model.Duration(3 * time.Second)),
 				MuteTimeIntervals:   []string{"test-mute"},
 				ActiveTimeIntervals: []string{"test-active"},
 			}),

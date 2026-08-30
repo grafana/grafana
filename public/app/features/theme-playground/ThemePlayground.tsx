@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useId, useState } from 'react';
 
-import { createTheme, GrafanaTheme2, NewThemeOptions } from '@grafana/data';
+import { createTheme, type GrafanaTheme2, type NewThemeOptions } from '@grafana/data';
 import { NewThemeOptionsSchema } from '@grafana/data/internal';
 import aubergine from '@grafana/data/themes/definitions/aubergine.json';
 import debug from '@grafana/data/themes/definitions/debug.json';
 import desertbloom from '@grafana/data/themes/definitions/desertbloom.json';
-import deuteranopia_protanopia_dark from '@grafana/data/themes/definitions/deuteranopia_protanopia_dark.json';
-import deuteranopia_protanopia_light from '@grafana/data/themes/definitions/deuteranopia_protanopia_light.json';
+import deut_prot_dark from '@grafana/data/themes/definitions/deut_prot_dark.json';
+import deut_prot_light from '@grafana/data/themes/definitions/deut_prot_light.json';
 import gildedgrove from '@grafana/data/themes/definitions/gildedgrove.json';
 import gloom from '@grafana/data/themes/definitions/gloom.json';
 import mars from '@grafana/data/themes/definitions/mars.json';
@@ -22,6 +22,7 @@ import zen from '@grafana/data/themes/definitions/zen.json';
 import themeJsonSchema from '@grafana/data/themes/schema.generated.json';
 import { t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { CodeEditor, Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { ThemeDemo } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
@@ -54,8 +55,8 @@ const experimentalDefinitions: Record<string, unknown> = {
   aubergine,
   debug,
   desertbloom,
-  deuteranopia_protanopia_dark,
-  deuteranopia_protanopia_light,
+  deut_prot_dark,
+  deut_prot_light,
   gildedgrove,
   gloom,
   mars,
@@ -93,7 +94,8 @@ export default function ThemePlayground() {
   };
   const baseId = useId();
   const chromeHeaderHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, chromeHeaderHeight);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, chromeHeaderHeight, visualRefreshEnabled);
   const dispatch = useDispatch();
 
   const [baseThemeId, setBaseThemeId] = useState(Object.keys(themeMap)[0]);
@@ -185,9 +187,9 @@ export default function ThemePlayground() {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined) => ({
+const getStyles = (theme: GrafanaTheme2, chromeHeaderHeight: number | undefined, visualRefreshEnabled: boolean) => ({
   left: css({
-    background: theme.colors.background.primary,
+    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.primary,
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),

@@ -117,6 +117,12 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 							Ref: ref(KeeperAWSAssumeRole{}.OpenAPIModelName()),
 						},
 					},
+					"kmsKeyId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"region"},
 			},
@@ -158,8 +164,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Keeper{}.OpenAPIModelName()),
+										Ref: ref(Keeper{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -216,6 +221,14 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"active": {
+						SchemaProps: spec.SchemaProps{
+							Description: "True when the keeper is the current active keeper",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -224,8 +237,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -247,6 +259,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 						},
 					},
 				},
+				Required: []string{"active"},
 			},
 		},
 		Dependencies: []string{
@@ -385,8 +398,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SecureValue{}.OpenAPIModelName()),
+										Ref: ref(SecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -449,9 +461,8 @@ func schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -494,8 +505,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
+										Ref: ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},

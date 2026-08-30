@@ -1,6 +1,6 @@
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Stack, Text } from '@grafana/ui';
-import { AlertProps } from '@grafana/ui/internal';
+import { type AlertProps } from '@grafana/ui/internal';
 
 interface AlertWithTraceIDProps extends AlertProps {
   error?: unknown;

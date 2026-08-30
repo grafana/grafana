@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { type PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { isLoading as isLoadingState, useAsync } from '../../hooks/useAsync';
 

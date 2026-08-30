@@ -1,7 +1,7 @@
-import { ThemeSpacingTokens } from '@grafana/data';
+import { type ThemeSpacingTokens } from '@grafana/data';
 
 import { Box } from './Box/Box';
-import { ResponsiveProp } from './utils/responsiveness';
+import { type ResponsiveProp } from './utils/responsiveness';
 
 export interface SpaceProps {
   /**

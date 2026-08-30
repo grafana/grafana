@@ -3,7 +3,8 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -11,7 +12,7 @@ import {
   CodeEditor,
   Collapse,
   Combobox,
-  ComboboxOption,
+  type ComboboxOption,
   Divider,
   Field,
   FileUpload,
@@ -23,7 +24,7 @@ import {
 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
   DataSourceType,
@@ -33,8 +34,8 @@ import {
 import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
-import { ImportFormValues } from '../ImportToGMA';
-import { getRulesSourceOptions } from '../Wizard/constants';
+import { type ImportFormValues } from '../ImportToGMA';
+import { getRulesSourceOptions } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
 import { filterRulerRulesConfig } from '../useImport';
 import { useRoutingTrees } from '../useRoutingTrees';
@@ -220,7 +221,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
               label={t('alerting.import-to-gma.step2.policy-tree', 'Policy tree')}
               description={t(
                 'alerting.import-to-gma.step2.policy-tree-desc',
-                'Select a notification policy tree to route alerts'
+                'Select a notification policy tree to route the imported alerts'
               )}
               noMargin
             >
@@ -233,6 +234,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                     placeholder={t('alerting.import-to-gma.step2.select-policy', 'Select a policy tree')}
                     loading={isLoadingRoutingTrees}
                     width={50}
+                    data-testid={selectors.pages.Alerting.ImportToGMA.policyTreeInput}
                   />
                 )}
                 control={control}
@@ -331,6 +333,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.namespaceInput}
                           />
                         )}
                         name="namespace"
@@ -355,6 +358,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                             loading={isLoadingNamespaces}
                             disabled={isLoadingNamespaces || !namespace || !rulesDatasourceName}
                             isClearable
+                            data-testid={selectors.pages.Alerting.ImportToGMA.groupInput}
                           />
                         )}
                         name="ruleGroup"

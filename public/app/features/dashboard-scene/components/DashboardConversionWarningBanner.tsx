@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { isV2StoredVersion } from 'app/features/dashboard/api/utils';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
 
 interface DashboardConversionWarningBannerProps {
   dashboard: DashboardScene;

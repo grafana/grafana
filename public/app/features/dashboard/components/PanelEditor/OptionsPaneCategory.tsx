@@ -1,9 +1,9 @@
-import { css, cx } from '@emotion/css';
-import { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
+import { css, cx, keyframes } from '@emotion/css';
+import { type ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import * as React from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Counter, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -20,15 +20,23 @@ export interface OptionsPaneCategoryProps {
   forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
+  isDashboardSidebar?: boolean;
   children: ReactNode;
   sandboxId?: string;
+  /**
+   * Actions rendered in the header next to the collapse toggle (e.g. an "add" button).
+   */
+  headerActions?: React.ReactNode;
+  headerActionPlacement?: 'left' | 'right';
+  compactIcons?: boolean;
   /**
    * When set will disable category and show tooltip with disabledText on hover
    */
   disabledText?: string | React.ReactElement;
 }
 
-const CATEGORY_PARAM_NAME = 'showCategory' as const;
+export const CATEGORY_PARAM_NAME = 'showCategory' as const;
+export const HIGHLIGHT_CATEGORY_PARAM_NAME = 'highlightCategory' as const;
 
 export const OptionsPaneCategory = React.memo(
   ({
@@ -41,28 +49,75 @@ export const OptionsPaneCategory = React.memo(
     className,
     itemsCount,
     isNested = false,
+    isDashboardSidebar = false,
     sandboxId,
+    headerActions,
+    headerActionPlacement = 'right',
+    compactIcons = false,
     disabledText,
   }: OptionsPaneCategoryProps) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: isOpenDefault,
     });
 
-    const isExpandedInitialValue = forceOpen || (savedState?.isExpanded ?? isOpenDefault);
+    const isSavedAsExpanded = savedState?.isExpanded ?? isOpenDefault;
+    // collapse if there are explicitly no items
+    const isExpandedInitialValue = forceOpen || (isSavedAsExpanded && (itemsCount === undefined || itemsCount > 0));
+
     const [isExpanded, setIsExpanded] = useState(isExpandedInitialValue);
+    const [isHighlighted, setIsHighlighted] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const [queryParams, updateQueryParams] = useQueryParams();
     const isOpenFromUrl = queryParams[CATEGORY_PARAM_NAME] === id;
+    const isHighlightedFromUrl = queryParams[HIGHLIGHT_CATEGORY_PARAM_NAME] === id;
 
     // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
+      if ((forceOpen || isOpenFromUrl) && !isExpanded && !disabledText) {
         setIsExpanded(true);
         setTimeout(() => {
-          ref.current?.scrollIntoView();
+          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 200);
       }
-    }, [isExpanded, isOpenFromUrl, forceOpen]);
+    }, [isExpanded, isOpenFromUrl, forceOpen, disabledText]);
+
+    // Close the category when it becomes disabled
+    useEffect(() => {
+      if (disabledText && isExpanded) {
+        setIsExpanded(false);
+      }
+    }, [disabledText, isExpanded]);
+
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
+    useEffect(() => {
+      if (!isHighlightedFromUrl) {
+        return;
+      }
+
+      setIsHighlighted(true);
+      setIsExpanded(true);
+      updateQueryParams({ [HIGHLIGHT_CATEGORY_PARAM_NAME]: undefined }, true);
+    }, [isHighlightedFromUrl, updateQueryParams]);
+
+    // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
+    useEffect(() => {
+      if (!isHighlighted) {
+        return;
+      }
+
+      const scrollTimeout = window.setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+
+      const highlightTimeout = window.setTimeout(() => {
+        setIsHighlighted(false);
+      }, 5000);
+
+      return () => {
+        window.clearTimeout(scrollTimeout);
+        window.clearTimeout(highlightTimeout);
+      };
+    }, [isHighlighted]);
 
     const onToggle = useCallback(() => {
       updateQueryParams({ [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id }, true);
@@ -85,9 +140,30 @@ export const OptionsPaneCategory = React.memo(
     }
 
     const styles = useStyles2(getStyles);
+    const collapseIcon = isExpanded ? 'angle-up' : 'angle-down';
+    const toggleButton = (
+      <Button
+        aria-label={
+          isExpanded
+            ? t('dashboard.options-pane-category.aria-label-collapse', 'Collapse {{title}} category', { title })
+            : t('dashboard.options-pane-category.aria-label-expand', 'Expand {{title}} category', { title })
+        }
+        data-testid={selectors.components.OptionsGroup.toggle(id)}
+        type="button"
+        fill="text"
+        size={compactIcons ? 'sm' : 'md'}
+        variant="secondary"
+        aria-expanded={isExpanded}
+        className={cx(styles.toggleButton, compactIcons && styles.toggleButtonCompact)}
+        icon={headerActionPlacement === 'left' ? (isExpanded ? 'angle-down' : 'angle-right') : collapseIcon}
+        onClick={onToggle}
+      />
+    );
+
     const boxStyles = cx(
       {
         [styles.box]: true,
+        [styles.boxNestedSidebar]: isNested && isDashboardSidebar,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
       className
@@ -96,10 +172,13 @@ export const OptionsPaneCategory = React.memo(
     const headerStyles = cx(styles.header, {
       [styles.headerExpanded]: isExpanded,
       [styles.headerNested]: isNested,
+      [styles.boxHighlighted]: isHighlighted,
     });
 
     const bodyStyles = cx(styles.body, {
       [styles.bodyNested]: isNested,
+      [styles.bodySidebar]: isDashboardSidebar,
+      [styles.bodyNestedSidebar]: isNested && isDashboardSidebar,
     });
 
     /**
@@ -113,14 +192,14 @@ export const OptionsPaneCategory = React.memo(
           data-testid={selectors.components.OptionsGroup.group(id)}
           ref={ref}
         >
-          <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
-            <div className={headerStyles}>
-              <h6 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
-                {renderTitle(isExpanded)}
-              </h6>
+          <div className={headerStyles}>
+            <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+              {renderTitle(isExpanded)}
+            </h3>
+            <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
               <Icon size="sm" name="ban" className={styles.disabledIcon} />
-            </div>
-          </Tooltip>
+            </Tooltip>
+          </div>
         </div>
       );
     }
@@ -136,25 +215,12 @@ export const OptionsPaneCategory = React.memo(
         {/* this just provides a better experience for mouse users */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={headerStyles} onClick={onToggle}>
-          <h6 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
+          {headerActionPlacement === 'left' && toggleButton}
+          <h3 id={`button-${id}`} className={cx(styles.title, isExpanded && styles.titleExpanded)}>
             {renderTitle(isExpanded)}
-          </h6>
-          <Button
-            aria-label={
-              isExpanded
-                ? t('dashboard.options-pane-category.aria-label-collapse', 'Collapse {{title}} category', { title })
-                : t('dashboard.options-pane-category.aria-label-expand', 'Expand {{title}} category', { title })
-            }
-            data-testid={selectors.components.OptionsGroup.toggle(id)}
-            type="button"
-            fill="text"
-            size="md"
-            variant="secondary"
-            aria-expanded={isExpanded}
-            className={styles.toggleButton}
-            icon={isExpanded ? 'angle-up' : 'angle-down'}
-            onClick={onToggle}
-          />
+          </h3>
+          {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
+          {headerActionPlacement === 'right' && toggleButton}
         </div>
         {isExpanded && (
           <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
@@ -174,11 +240,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   boxNestedExpanded: css({
     marginBottom: theme.spacing(2),
   }),
+  boxNestedSidebar: css({
+    borderTop: 'none',
+    padding: theme.spacing(0),
+  }),
   title: css({
     flexGrow: 1,
     overflow: 'hidden',
     lineHeight: 1.5,
-    fontSize: '1rem',
+    fontSize: theme.typography.body.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
     margin: 0,
     color: theme.colors.text.secondary,
@@ -197,17 +267,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
     },
   }),
-  toggleButton: css({
-    alignSelf: 'baseline',
-  }),
   headerExpanded: css({
     color: theme.colors.text.primary,
   }),
   headerNested: css({
-    padding: theme.spacing(0.5, 0, 0.5, 0),
+    padding: theme.spacing(0.5, 0),
+  }),
+  toggleButton: css({
+    alignSelf: 'baseline',
+    justifyContent: 'center',
+    '&:focus, &:focus-visible': {
+      background: 'none',
+    },
+  }),
+  toggleButtonCompact: css({
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    padding: 0,
+  }),
+  headerActions: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
   body: css({
-    padding: theme.spacing(1, 2, 1, 2),
+    padding: theme.spacing(1, 2),
+  }),
+  bodySidebar: css({
+    padding: theme.spacing(0, 1),
   }),
   titleDisabled: css({
     color: theme.colors.text.disabled,
@@ -220,17 +306,40 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bodyNested: css({
     position: 'relative',
     paddingRight: 0,
-
+  }),
+  bodyNestedSidebar: css({
     '&:before': {
       content: "''",
       position: 'absolute',
       top: 0,
-      left: '1px',
-      width: '1px',
+      left: theme.spacing(2),
+      width: 1,
       height: '100%',
       background: theme.colors.border.weak,
     },
   }),
+
+  boxHighlighted: css({
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${categoryHighlight(theme)} 5s ease-out forwards`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      backgroundColor: theme.colors.primary.transparent,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.border}`,
+    },
+  }),
 });
+
+const categoryHighlight = (theme: GrafanaTheme2) =>
+  keyframes({
+    '0%': {
+      backgroundColor: theme.colors.primary.transparent,
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.border}`,
+    },
+    '100%': {
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+    },
+  });
 
 const getOptionGroupStorageKey = (id: string) => `${PANEL_EDITOR_UI_STATE_STORAGE_KEY}.optionGroup[${id}]`;

@@ -1,20 +1,23 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, type TimeRange, urlUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { EmbeddedDashboardProps } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
+import { type EmbeddedDashboardProps } from '@grafana/runtime';
+import { SceneObjectStateChangedEvent, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
-import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { useScenesFlickeringFix } from '../utils/utils';
 
 export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, loadError } = stateManager.useState();
+
+  useScenesFlickeringFix();
 
   useEffect(() => {
     stateManager.loadDashboard({ uid: props.uid!, route: DashboardRoutes.Embedded });
@@ -42,7 +45,7 @@ interface RendererProps extends EmbeddedDashboardProps {
   model: DashboardScene;
 }
 
-function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
+function EmbeddedDashboardRenderer({ model, initialState, onStateChange, timeRange, refreshToken }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles);
@@ -60,6 +63,8 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
   }, [model]);
 
   useSubscribeToEmbeddedUrlState(onStateChange, model);
+  useControlledTimeRange(timeRange, model, isActive);
+  useControlledRefresh(refreshToken, model, isActive);
 
   if (!isActive) {
     return null;
@@ -102,6 +107,33 @@ function useSubscribeToEmbeddedUrlState(onStateChange: ((state: string) => void)
   }, [model, onStateChange]);
 }
 
+function useControlledTimeRange(timeRange: TimeRange | undefined, model: DashboardScene, isActive: boolean) {
+  useEffect(() => {
+    if (!isActive || !timeRange) {
+      return;
+    }
+
+    sceneGraph.getTimeRange(model).onTimeRangeChange(timeRange);
+  }, [timeRange, model, isActive]);
+}
+
+function useControlledRefresh(refreshToken: string | number | undefined, model: DashboardScene, isActive: boolean) {
+  const lastToken = useRef(refreshToken);
+
+  useEffect(() => {
+    if (refreshToken === undefined) {
+      return;
+    }
+
+    const changed = refreshToken !== lastToken.current;
+    lastToken.current = refreshToken;
+
+    if (isActive && changed) {
+      sceneGraph.getTimeRange(model).onRefresh();
+    }
+  }, [refreshToken, model, isActive]);
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     canvas: css({
@@ -124,6 +156,7 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'body',
       flexGrow: 1,
       display: 'flex',
+      flexDirection: 'column',
       gap: '8px',
       gridArea: 'panels',
       marginBottom: theme.spacing(2),

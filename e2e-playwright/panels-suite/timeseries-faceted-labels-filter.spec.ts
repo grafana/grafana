@@ -3,10 +3,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 const DASHBOARD_UID = 'faceted-labels-demo';
 const FIRST_PANEL_TITLE = 'Multiple names + labels (both sections)';
 
-test.use({
-  featureToggles: { vizLegendFacetedFilter: true },
-});
-
 test.describe('TimeSeries faceted labels filter', { tag: ['@panels', '@timeseries'] }, () => {
   test('filter toggle appears and opens popover with label sections', async ({
     gotoDashboardPage,

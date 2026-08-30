@@ -16,8 +16,10 @@ export type TemplateString = string;
 
 export const defaultTemplateString = (): TemplateString => ("");
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
+export type MetricName = string;
+
+export const defaultMetricName = (): MetricName => ("");
+
 export type ExpressionMap = Record<string, Expression>;
 
 export const defaultExpressionMap = (): ExpressionMap => ({});
@@ -63,16 +65,16 @@ export interface Spec {
 	paused?: boolean;
 	trigger: IntervalTrigger;
 	labels?: Record<string, TemplateString>;
-	metric: string;
+	metric: MetricName;
 	expressions: ExpressionMap;
-	targetDatasourceUID: string;
+	targetDatasourceUID: DatasourceUID;
 }
 
 export const defaultSpec = (): Spec => ({
 	title: "",
 	trigger: defaultIntervalTrigger(),
-	metric: "",
+	metric: defaultMetricName(),
 	expressions: defaultExpressionMap(),
-	targetDatasourceUID: "",
+	targetDatasourceUID: defaultDatasourceUID(),
 });
 

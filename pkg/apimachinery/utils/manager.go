@@ -33,9 +33,31 @@ const (
 	ManagerKindPlugin    ManagerKind = "plugin"
 	ManagerKindGrafana   ManagerKind = "grafana"
 
-	// Deprecated: this is used as a shim/migration path for legacy file provisioning
-	// Previously this was a "file:" prefix
+	// ManagerKindClassicFP marks resources that originate from the
+	// legacy on-disk file provisioning system (dashboards, folders, correlations,
+	// alerting with the "file" provenance). The manager identity, when present, is
+	// the provisioner/reader name from the provisioning config. Previously this was
+	// a "file:" prefix.
+	//
+	// Deprecated: shim/migration path only. New resources should use a real manager
+	// kind (repo, terraform, kubectl, ...).
 	ManagerKindClassicFP ManagerKind = "classic-file-provisioning"
+
+	// ManagerKindClassicAPI marks resources created through the legacy provisioning
+	// HTTP API (alerting "api" provenance) where the concrete tool that made the
+	// call was not recorded, so there is no meaningful manager identity.
+	//
+	// Deprecated: shim/migration path only. Prefer ManagerKindTerraform,
+	// ManagerKindKubectl, etc. for new resources.
+	ManagerKindClassicAPI ManagerKind = "classic-api-provisioning"
+
+	// ManagerKindClassicConvertedPrometheus marks resources imported by the Grafana
+	// Alerting "Convert Prometheus" API, which converts Prometheus/Mimir/Cortex rule
+	// groups into Grafana-managed rules (alerting "converted_prometheus" provenance).
+	// The import has no owning manager instance, so there is no manager identity.
+	//
+	// Deprecated: shim/migration path only.
+	ManagerKindClassicConvertedPrometheus ManagerKind = "classic-converted-prometheus"
 )
 
 // ParseManagerKindString parses a string into a ManagerKind.
@@ -55,8 +77,26 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindGrafana
 	case string(ManagerKindClassicFP): // nolint:staticcheck
 		return ManagerKindClassicFP // nolint:staticcheck
+	case string(ManagerKindClassicAPI): // nolint:staticcheck
+		return ManagerKindClassicAPI // nolint:staticcheck
+	case string(ManagerKindClassicConvertedPrometheus): // nolint:staticcheck
+		return ManagerKindClassicConvertedPrometheus // nolint:staticcheck
 	default:
 		return ManagerKindUnknown
+	}
+}
+
+// IsClassic returns true for shim kinds that represent legacy provisioning
+// mechanisms (file/API provisioning, converted Prometheus). These origins have no
+// stable per-instance manager, so unlike other kinds they are considered managed
+// even without a manager Identity. Because their identity is absent or unstable, it
+// must not be treated as immutable the way user-defined identities are.
+func (k ManagerKind) IsClassic() bool {
+	switch k { //nolint:staticcheck
+	case ManagerKindClassicFP, ManagerKindClassicAPI, ManagerKindClassicConvertedPrometheus:
+		return true
+	default:
+		return false
 	}
 }
 

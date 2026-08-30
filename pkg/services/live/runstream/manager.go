@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -167,7 +168,7 @@ func (s *Manager) stopStream(sr streamRequest, cancelFn func()) {
 	delete(s.streams, sr.Channel)
 	if sr.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID)
+		dsKey := datasourceKey(sr.PluginContext.OrgID, dsUID) // nolint:staticcheck
 		delete(s.datasourceStreams[dsKey], sr.Channel)
 	}
 	cancelFn()
@@ -198,7 +199,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 				}
 				if pCtx.DataSourceInstanceSettings.Updated != sr.PluginContext.DataSourceInstanceSettings.Updated {
 					logger.Debug("Datasource changed, re-establish stream", "channel", sr.Channel, "path", sr.Path)
-					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID)
+					err := s.HandleDatasourceUpdate(pCtx.OrgID, dsUID) // nolint:staticcheck
 					if err != nil {
 						logger.Error("Error re-establishing stream", "channel", sr.Channel, "path", sr.Path, "error", err)
 						continue
@@ -351,7 +352,7 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 	}
 	if sr.streamRequest.PluginContext.DataSourceInstanceSettings != nil {
 		dsUID := sr.streamRequest.PluginContext.DataSourceInstanceSettings.UID
-		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID)
+		dsKey := datasourceKey(sr.streamRequest.PluginContext.OrgID, dsUID) // nolint:staticcheck
 		if _, ok := s.datasourceStreams[dsKey]; !ok {
 			s.datasourceStreams[dsKey] = map[string]struct{}{}
 		}
@@ -365,6 +366,12 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 
 // Run Manager till context canceled.
 func (s *Manager) Run(ctx context.Context) error {
+	// The provided context is the long-lived background-service context, which
+	// carries the process-lifetime server startup span. Streams started from it
+	// would all join that single trace, so every streaming query in the process
+	// would share one trace ID. Detach the span context so that each stream run
+	// starts a trace of its own.
+	ctx = trace.ContextWithSpanContext(ctx, trace.SpanContext{})
 	s.baseCtx = ctx
 	for {
 		select {

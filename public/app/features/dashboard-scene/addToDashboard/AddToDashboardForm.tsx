@@ -1,17 +1,18 @@
 import { partial } from 'lodash';
-import { ReactElement, useEffect, useState } from 'react';
-import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
+import { type ReactElement, useEffect, useState } from 'react';
+import { Controller, type DeepMap, type FieldError, type FieldErrors, useForm } from 'react-hook-form';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { addToDashboard, SubmissionError } from './addToDashboard';
+import { addToDashboard, type SubmissionError } from './addToDashboard';
 
 enum SaveTarget {
   NewDashboard = 'new-dashboard',
@@ -191,7 +192,13 @@ export function AddToDashboardForm<TOptions extends AbsolutePathOptions | undefi
         >
           <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-in-new-tab">Open in new tab</Trans>
         </Button>
-        <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
+        <Button
+          type="submit"
+          variant="primary"
+          onClick={handleSubmit(partial(onSubmit, false))}
+          icon="apps"
+          data-testid={selectors.components.AddToDashboard.confirmButton}
+        >
           <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-dashboard">Open dashboard</Trans>
         </Button>
       </Modal.ButtonRow>

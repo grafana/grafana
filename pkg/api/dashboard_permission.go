@@ -21,6 +21,10 @@ import (
 //
 // Gets all existing permissions for the given dashboard.
 //
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access
+//
+// Deprecated: true
+//
 // Responses:
 // 200: getDashboardPermissionsListResponse
 // 401: unauthorisedError
@@ -74,6 +78,8 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 // Updates permissions for a dashboard.
 //
 // This operation will remove existing permissions if they’re not included in the request.
+//
+// Deprecated: true
 //
 // Responses:
 // 200: okResponse
@@ -325,9 +331,9 @@ type UpdateDashboardPermissionsByUIDParams struct {
 	// in:body
 	// required:true
 	Body dtos.UpdateDashboardACLCommand
+	// The dashboard UID
 	// in:path
 	// required:true
-	// description: The dashboard UID
 	UID string `json:"uid"`
 }
 

@@ -1,24 +1,36 @@
 import { css } from '@emotion/css';
 import clsx from 'clsx';
-import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { TimeCompareColorMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, VizTooltipItem } from './types';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
+  /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
   value: string | number | null | ReactNode;
+  /** CSS `justify-content` value for the row layout. Defaults to `'start'`. */
   justify?: string;
-  isActive?: boolean; // for series list
+  /** Whether this row corresponds to the closest/hovered series — renders the label in bold. */
+  isActive?: boolean;
+  /** Right margin applied to the value cell, used to leave room for overlay elements such as the close button. */
   marginRight?: string;
-  isPinned: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
+   */
+  isPinned?: boolean;
+  /** When true the value cell becomes vertically scrollable up to a fixed max-height. */
   showValueScroll?: boolean;
+  /** When true the color indicator is rendered hollow, signalling the field is not shown in the visualization. */
   isHiddenFromViz?: boolean;
 }
 
@@ -32,21 +44,40 @@ const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
 const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
+/** @alpha */
 export const VizTooltipRow = ({
   label,
   value,
   color,
   colorIndicator,
-  colorPlacement = ColorPlacement.first,
+  colorPlacement = VizTooltipColorPlacement.first,
   justify,
   isActive = false,
   marginRight,
-  isPinned,
+  isPinned = false,
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
+  delta,
 }: VizTooltipRowProps) => {
   const styles = useStyles2(getStyles, justify, marginRight);
+
+  const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
+
+  // Same as value takes the series color, which is only known here as a prop, so it cannot come
+  // from a theme-derived class like the other modes.
+  const deltaTakesValueColor = delta?.colorMode === TimeCompareColorMode.SameAsValue;
+
+  const deltaNode =
+    delta == null ? null : (
+      <span
+        className={deltaTakesValueColor ? undefined : getDeltaClass(delta, styles)}
+        style={deltaTakesValueColor ? { color } : undefined}
+      >{` ${deltaDisplay}`}</span>
+    );
+
+  // the delta is a separate node for coloring, but copying the value should keep both values
+  const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
 
   const innerValueScrollStyle: CSSProperties = showValueScroll
     ? {
@@ -133,7 +164,7 @@ export const VizTooltipRow = ({
 
   return (
     <div className={styles.contentWrapper}>
-      {color && colorPlacement === ColorPlacement.first && (
+      {color && colorPlacement === VizTooltipColorPlacement.first && (
         <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
             color={color}
@@ -174,7 +205,7 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && colorPlacement === ColorPlacement.leading && (
+        {color && colorPlacement === VizTooltipColorPlacement.leading && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -186,6 +217,7 @@ export const VizTooltipRow = ({
         {!isPinned ? (
           <div className={styles.value} style={innerValueScrollStyle}>
             {value}
+            {deltaNode}
           </div>
         ) : (
           <>
@@ -198,15 +230,16 @@ export const VizTooltipRow = ({
             <div
               className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
-              onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
+              onClick={() => copyToClipboard(copyText ? copyText.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
             >
               {value}
+              {deltaNode}
             </div>
           </>
         )}
 
-        {color && colorPlacement === ColorPlacement.trailing && (
+        {color && colorPlacement === VizTooltipColorPlacement.trailing && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -217,6 +250,22 @@ export const VizTooltipRow = ({
       </div>
     </div>
   );
+};
+
+/**
+ * Standard treats an increase as favorable, inverted flips that. A delta of zero is left in the
+ * default text color since it reads as neither an increase nor a decrease. Same as value never
+ * reaches here — its color comes from the row's series color instead of the theme.
+ */
+const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyles>) => {
+  if (delta.numeric === 0 || Number.isNaN(delta.numeric)) {
+    return undefined;
+  }
+
+  const isIncrease = delta.numeric > 0;
+  const isFavorable = delta.colorMode === TimeCompareColorMode.Inverted ? !isIncrease : isIncrease;
+
+  return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
 };
 
 const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
@@ -254,6 +303,12 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
+  }),
+  deltaFavorable: css({
+    color: theme.colors.success.text,
+  }),
+  deltaUnfavorable: css({
+    color: theme.colors.error.text,
   }),
   copy: css({
     cursor: 'pointer',

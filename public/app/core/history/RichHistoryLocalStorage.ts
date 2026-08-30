@@ -1,11 +1,15 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { DataQuery, SelectableValue, store } from '@grafana/data';
-import { createMonitoringLogger } from '@grafana/runtime';
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type DataQuery, type SelectableValue, store } from '@grafana/data';
+import { getLogger } from '@grafana/runtime/unstable';
+import { type RichHistorySearchFilters, type RichHistorySettings, SortOrder } from 'app/core/utils/richHistoryTypes';
+import { type RichHistoryQuery } from 'app/types/explore';
 
-import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
+import {
+  type default as RichHistoryStorage,
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+} from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 import {
   createRetentionPeriodBoundary,
@@ -25,8 +29,6 @@ export type RichHistoryLocalStorageDTO = {
   queries: DataQuery[];
 };
 
-const logger = createMonitoringLogger('features.query-history.local-storage');
-
 /**
  * Local storage implementation for Rich History. It keeps all entries in browser's local storage.
  */
@@ -41,7 +43,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
    * Return history entries based on provided filters, perform migration and clean up entries not matching retention policy.
    */
   async getRichHistory(filters: RichHistorySearchFilters) {
-    const allQueries = getRichHistoryDTOs().map(fromDTO);
+    const allQueries = await Promise.all(getRichHistoryDTOs().map(fromDTO));
     const queries = filters.starred ? allQueries.filter((q) => q.starred === true) : allQueries;
 
     const timeFilter: [number, number] | undefined =
@@ -65,7 +67,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       ...newRichHistoryQuery,
     };
 
-    const newRichHistoryQueryDTO = toDTO(richHistoryQuery);
+    const newRichHistoryQueryDTO = await toDTO(richHistoryQuery);
     const currentRichHistoryDTOs = cleanUp(getRichHistoryDTOs());
 
     /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
@@ -199,7 +201,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
       allQueriesCount: allQueriesCount?.toString(),
     };
 
-    logger.logWarning(message, {
+    getLogger('features.query-history.local-storage').logWarning(message, {
       ...localStats,
       ...additionalInfo,
     });
@@ -209,7 +211,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
 function updateRichHistory(
   id: string,
   updateCallback: (richHistoryDTO: RichHistoryLocalStorageDTO) => void
-): RichHistoryQuery {
+): Promise<RichHistoryQuery> {
   const ts = parseInt(id, 10);
   const richHistoryDTOs: RichHistoryLocalStorageDTO[] = store.getObject(RICH_HISTORY_KEY, []);
   const richHistoryDTO = find(richHistoryDTOs, { ts });

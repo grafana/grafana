@@ -1,5 +1,5 @@
-import { Field, FieldConfig, FieldType } from '../types/dataFrame';
-import { Threshold, ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
+import { type Field, type FieldConfig, FieldType } from '../types/dataFrame';
+import { type Threshold, type ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
 
 import { validateFieldConfig } from './fieldOverrides';
 import { sortThresholds, getActiveThreshold, getActiveThresholdForValue } from './thresholds';

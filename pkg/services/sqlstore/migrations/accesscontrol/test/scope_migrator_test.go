@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,7 +60,7 @@ func TestScopeMigration(t *testing.T) {
 				{
 					RoleID:     1,
 					Action:     accesscontrol.ActionAlertingInstanceRead,
-					Scope:      dashboards.ScopeFoldersAll,
+					Scope:      folder.ScopeFoldersAll,
 					Kind:       "folders",
 					Attribute:  "uid",
 					Identifier: "*",

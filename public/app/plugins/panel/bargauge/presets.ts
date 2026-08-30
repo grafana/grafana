@@ -1,15 +1,17 @@
 import {
   FieldColorModeId,
+  FieldType,
   ThresholdsMode,
-  VisualizationPresetsSupplier,
-  VisualizationSuggestion,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestion,
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
 import { LegendDisplayMode } from '@grafana/ui';
 
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
+import { BARGAUGE_CARD_OPTIONS } from './suggestions';
 
 const defaultPresetThresholds = {
   mode: ThresholdsMode.Percentage,
@@ -27,7 +29,7 @@ const defaultPresetThresholds = {
 const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.basic', 'Basic'),
-    // description: t('bargauge.presets.basic_desc', 'Basic, color from thresholds'),
+    description: t('bargauge.presets.basic_desc', 'Horizontal bars, value color from thresholds'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Horizontal,
@@ -60,7 +62,7 @@ const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -70,7 +72,7 @@ const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.basic-vertical', 'Basic vertical'),
-    // description: t('bargauge.presets.basic-vertical_desc', 'Basic, color from thresholds, vertical'),
+    description: t('bargauge.presets.basic-vertical_desc', 'Vertical bars, threshold color, text value'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Vertical,
@@ -103,7 +105,7 @@ const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -113,7 +115,7 @@ const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
 const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient', 'Gradient'),
-    // description: t('bargauge.presets.gradient_desc', 'Gradient, color from thresholds, text color'),
+    description: t('bargauge.presets.gradient_desc', 'Horizontal bars, gradient fill from thresholds'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Horizontal,
@@ -146,7 +148,7 @@ const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -156,7 +158,7 @@ const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.retro-lcd', 'Retro LCD'),
-    // description: t('bargauge.presets.retro-lcd_desc', 'Color scale, text color'),
+    description: t('bargauge.presets.retro-lcd_desc', 'Horizontal, LCD style, green-yellow-red scale'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Horizontal,
@@ -188,7 +190,7 @@ const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -198,7 +200,7 @@ const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient-BlYlRd', 'Gradient blue-red'),
-    // description: t('bargauge.presets.gradient-BlYlRd_desc', 'Color scale, value color'),
+    description: t('bargauge.presets.gradient-BlYlRd_desc', 'Horizontal, gradient fill, blue-yellow-red scale'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Horizontal,
@@ -230,7 +232,7 @@ const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
@@ -240,7 +242,7 @@ const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
 const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient-vertical', 'Gradient vertical'),
-    // description: t('bargauge.presets.gradient-vertical_desc', 'color scale, unchecked show unfilled'),
+    description: t('bargauge.presets.gradient-vertical_desc', 'Vertical, gradient fill, no unfilled track'),
     options: {
       ...defaultOptions,
       orientation: VizOrientation.Vertical,
@@ -273,11 +275,15 @@ const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
       },
       overrides: [],
     },
-    cardOptions: {},
+    cardOptions: BARGAUGE_CARD_OPTIONS,
   };
 };
 
-export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = () => {
+export const barGaugePresetsSupplier: VisualizationPresetsSupplier<Options> = ({ dataSummary }) => {
+  if (!dataSummary?.hasData || !dataSummary.hasFieldType(FieldType.number)) {
+    return [];
+  }
+
   return [
     basicHorizontalPreset(),
     basicVerticalPreset(),

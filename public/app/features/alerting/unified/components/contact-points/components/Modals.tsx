@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Modal, ModalProps } from '@grafana/ui';
+import { Button, Modal } from '@grafana/ui';
 
-import { stringifyErrorLike } from '../../../utils/misc';
+import { ErrorModal } from '../../ErrorModal';
 
 /**
  * This hook controls the delete modal for contact points, showing loading and error states when appropriate
@@ -85,28 +85,4 @@ export const useDeleteContactPointModal = (
   }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
 
   return [modalElement, handleShow, handleDismiss] as const;
-};
-
-interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
-  error: unknown;
-}
-const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => {
-  return (
-    <Modal
-      isOpen={isOpen}
-      onDismiss={onDismiss}
-      closeOnBackdropClick={true}
-      closeOnEscape={true}
-      title={t('alerting.error-modal.title-something-went-wrong', 'Something went wrong')}
-    >
-      <p>
-        <Trans i18nKey="alerting.error-modal.failed-to-update-your-configuration">
-          Failed to update your configuration:
-        </Trans>
-      </p>
-      <pre>
-        <code>{stringifyErrorLike(error)}</code>
-      </pre>
-    </Modal>
-  );
 };

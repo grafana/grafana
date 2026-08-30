@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
+
+	// Registers the OSS dependency-injection entrypoints (server.InitializeForCLI etc.)
+	// via bootstrap/wire's init(); without this side-effect import they are nil.
+	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
@@ -228,6 +232,16 @@ var adminCommands = []*cli.Command{
 		Name:   "flush-rbac-seed-assignment",
 		Usage:  "Clears RBAC seeding to force re-seeding on next startup. Use after running an Enterprise build, then an OSS build, then an Enterprise build again.",
 		Action: runDbCommand(flushSeedAssignment),
+	},
+	{
+		Name:   "db-migrate",
+		Usage:  "Run schema migrations against the database configured in --config.",
+		Action: runDbCommand(logLastMigration),
+	},
+	{
+		Name:   "resource-db-migrate",
+		Usage:  "Run the unified storage resource schema migrations against the database configured in --config. ",
+		Action: resourceDbMigrateCommand,
 	},
 }
 

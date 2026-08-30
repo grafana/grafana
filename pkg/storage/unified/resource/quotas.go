@@ -19,8 +19,14 @@ import (
 const DEFAULT_RESOURCE_LIMIT = 1000
 
 type QuotasConfig struct {
-	EnforceQuotas  bool
-	SupportMessage string
+	EnforcedResources map[string]bool // group/resource keys to enforce, e.g. {"dashboard.grafana.app/dashboards": true}
+	SupportMessage    string
+}
+
+// ShouldEnforce returns true if quota enforcement should block writes for
+// the given group/resource pair.
+func (c QuotasConfig) ShouldEnforce(group, resource string) bool {
+	return c.EnforcedResources[group+"/"+resource]
 }
 
 type QuotaExceededError struct {

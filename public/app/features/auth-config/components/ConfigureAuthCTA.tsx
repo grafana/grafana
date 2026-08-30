@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
-export interface Props {}
+interface Props {}
 
 const ConfigureAuthCTA: React.FunctionComponent<Props> = () => {
   const styles = useStyles2(getStyles);

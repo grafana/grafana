@@ -1,7 +1,7 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
@@ -12,7 +12,7 @@ export interface RadioButtonDotProps<T>
   checked?: boolean;
   value?: T;
   disabled?: boolean;
-  label: React.ReactNode;
+  label?: React.ReactNode;
   description?: string;
   onChange?: (id: string) => void;
 }
@@ -31,7 +31,7 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
   const styles = useStyles2(getStyles);
 
   return (
-    <label title={description} className={styles.label}>
+    <label title={description} className={cx(styles.label, { [styles.labelWithoutContent]: !label && !description })}>
       <input
         {...props}
         id={id}
@@ -43,10 +43,12 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
         className={styles.input}
         onChange={() => onChange && onChange(id)}
       />
-      <div>
-        {label}
-        {description && <div className={styles.description}>{description}</div>}
-      </div>
+      {(label || description) && (
+        <div>
+          {label}
+          {description && <div className={styles.description}>{description}</div>}
+        </div>
+      )}
     </label>
   );
 };
@@ -65,8 +67,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: '3px 0' /* Space for box-shadow when focused */,
 
     ':checked': {
-      backgroundColor: theme.v1.palette.white,
-      border: `5px solid ${theme.colors.primary.main}`,
+      backgroundColor: theme.colors.accent.contrastText,
+      border: `5px solid ${theme.colors.accent.main}`,
     },
 
     ':disabled': {
@@ -92,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     ':focus': {
       outline: 'none !important',
-      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main}`,
+      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.accent.main}`,
     },
   }),
   label: css({
@@ -102,6 +104,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gridTemplateColumns: `${theme.spacing(2)} auto`,
     gap: theme.spacing(1),
     cursor: 'pointer',
+  }),
+  labelWithoutContent: css({
+    gridTemplateColumns: theme.spacing(2),
+    gap: 0,
   }),
   description: css({
     fontSize: theme.typography.size.sm,

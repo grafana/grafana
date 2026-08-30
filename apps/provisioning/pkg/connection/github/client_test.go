@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	conngh "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 )
 
@@ -125,7 +126,7 @@ func TestGithubClient_GetApp(t *testing.T) {
 			),
 			token:   "invalid-token",
 			wantApp: conngh.App{},
-			wantErr: conngh.ErrAuthentication,
+			wantErr: connection.ErrAuthentication,
 		},
 		{
 			name: "not found error",
@@ -632,7 +633,7 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 
 						// Create 100 repos per page to simulate going over 1000 limit
 						repos := make([]*github.Repository, 100)
-						for i := 0; i < 100; i++ {
+						for i := range 100 {
 							repoNum := (pageNum-1)*100 + i + 1
 							repos[i] = &github.Repository{
 								Name: github.Ptr(fmt.Sprintf("repo%d", repoNum)),
@@ -713,6 +714,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			),
 			installationID: "12345",
 			repo:           "test-repo",
+			// #nosec G101 -- test fixture, not a real credential
 			wantToken: conngh.InstallationToken{
 				Token:     "ghs_test_token_123456789",
 				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
@@ -792,7 +794,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			repo:           "private-repo",
 			wantToken:      conngh.InstallationToken{},
 			wantErr:        true,
-			errContains:    conngh.ErrAuthentication.Error(),
+			errContains:    connection.ErrAuthentication.Error(),
 		},
 		{
 			name: "installation not found",

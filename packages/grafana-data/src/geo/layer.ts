@@ -1,15 +1,15 @@
-import OpenLayersMap from 'ol/Map';
-import BaseLayer from 'ol/layer/Base';
-import { ReactNode } from 'react';
+import type OpenLayersMap from 'ol/Map';
+import type BaseLayer from 'ol/layer/Base';
+import { type ReactNode } from 'react';
 
-import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { type MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
-import { EventBus } from '../events/types';
-import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
-import { GrafanaTheme2 } from '../themes/types';
-import { PanelData } from '../types/panel';
-import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
-import { RegistryItemWithOptions } from '../utils/Registry';
+import { type EventBus } from '../events/types';
+import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { type GrafanaTheme2 } from '../themes/types';
+import { type PanelData } from '../types/panel';
+import { type PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { type RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * @deprecated use the type from schema
@@ -21,9 +21,7 @@ export { FrameGeometrySourceMode };
  */
 export type { FrameGeometrySource, MapLayerOptions } from '@grafana/schema';
 
-/**
- * @alpha
- */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface MapLayerHandler<TConfig = any> {
   init: () => BaseLayer;
   /**
@@ -48,8 +46,6 @@ export interface MapLayerHandler<TConfig = any> {
 
 /**
  * Map layer configuration
- *
- * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
   /**
@@ -68,6 +64,12 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   hideOpacity?: boolean;
 
   /**
+   * The license of the layer source requires attribution, so it can not be hidden.
+   * Pass a function when the requirement depends on the layer configuration.
+   */
+  requiresAttribution?: boolean | ((options: MapLayerOptions<TConfig>) => boolean);
+
+  /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
@@ -76,5 +78,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
     options: MapLayerOptions<TConfig>,
     eventBus: EventBus,
     theme: GrafanaTheme2
-  ) => Promise<MapLayerHandler>;
+  ) => Promise<MapLayerHandler<TConfig>>;
 }

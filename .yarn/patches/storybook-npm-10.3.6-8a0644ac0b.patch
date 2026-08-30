@@ -1,0 +1,13 @@
+diff --git a/dist/_node-chunks/builder-manager-UBFFXMB4.js b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+index 9284eef7282459f033478d34c63f791a001a4e81..7da25855f92b3047056744529dba55b38c677a78 100644
+--- a/dist/_node-chunks/builder-manager-UBFFXMB4.js
++++ b/dist/_node-chunks/builder-manager-UBFFXMB4.js
+@@ -1459,7 +1459,7 @@ var CORE_DIR_ORIGIN = join(resolvePackageDir("storybook"), "dist/manager"), isRo
+     // turn this on to assist with debugging the bundling of managerEntries
+     // treeShaking: true,
+     sourcemap: !1,
+-    conditions: ["browser", "module", "default"],
++    conditions: ["@grafana-app/source", "browser", "module", "default"],
+     jsxFactory: "React.createElement",
+     jsxFragment: "React.Fragment",
+     jsx: "transform",

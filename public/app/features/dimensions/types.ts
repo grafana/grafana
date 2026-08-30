@@ -1,5 +1,5 @@
-import { Field, FieldType } from '@grafana/data';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { type FieldNamePickerBaseNameMode, type Field, type FieldType } from '@grafana/data';
+import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
 export interface DimensionSupplier<T = any> {
   /**
@@ -87,3 +87,9 @@ export enum ResourcePickerSize {
 }
 
 export interface DirectionDimensionOptions {}
+
+export interface ColorDimensionOptions {
+  isClearable?: boolean;
+  baseNameMode?: FieldNamePickerBaseNameMode;
+  placeholder?: string;
+}

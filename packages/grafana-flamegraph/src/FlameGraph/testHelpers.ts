@@ -1,6 +1,6 @@
 import { arrayToDataFrame, FieldType } from '@grafana/data';
 
-import { FlameGraphDataContainer, LevelItem, Options } from './dataTransform';
+import { FlameGraphDataContainer, type LevelItem, type Options } from './dataTransform';
 
 // Convert text to a FlameGraphDataContainer for testing. The format representing the flamegraph for example:
 // [0///////]

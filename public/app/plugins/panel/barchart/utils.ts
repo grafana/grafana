@@ -1,11 +1,11 @@
-import uPlot, { Padding } from 'uplot';
+import uPlot, { type Padding } from 'uplot';
 
 import {
-  DataFrame,
-  Field,
-  FieldConfigSource,
+  type DataFrame,
+  type Field,
+  type FieldConfigSource,
   FieldType,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   cacheFieldDisplayNames,
   formattedValueToString,
   getDisplayProcessor,
@@ -22,7 +22,7 @@ import {
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
-  TimeZone,
+  type TimeZone,
   TooltipDisplayMode,
   VizOrientation,
 } from '@grafana/schema';
@@ -34,12 +34,12 @@ import {
   UPlotConfigBuilder,
   measureText,
 } from '@grafana/ui';
-import { AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
+import { type AxisProps, UPLOT_AXIS_FONT_SIZE, getStackingGroups } from '@grafana/ui/internal';
 
 import { setClassicPaletteIdxs } from '../timeseries/utils';
 
-import { BarsOptions, getConfig } from './bars';
-import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
+import { type BarsOptions, getConfig } from './bars';
+import { type FieldConfig, type Options, defaultFieldConfig } from './panelcfg.gen';
 // import { isLegendOrdered } from './utils';
 
 interface BarSeries {

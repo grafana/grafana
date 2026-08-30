@@ -6,15 +6,16 @@ import (
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,18 +36,23 @@ func ProvideProvisioningOSSRepositoryExtras(
 	reg prometheus.Registerer,
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
-	folderMetadataEnabled := resources.IsFolderMetadataEnabled(cfg)
+	operationMetrics := repository.RegisterOperationMetrics(reg)
+	// http:// URLs with a token are only allowed in development or when explicitly opted in,
+	// since the token would otherwise travel in cleartext.
+	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
+			operationMetrics,
 		),
-		git.Extra(decrypter),
+		git.Extra(decrypter, allowInsecure, operationMetrics),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
-			folderMetadataEnabled,
+			allowInsecure,
+			operationMetrics,
 		),
 	}
 }
@@ -55,11 +61,13 @@ func ProvideProvisioningOSSConnectionExtras(
 	_ *setting.Cfg,
 	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
+	ghRepoFactory *github.Factory,
 	reg prometheus.Registerer,
 ) []connection.Extra {
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(reg))
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
+		githuboauth.Extra(decrypter, ghRepoFactory),
 	}
 }
 
@@ -67,7 +75,7 @@ func ProvideExtraWorkers(pullRequestWorker *pullrequest.PullRequestWorker) []job
 	return []jobs.Worker{pullRequestWorker}
 }
 
-func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repository.Factory, error) {
+func ProvideFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []repository.Extra) (repository.Factory, error) {
 	types := cfg.ProvisioningRepositoryTypes
 	if len(types) == 0 {
 		// Enforcing default repository values if settings are not set
@@ -78,7 +86,7 @@ func ProvideFactoryFromConfig(cfg *setting.Cfg, extras []repository.Extra) (repo
 		enabledTypes[apisprovisioning.RepositoryType(e)] = struct{}{}
 	}
 
-	return repository.ProvideFactory(enabledTypes, extras)
+	return repository.ProvideFactory(enabledTypes, extras, tracer)
 }
 
 func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
@@ -88,16 +96,12 @@ func ProvideQuotaGetter(cfg *setting.Cfg) quotas.QuotaGetter {
 	})
 }
 
-func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Extra) (connection.Factory, error) {
-	types := cfg.ProvisioningRepositoryTypes
+func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer, extras []connection.Extra) (connection.Factory, error) {
+	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		// Enforcing default connection values if settings are not set
-		types = []string{"github"}
-	}
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
-	for _, e := range types {
-		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
+		types = []string{string(apisprovisioning.GithubConnectionType)}
 	}
 
-	return connection.ProvideFactory(enabledTypes, extras)
+	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)
 }

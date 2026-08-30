@@ -1,26 +1,30 @@
 import { css } from '@emotion/css';
 
-import { RouteWithID } from '@grafana/alerting';
-import { GrafanaTheme2 } from '@grafana/data';
+import { type RouteWithID } from '@grafana/alerting';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { labelMatcherToObjectMatcher } from '../../../utils/routeAdapter';
 import { Matchers } from '../../notification-policies/Matchers';
 import { DefaultPolicyIndicator } from '../../notification-policies/Policy';
+import { isNamedRootMatcher } from '../../notification-policies/useNotificationPolicyRoute';
 
 interface JourneyPolicyCardProps {
   route: RouteWithID;
   isRoot?: boolean;
   isFinalRoute?: boolean;
+  policyName?: string;
 }
 
-export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false }: JourneyPolicyCardProps) {
+export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false, policyName }: JourneyPolicyCardProps) {
   const styles = useStyles2(getStyles);
 
-  // Convert route matchers to ObjectMatcher format
-  const matchers: ObjectMatcher[] = route.matchers?.map(labelMatcherToObjectMatcher) ?? [];
+  // Convert route matchers to ObjectMatcher format, hiding the internal routing label from the root route (__grafana_managed_route__).
+  const matchers: ObjectMatcher[] = (route.matchers?.map(labelMatcherToObjectMatcher) ?? []).filter(
+    (m) => !isRoot || !isNamedRootMatcher(m)
+  );
 
   const hasMatchers = matchers.length > 0;
   const continueMatching = route.continue ?? false;
@@ -29,8 +33,16 @@ export function JourneyPolicyCard({ route, isRoot = false, isFinalRoute = false 
     <article className={styles.policyWrapper(isFinalRoute)} aria-current={isFinalRoute ? 'true' : 'false'}>
       {continueMatching && <ContinueMatchingIndicator />}
       <Stack direction="column" gap={0.5}>
-        {/* root route indicator */}
-        {isRoot && <DefaultPolicyIndicator />}
+        {/* root route indicator — render the tree name for named policy trees, fall back to
+            DefaultPolicyIndicator when policyName is undefined (the default tree). */}
+        {isRoot &&
+          (policyName ? (
+            <Text element="h2" variant="body" weight="medium">
+              {policyName}
+            </Text>
+          ) : (
+            <DefaultPolicyIndicator />
+          ))}
 
         {/* Matchers */}
         {hasMatchers ? (

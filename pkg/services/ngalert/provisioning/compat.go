@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	alertingModels "github.com/grafana/alerting/models"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -17,10 +18,18 @@ func EmbeddedContactPointToGrafanaIntegrationConfig(e *definitions.EmbeddedConta
 	if err != nil {
 		return alertingModels.IntegrationConfig{}, err
 	}
+	iType, err := alertingNotify.IntegrationTypeFromString(e.Type)
+	if err != nil {
+		return alertingModels.IntegrationConfig{}, err
+	}
+	if _, ok := alertingNotify.GetSchemaVersionForIntegration(iType, schema.V1); !ok {
+		return alertingModels.IntegrationConfig{}, fmt.Errorf("integration version %s is not available for integration type %s", schema.V1, iType)
+	}
 	return alertingModels.IntegrationConfig{
 		UID:                   e.UID,
 		Name:                  e.Name,
-		Type:                  e.Type,
+		Type:                  iType,
+		Version:               schema.V1,
 		DisableResolveMessage: e.DisableResolveMessage,
 		Settings:              data,
 		SecureSettings:        nil,

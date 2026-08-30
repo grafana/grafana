@@ -5,9 +5,9 @@ SELECT
     s.path,
     s.created_by,
     s.created_at,
-    s.last_seen_at
+    COALESCE(s.last_seen_at, 0) as last_seen_at
 FROM
-    {{ .Ident .ShortURLTable }} as s
+    {{ .Ident .ShortURLTable }} as s{{ if eq .DialectName "mysql" }} FORCE INDEX (IDX_short_url_org_id_id){{ end }}
 WHERE
     s.org_id = {{ .Arg .Query.OrgID }}
     {{ if .Query.LastID }}

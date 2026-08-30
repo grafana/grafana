@@ -10,12 +10,15 @@ import (
 )
 
 // tokenExchangeRoundTripper wraps an http.RoundTripper and injects an exchanged
-// access token into outgoing requests via the X-Access-Token header.
+// access token into outgoing requests. The token goes in the X-Access-Token
+// header by default; header can override that (e.g. Authorization for apiservers
+// that authenticate a standard bearer token).
 type tokenExchangeRoundTripper struct {
 	exchanger         authnlib.TokenExchanger
 	transport         http.RoundTripper
 	namespaceProvider NamespaceProvider
 	audienceProvider  AudienceProvider
+	header            string
 }
 
 var _ http.RoundTripper = (*tokenExchangeRoundTripper)(nil)
@@ -36,8 +39,8 @@ func newTokenExchangeRoundTripperWithStrategies(
 	}
 }
 
-// RoundTrip implements http.RoundTripper by exchanging a token and setting it
-// in the X-Access-Token header before forwarding the request.
+// RoundTrip implements http.RoundTripper by exchanging a token and setting it in
+// the configured header (X-Access-Token by default) before forwarding the request.
 func (t *tokenExchangeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 
@@ -52,7 +55,11 @@ func (t *tokenExchangeRoundTripper) RoundTrip(req *http.Request) (*http.Response
 	// Clone the request as RoundTrippers are not expected to mutate the passed request
 	req = utilnet.CloneRequest(req)
 
-	req.Header.Set("X-Access-Token", "Bearer "+tokenResponse.Token)
+	header := t.header
+	if header == "" {
+		header = "X-Access-Token"
+	}
+	req.Header.Set(header, "Bearer "+tokenResponse.Token)
 
 	return t.transport.RoundTrip(req)
 }
@@ -67,6 +74,23 @@ func NewStaticTokenExchangeTransportWrapper(
 ) transport.WrapperFunc {
 	return func(rt http.RoundTripper) http.RoundTripper {
 		return newTokenExchangeRoundTripperWithStrategies(exchanger, rt, NewStaticNamespaceProvider(namespace), NewStaticAudienceProvider(audience))
+	}
+}
+
+// NewStaticTokenExchangeAuthorizationTransportWrapper is like
+// NewStaticTokenExchangeTransportWrapper but sends the exchanged token in the
+// standard Authorization header instead of X-Access-Token. Use it for apiservers
+// that authenticate a bearer token from Authorization (e.g. the app-platform
+// apiserver) rather than the authlib X-Access-Token header.
+func NewStaticTokenExchangeAuthorizationTransportWrapper(
+	exchanger authnlib.TokenExchanger,
+	audience string,
+	namespace string,
+) transport.WrapperFunc {
+	return func(rt http.RoundTripper) http.RoundTripper {
+		t := newTokenExchangeRoundTripperWithStrategies(exchanger, rt, NewStaticNamespaceProvider(namespace), NewStaticAudienceProvider(audience))
+		t.header = "Authorization"
+		return t
 	}
 }
 
