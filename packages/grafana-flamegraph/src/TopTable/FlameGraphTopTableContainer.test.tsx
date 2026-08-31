@@ -7,12 +7,12 @@ import { mockBoundingClientRect } from '@grafana/test-utils';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 import { textToDataContainer } from '../FlameGraph/testHelpers';
-import { ColorScheme } from '../types';
+import { ColorScheme, ColorSchemeDiff } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
-  const setup = (flameGraphInput = data) => {
+  const setup = (flameGraphInput = data, colorScheme: ColorScheme | ColorSchemeDiff = ColorScheme.ValueBased) => {
     const flameGraphData = createDataFrame(flameGraphInput);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -24,7 +24,7 @@ describe('FlameGraphTopTableContainer', () => {
         onSymbolClick={jest.fn()}
         onSearch={onSearch}
         onSandwich={onSandwich}
-        colorScheme={ColorScheme.ValueBased}
+        colorScheme={colorScheme}
       />
     );
 
@@ -107,6 +107,26 @@ describe('FlameGraphTopTableContainer', () => {
 
     await userEvents.click(within(summary).getByLabelText('Show in sandwich view'));
     expect(mocks.onSandwich).toHaveBeenCalledWith('other');
+  });
+
+  it('renders baseline, comparison, and difference totals for a diff flame graph', () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const diffFlameGraphWithOther = {
+      fields: [
+        { name: 'level', values: [0, 1, 1, 1] },
+        { name: 'value', values: [10, 4, 3, 3] },
+        { name: 'self', values: [0, 4, 3, 3] },
+        { name: 'valueRight', values: [20, 6, 6, 8] },
+        { name: 'selfRight', values: [0, 6, 6, 8] },
+        { name: 'label', values: ['total', 'foo', 'bar', 'other'] },
+      ],
+    };
+
+    setup(diffFlameGraphWithOther, ColorSchemeDiff.Default);
+
+    expect(screen.getByTestId('topTableOtherSummary')).toHaveTextContent(
+      'Truncated totals represented by other in the flame graph: baseline 3, comparison 8, difference 5. The smallest included stack trace has a baseline total resource consumption of 3.'
+    );
   });
 });
 

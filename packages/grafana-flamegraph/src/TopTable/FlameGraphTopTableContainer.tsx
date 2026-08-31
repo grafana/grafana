@@ -151,7 +151,14 @@ function OtherSummary({
   onSandwich,
 }: OtherSummaryProps) {
   const styles = useStyles2(getOtherSummaryStyles);
+  const isDiffFlamegraph = data.isDiffFlamegraph();
   const otherValue = formattedValueToString(data.valueDisplayProcessor(other.total));
+  const comparisonValue = isDiffFlamegraph
+    ? formattedValueToString(data.valueDisplayProcessor(other.totalRight))
+    : undefined;
+  const diffValue = isDiffFlamegraph
+    ? formattedValueToString(data.valueDisplayProcessor(other.totalRight - other.total))
+    : undefined;
   const minimumValue =
     minimumIncludedTotal === undefined
       ? undefined
@@ -162,8 +169,18 @@ function OtherSummary({
   return (
     <div className={styles.container} data-testid="topTableOtherSummary">
       <span>
-        A total of {otherValue} was truncated and is represented by <strong>other</strong> in the flame graph.
-        {minimumValue && ` The smallest included stack trace has a total resource consumption of ${minimumValue}.`}
+        {isDiffFlamegraph ? (
+          <>
+            Truncated totals represented by <strong>other</strong> in the flame graph: baseline {otherValue}, comparison{' '}
+            {comparisonValue}, difference {diffValue}.
+          </>
+        ) : (
+          <>
+            A total of {otherValue} was truncated and is represented by <strong>other</strong> in the flame graph.
+          </>
+        )}
+        {minimumValue &&
+          ` The smallest included stack trace has a ${isDiffFlamegraph ? 'baseline ' : ''}total resource consumption of ${minimumValue}.`}
       </span>
       <div className={styles.actions}>
         <IconButton
