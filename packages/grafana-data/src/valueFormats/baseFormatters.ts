@@ -20,22 +20,27 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     decimals = getDecimalsForValue(value);
   }
 
+  // Number.prototype.toFixed only accepts 0-100, and values above 20 make the
+  // zero-padding below unreliable (Math.pow(10, decimals) switches to
+  // exponential notation), so clamp to a range both can handle safely.
+  decimals = clamp(decimals, 0, 100);
+
   if (value === 0) {
     return value.toFixed(decimals);
   }
 
-  const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
+  const factor = decimals ? Math.pow(10, decimals) : 1;
   const formatted = String(Math.round(value * factor) / factor);
 
   // if exponent return directly
-  if (formatted.indexOf('e') !== -1 || value === 0) {
+  if (formatted.indexOf('e') !== -1) {
     return formatted;
   }
 
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
+    return (precision ? formatted : formatted + '.') + '0'.repeat(decimals - precision);
   }
 
   return formatted;
