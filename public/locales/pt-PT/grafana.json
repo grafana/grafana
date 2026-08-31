@@ -2666,7 +2666,9 @@
       "view-in-explore": "Visualizar no Explore"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opções",
+      "invalid-interval-error": "",
       "label-time-range": "Intervalo de tempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervalo = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Desativar a sincronização automática do Mimir Alertmanager?",
         "disable-success": "Sincronização automática do Mimir Alertmanager desativada",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Este valor é definido pela chave <1>[unified_alerting] external_alertmanager_uid</1> em grafana.ini e não pode ser alterado a partir da IU. Edite o ficheiro de configuração e reinicie a Grafana ou remova a chave para gerir a sincronização a partir daqui.",
         "operator-managed-title": "Gerido pelo operador",
         "orphan-warning": "A UID da fonte de dados configurada {{uid}} não está disponível. Desative a sincronização ou restaure a origem dos dados para continuar.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Origem dos dados",
         "picker-placeholder": "Selecione uma origem de dados Mimir ou Cortex Alertmanager…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Selecione uma origem de dados Mimir ou Cortex Alertmanager para ativar a gravação.",
         "save-disabled-staged-config": "",
         "save-error": "Não foi possível guardar a sincronização automática do Mimir Alertmanager",
@@ -6018,11 +6022,14 @@
     "notebook-layout": {
       "description": "Uma sequência vertical de painéis, texto e células de código",
       "name": "Bloco de notas",
-      "pill": "Bloco de notas publicado",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Hora"
+      "time": "Hora",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9728,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Anteontem",
           "previousFiscalQuarter": "Trimestre fiscal anterior",
@@ -12981,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13017,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13086,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13094,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13114,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13122,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13157,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Colorir séries por"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17894,7 +17923,7 @@
       "delete-modal-body": "Tem a certeza de que pretende eliminar \"{{name}}\"?",
       "delete-modal-confirm": "Eliminar",
       "delete-modal-title": "Eliminar variável",
-      "folder-description": "Defina o âmbito da variável para uma pasta ou escolha a pasta de raiz de Painéis de controlo para a tornar global (disponível em toda a organização)",
+      "folder-description": "",
       "folder-description-folder-only": "Defina o âmbito da variável para uma pasta que possa editar",
       "folder-label": "Pasta",
       "moved": "Variável movida",
@@ -17914,8 +17943,8 @@
       "move": "Mover",
       "moving": "A mover...",
       "title": "Mover variáveis",
-      "body_one": "Mover {{count}} variável selecionada. Escolher a pasta de raiz de Painéis de controlo torna-a global (disponível em toda a organização).",
-      "body_other": "Mover {{count}} variáveis selecionadas. Escolher a pasta de raiz de Painéis de controlo torna-as globais (disponíveis em toda a organização).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Mova {{count}} variável selecionada para uma pasta que possa editar.",
       "body-folder-only_other": "Mova {{count}} variáveis selecionadas para uma pasta que possa editar."
     },

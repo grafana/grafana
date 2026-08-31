@@ -2646,7 +2646,9 @@
       "view-in-explore": "在「探索」中檢視"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "選項",
+      "invalid-interval-error": "",
       "label-time-range": "時間範圍",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔 = {{minInterval}}"
@@ -3226,6 +3228,7 @@
         "disable-confirm-title": "停用 Mimir Alertmanager 自動同步嗎？",
         "disable-success": "Mimir Alertmanager 自動同步已停用",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 索引鍵設定，無法從使用者介面變更。編輯設定檔案並重新啟動 Grafana，或移除金鑰以在此處管理同步。",
         "operator-managed-title": "由運算子管理",
         "orphan-warning": "無可用的已設定資料來源 UID {{uid}}。停用同步或還原資料來源以繼續。",
@@ -3234,6 +3237,7 @@
         "picker-label": "資料來源",
         "picker-placeholder": "選擇 Mimir 或 Cortex Alertmanager 資料來源…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "選擇 Mimir 或 Cortex Alertmanager 資料來源以啟用儲存。",
         "save-disabled-staged-config": "",
         "save-error": "無法儲存 Mimir Alertmanager 自動同步",
@@ -5976,11 +5980,14 @@
     "notebook-layout": {
       "description": "面板、文字和程式碼儲存格的縱向序列",
       "name": "筆記本",
-      "pill": "已發布的筆記本",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "時間"
+      "time": "時間",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9675,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "前天",
           "previousFiscalQuarter": "上一個會計季度",
@@ -12890,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12913,6 +12926,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -12995,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13003,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13021,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13029,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13064,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "系列顏色依據"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17767,7 +17796,7 @@
       "delete-modal-body": "確定要刪除「{{name}}」嗎？",
       "delete-modal-confirm": "刪除",
       "delete-modal-title": "刪除變數",
-      "folder-description": "將變數範圍設定為資料夾，或選擇根儀表板資料夾以使其成為全域變數（可在組織中的任何地方使用）",
+      "folder-description": "",
       "folder-description-folder-only": "將變數範圍設定為您可以編輯的資料夾",
       "folder-label": "資料夾",
       "moved": "變數已移動",
@@ -17787,7 +17816,7 @@
       "move": "移動",
       "moving": "正在移動…",
       "title": "移動變數",
-      "body_other": "移動 {{count}} 個所選變數。選擇根儀表板資料夾可使其成為全域變數（可在組織中的任何地方使用）。",
+      "body_other": "",
       "body-folder-only_other": "將 {{count}} 個所選變數移動到您可以編輯的資料夾。"
     },
     "page": {

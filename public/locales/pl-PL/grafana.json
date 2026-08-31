@@ -2706,7 +2706,9 @@
       "view-in-explore": "Wyświetl w widoku Eksploruj"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opcje",
+      "invalid-interval-error": "",
       "label-time-range": "Zakres czasu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. odstęp czasu = {{minInterval}}"
@@ -3295,6 +3297,7 @@
         "disable-confirm-title": "Wyłączyć automatyczną synchronizację menedżera alertów Mimir?",
         "disable-success": "Automatyczna synchronizacja menedżera alertów Mimir wyłączona",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Ta wartość jest ustawiana przez klucz <1>[unified_alerting] external_alertmanager_uid</1> w pliku grafana.ini i nie można jej zmienić z poziomu interfejsu użytkownika. Edytuj plik konfiguracyjny i uruchom ponownie Grafanę lub usuń klucz, aby zarządzać synchronizacją z tego miejsca.",
         "operator-managed-title": "Zarządzane przez operatora",
         "orphan-warning": "Skonfigurowane źródło danych z UID {{uid}} jest niedostępne. Wyłącz synchronizację lub przywróć źródło danych, aby kontynuować.",
@@ -3303,6 +3306,7 @@
         "picker-label": "Źródło danych",
         "picker-placeholder": "Wybierz źródło danych Mimir lub menedżera alertów Cortex…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Wybierz źródło danych Mimir lub menedżera alertów Cortex, aby włączyć zapisywanie.",
         "save-disabled-staged-config": "",
         "save-error": "Nie udało się zapisać automatycznej synchronizacji menedżera alertów Mimir",
@@ -6102,11 +6106,14 @@
     "notebook-layout": {
       "description": "Pionowa sekwencja paneli, tekstu i komórek kodu",
       "name": "Notatnik",
-      "pill": "Opublikowany notatnik",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Czas"
+      "time": "Czas",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9834,6 +9841,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Przedwczoraj",
           "previousFiscalQuarter": "Poprzedni kwartał podatkowy",
@@ -13163,6 +13172,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13186,6 +13199,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13268,7 +13288,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13276,7 +13295,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13300,6 +13318,9 @@
       "count-truncated_many": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13308,6 +13329,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13343,6 +13365,13 @@
     },
     "field-color": {
       "color-by-label": "Kolory serii wg"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -18148,7 +18177,7 @@
       "delete-modal-body": "Czy na pewno chcesz usunąć „{{name}}”?",
       "delete-modal-confirm": "Usuń",
       "delete-modal-title": "Usuń zmienną",
-      "folder-description": "Ogranicz zakres zmiennej do folderu lub wybierz główny folder pulpitów, aby zmienna stała się globalna (dostępna w całej organizacji)",
+      "folder-description": "",
       "folder-description-folder-only": "Ogranicz zakres zmiennej do folderu, który możesz edytować",
       "folder-label": "Folder",
       "moved": "Zmienna została przeniesiona",
@@ -18168,10 +18197,10 @@
       "move": "Przenieś",
       "moving": "Przenoszenie…",
       "title": "Przenieś zmienne",
-      "body_one": "Przenieś {{count}} wybraną zmienną. Wybranie głównego folderu pulpitów spowoduje, że zmienna stanie się globalna (dostępna w całej organizacji).",
-      "body_few": "Przenieś {{count}} wybrane zmienne. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
-      "body_many": "Przenieś {{count}} wybranych zmiennych. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
-      "body_other": "Przenieś {{count}} wybranej zmiennej. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
+      "body_one": "",
+      "body_few": "",
+      "body_many": "",
+      "body_other": "",
       "body-folder-only_one": "Przenieś {{count}} wybraną zmienną do folderu, który możesz edytować.",
       "body-folder-only_few": "Przenieś {{count}} wybrane zmienne do folderu, który możesz edytować.",
       "body-folder-only_many": "Przenieś {{count}} wybranych zmiennych do folderu, który możesz edytować.",
