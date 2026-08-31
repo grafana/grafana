@@ -2666,7 +2666,9 @@
       "view-in-explore": "Visa i Utforska"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Alternativ",
+      "invalid-interval-error": "",
       "label-time-range": "Tidsintervall",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Intervall = {{minInterval}}"
@@ -3249,6 +3251,7 @@
         "disable-confirm-title": "Inaktivera automatisk synkronisering av Mimir Alertmanager?",
         "disable-success": "Automatisk synkronisering av Mimir Alertmanager har inaktiverats",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Detta värde ställs in av nyckeln <1>[unified_alerting] external_alertmanager_uid</1> i grafana.ini och kan inte ändras från användargränssnittet. Redigera konfigurationsfilen och starta om Grafana, eller ta bort nyckeln om du vill hantera synkronisering härifrån.",
         "operator-managed-title": "Hanteras av operatör",
         "orphan-warning": "Den konfigurerade datakällans UID {{uid}} är inte tillgänglig. Inaktivera synkroniseringen eller återställ datakällan för att fortsätta.",
@@ -3257,6 +3260,7 @@
         "picker-label": "Datakälla",
         "picker-placeholder": "Välj en Mimir- eller Cortex Alertmanager-datakälla …",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Välj en Mimir- eller Cortex Alertmanager-datakälla för att aktivera sparande.",
         "save-disabled-staged-config": "",
         "save-error": "Det gick inte att spara automatisk synkronisering av Mimir Alertmanager",
@@ -6018,11 +6022,14 @@
     "notebook-layout": {
       "description": "En vertikal sekvens av paneler, text och kodceller",
       "name": "Anteckningsbok",
-      "pill": "Publicerad anteckningsbok",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Tid"
+      "time": "Tid",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -9728,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "I förrgår",
           "previousFiscalQuarter": "Föregående räkenskapskvartal",
@@ -12981,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13004,6 +13017,13 @@
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
@@ -13086,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13094,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13114,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13122,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13157,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Färga serier efter"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -17894,7 +17923,7 @@
       "delete-modal-body": "Är du säker på att du vill ta bort ”{{name}}”?",
       "delete-modal-confirm": "Ta bort",
       "delete-modal-title": "Ta bort variabel",
-      "folder-description": "Begränsa variabeln till en mapp, eller välj rotmappen för instrumentpaneler för att göra den global (tillgänglig överallt i organisationen)",
+      "folder-description": "",
       "folder-description-folder-only": "Begränsa variabeln till en mapp som du kan redigera",
       "folder-label": "Mapp",
       "moved": "Variabel flyttades",
@@ -17914,8 +17943,8 @@
       "move": "Flytta",
       "moving": "Flyttar …",
       "title": "Flytta variabler",
-      "body_one": "Flytta {{count}} vald variabel. Om du väljer rotmappen för instrumentpaneler blir den global (tillgänglig överallt i organisationen).",
-      "body_other": "Flytta {{count}} valda variabler. Om du väljer rotmappen för instrumentpaneler blir de globala (tillgängliga överallt i organisationen).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Flytta {{count}} vald variabel till en mapp som du kan redigera.",
       "body-folder-only_other": "Flytta {{count}} valda variabler till en mapp som du kan redigera."
     },
