@@ -22,6 +22,9 @@ var permittedHostEnvVarNames = []string{
 	"https_proxy",
 	"NO_PROXY",
 	"no_proxy",
+	// Env vars used by crypto/x509 (Go stdlib) and OpenSSL for custom CA certificate file/dir
+	"SSL_CERT_FILE",
+	"SSL_CERT_DIR",
 }
 
 type Provider interface {
