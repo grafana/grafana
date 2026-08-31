@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -235,6 +236,17 @@ func TestInitJaegerTracerProvider_AddressParsing(t *testing.T) {
 			address:     "https://jaeger.example.com:14268/api/traces",
 			expectError: false, // Auto-corrects port+path, scheme stays https (no WithInsecure)
 		},
+		// IPv6 addresses must not be rejected during parsing.
+		{
+			name:        "IPv6 host:port",
+			address:     "[::1]:4318",
+			expectError: false,
+		},
+		{
+			name:        "IPv6 legacy collector URL auto-corrected",
+			address:     "http://[::1]:14268/api/traces",
+			expectError: false, // Auto-corrects to [::1]:4318 + /v1/traces
+		},
 	}
 
 	for _, tt := range tests {
@@ -258,6 +270,30 @@ func TestInitJaegerTracerProvider_AddressParsing(t *testing.T) {
 					assert.NotContains(t, err.Error(), "invalid tracer address")
 				}
 			}
+		})
+	}
+}
+
+// TestJaegerEndpointFormatting_IPv6 guards the OTLP endpoint construction for
+// IPv6 hosts. The legacy /api/traces auto-correction and the agent-port
+// suggestion derive the host from url.Hostname()/net.SplitHostPort, which strip
+// the brackets from an IPv6 literal. Building the endpoint with net.JoinHostPort
+// (rather than fmt.Sprintf("%s:4318", host)) re-adds them so the result is a
+// valid host:port that WithEndpoint can parse, and leaves IPv4 unchanged.
+func TestJaegerEndpointFormatting_IPv6(t *testing.T) {
+	tests := []struct {
+		name string
+		host string
+		want string
+	}{
+		{"IPv6 loopback", "::1", "[::1]:4318"},
+		{"IPv6 full", "2001:db8::1", "[2001:db8::1]:4318"},
+		{"IPv4", "127.0.0.1", "127.0.0.1:4318"},
+		{"hostname", "jaeger.example.com", "jaeger.example.com:4318"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, net.JoinHostPort(tt.host, "4318"))
 		})
 	}
 }

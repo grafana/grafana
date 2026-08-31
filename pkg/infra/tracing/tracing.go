@@ -152,7 +152,10 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		// to ensure existing configurations continue to work after this migration.
 		if u.Path == "/api/traces" {
 			host := u.Hostname()
-			endpoint = fmt.Sprintf("%s:4318", host)
+			// net.JoinHostPort brackets IPv6 hosts (e.g. [::1]:4318) so the
+			// endpoint stays parseable by WithEndpoint; plain Sprintf would
+			// produce ::1:4318.
+			endpoint = net.JoinHostPort(host, "4318")
 			urlPath = "/v1/traces"
 			ots.log.Warn("detected legacy Jaeger collector URL - "+
 				"automatically correcting to OTLP endpoint; "+
@@ -174,7 +177,7 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		// Old Jaeger agent used UDP on ports 6831/6832/5775, but OTLP HTTP requires TCP on port 4318.
 		// We cannot auto-correct this because UDP→HTTP is a protocol change that requires
 		// the user to ensure their Jaeger deployment has OTLP enabled.
-		suggestedAddress := fmt.Sprintf("%s:4318", host)
+		suggestedAddress := net.JoinHostPort(host, "4318")
 		switch port {
 		case "6831", "6832", "5775":
 			ots.log.Warn("detected legacy Jaeger agent port which used UDP - "+
