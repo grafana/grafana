@@ -100,6 +100,40 @@ func (s *lastImportStore) Save(ctx context.Context, time ResourceLastImportTime)
 	return writer.Close()
 }
 
+func (s *lastImportStore) GetLastImportTime(ctx context.Context, nsr NamespacedResource, lastImportTimeMaxAge time.Duration) (time.Time, error) {
+	key := LastImportTimeKey{
+		Namespace: nsr.Namespace,
+		Group:     nsr.Group,
+		Resource:  nsr.Resource,
+	}
+	if err := key.Validate(); err != nil {
+		return time.Time{}, fmt.Errorf("invalid last import time key: %w", err)
+	}
+
+	prefix := kv.LastImportTimeKeyPrefix(nsr.Namespace, nsr.Group, nsr.Resource)
+	var latest time.Time
+	for value, err := range s.kv.Keys(ctx, lastImportTimesSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   kv.PrefixRangeEnd(prefix),
+	}) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		importTime, err := ParseLastImportKey(value)
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.LastImportTime.After(latest) {
+			latest = importTime.LastImportTime
+		}
+	}
+
+	if lastImportTimeMaxAge > 0 && time.Since(latest) > lastImportTimeMaxAge {
+		return time.Time{}, nil
+	}
+	return latest, nil
+}
+
 func (s *lastImportStore) ListLastImportTimes(ctx context.Context, lastImportTimeMaxAge time.Duration) (valid map[NamespacedResource]LastImportTimeKey, toDelete []LastImportTimeKey, _ error) {
 	valid = map[NamespacedResource]LastImportTimeKey{}
 	now := time.Now()

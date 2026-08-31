@@ -1616,6 +1616,18 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	return b.db
 }
 
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return time.Time{}, err
+		}
+		if importTime.NamespacedResource == nsr {
+			return importTime.LastImportTime, nil
+		}
+	}
+	return time.Time{}, nil
+}
+
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	b.logCall("GetResourceLastImportTimes")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")
