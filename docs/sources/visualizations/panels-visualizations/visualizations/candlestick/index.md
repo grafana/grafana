@@ -213,6 +213,7 @@ The options under the **Graph styles** section let you control the general appea
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
+| Show values                                 | Set whether to show data values on top of lines, bars, or points. |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
 | [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
