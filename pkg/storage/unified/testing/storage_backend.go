@@ -1767,7 +1767,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		secondImport := time.Now()
 
 		// Verify that last imported times are combination of both bulk imports
-		result2 := collectLastImportedTimes(t, backend, ctx, append(collections1, collections2...))
+		allCollections := make([]*resourcepb.ResourceKey, 0, len(collections1)+len(collections2))
+		allCollections = append(allCollections, collections1...)
+		allCollections = append(allCollections, collections2...)
+		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
