@@ -141,10 +141,6 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	panic("not implemented")
-}
-
 func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

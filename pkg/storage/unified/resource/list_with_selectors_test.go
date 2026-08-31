@@ -579,7 +579,3 @@ func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) (
 func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	return time.Time{}, nil
 }
-
-func (*fakeBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(func(ResourceLastImportTime, error) bool) {}
-}

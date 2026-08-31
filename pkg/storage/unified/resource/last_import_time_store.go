@@ -47,13 +47,6 @@ func (k LastImportTimeKey) ToNamespacedResource() NamespacedResource {
 	}
 }
 
-func (k LastImportTimeKey) ToResourceLastImportTime() ResourceLastImportTime {
-	return ResourceLastImportTime{
-		NamespacedResource: k.ToNamespacedResource(),
-		LastImportTime:     k.LastImportTime,
-	}
-}
-
 func ParseLastImportKey(key string) (LastImportTimeKey, error) {
 	ns, group, resource, t, err := kv.ParseLastImportTimeKey(key)
 	if err != nil {

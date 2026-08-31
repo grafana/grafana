@@ -1655,8 +1655,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	t.Run("no imported times by default", func(t *testing.T) {
-		res := collectLastImportedTimes(t, backend, ctx)
-		require.Empty(t, res)
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, resource.NamespacedResource{
+			Namespace: nsPrefix + "-not-imported",
+			Group:     "dashboards",
+			Resource:  "dashboard",
+		})
+		require.NoError(t, err)
+		require.True(t, lastImportTime.IsZero())
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1689,7 +1694,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Rejected)
 
-		result := collectLastImportedTimes(t, backend, ctx)
+		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
 
 		now := time.Now()
@@ -1730,7 +1735,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
-		result1 := collectLastImportedTimes(t, backend, ctx)
+		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
@@ -1762,7 +1767,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		secondImport := time.Now()
 
 		// Verify that last imported times are combination of both bulk imports
-		result2 := collectLastImportedTimes(t, backend, ctx)
+		result2 := collectLastImportedTimes(t, backend, ctx, append(collections1, collections2...))
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1778,11 +1783,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	})
 }
 
-func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
-	result := map[resource.NamespacedResource]time.Time{}
-	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
+func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context, keys []*resourcepb.ResourceKey) map[resource.NamespacedResource]time.Time {
+	result := make(map[resource.NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		nsr := resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, nsr)
 		require.NoError(t, err)
-		result[lm.NamespacedResource] = lm.LastImportTime
+		result[nsr] = lastImportTime
 	}
 	return result
 }

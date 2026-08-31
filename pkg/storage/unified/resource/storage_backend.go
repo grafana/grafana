@@ -2603,24 +2603,6 @@ func (k *kvStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr Na
 	return k.lastImportStore.GetLastImportTime(ctx, nsr, k.lastImportTimeMaxAge)
 }
 
-func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
-
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		defer span.End()
-		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
-		if err != nil {
-			yield(ResourceLastImportTime{}, err)
-			return
-		}
-		for _, v := range valid {
-			if !yield(v.ToResourceLastImportTime(), nil) {
-				return
-			}
-		}
-	}
-}
-
 type kvBulkImportItem struct {
 	req        *resourcepb.BulkRequest
 	dataKey    DataKey

@@ -115,14 +115,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
 	UnimplementedStorageBackend
-	resourceStats        []ResourceStats
-	lastImportTimes      []ResourceLastImportTime
-	statsCalls           atomic.Int32
-	listStoredCalls      atomic.Int32
-	listStoredErr        error
-	lastCountLimit       atomic.Int64
-	lastImportTimeCalls  atomic.Int32
-	lastImportTimesCalls atomic.Int32
+	resourceStats       []ResourceStats
+	lastImportTimes     []ResourceLastImportTime
+	statsCalls          atomic.Int32
+	listStoredCalls     atomic.Int32
+	listStoredErr       error
+	lastCountLimit      atomic.Int64
+	lastImportTimeCalls atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -205,17 +204,6 @@ func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr 
 		}
 	}
 	return time.Time{}, nil
-}
-
-func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	m.lastImportTimesCalls.Add(1)
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		for _, ti := range m.lastImportTimes {
-			if !yield(ti, nil) {
-				return
-			}
-		}
-	}
 }
 
 // mockSearchBackend implements SearchBackend for testing with tracking capabilities
@@ -504,7 +492,6 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
 	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
 	require.Equal(t, int32(1), storage.lastImportTimeCalls.Load())
-	require.Zero(t, storage.lastImportTimesCalls.Load())
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {

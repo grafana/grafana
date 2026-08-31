@@ -1285,7 +1285,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		})
 	}
 
-	importTimes, err := s.getLastImportTimes(ctx)
+	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{
 			Error: AsErrorResult(err),
@@ -1474,11 +1474,12 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			importTimes, err := s.getLastImportTimes(ctx)
+			keys := s.search.GetOpenIndexes()
+			importTimes, err := s.getLastImportTimes(ctx, keys)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
 		}
 	}
 }
@@ -1607,14 +1608,15 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 	return completeChs
 }
 
-func (s *searchServer) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
-	result := map[NamespacedResource]time.Time{}
-	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+func (s *searchServer) getLastImportTimes(ctx context.Context, keys []NamespacedResource) (map[NamespacedResource]time.Time, error) {
+	result := make(map[NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 		if err != nil {
-			// We return times that we have collected so far, if any.
+			// Return the times collected so far so periodic scans can still check those indexes.
 			return result, err
 		}
-		result[importTime.NamespacedResource] = importTime.LastImportTime
+		result[key] = lastImportTime
 	}
 	return result, nil
 }

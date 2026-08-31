@@ -348,7 +348,3 @@ func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource,
 func (b *panicBulkBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	panic("not implemented")
 }
-
-func (b *panicBulkBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return nil
-}
