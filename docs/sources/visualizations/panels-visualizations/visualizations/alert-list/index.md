@@ -47,6 +47,10 @@ On each dashboard load, this visualization queries the alert list, always provid
 
 {{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
+{{< admonition type="note" >}}
+The alert list visualization requires permission to read alert rules. If you don't have this permission, the panel displays a **Permission required** message instead of the list.
+{{< /admonition >}}
+
 ## Configure an alert list
 
 Once you’ve [created a dashboard](ref:create-dashboard), the following video shows you how to configure an alert list visualization:
