@@ -931,6 +931,16 @@ func (rc *RepositoryController) process(key string) (err error) {
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":   "replace",
+				"path": "/status/health",
+				"value": provisioning.HealthStatus{
+					Healthy: false,
+					Error:   provisioning.HealthFailureHealth,
+					Checked: time.Now().UnixMilli(),
+					Message: []string{err.Error()},
+				},
+			})
 			return fmt.Errorf("unable to create repository from configuration: %w", err)
 		}
 	}
