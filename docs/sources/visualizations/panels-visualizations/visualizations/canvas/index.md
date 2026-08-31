@@ -446,6 +446,7 @@ To add a data link, follow these steps:
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
    | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**.                                                                                                            |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
+   | Button style         | Set the **Color** of the action button.                                                                                                                                                                                                     |
 
 1. Click **Save** to save changes and close the dialog box.
 1. Disable inline editing.
