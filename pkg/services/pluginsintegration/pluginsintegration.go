@@ -204,7 +204,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
-		clientmiddleware.NewForwardHeadersMiddleware(cfg.DataSourceForwardHeadersDenyList),
+		clientmiddleware.NewForwardHeadersMiddleware(cfg.DataSourceForwardHeadersDenyList, &cfg.JWTAuth, &cfg.AuthProxy),
 		clientmiddleware.NewCachingMiddleware(cachingServiceClient),
 		clientmiddleware.NewForwardIDMiddleware(),
 		clientmiddleware.NewUseAlertHeadersMiddleware(),

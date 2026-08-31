@@ -625,9 +625,11 @@ Controls how `deny_list` combines with Grafana's built-in denylist. Values:
 - `merge` (default): append `deny_list` entries to the built-in denylist
 - `replace`: use only `deny_list` and ignore the built-in denylist
 
-Any other value is a configuration error and Grafana fails to start.
+Any other value is a configuration error and Grafana fails to start. A `deny_list` that contains no header names is treated as unset, so `replace` mode falls back to the built-in denylist rather than leaving it empty.
 
 Grafana's built-in denylist blocks headers whose values Grafana or the transport owns, including `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, `X-ID-Token`, every `X-Grafana-*` header, every `X-Forwarded-*` header, hop-by-hop headers such as `Connection` and `Transfer-Encoding`, and transport-controlled headers such as `Host` and `Content-Length`.
+
+The headers Grafana authenticates the incoming request with are always denied, even under `deny_list_mode = replace`. This covers the configured `[auth.jwt] header_name` and the `[auth.proxy]` header names when those authentication methods are enabled, so a data source allowlist cannot re-forward credentials that Grafana strips from the plugin request.
 
 If `deny_list` contains `[]`, that kill switch takes precedence over both modes and denies every header.
 

@@ -68,8 +68,7 @@ func readDataSourceForwardHeadersSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	cfg.DataSourceForwardHeadersDenyListMode = mode
 
-	rawList := sec.Key("deny_list").String()
-	configured := splitCommaList(rawList)
+	configured := splitCommaList(sec.Key("deny_list").String())
 
 	// Preserve the special "[]" match-all kill switch regardless of mode.
 	hasKillSwitch := slices.Contains(configured, "[]")
@@ -77,7 +76,10 @@ func readDataSourceForwardHeadersSettings(iniFile *ini.File, cfg *Cfg) error {
 	switch {
 	case hasKillSwitch:
 		cfg.DataSourceForwardHeadersDenyList = []string{"[]"}
-	case mode == "replace" && rawList != "":
+	// A deny_list that parses to no entries (empty, whitespace-only, or only
+	// separators) is treated as unset in replace mode, so an operator typo
+	// cannot silently drop the built-in deny-list.
+	case mode == "replace" && len(configured) > 0:
 		cfg.DataSourceForwardHeadersDenyList = configured
 	default:
 		merged := make([]string, 0, len(DefaultDataSourceForwardHeadersDenyList)+len(configured))

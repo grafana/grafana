@@ -65,3 +65,17 @@ func TestDataSourceForwardHeadersSettings_NoSection(t *testing.T) {
 	require.Equal(t, "merge", cfg.DataSourceForwardHeadersDenyListMode)
 	require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
 }
+
+// A deny_list that parses to no entries is as good as unset: replace mode
+// must not turn an operator typo into an empty deny-list.
+func TestDataSourceForwardHeadersSettings_ReplaceBlankListFallsBackToDefaults(t *testing.T) {
+	for name, body := range map[string]string{
+		"whitespace only": "deny_list = \"   \"\ndeny_list_mode = replace\n",
+		"separators only": "deny_list = , ,,\ndeny_list_mode = replace\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg := loadCfgWithSection(t, "datasource_forward_headers", body)
+			require.Equal(t, DefaultDataSourceForwardHeadersDenyList, cfg.DataSourceForwardHeadersDenyList)
+		})
+	}
+}

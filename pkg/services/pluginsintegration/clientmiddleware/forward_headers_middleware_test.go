@@ -22,6 +22,13 @@ import (
 // list. Individual tests can override.
 var defaultDenyList = setting.DefaultDataSourceForwardHeadersDenyList
 
+// newTestForwardHeadersMiddleware builds the middleware with JWT auth and
+// auth proxy disabled, which is the default Grafana configuration. Tests that
+// care about those auth headers construct the middleware directly.
+func newTestForwardHeadersMiddleware(denyList []string) backend.HandlerMiddleware {
+	return NewForwardHeadersMiddleware(denyList, &setting.AuthJWTSettings{}, &setting.AuthProxySettings{})
+}
+
 // openfeature.SetProviderAndWait mutates global state, so tests that touch it
 // must not run in parallel with each other.
 var forwardHeadersFlagMu sync.Mutex
@@ -71,7 +78,7 @@ func TestForwardHeadersMiddleware_FeatureToggleOff(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 
@@ -94,7 +101,7 @@ func TestForwardHeadersMiddleware_NoAllowList(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, nil)
 
@@ -115,7 +122,7 @@ func TestForwardHeadersMiddleware_ExactMatch(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 
@@ -137,7 +144,7 @@ func TestForwardHeadersMiddleware_CaseInsensitiveAllowMatch(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	// Allow-list entry in a totally different case.
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-SCOPE-ORGID"})
@@ -160,7 +167,7 @@ func TestForwardHeadersMiddleware_PrefixMatch(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Tenant-[]"})
 
@@ -185,7 +192,7 @@ func TestForwardHeadersMiddleware_DenyListWins(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"[]"})
 
@@ -208,7 +215,7 @@ func TestForwardHeadersMiddleware_KillSwitch(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware([]string{"[]"})),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware([]string{"[]"})),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 
@@ -230,7 +237,7 @@ func TestForwardHeadersMiddleware_DoesNotClobberExisting(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 
@@ -251,7 +258,7 @@ func TestForwardHeadersMiddleware_CallResourceMultiValue(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Multi"})
 
@@ -273,7 +280,7 @@ func TestForwardHeadersMiddleware_QueryDataMultiValueJoins(t *testing.T) {
 
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Multi"})
 
@@ -296,7 +303,7 @@ func TestForwardHeadersMiddleware_AllRequestTypes(t *testing.T) {
 		req.Header.Set("X-Scope-OrgID", "tenant-a")
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+			handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 		)
 		return cdt, newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"}), req
 	}
@@ -338,7 +345,7 @@ func TestForwardHeadersMiddleware_NoReqContext(t *testing.T) {
 	// No WithReqContext, so contexthandler.FromContext returns nil -> no-op.
 	req := newForwardHeadersReq(t)
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-Scope-OrgID"})
 	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
@@ -358,7 +365,7 @@ func TestForwardHeadersMiddleware_AppInstance_NoOp(t *testing.T) {
 	req.Header.Set("X-Scope-OrgID", "tenant-a")
 	cdt := handlertest.NewHandlerMiddlewareTest(t,
 		WithReqContext(req, &user.SignedInUser{}),
-		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList)),
+		handlertest.WithMiddlewares(newTestForwardHeadersMiddleware(defaultDenyList)),
 	)
 	pluginCtx := backend.PluginContext{AppInstanceSettings: &backend.AppInstanceSettings{}}
 	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
@@ -367,4 +374,91 @@ func TestForwardHeadersMiddleware_AppInstance_NoOp(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Empty(t, cdt.QueryDataReq.Headers)
+}
+
+// ClearAuthHeadersMiddleware strips the headers Grafana authenticated the
+// incoming request with. Those names are configurable, so they cannot be in
+// the static default deny-list — the middleware must derive them from config
+// and never re-forward them, even for an allow-list of "[]".
+func TestForwardHeadersMiddleware_ConfiguredAuthHeadersNeverForwarded(t *testing.T) {
+	enableForwardHeadersFlag(t)
+
+	jwtAuth := &setting.AuthJWTSettings{Enabled: true, HeaderName: "X-JWT-Assertion"}
+	authProxy := &setting.AuthProxySettings{
+		Enabled:    true,
+		HeaderName: "X-WEBAUTH-USER",
+		Headers:    map[string]string{"Groups": "X-WEBAUTH-GROUPS", "Email": "X-WEBAUTH-EMAIL"},
+	}
+
+	req := newForwardHeadersReq(t)
+	req.Header.Set("X-JWT-Assertion", "jwt-token")
+	req.Header.Set("X-WEBAUTH-USER", "admin")
+	req.Header.Set("X-WEBAUTH-GROUPS", "admins")
+	req.Header.Set("X-WEBAUTH-EMAIL", "admin@example.com")
+	req.Header.Set("X-Grafana-Device-Id", "device-1")
+	req.Header.Set("X-Scope-OrgID", "tenant-a")
+
+	cdt := handlertest.NewHandlerMiddlewareTest(t,
+		WithReqContext(req, &user.SignedInUser{}),
+		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList, jwtAuth, authProxy)),
+	)
+	pluginCtx := newForwardHeadersPluginCtx(t, []string{"[]"})
+
+	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+		PluginContext: pluginCtx,
+		Headers:       map[string]string{},
+	})
+	require.NoError(t, err)
+	for _, name := range []string{"X-Jwt-Assertion", "X-Webauth-User", "X-Webauth-Groups", "X-Webauth-Email", "X-Grafana-Device-Id"} {
+		require.NotContains(t, cdt.QueryDataReq.Headers, name)
+	}
+	require.Equal(t, "tenant-a", cdt.QueryDataReq.Headers["X-Scope-Orgid"])
+}
+
+// An explicit allow-list entry for a configured auth header must not beat the
+// deny-list either.
+func TestForwardHeadersMiddleware_ExplicitlyAllowedAuthProxyHeaderDenied(t *testing.T) {
+	enableForwardHeadersFlag(t)
+
+	authProxy := &setting.AuthProxySettings{Enabled: true, HeaderName: "X-WEBAUTH-USER"}
+
+	req := newForwardHeadersReq(t)
+	req.Header.Set("X-WEBAUTH-USER", "admin")
+
+	cdt := handlertest.NewHandlerMiddlewareTest(t,
+		WithReqContext(req, &user.SignedInUser{}),
+		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList, &setting.AuthJWTSettings{}, authProxy)),
+	)
+	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-WEBAUTH-USER"})
+
+	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+		PluginContext: pluginCtx,
+		Headers:       map[string]string{},
+	})
+	require.NoError(t, err)
+	require.Empty(t, cdt.QueryDataReq.Headers)
+}
+
+// With auth proxy disabled its header name carries no Grafana credential, so
+// it is forwardable like any other header.
+func TestForwardHeadersMiddleware_AuthProxyDisabledHeaderForwardable(t *testing.T) {
+	enableForwardHeadersFlag(t)
+
+	authProxy := &setting.AuthProxySettings{Enabled: false, HeaderName: "X-WEBAUTH-USER"}
+
+	req := newForwardHeadersReq(t)
+	req.Header.Set("X-WEBAUTH-USER", "admin")
+
+	cdt := handlertest.NewHandlerMiddlewareTest(t,
+		WithReqContext(req, &user.SignedInUser{}),
+		handlertest.WithMiddlewares(NewForwardHeadersMiddleware(defaultDenyList, &setting.AuthJWTSettings{}, authProxy)),
+	)
+	pluginCtx := newForwardHeadersPluginCtx(t, []string{"X-WEBAUTH-USER"})
+
+	_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+		PluginContext: pluginCtx,
+		Headers:       map[string]string{},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "admin", cdt.QueryDataReq.Headers["X-Webauth-User"])
 }

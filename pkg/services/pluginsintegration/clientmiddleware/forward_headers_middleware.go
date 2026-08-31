@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
@@ -30,18 +31,43 @@ var forwardHeadersFlagClient = openfeature.NewDefaultClient()
 // This mirrors the shape of the cookie pass-through (`keepCookies`) feature.
 // The behavior depends on the `grafana.datasourceForwardHeaders` feature
 // toggle; when the toggle is disabled the middleware is a no-op.
-func NewForwardHeadersMiddleware(denyList []string) backend.HandlerMiddleware {
+//
+// The JWT and auth-proxy settings are needed because the headers Grafana
+// authenticates with are configurable: ClearAuthHeadersMiddleware strips them
+// from the plugin request, and this middleware must not put them back.
+func NewForwardHeadersMiddleware(denyList []string, cfgJWTAuth *setting.AuthJWTSettings, cfgAuthProxy *setting.AuthProxySettings) backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &ForwardHeadersMiddleware{
-			BaseHandler: backend.NewBaseHandler(next),
-			denyList:    denyList,
+			BaseHandler:  backend.NewBaseHandler(next),
+			denyList:     denyList,
+			cfgJWTAuth:   cfgJWTAuth,
+			cfgAuthProxy: cfgAuthProxy,
 		}
 	})
 }
 
 type ForwardHeadersMiddleware struct {
 	backend.BaseHandler
-	denyList []string
+	denyList     []string
+	cfgJWTAuth   *setting.AuthJWTSettings
+	cfgAuthProxy *setting.AuthProxySettings
+}
+
+// effectiveDenyList is the configured deny-list plus the headers Grafana
+// itself authenticates with. The latter are config-dependent (custom JWT
+// header name, auth-proxy headers) so they cannot live in the static default
+// deny-list.
+func (m *ForwardHeadersMiddleware) effectiveDenyList() []string {
+	if m.cfgJWTAuth == nil || m.cfgAuthProxy == nil {
+		return m.denyList
+	}
+	authHeaders := contexthandler.GetAuthHTTPHeaders(m.cfgJWTAuth, m.cfgAuthProxy)
+	if len(authHeaders) == 0 {
+		return m.denyList
+	}
+	out := make([]string, 0, len(m.denyList)+len(authHeaders))
+	out = append(out, m.denyList...)
+	return append(out, authHeaders...)
 }
 
 func (m *ForwardHeadersMiddleware) enabled(ctx context.Context) bool {
@@ -72,7 +98,7 @@ func (m *ForwardHeadersMiddleware) applyHeaders(ctx context.Context, pCtx backen
 		return nil
 	}
 
-	names := proxyutil.FilterAllowedHeaders(reqCtx.Req.Header, allowList, m.denyList)
+	names := proxyutil.FilterAllowedHeaders(reqCtx.Req.Header, allowList, m.effectiveDenyList())
 	if len(names) == 0 {
 		return nil
 	}
