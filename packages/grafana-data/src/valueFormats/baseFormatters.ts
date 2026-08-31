@@ -18,6 +18,8 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 
   if (decimals === null || decimals === undefined) {
     decimals = getDecimalsForValue(value);
+  } else {
+    decimals = clamp(Math.floor(decimals), 0, 20);
   }
 
   if (value === 0) {
@@ -35,7 +37,7 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
+    return (precision ? formatted : formatted + '.') + '0'.repeat(decimals - precision);
   }
 
   return formatted;

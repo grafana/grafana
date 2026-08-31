@@ -150,6 +150,18 @@ describe('valueFormats', () => {
     it('should treat as zero decimals', () => {
       const str = toFixed(186.123, -2);
       expect(str).toBe('186');
+      expect(toFixed(0, -5)).toBe('0');
+    });
+  });
+
+  describe('toFixed with large decimals count', () => {
+    it('should clamp decimals above 20 and avoid exponent stringification in padding', () => {
+      expect(toFixed(1.5, 21)).toBe('1.50000000000000000000');
+      expect(toFixed(5, 21)).toBe('5.00000000000000000000');
+      expect(toFixed(5, 20)).toBe('5.00000000000000000000');
+      expect(toFixed(1.5, 101)).toBe('1.50000000000000000000');
+      expect(toFixed(0, 101)).toBe('0.00000000000000000000');
+      expect(toFixed(1.5, 2.7)).toBe('1.50');
     });
   });
 
