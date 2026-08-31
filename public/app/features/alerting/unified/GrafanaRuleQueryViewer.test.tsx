@@ -1,26 +1,29 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer } from './GrafanaRuleQueryViewer';
 import { type AlertQueryDataSources } from './hooks/alertQueriesStatus';
-import { mockCombinedRule, mockDataSource } from './mocks';
+import { mockCombinedRule } from './mocks';
+import { mimirDataSource } from './mocks/server/configure';
 
-const DS_UID = 'abc123';
+const { dataSource } = mimirDataSource();
+const DS_UID = dataSource.uid;
+setDataSourceInstanceSettings({ [dataSource.name]: dataSource });
 
-function mockDataSourceListItem(partial: Partial<DataSourceInstanceListItem> = {}): DataSourceInstanceListItem {
-  return { isDefault: false, ...mockDataSource(), ...partial };
-}
+const dataSourcesPromise: Promise<AlertQueryDataSources> = getDataSourceInstanceList({ all: true }).then(
+  (items) => new Map(items.map((item) => [item.uid, item]))
+);
 
-function makeDataSources(...items: DataSourceInstanceListItem[]): AlertQueryDataSources {
-  return new Map(items.map((item) => [item.uid, item]));
-}
-
-const dataSources = makeDataSources(mockDataSourceListItem({ uid: DS_UID, name: 'Test DS' }));
+afterAll(() => {
+  setDataSourceInstanceSettings({});
+});
 
 describe('GrafanaRuleQueryViewer', () => {
   it('renders without crashing', async () => {
+    const dataSources = await dataSourcesPromise;
     const rule = mockCombinedRule();
 
     const expressions = [getExpression('F'), getExpression('G'), getExpression('H'), getExpression('I')];
@@ -38,6 +41,7 @@ describe('GrafanaRuleQueryViewer', () => {
   });
 
   it('should catch cyclical references', async () => {
+    const dataSources = await dataSourcesPromise;
     const rule = mockCombinedRule();
 
     const queries = [
@@ -51,6 +55,7 @@ describe('GrafanaRuleQueryViewer', () => {
   });
 
   it('renders the data source badge and the query model for a resolved data source', async () => {
+    const dataSources = await dataSourcesPromise;
     const rule = mockCombinedRule();
 
     render(
@@ -62,8 +67,8 @@ describe('GrafanaRuleQueryViewer', () => {
       />
     );
 
-    expect(await screen.findByText('Test DS')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Test DS' })).toBeInTheDocument();
+    expect(await screen.findByText(dataSource.name)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: dataSource.name })).toBeInTheDocument();
     expect(screen.getByText(/refId: A/)).toBeInTheDocument();
   });
 
@@ -80,7 +85,7 @@ describe('GrafanaRuleQueryViewer', () => {
     );
 
     expect(await screen.findByTestId('queries-container')).toBeInTheDocument();
-    expect(screen.queryByText('Test DS')).not.toBeInTheDocument();
+    expect(screen.queryByText(dataSource.name)).not.toBeInTheDocument();
     expect(screen.queryByText(/refId: A/)).not.toBeInTheDocument();
   });
 });

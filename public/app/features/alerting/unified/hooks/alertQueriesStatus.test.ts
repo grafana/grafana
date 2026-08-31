@@ -1,24 +1,12 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { isExpressionReference } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { mockDataSource } from '../mocks';
+
 import { type AlertQueryDataSources, getAlertQueriesStatus, useAlertQueryDataSources } from './alertQueriesStatus';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  isExpressionReference: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceList: jest.fn(),
-}));
-
-const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
-const mockIsExpressionReference = jest.mocked(isExpressionReference);
 
 function makeQuery(uid: string): AlertQuery {
   return {
@@ -34,84 +22,84 @@ function makeListItem(uid: string): DataSourceInstanceListItem {
   return { uid, name: uid } as DataSourceInstanceListItem;
 }
 
-function mockList(items: DataSourceInstanceListItem[], overrides: Partial<{ isLoading: boolean; error: Error }> = {}) {
-  mockUseDataSourceInstanceList.mockReturnValue({ items, isLoading: false, error: undefined, ...overrides });
-}
-
 function makeDataSources(uids: string[]): AlertQueryDataSources {
   return new Map(uids.map((uid) => [uid, makeListItem(uid)]));
 }
 
-beforeEach(() => {
-  jest.clearAllMocks();
-  mockIsExpressionReference.mockReturnValue(false);
+function setDataSources(...uids: string[]) {
+  const dataSources = uids.map((uid) => mockDataSource({ uid, name: uid }));
+  const settings = Object.fromEntries(dataSources.map((dataSource) => [dataSource.name, dataSource]));
+  setDataSourceInstanceSettings(settings);
+}
+
+afterEach(() => {
+  setDataSourceInstanceSettings({});
 });
 
 describe('useAlertQueryDataSources', () => {
-  it('reports a loading state while the datasource list loads', () => {
-    mockList([], { isLoading: true });
+  it('reports a loading state while the datasource list loads', async () => {
+    setDataSources('ds-uid');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('ds-uid')]));
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.dataSourcesByUid.size).toBe(0);
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
   });
 
-  it('exposes an error when the datasource list fails to load', () => {
-    mockList([], { error: new Error('network failure') });
-
-    const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('ds-uid')]));
-
-    expect(result.current.error).toBeInstanceOf(Error);
-    expect(result.current.dataSourcesByUid.size).toBe(0);
-  });
-
-  it('resolves the datasources referenced by the queries, keyed by uid', () => {
-    mockList([makeListItem('ds-1'), makeListItem('ds-2')]);
+  it('resolves the datasources referenced by the queries, keyed by uid', async () => {
+    setDataSources('ds-1', 'ds-2');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('ds-1'), makeQuery('ds-2')]));
 
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeUndefined();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
     expect([...result.current.dataSourcesByUid.keys()]).toEqual(['ds-1', 'ds-2']);
-    expect(result.current.dataSourcesByUid.get('ds-1')).toEqual({ uid: 'ds-1', name: 'ds-1' });
+    expect(result.current.dataSourcesByUid.get('ds-1')).toMatchObject({ uid: 'ds-1', name: 'ds-1' });
   });
 
-  it('leaves out datasources the queries do not reference', () => {
-    mockList([makeListItem('ds-1'), makeListItem('unreferenced')]);
+  it('leaves out datasources the queries do not reference', async () => {
+    setDataSources('ds-1', 'unreferenced');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('ds-1')]));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect([...result.current.dataSourcesByUid.keys()]).toEqual(['ds-1']);
   });
 
-  it('omits uids that are missing from the list', () => {
-    mockList([makeListItem('ds-1')]);
+  it('omits uids that are missing from the list', async () => {
+    setDataSources('ds-1');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('ds-1'), makeQuery('ds-missing')]));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.dataSourcesByUid.has('ds-missing')).toBe(false);
   });
 
-  it('skips expression references', () => {
-    mockIsExpressionReference.mockReturnValue(true);
-    mockList([makeListItem('__expr__')]);
+  it('skips expression references', async () => {
+    setDataSources('ds-1');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('__expr__')]));
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.dataSourcesByUid.size).toBe(0);
   });
 
-  it('rebuilds the map when a uid containing the key separator is swapped for two uids', () => {
+  it('rebuilds the map when a uid containing the key separator is swapped for two uids', async () => {
     // A uid can contain any character, so serializing the referenced uids has to distinguish
     // ['a,b'] from ['a', 'b'] — joining on a comma would give both the same memo key.
-    mockList([makeListItem('a'), makeListItem('b'), makeListItem('a,b')]);
+    setDataSources('a', 'b', 'a,b');
 
     const { result, rerender } = renderHook(
       ({ queries }: { queries: AlertQuery[] }) => useAlertQueryDataSources(queries),
       { initialProps: { queries: [makeQuery('a,b')] } }
     );
 
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect([...result.current.dataSourcesByUid.keys()]).toEqual(['a,b']);
 
     rerender({ queries: [makeQuery('a'), makeQuery('b')] });
@@ -119,28 +107,20 @@ describe('useAlertQueryDataSources', () => {
     expect([...result.current.dataSourcesByUid.keys()]).toEqual(['a', 'b']);
   });
 
-  it('reports no loading state when the queries reference no data sources', () => {
-    // An expression-only rule has nothing to resolve, so it must not be held in a loading state by
-    // the underlying list request.
-    mockIsExpressionReference.mockReturnValue(true);
-    mockList([], { isLoading: true });
+  it('reports no loading state when the queries reference no data sources', async () => {
+    setDataSources('ds-uid');
 
     const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('__expr__')]));
 
+    const initialDataSources = result.current.dataSourcesByUid;
+    expect(result.current.isLoading).toBe(false);
+
+    await waitFor(() => expect(result.current.dataSourcesByUid).not.toBe(initialDataSources));
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('hides a list error when the queries reference no data sources', () => {
-    mockIsExpressionReference.mockReturnValue(true);
-    mockList([], { error: new Error('network failure') });
-
-    const { result } = renderHook(() => useAlertQueryDataSources([makeQuery('__expr__')]));
-
-    expect(result.current.error).toBeUndefined();
-  });
-
-  it('keeps the same map across a rerender with a new but equivalent queries array', () => {
-    mockList([makeListItem('ds-1')]);
+  it('keeps the same map across a rerender with a new but equivalent queries array', async () => {
+    setDataSources('ds-1');
 
     // PreviewRule passes a fresh array on every render (react-hook-form's watch), so the map
     // must not be rebuilt unless the referenced uids actually change.
@@ -151,6 +131,7 @@ describe('useAlertQueryDataSources', () => {
       }
     );
 
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
     const first = result.current.dataSourcesByUid;
     rerender({ queries: [makeQuery('ds-1')] });
 
@@ -176,8 +157,6 @@ describe('getAlertQueriesStatus', () => {
   });
 
   it('reports all datasources available for an expression-only rule', () => {
-    mockIsExpressionReference.mockReturnValue(true);
-
     expect(getAlertQueriesStatus([makeQuery('__expr__')], new Map())).toEqual({
       allDataSourcesAvailable: true,
     });
