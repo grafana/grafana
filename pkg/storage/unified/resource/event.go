@@ -44,8 +44,12 @@ func (e *WriteEvent) Validate() error {
 		return fmt.Errorf("watch event type is unknown")
 	}
 
-	if (e.Type == resourcepb.WatchEvent_MODIFIED || e.Type == resourcepb.WatchEvent_DELETED) && e.PreviousRV <= 0 {
-		return fmt.Errorf("previous RV is required for update and delete events")
+	if e.Type == resourcepb.WatchEvent_MODIFIED && e.PreviousRV <= 0 {
+		return fmt.Errorf("previous RV is required for update events")
+	}
+
+	if e.Type == resourcepb.WatchEvent_DELETED && e.PreviousRV < 0 {
+		return fmt.Errorf("previous RV must not be negative")
 	}
 
 	return nil
