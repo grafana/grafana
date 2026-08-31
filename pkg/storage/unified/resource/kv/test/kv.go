@@ -227,10 +227,10 @@ func runTestKVSave(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		binaryKey := namespacedKey(nsPrefix, "binary-key")
 
 		binaryData := []byte{0x00, 0x01, 0x02, 0x03, 0xFF, 0xFE, 0xFD}
-		saveKVHelper(t, kv, ctx, testSection, binaryKey, bytes.NewReader(binaryData))
+		saveKVHelper(t, kv, ctx, kvpkg.SearchSnapshotDataSection, binaryKey, bytes.NewReader(binaryData))
 
 		// Verify binary data
-		reader, err := kv.Get(ctx, testSection, binaryKey)
+		reader, err := kv.Get(ctx, kvpkg.SearchSnapshotDataSection, binaryKey)
 		require.NoError(t, err)
 
 		value, err := io.ReadAll(reader)
