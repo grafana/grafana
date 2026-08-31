@@ -21,6 +21,7 @@ import (
 const (
 	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
+	listEventsBatchSize  = 50
 )
 
 // eventStore is a store for events.
@@ -223,31 +224,61 @@ func (n *eventStore) ListSince(ctx context.Context, sinceRV int64, sortOrder Sor
 	))
 	return func(yield func(Event, error) bool) {
 		defer span.End()
+
+		batch := make([]string, 0, listEventsBatchSize)
+		flush := func() bool {
+			cont, err := n.yieldEventsForKeys(ctx, batch, yield)
+			batch = batch[:0]
+			if err != nil {
+				yield(Event{}, err)
+				return false
+			}
+			return cont
+		}
+
 		for evtKey, err := range n.ListKeysSince(ctx, sinceRV, sortOrder) {
 			if err != nil {
 				yield(Event{}, err)
 				return
 			}
 
-			reader, err := n.kv.Get(ctx, eventsSection, evtKey)
-			if err != nil {
-				yield(Event{}, err)
-				return
-			}
-
-			var event Event
-			if err := json.NewDecoder(reader).Decode(&event); err != nil {
-				_ = reader.Close()
-				yield(Event{}, err)
-				return
-			}
-
-			_ = reader.Close()
-			if !yield(event, nil) {
+			batch = append(batch, evtKey)
+			if len(batch) == listEventsBatchSize && !flush() {
 				return
 			}
 		}
+
+		if len(batch) > 0 {
+			flush()
+		}
 	}
+}
+
+func (n *eventStore) yieldEventsForKeys(ctx context.Context, keys []string, yield func(Event, error) bool) (bool, error) {
+	if len(keys) == 0 {
+		return true, nil
+	}
+
+	events := make([]Event, 0, len(keys))
+	for pair, err := range n.kv.BatchGet(ctx, eventsSection, keys) {
+		if err != nil {
+			return false, err
+		}
+		var event Event
+		decErr := json.NewDecoder(pair.Value).Decode(&event)
+		_ = pair.Value.Close()
+		if decErr != nil {
+			return false, decErr
+		}
+		events = append(events, event)
+	}
+
+	for i := range events {
+		if !yield(events[i], nil) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 // CleanupOldEvents deletes events older than the specified retention period.

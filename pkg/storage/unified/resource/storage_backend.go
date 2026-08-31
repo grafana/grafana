@@ -1964,34 +1964,48 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 
 func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
-		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
-		for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv, SortOrderDesc) {
+		dataKeys := func(yield func(DataKey, error) bool) {
+			for evtKeyStr, err := range k.eventStore.ListKeysSince(ctx, sinceRv, SortOrderDesc) {
+				if err != nil {
+					yield(DataKey{}, err)
+					return
+				}
+
+				evtKey, err := ParseEventKey(evtKeyStr)
+				if err != nil {
+					yield(DataKey{}, err)
+					return
+				}
+
+				if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
+					continue
+				}
+				// Empty key.Namespace = cross-namespace scan; otherwise filter to one namespace.
+				if key.Namespace != "" && evtKey.Namespace != key.Namespace {
+					continue
+				}
+
+				// we only care about the latest revision of every resource in the list
+				dedupKey := evtKey.Namespace + "/" + evtKey.Name
+				if _, ok := seen[dedupKey]; ok {
+					continue
+				}
+				seen[dedupKey] = struct{}{}
+
+				if !yield(DataKey(evtKey), nil) {
+					return
+				}
+			}
+		}
+
+		for obj, err := range batchGetResourceKeys(ctx, k.dataStore, dataKeys) {
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
 			}
 
-			evtKey, err := ParseEventKey(evtKeyStr)
-			if err != nil {
-				yield(&ModifiedResource{}, err)
-				return
-			}
-
-			if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
-				continue
-			}
-			// Empty key.Namespace = cross-namespace scan; otherwise filter to one namespace.
-			if key.Namespace != "" && evtKey.Namespace != key.Namespace {
-				continue
-			}
-
-			dedupKey := evtKey.Namespace + "/" + evtKey.Name
-			if _, ok := seen[dedupKey]; ok {
-				continue
-			}
-			seen[dedupKey] = struct{}{}
-			value, err := k.getValueFromDataStore(ctx, DataKey(evtKey))
+			value, err := readAndClose(obj.Value)
 			if err != nil {
 				yield(&ModifiedResource{}, err)
 				return
@@ -1999,13 +2013,13 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 
 			if !yield(&ModifiedResource{
 				Key: resourcepb.ResourceKey{
-					Group:     evtKey.Group,
-					Resource:  evtKey.Resource,
-					Namespace: evtKey.Namespace,
-					Name:      evtKey.Name,
+					Group:     obj.Key.Group,
+					Resource:  obj.Key.Resource,
+					Namespace: obj.Key.Namespace,
+					Name:      obj.Key.Name,
 				},
-				Action:          convertEventType(evtKey.Action),
-				ResourceVersion: evtKey.ResourceVersion,
+				Action:          convertEventType(obj.Key.Action),
+				ResourceVersion: obj.Key.ResourceVersion,
 				Value:           value,
 			}, nil) {
 				return

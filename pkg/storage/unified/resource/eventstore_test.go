@@ -3,7 +3,11 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"iter"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -13,6 +17,7 @@ import (
 	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -468,6 +473,83 @@ func testEventStoreListSince(t *testing.T, ctx context.Context, store *eventStor
 	assert.Equal(t, int64(3000), retrievedEvents[1].ResourceVersion)
 	assert.Equal(t, "test-3", retrievedEvents[1].Name)
 	assert.Equal(t, DataActionDeleted, retrievedEvents[1].Action)
+}
+
+// countingEventsKV wraps a KV and counts the reads issued against the events
+// section so a test can prove how a long event backlog is resolved.
+type countingEventsKV struct {
+	KV
+	mu         sync.Mutex
+	getCalls   int
+	batchCalls int
+	batchKeys  int
+}
+
+func (k *countingEventsKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if section == eventsSection {
+		k.mu.Lock()
+		k.getCalls++
+		k.mu.Unlock()
+	}
+	return k.KV.Get(ctx, section, key)
+}
+
+func (k *countingEventsKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if section == eventsSection {
+		k.mu.Lock()
+		k.batchCalls++
+		k.batchKeys += len(keys)
+		k.mu.Unlock()
+	}
+	return k.KV.BatchGet(ctx, section, keys)
+}
+
+func (k *countingEventsKV) stats() (getCalls, batchCalls, batchKeys int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.getCalls, k.batchCalls, k.batchKeys
+}
+
+// TestIntegrationEventStore_ListSince_BatchesReads verifies that replaying a
+// long event backlog resolves the payloads with one BatchGet per chunk rather
+// than a Get per event — the per-event Get is one gRPC round trip each once the
+// KV backend is remote.
+func TestIntegrationEventStore_ListSince_BatchesReads(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	counting := &countingEventsKV{KV: setupBadgerKV(t)}
+	store := newEventStore(counting)
+	ctx := context.Background()
+
+	const numEvents = 2*listEventsBatchSize + 5 // spans more than two chunks
+	for i := range numEvents {
+		require.NoError(t, store.Save(ctx, Event{
+			Namespace:       "default",
+			Group:           "apps",
+			Resource:        "resource",
+			Name:            fmt.Sprintf("test-%03d", i),
+			ResourceVersion: int64(1000 + i),
+			Action:          DataActionCreated,
+		}))
+	}
+
+	getsBefore, batchesBefore, keysBefore := counting.stats()
+
+	got := 0
+	var lastRV int64
+	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
+		require.NoError(t, err)
+		require.Greater(t, event.ResourceVersion, lastRV, "events must be yielded in ascending resource version order")
+		lastRV = event.ResourceVersion
+		got++
+	}
+	require.Equal(t, numEvents, got)
+
+	getsAfter, batchesAfter, keysAfter := counting.stats()
+	expectedBatches := (numEvents + listEventsBatchSize - 1) / listEventsBatchSize
+	assert.Zero(t, getsAfter-getsBefore, "ListSince must not issue a Get per event")
+	assert.Equal(t, expectedBatches, batchesAfter-batchesBefore, "payloads should be resolved with one BatchGet per chunk")
+	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
 }
 
 func TestIntegrationEventStore_ListSince_Empty(t *testing.T) {
