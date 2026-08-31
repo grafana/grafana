@@ -241,7 +241,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	writer.Header().Set("Cache-Control", "no-store")
 	writer.WriteHeader(200)
 	if err := p.index.Execute(writer, &data); err != nil {
-		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+		if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, http.ErrAbortHandler) { // Client has stopped listening or handler was aborted.
 			return
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))

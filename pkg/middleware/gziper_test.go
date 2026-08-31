@@ -121,6 +121,29 @@ func TestGziperDoesNotLeakGoroutines(t *testing.T) {
 			serveGzipped(t, http.MethodGet, "/d/abc/dash", &brokenResponseWriter{failAfter: 1, short: true})
 		}
 	})
+
+	t.Run("responses where handler panics", func(t *testing.T) {
+		defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
+
+		for range requests {
+			func() {
+				defer func() {
+					_ = recover()
+				}()
+
+				req, err := http.NewRequest(http.MethodGet, "/d/abc/dash", nil)
+				require.NoError(t, err)
+				req.Header.Set("Accept-Encoding", "gzip")
+
+				panickingHandler := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+					_, _ = rw.Write(gzipTestBody)
+					panic("handler failure")
+				})
+
+				Gziper()(panickingHandler).ServeHTTP(web.NewResponseWriter(http.MethodGet, httptest.NewRecorder()), req)
+			}()
+		}
+	})
 }
 
 func TestGzipSink(t *testing.T) {
