@@ -265,6 +265,16 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	proxyutil.ApplyUserHeader(proxy.settings.SendUserHeader, req, proxy.requester)
 
 	proxyutil.ClearCookieHeader(req, ds.Spec.KeepCookies(), []string{proxy.settings.LoginCookieName})
+
+	// NOTE: The per-datasource `jsonData.allowedHeaders` pass-through is
+	// deliberately not enforced here. In `access=proxy` mode Grafana's
+	// reverse proxy already forwards incoming request headers verbatim to
+	// the datasource, so allow-listed headers reach it today; adding a
+	// strip filter here would break existing setups that rely on that
+	// behavior. The allow-list is applied on the backend-plugin path by
+	// ForwardHeadersMiddleware, where the SDK request does not otherwise
+	// carry incoming HTTP headers.
+
 	ua := proxy.settings.DataProxyUserAgent
 	if proxy.settings.DataProxyForwardUserAgent {
 		if originalUA := req.Header.Get("User-Agent"); originalUA != "" {

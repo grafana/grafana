@@ -169,6 +169,56 @@ func TestClearCookieHeader(t *testing.T) {
 	})
 }
 
+func TestFilterAllowedHeaders(t *testing.T) {
+	mkHeader := func(pairs ...string) http.Header {
+		h := http.Header{}
+		for i := 0; i+1 < len(pairs); i += 2 {
+			h.Add(pairs[i], pairs[i+1])
+		}
+		return h
+	}
+
+	t.Run("empty allow-list returns nothing", func(t *testing.T) {
+		got := FilterAllowedHeaders(mkHeader("X-Scope-OrgID", "t"), nil, nil)
+		require.Empty(t, got)
+	})
+
+	t.Run("exact match is case-insensitive on header name", func(t *testing.T) {
+		got := FilterAllowedHeaders(mkHeader("x-scope-orgid", "t"), []string{"X-SCOPE-ORGID"}, nil)
+		require.Equal(t, []string{"X-Scope-Orgid"}, got)
+	})
+
+	t.Run("prefix match", func(t *testing.T) {
+		h := mkHeader("X-Tenant-Id", "t1", "X-Tenant-Cluster", "c1", "X-Other", "n")
+		got := FilterAllowedHeaders(h, []string{"X-Tenant-[]"}, nil)
+		require.Equal(t, []string{"X-Tenant-Cluster", "X-Tenant-Id"}, got)
+	})
+
+	t.Run("match-all subject to deny-list", func(t *testing.T) {
+		h := mkHeader("Authorization", "Bearer x", "X-Scope-OrgID", "t")
+		got := FilterAllowedHeaders(h, []string{"[]"}, []string{"Authorization"})
+		require.Equal(t, []string{"X-Scope-Orgid"}, got)
+	})
+
+	t.Run("deny-list prefix match", func(t *testing.T) {
+		h := mkHeader("X-Grafana-User", "u", "X-Scope-OrgID", "t")
+		got := FilterAllowedHeaders(h, []string{"[]"}, []string{"X-Grafana-[]"})
+		require.Equal(t, []string{"X-Scope-Orgid"}, got)
+	})
+
+	t.Run("kill switch denies everything", func(t *testing.T) {
+		h := mkHeader("X-Scope-OrgID", "t")
+		got := FilterAllowedHeaders(h, []string{"X-Scope-OrgID"}, []string{"[]"})
+		require.Empty(t, got)
+	})
+
+	t.Run("returns canonical header names", func(t *testing.T) {
+		h := mkHeader("x-scope-orgid", "t")
+		got := FilterAllowedHeaders(h, []string{"x-scope-orgid"}, nil)
+		require.Equal(t, []string{"X-Scope-Orgid"}, got)
+	})
+}
+
 func TestApplyUserHeader(t *testing.T) {
 	t.Run("Should not apply user header when not enabled, should remove the existing", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)

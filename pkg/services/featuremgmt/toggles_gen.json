@@ -2018,6 +2018,20 @@
     },
     {
       "metadata": {
+        "name": "datasourceForwardHeaders",
+        "resourceVersion": "1787620047976",
+        "creationTimestamp": "2026-08-25T01:07:27Z",
+        "deletionTimestamp": "2026-08-25T05:13:06Z"
+      },
+      "spec": {
+        "description": "Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, gated by the `[datasource_forward_headers]` deny-list).",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceLegacyIdApi",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2991,6 +3005,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.datasourceForwardHeaders",
+        "resourceVersion": "1787634786882",
+        "creationTimestamp": "2026-08-25T05:13:06Z"
+      },
+      "spec": {
+        "description": "Forward allow-listed HTTP request headers from the user's request to data sources (per-datasource `jsonData.allowedHeaders`, filtered by the `[datasource_forward_headers]` deny-list).",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
