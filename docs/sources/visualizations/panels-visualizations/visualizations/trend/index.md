@@ -40,7 +40,7 @@ Trend visualizations support all visual styles and options available in the [tim
 - No multi-timezone x-axis
 - No ability to change the dashboard time range using drag-selection
 
-Trend visualizations require at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows an error. When multiple frames or queries exist, you should use a [join transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/) on the x-fields to produce a single frame.
+Trend visualizations require at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows the error "Values must be in ascending order." When multiple frames or queries exist, you should use a [join transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/transform-data/) on the x-fields to produce a single frame.
 
 ## Configuration options
 
