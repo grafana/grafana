@@ -1275,7 +1275,7 @@
       "delete-modal-confirmation-text": "삭제",
       "delete-modal-delete-button": "삭제",
       "delete-modal-deleting": "삭제 중…",
-      "delete-modal-text": "{{folderName}}이 작업을 수행하면 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
+      "delete-modal-text": "이 작업을 수행하면 <1>{{folderName}}</1> 폴더의 모든 알림 규칙이 삭제됩니다. 중첩된 폴더에는 영향을 미치지 않습니다.",
       "delete-modal-title": "삭제",
       "error": "{{error}} 폴더 작업 실행 실패:",
       "pause": {
@@ -5731,7 +5731,7 @@
       "custom-grid": "사용자 지정 그리드",
       "custom-grid-description": "각 패널의 위치와 크기를 개별적으로 지정하세요.",
       "description": "패널을 추가하여 데이터 시각화",
-      "import-a-dashboard-body": "파일 또는 <1>grafana.com</1>에서 대시보드 가져오기",
+      "import-a-dashboard-body": "파일 또는 <2>grafana.com</2>에서 대시보드 가져오기",
       "import-a-dashboard-header": "대시보드 가져오기",
       "import-dashboard-button": "대시보드 가져오기",
       "layout-default-hint": "선택한 레이아웃은 모든 새 탭과 행의 기본 레이아웃으로도 사용됩니다. 나중에 '대시보드 설정 > 일반'에서 이 설정을 변경할 수 있습니다.",
@@ -15870,7 +15870,7 @@
     },
     "empty-state": {
       "message": "아직 생성된 공유 대시보드가 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 기존 대시보드에서 공유 대시보드를 생성하세요. <4>자세히 알아보기</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "액세스 권한 일시 중지"
@@ -15941,7 +15941,7 @@
   "snapshot": {
     "empty-state": {
       "message": "아직 생성된 스냅샷이 없습니다.",
-      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <2>자세히 알아보기</2>"
+      "more-info": "<1>공유</1> 모달을 통해 모든 대시보드의 스냅샷을 생성할 수 있습니다. <4>자세히 알아보기</4>"
     },
     "external-badge": "외부",
     "load-error": {

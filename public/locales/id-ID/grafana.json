@@ -7000,7 +7000,7 @@
     },
     "custom-variable-form": {
       "custom-options": "Opsi kustom",
-      "json-values-tooltip": "Berikan JSON dalam bentuk array objek, dengan setiap objek dapat memiliki sejumlah properti.<br/>Lihat < 4>dokumen kami</4> untuk informasi selengkapnya.",
+      "json-values-tooltip": "Berikan JSON dalam bentuk array objek, dengan setiap objek dapat memiliki sejumlah properti.<br/>Lihat <4>dokumen kami</4> untuk informasi selengkapnya.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
       "selection-options": "Opsi pemilihan"

@@ -958,7 +958,7 @@
         "jira": "„{{issueType}}” problémát hoz létre a(z) „{{project}}” projektben"
       },
       "telegram": {
-        "parse-mode-warning-body": "Ha a < 3 >Nincs</3 > < 1>parse_mode</1 > opciótól eltérő opciót használ, a rövidítés érvénytelen üzenetet eredményezhet, ami miatt az értesítés sikertelen lehet. Hosszabb üzenetek esetén javasoljuk egy alternatív kapcsolatfelvételi módszer használatát.",
+        "parse-mode-warning-body": "Ha a <3>Nincs</3> <1>parse_mode</1> opciótól eltérő opciót használ, a rövidítés érvénytelen üzenetet eredményezhet, ami miatt az értesítés sikertelen lehet. Hosszabb üzenetek esetén javasoljuk egy alternatív kapcsolatfelvételi módszer használatát.",
         "parse-mode-warning-title": "A Telegram-üzenetek legfeljebb 4096 UTF-8-karakterből állhatnak."
       },
       "used-by_one": "{{count}} értesítési házirend használja",
@@ -7969,7 +7969,7 @@
     }
   },
   "dashboard-scene-help-wizard": {
-    "support-bundle": "A < 1 >támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
+    "support-bundle": "A <1>támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
   },
   "dashboard-schema-editor": {
     "json-disabled-tooltip": "Javítsa ki a YAML-szintaxishibákat a JSON-ra való átváltáshoz",
@@ -11072,7 +11072,7 @@
   "help-wizard": {
     "download-snapshot": "Pillanatkép letöltése ({{snapshotSize}})",
     "github-comment": "GitHub-megjegyzés másolása",
-    "support-bundle": "A < 1 >támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti.",
+    "support-bundle": "A <1>támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti.",
     "troubleshooting-help": "Hibaelhárítási segítség kéréséhez küldjön egy pillanatfelvételt erről a panelről a Grafana Labs műszaki ügyfélszolgálatának. A pillanatfelvétel lekérdezési válaszadatokat és panelbeállításokat tartalmaz."
   },
   "histogram": {
