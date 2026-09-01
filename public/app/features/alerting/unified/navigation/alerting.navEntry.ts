@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/i18n/no-untranslated-strings -- nav item text is translated by id in public/app/core/utils/navBarItem-translations.ts, whose lookup takes precedence, so the strings below are only the English fallback. The core nav sections declare theirs the same way and are exempt only because the rule's autofix is scoped to public/app/features; making nav entries exempt everywhere is the real fix. */
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { NavID, NavWeight } from 'app/core/navtree/constants';
