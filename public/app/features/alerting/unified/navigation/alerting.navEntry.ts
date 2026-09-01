@@ -1,5 +1,4 @@
 import { type NavModelItem } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { NavID, NavWeight } from 'app/core/navtree/constants';
 import { type NavEntryBuilder, buildEntries, hasAny } from 'app/core/navtree/utils';
@@ -39,8 +38,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
     // V2 navigation groups alert activity and groups under one page (tabs managed on the frontend)
     when: () => isAlertingTriage() && isAlertingV2() && (alertRulesAccess() || alertInstanceAccess()),
     build: () => ({
-      text: t('nav.alerting-activity.title', 'Alert activity'),
-      subTitle: t('nav.alerting-activity.subtitle', 'View alerts and active notifications'),
+      text: 'Alert activity',
+      subTitle: 'View alerts and active notifications',
       id: 'alert-activity',
       url: '/alerting/alerts',
       icon: 'bell',
@@ -49,8 +48,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => isAlertingTriage() && !isAlertingV2() && alertRulesAccess(),
     build: () => ({
-      text: t('nav.alerting-alerts.title', 'Alert activity'),
-      subTitle: t('nav.alerting-alerts.subtitle', 'Visualize active and pending alerts'),
+      text: 'Alert activity',
+      subTitle: 'Visualize active and pending alerts',
       id: 'alert-alerts',
       url: '/alerting/alerts',
       icon: 'bell',
@@ -59,8 +58,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: alertRulesAccess,
     build: () => ({
-      text: t('nav.alerting-list.title', 'Alert rules'),
-      subTitle: t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire'),
+      text: 'Alert rules',
+      subTitle: 'Rules that determine whether an alert will fire',
       // V2 navigation renders rules with frontend-managed tabs under a different nav id
       id: isAlertingV2() ? 'alert-rules' : 'alert-list',
       url: '/alerting/list',
@@ -70,11 +69,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => isAlertingV2() && (contactPointsAccess() || notificationPoliciesAccess()),
     build: () => ({
-      text: t('nav.alerting-notification-config.title', 'Notification configuration'),
-      subTitle: t(
-        'nav.alerting-notification-config.subtitle',
-        'Manage contact points, notification policies, templates, and time intervals'
-      ),
+      text: 'Notification configuration',
+      subTitle: 'Manage contact points, notification policies, templates, and time intervals',
       id: 'notification-config',
       url: '/alerting/notifications',
       icon: 'comment-alt-share',
@@ -83,11 +79,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => !isAlertingV2() && contactPointsAccess(),
     build: () => ({
-      text: t('nav.alerting-receivers.title', 'Contact points'),
-      subTitle: t(
-        'nav.alerting-receivers.subtitle',
-        'Choose how to notify your contact points when an alert instance fires'
-      ),
+      text: 'Contact points',
+      subTitle: 'Choose how to notify your contact points when an alert instance fires',
       id: 'receivers',
       url: '/alerting/notifications',
       icon: 'comment-alt-share',
@@ -96,8 +89,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => !isAlertingV2() && notificationPoliciesAccess(),
     build: () => ({
-      text: t('nav.alerting-am-routes.title', 'Notification policies'),
-      subTitle: t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points'),
+      text: 'Notification policies',
+      subTitle: 'Determine how alerts are routed to contact points',
       id: 'am-routes',
       url: '/alerting/routes',
       icon: 'sitemap',
@@ -106,8 +99,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: silencesAccess,
     build: () => ({
-      text: t('nav.alerting-silences.title', 'Silences'),
-      subTitle: t('nav.alerting-silences.subtitle', 'Stop notifications from one or more alerting rules'),
+      text: 'Silences',
+      subTitle: 'Stop notifications from one or more alerting rules',
       id: 'silences',
       url: '/alerting/silences',
       icon: 'bell-slash',
@@ -117,8 +110,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
     // In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity
     when: () => alertInstanceAccess() && !(isAlertingV2() && isAlertingTriage()),
     build: () => ({
-      text: t('nav.alerting-groups.title', 'Active notifications'),
-      subTitle: t('nav.alerting-groups.subtitle', 'See grouped alerts with active notifications'),
+      text: 'Active notifications',
+      subTitle: 'See grouped alerts with active notifications',
       id: 'groups',
       url: '/alerting/groups',
       icon: 'layer-group',
@@ -127,7 +120,7 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => stateHistoryServedByLoki() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead),
     build: () => ({
-      text: t('nav.alerting-history.title', 'History'),
+      text: 'History',
       id: 'alerts-history',
       url: '/alerting/history',
       icon: 'history',
@@ -143,8 +136,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
       Boolean(config.featureToggles.alertingRuleRecoverDeleted) &&
       !isAlertingV2(),
     build: () => ({
-      text: t('nav.alerts-recently-deleted.title', 'Recently deleted'),
-      subTitle: t('nav.alerts-recently-deleted.subtitle', 'See recently deleted alert rules'),
+      text: 'Recently deleted',
+      subTitle: 'See recently deleted alert rules',
       id: 'alerts/recently-deleted',
       url: '/alerting/recently-deleted',
     }),
@@ -152,7 +145,7 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => contextSrv.hasRole('Admin'),
     build: () => ({
-      text: t('nav.alerting-admin.title', 'Settings'),
+      text: 'Settings',
       id: 'alerting-admin',
       url: '/alerting/admin',
       icon: 'cog',
@@ -161,8 +154,8 @@ const ALERTING_CHILDREN: NavEntryBuilder[] = [
   {
     when: () => hasAny(AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite),
     build: () => ({
-      text: t('nav.create-alert.title', 'New alert rule'),
-      subTitle: t('nav.create-alert.subtitle', 'Create an alert rule'),
+      text: 'New alert rule',
+      subTitle: 'Create an alert rule',
       id: 'alert',
       icon: 'plus',
       url: '/alerting/new',
@@ -185,8 +178,8 @@ export const alertingNavEntry: NavEntryBuilder = {
     }
 
     return {
-      text: t('nav.alerting.title', 'Alerting'),
-      subTitle: t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur'),
+      text: 'Alerting',
+      subTitle: 'Learn about problems in your systems moments after they occur',
       id: NavID.alerting,
       icon: 'bell',
       children,
