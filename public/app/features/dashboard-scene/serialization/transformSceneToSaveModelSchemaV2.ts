@@ -109,6 +109,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
     preload: sceneDash.preload ?? defaultDashboardV2Spec().preload,
+    stickyControls: sceneDash.stickyControls ?? defaultDashboardV2Spec().stickyControls,
     editable: sceneDash.editable ?? defaultDashboardV2Spec().editable,
     links: (sceneDash.links || [])
       // Links with a `origin` property didn't come from the persisted JSON schema, so we also skip them

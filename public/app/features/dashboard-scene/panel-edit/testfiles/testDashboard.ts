@@ -774,6 +774,7 @@ export const testDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
     liveNow: false,
     editable: true,
     preload: false,
+    stickyControls: true,
     links: [],
     variables: [],
     annotations: [],

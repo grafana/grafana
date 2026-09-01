@@ -28,6 +28,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editable?: boolean;
   /** Allows disabling grid lazy loading */
   preload?: boolean;
+  /** When false the controls row scrolls with the dashboard instead of staying pinned below the header */
+  stickyControls?: boolean;
   /** A uid when saved */
   uid?: string;
   /** @experimental */

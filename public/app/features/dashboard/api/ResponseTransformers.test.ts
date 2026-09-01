@@ -448,6 +448,8 @@ describe('ResponseTransformers', () => {
       expect(spec.tags).toEqual(dashboardV1.tags);
       expect(spec.cursorSync).toBe('Off'); // Assuming transformCursorSynctoEnum(0) returns 'Off'
       expect(spec.preload).toBe(dashboardV1.preload);
+      // dashboardV1 does not set stickyControls, so the v2 default fills in
+      expect(spec.stickyControls).toBe(true);
       expect(spec.liveNow).toBe(dashboardV1.liveNow);
       expect(spec.editable).toBe(dashboardV1.editable);
       expect(spec.revision).toBe(dashboardV1.revision);
@@ -859,6 +861,7 @@ describe('ResponseTransformers', () => {
           tags: ['tag1', 'tag2'],
           cursorSync: 'Off',
           preload: true,
+          stickyControls: false,
           liveNow: false,
           editable: true,
           revision: 225,
@@ -957,6 +960,7 @@ describe('ResponseTransformers', () => {
       expect(dashboard.schemaVersion).toBe(40);
       //   expect(dashboard.graphTooltip).toBe(0); // Assuming transformCursorSynctoEnum('Off') returns 0
       expect(dashboard.preload).toBe(dashboardV2.spec.preload);
+      expect(dashboard.stickyControls).toBe(false);
       expect(dashboard.liveNow).toBe(dashboardV2.spec.liveNow);
       expect(dashboard.editable).toBe(dashboardV2.spec.editable);
       expect(dashboard.revision).toBe(225);

@@ -7,7 +7,10 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { getInternalRadius } from '@grafana/ui/internal';
 
+import { type DashboardScene } from './DashboardScene';
+
 interface DashboardControlsChromeProps {
+  dashboard: DashboardScene;
   children: React.ReactNode;
   onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
 }
@@ -25,11 +28,15 @@ interface DashboardControlsChromeProps {
  *
  * The spacing below the bar is owned by DashboardControls itself (its bottom padding plus the
  * bottom margin of its children), so consumers should not add their own vertical spacing here.
+ *
+ * A dashboard with stickyControls set to false opts out of the pinning: the bar then scrolls away
+ * with the canvas, the same way it already does on narrow viewports.
  */
-export function DashboardControlsChrome({ children, onPointerDown }: DashboardControlsChromeProps) {
+export function DashboardControlsChrome({ dashboard, children, onPointerDown }: DashboardControlsChromeProps) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
+  const { stickyControls } = dashboard.useState();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled, stickyControls !== false);
 
   return (
     <div className={styles.chrome} onPointerDown={onPointerDown}>
@@ -38,7 +45,7 @@ export function DashboardControlsChrome({ children, onPointerDown }: DashboardCo
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean, sticky: boolean) {
   return {
     chrome: css(
       {
@@ -50,9 +57,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
         // The canvas wrapper next to us is also z-index 1 and comes later in DOM order, so it wins the
         // tie and paints over the time picker and variable overlays, which render inside this wrapper.
         // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
-        // scrolls past on narrow viewports.
+        // scrolls past on narrow viewports (and on every viewport when the bar is not sticky).
         zIndex: 2,
         background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+      },
+      sticky && {
         [theme.breakpoints.up('md')]: {
           position: 'sticky',
           // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.

@@ -127,7 +127,17 @@ import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
+export const PERSISTED_PROPS = [
+  'title',
+  'description',
+  'tags',
+  'editable',
+  'graphTooltip',
+  'links',
+  'meta',
+  'preload',
+  'stickyControls',
+];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 

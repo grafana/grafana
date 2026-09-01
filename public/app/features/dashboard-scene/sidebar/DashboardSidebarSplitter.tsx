@@ -54,7 +54,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
       <div className={styles.canvasWrappperOld}>
         <NavToolbarActions dashboard={dashboard} />
-        <DashboardControlsChrome>{controls}</DashboardControlsChrome>
+        <DashboardControlsChrome dashboard={dashboard}>{controls}</DashboardControlsChrome>
         <div className={styles.body}>{body}</div>
       </div>
     </NativeScrollbar>
@@ -63,6 +63,10 @@ function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const { sidebar } = dashboard.state;
+  const { stickyControls } = dashboard.useState();
+  // When unpinned the controls render inside the scroll container instead of the fixed bar
+  // above it, so they scroll away with the dashboard.
+  const pinned = stickyControls !== false;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
@@ -135,7 +139,10 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
           data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
-          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
+          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+            {!pinned && controls}
+            {body}
+          </NativeScrollbar>
         </div>
       );
     }
@@ -147,7 +154,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          className={cx(
+            styles.scrollContainer,
+            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            !pinned && styles.scrollContainerUnpinned
+          )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
@@ -157,6 +168,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
           tabIndex={0}
           aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
+          {!pinned && controls}
           {body}
         </div>
 
@@ -175,7 +187,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         isHidden={sidebarContext.isHidden}
       >
         <ElementSelectionContext.Provider value={selectionContext}>
-          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+          {pinned && (
+            <DashboardControlsChrome dashboard={dashboard} onPointerDown={onClearSelection}>
+              {controls}
+            </DashboardControlsChrome>
+          )}
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
@@ -298,6 +314,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
+    }),
+    // With unpinned controls there is no bar above to bleed under, and the controls row inside
+    // the scroller brings its own top padding.
+    scrollContainerUnpinned: css({
+      paddingTop: 0,
+      marginTop: 0,
     }),
     body: css({
       label: 'body',

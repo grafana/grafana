@@ -145,6 +145,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     uid: state.uid,
     editable: state.editable,
     preload: state.preload,
+    stickyControls: state.stickyControls,
     time: {
       from: timeRange.from,
       to: timeRange.to,

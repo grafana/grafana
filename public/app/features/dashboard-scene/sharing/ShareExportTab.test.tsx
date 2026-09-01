@@ -53,6 +53,7 @@ const mockV2Spec: DashboardV2Spec = {
   links: [],
   liveNow: false,
   preload: false,
+  stickyControls: true,
   tags: [],
   timeSettings: {
     from: 'now-6h',
