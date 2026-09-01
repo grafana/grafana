@@ -12725,6 +12725,7 @@
       "title": "Recorded queries"
     },
     "reporting": {
+      "subtitle": "Create and manage PDF reports distributed via e-mail",
       "title": "Reporting"
     },
     "saved-queries": {

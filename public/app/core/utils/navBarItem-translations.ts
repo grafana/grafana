@@ -248,6 +248,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.recently-deleted.subtitle', 'Deleted dashboards are kept for up to 12 months.');
     case 'saved-queries':
       return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
+    case 'reports':
+      return t('nav.reporting.subtitle', 'Create and manage PDF reports distributed via e-mail');
     case 'banner-settings':
       return t('nav.banner-settings.subtitle', 'Show important updates and information at the top of every page');
     case 'secrets-management':
