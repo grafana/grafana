@@ -6,9 +6,9 @@
 // — the code has the same reach as anything else on the page — so it only ever runs code the reader
 // themselves typed and explicitly pressed Run on, exactly like a browser devtools console.
 
-export type CodeExecutionLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
+type CodeExecutionLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
 
-export interface CodeExecutionLog {
+interface CodeExecutionLog {
   level: CodeExecutionLevel;
   /** The console arguments, already formatted and joined the way the browser console would show them. */
   text: string;
@@ -94,7 +94,7 @@ function replaceUnserializable(_key: string, value: unknown): unknown {
   return value;
 }
 
-export function formatError(error: unknown): string {
+function formatError(error: unknown): string {
   if (error instanceof Error) {
     return `${error.name}: ${error.message}`;
   }
