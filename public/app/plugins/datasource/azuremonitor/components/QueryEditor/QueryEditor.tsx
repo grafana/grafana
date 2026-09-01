@@ -16,8 +16,10 @@ import {
   type AzureMonitorErrorish,
   type AzureMonitorOption,
 } from '../../types/types';
+import { AZURE_HEALTH_MODELS_SERVICE, getAzureMonitorService } from '../../utils/queryUtils';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
+import HealthModelsQueryEditor from '../HealthModelsQueryEditor/HealthModelsQueryEditor';
 import { AzureCheatSheetModal } from '../LogsQueryEditor/AzureCheatSheetModal';
 import LogsQueryEditor from '../LogsQueryEditor/LogsQueryEditor';
 import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
@@ -156,7 +158,7 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
-  switch (query.queryType) {
+  switch (getAzureMonitorService(query)) {
     case AzureQueryType.AzureMonitor:
       return (
         <NewMetricsQueryEditor
@@ -188,6 +190,18 @@ const EditorForQueryType = ({
     case AzureQueryType.AzureResourceGraph:
       return (
         <ArgQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AZURE_HEALTH_MODELS_SERVICE:
+      return (
+        <HealthModelsQueryEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}

@@ -5,6 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { AzureQueryType, ResultFormat } from '../../dataquery.gen';
 import { type AzureMonitorQuery } from '../../types/query';
 import migrateQuery from '../../utils/migrateQuery';
+import { getAzureMonitorService } from '../../utils/queryUtils';
 
 const DEFAULT_QUERY = {
   queryType: AzureQueryType.AzureMonitor,
@@ -24,7 +25,7 @@ const transformExemplarQuery = (query: AzureMonitorQuery, defaultSubscriptionId:
 
 const prepareQuery = (query: AzureMonitorQuery, defaultSubscriptionId: string) => {
   // Note: _.defaults does not apply default values deeply.
-  const withDefaults = defaults({}, query, DEFAULT_QUERY);
+  const withDefaults = getAzureMonitorService(query) ? { ...query } : defaults({}, query, DEFAULT_QUERY);
   const transformedQuery = transformExemplarQuery(withDefaults, defaultSubscriptionId);
   const migratedQuery = migrateQuery(transformedQuery);
 

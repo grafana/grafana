@@ -117,6 +117,17 @@ export const components = {
         input: 'data-testid azure-monitor-args-subscription',
       },
     },
+    healthModelsQueryEditor: {
+      container: {
+        input: 'data-testid azure-health-models-query-editor',
+      },
+      subscription: {
+        input: 'data-testid azure-health-models-subscription',
+      },
+      healthModel: {
+        input: 'data-testid azure-health-models-health-model',
+      },
+    },
     tracesQueryEditor: {
       container: {
         input: 'data-testid azure-monitor-traces-query-editor-with-experimental-ui',

@@ -9,6 +9,12 @@ import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import { type AzureMonitorQuery } from '../../types/query';
+import {
+  AZURE_HEALTH_MODELS_SERVICE,
+  type AzureMonitorService,
+  getAzureMonitorService,
+  setAzureMonitorService,
+} from '../../utils/queryUtils';
 
 interface QueryTypeFieldProps {
   query: AzureMonitorQuery;
@@ -38,21 +44,22 @@ export const QueryHeader = ({
   ];
 
   const currentMode = query.azureLogAnalytics?.mode;
+  const selectedService = getAzureMonitorService(query);
 
-  const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
+  const services: Array<{ value: AzureMonitorService; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureTraces, label: 'Traces' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
+    ...(app !== CoreApp.UnifiedAlerting && app !== CoreApp.CloudAlerting
+      ? [{ value: AZURE_HEALTH_MODELS_SERVICE, label: AZURE_HEALTH_MODELS_SERVICE }]
+      : []),
   ];
 
   const handleChange = useCallback(
-    (change: SelectableValue<AzureQueryType>) => {
-      if (change.value && change.value !== query.queryType) {
-        onQueryChange({
-          ...query,
-          queryType: change.value,
-        });
+    (change: SelectableValue<AzureMonitorService>) => {
+      if (change.value && change.value !== getAzureMonitorService(query)) {
+        onQueryChange(setAzureMonitorService(query, change.value));
       }
     },
     [onQueryChange, query]
@@ -140,10 +147,10 @@ export const QueryHeader = ({
 
         <InlineSelect
           label={t('components.query-header.label-service', 'Service')}
-          value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
+          value={selectedService === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : selectedService}
           placeholder={t('components.query-header.placeholder-service', 'Service...')}
           allowCustomValue
-          options={queryTypes}
+          options={services}
           onChange={handleChange}
         />
         {query.queryType === AzureQueryType.LogAnalytics && query.azureLogAnalytics?.mode === LogsEditorMode.Raw && (

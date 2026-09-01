@@ -69,6 +69,26 @@ describe('Azure Monitor Datasource', () => {
     const ds = new Datasource(createMockInstanceSetttings());
     const query = createMockQuery();
     delete query.queryType;
+    delete query.azureHealthModels;
+    expect(ds.filterQuery(query)).toBe(false);
+  });
+
+  it('should not filter a selected Azure Health Model', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery({
+      queryType: undefined,
+    });
+
+    expect(ds.filterQuery(query)).toBe(true);
+  });
+
+  it('should filter an Azure Health Models selection with no model', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery({
+      queryType: undefined,
+      azureHealthModels: { healthModelId: undefined },
+    });
+
     expect(ds.filterQuery(query)).toBe(false);
   });
 
@@ -110,6 +130,19 @@ describe('Azure Monitor Datasource', () => {
       };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(false);
+    });
+
+    it('should detect a variable in the Health Model resource ID', () => {
+      const query = createMockQuery({
+        queryType: undefined,
+        azureHealthModels: {
+          healthModelId:
+            '/subscriptions/$subscription/resourceGroups/rg/providers/Microsoft.CloudHealth/healthmodels/model',
+        },
+      });
+      const ds = new Datasource(createMockInstanceSetttings());
+
+      expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
   });
 });

@@ -12,6 +12,7 @@ keywords:
   - resources
   - queries
   - traces
+  - health models
   - application insights
 labels:
   products:
@@ -31,7 +32,7 @@ Grafana provides a query editor for the Azure Monitor data source, which is loca
 This document explains querying specific to the Azure Monitor data source.
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
+The Azure Monitor data source can retrieve data from Azure Monitor Metrics and Logs, the Azure Resource Graph, Application Insights Traces, and Azure Health Models. Each source has its own specialized editor.
 
 ## Before you begin
 
@@ -49,14 +50,28 @@ If you're new to Azure Monitor, here are some key terms used throughout this doc
 | **Application Insights**       | Azure's application performance monitoring (APM) service. It collects telemetry data like requests, exceptions, and traces from your applications.                                                                                                                                                                                        |
 | **Metrics vs. Logs**           | **Metrics** are lightweight numeric values collected at regular intervals (for example, CPU percentage). **Logs** are detailed records of events with varying schemas (for example, request logs, error messages). Metrics use a visual query builder; Logs require KQL.                                                                  |
 
-## Choose a query editor mode
+## Choose a service
 
-The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:
+The Azure Monitor data source provides five service options:
 
 - **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
 - **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
 - **Traces** for [Application Insights Traces](#query-application-insights-traces)
 - **Azure Resource Graph** for [Azure Resource Graph](#query-azure-resource-graph)
+- **Azure Health Models** for [Azure Health Models](#view-azure-health-models)
+
+## View Azure Health Models
+
+The Azure Health Models editor loads data directly from the `Microsoft.CloudHealth` REST API. It doesn't require KQL or another query language.
+
+To add a Health Model to a dashboard:
+
+1. In a Grafana panel, select the **Azure Monitor** data source.
+1. From the **Service** menu, select **Azure Health Models**.
+1. Select the Azure subscription containing the Health Model.
+1. Select the Health Model.
+
+Grafana retrieves the selected Health Model, its entities, and its relationships using API version `2026-09-01-preview`. The configured Azure Monitor data source identity must have permission to read those resources.
 
 ## Query Azure Monitor Metrics
 

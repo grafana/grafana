@@ -8,6 +8,7 @@ import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import createMockQuery from '../../mocks/query';
 import { type AzureMonitorQuery } from '../../types/query';
+import { AZURE_HEALTH_MODELS_SERVICE } from '../../utils/queryUtils';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import { QueryHeader } from './QueryHeader';
@@ -73,6 +74,36 @@ describe('Azure Monitor QueryHeader', () => {
         queryType: AzureQueryType.LogAnalytics,
       })
     );
+  });
+
+  it('offers Azure Health Models as a dashboard service', async () => {
+    const query = createMockQuery();
+    const onQueryChange = jest.fn();
+
+    renderComponent(query, { app: CoreApp.Dashboard, onQueryChange });
+
+    const serviceSelect = await screen.findByLabelText(/Service/i);
+    await selectOptionInTest(serviceSelect, AZURE_HEALTH_MODELS_SERVICE);
+
+    expect(onQueryChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryType: undefined,
+        azureHealthModels: query.azureHealthModels,
+      })
+    );
+  });
+
+  it('places Azure Health Models immediately after Azure Resource Graph', async () => {
+    const user = userEvent.setup();
+    const query = createMockQuery();
+
+    renderComponent(query, { app: CoreApp.Dashboard });
+
+    await user.click(await screen.findByLabelText(/Service/i));
+    const options = await screen.findAllByRole('option');
+    const optionLabels = options.map((option) => option.textContent);
+
+    expect(optionLabels.indexOf(AZURE_HEALTH_MODELS_SERVICE)).toBe(optionLabels.indexOf('Azure Resource Graph') + 1);
   });
 
   it('initializes logs editor mode to Raw when a raw query exists and builder is enabled', async () => {
