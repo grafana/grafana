@@ -34,6 +34,23 @@ const UNHIGHLIGHTED_LANGUAGES: Record<string, string> = {
 };
 
 /**
+ * Executable in the browser (see executeCode). Offered by the picker so a runnable cell can be
+ * authored, and given a "Run" affordance wherever `isExecutableLanguage` says so. JavaScript borrows
+ * the TypeScript grammar for highlighting (see HIGHLIGHT_ONLY_ALIASES) while keeping its own identity,
+ * because a reader running a `console.log` cell should see it labelled JavaScript, not TypeScript.
+ */
+const EXECUTABLE_LANGUAGES: Record<string, string> = {
+  javascript: 'JavaScript',
+};
+
+/**
+ * Normalised spellings that count as executable JavaScript. `typescript` is here because valid
+ * TypeScript that carries no type annotations is valid JavaScript, so the common demo case runs; a
+ * cell that uses TS-only syntax simply reports the syntax error the engine throws.
+ */
+const EXECUTABLE_ALIASES = new Set(['javascript', 'js', 'typescript', 'ts']);
+
+/**
  * Spellings a notebook can arrive with from outside the picker. `language` is a bare `z.string()` in
  * the spec schema, so a hand-written notebook, an import, or an assistant-authored spec can carry any
  * of these — and the picker itself now stores whatever a user types into it.
@@ -41,6 +58,16 @@ const UNHIGHLIGHTED_LANGUAGES: Record<string, string> = {
 const LANGUAGE_ALIASES: Record<string, CodeMirrorEditorLanguage> = {
   yml: 'yaml',
   ts: 'typescript',
+};
+
+/**
+ * Languages that keep their own stored identity but borrow another grammar for highlighting. Unlike
+ * LANGUAGE_ALIASES these are resolved only for the editor (toCodeMirrorLanguage), never for the
+ * canonical value, so a `javascript` cell stays `javascript` in the spec and in the picker.
+ */
+const HIGHLIGHT_ONLY_ALIASES: Record<string, CodeMirrorEditorLanguage> = {
+  javascript: 'typescript',
+  js: 'typescript',
 };
 
 // Plain text is the absence of a language, and '' is what the schema defaults `language` to. It is
@@ -80,7 +107,16 @@ export function toCodeMirrorLanguage(language: string): CodeMirrorEditorLanguage
   }
 
   // Object.hasOwn for the same reason as above: a bare lookup would resolve 'constructor' to Object's.
-  return Object.hasOwn(LANGUAGE_ALIASES, normalized) ? LANGUAGE_ALIASES[normalized] : undefined;
+  if (Object.hasOwn(LANGUAGE_ALIASES, normalized)) {
+    return LANGUAGE_ALIASES[normalized];
+  }
+
+  return Object.hasOwn(HIGHLIGHT_ONLY_ALIASES, normalized) ? HIGHLIGHT_ONLY_ALIASES[normalized] : undefined;
+}
+
+/** Whether a Run affordance should be offered for this language — see executeCode. */
+export function isExecutableLanguage(language: string): boolean {
+  return EXECUTABLE_ALIASES.has(normalizeLanguage(language));
 }
 
 /**
@@ -94,7 +130,14 @@ export function toCodeMirrorLanguage(language: string): CodeMirrorEditorLanguage
 export function canonicalLanguage(language: string): string {
   const normalized = normalizeLanguage(language);
 
-  return toCodeMirrorLanguage(normalized) ?? normalized;
+  if (isHighlightable(normalized)) {
+    return normalized;
+  }
+
+  // Only identity aliases (`yml` → `yaml`) collapse here. Highlight-only aliases like `javascript`
+  // are deliberately left alone: they borrow the TypeScript grammar to render but keep their own name
+  // in the spec and the picker, so resolving them here would relabel a JavaScript cell as TypeScript.
+  return Object.hasOwn(LANGUAGE_ALIASES, normalized) ? LANGUAGE_ALIASES[normalized] : normalized;
 }
 
 /** Display name for a language, falling back to the stored value for anything unrecognised. */
@@ -109,6 +152,10 @@ export function codeLanguageLabel(language: string): string {
     return HIGHLIGHTED_LANGUAGES[canonical];
   }
 
+  if (Object.hasOwn(EXECUTABLE_LANGUAGES, canonical)) {
+    return EXECUTABLE_LANGUAGES[canonical];
+  }
+
   return Object.hasOwn(UNHIGHLIGHTED_LANGUAGES, canonical) ? UNHIGHLIGHTED_LANGUAGES[canonical] : canonical;
 }
 
@@ -121,6 +168,7 @@ export function getCodeLanguageOptions(current: string): Array<ComboboxOption<st
   const offered: Array<ComboboxOption<string>> = [
     { value: PLAIN_TEXT_LANGUAGE, label: codeLanguageLabel(PLAIN_TEXT_LANGUAGE) },
     ...Object.entries(HIGHLIGHTED_LANGUAGES).map(([value, label]) => ({ value, label })),
+    ...Object.entries(EXECUTABLE_LANGUAGES).map(([value, label]) => ({ value, label })),
     ...Object.entries(UNHIGHLIGHTED_LANGUAGES).map(([value, label]) => ({ value, label })),
   ];
 
