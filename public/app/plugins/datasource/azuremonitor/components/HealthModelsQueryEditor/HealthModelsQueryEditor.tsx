@@ -242,7 +242,6 @@ function addTemplateVariables(
     ...variableOptionGroup.options.map((option) => ({
       label: option.label,
       value: option.value,
-      description: option.description,
       group: variableOptionGroup.label,
     })),
   ];
