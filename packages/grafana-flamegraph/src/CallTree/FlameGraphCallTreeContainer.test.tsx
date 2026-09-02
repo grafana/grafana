@@ -178,14 +178,28 @@ describe('FlameGraphCallTreeContainer', () => {
     const scrollContainer = screen.getByTestId('call-tree-scroll-container');
     expect(scrollContainer).toHaveStyle({ overflow: 'auto' });
 
-    // Expanding the root also expands single-child chains, which used to push
-    // names past the fixed Function column with no way to scroll sideways.
+    const columnHeaders = screen.getAllByRole('columnheader');
+    const selfHeader = columnHeaders[3];
+    const totalHeader = columnHeaders[4];
+    expect(selfHeader).toHaveStyle({ position: 'sticky', right: '150px' });
+    expect(totalHeader).toHaveStyle({ position: 'sticky', right: '0px' });
+
+    const firstDataRow = screen.getAllByRole('row')[1];
+    const firstDataRowCells = within(firstDataRow).getAllByRole('cell');
+    expect(firstDataRowCells[3]).toHaveStyle({ position: 'sticky', right: '150px' });
+    expect(firstDataRowCells[4]).toHaveStyle({ position: 'sticky', right: '0px' });
+
+    // The root starts expanded. Collapse and expand it again to expand its
+    // single-child chains, which push names past the fixed Function column.
+    await user.click(screen.getByText('total'));
     await user.click(screen.getByText('total'));
     await act(async () => {
       jest.runAllTimers();
     });
 
-    expect(screen.getByText('test/pkg/agent.(*Target).start.func1')).toBeInTheDocument();
+    const nestedFunction = screen.getByText('test/pkg/agent.(*Target).start.func1');
+    await user.click(nestedFunction);
+    expect(nestedFunction).toBeInTheDocument();
     expect(screen.getByText('test/pkg/agent.(*Target).scrape')).toBeInTheDocument();
 
     const table = scrollContainer.querySelector('table');

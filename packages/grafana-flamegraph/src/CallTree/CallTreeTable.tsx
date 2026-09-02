@@ -66,6 +66,21 @@ export function CallTreeTable({
   }, [availableWidth, shouldBeCompact, isCompact, setIsCompact]);
 
   const functionColumnMinWidth = getFunctionColumnWidth(availableWidth, isCompact);
+  const totalColumnWidth = headerGroups
+    .flatMap((headerGroup) => headerGroup.headers)
+    .find((column) => column.id === 'total')?.width;
+
+  const getPinnedColumnOffset = (columnId: string): number | undefined => {
+    if (columnId === 'total') {
+      return 0;
+    }
+
+    if (columnId === 'self' && typeof totalColumnWidth === 'number') {
+      return totalColumnWidth;
+    }
+
+    return undefined;
+  };
 
   if (width < 3 || height < 3) {
     return null;
@@ -86,12 +101,19 @@ export function CallTreeTable({
               <tr key={key} {...headerGroupProps}>
                 {headerGroup.headers.map((column) => {
                   const { key: headerKey, ...headerProps } = column.getHeaderProps(column.getSortByToggleProps());
+                  const pinnedColumnOffset = getPinnedColumnOffset(column.id);
                   return (
                     <th
                       key={headerKey}
                       {...headerProps}
-                      className={styles.th}
-                      style={getColumnStyle(column.id, functionColumnMinWidth, column.width, column.minWidth)}
+                      className={cx(styles.th, pinnedColumnOffset !== undefined && styles.pinnedHeaderCell)}
+                      style={getColumnStyle(
+                        column.id,
+                        functionColumnMinWidth,
+                        column.width,
+                        column.minWidth,
+                        pinnedColumnOffset
+                      )}
                     >
                       {column.render('Header')}
                       {column.isSorted && (
@@ -135,6 +157,7 @@ export function CallTreeTable({
                   const isValueColumn = cell.column.id === 'self' || cell.column.id === 'total';
                   const isActionsColumn = cell.column.id === 'actions';
                   const isLabelColumn = cell.column.id === 'label';
+                  const pinnedColumnOffset = getPinnedColumnOffset(cell.column.id);
                   return (
                     <td
                       key={cellKey}
@@ -143,13 +166,15 @@ export function CallTreeTable({
                         styles.td,
                         isActionsColumn && styles.actionsColumnCell,
                         isValueColumn && styles.valueColumnCell,
-                        isLabelColumn && styles.labelColumnCell
+                        isLabelColumn && styles.labelColumnCell,
+                        pinnedColumnOffset !== undefined && styles.pinnedValueCell
                       )}
                       style={getColumnStyle(
                         cell.column.id,
                         functionColumnMinWidth,
                         cell.column.width,
-                        cell.column.minWidth
+                        cell.column.minWidth,
+                        pinnedColumnOffset
                       )}
                     >
                       {cell.render('Cell', { rowIndex })}
@@ -169,7 +194,8 @@ function getColumnStyle(
   columnId: string,
   functionColumnMinWidth: number | undefined,
   columnWidth: number | string | undefined,
-  minWidth: number | undefined
+  minWidth: number | undefined,
+  pinnedColumnOffset?: number
 ): CSSProperties {
   if (columnId === 'label') {
     return {
@@ -183,6 +209,7 @@ function getColumnStyle(
   return {
     ...(columnWidth !== undefined && { width: columnWidth, maxWidth: columnWidth }),
     ...(minWidth !== undefined && { minWidth }),
+    ...(pinnedColumnOffset !== undefined && { right: pinnedColumnOffset }),
     textAlign: columnId === 'self' || columnId === 'total' ? 'right' : undefined,
   };
 }
@@ -239,6 +266,7 @@ function getStyles(theme: GrafanaTheme2) {
       backgroundColor: theme.colors.background.primary,
     }),
     tr: css({
+      backgroundColor: theme.colors.background.primary,
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
@@ -297,6 +325,15 @@ function getStyles(theme: GrafanaTheme2) {
     valueColumnCell: css({
       overflow: 'visible',
       textAlign: 'right',
+    }),
+    pinnedHeaderCell: css({
+      position: 'sticky',
+      zIndex: 3,
+    }),
+    pinnedValueCell: css({
+      position: 'sticky',
+      zIndex: 1,
+      backgroundColor: 'inherit',
     }),
   };
 }
