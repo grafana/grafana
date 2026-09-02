@@ -80,3 +80,28 @@ func TestIntegrationSecondSet(t *testing.T) {
 	err = db.Set(context.Background(), "killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
 }
+
+func TestIntegrationGetInvalidatesFutureCreatedAt(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	db := &databaseCache{
+		SQLStore: sqlstore,
+		log:      log.New("remotecache.database"),
+	}
+
+	obj := []byte("future-cache")
+
+	getTime = time.Now
+	err := db.Set(context.Background(), "future-key", obj, 1000*time.Second)
+	assert.Equal(t, err, nil)
+
+	getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+	t.Cleanup(func() {
+		getTime = time.Now
+	})
+
+	_, err = db.Get(context.Background(), "future-key")
+	assert.Equal(t, err, ErrCacheItemNotFound)
+}

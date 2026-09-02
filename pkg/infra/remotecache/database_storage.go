@@ -67,7 +67,9 @@ func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 		}
 
 		if cacheHit.Expires > 0 {
-			existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
+			age := getTime().Unix() - cacheHit.CreatedAt
+			existedButExpired := age < 0 || age >= cacheHit.Expires
+
 			if existedButExpired {
 				err = dc.Delete(ctx, key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
 				if err != nil {
