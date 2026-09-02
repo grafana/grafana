@@ -70,8 +70,31 @@ To add a Health Model to a dashboard:
 1. From the **Service** menu, select **Azure Health Models**.
 1. Select the Azure subscription containing the Health Model.
 1. Select the Health Model.
+1. Choose a **Format**.
 
 Grafana retrieves the selected Health Model, its entities, and its relationships using API version `2026-09-01-preview`. The configured Azure Monitor data source identity must have permission to read those resources.
+
+### Formats
+
+**Entities** returns one row per entity and is the default. Grafana ranks **Table** as the preferred visualization for it. Alongside the entity name and a color-coded health state, each row carries the health telemetry reported for that entity:
+
+| Field | Description |
+| --- | --- |
+| `name` | The entity's resource name. Relationships reference entities by this name, so it is the key to join on. Hidden by default. |
+| `displayName` | The entity's friendly name. Not guaranteed to be unique within a model. |
+| `healthState` | The current health state, color-coded. |
+| `healthStateValue` | The same state as an enum, so panels that need a number, such as **Stat**, **Gauge**, **Bar gauge**, and **Pie chart**, can display it. Hidden by default. |
+| `lastCheckedAt` | When the entity last reported. Empty for an entity that has never reported. |
+| `signalsHealthy`, `signalsTotal` | How many of the entity's signals are healthy. |
+| `availabilityState` | Azure Resource Health availability, when the entity is backed by an Azure resource. |
+| `alertSeverities` | Severities of the alerts configured on the entity. |
+| `impact`, `healthObjective`, `provisioningState` | The entity's configured impact, health objective, and provisioning state. |
+
+**Model graph** returns nodes and edges for the **Node graph** panel, drawing each entity coloured by health state and connected to its dependencies.
+
+{{< admonition type="note" >}}
+Health Model queries return the model's current state, not a history, so the dashboard time range does not filter them. `lastCheckedAt` is a formatted string rather than a time field for the same reason: each row is a different entity, not a point in a series, so plotting the entity rows over time would suggest a trend that does not exist.
+{{< /admonition >}}
 
 ## Query Azure Monitor Metrics
 

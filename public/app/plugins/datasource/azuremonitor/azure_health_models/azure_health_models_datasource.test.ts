@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
-import { type DataQueryRequest } from '@grafana/data';
+import { type DataQueryRequest, type Field, MappingType } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 
 import { createMockInstanceSetttings } from '../mocks/instanceSettings';
 import createMockQuery from '../mocks/query';
@@ -52,7 +53,28 @@ describe('AzureHealthModelsDatasource', () => {
               id: `${healthModelId}/entities/entity-one`,
               name: 'entity-one',
               type: 'Microsoft.CloudHealth/healthmodels/entities',
-              properties: { displayName: 'Entity One', healthState: 'Healthy' },
+              properties: {
+                displayName: 'Entity One',
+                healthState: 'Healthy',
+                impact: 'Standard',
+                signalGroups: {
+                  azureResource: {
+                    resourceHealth: {
+                      status: {
+                        healthState: 'Healthy',
+                        availabilityState: 'Available',
+                        reportedAt: '2026-01-01T00:00:00Z',
+                      },
+                    },
+                  },
+                  azureLogAnalytics: {
+                    signals: [
+                      { name: 'error-rate', status: { healthState: 'Degraded', reportedAt: '2026-01-01T01:00:00Z' } },
+                    ],
+                  },
+                },
+                alerts: { 'alert-one': { severity: 'Sev1' } },
+              },
             },
           ],
         };
@@ -83,8 +105,67 @@ describe('AzureHealthModelsDatasource', () => {
       } as DataQueryRequest<AzureMonitorQuery>)
     );
 
-    expect(response.data.map((frame) => frame.name)).toEqual(['Health Model', 'Entities', 'Relationships']);
+    expect(response.data.map((frame) => frame.name)).toEqual(['Entities', 'Health Model', 'Relationships']);
     expect(response.data.map((frame) => frame.length)).toEqual([1, 1, 1]);
+    expect(response.data[0].meta?.preferredVisualisationType).toBe('table');
+    expect(response.data[0].fields.map((field: Field) => field.name)).toEqual([
+      'name',
+      'displayName',
+      'healthState',
+      'healthStateValue',
+      'lastCheckedAt',
+      'signalsHealthy',
+      'signalsTotal',
+      'availabilityState',
+      'alertSeverities',
+      'impact',
+      'healthObjective',
+      'provisioningState',
+    ]);
+    // `name` is the key relationships reference, so it must be present, but it is hidden to keep
+    // the default table readable.
+    expect(response.data[0].fields[0].values).toEqual(['entity-one']);
+    expect(response.data[0].fields[0].config).toEqual({ custom: { hidden: true } });
+    expect(response.data[0].fields.find((field: Field) => field.name === 'healthState')?.config).toEqual({
+      custom: {
+        cellOptions: {
+          type: TableCellDisplayMode.ColorText,
+        },
+      },
+      mappings: [
+        {
+          type: MappingType.ValueToText,
+          options: {
+            Healthy: { text: 'Healthy', color: 'green' },
+            Degraded: { text: 'Degraded', color: 'orange' },
+            Unhealthy: { text: 'Unhealthy', color: 'red' },
+            Unknown: { text: 'Unknown', color: 'gray' },
+            Deleted: { text: 'Deleted', color: 'gray' },
+          },
+        },
+      ],
+    });
+    // The health telemetry is nested inside `signalGroups` at inconsistent depths, so prove it is
+    // actually extracted rather than just present as columns.
+    const entityField = (name: string) => response.data[0].fields.find((field: Field) => field.name === name)?.values[0];
+    expect(entityField('healthStateValue')).toBe(0); // Healthy
+    // Enum text/colour must live under `config.type.enum`; panels such as Time series read it
+    // with a non-null assertion, so the wrong shape crashes them rather than degrading.
+    expect(
+      response.data[0].fields.find((field: Field) => field.name === 'healthStateValue')?.config.type?.enum?.text
+    ).toEqual(['Healthy', 'Degraded', 'Unhealthy', 'Unknown', 'Deleted']);
+    expect(entityField('signalsTotal')).toBe(2);
+    expect(entityField('signalsHealthy')).toBe(1);
+    expect(entityField('availabilityState')).toBe('Available');
+    expect(entityField('alertSeverities')).toBe('Sev1');
+    // A formatted string, not a time field: the frame is a snapshot, so a time axis would let
+    // panels invent a trend across unrelated entities.
+    expect(typeof entityField('lastCheckedAt')).toBe('string');
+    expect(
+      response.data[0].fields.find((field: Field) => field.name === 'lastCheckedAt')?.type
+    ).toBe('string');
+    expect(entityField('impact')).toBe('Standard');
+
     expect(getResource).toHaveBeenCalledWith(`azuremonitor${healthModelId}`, {
       'api-version': HEALTH_MODELS_API_VERSION,
     });
@@ -128,4 +209,60 @@ describe('AzureHealthModelsDatasource', () => {
       )
     ).toThrow('not a valid Microsoft.CloudHealth Health Model resource ID');
   });
+  it('returns node graph frames when the model graph format is selected', async () => {
+    const datasource = new AzureHealthModelsDatasource(createMockInstanceSetttings());
+    jest.spyOn(datasource, 'getResource').mockImplementation(async (path: string) => {
+      if (path.includes('/entities?')) {
+        return {
+          value: [
+            { id: 'a', name: 'parent-entity', type: 't', properties: { displayName: 'Parent', healthState: 'Healthy' } },
+            { id: 'b', name: 'child-entity', type: 't', properties: { displayName: 'Child', healthState: 'Degraded' } },
+          ],
+        };
+      }
+      if (path.includes('/relationships?')) {
+        return {
+          value: [
+            {
+              id: 'r1',
+              name: 'rel-one',
+              type: 't',
+              properties: { parentEntityName: 'parent-entity', childEntityName: 'child-entity' },
+            },
+            // References an entity outside the model, so it must be dropped.
+            {
+              id: 'r2',
+              name: 'rel-two',
+              type: 't',
+              properties: { parentEntityName: 'parent-entity', childEntityName: 'missing-entity' },
+            },
+          ],
+        };
+      }
+      return { id: healthModelId, name: 'model-one', type: 't' };
+    });
+
+    const query = createMockQuery({
+      queryType: undefined,
+      subscription: subscriptionId,
+      azureHealthModels: { healthModelId, resultFormat: 'modelGraph' },
+    });
+
+    const response = await lastValueFrom(
+      datasource.query({
+        targets: [query],
+      } as DataQueryRequest<AzureMonitorQuery>)
+    );
+
+    expect(response.data.map((frame) => frame.name)).toEqual(['nodes', 'edges']);
+    expect(response.data[0].meta?.preferredVisualisationType).toBe('nodeGraph');
+    const nodeField = (name: string) => response.data[0].fields.find((field: Field) => field.name === name)?.values;
+    expect(nodeField('id')).toEqual(['parent-entity', 'child-entity']);
+    expect(nodeField('title')).toEqual(['Parent', 'Child']);
+
+    const edgeField = (name: string) => response.data[1].fields.find((field: Field) => field.name === name)?.values;
+    expect(edgeField('source')).toEqual(['parent-entity']);
+    expect(edgeField('target')).toEqual(['child-entity']);
+  });
+
 });

@@ -2,7 +2,14 @@ export const HEALTH_MODELS_API_VERSION = '2026-09-01-preview';
 
 export interface AzureHealthModelsOptions {
   healthModelId?: string;
+  /**
+   * Which view of the model to return. Defaults to `entities` so an existing query keeps its
+   * current behaviour.
+   */
+  resultFormat?: HealthModelsResultFormat;
 }
+
+export type HealthModelsResultFormat = 'entities' | 'modelGraph';
 
 export interface HealthModelResourceId {
   subscriptionId: string;
@@ -32,6 +39,13 @@ export interface HealthModelEntity {
     provisioningState?: string;
     healthObjective?: number | null;
     tags?: Record<string, string>;
+    /**
+     * Signal configuration and last reported status, grouped by signal kind. The shape varies by
+     * kind and nests status objects at different depths, so it is read defensively rather than
+     * typed exhaustively.
+     */
+    signalGroups?: Record<string, unknown>;
+    alerts?: Record<string, { severity?: string } | undefined>;
   };
 }
 

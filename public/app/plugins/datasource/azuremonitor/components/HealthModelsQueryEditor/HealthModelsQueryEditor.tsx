@@ -5,7 +5,7 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
 import { parseHealthModelResourceId } from '../../azure_health_models/azure_health_models_datasource';
-import { type HealthModel } from '../../azure_health_models/types';
+import { type HealthModel, type HealthModelsResultFormat } from '../../azure_health_models/types';
 import type Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { type AzureMonitorQuery } from '../../types/query';
@@ -23,6 +23,15 @@ interface HealthModelsQueryEditorProps {
 
 const SUBSCRIPTIONS_ERROR_SOURCE = 'health-models-subscriptions';
 const HEALTH_MODELS_ERROR_SOURCE = 'health-models-list';
+
+const RESULT_FORMAT_OPTIONS: Array<ComboboxOption<HealthModelsResultFormat>> = [
+  { label: 'Entities', value: 'entities', description: 'Entity health, as a table.' },
+  {
+    label: 'Model graph',
+    value: 'modelGraph',
+    description: 'Entities and their relationships, for the Node graph panel.',
+  },
+];
 
 const HealthModelsQueryEditor = ({
   query,
@@ -150,6 +159,16 @@ const HealthModelsQueryEditor = ({
     });
   };
 
+  const onResultFormatChange = (selection: ComboboxOption<HealthModelsResultFormat>) => {
+    onChange({
+      ...query,
+      azureHealthModels: {
+        ...query.azureHealthModels,
+        resultFormat: selection.value,
+      },
+    });
+  };
+
   return (
     <span data-testid={selectors.components.queryEditor.healthModelsQueryEditor.container.input}>
       <EditorRows>
@@ -185,6 +204,16 @@ const HealthModelsQueryEditor = ({
                 disabled={!selectedSubscription}
                 createCustomValue
                 width={48}
+              />
+            </Field>
+            <Field label={t('components.health-models-query-editor.label-format', 'Format')}>
+              <Combobox
+                aria-label={t('components.health-models-query-editor.aria-label-format', 'Result format')}
+                options={RESULT_FORMAT_OPTIONS}
+                value={query.azureHealthModels?.resultFormat ?? 'entities'}
+                onChange={onResultFormatChange}
+                disabled={!selectedHealthModelId}
+                width={24}
               />
             </Field>
           </EditorFieldGroup>
