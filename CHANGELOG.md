@@ -472,6 +472,15 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.8 START -->
+
+# 13.0.8 (2026-09-02)
+
+### Bug fixes
+
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131809](https://github.com/grafana/grafana/pull/131809), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 13.0.8 END -->
 <!-- 13.0.7 START -->
 
 # 13.0.7 (2026-08-18)
