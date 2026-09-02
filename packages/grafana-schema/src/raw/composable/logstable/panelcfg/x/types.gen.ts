@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.2.1";
+export const pluginVersion = "13.2.2";
 
 export interface Options {
   allowDownload?: boolean;
