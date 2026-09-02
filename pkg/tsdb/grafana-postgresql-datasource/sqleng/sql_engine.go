@@ -810,6 +810,25 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	return frame, nil
 }
 
+// fillFreeFields is how wide a frame may be before the resample allowance starts
+// shrinking. Frames at or below this width keep the historical allowance of
+// rowLimit fill points, so ordinary panels are unaffected.
+const fillFreeFields = 10
+
+// maxFillPoints returns the largest number of fill points allowed for a frame
+// numFields wide. Resampling allocates one cell per field per fill point, and
+// nothing bounds the column count of a query, so past fillFreeFields the
+// allowance falls off as 1/numFields. That holds the total number of cells the
+// resample allocates at rowLimit*fillFreeFields however wide the frame gets,
+// while leaving narrow frames on the historical allowance.
+func maxFillPoints(rowLimit, numFields int64) int64 {
+	if numFields <= fillFreeFields {
+		return rowLimit
+	}
+	// Divide before multiplying so the product cannot overflow.
+	return rowLimit / numFields * fillFreeFields
+}
+
 // applyFill resamples frame using the fill configuration in qm. If the number
 // of fill points would exceed the row limit the fill is skipped and a warning
 // notice is appended to the frame instead.
@@ -820,14 +839,17 @@ func (e *DataSourceHandler) applyFill(frame *data.Frame, qm *dataQueryModel) *da
 		To:   qm.TimeRange.To,
 	}
 
-	// Guard against excessive memory allocation from fill operations that span
-	// a very large time range relative to the fill interval.
+	// Guard against excessive memory allocation from fill operations that span a
+	// very large time range relative to the fill interval, or that fan a modest
+	// point count out across a very wide result set.
 	numFillPoints := int64(alignedTimeRange.To.Sub(alignedTimeRange.From) / qm.Interval)
-	if numFillPoints > e.rowLimit {
-		e.log.Warn("Skipping fill: number of fill points exceeds row limit",
-			"numFillPoints", numFillPoints, "rowLimit", e.rowLimit)
+	numFields := int64(len(frame.Fields))
+	maxPoints := maxFillPoints(e.rowLimit, numFields)
+	if numFillPoints > maxPoints {
+		e.log.Warn("Skipping fill: number of fill points exceeds the limit for this frame width",
+			"numFillPoints", numFillPoints, "numFields", numFields, "maxFillPoints", maxPoints, "rowLimit", e.rowLimit)
 		frame.AppendNotices(data.Notice{
-			Text:     "Fill operation skipped: time range and interval would require more points than the configured row limit",
+			Text:     "Fill operation skipped: time range, interval and number of columns would require more points than the configured row limit allows",
 			Severity: data.NoticeSeverityWarning,
 		})
 		return frame
