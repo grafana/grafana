@@ -41,6 +41,17 @@ function useColorCardContext() {
   return useContext(ColorCardContext);
 }
 
+/** Matches the icons Alert uses per severity, with a neutral fallback for the non-severity variants */
+const iconsByVariant: Record<ColorCardVariant, IconName> = {
+  error: 'exclamation-circle',
+  warning: 'exclamation-triangle',
+  info: 'info-circle',
+  success: 'check',
+  default: 'info-circle',
+  tertiary: 'info-circle',
+  accent: 'info-circle',
+};
+
 const rolesByVariant: Record<ColorCardVariant, AriaRole> = {
   error: 'alert',
   warning: 'alert',
@@ -95,16 +106,17 @@ interface SlotProps {
   children?: ReactNode;
 }
 
-const ColorCardIcon = ({ name, className }: { name: IconName; className?: string }) => {
+const ColorCardIcon = ({ name, className }: { name?: IconName; className?: string }) => {
   const { variant, size } = useColorCardContext();
   const styles = useStyles2(getStyles, variant, size);
 
   return (
     <div className={cx(styles.icon, className)}>
-      <Icon name={name} size={styles.iconSize} />
+      <Icon name={name ?? iconsByVariant[variant]} size={styles.iconSize} />
     </div>
   );
 };
+
 ColorCardIcon.displayName = 'ColorCardIcon';
 
 const ColorCardTitle = ({ children, className }: SlotProps) => {
@@ -113,6 +125,7 @@ const ColorCardTitle = ({ children, className }: SlotProps) => {
 
   return <div className={cx(styles.title, className)}>{children}</div>;
 };
+
 ColorCardTitle.displayName = 'ColorCardTitle';
 
 const ColorCardContent = ({ children, className }: SlotProps) => {
@@ -121,6 +134,7 @@ const ColorCardContent = ({ children, className }: SlotProps) => {
 
   return <div className={cx(styles.content, className)}>{children}</div>;
 };
+
 ColorCardContent.displayName = 'ColorCardContent';
 
 const ColorCardActions = ({ children, className }: SlotProps) => {
@@ -129,6 +143,7 @@ const ColorCardActions = ({ children, className }: SlotProps) => {
 
   return <div className={cx(styles.actions, className)}>{children}</div>;
 };
+
 ColorCardActions.displayName = 'ColorCardActions';
 
 const SLOT_COMPONENTS: ReadonlySet<unknown> = new Set([
@@ -234,7 +249,7 @@ const getStyles = (
     }),
     content: css({
       gridArea: 'Content',
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),

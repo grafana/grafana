@@ -27,6 +27,33 @@ describe('ColorCard', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
   });
 
+  it('falls back to an icon based on the variant when Icon has no name', () => {
+    const { rerender } = render(
+      <ColorCard variant="warning" title="Careful">
+        <ColorCard.Icon />
+      </ColorCard>
+    );
+    expect(screen.getByTestId('icon-exclamation-triangle')).toBeInTheDocument();
+
+    rerender(
+      <ColorCard variant="success" title="Done">
+        <ColorCard.Icon />
+      </ColorCard>
+    );
+    expect(screen.getByTestId('icon-check')).toBeInTheDocument();
+  });
+
+  it('prefers an explicit icon name over the variant fallback', () => {
+    render(
+      <ColorCard variant="error" title="Boom">
+        <ColorCard.Icon name="cloud" />
+      </ColorCard>
+    );
+
+    expect(screen.getByTestId('icon-cloud')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exclamation-circle')).not.toBeInTheDocument();
+  });
+
   it('uses an assertive role for error and warning, and a polite one otherwise', () => {
     const { rerender } = render(<ColorCard variant="error" title="Boom" />);
     expect(screen.getByRole('alert')).toHaveAccessibleName('Boom');

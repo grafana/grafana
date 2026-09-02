@@ -84,7 +84,8 @@ function SimpleExampleWithButton({
 }) {
   return (
     <ColorCard size={size} variant={variant}>
-      <ColorCard.Icon name="exclamation-circle" />
+      {/* No name, so the icon comes from the variant */}
+      <ColorCard.Icon />
       <ColorCard.Title>{title}</ColorCard.Title>
       {content && <ColorCard.Content>{content}</ColorCard.Content>}
       <ColorCard.Actions>
