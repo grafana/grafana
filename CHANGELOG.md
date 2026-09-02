@@ -932,6 +932,16 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.10 START -->
+
+# 12.4.10 (2026-09-02)
+
+### Bug fixes
+
+- **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131821](https://github.com/grafana/grafana/pull/131821), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Fix version dates and user display names in the legacy version history page [#131808](https://github.com/grafana/grafana/pull/131808), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 12.4.10 END -->
 <!-- 12.4.9 START -->
 
 # 12.4.9 (2026-08-18)
