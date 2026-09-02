@@ -309,7 +309,6 @@ docker run -d -p 3000:3000 --name=grafana \
 To increase the log level to `DEBUG` mode, add the environment variable `GF_LOG_LEVEL` to the `docker-compose.yaml` file.
 
 ```yaml
-version: '3.8'
 services:
   grafana:
     image: grafana/grafana-enterprise
