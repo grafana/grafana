@@ -7,11 +7,12 @@ import { act, render, screen, testWithFeatureToggles, waitFor, within } from 'te
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from 'app/features/alerting/unified/mocks';
-import {
-  setupAdminConfigGet,
-  setupAlertmanagersStatus,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
 import {
@@ -534,10 +535,18 @@ describe('Step1AlertmanagerResources', () => {
 
       beforeEach(() => {
         setupDataSources(alertmanagerDataSource, mimirDataSource);
+        // useAutoSyncConfiguration gates its Config and datasources queries on
+        // ActionAlertingNotificationsConfigRead, which grantUserRole('Admin') alone doesn't imply
+        // here since roles and permissions are mocked independently. Also repeats the outer
+        // beforeEach's Write grant, since grantUserPermissions replaces rather than extends it.
+        grantUserPermissions([
+          AccessControlAction.AlertingNotificationsWrite,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
         // Step1Content calls useAutoSyncConfiguration() unconditionally, so every admin+toggle-on
         // render below fires these two queries regardless of what the test exercises — mock them
         // by default for the whole block rather than per test.
-        setupAdminConfigGet(server, null);
+        setupAutoSyncConfig(server);
         setupDatasourcesEndpoint(server, [MIMIR_DS]);
       });
 
@@ -698,6 +707,26 @@ describe('Step1AlertmanagerResources', () => {
         );
 
         await waitFor(() => expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled());
+      });
+
+      it('disables the auto-sync switch when the Config singleton has not been seeded yet', async () => {
+        grantUserRole('Admin');
+        setupAutoSyncConfigAbsent(server);
+        const user = userEvent.setup();
+
+        render(
+          <TestWrapper defaultValues={{ notificationsSource: 'datasource', notificationsDatasourceUID: MIMIR_DS.uid }}>
+            <Step1Content {...defaultStep1Props} />
+          </TestWrapper>
+        );
+
+        // Wait for the (Config-independent) datasource-capability query to settle and recognize
+        // MIMIR_DS as eligible, so a still-loading disable isn't mistaken for the readiness gate.
+        await user.click(screen.getByRole('combobox'));
+        const mimirOption = await screen.findByRole('option', { name: /^Mimir Alertmanager/ });
+        expect(within(mimirOption).getByText('Auto-sync')).toBeInTheDocument();
+
+        expect(screen.getByRole('switch', { name: /auto-sync/i })).toBeDisabled();
       });
 
       it('enables the auto-sync switch when a Mimir/Cortex datasource is selected', async () => {

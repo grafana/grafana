@@ -820,7 +820,8 @@ type HybridSearchRequest struct {
 	// Resource type to search (namespace + group + resource).
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// Required. Feeds the lexical leg verbatim; also embedded for the
-	// semantic leg unless semantic_query is set. Max 1000 bytes.
+	// semantic leg unless semantic_query is set. Max 1000 bytes. Put
+	// extracted keywords here and natural language in semantic_query.
 	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
 	// Optional richer phrasing embedded for the semantic leg instead of
 	// query. Max 1000 bytes.
@@ -828,10 +829,12 @@ type HybridSearchRequest struct {
 	// Top-k: maximum results. Defaults to 50 when zero, capped at 200.
 	Limit int64 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
 	// Exact-match filters, IN semantics for multiple values, each key at
-	// most once. Supported keys: "uid" and "folder" (all kinds),
-	// "datasource_uid" and "language" (dashboards; language values:
-	// promql, logql, traceql, sql). Every key is enforced natively by
-	// BOTH legs. Any other key or language fails the request.
+	// most once, max 1000 values total. Internal collections allow only
+	// "uid" and "folder" (all kinds), "datasource_uid" and "language"
+	// (dashboards; values: promql, logql, traceql, sql) — enforced
+	// natively by BOTH legs. External collections: "uid" and "folder"
+	// match the row's identity and folder, any other key matches the
+	// metadata JSON (containment).
 	Filters []*Requirement `protobuf:"bytes,5,rep,name=filters,proto3" json:"filters,omitempty"`
 	// Minimum relevance a result must reach to be returned. One of:
 	// "lowest", "low", "medium", "high", "highest"; empty keeps every
@@ -1000,8 +1003,9 @@ type HybridSearchResult struct {
 	// content = title and no metadata so rerankers always have text.
 	// Only the best chunk influences score.
 	Chunks []*HybridSearchChunk `protobuf:"bytes,5,rep,name=chunks,proto3" json:"chunks,omitempty"`
-	// Manager kind. Empty when unmanaged, or when resolution for a
-	// semantic-only hit fails — best-effort display data, never an error.
+	// Manager kind. Empty when unmanaged, for external collections, or when
+	// resolution for a semantic-only hit fails — best-effort display data,
+	// never an error.
 	ManagedByKind string `protobuf:"bytes,7,opt,name=managed_by_kind,json=managedByKind,proto3" json:"managed_by_kind,omitempty"`
 	// Manager identity, alongside managed_by_kind.
 	ManagedById   string `protobuf:"bytes,8,opt,name=managed_by_id,json=managedById,proto3" json:"managed_by_id,omitempty"`

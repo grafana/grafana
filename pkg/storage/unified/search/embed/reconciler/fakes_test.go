@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"iter"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
@@ -29,6 +30,10 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// onYield, if set, fires once per resource the ListModifiedSince
+	// iterator yields — lets tests observe iterator progress at each flush.
+	onYield func()
 
 	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
 	// -> title. An unset entry reads as NotFound.
@@ -136,10 +141,6 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 	return out, nil
 }
 
-func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
-	panic("not implemented")
-}
-
 func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -175,6 +176,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
+	onYield := f.onYield
 	return latestRv, func(yield func(*resource.ModifiedResource, error) bool) {
 		for i, c := range matches {
 			if itemErr != nil && i == itemErrI {
@@ -182,6 +184,9 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 					return
 				}
 				continue
+			}
+			if onYield != nil {
+				onYield()
 			}
 			if !yield(c, nil) {
 				return
@@ -203,6 +208,10 @@ type fakeVector struct {
 	upsertErr    error
 	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
 	deleteErr    error
+
+	// onUpsert, if set, fires at the start of each upsert. Paired with
+	// fakeStorage.onYield to snapshot iterator progress at each flush.
+	onUpsert func()
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -294,6 +303,9 @@ func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
+	if f.onUpsert != nil {
+		f.onUpsert()
+	}
 	if f.upsertErrFn != nil {
 		if err := f.upsertErrFn(vs); err != nil {
 			return err
@@ -348,9 +360,7 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 	defer f.mu.Unlock()
 	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[key] {
-		out[k] = v
-	}
+	maps.Copy(out, f.storedSubs[key])
 	if len(out) == 0 {
 		return nil, "", nil
 	}

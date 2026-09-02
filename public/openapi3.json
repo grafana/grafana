@@ -15,6 +15,13 @@
         "description": "(empty)"
       },
       "SMTPNotEnabledError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "StateHistory": {
@@ -619,7 +626,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Status"
+              "$ref": "#/components/schemas/AccessControlStatus"
             }
           }
         },
@@ -731,6 +738,13 @@
         "description": "(empty)"
       },
       "getDashboardSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DashboardFullWithMeta"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getDashboardsTagsResponse": {
@@ -1213,6 +1227,13 @@
         "description": "(empty)"
       },
       "getStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getSyncStatusResponse": {
@@ -1658,6 +1679,13 @@
         "description": "(empty)"
       },
       "postRenewLicenseTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "preconditionFailedError": {
@@ -2053,6 +2081,14 @@
       }
     },
     "schemas": {
+      "AccessControlStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "Ack": {
         "type": "object"
       },
@@ -3014,7 +3050,8 @@
           "dashboardId": {
             "description": "Deprecated: Use DashboardUID and OrgID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "dashboardUID": {
             "type": "string"
@@ -3074,7 +3111,6 @@
         "type": "object"
       },
       "AnnotationActions": {
-        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "canAdd": {
             "type": "boolean"
@@ -3152,7 +3188,6 @@
         "type": "object"
       },
       "AnnotationPermission": {
-        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
@@ -3664,6 +3699,10 @@
             "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
             "type": "boolean"
           },
+          "NotAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
           "NotBefore": {
             "format": "date-time",
             "type": "string"
@@ -3773,7 +3812,7 @@
             "type": "boolean"
           },
           "SerialNumber": {
-            "type": "string"
+            "type": "integer"
           },
           "Signature": {
             "items": {
@@ -4096,7 +4135,7 @@
         "type": "object"
       },
       "CorrelationType": {
-        "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
+        "description": "the type of correlation, either query for containing query information, or external for containing an external URL",
         "type": "string"
       },
       "CounterResetHint": {
@@ -4160,7 +4199,7 @@
       "CreateDashboardSnapshotCommand": {
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "dashboard": {
@@ -4186,7 +4225,7 @@
             "type": "string"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
           "name": {
@@ -4223,14 +4262,15 @@
           "folderId": {
             "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "description": "UID of the folder where the library element is stored.",
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
             "enum": [
               1
             ],
@@ -4464,7 +4504,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -4476,7 +4517,7 @@
             "type": "boolean"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/DashboardaccessPermissionType"
           },
           "permissionName": {
             "type": "string"
@@ -4544,7 +4585,7 @@
       "DashboardACLUpdateItem": {
         "properties": {
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/DashboardaccessPermissionType"
           },
           "role": {
             "enum": [
@@ -4567,10 +4608,10 @@
         "type": "object"
       },
       "DashboardCreateCommand": {
-        "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+        "description": "These are the values expected to be sent from an end user",
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "dashboard": {
@@ -4588,7 +4629,7 @@
             "type": "boolean"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
           "name": {
@@ -4649,7 +4690,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderTitle": {
             "type": "string"
@@ -4697,14 +4739,6 @@
           "version": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardRedirect": {
-        "properties": {
-          "redirectUri": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -4806,6 +4840,10 @@
           }
         },
         "type": "object"
+      },
+      "DashboardaccessPermissionType": {
+        "format": "int64",
+        "type": "integer"
       },
       "DataLink": {
         "description": "DataLink define what",
@@ -4986,7 +5024,6 @@
         "type": "object"
       },
       "DataTopic": {
-        "description": "nolint:revive",
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
       },
@@ -5099,7 +5136,7 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
+        "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
         "format": "int64",
         "type": "integer"
       },
@@ -5669,7 +5706,8 @@
           "id": {
             "description": "Deprecated: use UID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "managedBy": {
             "$ref": "#/components/schemas/ManagerKind"
@@ -5862,7 +5900,7 @@
         "type": "object"
       },
       "FrameType": {
-        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
+        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
         "type": "string"
       },
       "FrameTypeVersion": {
@@ -6768,7 +6806,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -6804,7 +6843,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -7022,7 +7062,7 @@
             "$ref": "#/components/schemas/URL"
           },
           "Key": {
-            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
+            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\n- ed25519.PublicKey\n- ed25519.PrivateKey\n- *ecdsa.PublicKey\n- *ecdsa.PrivateKey\n- *rsa.PublicKey\n- *rsa.PrivateKey\n- []byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
           },
           "KeyID": {
             "description": "Key identifier, parsed from `kid` header.",
@@ -7134,7 +7174,8 @@
           "id": {
             "description": "Deprecated: this field will be removed in the future",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "kind": {
             "format": "int64",
@@ -7164,7 +7205,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -7180,9 +7222,7 @@
           "meta": {
             "$ref": "#/components/schemas/LibraryElementDTOMeta"
           },
-          "model": {
-            "type": "object"
-          },
+          "model": {},
           "name": {
             "type": "string"
           },
@@ -7375,7 +7415,7 @@
         "type": "object"
       },
       "ManagerKind": {
-        "description": "It can be a user or a tool or a generic API client.\n+enum",
+        "description": "It can be a user or a tool or a generic API client.",
         "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
         "type": "string"
       },
@@ -7662,6 +7702,9 @@
       "Name": {
         "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
         "properties": {
+          "CommonName": {
+            "type": "string"
+          },
           "Country": {
             "items": {
               "type": "string"
@@ -7685,6 +7728,30 @@
             "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
             "items": {
               "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "Organization": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "OrganizationalUnit": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PostalCode": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "Province": {
+            "items": {
+              "type": "string"
             },
             "type": "array"
           },
@@ -8284,14 +8351,15 @@
           "folderId": {
             "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "description": "UID of the folder where the library element is stored.",
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
             "enum": [
               1
             ],
@@ -8299,8 +8367,7 @@
             "type": "integer"
           },
           "model": {
-            "description": "The JSON model for the library element.",
-            "type": "object"
+            "description": "The JSON model for the library element."
           },
           "name": {
             "description": "Name of the library element.",
@@ -8321,7 +8388,7 @@
         "properties": {
           "homeDashboardId": {
             "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
+            "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -8386,10 +8453,6 @@
       },
       "PermissionDenied": {
         "type": "object"
-      },
-      "PermissionType": {
-        "format": "int64",
-        "type": "integer"
       },
       "Playlist": {
         "description": "Playlist model",
@@ -8502,7 +8565,7 @@
             "type": "string"
           },
           "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+            "description": "Value depends on type and describes the playlist item.\n\n- dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\n- dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\n- dashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
@@ -8907,7 +8970,6 @@
         "type": "object"
       },
       "PreferencesNavbarPreference": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "bookmarkUrls": {
             "items": {
@@ -8919,7 +8981,6 @@
         "type": "object"
       },
       "PreferencesQueryHistoryPreference": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "homeTab": {
             "description": "one of: '' | 'query' | 'starred';",
@@ -8929,7 +8990,6 @@
         "type": "object"
       },
       "PreferencesSpec": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
@@ -10030,9 +10090,7 @@
           "dashboard": {
             "$ref": "#/components/schemas/ReportDashboardID"
           },
-          "reportVariables": {
-            "type": "object"
-          },
+          "reportVariables": {},
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
           }
@@ -10792,7 +10850,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -10837,7 +10896,6 @@
         "type": "object"
       },
       "SearchOrgServiceAccountsResult": {
-        "description": "swagger: model",
         "properties": {
           "page": {
             "format": "int64",
@@ -10961,7 +11019,6 @@
         "$ref": "#/components/schemas/URL"
       },
       "ServiceAccountDTO": {
-        "description": "swagger: model",
         "properties": {
           "accessControl": {
             "additionalProperties": {
@@ -11477,7 +11534,6 @@
         "type": "object"
       },
       "State": {
-        "description": "+enum",
         "type": "string"
       },
       "Status": {
@@ -11640,7 +11696,7 @@
             "type": "integer"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           },
           "uid": {
             "type": "string"
@@ -11674,12 +11730,14 @@
           },
           "uid": {
             "description": "Deprecated: always empty; no per-entry id.",
-            "type": "string"
+            "type": "string",
+            "x-deprecated": true
           }
         },
         "type": "object"
       },
       "TeamGroupMapping": {
+        "description": "---------------------",
         "properties": {
           "groupId": {
             "type": "string"
@@ -11743,7 +11801,7 @@
             "type": "integer"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           },
           "teamId": {
             "format": "int64",
@@ -11764,6 +11822,10 @@
           }
         },
         "type": "object"
+      },
+      "TeamPermissionType": {
+        "format": "int64",
+        "type": "integer"
       },
       "TelegramConfig": {
         "properties": {
@@ -12246,22 +12308,20 @@
         "type": "array"
       },
       "Type": {
-        "description": "+enum",
         "type": "string"
       },
       "TypeMeta": {
-        "description": "+k8s:deepcopy-gen=false",
+        "description": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           }
         },
-        "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
         "type": "object"
       },
       "URL": {
@@ -12514,7 +12574,7 @@
         "properties": {
           "homeDashboardId": {
             "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
+            "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -12669,7 +12729,7 @@
       "UpdateTeamMemberCommand": {
         "properties": {
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           }
         },
         "type": "object"
@@ -15872,7 +15932,7 @@
             }
           },
           {
-            "description": "Return alerts or user created annotations",
+            "description": "Return alerts or user created annotations\nDescription:\n- `alert`\n- `annotation`",
             "in": "query",
             "name": "type",
             "schema": {
@@ -18027,6 +18087,7 @@
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
           {
+            "description": "The dashboard UID",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -19141,6 +19202,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19157,7 +19219,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19180,6 +19242,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19207,7 +19270,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -19244,7 +19307,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19269,6 +19332,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19285,7 +19349,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19310,6 +19374,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19326,7 +19391,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19810,7 +19875,7 @@
                 }
               }
             },
-            "description": "healthResponse"
+            "description": "OK"
           },
           "503": {
             "$ref": "#/components/responses/internalServerError"
@@ -19835,7 +19900,7 @@
             }
           },
           {
-            "description": "Kind of element to search for.",
+            "description": "Kind of element to search for.\nDescription:\n- 1 - library panels",
             "in": "query",
             "name": "kind",
             "schema": {
@@ -19847,7 +19912,7 @@
             }
           },
           {
-            "description": "Sort order of elements.",
+            "description": "Sort order of elements.\nDescription:\n- alpha-asc: ascending\n- alpha-desc: descending",
             "in": "query",
             "name": "sortDirection",
             "schema": {
@@ -20183,7 +20248,7 @@
     "/licensing/custom-permissions": {
       "get": {
         "deprecated": true,
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
           "500": {
@@ -20200,7 +20265,7 @@
     "/licensing/custom-permissions-csv": {
       "get": {
         "deprecated": true,
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
           "500": {
@@ -21561,7 +21626,6 @@
             }
           },
           {
-            "description": "in:limit",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -23102,7 +23166,7 @@
             }
           },
           {
-            "description": "Type to search for, dash-folder or dash-db",
+            "description": "Type to search for, dash-folder or dash-db\nDescription:\n- `dash-folder` - Search for folder\n- `dash-db` - Seatch for dashboard",
             "in": "query",
             "name": "type",
             "schema": {
@@ -23137,7 +23201,7 @@
             }
           },
           {
-            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead\n\nDeprecated: use FolderUIDs instead",
             "in": "query",
             "name": "folderIds",
             "schema": {
@@ -24783,7 +24847,7 @@
       },
       "put": {
         "deprecated": true,
-        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}\n\n\nOmitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {

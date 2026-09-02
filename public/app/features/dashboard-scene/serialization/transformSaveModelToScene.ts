@@ -62,7 +62,8 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';

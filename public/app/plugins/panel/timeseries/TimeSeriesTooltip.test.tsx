@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { type DataFrame, type DisplayProcessor, FieldColorModeId, FieldType, createDataFrame } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, TimeCompareColorMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 
@@ -59,7 +59,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, -ONE_DAY_MS] }}
       />
     );
 
@@ -76,7 +76,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, -ONE_DAY_MS] }}
       />
     );
 
@@ -94,7 +94,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0]}
+        timeCompare={{ diffMs: [0, 0] }}
       />
     );
 
@@ -111,7 +111,7 @@ describe('TimeSeriesTooltip time comparison', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS]}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS] }}
       />
     );
 
@@ -133,10 +133,12 @@ describe('TimeSeriesTooltip comparison pairing', () => {
     seriesIdx,
     mode = TooltipDisplayMode.Single,
     pairs = PAIRS,
+    deltaColorMode,
   }: {
     seriesIdx: number | null;
     mode?: TooltipDisplayMode;
     pairs?: Map<number, number>;
+    deltaColorMode?: TimeCompareColorMode;
   }) {
     render(
       <TimeSeriesTooltip
@@ -150,8 +152,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS]}
-        comparisonFieldPairs={pairs}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS], fieldPairs: pairs, colorMode: deltaColorMode }}
       />
     );
   }
@@ -171,6 +172,16 @@ describe('TimeSeriesTooltip comparison pairing', () => {
     // value and delta are separate elements so the delta can be colored independently
     expect(screen.getByText('25')).toBeInTheDocument();
     expect(screen.getByText('(+5)')).toBeInTheDocument();
+  });
+
+  // Guards the wiring from the panel option down to the delta: the modes themselves are covered
+  // in VizTooltipRow. Inverted is used because it flips the default coloring of the same delta.
+  it('colors the delta by the configured color mode', () => {
+    renderPair({ seriesIdx: CURRENT_IDX, deltaColorMode: TimeCompareColorMode.Inverted });
+
+    // hovering the current series (20) puts a +5 delta on the compare row, which inverted colors
+    // with the error color rather than the success color the default mode would use
+    expect(screen.getByText('(+5)')).toHaveStyle({ color: '#ff5286' });
   });
 
   it('shows the paired current entry when hovering the comparison series', () => {
@@ -204,8 +215,7 @@ describe('TimeSeriesTooltip comparison pairing', () => {
         sortOrder={SortOrder.None}
         isPinned={false}
         dataLinks={[]}
-        compareDiffMs={[0, 0, -ONE_DAY_MS, 0]}
-        comparisonFieldPairs={PAIRS}
+        timeCompare={{ diffMs: [0, 0, -ONE_DAY_MS, 0], fieldPairs: PAIRS }}
       />
     );
 

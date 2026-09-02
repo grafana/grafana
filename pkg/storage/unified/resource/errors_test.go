@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -150,5 +151,41 @@ func TestGRPCCodeFromHTTPStatus(t *testing.T) {
 	}
 	for _, httpCode := range unmapped {
 		require.Equal(t, codes.Unknown, grpcCodeFromHTTPStatus(httpCode), "http status %d", httpCode)
+	}
+}
+
+func TestIsConflict(t *testing.T) {
+	t.Parallel()
+
+	grpcConflict := status.New(codes.Aborted, "conflict")
+	withDetails, err := grpcConflict.WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+	require.NoError(t, err)
+
+	withReasonOnly, err := status.New(codes.Aborted, "conflict").
+		WithDetails(&resourcepb.ErrorResult{Reason: string(metav1.StatusReasonConflict), Message: "conflict"})
+	require.NoError(t, err)
+
+	withOtherDetails, err := status.New(codes.NotFound, "missing").
+		WithDetails(&resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound)})
+	require.NoError(t, err)
+
+	tests := map[string]struct {
+		err      error
+		expected bool
+	}{
+		"nil":                         {err: nil, expected: false},
+		"typed conflict":              {err: apierrors.NewConflict(schema.GroupResource{Resource: "pods"}, "foo", nil), expected: true},
+		"grpc status details":         {err: withDetails.Err(), expected: true},
+		"grpc status reason only":     {err: withReasonOnly.Err(), expected: true},
+		"grpc status no details":      {err: grpcConflict.Err(), expected: false},
+		"grpc status other details":   {err: withOtherDetails.Err(), expected: false},
+		"wrapped grpc status details": {err: fmt.Errorf("update failed: %w", withDetails.Err()), expected: true},
+		"unrelated error":             {err: apierrors.NewBadRequest("nope"), expected: false},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, tc.expected, IsConflict(tc.err))
+		})
 	}
 }

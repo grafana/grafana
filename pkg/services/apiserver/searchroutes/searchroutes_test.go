@@ -86,8 +86,8 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 	gv := schema.GroupVersion{Group: "playlist.grafana.app", Version: "v0alpha1"}
 	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
 
-	playlists := func(fields []app.ManifestVersionKindSearchField) []app.Manifest {
-		return []app.Manifest{{ManifestData: &app.ManifestData{
+	playlists := func(fields []app.ManifestVersionKindSearchField) []*app.ManifestData {
+		return []*app.ManifestData{{
 			Group: gv.Group,
 			Versions: []app.ManifestVersion{{
 				Name:   gv.Version,
@@ -99,7 +99,7 @@ func TestBuild_SearchFieldsEnrolAKind(t *testing.T) {
 					SearchFields: fields,
 				}},
 			}},
-		}}}
+		}}
 	}
 
 	t.Run("no fields, not enrolled", func(t *testing.T) {
@@ -164,12 +164,12 @@ func TestBuild_EnrolmentIsPerKindNotPerGroup(t *testing.T) {
 func TestBuild_MountsEveryServedVersion(t *testing.T) {
 	var dashboardGVs []schema.GroupVersion
 	for _, m := range resource.AppManifests() {
-		if m.ManifestData == nil || m.ManifestData.Group != "dashboard.grafana.app" {
+		if m == nil || m.Group != "dashboard.grafana.app" {
 			continue
 		}
-		for _, v := range m.ManifestData.Versions {
+		for _, v := range m.Versions {
 			if v.Served {
-				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.Group, Version: v.Name})
 			}
 		}
 	}
@@ -191,12 +191,12 @@ func TestBuild_MountsEveryServedVersion(t *testing.T) {
 func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 	var dashboardGVs []schema.GroupVersion
 	for _, m := range resource.AppManifests() {
-		if m.ManifestData == nil || m.ManifestData.Group != "dashboard.grafana.app" {
+		if m == nil || m.Group != "dashboard.grafana.app" {
 			continue
 		}
-		for _, v := range m.ManifestData.Versions {
+		for _, v := range m.Versions {
 			if v.Served {
-				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.Group, Version: v.Name})
 			}
 		}
 	}
@@ -221,12 +221,12 @@ func allServedGroupVersions(t *testing.T) []schema.GroupVersion {
 
 	var gvs []schema.GroupVersion
 	for _, m := range resource.AppManifests() {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		for _, v := range m.ManifestData.Versions {
+		for _, v := range m.Versions {
 			if v.Served {
-				gvs = append(gvs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+				gvs = append(gvs, schema.GroupVersion{Group: m.Group, Version: v.Name})
 			}
 		}
 	}
@@ -303,8 +303,8 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 	gv := schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
 	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{gv}}}
 
-	dashboards := func(search *app.ManifestVersionKindSearch) []app.Manifest {
-		return []app.Manifest{{ManifestData: &app.ManifestData{
+	dashboards := func(search *app.ManifestVersionKindSearch) []*app.ManifestData {
+		return []*app.ManifestData{{
 			Group: gv.Group,
 			Versions: []app.ManifestVersion{{
 				Name:   gv.Version,
@@ -320,7 +320,7 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 					},
 				}},
 			}},
-		}}}
+		}}
 	}
 	optOut := func(v bool) *bool { return &v }
 
@@ -357,8 +357,8 @@ func TestServedGroupVersions_CoversBothRegistrationPaths(t *testing.T) {
 }
 
 // todoManifest is an ext app group, which no builder or installer knows about.
-func todoManifest(gv schema.GroupVersion, fieldType, capability string) []app.Manifest {
-	return []app.Manifest{{ManifestData: &app.ManifestData{
+func todoManifest(gv schema.GroupVersion, fieldType, capability string) []*app.ManifestData {
+	return []*app.ManifestData{{
 		Group: gv.Group,
 		Versions: []app.ManifestVersion{{
 			Name:   gv.Version,
@@ -372,7 +372,7 @@ func todoManifest(gv schema.GroupVersion, fieldType, capability string) []app.Ma
 				},
 			}},
 		}},
-	}}}
+	}}
 }
 
 func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testing.T) {

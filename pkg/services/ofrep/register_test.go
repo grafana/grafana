@@ -2,6 +2,7 @@ package ofrep
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -48,7 +49,7 @@ func TestReadEvalContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.body))
 
-			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
+			evalCtx, err := b.readEvalContext(context.Background(), httptest.NewRecorder(), req)
 			if tt.expectErr {
 				require.Error(t, err)
 				return

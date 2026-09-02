@@ -50,7 +50,9 @@ export function transformNotebookSceneToSaveModel(scene: NotebookScene): Noteboo
 function getElements(scene: NotebookScene): Record<string, NotebookElement> {
   const elements: Record<string, NotebookElement> = {};
 
-  for (const cell of scene.state.body.state.cells) {
+  // The same cells the layout writes, or the block the editor keeps at the bottom would leave an
+  // element behind with nothing referencing it.
+  for (const cell of scene.state.body.contentCells()) {
     const { elementName, body: panel, content } = cell.state;
 
     if (panel) {

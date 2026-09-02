@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Klasörden devralındı",
-      "locked-aria-label": "Kilitli izin göstergesi",
       "remove-aria-label": "{{identifier}} için izni kaldır",
       "tooltip-inherited-permission": "Devralınan izin",
       "tooltip-provisioned-permission": "Sağlanan izin"
@@ -2667,7 +2666,9 @@
       "view-in-explore": "Keşfet'te görüntüle"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Seçenekler",
+      "invalid-interval-error": "",
       "label-time-range": "Zaman Aralığı",
       "max-data-points": "MD (Maks. Veri Noktası) = {{maxDataPoints}}",
       "min-interval": "Min. Aralık = {{minInterval}}"
@@ -3250,6 +3251,7 @@
         "disable-confirm-title": "Mimir Alertmanager otomatik eşitlemesi devre dışı bırakılsın mı?",
         "disable-success": "Mimir Alertmanager otomatik eşitlemesi devre dışı bırakıldı",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Bu değer, grafana.ini dosyasındaki <1>[unified_alerting] external_alertmanager_uid</1> anahtarı tarafından belirlenir ve kullanıcı arayüzünden değiştirilemez. Yapılandırma dosyasını düzenleyip Grafana'yı yeniden başlatın veya eşitlemeyi buradan yönetmek için anahtarı kaldırın.",
         "operator-managed-title": "Operatör tarafından yönetiliyor",
         "orphan-warning": "Yapılandırılan veri kaynağı UID'si {{uid}} kullanılamıyor. Devam etmek için eşitlemeyi devre dışı bırakın veya veri kaynağını geri yükleyin.",
@@ -3258,6 +3260,7 @@
         "picker-label": "Veri kaynağı",
         "picker-placeholder": "Bir Mimir veya Cortex Alertmanager veri kaynağı seçin…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Kaydetmeyi etkinleştirmek için bir Mimir veya Cortex Alertmanager veri kaynağı seçin.",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanager otomatik eşitlemesi kaydedilemedi",
@@ -6019,11 +6022,14 @@
     "notebook-layout": {
       "description": "Panel, metin ve kod hücrelerinden oluşan dikey bir sıra",
       "name": "Defter",
-      "pill": "Yayımlanmış Not Defteri",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Zaman"
+      "time": "Zaman",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6048,6 +6054,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "1 gün önce",
         "compare-month-before": "1 ay önce",
         "compare-week-before": "1 hafta önce",
@@ -8782,7 +8793,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "{{name}} metriğini daralt",
@@ -9722,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Dünden önceki gün",
           "previousFiscalQuarter": "Önceki mali çeyrek",
@@ -12960,8 +12975,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12976,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12989,15 +13007,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13017,13 +13086,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13031,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13039,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13059,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13067,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13102,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Serileri şuna göre renklendir:"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13236,6 +13320,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Kopyala",
       "copy-styles": "Stilleri kopyala",
       "download-diagnostics": "Tanılama verilerini indir",
@@ -15072,6 +15157,75 @@
       "title-data-source-help": "Veri kaynağı yardımı"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Filtre ekle",
@@ -15854,7 +16008,6 @@
       "home-dashboard-placeholder": "Varsayılan pano",
       "language-preference-label": "Dil",
       "language-preference-placeholder": "Dil seçin",
-      "theme-description": "Deneysel temaları beğendiniz mi? Görmek istediklerinizi <2>buradan</2> bize bildirin.",
       "theme-label": "Arayüz teması",
       "week-start-label": "Hafta başlangıcı"
     },
@@ -17770,7 +17923,7 @@
       "delete-modal-body": "\"{{name}}\" ögesini silmek istediğinizden emin misiniz?",
       "delete-modal-confirm": "Sil",
       "delete-modal-title": "Değişkeni sil",
-      "folder-description": "Değişkeni bir klasörle sınırlandırın veya genel hâle getirmek (kuruluşun her yerinde kullanılabilir olmasını sağlamak) için kök Panolar klasörünü seçin",
+      "folder-description": "",
       "folder-description-folder-only": "Değişkeni düzenleyebildiğiniz bir klasörle sınırlandırın",
       "folder-label": "Klasör",
       "moved": "Değişken taşındı",
@@ -17790,8 +17943,8 @@
       "move": "Taşı",
       "moving": "Taşınıyor...",
       "title": "Değişkenleri taşı",
-      "body_one": "Seçili {{count}} değişkeni taşıyın. Kök Panolar klasörünün seçilmesi, değişkeni genel hâle getirir (kuruluşun her yerinde kullanılabilir).",
-      "body_other": "Seçili {{count}} değişkeni taşıyın. Kök Panolar klasörünün seçilmesi, değişkenleri genel hâle getirir (kuruluşun her yerinde kullanılabilir).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Seçili {{count}} değişkeni düzenleyebildiğiniz bir klasöre taşıyın.",
       "body-folder-only_other": "Seçili {{count}} değişkeni düzenleyebildiğiniz bir klasöre taşıyın."
     },
@@ -17815,6 +17968,14 @@
       "select-all": "Tüm değişkenleri seçin",
       "select-folder": "{{title}} klasöründeki tüm değişkenleri seçin",
       "select-variable": "{{name}} değişkenini seçin"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

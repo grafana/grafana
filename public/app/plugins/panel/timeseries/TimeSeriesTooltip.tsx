@@ -9,7 +9,7 @@ import {
   type LinkModel,
   usePluginContext,
 } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, type TimeCompareColorMode, TooltipDisplayMode } from '@grafana/schema';
 import {
   type AdHocFilterModel,
   type FilterByGroupedLabelsModel,
@@ -54,8 +54,15 @@ export interface TimeSeriesTooltipProps {
   adHocFilters?: AdHocFilterModel[];
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
-  compareDiffMs?: number[];
-  comparisonFieldPairs?: Map<number, number>;
+  /** Time comparison context. Absent unless the panel has a comparison configured. */
+  timeCompare?: {
+    /** Per-series offset from the current period, indexed like `series.fields`. */
+    diffMs?: number[];
+    /** Maps a series index to the index of its comparison counterpart. */
+    fieldPairs?: Map<number, number>;
+    /** How the delta is colored. Defaults to `TimeCompareColorMode.Standard`. */
+    colorMode?: TimeCompareColorMode;
+  };
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
 }
@@ -75,12 +82,13 @@ export const TimeSeriesTooltip = ({
   hideZeros,
   adHocFilters,
   canExecuteActions,
-  compareDiffMs,
   filterByGroupedLabels,
   assistantContext,
-  comparisonFieldPairs,
+  timeCompare,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
+
+  const { diffMs: compareDiffMs, fieldPairs: comparisonFieldPairs, colorMode: deltaColorMode } = timeCompare ?? {};
 
   const xField = series.fields[0];
   let xVal = xField.values[dataIdxs[0]!];
@@ -112,7 +120,8 @@ export const TimeSeriesTooltip = ({
     },
     hideZeros,
     _rest,
-    compareFieldIdx
+    compareFieldIdx,
+    deltaColorMode
   );
 
   let footer: ReactNode;

@@ -155,6 +155,7 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.MaxRecvMsgSize, "grpc-server-max-recv-msg-size", 0, "Maximum size of a gRPC request message in bytes")
 	fs.IntVar(&c.MaxSendMsgSize, "grpc-server-max-send-msg-size", 0, "Maximum size of a gRPC response message in bytes")
 	fs.DurationVar(&c.GracefulShutdownTimeout, "grpc-server-graceful-shutdown-timeout", 10*time.Second, "Duration to wait for graceful gRPC server shutdown")
+	fs.BoolVar(&c.ReportGRPCCodesInInstrumentationLabelEnabled, "grpc-server-report-grpc-codes-in-instrumentation-label-enabled", false, "Use the actual gRPC codes in the request duration metric status_code label rather than generic success/error")
 
 	// Internal flags, we need to call ProcessTLSConfig
 	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")

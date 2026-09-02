@@ -782,6 +782,20 @@ export const mockThresholdExpression = (partial: Partial<ExpressionQuery> = {}):
   },
 });
 
+export const mockResampleExpression = (partial: Partial<ExpressionQuery> = {}): AlertQuery<ExpressionQuery> => ({
+  refId: 'B',
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.resample,
+    refId: 'B',
+    window: '10s',
+    downsampler: 'mean',
+    upsampler: 'fillna',
+    ...partial,
+  },
+});
+
 class LocalStorageMock implements Storage {
   [key: string]: any;
 

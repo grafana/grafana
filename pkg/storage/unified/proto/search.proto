@@ -21,7 +21,7 @@ service ResourceIndex {
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
 
-  // Hybrid search: RRF fuse lexical and vector with optional reranker
+  // Hybrid search: RRF fuse lexical and vector with optional reranker.
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
@@ -283,7 +283,8 @@ message HybridSearchRequest {
   ResourceKey key = 1;
 
   // Required. Feeds the lexical leg verbatim; also embedded for the
-  // semantic leg unless semantic_query is set. Max 1000 bytes.
+  // semantic leg unless semantic_query is set. Max 1000 bytes. Put
+  // extracted keywords here and natural language in semantic_query.
   string query = 2;
 
   // Optional richer phrasing embedded for the semantic leg instead of
@@ -294,10 +295,12 @@ message HybridSearchRequest {
   int64 limit = 4;
 
   // Exact-match filters, IN semantics for multiple values, each key at
-  // most once. Supported keys: "uid" and "folder" (all kinds),
-  // "datasource_uid" and "language" (dashboards; language values:
-  // promql, logql, traceql, sql). Every key is enforced natively by
-  // BOTH legs. Any other key or language fails the request.
+  // most once, max 1000 values total. Internal collections allow only
+  // "uid" and "folder" (all kinds), "datasource_uid" and "language"
+  // (dashboards; values: promql, logql, traceql, sql) — enforced
+  // natively by BOTH legs. External collections: "uid" and "folder"
+  // match the row's identity and folder, any other key matches the
+  // metadata JSON (containment).
   repeated Requirement filters = 5;
 
   // Minimum relevance a result must reach to be returned. One of:
@@ -352,8 +355,9 @@ message HybridSearchResult {
   // Only the best chunk influences score.
   repeated HybridSearchChunk chunks = 5;
 
-  // Manager kind. Empty when unmanaged, or when resolution for a
-  // semantic-only hit fails — best-effort display data, never an error.
+  // Manager kind. Empty when unmanaged, for external collections, or when
+  // resolution for a semantic-only hit fails — best-effort display data,
+  // never an error.
   string managed_by_kind = 7;
 
   // Manager identity, alongside managed_by_kind.

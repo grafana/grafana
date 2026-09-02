@@ -31,6 +31,7 @@ import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
+import { startQueryPreview, type QueryPreview } from './QueryEditor/coauthoring/queryPreview';
 import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
@@ -386,6 +387,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     if (queryRunner) {
       queryRunner.runQueries();
     }
+  };
+
+  public startQueryPreview = (originalRefId: string, proposedQuery: DataQuery): QueryPreview | undefined => {
+    return startQueryPreview(this.state.panelRef.resolve(), originalRefId, proposedQuery);
   };
 
   public bulkDeleteQueries = (refIds: readonly string[]) => {

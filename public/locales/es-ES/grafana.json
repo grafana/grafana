@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Heredado de la carpeta",
-      "locked-aria-label": "Indicador de permiso bloqueado",
       "remove-aria-label": "Eliminar permiso para {{identifier}}",
       "tooltip-inherited-permission": "Permiso heredado",
       "tooltip-provisioned-permission": "Permiso aprovisionado"
@@ -2667,7 +2666,9 @@
       "view-in-explore": "Ver en Explorar"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opciones",
+      "invalid-interval-error": "",
       "label-time-range": "Rango de tiempo",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Tamaño min. Intervalo = {{minInterval}}"
@@ -3250,6 +3251,7 @@
         "disable-confirm-title": "¿Deshabilitar la sincronización automática de Mimir Alertmanager?",
         "disable-success": "Sincronización automática de Mimir Alertmanager deshabilitada",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Este valor lo establece la clave <1>[unified_alerting] external_alertmanager_uid</1> en grafana.ini y no se puede cambiar desde la interfaz de usuario. Edita el archivo de configuración y reinicia Grafana, o elimina la clave para gestionar la sincronización desde aquí.",
         "operator-managed-title": "Administrado por el operador",
         "orphan-warning": "La fuente de datos configurada con el UID {{uid}} no está disponible. Deshabilita la sincronización o restaura la fuente de datos para continuar.",
@@ -3258,6 +3260,7 @@
         "picker-label": "Fuente de datos",
         "picker-placeholder": "Selecciona una fuente de datos de Mimir o Cortex Alertmanager...",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Selecciona una fuente de datos de Mimir o Cortex Alertmanager para habilitar el guardado.",
         "save-disabled-staged-config": "",
         "save-error": "Error al guardar la sincronización automática de Mimir Alertmanager",
@@ -6019,11 +6022,14 @@
     "notebook-layout": {
       "description": "Una secuencia vertical de paneles, texto y celdas de código",
       "name": "Cuaderno",
-      "pill": "Cuaderno publicado",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Hora"
+      "time": "Hora",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6048,6 +6054,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "Día anterior",
         "compare-month-before": "Mes anterior",
         "compare-week-before": "Semana anterior",
@@ -8782,7 +8793,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Contraer {{name}}",
@@ -9722,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Anteayer",
           "previousFiscalQuarter": "Trimestre fiscal anterior",
@@ -12960,8 +12975,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12976,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12989,15 +13007,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13017,13 +13086,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13031,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13039,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13059,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13067,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13102,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Colorear series por"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13236,6 +13320,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Copiar",
       "copy-styles": "Copiar estilos",
       "download-diagnostics": "Descargar diagnósticos",
@@ -15072,6 +15157,75 @@
       "title-data-source-help": "Ayuda de la fuente de datos"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Añadir filtro",
@@ -15854,7 +16008,6 @@
       "home-dashboard-placeholder": "Panel de control por defecto",
       "language-preference-label": "Idioma",
       "language-preference-placeholder": "Cambiar idioma",
-      "theme-description": "¿Te gustan los temas experimentales? Dinos lo que te gustaría ver <2>aquí.</2>",
       "theme-label": "Tema de interfaz de usuario",
       "week-start-label": "Inicio de la semana"
     },
@@ -17770,7 +17923,7 @@
       "delete-modal-body": "¿Seguro que quieres eliminar «{{name}}»?",
       "delete-modal-confirm": "Eliminar",
       "delete-modal-title": "Eliminar variable",
-      "folder-description": "Asigna el ámbito de la variable a una carpeta o elige la carpeta raíz de Dashboards para que sea global (disponible en toda la organización)",
+      "folder-description": "",
       "folder-description-folder-only": "Asigna el alcance de la variable a una carpeta que puedas editar",
       "folder-label": "Carpeta",
       "moved": "Variable movida",
@@ -17790,8 +17943,8 @@
       "move": "Mover",
       "moving": "Moviendo...",
       "title": "Mover variables",
-      "body_one": "Mover {{count}} variable seleccionada. Al elegir la carpeta raíz de Dashboards, se convierte en global (disponible en toda la organización).",
-      "body_other": "Mueve {{count}} variables seleccionadas. Al elegir la carpeta raíz de Dashboards, se convierten en globales (disponibles en toda la organización).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Mueve {{count}} variable seleccionada a una carpeta que puedas editar.",
       "body-folder-only_other": "Mueve {{count}} variables seleccionadas a una carpeta que puedas editar."
     },
@@ -17815,6 +17968,14 @@
       "select-all": "Seleccionar todas las variables",
       "select-folder": "Seleccionar todas las variables de la carpeta {{title}}",
       "select-variable": "Seleccionar variable {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

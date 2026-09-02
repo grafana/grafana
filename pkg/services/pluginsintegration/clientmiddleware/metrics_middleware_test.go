@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -524,13 +525,9 @@ func checkHistogram(promRegistry *prometheus.Registry, expMetricName string, exp
 // The additionalLabels are merged into the initial ones, and will overwrite a value if already set in initialLabels.
 func newLabels(initialLabels prometheus.Labels, additional ...prometheus.Labels) prometheus.Labels {
 	r := make(prometheus.Labels, len(initialLabels)+len(additional)/2)
-	for k, v := range initialLabels {
-		r[k] = v
-	}
+	maps.Copy(r, initialLabels)
 	for _, l := range additional {
-		for k, v := range l {
-			r[k] = v
-		}
+		maps.Copy(r, l)
 	}
 	return r
 }

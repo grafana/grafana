@@ -420,7 +420,29 @@ func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) (s
 // Write operations
 
 func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	if len(permissions) == 0 {
+		return nil
+	}
+
 	ctx := c.Req.Context()
+	type permissionChange struct {
+		kind       iamv0.ResourcePermissionSpecPermissionKind
+		name       string
+		permission string
+	}
+	changes := make([]permissionChange, 0, len(permissions))
+	for _, perm := range permissions {
+		name, err := a.getPermissionName(ctx, perm)
+		if err != nil {
+			return fmt.Errorf("failed to get permission name: %w", err)
+		}
+		changes = append(changes, permissionChange{
+			kind:       iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm)),
+			name:       name,
+			permission: perm.Permission,
+		})
+	}
+
 	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return err
@@ -432,67 +454,92 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
-	_, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
-	if err != nil {
-		return err
-	}
-
-	k8sPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(permissions))
-
-	for _, perm := range permissions {
-		if perm.Permission == "" {
-			continue
-		}
-
-		kind := a.getPermissionKind(perm)
-		name, err := a.getPermissionName(ctx, perm)
-		if err != nil {
-			return fmt.Errorf("failed to get permission name: %w", err)
-		}
-
-		k8sPermissions = append(k8sPermissions, iamv0.ResourcePermissionspecPermission{
-			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
-			Name: name,
-			Verb: cases.Lower(language.Und).String(perm.Permission),
-		})
-	}
-
-	if len(k8sPermissions) == 0 {
-		if existingResourceVersion != "" {
-			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{})
-			if err != nil && !k8serrors.IsNotFound(err) {
-				return fmt.Errorf("failed to delete resource permission in k8s: %w", err)
-			}
-		}
-		return nil
-	}
-
 	apiGroup, err := a.getAPIGroup()
 	if err != nil {
 		return err
 	}
 
-	resourcePerm := &iamv0.ResourcePermission{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            resourcePermName,
-			Namespace:       namespace,
-			ResourceVersion: existingResourceVersion,
-		},
-		Spec: iamv0.ResourcePermissionSpec{
-			Resource: iamv0.ResourcePermissionspecResource{
-				ApiGroup: apiGroup,
-				Resource: a.service.options.Resource,
-				Name:     resourceNameFromRequest(c.Req, resourceID),
-			},
-			Permissions: k8sPermissions,
-		},
-	}
+	// The legacy endpoint applies commands incrementally, while the K8s object
+	// replaces its permissions slice. Re-read on conflicts so this translation
+	// preserves both the legacy contract and concurrent writers' changes.
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		existingResourcePerm, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
+		if err != nil {
+			return err
+		}
 
-	return a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
+		k8sPermissions := slices.Clone(existingResourcePerm.Spec.Permissions)
+		changed := false
+		for _, change := range changes {
+			idx := slices.IndexFunc(k8sPermissions, func(existing iamv0.ResourcePermissionspecPermission) bool {
+				return existing.Kind == change.kind && existing.Name == change.name
+			})
+			if change.permission == "" {
+				if idx >= 0 {
+					k8sPermissions = slices.Delete(k8sPermissions, idx, idx+1)
+					changed = true
+				}
+				continue
+			}
+
+			updatedPermission := iamv0.ResourcePermissionspecPermission{
+				Kind: change.kind,
+				Name: change.name,
+				Verb: cases.Lower(language.Und).String(change.permission),
+			}
+			if idx >= 0 {
+				if k8sPermissions[idx] != updatedPermission {
+					k8sPermissions[idx] = updatedPermission
+					changed = true
+				}
+			} else {
+				k8sPermissions = append(k8sPermissions, updatedPermission)
+				changed = true
+			}
+		}
+
+		if !changed {
+			return nil
+		}
+
+		if len(k8sPermissions) == 0 {
+			if existingResourceVersion == "" {
+				return nil
+			}
+			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{
+				Preconditions: &metav1.Preconditions{ResourceVersion: &existingResourceVersion},
+			})
+			if err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf("failed to delete resource permission in k8s: %w", err)
+			}
+			return nil
+		}
+
+		resourcePerm := existingResourcePerm.DeepCopy()
+		if existingResourceVersion == "" {
+			resourcePerm = &iamv0.ResourcePermission{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: resourcePermName, Namespace: namespace},
+				Spec: iamv0.ResourcePermissionSpec{
+					Resource: iamv0.ResourcePermissionspecResource{
+						ApiGroup: apiGroup,
+						Resource: a.service.options.Resource,
+						Name:     resourceNameFromRequest(c.Req, resourceID),
+					},
+				},
+			}
+		}
+		resourcePerm.Spec.Permissions = k8sPermissions
+
+		err = a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
+		if k8serrors.IsAlreadyExists(err) {
+			return k8serrors.NewConflict(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermName, err)
+		}
+		return err
+	})
 }
 
 func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {

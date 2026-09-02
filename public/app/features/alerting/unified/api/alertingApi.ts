@@ -7,8 +7,6 @@ import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 
-const logger = getLogger('features.alerting');
-
 type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
    * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
@@ -58,6 +56,8 @@ export type AlertingApiExtraOptions = {
 const backendSrvBaseQuery =
   (): BaseQueryFn<BaseQueryFnArgs> =>
   async ({ body, notificationOptions = {}, ...requestOptions }, api, extraOptions?: AlertingApiExtraOptions) => {
+    const logger = getLogger('features.alerting');
+
     const { errorMessage, showErrorAlert, successMessage, showSuccessAlert } = notificationOptions;
     const { hideErrorMessage } = extraOptions || {};
 

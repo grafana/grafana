@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"slices"
@@ -2118,12 +2119,8 @@ func TestStaleResults(t *testing.T) {
 	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) data.Fingerprint {
 		t.Helper()
 		labels := data.Labels{}
-		for key, value := range rule.Labels {
-			labels[key] = value
-		}
-		for key, value := range result.Instance {
-			labels[key] = value
-		}
+		maps.Copy(labels, rule.Labels)
+		maps.Copy(labels, result.Instance)
 		lbls := models.InstanceLabels(labels)
 		return lbls.Fingerprint()
 	}
@@ -2594,12 +2591,8 @@ func stateSliceToMap(states []*state.State) map[data.Fingerprint]*state.State {
 
 func mergeLabels(a, b data.Labels) data.Labels {
 	result := make(data.Labels, len(a)+len(b))
-	for k, v := range a {
-		result[k] = v
-	}
-	for k, v := range b {
-		result[k] = v
-	}
+	maps.Copy(result, a)
+	maps.Copy(result, b)
 	return result
 }
 

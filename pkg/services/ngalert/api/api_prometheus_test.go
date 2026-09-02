@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -326,9 +327,7 @@ func withNoDataState() forEachState {
 
 func withLabels(labels data.Labels) forEachState {
 	return func(s *state.State) *state.State {
-		for k, v := range labels {
-			s.Labels[k] = v
-		}
+		maps.Copy(s.Labels, labels)
 		return s
 	}
 }

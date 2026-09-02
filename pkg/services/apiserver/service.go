@@ -464,7 +464,7 @@ func (s *service) start(ctx context.Context) error {
 			StorageClient:         s.unified,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,

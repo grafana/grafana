@@ -1,5 +1,6 @@
-import { act, render, screen } from '@testing-library/react';
-import { useEffect, useRef, useState } from 'react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { type PropsWithChildren, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import {
   type DataQueryError,
@@ -10,13 +11,21 @@ import {
   LoadingState,
   type TestDataSourceResponse,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { QueryEditorType } from '../constants';
 
 import { QueryEditorProvider } from './QueryEditorContext';
-import { QueryEditorRenderer } from './QueryEditorRenderer';
+import { QueryEditorPanel, QueryEditorRenderer } from './QueryEditorRenderer';
+import {
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
+} from './coauthoring/internalCoauthoringContract';
+import { synchronizeCoauthoringBaselineQuery } from './coauthoring/useQueryProposalTransaction';
 import {
   ds1SettingsMock,
   mockActions,
@@ -51,8 +60,8 @@ function UncontrolledQueryEditor({ query }: { query: DataQuery }) {
 }
 
 class MockDataSourceApi extends DataSourceApi<DataQuery, DataSourceJsonData> {
-  constructor(components: DataSourceApi<DataQuery, DataSourceJsonData>['components']) {
-    super(ds1SettingsMock);
+  constructor(components: DataSourceApi<DataQuery, DataSourceJsonData>['components'], settings = ds1SettingsMock) {
+    super(settings);
     this.components = components;
   }
 
@@ -84,7 +93,23 @@ function renderRenderer(
   });
 }
 
+function renderWithOpenFeature(ui: ReactElement) {
+  function Wrapper({ children }: PropsWithChildren) {
+    return <OpenFeatureProvider client={getTestFeatureFlagClient()}>{children}</OpenFeatureProvider>;
+  }
+
+  return render(ui, { wrapper: Wrapper });
+}
+
 describe('QueryEditorRenderer', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   it('renders nothing when no query is selected', () => {
     renderRenderer(null);
     expect(screen.queryByTestId('query-editor-legend')).not.toBeInTheDocument();
@@ -104,6 +129,152 @@ describe('QueryEditorRenderer', () => {
   it('renders the query editor for the selected query', () => {
     renderRenderer(queryA);
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+  });
+
+  it('does not enable query coauthoring when the feature flag is disabled', () => {
+    function CapabilityQueryEditor(props: { query: DataQuery; unstable_queryEditorCoauthoringV1?: object }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toBeUndefined();
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
+      },
+    });
+
+    expect(screen.getByTestId('capability-query-editor')).toBeInTheDocument();
+  });
+
+  it('provides the datasource coauthoring registrar when the feature flag is enabled', () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+
+    function CapabilityQueryEditor(props: {
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toEqual({ register: expect.any(Function) });
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
+      },
+    });
+
+    expect(screen.getByTestId('capability-query-editor')).toBeInTheDocument();
+  });
+
+  it('does not offer the private coauthoring seam to a second datasource', () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+
+    function OtherDatasourceQueryEditor(props: { query: DataQuery; unstable_queryEditorCoauthoringV1?: object }) {
+      expect(props.unstable_queryEditorCoauthoringV1).toBeUndefined();
+      return <div data-testid="other-datasource-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: OtherDatasourceQueryEditor }),
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    expect(screen.getByTestId('other-datasource-query-editor')).toBeInTheDocument();
+  });
+
+  it('registers the row-scoped adapter and renders its selection trigger in Core', async () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const snapshot = { mode: 'selection' as const, portalTarget };
+    const adapter: QueryEditorCoauthoringAdapterV1 = {
+      getSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      invoke: jest.fn(),
+      readInvocation: jest.fn(),
+      prepareProposal: jest.fn(),
+      dismiss: jest.fn(),
+    };
+
+    function CapabilityQueryEditor({
+      unstable_queryEditorCoauthoringV1,
+    }: {
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      useEffect(() => unstable_queryEditorCoauthoringV1?.register(adapter), [unstable_queryEditorCoauthoringV1]);
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    const view = renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: { ...ds1SettingsMock, type: 'prometheus' },
+      },
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: /Explain or modify/ }));
+
+    expect(adapter.invoke).toHaveBeenCalledTimes(1);
+    expect(portalTarget).toContainElement(
+      screen.getByTestId(selectors.components.QueryEditorCoauthoring.selectionToolbar)
+    );
+
+    view.unmount();
+    portalTarget.remove();
+  });
+
+  it('synchronizes only a baseline that differs from the current query', () => {
+    const updateQuery = jest.fn();
+    const currentQuery: TestQuery = { refId: 'A', legendFormat: 'series-a' };
+    const equalBaseline: TestQuery = { refId: 'A', legendFormat: 'series-a' };
+    const differentBaseline: TestQuery = { refId: 'A', legendFormat: 'series-b' };
+    const staleBaseline: TestQuery = { refId: 'B', legendFormat: 'series-c' };
+
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, equalBaseline, updateQuery)).toBe(true);
+    expect(updateQuery).not.toHaveBeenCalled();
+
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, differentBaseline, updateQuery)).toBe(true);
+    expect(updateQuery).toHaveBeenCalledWith({ refId: 'A', legendFormat: 'series-b' }, 'A');
+
+    updateQuery.mockClear();
+    expect(synchronizeCoauthoringBaselineQuery(currentQuery, staleBaseline, updateQuery)).toBe(false);
+    expect(updateQuery).not.toHaveBeenCalled();
+  });
+
+  it('remounts the query editor when the datasource instance changes', () => {
+    function InstanceAwareQueryEditor({ datasource }: { datasource: DataSourceApi }) {
+      const [initialDatasourceUid] = useState(datasource.uid);
+      return <div data-testid="datasource-instance">{initialDatasourceUid}</div>;
+    }
+
+    const firstSettings = { ...ds1SettingsMock, uid: 'prometheus-first' };
+    const secondSettings = { ...ds1SettingsMock, uid: 'prometheus-second' };
+    const renderPanel = (settings: typeof ds1SettingsMock) => (
+      <QueryEditorPanel
+        query={queryA}
+        queryDsData={{
+          datasource: new MockDataSourceApi({ QueryEditor: InstanceAwareQueryEditor }, settings),
+          dsSettings: settings,
+        }}
+        queryDsLoading={false}
+        queries={[queryA, queryB]}
+        updateQuery={jest.fn()}
+        addQuery={jest.fn()}
+        runQueries={jest.fn()}
+        startQueryPreview={jest.fn()}
+      />
+    );
+
+    const view = renderWithOpenFeature(renderPanel(firstSettings));
+    expect(screen.getByTestId('datasource-instance')).toHaveTextContent('prometheus-first');
+
+    view.rerender(renderPanel(secondSettings));
+    expect(screen.getByTestId('datasource-instance')).toHaveTextContent('prometheus-second');
   });
 
   it('contains errors thrown by the datasource query editor', () => {
@@ -188,7 +359,7 @@ describe('QueryEditorRenderer', () => {
       );
     }
 
-    const { rerender } = render(buildJsx(queryA));
+    const { rerender } = renderWithOpenFeature(buildJsx(queryA));
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
 
     rerender(buildJsx(queryB));
@@ -269,7 +440,7 @@ describe('QueryEditorRenderer', () => {
       );
     }
 
-    const { rerender } = render(buildJsx(queryA));
+    const { rerender } = renderWithOpenFeature(buildJsx(queryA));
 
     await act(async () => {
       rerender(buildJsx(queryB));

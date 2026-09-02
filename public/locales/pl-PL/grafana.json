@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Dziedziczone z folderu",
-      "locked-aria-label": "Zablokowany wskaźnik uprawnień",
       "remove-aria-label": "Usuń uprawnienie dla: {{identifier}}",
       "tooltip-inherited-permission": "Uprawnienie dziedziczone",
       "tooltip-provisioned-permission": "Uprawnienie aprowizowane"
@@ -2707,7 +2706,9 @@
       "view-in-explore": "Wyświetl w widoku Eksploruj"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opcje",
+      "invalid-interval-error": "",
       "label-time-range": "Zakres czasu",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. odstęp czasu = {{minInterval}}"
@@ -3296,6 +3297,7 @@
         "disable-confirm-title": "Wyłączyć automatyczną synchronizację menedżera alertów Mimir?",
         "disable-success": "Automatyczna synchronizacja menedżera alertów Mimir wyłączona",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Ta wartość jest ustawiana przez klucz <1>[unified_alerting] external_alertmanager_uid</1> w pliku grafana.ini i nie można jej zmienić z poziomu interfejsu użytkownika. Edytuj plik konfiguracyjny i uruchom ponownie Grafanę lub usuń klucz, aby zarządzać synchronizacją z tego miejsca.",
         "operator-managed-title": "Zarządzane przez operatora",
         "orphan-warning": "Skonfigurowane źródło danych z UID {{uid}} jest niedostępne. Wyłącz synchronizację lub przywróć źródło danych, aby kontynuować.",
@@ -3304,6 +3306,7 @@
         "picker-label": "Źródło danych",
         "picker-placeholder": "Wybierz źródło danych Mimir lub menedżera alertów Cortex…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Wybierz źródło danych Mimir lub menedżera alertów Cortex, aby włączyć zapisywanie.",
         "save-disabled-staged-config": "",
         "save-error": "Nie udało się zapisać automatycznej synchronizacji menedżera alertów Mimir",
@@ -6103,11 +6106,14 @@
     "notebook-layout": {
       "description": "Pionowa sekwencja paneli, tekstu i komórek kodu",
       "name": "Notatnik",
-      "pill": "Opublikowany notatnik",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Czas"
+      "time": "Czas",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6134,6 +6140,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "Dzień przed",
         "compare-month-before": "Miesiąc przed",
         "compare-week-before": "Tydzień przed",
@@ -8880,7 +8891,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Zwiń: {{name}}",
@@ -9828,6 +9841,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "Przedwczoraj",
           "previousFiscalQuarter": "Poprzedni kwartał podatkowy",
@@ -13142,8 +13157,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -13158,6 +13172,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -13171,15 +13189,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13199,13 +13268,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13213,7 +13288,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13221,7 +13295,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13245,6 +13318,9 @@
       "count-truncated_many": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13253,6 +13329,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13288,6 +13365,13 @@
     },
     "field-color": {
       "color-by-label": "Kolory serii wg"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13422,6 +13506,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Kopiuj",
       "copy-styles": "Kopiuj style",
       "download-diagnostics": "Pobierz diagnostykę",
@@ -15296,6 +15381,75 @@
       "title-data-source-help": "Pomoc dotycząca źródła danych"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Dodaj filtr",
@@ -16098,7 +16252,6 @@
       "home-dashboard-placeholder": "Domyślny pulpit",
       "language-preference-label": "Język",
       "language-preference-placeholder": "Wybierz język",
-      "theme-description": "Podobają Ci się motywy eksperymentalne? Powiedz nam, co chcesz <2>tutaj</2> zobaczyć.",
       "theme-label": "Motyw interfejsu",
       "week-start-label": "Początek tygodnia"
     },
@@ -18024,7 +18177,7 @@
       "delete-modal-body": "Czy na pewno chcesz usunąć „{{name}}”?",
       "delete-modal-confirm": "Usuń",
       "delete-modal-title": "Usuń zmienną",
-      "folder-description": "Ogranicz zakres zmiennej do folderu lub wybierz główny folder pulpitów, aby zmienna stała się globalna (dostępna w całej organizacji)",
+      "folder-description": "",
       "folder-description-folder-only": "Ogranicz zakres zmiennej do folderu, który możesz edytować",
       "folder-label": "Folder",
       "moved": "Zmienna została przeniesiona",
@@ -18044,10 +18197,10 @@
       "move": "Przenieś",
       "moving": "Przenoszenie…",
       "title": "Przenieś zmienne",
-      "body_one": "Przenieś {{count}} wybraną zmienną. Wybranie głównego folderu pulpitów spowoduje, że zmienna stanie się globalna (dostępna w całej organizacji).",
-      "body_few": "Przenieś {{count}} wybrane zmienne. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
-      "body_many": "Przenieś {{count}} wybranych zmiennych. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
-      "body_other": "Przenieś {{count}} wybranej zmiennej. Wybranie głównego folderu pulpitów spowoduje, że zmienne staną się globalne (dostępne w całej organizacji).",
+      "body_one": "",
+      "body_few": "",
+      "body_many": "",
+      "body_other": "",
       "body-folder-only_one": "Przenieś {{count}} wybraną zmienną do folderu, który możesz edytować.",
       "body-folder-only_few": "Przenieś {{count}} wybrane zmienne do folderu, który możesz edytować.",
       "body-folder-only_many": "Przenieś {{count}} wybranych zmiennych do folderu, który możesz edytować.",
@@ -18075,6 +18228,14 @@
       "select-all": "Wybierz wszystkie zmienne",
       "select-folder": "Wybierz wszystkie zmienne w folderze {{title}}",
       "select-variable": "Wybierz zmienną {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

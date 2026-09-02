@@ -1,11 +1,13 @@
 package informer
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProcessedMetrics_ClassifyAdd(t *testing.T) {
@@ -61,14 +63,14 @@ func TestProcessedMetrics_RecordProcessed(t *testing.T) {
 	m.RecordProcessed(TriggerRelist)
 	m.RecordProcessed(TriggerInitial)
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "live")))
-	assert.Equal(t, 2.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "relist")))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "initial")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("live")))
+	assert.Equal(t, 2.0, testutil.ToFloat64(m.processed.WithLabelValues("relist")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("initial")))
 
 	// An unknown source (e.g. the zero value carried by a non-classified queue
 	// item) records nothing.
 	m.RecordProcessed(ProcessTrigger(""))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "live")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("live")))
 }
 
 func TestProcessedMetrics_NilSafe(t *testing.T) {
@@ -77,9 +79,9 @@ func TestProcessedMetrics_NilSafe(t *testing.T) {
 	assert.NotPanics(t, func() { m.ObserveDeliveryLatency(TriggerLive, 1.0) })
 }
 
-// TestProcessedMetrics_SharedAcrossResources verifies that several consumers on
-// one registry share the same collectors (via registerOrReuse) and emit
-// distinct series per resource label.
+// TestProcessedMetrics_SharedAcrossResources verifies that several consumers can
+// be built on one registry and that the scrape shows one metric family carrying
+// a series per resource.
 func TestProcessedMetrics_SharedAcrossResources(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	jobsM := NewProcessedMetrics(reg, "jobs", false)
@@ -89,6 +91,13 @@ func TestProcessedMetrics_SharedAcrossResources(t *testing.T) {
 	reposM.RecordProcessed(TriggerRelist)
 	reposM.RecordProcessed(TriggerRelist)
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(jobsM.processed.WithLabelValues("jobs", "relist")))
-	assert.Equal(t, 2.0, testutil.ToFloat64(reposM.processed.WithLabelValues("repositories", "relist")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(jobsM.processed.WithLabelValues("relist")))
+	assert.Equal(t, 2.0, testutil.ToFloat64(reposM.processed.WithLabelValues("relist")))
+
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
+# HELP grafana_provisioning_events_processed_total Processing started for a work-queue key, by resource and source (live = a live event; relist = the periodic re-list; initial = the informer's initial list).
+# TYPE grafana_provisioning_events_processed_total counter
+grafana_provisioning_events_processed_total{resource="jobs",source="relist"} 1
+grafana_provisioning_events_processed_total{resource="repositories",source="relist"} 2
+`), "grafana_provisioning_events_processed_total"))
 }

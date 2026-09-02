@@ -1953,11 +1953,11 @@ var (
 		{
 			Name:         "foldersAppPlatformAPI",
 			Description:  "Enables use of app platform API for folders",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "otelLogsFormatting",
@@ -2328,6 +2328,14 @@ var (
 			Description: "Enables next generation query editor experience",
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryeditor.coauthoringUi",
+			Description: "Enables AI-assisted coauthoring in code query editors",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 		},

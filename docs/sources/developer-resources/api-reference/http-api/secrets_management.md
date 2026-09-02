@@ -60,6 +60,7 @@ Currently available decrypters:
 - `k6-cloud` (for Grafana Cloud k6)
 - `provisioning.grafana.app` (for GitSync/Provisioning)
 - `synthetic-monitoring` (for Synthetic Monitoring checks)
+- `agent-observability` (for Agent Observability)
 
 ## Create a secure value
 

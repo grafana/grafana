@@ -173,6 +173,34 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
   });
 
+  // The block the editor keeps at the bottom is dropped from the layout, so its element has to go too
+  // or `elements` keeps an entry that no layout item points at.
+  it('leaves no orphan element behind when the trailing empty block is dropped', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const trailing = scene.state.body.appendSystemCell(scene.state.body.state.cells.length)!;
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[trailing.state.elementName]).toBeUndefined();
+    expect(saveModel.layout.spec.cells.map((cell) => cell.spec.element.name)).not.toContain(trailing.state.elementName);
+    // Everything else is untouched, so this drops one cell rather than changing the document.
+    expect(saveModel.layout.spec.cells).toHaveLength(4);
+  });
+
+  // The element survives being referenced twice even when one of the two references is the dropped
+  // trailing cell, because elements are keyed off the cells that stay.
+  it('keeps an element that the dropped block shares with a cell that stays', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cells = scene.state.body.state.cells;
+    const shared = cells[0].state.elementName;
+    const trailing = scene.state.body.appendSystemCell(cells.length)!;
+    trailing.setState({ elementName: shared });
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[shared]).toBeDefined();
+  });
+
   // Two layout items referencing one element is legal, and the deserializer gives each its own cell.
   // getElements folds them back into a single elements[name] entry by walking cells in order, so the
   // last one wins: an edit applied to only the edited cell is silently dropped by the duplicate that

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
+import { type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -8,6 +9,7 @@ import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookCellItem } from '../NotebookCellItem';
 import { NotebookCellRenderer } from '../NotebookCellRenderer';
+import { resolveScrollAlign } from '../cells/focusExtension';
 
 import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
@@ -19,6 +21,8 @@ import { NotebookCellActions } from './NotebookCellActions';
  * convention as `dashboard-canvas-controls` in the dashboard layouts.
  */
 const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+
+const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
 export type NotebookCellDropIndicator = 'top' | 'bottom';
@@ -54,6 +58,7 @@ interface Props {
    * MarkdownCell's own `caretOffset` doc comment. Only meaningful together with `focusRequestId`.
    */
   caretOffset?: number;
+  scrollAlign?: ScrollLogicalPosition;
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
@@ -78,6 +83,13 @@ interface Props {
    * currently just the "/" menu any empty markdown cell offers.
    */
   onFocusRequest?: () => void;
+  /**
+   * ArrowUp/ArrowDown once there's nowhere further to go inside this cell — a Markdown/Code cell
+   * decides that itself (see their own boundary-aware keymaps) and calls this the same way a
+   * Panel/Collapsed cell does from the frame's own onKeyDown below, since neither has a caret of its
+   * own to ask.
+   */
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 /**
@@ -92,6 +104,7 @@ export function NotebookCellFrame({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   isDragActive,
   dropIndicator,
   onAdd,
@@ -99,18 +112,86 @@ export function NotebookCellFrame({
   onDelete,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const { collapsed, body, content, elementName } = cell.useState();
+  // Markdown/Code hand a focus grant to their own editor's caret (via useFocusExtension) and detect
+  // an ArrowUp/Down boundary themselves. A Panel or Collapsed cell has no caret to do either with, so
+  // the frame itself stands in for both below.
+  const isEditorCell = !collapsed && !body && (content?.kind === 'Markdown' || content?.kind === 'Code');
+
+  const frameLabel = collapsed
+    ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
+    : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
+  const previousFocusRequestId = useRef(focusRequestId);
+
+  const focusFrame = () => {
+    const node = frameRef.current;
+    if (!node) {
+      return;
+    }
+    node.focus({ preventScroll: true });
+    node.scrollIntoView({ block: resolveScrollAlign(node, scrollAlign), inline: 'nearest' });
+  };
+
+  useEffect(() => {
+    if (isEditorCell || !isEditing) {
+      return;
+    }
+    if (pendingAutoFocus.current) {
+      pendingAutoFocus.current = false;
+      previousFocusRequestId.current = focusRequestId;
+      focusFrame();
+      return;
+    }
+    const isFreshRequest = focusRequestId !== undefined && focusRequestId !== previousFocusRequestId.current;
+    previousFocusRequestId.current = focusRequestId;
+    if (isFreshRequest) {
+      focusFrame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- focusFrame is a fresh closure every render over the same ref/callback shape; only the nonce/mode inputs should re-run this
+  }, [focusRequestId, isEditing, isEditorCell]);
+
+  const onFrameKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Only when the bare frame itself is focused — never for a key bubbling up from something
+    // interactive inside it (a panel's own legend, menu, etc.), which owns its own arrow keys.
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      onNavigate?.('up');
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      onNavigate?.('down');
+    }
+  };
 
   return (
     <Draggable draggableId={cell.state.key!} index={index} isDragDisabled={!isEditing}>
       {(dragProvided, dragSnapshot) => (
         <div
-          ref={dragProvided.innerRef}
+          ref={(node) => {
+            dragProvided.innerRef(node);
+            frameRef.current = node;
+          }}
           {...dragProvided.draggableProps}
+          tabIndex={isEditing && !isEditorCell ? 0 : undefined}
+          onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
+          role={!isEditorCell ? 'group' : undefined}
+          aria-label={!isEditorCell ? frameLabel : undefined}
           className={cx(
             styles.frame,
             isEditing && styles.frameEditing,
+            !isEditorCell && styles.frameFocusable,
             dragSnapshot.isDragging && styles.dragging,
             (dragSnapshot.isDragging || isDragActive) && styles.affordancesHidden,
             dropIndicator === 'top' && styles.dropLineTop,
@@ -145,15 +226,19 @@ export function NotebookCellFrame({
             </>
           )}
 
-          <NotebookCellRenderer
-            cell={cell}
-            isEditing={Boolean(isEditing)}
-            autoFocus={autoFocus}
-            focusRequestId={focusRequestId}
-            caretOffset={caretOffset}
-            onAdvance={onAdvance}
-            onFocusRequest={onFocusRequest}
-          />
+          <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
+            <NotebookCellRenderer
+              cell={cell}
+              isEditing={Boolean(isEditing)}
+              autoFocus={autoFocus}
+              focusRequestId={focusRequestId}
+              caretOffset={caretOffset}
+              scrollAlign={scrollAlign}
+              onAdvance={onAdvance}
+              onFocusRequest={onFocusRequest}
+              onNavigate={onNavigate}
+            />
+          </div>
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (
@@ -183,6 +268,8 @@ export function getCellDropIndicator(
 const getStyles = (theme: GrafanaTheme2) => ({
   frame: css({
     position: 'relative',
+    scrollMarginTop: theme.spacing(14),
+    scrollMarginBottom: theme.spacing(4),
   }),
   frameEditing: css({
     paddingLeft: theme.spacing(4),
@@ -201,6 +288,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
       // Reaching it from inside the frame still works — the frame is already hovered, so the bar is
       // already interactive by the time the pointer arrives on it.
       pointerEvents: 'auto',
+    },
+  }),
+  frameFocusable: css({
+    '&:focus': {
+      outline: 'none',
+    },
+    [`&:focus > .${NOTEBOOK_CELL_CONTENT_CLASS}`]: {
+      outline: `1px dashed ${theme.colors.accent.main}`,
+      outlineOffset: 0,
+      borderRadius: theme.shape.radius.default,
     },
   }),
   handle: css({

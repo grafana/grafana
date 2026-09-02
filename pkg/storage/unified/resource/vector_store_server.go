@@ -27,6 +27,10 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
+// maxContentBytes keeps content's tsvector under Postgres's 1 MiB limit
+// (the write path stores one per external row).
+const maxContentBytes = 128 * 1024
+
 // maxFilterValues caps total $in/$nin values in a filter. Each value expands
 // to a few SQL parameters, so this keeps a filter well under Postgres's 65535
 // parameter limit instead of failing as Internal at execution.
@@ -232,6 +236,8 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
 		case in.Content == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content is required", i)
+		case len(in.Content) > maxContentBytes:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content exceeds %d bytes", i, maxContentBytes)
 		case in.Title == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: title is required", i)
 		case len(in.Metadata) > maxMetadataBytes:

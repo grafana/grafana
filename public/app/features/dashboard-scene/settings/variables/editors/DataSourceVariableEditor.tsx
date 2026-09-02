@@ -10,6 +10,7 @@ import { Combobox, type ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
+import { useGetAllVariableOptions, VariableValuesPreview } from '../components/VariableValuesPreview';
 import { getOptionDataSourceTypes } from '../utils';
 
 interface DataSourceVariableEditorProps {
@@ -93,12 +94,23 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
       ),
       render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
     }),
+    new OptionsPaneItemDescriptor({
+      id: 'datasource-options-preview',
+      skipField: true,
+      render: () => <DataSourceValuesPreview variable={variable} />,
+    }),
   ];
 }
 
 interface InputProps {
   variable: DataSourceVariable;
   id?: string;
+}
+
+function DataSourceValuesPreview({ variable }: InputProps) {
+  const { options, staticOptions } = useGetAllVariableOptions(variable);
+
+  return <VariableValuesPreview options={options} staticOptions={staticOptions} pageSize={5} />;
 }
 
 function DataSourceTypeSelect({ variable, id }: InputProps) {

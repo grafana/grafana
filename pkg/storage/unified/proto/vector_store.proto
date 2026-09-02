@@ -29,7 +29,7 @@ service VectorStore {
 message EmbeddingInput {
   string uid = 1;          // entity id (caller-chosen, deterministic)
   string subresource = 2;  // chunk id within the entity (optional)
-  string content = 3;      // document content to embed (required)
+  string content = 3;      // document content to embed (required, max 128 KiB)
   bytes metadata = 4;      // JSON object, max 4 KiB
   string title = 5;        // human-readable display title, returned in search results (required)
   string folder = 6;       // parent folder UID; folder-scoped resources are denied at read time without it

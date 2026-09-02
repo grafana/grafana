@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"maps"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -169,9 +170,7 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 	// result is the snapshot we install: objs, minus resurrections we suppress,
 	// plus live writes newer than the snapshot we carry forward.
 	result := make(map[string]entry, len(next))
-	for key, e := range next {
-		result[key] = e
-	}
+	maps.Copy(result, next)
 
 	// Classify snapshot objects in objs order (not map order) so added/updated
 	// are deterministic. A LIST carries no duplicate keys, but guard anyway.

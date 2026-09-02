@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -8,12 +8,23 @@ import {
   type PanelData,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
+import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
+import {
+  type InternalQueryEditorCoauthoringPropsV1,
+  type QueryEditorCoauthoringAdapterV1,
+  type QueryEditorCoauthoringRegistrationV1,
+} from './coauthoring/internalCoauthoringContract';
+import { type QueryPreview } from './coauthoring/queryPreview';
+import { useQueryProposalTransaction } from './coauthoring/useQueryProposalTransaction';
+
+const PROMETHEUS_DATASOURCE_TYPE = 'prometheus';
 
 interface QueryDatasourceData {
   datasource?: DataSourceApi;
@@ -29,6 +40,7 @@ interface QueryEditorPanelProps {
   updateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
   runQueries: () => void;
+  startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
 }
 
 export function QueryEditorPanel({
@@ -40,20 +52,56 @@ export function QueryEditorPanel({
   updateQuery,
   addQuery,
   runQueries,
+  startQueryPreview,
 }: QueryEditorPanelProps) {
+  const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
+  const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
+  const [coauthoringAdapter, setCoauthoringAdapter] = useState<QueryEditorCoauthoringAdapterV1>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
   }, [data, queryRefId]);
+  const coauthoringRegistration = useMemo<QueryEditorCoauthoringRegistrationV1>(
+    () => ({
+      register: (adapter) => {
+        setCoauthoringAdapter(adapter);
+        return () => setCoauthoringAdapter((current) => (current === adapter ? undefined : current));
+      },
+    }),
+    []
+  );
+  const proposalTransaction = useQueryProposalTransaction({
+    query,
+    queries,
+    queryKey: coauthoringIdentity,
+    adapter: coauthoringAdapter,
+    updateQuery,
+    runQueries,
+    startQueryPreview,
+  });
 
-  // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
-  const handleChange = useCallback(
-    (updatedQuery: DataQuery) => {
-      updateQuery(updatedQuery, updatedQuery.refId);
-    },
-    [updateQuery]
+  const coauthoringHost = useMemo(
+    () => ({
+      datasourceType: coauthoringDatasourceType,
+      previewPhase: proposalTransaction.previewPhase,
+      timeRange: filteredData?.timeRange
+        ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
+        : undefined,
+      preview: proposalTransaction.preview,
+      accept: proposalTransaction.accept,
+      revert: proposalTransaction.revert,
+    }),
+    [
+      coauthoringDatasourceType,
+      filteredData?.timeRange,
+      proposalTransaction.accept,
+      proposalTransaction.preview,
+      proposalTransaction.previewPhase,
+      proposalTransaction.revert,
+    ]
   );
 
   if (!query) {
@@ -97,23 +145,36 @@ export function QueryEditorPanel({
   }
 
   const { datasource, dsSettings } = queryDsData;
-
+  const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
+    unstable_queryEditorCoauthoringV1:
+      coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE
+        ? coauthoringRegistration
+        : undefined,
+  };
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
           <QueryEditorComponent
-            key={query.refId}
+            key={coauthoringIdentity}
+            {...internalCoauthoringProps}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
-            onChange={handleChange}
-            onRunQuery={runQueries}
-            queries={queries}
-            query={query}
+            onChange={proposalTransaction.onChange}
+            onRunQuery={proposalTransaction.run}
+            queries={proposalTransaction.editorQueries}
+            query={proposalTransaction.editorQuery ?? query}
             range={filteredData?.timeRange}
           />
+          {coauthoringAdapter && (
+            <QueryCoauthoringSurface
+              adapter={coauthoringAdapter}
+              host={coauthoringHost}
+              onBaseline={proposalTransaction.synchronizeBaseline}
+            />
+          )}
         </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
@@ -124,7 +185,7 @@ export function QueryEditorPanel({
 export function QueryEditorRenderer() {
   const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
-  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
 
   return (
     <QueryEditorPanel
@@ -136,6 +197,7 @@ export function QueryEditorRenderer() {
       updateQuery={updateSelectedQuery}
       addQuery={addQuery}
       runQueries={runQueries}
+      startQueryPreview={startQueryPreview}
     />
   );
 }

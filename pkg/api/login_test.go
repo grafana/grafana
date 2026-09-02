@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -329,11 +330,8 @@ func TestLoginViewRedirect(t *testing.T) {
 					expCookieMaxAge = 0
 				}
 				expCookie := fmt.Sprintf("redirect_to=%v; Path=%v; Max-Age=%v; HttpOnly; Secure", expCookieValue, expCookiePath, expCookieMaxAge)
-				for _, cookieValue := range setCookie {
-					if cookieValue == expCookie {
-						redirectToCookieFound = true
-						break
-					}
+				if slices.Contains(setCookie, expCookie) {
+					redirectToCookieFound = true
 				}
 				assert.True(t, redirectToCookieFound)
 			}
@@ -486,11 +484,8 @@ func TestLoginPostRedirect(t *testing.T) {
 			assert.Greater(t, len(setCookie), 0)
 			var redirectToCookieFound bool
 			expCookieValue := fmt.Sprintf("redirect_to=; Path=%v; Max-Age=0; HttpOnly; Secure", expCookiePath)
-			for _, cookieValue := range setCookie {
-				if cookieValue == expCookieValue {
-					redirectToCookieFound = true
-					break
-				}
+			if slices.Contains(setCookie, expCookieValue) {
+				redirectToCookieFound = true
 			}
 			assert.True(t, redirectToCookieFound)
 		})
@@ -885,6 +880,31 @@ func TestIsProviderEnabled(t *testing.T) {
 			assert.Equal(t, tc.expected, hs.isProviderEnabled(t.Context(), setting.NewCfg(), tc.provider))
 		})
 	}
+}
+
+// countingAuthnService counts calls per client name to the two methods that
+// trigger an SSO settings read, so tests can assert the resolver caches per
+// module and keys the cache correctly.
+type countingAuthnService struct {
+	*authntest.FakeService
+	enabledCalls map[string]int
+	configCalls  map[string]int
+}
+
+func (s *countingAuthnService) IsClientEnabled(ctx context.Context, name string) bool {
+	if s.enabledCalls == nil {
+		s.enabledCalls = map[string]int{}
+	}
+	s.enabledCalls[name]++
+	return s.FakeService.IsClientEnabled(ctx, name)
+}
+
+func (s *countingAuthnService) GetClientConfig(ctx context.Context, name string) (authn.SSOClientConfig, bool) {
+	if s.configCalls == nil {
+		s.configCalls = map[string]int{}
+	}
+	s.configCalls[name]++
+	return s.FakeService.GetClientConfig(ctx, name)
 }
 
 type mockSocialService struct {

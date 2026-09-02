@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -914,9 +915,7 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 		}
 		// Generate labels - always include section/key, merge with any custom labels
 		labels := map[string]string{"section": s.Section, "key": s.Key}
-		for k, v := range s.Labels {
-			labels[k] = v
-		}
+		maps.Copy(labels, s.Labels)
 		labelsJSON, _ := json.Marshal(labels)
 		sb.WriteString(fmt.Sprintf(
 			`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,

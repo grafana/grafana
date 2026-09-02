@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// rulesManifests is the rule kinds' manifest; the tests derive the rule search
-// fields from it the way the shared registry does in production.
-var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
+// rulesManifestData is the rule kinds' manifest; the tests derive the rule
+// search fields from it the way the shared registry does in production.
+var rulesManifestData = rulesmanifest.LocalManifest().ManifestData
 
-var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
+var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifestData)
 
 // Field names as declared in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
 // Only type, labels, annotations and datasourceUIDs remain as Go constants in
@@ -62,7 +61,7 @@ func recordingRuleKey(name string) *resourcepb.ResourceKey {
 // registry-backed builders extract them, as they do in production.
 func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifests)
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifestData)
 	require.NoError(t, err)
 	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
 }

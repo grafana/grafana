@@ -9,7 +9,8 @@ INSERT INTO embeddings (
     {{ .Ident "content" }},
     {{ .Ident "metadata" }},
     {{ .Ident "embedding" }},
-    {{ .Ident "content_version" }}
+    {{ .Ident "content_version" }},
+    {{ .Ident "ts" }}
 )
 VALUES (
     {{ .Arg .Resource }},
@@ -22,7 +23,8 @@ VALUES (
     {{ .Arg .Vector.Content }},
     {{ .Arg .Vector.Metadata }},
     {{ .Arg .Embedding }},
-    {{ .Arg .Vector.ContentVersion }}
+    {{ .Arg .Vector.ContentVersion }},
+    {{ if .ComputeTS }}to_tsvector('english', {{ .Arg .Vector.Content }}){{ else }}NULL{{ end }}
 )
 ON CONFLICT ({{ .Ident "resource" }}, {{ .Ident "namespace" }}, {{ .Ident "model" }}, {{ .Ident "uid" }}, {{ .Ident "subresource" }})
 DO UPDATE SET
@@ -32,5 +34,6 @@ DO UPDATE SET
     {{ .Ident "metadata" }}        = {{ .Arg .Vector.Metadata }},
     {{ .Ident "embedding" }}       = {{ .Arg .Embedding }},
     {{ .Ident "content_version" }} = {{ .Arg .Vector.ContentVersion }},
+    {{ .Ident "ts" }}              = EXCLUDED.{{ .Ident "ts" }},
     {{ .Ident "updated_at" }}      = CURRENT_TIMESTAMP
 ;

@@ -448,6 +448,58 @@ describe('useNotebooksList', () => {
     });
   });
 
+  describe('tag filtering', () => {
+    // `In` is set membership, so one leaf listing both tags would match a notebook carrying either.
+    // Selecting two tags has to narrow, which an `and` of one leaf each expresses.
+    it('sends a leaf per tag, so several tags narrow rather than widen', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency', 'slo']);
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['slo'] } },
+            ],
+          },
+        })
+      );
+    });
+
+    it('combines tags with the search text', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+        result.current.setTagFilter(['errors']);
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['errors'] } }],
+          },
+        })
+      );
+    });
+
+    it('counts as filtered, so an empty result reads as no matches rather than no notebooks', async () => {
+      const { result } = setupHook();
+
+      expect(result.current.isFiltered).toBe(false);
+
+      act(() => {
+        result.current.setTagFilter(['latency']);
+      });
+
+      await waitFor(() => expect(result.current.isFiltered).toBe(true));
+    });
+  });
+
   describe('filtering state', () => {
     it('rows are whatever the server returned, without re-filtering', async () => {
       // Server-side filtering is the whole point; narrowing again here would hide a request
@@ -743,6 +795,27 @@ describe('useNotebooksList', () => {
 
       act(() => {
         result.current.setSearchQuery('CHECKOUT');
+      });
+
+      await waitFor(() => {
+        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+      });
+    });
+
+    // The search path sends the tags as predicates; on this path nothing did, so the same narrowing
+    // has to happen here or the filter would silently do nothing wherever search is not served.
+    it('narrows by every selected tag, not any of them', async () => {
+      setSearchRouteMissing();
+      setList([
+        makeNotebook({ name: 'nb1', title: 'Both', tags: ['latency', 'slo'] }),
+        makeNotebook({ name: 'nb2', title: 'One of them', tags: ['latency'] }),
+        makeNotebook({ name: 'nb3', title: 'Neither', tags: ['checkout'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency', 'slo']);
       });
 
       await waitFor(() => {

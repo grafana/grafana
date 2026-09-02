@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -188,9 +189,7 @@ func TestGetHomeDashboard(t *testing.T) {
 				t.Helper()
 				// Copy so we don't mutate the shared doc.
 				resp := map[string]any{}
-				for k, v := range k8sV1Doc {
-					resp[k] = v
-				}
+				maps.Copy(resp, k8sV1Doc)
 				resp["access"] = readOnlyAccess
 				out, err := json.Marshal(resp)
 				require.NoError(t, err)
@@ -203,9 +202,7 @@ func TestGetHomeDashboard(t *testing.T) {
 			expectedResponse: func(t *testing.T) []byte {
 				t.Helper()
 				resp := map[string]any{}
-				for k, v := range k8sV2Doc {
-					resp[k] = v
-				}
+				maps.Copy(resp, k8sV2Doc)
 				resp["access"] = readOnlyAccess
 				out, err := json.Marshal(resp)
 				require.NoError(t, err)

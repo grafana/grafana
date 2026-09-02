@@ -129,11 +129,20 @@ function Wizard() {
 // Blocks the whole import flow while auto-sync is active. Mirrors how the menu entry point (useImportEntrypointState) gates the same action.
 export function ImportWizardGate() {
   const { isActive, isLoading } = useIsAutoSyncActive();
+  // Frozen on first resolution, not live: this only gates *entry*. Enabling auto-sync mid-wizard
+  // (handleConfirmImport's own save) flips isActive via the same Config cache the mutation
+  // invalidates — without freezing, that unmounts the wizard out from under its own in-flight submit.
+  const [gateActive, setGateActive] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!isLoading && gateActive === null) {
+      setGateActive(isActive);
+    }
+  }, [isLoading, isActive, gateActive]);
 
-  if (isLoading) {
+  if (isLoading || gateActive === null) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
   }
-  if (isActive) {
+  if (gateActive) {
     return <AutoSyncActiveBlock />;
   }
   return <Wizard />;

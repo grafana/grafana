@@ -15,14 +15,6 @@ import { NotebookScene } from '../NotebookScene';
 // propagation is observable end to end. It stands in for the caret the same way CodeCell.test.tsx
 // does — a new `extensions` identity is what rebuilds CodeMirror's view plugins — which makes the
 // manager -> frame -> renderer -> cell wiring observable here.
-//
-// CodeCell passes only its (optional) focus request as `extensions`, so any non-empty array means one
-// was made. A markdown cell's baseline is higher and fixed, not merely "non-empty": every markdown
-// cell rendered through this tree gets the live-preview extension, the placeholder (SpecialMarkdownCell
-// passes one to every markdown cell unconditionally — see NotebookCellRenderer), and the Enter/
-// Shift-Enter keymap (also unconditional now — Shift-Enter's list-continuation binding no longer
-// depends on onSubmit), for a baseline of 3. A focus request adds exactly one more on top of that.
-//
 // Real CodeMirrorEditor never sees a raw re-render-fresh `extensions` array either: CodeEditor.tsx
 // wraps it in useShallowStable precisely because callers pass inline literals on every render (its own
 // doc comment says so). Without reproducing that here, every markdown cell's own three-item baseline
@@ -61,7 +53,7 @@ jest.mock('@grafana/ui/unstable', () => {
     }) => {
       const ref = useRef(null);
       const stableExtensions = useStableExtensions(extensions);
-      const focusThreshold = ariaLabel === 'Markdown' ? 4 : 1;
+      const focusThreshold = ariaLabel === 'Markdown' ? 6 : 3;
 
       useEffect(() => {
         if (!stableExtensions || stableExtensions.length < focusThreshold) {
@@ -178,10 +170,9 @@ describe('NotebookLayoutManager', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the document header with badge, title, time range and tags', async () => {
+  it('renders the document header with title, time range and tags', async () => {
     renderNotebook();
 
-    expect(screen.getByText('Published Notebook')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
     expect(screen.getByText(/now-6h/)).toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();
@@ -884,6 +875,29 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setTitleFromHeader', () => {
+    // Same arrangement as the tags above, and the same hazard: nothing else walks up for the title, so
+    // a silent no-op here would leave renaming dead with the suite still green.
+    it('forwards the edit up to the scene, which owns the title', () => {
+      const manager = buildManager([]);
+      const scene = attachScene(manager);
+
+      manager.setTitleFromHeader('Q3 latency regression');
+
+      expect(scene.state.title).toBe('Q3 latency regression');
+    });
+
+    // The manager must not write its own copy when there is no scene to tell: the scene is the single
+    // writer, and a second copy here is the drift this arrangement exists to prevent.
+    it('leaves a manager with no scene above it untouched', () => {
+      const manager = buildManager([]);
+
+      manager.setTitleFromHeader('Q3 latency regression');
+
+      expect(manager.state.title).toBe('My notebook');
+    });
+  });
+
   describe('editModeChanged', () => {
     // The scene owns the mode; this is the channel it uses to hand the flag down, so the cells can
     // react without the manager reaching back up to the scene.
@@ -1361,6 +1375,54 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  /**
+   * Editing keeps an empty block at the bottom ready to type in. It belongs to the editor, not to the
+   * notebook, so it must not reach the saved document.
+   */
+  describe("serialize() and the editor's trailing empty block", () => {
+    const empty = { kind: 'Markdown' as const, spec: { text: '' } };
+    const written = { kind: 'Markdown' as const, spec: { text: 'Hello' } };
+
+    function managerWith(...contents: Array<typeof empty | undefined>) {
+      return new NotebookLayoutManager({
+        cells: contents.map(
+          (content, i) => new NotebookCellItem({ elementName: `md${i + 1}`, source: 'user', content })
+        ),
+      });
+    }
+
+    function names(manager: NotebookLayoutManager) {
+      return manager.serialize().spec.cells.map((cell) => cell.spec.element.name);
+    }
+
+    it('leaves out a trailing empty block', () => {
+      expect(names(managerWith(written, empty))).toEqual(['md1']);
+    });
+
+    it('keeps an empty block that somebody left in the middle', () => {
+      expect(names(managerWith(written, empty, written))).toEqual(['md1', 'md2', 'md3']);
+    });
+
+    // Only the last one. Two in a row means the one before it was left there deliberately.
+    it('leaves out only the last of two trailing empty blocks', () => {
+      expect(names(managerWith(written, empty, empty))).toEqual(['md1', 'md2']);
+    });
+
+    it('keeps a trailing cell that holds no content at all, which is not an empty block', () => {
+      expect(names(managerWith(written, undefined))).toEqual(['md1', 'md2']);
+    });
+
+    it('serializes an empty layout when the block is the only cell', () => {
+      expect(names(managerWith(empty))).toEqual([]);
+    });
+
+    // Two in a row usually means the first was left there on purpose, but not when there is no real
+    // content anywhere: clearing or undoing what was typed leaves exactly that, and it is still blank.
+    it('serializes an empty layout when every block is empty, not just the trailing one', () => {
+      expect(names(managerWith(empty, empty))).toEqual([]);
+    });
+  });
+
   it('serializes to the notebook layout kind, not a dashboard layout kind', () => {
     const manager = new NotebookLayoutManager({
       cells: [new NotebookCellItem({ elementName: 'md1', source: 'assistant' })],
@@ -1427,6 +1489,101 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
     });
+  });
+
+  // A Markdown/Code cell's own boundary-aware ArrowUp/Down keymap lives inside a real CodeMirror
+  // keymap, which — same as onAdvance/Enter above — this file's mocked CodeMirrorEditor never
+  // actually runs (see navigationKeymap's own dedicated test in focusExtension.test.ts for that
+  // part). A Collapsed cell has no editor at all, so its own frame is what ArrowUp/Down reaches
+  // instead — real DOM/React the whole way, and so exercised here for the manager's own resolution
+  // of "which cell is next" and the resulting focus grant.
+  describe('arrow-key navigation between cells', () => {
+    function collapsedFrame() {
+      return screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+    }
+
+    it('moves focus down from a collapsed cell into the markdown cell after it', async () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      const frame = collapsedFrame();
+      frame.focus();
+      fireEvent.keyDown(frame, { key: 'ArrowDown' });
+
+      // The trailing-empty-cell invariant adds its own second markdown cell once "Hello" lands, so
+      // more than one "Markdown" editor exists by now — the focused one is the one that matters.
+      await waitFor(() => {
+        const editors = screen.getAllByLabelText('Markdown');
+        expect(editors.some((editor) => editor === document.activeElement)).toBe(true);
+      });
+      expect(screen.getByDisplayValue('Hello')).toHaveFocus();
+    });
+
+    it('does nothing pressing ArrowUp on the first cell — no wraparound', () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, true));
+
+      const frame = collapsedFrame();
+      frame.focus();
+      fireEvent.keyDown(frame, { key: 'ArrowUp' });
+
+      expect(frame).toHaveFocus();
+    });
+
+    // The rest of every other affordance on this frame (drag handle, actions bar, the add-block
+    // divider) is edit-mode-only too — arrow-key navigation follows the same rule rather than being
+    // a special case, which is also why the frame is not even a tab stop outside edit mode.
+    it('does not respond to arrow keys outside edit mode', () => {
+      const cells = [
+        new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
+        new NotebookCellItem({
+          elementName: 'md1',
+          source: 'user',
+          content: { kind: 'Markdown', spec: { text: 'Hello' } },
+        }),
+      ];
+      renderManager(buildManager(cells, false));
+
+      expect(screen.getByText('hidden-panel').closest('[tabindex]')).toBeNull();
+    });
+
+    it.each([
+      ['down', 'ArrowDown', 'a', 'tall', 'start'],
+      ['up', 'ArrowUp', 'tall', 'a', 'end'],
+    ] as const)(
+      'scrolls to reveal the caret edge moving %s',
+      (_direction, key, sourceName, targetName, expectedBlock) => {
+        const cells = [
+          new NotebookCellItem({ elementName: 'a', source: 'user', collapsed: true }),
+          new NotebookCellItem({ elementName: 'tall', source: 'user', collapsed: true }),
+        ];
+        renderManager(buildManager(cells, true));
+
+        const sourceFrame = screen.getByText(sourceName).closest('[tabindex]') as HTMLElement;
+        const targetFrame = screen.getByText(targetName).closest('[tabindex]') as HTMLElement;
+        jest.spyOn(targetFrame, 'getBoundingClientRect').mockReturnValue({ height: 2000 } as DOMRect);
+        const scrollIntoView = jest.spyOn(targetFrame, 'scrollIntoView');
+
+        sourceFrame.focus();
+        fireEvent.keyDown(sourceFrame, { key });
+
+        expect(scrollIntoView).toHaveBeenCalledWith(expect.objectContaining({ block: expectedBlock }));
+      }
+    );
   });
 });
 

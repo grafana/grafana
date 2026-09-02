@@ -2,6 +2,7 @@ package resourcepermissions
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/web"
 
@@ -164,6 +166,226 @@ func TestBuildResourcePermissionName(t *testing.T) {
 			assert.Equal(t, tt.expectedName, name)
 		})
 	}
+}
+
+func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
+	viewer := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"}
+	editor := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"}
+
+	tests := []struct {
+		name           string
+		exists         bool
+		initial        []iamv0.ResourcePermissionspecPermission
+		commands       []accesscontrol.SetResourcePermissionCommand
+		expected       []iamv0.ResourcePermissionspecPermission
+		expectedMethod string
+	}{
+		{
+			name:     "preserves unmentioned permissions on upsert",
+			exists:   true,
+			initial:  []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands: []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Editor", Permission: "Admin"}},
+			expected: []iamv0.ResourcePermissionspecPermission{
+				viewer,
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "admin"},
+			},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:           "deletes only the addressed permission",
+			exists:         true,
+			initial:        []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: ""}},
+			expected:       []iamv0.ResourcePermissionspecPermission{editor},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:    "applies mixed deletes and upserts incrementally",
+			exists:  true,
+			initial: []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: ""},
+				{BuiltinRole: "Admin", Permission: "View"},
+			},
+			expected: []iamv0.ResourcePermissionspecPermission{
+				editor,
+				{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Admin", Verb: "view"},
+			},
+			expectedMethod: http.MethodPut,
+		},
+		{
+			name:           "deletes the object after removing its final permission",
+			exists:         true,
+			initial:        []iamv0.ResourcePermissionspecPermission{viewer},
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: ""}},
+			expectedMethod: http.MethodDelete,
+		},
+		{
+			name:     "does not write for an empty command batch",
+			exists:   true,
+			initial:  []iamv0.ResourcePermissionspecPermission{viewer, editor},
+			expected: []iamv0.ResourcePermissionspecPermission{viewer, editor},
+		},
+		{
+			name:           "creates an object for a permission on a new resource",
+			commands:       []accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Viewer", Permission: "View"}},
+			expected:       []iamv0.ResourcePermissionspecPermission{viewer},
+			expectedMethod: http.MethodPost,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			existing := &iamv0.ResourcePermission{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "dashboard.grafana.app-dashboards-1",
+					Namespace:       "org-1",
+					ResourceVersion: "1",
+				},
+				Spec: iamv0.ResourcePermissionSpec{
+					Resource: iamv0.ResourcePermissionspecResource{
+						ApiGroup: dashboardv1.APIGroup,
+						Resource: "dashboards",
+						Name:     "1",
+					},
+					Permissions: tt.initial,
+				},
+			}
+
+			var updated iamv0.ResourcePermission
+			writeCalls := 0
+			writeMethod := ""
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.Method {
+				case http.MethodGet:
+					if !tt.exists {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+							Status: metav1.StatusFailure,
+							Code:   http.StatusNotFound,
+							Reason: metav1.StatusReasonNotFound,
+						}))
+						return
+					}
+					require.NoError(t, json.NewEncoder(w).Encode(existing))
+				case http.MethodPut, http.MethodPost:
+					writeCalls++
+					writeMethod = r.Method
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&updated))
+					require.NoError(t, json.NewEncoder(w).Encode(&updated))
+				case http.MethodDelete:
+					writeCalls++
+					writeMethod = r.Method
+					var opts metav1.DeleteOptions
+					require.NoError(t, json.NewDecoder(r.Body).Decode(&opts))
+					require.NotNil(t, opts.Preconditions)
+					require.NotNil(t, opts.Preconditions.ResourceVersion)
+					assert.Equal(t, "1", *opts.Preconditions.ResourceVersion)
+				default:
+					t.Fatalf("unexpected method %s", r.Method)
+				}
+			}))
+			t.Cleanup(ts.Close)
+
+			a := &api{
+				restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+				service: &Service{options: Options{
+					Resource: "dashboards",
+					APIGroup: dashboardv1.APIGroup,
+				}},
+			}
+
+			err := a.setResourcePermissionsToK8s(makeReqCtx(), "org-1", "1", tt.commands)
+			require.NoError(t, err)
+			if tt.expectedMethod != "" {
+				assert.Equal(t, 1, writeCalls)
+				assert.Equal(t, tt.expectedMethod, writeMethod)
+				if tt.expectedMethod == http.MethodPut || tt.expectedMethod == http.MethodPost {
+					assert.Equal(t, tt.expected, updated.Spec.Permissions)
+				}
+			} else {
+				assert.Zero(t, writeCalls)
+				assert.Equal(t, tt.expected, existing.Spec.Permissions)
+			}
+		})
+	}
+}
+
+func TestSetResourcePermissionsToK8sRetriesConflicts(t *testing.T) {
+	viewer := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"}
+	admin := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Admin", Verb: "admin"}
+	existing := &iamv0.ResourcePermission{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "dashboard.grafana.app-dashboards-1",
+			Namespace:       "org-1",
+			ResourceVersion: "1",
+		},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource:    iamv0.ResourcePermissionspecResource{ApiGroup: dashboardv1.APIGroup, Resource: "dashboards", Name: "1"},
+			Permissions: []iamv0.ResourcePermissionspecPermission{viewer},
+		},
+	}
+
+	updateCalls := 0
+	var updated iamv0.ResourcePermission
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			require.NoError(t, json.NewEncoder(w).Encode(existing))
+		case http.MethodPut:
+			updateCalls++
+			if updateCalls == 1 {
+				existing.ResourceVersion = "2"
+				existing.Spec.Permissions = append(existing.Spec.Permissions, admin)
+				w.WriteHeader(http.StatusConflict)
+				require.NoError(t, json.NewEncoder(w).Encode(&metav1.Status{
+					Status:  metav1.StatusFailure,
+					Code:    http.StatusConflict,
+					Reason:  metav1.StatusReasonConflict,
+					Message: "resource was modified",
+				}))
+				return
+			}
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&updated))
+			require.NoError(t, json.NewEncoder(w).Encode(&updated))
+		default:
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+	}))
+	t.Cleanup(ts.Close)
+
+	a := &api{
+		restConfigProvider: &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}},
+		service: &Service{options: Options{
+			Resource: "dashboards",
+			APIGroup: dashboardv1.APIGroup,
+		}},
+	}
+
+	err := a.setResourcePermissionsToK8s(
+		makeReqCtx(),
+		"org-1",
+		"1",
+		[]accesscontrol.SetResourcePermissionCommand{{BuiltinRole: "Editor", Permission: "Edit"}},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 2, updateCalls)
+	assert.Equal(t, "2", updated.ResourceVersion)
+	assert.Equal(t, []iamv0.ResourcePermissionspecPermission{
+		viewer,
+		admin,
+		{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+	}, updated.Spec.Permissions)
 }
 
 // TestGetAPIGroup tests API group resolution

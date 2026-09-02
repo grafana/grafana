@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "フォルダから継承",
-      "locked-aria-label": "ロックされた権限表示",
       "remove-aria-label": "{{identifier}}のアクセス許可を削除する",
       "tooltip-inherited-permission": "継承された権限",
       "tooltip-provisioned-permission": "プロビジョニングされた権限"
@@ -2647,7 +2646,9 @@
       "view-in-explore": "Exploreで表示"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "オプション",
+      "invalid-interval-error": "",
       "label-time-range": "時間範囲",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小間隔= {{minInterval}}"
@@ -3227,6 +3228,7 @@
         "disable-confirm-title": "Mimir Alertmanagerの自動同期を無効にしますか？",
         "disable-success": "Mimir Alertmanagerの自動同期を無効にしました",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "この値はgrafana.iniの<1>[unified_alerting] external_alertmanager_uid</1>キーで設定されており、UIから変更することはできません。設定ファイルを編集してGrafanaを再起動するか、キーを削除すると、ここから同期を管理できるようになります。",
         "operator-managed-title": "オペレーターによって管理されています",
         "orphan-warning": "設定されたデータソースUID、{{uid}}は利用できません。続行するには、同期を無効にするか、データソースを復元してください。",
@@ -3235,6 +3237,7 @@
         "picker-label": "データソース",
         "picker-placeholder": "MimirまたはCortex Alertmanagerのデータソースを選択…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "保存を有効にするには、MimirまたはCortex Alertmanagerのデータソースを選択してください。",
         "save-disabled-staged-config": "",
         "save-error": "Mimir Alertmanagerの自動同期の保存に失敗しました",
@@ -5977,11 +5980,14 @@
     "notebook-layout": {
       "description": "パネル、テキスト、コードセルを縦に並べた構成",
       "name": "ノートブック",
-      "pill": "公開済みノートブック",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "時刻"
+      "time": "時刻",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6005,6 +6011,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "前日",
         "compare-month-before": "前月",
         "compare-week-before": "前週",
@@ -8733,7 +8744,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "{{name}}を折りたたむ",
@@ -9669,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "一昨日",
           "previousFiscalQuarter": "前四半期",
@@ -12869,8 +12884,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12885,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12898,15 +12916,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -12926,13 +12995,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12940,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -12948,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -12966,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -12974,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13009,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "色分けの基準"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13143,6 +13227,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "コピー",
       "copy-styles": "スタイルをコピー",
       "download-diagnostics": "診断情報をダウンロード",
@@ -14960,6 +15045,75 @@
       "title-data-source-help": "データソースヘルプ"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "フィルターを追加",
@@ -15732,7 +15886,6 @@
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
       "language-preference-label": "言語",
       "language-preference-placeholder": "言語選択",
-      "theme-description": "実験的なテーマを楽しんでいますか？<2>こちらからご意見をお聞かせください。</2>",
       "theme-label": "インターフェースのテーマ",
       "week-start-label": "週のはじまり"
     },
@@ -17643,7 +17796,7 @@
       "delete-modal-body": "「{{name}}」を削除してもよろしいですか？",
       "delete-modal-confirm": "削除",
       "delete-modal-title": "変数を削除",
-      "folder-description": "変数のスコープをフォルダに設定するか、ルートのDashboardsフォルダを選択してグローバルにします（組織内のどこでも利用可能）",
+      "folder-description": "",
       "folder-description-folder-only": "変数のスコープを編集可能なフォルダに設定します",
       "folder-label": "フォルダ",
       "moved": "変数を移動しました",
@@ -17663,7 +17816,7 @@
       "move": "移動",
       "moving": "移動中…",
       "title": "変数を移動",
-      "body_other": "選択した{{count}}件の変数を移動します。ルートのDashboardsフォルダを選択すると、グローバルになります（組織内のどこでも利用可能）。",
+      "body_other": "",
       "body-folder-only_other": "選択した{{count}}件の変数を編集可能なフォルダに移動します。"
     },
     "page": {
@@ -17685,6 +17838,14 @@
       "select-all": "すべての変数を選択",
       "select-folder": "フォルダ{{title}}内のすべての変数を選択",
       "select-variable": "変数{{name}}を選択"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

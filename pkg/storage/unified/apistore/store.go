@@ -322,13 +322,12 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	rsp, err := s.store.Create(ctx, req)
-	if err != nil {
-		return v.finish(ctx, resource.GetError(resource.AsErrorResult(err)), s.opts.SecureValues)
-	}
-	if rsp.Error != nil {
-		err = resource.GetError(rsp.Error)
-		if rsp.Error.Code == http.StatusConflict {
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		resErr := resource.AsErrorResult(err)
+		if resErr.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
+		} else {
+			err = resource.GetError(resErr)
 		}
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
@@ -426,12 +425,11 @@ func (s *Storage) Delete(
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
-		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
-		}
-		if rsp.Error != nil {
-			err := resource.GetError(rsp.Error)
-			if isRetryableStorageError(err) {
+		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+			// Classify before normalization so attached gRPC status details remain available.
+			retryable := isRetryableStorageError(err)
+			err = resource.GetError(resource.AsErrorResult(err))
+			if retryable {
 				lastErr = err
 				bo.Wait()
 				continue
@@ -516,17 +514,15 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	rsp, err := s.store.Read(ctx, req)
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	if rsp.Error != nil {
-		if rsp.Error.Code == http.StatusNotFound {
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		resErr := resource.AsErrorResult(err)
+		if resErr.Code == http.StatusNotFound {
 			if opts.IgnoreNotFound {
 				return runtime.SetZeroValue(objPtr)
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.GetError(rsp.Error)
+		return resource.GetError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -719,18 +715,17 @@ func (s *Storage) GuaranteedUpdate(
 	for bo.Ongoing() {
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
-		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
-		}
-
-		if readResponse.Error != nil {
-			if readResponse.Error.Code == http.StatusNotFound {
-				if !ignoreNotFound {
-					return apierrors.NewNotFound(s.gr, req.Key.Name)
-				}
-			} else {
-				return resource.GetError(readResponse.Error)
+		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
+			resErr := resource.AsErrorResult(err)
+			if resErr.Code != http.StatusNotFound {
+				return resource.GetError(resErr)
 			}
+			if !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
+			// A NotFound reported as a transport error leaves readResponse nil, so
+			// substitute an empty response and let the upsert path below handle it.
+			readResponse = &resourcepb.ReadResponse{}
 		}
 
 		// Upsert?  (create because it does not already exist)
@@ -788,11 +783,11 @@ func (s *Storage) GuaranteedUpdate(
 		req.Value = v.raw.Bytes()
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err != nil {
+		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
+			// Classify before normalization so attached gRPC status details remain available.
+			retryable := isRetryableStorageError(err)
 			err = resource.GetError(resource.AsErrorResult(err))
-		} else if updateResponse.Error != nil {
-			err = resource.GetError(updateResponse.Error)
-			if isRetryableStorageError(err) {
+			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
 				// discard its return and retry instead of surfacing it.
@@ -802,7 +797,6 @@ func (s *Storage) GuaranteedUpdate(
 				continue
 			}
 		}
-
 		// Cleanup secure values
 		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
 			return err
@@ -825,7 +819,7 @@ func (s *Storage) GuaranteedUpdate(
 }
 
 func isRetryableStorageError(err error) bool {
-	return apierrors.IsConflict(err)
+	return resource.IsConflict(err)
 }
 
 func retriesExhausted(ctx context.Context, bo *backoff.Backoff, lastErr error) error {

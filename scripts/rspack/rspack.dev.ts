@@ -2,6 +2,7 @@ import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
@@ -10,6 +11,8 @@ import WebpackBar from 'webpackbar';
 
 import { assetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { type Env } from './rspack.common.ts';
+
+const require = createRequire(import.meta.url);
 
 // To speed up rspack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins(): string[] {
@@ -88,10 +91,13 @@ export default (env: Env = {}) => {
   }
 
   if (!Number(env.noTsCheck)) {
+    const nativeTypeScriptPackageJson = require.resolve('@typescript/native/package.json');
     devConfig.plugins?.push(
       new TsCheckerRspackPlugin({
         async: true, // don't block rspack emit
         typescript: {
+          tsgo: true,
+          typescriptPath: nativeTypeScriptPackageJson,
           mode: 'write-references',
           memoryLimit: 8192,
           diagnosticOptions: {

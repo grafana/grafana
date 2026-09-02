@@ -348,15 +348,19 @@ type searchServer struct {
 	log           log.Logger
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
-	embedder      *embedder.Embedder
-	reranker      *rerank.Reranker
-	search        SearchBackend
-	indexMetrics  *BleveIndexMetrics
-	vectorMetrics *VectorMetrics
-	access        types.AccessClient
-	builders      *builderCache
-	initWorkers   int
-	initMinSize   int
+	// Lexical leg for external collections (internal use bleve); nil = unsupported.
+	// Interim until bleve indexes external kinds — then external routes down
+	// the existing bleve leg and this field (and the FTS impl) gets deleted.
+	externalLexical vector.LexicalSearcher
+	embedder        *embedder.Embedder
+	reranker        *rerank.Reranker
+	search          SearchBackend
+	indexMetrics    *BleveIndexMetrics
+	vectorMetrics   *VectorMetrics
+	access          types.AccessClient
+	builders        *builderCache
+	initWorkers     int
+	initMinSize     int
 
 	queryCache             vector.QueryEmbeddingCache
 	queryCacheMaxPerTenant int
@@ -480,6 +484,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+	}
+
+	// pgvector doubles as the FTS lexical searcher.
+	if lex, ok := vectorBackend.(vector.LexicalSearcher); ok {
+		s.externalLexical = lex
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -1276,7 +1285,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		})
 	}
 
-	importTimes, err := s.getLastImportTimes(ctx)
+	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{
 			Error: AsErrorResult(err),
@@ -1465,11 +1474,12 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			importTimes, err := s.getLastImportTimes(ctx)
+			keys := s.search.GetOpenIndexes()
+			importTimes, err := s.getLastImportTimes(ctx, keys)
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
+			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
 		}
 	}
 }
@@ -1598,14 +1608,15 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 	return completeChs
 }
 
-func (s *searchServer) getLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
-	result := map[NamespacedResource]time.Time{}
-	for importTime, err := range s.storage.GetResourceLastImportTimes(ctx) {
+func (s *searchServer) getLastImportTimes(ctx context.Context, keys []NamespacedResource) (map[NamespacedResource]time.Time, error) {
+	result := make(map[NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 		if err != nil {
-			// We return times that we have collected so far, if any.
+			// Return the times collected so far so periodic scans can still check those indexes.
 			return result, err
 		}
-		result[importTime.NamespacedResource] = importTime.LastImportTime
+		result[key] = lastImportTime
 	}
 	return result, nil
 }
@@ -1883,13 +1894,10 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
-			var lastImportTime time.Time
-			importTimes, err := s.getLastImportTimes(ctx)
+			lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 			if err != nil {
-				s.log.FromContext(ctx).Warn("failed to get last import times", "error", err)
+				s.log.FromContext(ctx).Warn("failed to get last import time", "error", err)
 				// Continue without import time check
-			} else {
-				lastImportTime = importTimes[key]
 			}
 
 			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)

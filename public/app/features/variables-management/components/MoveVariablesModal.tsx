@@ -16,11 +16,9 @@ export interface MoveVariablesModalProps {
 
 export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
   const allowGlobalScope = canManageGlobalVariables();
-  // '' is root/global. Non-editors hide root, so start empty (undefined) — NestedFolderPicker
+  // '' is root/global. Without root rights, start empty (undefined) — NestedFolderPicker
   // labels '' as "Dashboards" even when showRootFolder is false.
-  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
-    canManageGlobalVariables() ? '' : undefined
-  );
+  const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() => (allowGlobalScope ? '' : undefined));
   const { data: targetFolder } = useGetFolderQueryFacade(targetFolderUid || undefined);
   // Match the editor Save gate: require CanEdit on folder targets (picker alone is not enough
   // for team folders / other surfaces that may still appear without Edit).
@@ -36,9 +34,9 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
           ? t('variables-management.move-modal.body', '', {
               count,
               defaultValue_one:
-                'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).',
+                'Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available to all dashboards).',
               defaultValue_other:
-                'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).',
+                'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available to all dashboards).',
             })
           : t('variables-management.move-modal.body-folder-only', '', {
               count,

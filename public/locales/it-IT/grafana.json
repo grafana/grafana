@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "Ereditato dalla cartella",
-      "locked-aria-label": "Indicatore di autorizzazioni bloccato",
       "remove-aria-label": "Rimuovi autorizzazione per {{identifier}}",
       "tooltip-inherited-permission": "Autorizzazione ereditata",
       "tooltip-provisioned-permission": "Autorizzazione fornita"
@@ -2667,7 +2666,9 @@
       "view-in-explore": "Visualizza in Esplora"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "Opzioni",
+      "invalid-interval-error": "",
       "label-time-range": "Intervallo orario",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min Intervallo = {{minInterval}}"
@@ -3250,6 +3251,7 @@
         "disable-confirm-title": "Disabilitare la sincronizzazione automatica di Mimir Alertmanager?",
         "disable-success": "Sincronizzazione automatica di Mimir Alertmanager disabilitata",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "Questo valore è impostato dalla chiave <1>[unified_alerting] external_alertmanager_uid</1> in grafana.ini e non può essere modificato dall'interfaccia utente. Modifica il file di configurazione e riavvia Grafana, o rimuovi la chiave per gestire la sincronizzazione da qui.",
         "operator-managed-title": "Gestito da operatore",
         "orphan-warning": "L'UID dell'origine dei dati configurata {{uid}} non è disponibile. Disabilita la sincronizzazione o ripristina l'origine dei dati per continuare.",
@@ -3258,6 +3260,7 @@
         "picker-label": "Origine dei dati",
         "picker-placeholder": "Seleziona un'origine dei dati Mimir o Cortex Alertmanager...",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "Seleziona un'origine dei dati Mimir o Cortex Alertmanager per abilitare il salvataggio.",
         "save-disabled-staged-config": "",
         "save-error": "Impossibile salvare la sincronizzazione automatica di Mimir Alertmanager",
@@ -6019,11 +6022,14 @@
     "notebook-layout": {
       "description": "Una sequenza verticale di pannelli, testo e celle di codice",
       "name": "Notebook",
-      "pill": "Notebook destinato alla pubblicazione",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "Ora"
+      "time": "Ora",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6048,6 +6054,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "Giorno prima",
         "compare-month-before": "Mese prima",
         "compare-week-before": "Settimana prima",
@@ -8782,7 +8793,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "Comprimi {{name}}",
@@ -9722,6 +9735,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "L'altro ieri",
           "previousFiscalQuarter": "Trimestre fiscale precedente",
@@ -12960,8 +12975,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12976,6 +12990,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12989,15 +13007,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -13017,13 +13086,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -13031,7 +13106,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -13039,7 +13113,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -13059,6 +13132,9 @@
       "count-truncated_one": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -13067,6 +13143,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13102,6 +13179,13 @@
     },
     "field-color": {
       "color-by-label": "Serie di colori per"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13236,6 +13320,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "Copia",
       "copy-styles": "Copia stili",
       "download-diagnostics": "Scarica la diagnostica",
@@ -15072,6 +15157,75 @@
       "title-data-source-help": "Guida dell'origine dei dati"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "Aggiungi filtro",
@@ -15854,7 +16008,6 @@
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
       "language-preference-placeholder": "Scegli lingua",
-      "theme-description": "Ti piacciono i temi sperimentali? Dicci cosa ti piacerebbe vedere <2>qui.</2>",
       "theme-label": "Tema dell'interfaccia",
       "week-start-label": "Inizio settimana"
     },
@@ -17770,7 +17923,7 @@
       "delete-modal-body": "Desideri davvero eliminare \"{{name}}\"?",
       "delete-modal-confirm": "Elimina",
       "delete-modal-title": "Elimina variabile",
-      "folder-description": "Assegna la variabile a una cartella o scegli la cartella principale Dashboard per renderla globale (disponibile ovunque nell'organizzazione)",
+      "folder-description": "",
       "folder-description-folder-only": "Imposta l'ambito della variabile in una cartella che puoi modificare",
       "folder-label": "Cartella",
       "moved": "Variabile spostata",
@@ -17790,8 +17943,8 @@
       "move": "Sposta",
       "moving": "Spostamento in corso...",
       "title": "Sposta variabili",
-      "body_one": "Sposta {{count}} variabile selezionata. Scegliendo la cartella principale Dashboard, la variabile diventa globale (disponibile ovunque nell'organizzazione).",
-      "body_other": "Sposta {{count}} variabili selezionate. Scegliendo la cartella principale Dashboard, le variabili diventano globali (disponibili ovunque nell'organizzazione).",
+      "body_one": "",
+      "body_other": "",
       "body-folder-only_one": "Sposta {{count}} variabile selezionata in una cartella che puoi modificare.",
       "body-folder-only_other": "Sposta {{count}} variabili selezionate in una cartella che puoi modificare."
     },
@@ -17815,6 +17968,14 @@
       "select-all": "Seleziona tutte le variabili",
       "select-folder": "Seleziona tutte le variabili nella cartella {{title}}",
       "select-variable": "Seleziona la variabile {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

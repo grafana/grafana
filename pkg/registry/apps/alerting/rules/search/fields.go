@@ -3,7 +3,6 @@ package search
 import (
 	"fmt"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
@@ -59,7 +58,7 @@ func buildSearchColumns() map[string]*resourcepb.ResourceTableColumnDefinition {
 		fieldFolder: std.Field(fieldFolder),
 	}
 
-	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	for _, gr := range []schema.GroupResource{
 		alertrule.ResourceInfo.GroupResource(),
 		recordingrule.ResourceInfo.GroupResource(),

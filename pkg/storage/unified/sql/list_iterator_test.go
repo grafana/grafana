@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	dbsql "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	dbmocks "github.com/grafana/grafana/pkg/storage/unified/sql/db/mocks"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -26,6 +29,35 @@ import (
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
+
+func TestListIterReturnsRowsError(t *testing.T) {
+	rowsErr := errors.New("row iteration failed")
+	rows := dbmocks.NewRows(t)
+	rows.EXPECT().Next().Return(false).Once()
+	rows.EXPECT().Err().Return(rowsErr).Once()
+
+	iter := &listIter{rows: rows}
+
+	require.False(t, iter.Next())
+	require.ErrorIs(t, iter.Error(), rowsErr)
+}
+
+func TestListIterPreservesScanError(t *testing.T) {
+	scanErr := errors.New("row scan failed")
+	rows := dbmocks.NewRows(t)
+	rows.EXPECT().Next().Return(true).Once()
+	rows.On("Scan", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(scanErr).Once()
+	rows.EXPECT().Next().Return(false).Once()
+
+	iter := &listIter{rows: rows}
+
+	require.True(t, iter.Next())
+	require.ErrorIs(t, iter.Error(), scanErr)
+	require.False(t, iter.Next())
+	require.ErrorIs(t, iter.Error(), scanErr)
+}
+
 func TestIntegrationListIter(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

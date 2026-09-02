@@ -22,14 +22,13 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
-	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
-
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
 	proxy, err := b.newProxy(ofrepPath, namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "error", err)
+		logger.Error("Failed to create proxy", "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -40,13 +39,13 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		}
 
 		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
-		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, b.logger) {
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, logger) {
 			return nil
 		}
 
 		var result goffmodel.OFREPBulkEvaluateSuccessResponse
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			b.logger.Error("Failed to decode bulk eval response", "error", err)
+			logger.Error("Failed to decode bulk eval response", "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
@@ -61,7 +60,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		result.Flags = filteredFlags
 		newBodyBytes, err := json.Marshal(result)
 		if err != nil {
-			b.logger.Error("Failed to encode filtered result", "error", err)
+			logger.Error("Failed to encode filtered result", "error", err)
 			return err
 		}
 
@@ -76,14 +75,13 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
-	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
-
 	r = r.WithContext(ctx)
+	logger := b.logger.FromContext(ctx)
 
 	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace, r.Header.Get("User-Agent"))
 	if err != nil {
 		err = tracing.Error(span, err)
-		b.logger.Error("Failed to create proxy", "key", flagKey, "error", err)
+		logger.Error("Failed to create proxy", "key", flagKey, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -96,14 +94,14 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			b.logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
+			logger.Error("Failed to read flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 		_ = resp.Body.Close()
 
 		var result goffmodel.OFREPEvaluateSuccessResponse
 		if err := json.Unmarshal(body, &result); err != nil {
-			b.logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
+			logger.Error("Failed to decode flag eval response", "key", flagKey, "error", err)
 			return err
 		}
 
@@ -115,7 +113,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// Not public -> respond as if the flag doesn't exist, so an unauthed
 		// caller can't use the 404-vs-401 distinction to probe which private
 		// flags exist.
-		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
+		logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
 		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
 			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
 				ErrorCode:    "FLAG_NOT_FOUND",

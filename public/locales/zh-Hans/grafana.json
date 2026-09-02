@@ -20,7 +20,6 @@
     },
     "permission-list-item": {
       "inherited": "继承自文件夹",
-      "locked-aria-label": "已锁定权限指示器",
       "remove-aria-label": "移除 {{identifier}} 的权限",
       "tooltip-inherited-permission": "继承的权限",
       "tooltip-provisioned-permission": "预置的权限"
@@ -2647,7 +2646,9 @@
       "view-in-explore": "在 Explore 中查看"
     },
     "query-options": {
+      "apply-button": "",
       "button-options": "选项",
+      "invalid-interval-error": "",
       "label-time-range": "时间范围",
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "最小间隔 = {{minInterval}}"
@@ -3227,6 +3228,7 @@
         "disable-confirm-title": "要禁用 Mimir Alertmanager 自动同步吗？",
         "disable-success": "Mimir Alertmanager 自动同步已禁用",
         "not-ready-body": "",
+        "not-ready-title": "",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 密钥设置，无法通过 UI 更改。编辑配置文件并重新启动 Grafana，或移除密钥以从此处管理同步。",
         "operator-managed-title": "由操作员管理",
         "orphan-warning": "已配置的数据源 UID {{uid}} 不可用。禁用同步或恢复数据源以继续。",
@@ -3235,6 +3237,7 @@
         "picker-label": "数据源",
         "picker-placeholder": "选择 Mimir 或 Cortex Alertmanager 数据源…",
         "read-error-message": "",
+        "read-error-title": "",
         "save-disabled-no-selection": "选择 Mimir 或 Cortex Alertmanager 数据源以启用保存。",
         "save-disabled-staged-config": "",
         "save-error": "保存 Mimir Alertmanager 自动同步失败",
@@ -5977,11 +5980,14 @@
     "notebook-layout": {
       "description": "垂直排列的面板、文本和代码单元格",
       "name": "笔记本",
-      "pill": "已发布的笔记本",
       "tags": "",
       "tags-custom-value": "",
       "tags-placeholder": "",
-      "time": "时间"
+      "time": "时间",
+      "title-edit": "",
+      "title-label": "",
+      "title-placeholder": "",
+      "title-required": ""
     },
     "on-create-new-row": {
       "new-row": {
@@ -6005,6 +6011,11 @@
     },
     "panel": {
       "time-range-settings": {
+        "compare-color-mode": "",
+        "compare-color-mode-description": "",
+        "compare-color-mode-inverted": "",
+        "compare-color-mode-same-as-value": "",
+        "compare-color-mode-standard": "",
         "compare-day-before": "前一天",
         "compare-month-before": "前一个月",
         "compare-week-before": "前一周",
@@ -8733,7 +8744,9 @@
     "metric-detail-panel": {
       "aria-label": "",
       "close": "",
-      "from-query": ""
+      "from-query": "",
+      "unknown-type": "",
+      "unknown-type-tooltip": ""
     },
     "metrics-list": {
       "collapse-metric": "收起{{name}}",
@@ -9669,6 +9682,8 @@
   "grafana-data": {
     "datetime": {
       "rangeutils": {
+        "fewSecondsFuture": "",
+        "fewSecondsPast": "",
         "getBaseRangeOptions": {
           "dayBeforeYesterday": "前天",
           "previousFiscalQuarter": "上一财季",
@@ -12869,8 +12884,7 @@
       "label": "",
       "paragraph": "",
       "prompt": "",
-      "visualization": "",
-      "visualization-placeholder": ""
+      "visualization": ""
     },
     "cell": {
       "code": {
@@ -12885,6 +12899,10 @@
       "delete-confirm-yes": "",
       "drag-handle": "",
       "duplicate": "",
+      "frame": {
+        "aria-label-collapsed": "",
+        "aria-label-panel": ""
+      },
       "markdown": {
         "aria-label-editor": "",
         "format-bold": "",
@@ -12898,15 +12916,66 @@
         "tooltip-link": "",
         "tooltip-numbered-list": "",
         "tooltip-strikethrough": ""
+      },
+      "query": {
+        "add": "",
+        "run": ""
       }
     },
     "errors": {
       "entity": "",
       "failed-to-load": "",
       "not-found-title": ""
+    },
+    "panel-changes": {
+      "confirm-cancel": "",
+      "confirm-discard": "",
+      "confirm-keep": "",
+      "confirm-text": "",
+      "confirm-title": ""
     }
   },
   "notebooks": {
+    "add-panel": {
+      "cancel": "",
+      "card-author": "",
+      "card-selected": "",
+      "card-updated": "",
+      "create-description": "",
+      "create-description-help": "",
+      "create-description-placeholder": "",
+      "create-name": "",
+      "create-name-required": "",
+      "create-name-taken": "",
+      "create-tags": "",
+      "create-tags-custom-value": "",
+      "create-tags-help": "",
+      "create-tags-placeholder": "",
+      "created-by-me": "",
+      "error-conflict": "",
+      "error-generic": "",
+      "list-error": "",
+      "list-error-body": "",
+      "list-no-matches": "",
+      "list-none": "",
+      "list-none-read-only": "",
+      "list-truncated": "",
+      "search-placeholder": "",
+      "sort-alphabetical": "",
+      "sort-label": "",
+      "sort-reverse-alphabetical": "",
+      "sort-updated": "",
+      "submit": "",
+      "success": "",
+      "success-link": "",
+      "tag-label": "",
+      "tag-placeholder": "",
+      "target-description": "",
+      "target-existing": "",
+      "target-label": "",
+      "target-new": "",
+      "title": ""
+    },
     "delete": {
       "body": "",
       "confirm": "",
@@ -12926,13 +12995,19 @@
     },
     "history": {
       "add-block": "",
+      "add-query": "",
       "delete-block": "",
       "duplicate-block": "",
+      "duplicate-query": "",
       "edit-block": "",
+      "edit-query": "",
       "move-block": "",
       "redo": "",
       "redo-action": "",
+      "remove-query": "",
+      "select-query": "",
       "split-block": "",
+      "switch-datasource": "",
       "undo": "",
       "undo-action": ""
     },
@@ -12940,7 +13015,6 @@
       "count-loading": "",
       "count-of-total": "",
       "count-of-total-approx": "",
-      "create-error": "",
       "created-by-me": "",
       "empty-body": "",
       "empty-title": "",
@@ -12948,7 +13022,6 @@
       "load-error": "",
       "loading": "",
       "new-notebook": "",
-      "new-notebook-title": "",
       "no-results": "",
       "partial-load-error": "",
       "search-placeholder": "",
@@ -12966,6 +13039,9 @@
       "count_other": "",
       "count-truncated_other": ""
     },
+    "new": {
+      "default-title": ""
+    },
     "save-status": {
       "failed": "",
       "pending": "",
@@ -12974,6 +13050,7 @@
       "saving": ""
     },
     "view": {
+      "available-once-created": "",
       "copy-link": "",
       "mode-edit": "",
       "mode-view": "",
@@ -13009,6 +13086,13 @@
     },
     "field-color": {
       "color-by-label": "为序列添加颜色的方式"
+    },
+    "number-input": {
+      "error-out-of-range": "",
+      "error-out-of-range-generic": "",
+      "range-max": "",
+      "range-min": "",
+      "range-min-max": ""
     },
     "registry": {
       "get-all-option-editors": {
@@ -13143,6 +13227,7 @@
       }
     },
     "header-menu": {
+      "add-to-notebook": "",
       "copy": "复制",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
@@ -14960,6 +15045,75 @@
       "title-data-source-help": "数据源帮助"
     }
   },
+  "query-editor-coauthoring": {
+    "accept": "",
+    "assistant-context-title": "",
+    "assistant-instructions-title": "",
+    "assistant-unavailable": "",
+    "assistant-unavailable-body": "",
+    "building": "",
+    "checking-assistant": "",
+    "clarification-label": "",
+    "clarification-message": "",
+    "clarification-placeholder": "",
+    "clarification-title": "",
+    "close": "",
+    "context": "",
+    "context-error": "",
+    "continue": "",
+    "continue-here": "",
+    "continue-in-assistant": "",
+    "continue-in-assistant-chat": "",
+    "dialog": "",
+    "dismiss": "",
+    "error": "",
+    "error-accept-failed": "",
+    "error-multiple-responses": "",
+    "error-preview-failed": "",
+    "explain-or-modify": "",
+    "feedback-cancel": "",
+    "feedback-description": "",
+    "feedback-error": "",
+    "feedback-helpful": "",
+    "feedback-label": "",
+    "feedback-negative-placeholder": "",
+    "feedback-negative-title": "",
+    "feedback-not-helpful": "",
+    "feedback-positive-placeholder": "",
+    "feedback-positive-title": "",
+    "feedback-privacy": "",
+    "feedback-recipient": "",
+    "feedback-send": "",
+    "feedback-sending": "",
+    "focus": "",
+    "handoff-guidance": "",
+    "highlighted-query": "",
+    "highlighted-query-summary": "",
+    "invalid-query-response": "",
+    "iteration-nudge": "",
+    "open-in-chat": "",
+    "original-change": "",
+    "previewing-query": "",
+    "prompt-label": "",
+    "prompt-placeholder": "",
+    "proposal-details": "",
+    "proposed-change": "",
+    "reading-highlighted-query": "",
+    "relevant-context": "",
+    "request-failed": "",
+    "retry": "",
+    "running-updated-query": "",
+    "selection-ready": "",
+    "selection-whole-query": "",
+    "selection-with-type": "",
+    "stale-query-response": "",
+    "stop": "",
+    "submit": "",
+    "suggestion-updated": "",
+    "unchanged-query-response": "",
+    "unsaved-safe": "",
+    "working-focus": ""
+  },
   "query-editor-next": {
     "action": {
       "add-transformation-filter": "添加筛选条件",
@@ -15732,7 +15886,6 @@
       "home-dashboard-placeholder": "默认仪表板",
       "language-preference-label": "语言",
       "language-preference-placeholder": "选择语言",
-      "theme-description": "喜欢实验性主题吗？请在<2>此处</2>告诉我们您想要看到的功能。",
       "theme-label": "UI 主题",
       "week-start-label": "每周开始日"
     },
@@ -17643,7 +17796,7 @@
       "delete-modal-body": "您确定要删除“{{name}}”吗？",
       "delete-modal-confirm": "删除",
       "delete-modal-title": "删除变量",
-      "folder-description": "将变量的作用域限定为一个文件夹，或选择根数据面板文件夹以使其成为全局变量（在组织中的任何地方都可用）",
+      "folder-description": "",
       "folder-description-folder-only": "将变量的作用域设置为您可以编辑的文件夹",
       "folder-label": "文件夹",
       "moved": "变量已移动",
@@ -17663,7 +17816,7 @@
       "move": "移动",
       "moving": "正在移动…",
       "title": "移动变量",
-      "body_other": "移动 {{count}} 个选定的变量。选择根数据面板文件夹会使其成为全局变量（在组织中的任何地方都可用）。",
+      "body_other": "",
       "body-folder-only_other": "将 {{count}} 个选定的变量移动到您可以编辑的文件夹。"
     },
     "page": {
@@ -17685,6 +17838,14 @@
       "select-all": "选择所有变量",
       "select-folder": "选择文件夹“{{title}}”中的所有变量",
       "select-variable": "选择变量 {{name}}"
+    }
+  },
+  "visual-refresh": {
+    "info": {
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": ""
     }
   },
   "visualization": {

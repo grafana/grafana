@@ -384,11 +384,12 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
 	}
 
+	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, module)
+			filteredUsers[i].IsExternallySynced = externallySynced(module)
 		}
 	}
 
@@ -399,8 +400,12 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	// Shared across pages so the externally-synced check is resolved once per
+	// auth module for the whole request, not once per page.
+	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
+
 	if query.Limit > 0 || query.UserID != 0 {
-		return hs.searchOrgUsersPageUsingK8s(c, query)
+		return hs.searchOrgUsersPageUsingK8s(c, query, externallySynced)
 	}
 
 	const pageSize = 1000
@@ -410,7 +415,7 @@ func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *
 		pageQuery.Limit = pageSize
 		pageQuery.Page = page
 
-		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery)
+		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery, externallySynced)
 		if err != nil {
 			return nil, err
 		}
@@ -425,7 +430,7 @@ func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *
 	}
 }
 
-func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery, externallySynced func(authModule string) bool) (*org.SearchOrgUsersQueryResult, error) {
 	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
 		SignedInUser:         query.User,
 		OrgID:                query.OrgID,
@@ -449,7 +454,7 @@ func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, que
 		isExternallySynced := false
 		for _, module := range u.AuthModule {
 			authLabels = append(authLabels, login.GetAuthProviderLabel(module))
-			if hs.isExternallySynced(c.Req.Context(), hs.Cfg, module) {
+			if externallySynced(module) {
 				isExternallySynced = true
 			}
 		}

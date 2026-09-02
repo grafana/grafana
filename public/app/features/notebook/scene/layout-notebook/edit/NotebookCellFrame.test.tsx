@@ -1,5 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { render, screen } from 'test/test-utils';
+import { fireEvent, render, screen } from 'test/test-utils';
 
 import { NotebookCellItem } from '../NotebookCellItem';
 
@@ -13,32 +13,53 @@ function buildCell() {
   });
 }
 
-// Draggable throws outside a DragDropContext, so the frame always needs the dnd wrappers around it.
-function renderFrame({
-  index = 1,
-  isEditing,
-  onAdd,
-  onDuplicate,
-  onDelete,
-}: {
+// Collapsed and Panel cells have no caret of their own, so the frame itself is what ArrowUp/Down and
+// a focus grant land on — see NotebookCellFrame's own `isEditorCell`.
+function buildCollapsedCell() {
+  return new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true });
+}
+
+interface FrameProps {
+  cell?: NotebookCellItem;
   index?: number;
   isEditing?: boolean;
+  autoFocus?: boolean;
+  focusRequestId?: number;
   onAdd?: (type: string, index: number) => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
-} = {}) {
-  return render(
+  onNavigate?: (direction: 'up' | 'down') => void;
+}
+
+// Draggable throws outside a DragDropContext, so the frame always needs the dnd wrappers around it.
+// A plain function (rather than render() directly) so a test that needs `rerender` — a fresh focus
+// grant arriving on an already-mounted, non-editor cell — can build the same tree with new props.
+function frameTree({
+  cell = buildCell(),
+  index = 1,
+  isEditing,
+  autoFocus,
+  focusRequestId,
+  onAdd,
+  onDuplicate,
+  onDelete,
+  onNavigate,
+}: FrameProps = {}) {
+  return (
     <DragDropContext onDragEnd={() => {}}>
       <Droppable droppableId="test">
         {(dropProvided) => (
           <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
             <NotebookCellFrame
-              cell={buildCell()}
+              cell={cell}
               index={index}
               isEditing={isEditing}
+              autoFocus={autoFocus}
+              focusRequestId={focusRequestId}
               onAdd={onAdd}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
+              onNavigate={onNavigate}
             />
             {dropProvided.placeholder}
           </div>
@@ -46,6 +67,10 @@ function renderFrame({
       </Droppable>
     </DragDropContext>
   );
+}
+
+function renderFrame(props?: FrameProps) {
+  return render(frameTree(props));
 }
 
 describe('NotebookCellFrame', () => {
@@ -93,6 +118,112 @@ describe('NotebookCellFrame', () => {
     const actions = (await screen.findByRole('button', { name: 'Duplicate block' })).parentElement;
 
     expect(getComputedStyle(actions!).pointerEvents).toBe('none');
+  });
+
+  // A Panel or Collapsed cell has no caret of its own to hand ArrowUp/Down or a focus grant to, so
+  // the frame itself stands in for both — a Markdown/Code cell's own editor does this instead (see
+  // MarkdownCell/CodeCell's own navigationKeymap and useFocusExtension), so the frame never needs to.
+  describe('a cell with no caret of its own', () => {
+    it('is a tab stop while editing', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true });
+
+      expect(screen.getByText('hidden-panel').closest('[tabindex]')).toHaveAttribute('tabindex', '0');
+    });
+
+    it('is not a tab stop while reading', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: false });
+
+      expect(screen.getByText('hidden-panel').closest('[tabindex]')).toBeNull();
+    });
+
+    it('keeps the drag handle outside the content wrapper the focus ring targets', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true });
+
+      const handle = screen.getByRole('button', { name: 'Drag to reorder' });
+      const content = screen.getByText('hidden-panel').closest('.notebook-cell-content');
+
+      expect(content).not.toBeNull();
+      expect(content?.contains(handle)).toBe(false);
+    });
+
+    it('reports ArrowUp/ArrowDown once the frame itself has focus', () => {
+      const onNavigate = jest.fn();
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
+      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+
+      fireEvent.keyDown(frame, { key: 'ArrowDown' });
+      fireEvent.keyDown(frame, { key: 'ArrowUp' });
+
+      expect(onNavigate).toHaveBeenNthCalledWith(1, 'down');
+      expect(onNavigate).toHaveBeenNthCalledWith(2, 'up');
+    });
+
+    // Never for a key that bubbles up from something interactive inside the cell (a panel's own
+    // legend or menu button, say) — only the bare frame owns arrow keys.
+    it('ignores an arrow key that bubbles up from something inside the cell', () => {
+      const onNavigate = jest.fn();
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
+
+      fireEvent.keyDown(screen.getByText('hidden-panel'), { key: 'ArrowDown' });
+
+      expect(onNavigate).not.toHaveBeenCalled();
+    });
+
+    it.each([{ ctrlKey: true }, { altKey: true }, { shiftKey: true }, { metaKey: true }])(
+      'ignores an arrow key held with a modifier (%o)',
+      (modifier) => {
+        const onNavigate = jest.fn();
+        renderFrame({ cell: buildCollapsedCell(), isEditing: true, onNavigate });
+        const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+
+        fireEvent.keyDown(frame, { key: 'ArrowDown', ...modifier });
+
+        expect(onNavigate).not.toHaveBeenCalled();
+      }
+    );
+
+    it('labels the frame with the cell element name for an assistive-technology user', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true });
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: hidden-panel' })).toBeInTheDocument();
+    });
+
+    it('takes DOM focus once a fresh grant targets it', () => {
+      const cell = buildCollapsedCell();
+      const { rerender } = render(frameTree({ cell, isEditing: true, focusRequestId: 1 }));
+      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+      expect(frame).not.toHaveFocus();
+
+      rerender(frameTree({ cell, isEditing: true, focusRequestId: 2 }));
+
+      expect(frame).toHaveFocus();
+    });
+
+    it('takes DOM focus once at mount when it was already the target', () => {
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, autoFocus: true });
+
+      expect(screen.getByText('hidden-panel').closest('[tabindex]')).toHaveFocus();
+    });
+
+    it('scrolls the frame into view once a fresh grant targets it', () => {
+      const cell = buildCollapsedCell();
+      const { rerender } = render(frameTree({ cell, isEditing: true, focusRequestId: 1 }));
+      const frame = screen.getByText('hidden-panel').closest('[tabindex]') as HTMLElement;
+      const scrollIntoView = jest.spyOn(frame, 'scrollIntoView');
+
+      rerender(frameTree({ cell, isEditing: true, focusRequestId: 2 }));
+
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
+
+    it('scrolls the frame into view once at mount when it was already the target', () => {
+      const scrollIntoView = jest.spyOn(HTMLElement.prototype, 'scrollIntoView');
+
+      renderFrame({ cell: buildCollapsedCell(), isEditing: true, autoFocus: true });
+
+      expect(scrollIntoView).toHaveBeenCalled();
+      scrollIntoView.mockRestore();
+    });
   });
 });
 

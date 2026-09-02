@@ -23,15 +23,12 @@ import { NotebooksListPage } from './NotebooksListPage';
 // The route is registered unconditionally, so the page itself enforces this OpenFeature flag.
 const NOTEBOOKS_FLAG = 'dashboard.notebooks';
 
-const mockCreateNotebook = jest.fn();
-
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
 }));
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
   useListNotebookQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
-  useCreateNotebookMutation: () => [mockCreateNotebook],
   // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
   useLazyGetNotebookQuery: () => [jest.fn()],
   // The table mounts the delete hook for every row menu; deleting is covered in NotebooksTable's own tests.
@@ -564,21 +561,21 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
-  it('creates a notebook and navigates to it in edit mode', async () => {
+  // Writing a notebook on click left one behind in the library for every click somebody thought
+  // better of. The button now opens a blank page instead, and the notebook is created by its first
+  // save. Nothing in this suite mocks the create endpoint any more, so a click that still tried to
+  // create would fail rather than quietly pass.
+  it('opens a blank notebook in edit mode without creating one', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
-    mockCreateNotebook.mockReturnValue({
-      unwrap: () => Promise.resolve({ metadata: { name: 'nb-new' } }),
-    });
 
     render(<NotebooksListPage />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 
-    // A freshly created notebook is empty and exists only to be written into, so it should open ready
-    // to edit rather than in the read-only view a reader would otherwise land on first.
+    // Edit mode, because a blank notebook exists only to be written into.
     await waitFor(() => {
-      expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new');
+      expect(locationService.getLocation().pathname).toBe('/notebooks/new');
       expect(locationService.getLocation().search).toBe('?edit=true');
     });
   });

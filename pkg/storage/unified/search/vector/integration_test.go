@@ -888,13 +888,13 @@ func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
 	t.Cleanup(drop)
 
 	// Absent before creation.
-	ready, err := pg.resourcePartitionReady(ctx, leaf, idx)
+	ready, err := pg.resourcePartitionReady(ctx, leaf, idx, "")
 	require.NoError(t, err)
 	require.False(t, ready)
 
 	// Create it: partition + metadata index both present.
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
-	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, "")
 	require.NoError(t, err)
 	assert.True(t, ready, "leaf attached as partition and metadata index present")
 
@@ -902,12 +902,218 @@ func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
 	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, idx))
 	require.NoError(t, err)
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
-	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, "")
 	require.NoError(t, err)
 	assert.True(t, ready, "missing index recreated on retry")
 
 	// Idempotent: a second call (fast path) is a no-op, no error.
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+
+	// Internal partitions never get the ts index.
+	var hasFTS bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = $1 AND relkind = 'i')`,
+		leaf+"_ts_idx").Scan(&hasFTS))
+	assert.False(t, hasFTS, "internal partitions must not get a ts index")
+}
+
+func TestIntegrationVectorEnsureResourcePartitionExternal(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	pg := backend.(*pgvectorBackend)
+
+	const res = "testpartition_external"
+	leaf := subtreeName(res)
+	idx := leaf + "_metadata_idx"
+	ftsIdx := leaf + "_ts_idx"
+	drop := func() { _, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf)) }
+	drop()
+	t.Cleanup(drop)
+
+	// External partitions get partition + metadata index + ts index.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err := pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
+	require.NoError(t, err)
+	assert.True(t, ready, "external partition with metadata and ts indexes")
+
+	// Retro-fits partitions created before the ts index existed.
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, ftsIdx))
+	require.NoError(t, err)
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
+	require.NoError(t, err)
+	require.False(t, ready, "missing ts index must not report ready")
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx, ftsIdx)
+	require.NoError(t, err)
+	assert.True(t, ready, "missing ts index recreated on retry")
+}
+
+func TestIntegrationEnsureCollectionRejectsReservedSuffix(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// Internal *_external keys would be misclassified as external.
+	_, err := backend.EnsureCollection(ctx, "reserved.test.grafana.app", "foo_external", false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "reserved partition key")
+
+	_, err = backend.EnsureCollection(ctx, "reserved.test.grafana.app", "foo-external", false)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "reserved partition key")
+}
+
+func TestIntegrationVectorLexicalSearch(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	pg := backend.(*pgvectorBackend)
+
+	const ns = "integration-test"
+	// Provision via the real write-path flow (catalog row + partition + FTS index).
+	coll, err := backend.EnsureCollection(ctx, "lexint.test.grafana.app", "lexint", true)
+	require.NoError(t, err)
+	extRes := coll.PartitionKey
+	require.Equal(t, "lexint_external", extRes)
+	leaf := subtreeName(extRes)
+	drop := func() {
+		_, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf))
+		_, _ = engine.DB().ExecContext(ctx, `DELETE FROM embedding_collections WHERE partition_key = $1`, extRes)
+	}
+	t.Cleanup(drop)
+
+	row := func(uid, sub, content string, meta string) Vector {
+		return Vector{
+			Namespace: ns, Resource: extRes, UID: uid, Title: "Title " + uid,
+			Subresource: sub, Content: content, Metadata: json.RawMessage(meta),
+			Embedding: makeEmbedding(0.1, 0.2), Model: testModel,
+		}
+	}
+	// The same content under another model must not duplicate hits.
+	other := row("r1", "chunk/0", "High CPU usage on mimir ingester", `{"folderUid":"f1"}`)
+	other.Model = "other-model"
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		row("r1", "chunk/0", "High CPU usage on mimir ingester", `{"folderUid":"f1","kind":"alert_rule"}`),
+		row("r1", "chunk/1", "runbook: restart mimir ingester pods, check CPU throttling", `{"folderUid":"f1","kind":"alert_rule"}`),
+		row("r2", "chunk/0", "Postgres disk usage high on primary", `{"folderUid":"f2","kind":"alert_rule","labels":["team=db","env=prod"]}`),
+		row("r3", "chunk/0", "staging mimir latency above threshold", `{"folderUid":"f1","kind":"alert_rule"}`),
+		other,
+	}))
+
+	search := func(q string, filters ...SearchFilter) []LexicalHit {
+		t.Helper()
+		hits, err := pg.LexicalSearch(ctx, LexicalQuery{
+			Namespace: ns, Model: testModel, Resource: extRes,
+			Query: q, Limit: 10, Filters: filters,
+		})
+		require.NoError(t, err)
+		return hits
+	}
+	uids := func(hits []LexicalHit) []string {
+		out := make([]string, len(hits))
+		for i, h := range hits {
+			out[i] = h.UID
+		}
+		return out
+	}
+
+	t.Run("plain words AND, per-uid dedup across chunks and models", func(t *testing.T) {
+		hits := search("mimir CPU")
+		require.Equal(t, []string{"r1"}, uids(hits))
+		assert.Equal(t, "Title r1", hits[0].Title)
+		assert.NotEmpty(t, hits[0].Content)
+		assert.Greater(t, hits[0].Score, 0.0)
+	})
+
+	t.Run("best matching chunk wins", func(t *testing.T) {
+		hits := search("runbook throttling")
+		require.Equal(t, []string{"r1"}, uids(hits))
+		assert.Equal(t, "chunk/1", hits[0].Subresource)
+	})
+
+	t.Run("quoted phrase", func(t *testing.T) {
+		assert.Equal(t, []string{"r2"}, uids(search(`"disk usage"`)))
+		assert.Empty(t, search(`"usage disk"`))
+	})
+
+	t.Run("negation", func(t *testing.T) {
+		assert.Equal(t, []string{"r1"}, uids(search("mimir -staging")))
+	})
+
+	t.Run("or", func(t *testing.T) {
+		assert.ElementsMatch(t, []string{"r2", "r3"}, uids(search("postgres OR staging")))
+	})
+
+	t.Run("stopword-only query matches nothing without error", func(t *testing.T) {
+		assert.Empty(t, search("the of and"))
+	})
+
+	t.Run("negation-only query matches nothing", func(t *testing.T) {
+		// Pure negation would match nearly every row at rank 0.
+		assert.Empty(t, search("-staging"))
+		assert.Empty(t, search("the -staging"))
+	})
+
+	t.Run("or-negation keeps positive matches", func(t *testing.T) {
+		// 'cpu' | !'stage' isn't indexable, but the cpu docs must still hit.
+		assert.Equal(t, []string{"r1"}, uids(search("CPU OR -staging")))
+	})
+
+	t.Run("rows without metadata are searchable", func(t *testing.T) {
+		// Metadata is optional on external writes; a NULL must not fail the
+		// row scan on either leg.
+		noMeta := row("r5", "chunk/0", "windows kubelet flapping", "")
+		noMeta.Metadata = nil
+		require.NoError(t, backend.Upsert(ctx, []Vector{noMeta}))
+		hits := search("kubelet")
+		require.Equal(t, []string{"r5"}, uids(hits))
+		assert.Nil(t, hits[0].Metadata)
+
+		semHits, err := pg.Search(ctx, ns, testModel, extRes, makeEmbedding(0.1, 0.2), 10,
+			SearchFilter{Field: "uid", Values: []string{"r5"}})
+		require.NoError(t, err)
+		require.Len(t, semHits, 1)
+	})
+
+	t.Run("legacy rows without ts are invisible", func(t *testing.T) {
+		// Rows written before the ts column exist with ts NULL; they don't
+		// match until rewritten by an upsert.
+		emb := "[" + strings.TrimSuffix(strings.Repeat("0,", 1024), ",") + "]"
+		_, err := engine.DB().ExecContext(ctx, fmt.Sprintf(
+			`INSERT INTO %s (resource, namespace, model, uid, title, subresource, content, embedding)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, '%s'::halfvec)`, leaf, emb),
+			extRes, ns, testModel, "legacy", "t", "", "mimir legacy row")
+		require.NoError(t, err)
+		for _, h := range search("mimir") {
+			assert.NotEqual(t, "legacy", h.UID)
+		}
+	})
+
+	t.Run("uid filter", func(t *testing.T) {
+		assert.Empty(t, search("mimir", SearchFilter{Field: "uid", Values: []string{"r2"}}))
+		assert.Equal(t, []string{"r1"}, uids(search("mimir CPU", SearchFilter{Field: "uid", Values: []string{"r1"}})))
+	})
+
+	t.Run("metadata containment filters, scalar and array", func(t *testing.T) {
+		assert.ElementsMatch(t, []string{"r1", "r3"},
+			uids(search("mimir OR staging", SearchFilter{Field: "folderUid", Values: []string{"f1"}})))
+		assert.Equal(t, []string{"r2"},
+			uids(search("postgres", SearchFilter{Field: "labels", Values: []string{"team=db"}})))
+		assert.Empty(t, search("postgres", SearchFilter{Field: "labels", Values: []string{"team=infra"}}))
+	})
+
+	t.Run("model scoping", func(t *testing.T) {
+		hits, err := pg.LexicalSearch(ctx, LexicalQuery{
+			Namespace: ns, Model: "third-model", Resource: extRes,
+			Query: "mimir", Limit: 10,
+		})
+		require.NoError(t, err)
+		assert.Empty(t, hits)
+	})
+
+	t.Run("limit truncates", func(t *testing.T) {
+		hits, err := pg.LexicalSearch(ctx, LexicalQuery{
+			Namespace: ns, Model: testModel, Resource: extRes,
+			Query: "mimir OR postgres OR staging", Limit: 1, Filters: nil,
+		})
+		require.NoError(t, err)
+		assert.Len(t, hits, 1)
+	})
 }
 
 // TestIntegrationVectorTimestamps pins the created_at/updated_at contract:

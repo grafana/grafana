@@ -94,6 +94,7 @@ interface UseNotebooksListOptions {
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   // Mirrors the module latch into state, so the branches below have it as a real dependency and a
   // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
   const [usingFallback, setUsingFallback] = useState(searchUnavailable);
@@ -107,8 +108,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const filterByAuthor = createdByMe && Boolean(currentUserUid);
 
   const searchBody = useMemo(
-    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined),
-    [debouncedSearch, filterByAuthor, currentUserUid]
+    () => buildSearchQuery(debouncedSearch, filterByAuthor ? currentUserUid : undefined, tagFilter),
+    [debouncedSearch, filterByAuthor, currentUserUid, tagFilter]
   );
 
   const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
@@ -232,11 +233,14 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     const needle = debouncedSearch.trim().toLowerCase();
     return namedRows.filter(
       (row) =>
-        (!needle || row.title.toLowerCase().includes(needle)) && (!filterByAuthor || row.authorUid === currentUserUid)
+        (!needle || row.title.toLowerCase().includes(needle)) &&
+        (!filterByAuthor || row.authorUid === currentUserUid) &&
+        // Every selected tag, matching the `and` of leaves the search path sends.
+        tagFilter.every((tag) => row.tags.includes(tag))
     );
-  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid]);
+  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid, tagFilter]);
 
-  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
+  const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor || tagFilter.length > 0;
 
   // Every page carries the same total for the query, so the first one answers for all of them.
   const searchMetadata = search.currentData?.pages[0]?.metadata;
@@ -275,6 +279,8 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     setSearchQuery,
     createdByMe,
     setCreatedByMe,
+    tagFilter,
+    setTagFilter,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
     /**
@@ -294,7 +300,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
      * (the table's page index) without resetting it as rows merely accumulate. Built from the
      * committed filters, not the raw input, so it does not change on every keystroke.
      */
-    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}`,
+    filterKey: `${debouncedSearch.trim()}|${filterByAuthor}|${tagFilter.join(',')}`,
     error: active.error,
   };
 }
@@ -304,7 +310,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
  * notebook — and flattened to a single leaf when only one predicate applies, because v1
  * accepts just a top-level leaf or one `and` of leaves.
  */
-function buildSearchQuery(search: string, authorUid: string | undefined): NotebookSearchQuery {
+function buildSearchQuery(search: string, authorUid: string | undefined, tags: string[]): NotebookSearchQuery {
   const leaves: WhereNode[] = [];
   const needle = search.trim();
   if (needle) {
@@ -317,6 +323,12 @@ function buildSearchQuery(search: string, authorUid: string | undefined): Notebo
     // resolved from either form because old resources elsewhere carry the legacy numeric id, but a
     // notebook cannot have been written that way, so matching on one form is enough here.
     leaves.push({ filter: { field: SearchField.createdBy, operator: 'In', values: [authorUid] } });
+  }
+  // One leaf per tag rather than one leaf listing them all: `In` is set membership, so a single leaf
+  // would match a notebook carrying *any* of them. Selecting two tags narrows the list here as it
+  // does elsewhere in Grafana, and `and` of leaves is what expresses that.
+  for (const tag of tags) {
+    leaves.push({ filter: { field: SearchField.tags, operator: 'In', values: [tag] } });
   }
 
   // No sort: `created`/`updated` are retrieve-only and 422 if sorted on, and the table owns

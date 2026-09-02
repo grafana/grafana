@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -3452,9 +3453,7 @@ func (h *GitTestHelper) createRepo(
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
 	}
-	for k, v := range opts.templateVariables {
-		templateValues[k] = v
-	}
+	maps.Copy(templateValues, opts.templateVariables)
 
 	tmpl := TestdataPath(repoType + ".json.tmpl")
 	repoObj := h.RenderObject(t, tmpl, templateValues)

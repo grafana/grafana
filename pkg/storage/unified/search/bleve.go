@@ -1753,7 +1753,7 @@ type bleveIndex struct {
 
 	indexMetrics     *resource.BleveIndexMetrics
 	updateLatency    prometheus.Histogram
-	updatedDocuments prometheus.Summary
+	updatedDocuments prometheus.Histogram
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64

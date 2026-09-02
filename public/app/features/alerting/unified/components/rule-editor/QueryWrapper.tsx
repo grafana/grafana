@@ -221,28 +221,7 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-export function MaxDataPointsOption({
-  options,
-  onChange,
-}: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
-}) {
-  const value = options.maxDataPoints ?? '';
-
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
-    const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
-
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
-        maxDataPoints,
-      });
-    }
-  };
-
+export function MaxDataPointsOption({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <InlineField
       labelWidth={24}
@@ -257,32 +236,24 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
     </InlineField>
   );
 }
 
 export function MinIntervalOption({
-  options,
+  value,
   onChange,
+  invalid,
+  error,
 }: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  value: string;
+  onChange: (value: string) => void;
+  invalid?: boolean;
+  error?: string;
 }) {
-  const value = options.minInterval ?? '';
-
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
-      });
-    }
-  };
-
   return (
     <InlineField
       label={t('alerting.min-interval-option.label-interval', 'Interval')}
@@ -293,14 +264,16 @@ export function MinIntervalOption({
           your data is written every minute.
         </Trans>
       }
+      invalid={invalid}
+      error={error}
     >
       <Input
         type="text"
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        value={value}
       />
     </InlineField>
   );

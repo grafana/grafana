@@ -25,6 +25,7 @@ function setLibraryTags(...tags: string[]) {
 
 function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader>> = {}) {
   const onTagsChange = jest.fn();
+  const onTitleChange = jest.fn();
   const rendered = render(
     <NotebookDocumentHeader
       title="Q2 latency regression"
@@ -32,11 +33,12 @@ function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader
       timeFrom="now-6h"
       timeTo="now"
       onTagsChange={onTagsChange}
+      onTitleChange={onTitleChange}
       {...props}
     />
   );
 
-  return { ...rendered, onTagsChange };
+  return { ...rendered, onTagsChange, onTitleChange };
 }
 
 /**
@@ -212,5 +214,61 @@ describe('NotebookDocumentHeader', () => {
     setup({ isEditing: true, tags: [] });
 
     expect(screen.getByRole('combobox', { name: 'Tags' })).toBeInTheDocument();
+  });
+
+  describe('the title', () => {
+    it('is a plain heading with no way in while the notebook is being read', () => {
+      setup({ isEditing: false });
+
+      expect(screen.getByRole('heading', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+    });
+
+    it('is the heading and the way into editing it once the notebook is being edited', () => {
+      setup({ isEditing: true });
+
+      expect(screen.getByRole('heading', { name: 'Q2 latency regression' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('reports the new title as it is typed', async () => {
+      const { user, onTitleChange } = setup({ isEditing: true });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      const input = screen.getByRole('textbox', { name: 'Title' });
+      await user.clear(input);
+      await user.type(input, 'Q3');
+
+      expect(onTitleChange).toHaveBeenLastCalledWith('Q3');
+    });
+
+    // The read-only branch renders nothing for an empty title; this one has to, or there is no way back.
+    it('still offers a way in on a notebook whose title is empty', () => {
+      setup({ isEditing: true, title: '' });
+
+      expect(screen.getByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Add a title' })).toBeInTheDocument();
+    });
+
+    // Edit mode can be left without the field ever blurring: the Back button dropping `?edit=true`.
+    it('keeps a title typed but never blurred when the notebook leaves edit mode', async () => {
+      const { user, rerender } = setup({ isEditing: true, title: 'Q2 latency regression' });
+
+      await user.click(screen.getByRole('button', { name: 'Edit title' }));
+      await user.clear(screen.getByRole('textbox', { name: 'Title' }));
+      await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Q3 latency regression');
+
+      rerender(
+        <NotebookDocumentHeader
+          title="Q3 latency regression"
+          tags={['latency']}
+          timeFrom="now-6h"
+          timeTo="now"
+          isEditing={false}
+        />
+      );
+
+      expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
+    });
   });
 });
