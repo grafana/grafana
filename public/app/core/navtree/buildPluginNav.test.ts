@@ -399,6 +399,15 @@ describe('mergePluginNavIntoTree', () => {
     expect(findById(merged, NavID.cfg)).toBeUndefined();
   });
 
+  it('keeps the drilldown shell once a drilldown app attaches to it', async () => {
+    setup({ permissions: ['datasources:explore'] });
+    const merged = await mergeFromMetas([
+      appMeta('grafana-metricsdrilldown-app', 'Metrics', [page('Metrics', '/a/grafana-metricsdrilldown-app/metrics')]),
+    ]);
+
+    expect(findById(merged, NavID.drilldown)?.children?.length).toBe(1);
+  });
+
   it('skips non-app plugins and malformed metas without failing the build', async () => {
     const malformed = { apiVersion: 'v0alpha1', kind: 'Meta', metadata: { name: 'broken' }, spec: {} };
     const merged = await mergeFromMetas(
