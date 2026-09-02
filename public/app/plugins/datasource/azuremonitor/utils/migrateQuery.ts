@@ -8,14 +8,12 @@ import { type AzureMetricDimension, AzureQueryType } from '../dataquery.gen';
 import TimegrainConverter from '../time_grain_converter';
 import { type AzureMonitorQuery } from '../types/query';
 
-import { getAzureMonitorService } from './queryUtils';
-
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 
 export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
-  if (!getAzureMonitorService(workingQuery)) {
+  if (!workingQuery.queryType) {
     workingQuery = {
       ...workingQuery,
       queryType: AzureQueryType.AzureMonitor,

@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { type DataQueryRequest, type Field, MappingType } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
+import { AzureQueryType } from '../dataquery.gen';
 import { createMockInstanceSetttings } from '../mocks/instanceSettings';
 import createMockQuery from '../mocks/query';
 import { type AzureMonitorQuery } from '../types/query';
@@ -94,7 +95,7 @@ describe('AzureHealthModelsDatasource', () => {
       throw new Error(`Unexpected resource path: ${path}`);
     });
     const query = createMockQuery({
-      queryType: undefined,
+      queryType: AzureQueryType.AzureHealthModels,
       subscription: subscriptionId,
       azureHealthModels: { healthModelId },
     });
@@ -180,7 +181,7 @@ describe('AzureHealthModelsDatasource', () => {
   it('rejects a Health Model resource ID from another subscription', async () => {
     const datasource = new AzureHealthModelsDatasource(createMockInstanceSetttings());
     const query = createMockQuery({
-      queryType: undefined,
+      queryType: AzureQueryType.AzureHealthModels,
       subscription: '22222222-2222-2222-2222-222222222222',
       azureHealthModels: { healthModelId },
     });
@@ -243,7 +244,7 @@ describe('AzureHealthModelsDatasource', () => {
     });
 
     const query = createMockQuery({
-      queryType: undefined,
+      queryType: AzureQueryType.AzureHealthModels,
       subscription: subscriptionId,
       azureHealthModels: { healthModelId, resultFormat: 'modelGraph' },
     });

@@ -8,7 +8,6 @@ import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import createMockQuery from '../../mocks/query';
 import { type AzureMonitorQuery } from '../../types/query';
-import { AZURE_HEALTH_MODELS_SERVICE } from '../../utils/queryUtils';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import { QueryHeader } from './QueryHeader';
@@ -83,11 +82,11 @@ describe('Azure Monitor QueryHeader', () => {
     renderComponent(query, { app: CoreApp.Dashboard, onQueryChange });
 
     const serviceSelect = await screen.findByLabelText(/Service/i);
-    await selectOptionInTest(serviceSelect, AZURE_HEALTH_MODELS_SERVICE);
+    await selectOptionInTest(serviceSelect, 'Azure Health Models');
 
     expect(onQueryChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryType: undefined,
+        queryType: AzureQueryType.AzureHealthModels,
         azureHealthModels: query.azureHealthModels,
       })
     );
@@ -103,7 +102,7 @@ describe('Azure Monitor QueryHeader', () => {
     const options = await screen.findAllByRole('option');
     const optionLabels = options.map((option) => option.textContent);
 
-    expect(optionLabels.indexOf(AZURE_HEALTH_MODELS_SERVICE)).toBe(optionLabels.indexOf('Azure Resource Graph') + 1);
+    expect(optionLabels.indexOf('Azure Health Models')).toBe(optionLabels.indexOf('Azure Resource Graph') + 1);
   });
 
   it('initializes logs editor mode to Raw when a raw query exists and builder is enabled', async () => {

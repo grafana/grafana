@@ -168,7 +168,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = {
       ...createMockQuery(),
-      queryType: undefined,
+      queryType: AzureQueryType.AzureHealthModels,
     };
 
     render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);

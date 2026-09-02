@@ -91,19 +91,6 @@ describe('AzureMonitor: migrateQuery', () => {
     expect(modernMetricsQuery).toBe(result);
   });
 
-  it('does not assign a query type to an Azure Health Models service selection', () => {
-    const query: AzureMonitorQuery = {
-      refId: 'A',
-      azureHealthModels: {
-        healthModelId:
-          '/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg/providers/Microsoft.CloudHealth/healthmodels/model',
-      },
-    };
-
-    expect(migrateQuery(query)).toBe(query);
-    expect(query.queryType).toBeUndefined();
-  });
-
   describe('migrating from a v8 query to the latest query version', () => {
     it('will not change valid dimension filters', () => {
       const dimensionFilters: AzureMetricDimension[] = [

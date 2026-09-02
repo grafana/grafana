@@ -16,7 +16,6 @@ import {
   type AzureMonitorErrorish,
   type AzureMonitorOption,
 } from '../../types/types';
-import { AZURE_HEALTH_MODELS_SERVICE, getAzureMonitorService } from '../../utils/queryUtils';
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor/ArgQueryEditor';
 import HealthModelsQueryEditor from '../HealthModelsQueryEditor/HealthModelsQueryEditor';
@@ -158,7 +157,7 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
-  switch (getAzureMonitorService(query)) {
+  switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
         <NewMetricsQueryEditor
@@ -199,7 +198,7 @@ const EditorForQueryType = ({
         />
       );
 
-    case AZURE_HEALTH_MODELS_SERVICE:
+    case AzureQueryType.AzureHealthModels:
       return (
         <HealthModelsQueryEditor
           subscriptionId={subscriptionId}

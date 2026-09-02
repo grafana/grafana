@@ -24,7 +24,6 @@ import { type AzureMonitorQuery } from './types/query';
 import { type AzureMonitorDataSourceJsonData } from './types/types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
-import { AZURE_HEALTH_MODELS_SERVICE, type AzureMonitorService, getAzureMonitorService } from './utils/queryUtils';
 import { VariableSupport } from './variables';
 
 export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
@@ -42,14 +41,14 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   defaultSubscriptionId?: string;
 
   pseudoDatasource: {
-    [key in AzureMonitorService]?:
+    [key in AzureQueryType]?:
       | AzureMonitorDatasource
       | AzureLogAnalyticsDatasource
       | AzureResourceGraphDatasource
       | AzureHealthModelsDatasource;
   } = {};
 
-  declare optionsKey: Record<AzureMonitorService, string>;
+  declare optionsKey: Record<AzureQueryType, string>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>,
@@ -71,7 +70,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       [AzureQueryType.LogAnalytics]: this.azureLogAnalyticsDatasource,
       [AzureQueryType.AzureResourceGraph]: this.azureResourceGraphDatasource,
       [AzureQueryType.AzureTraces]: this.azureLogAnalyticsDatasource,
-      [AZURE_HEALTH_MODELS_SERVICE]: this.azureHealthModelsDatasource,
+      [AzureQueryType.AzureHealthModels]: this.azureHealthModelsDatasource,
     };
 
     this.variables = new VariableSupport(this);
@@ -94,49 +93,48 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    const service = getAzureMonitorService(item);
-    if (!service) {
+    if (!item.queryType) {
       return false;
     }
 
     const query = migrateQuery(item);
-    const ds = this.pseudoDatasource[service];
+    const ds = this.pseudoDatasource[item.queryType];
     return ds?.filterQuery?.(query) ?? true;
   }
 
   query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    const byService = new Map<AzureMonitorService, DataQueryRequest<AzureMonitorQuery>>();
+    const byType = new Map<AzureQueryType, DataQueryRequest<AzureMonitorQuery>>();
 
     for (const baseTarget of options.targets) {
       // Migrate old query structures
       const target = migrateQuery(baseTarget);
-      const service = getAzureMonitorService(target);
 
       // Skip hidden or invalid queries, or ones without properties
-      if (!service || target.hide || !hasQueryForService(target)) {
+      if (!target.queryType || target.hide || !hasQueryForType(target)) {
         continue;
       }
 
       // Initialize the list of queries
-      if (!byService.has(service)) {
-        const queryForService = cloneDeep(options);
-        queryForService.requestId = `${queryForService.requestId}-${target.refId}`;
-        queryForService.targets = [];
-        byService.set(service, queryForService);
+      if (!byType.has(target.queryType)) {
+        const queryForType = cloneDeep(options);
+        queryForType.requestId = `${queryForType.requestId}-${target.refId}`;
+        queryForType.targets = [];
+        byType.set(target.queryType, queryForType);
       }
 
-      byService.get(service)?.targets.push(target);
+      const queryForType = byType.get(target.queryType);
+      queryForType?.targets.push(target);
     }
 
-    const observables: Array<Observable<DataQueryResponse>> = Array.from(byService.entries()).map(([service, req]) => {
-      let mappedService = service;
-      if (service === AzureQueryType.AzureTraces || service === AzureQueryType.TraceExemplar) {
-        mappedService = AzureQueryType.LogAnalytics;
+    const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
+      let mappedQueryType = queryType;
+      if (queryType === AzureQueryType.AzureTraces || queryType === AzureQueryType.TraceExemplar) {
+        mappedQueryType = AzureQueryType.LogAnalytics;
       }
 
-      const ds = this.pseudoDatasource[mappedService];
+      const ds = this.pseudoDatasource[mappedQueryType];
       if (!ds) {
-        throw new Error('Data source not created for service ' + service);
+        throw new Error('Data source not created for query type ' + queryType);
       }
 
       return ds.query(req);
@@ -177,7 +175,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
       subQuery = JSON.stringify(query.azureLogAnalytics);
     } else if (query.queryType === AzureQueryType.AzureResourceGraph) {
       subQuery = JSON.stringify([query.azureResourceGraph, query.subscriptions]);
-    } else if (getAzureMonitorService(query) === AZURE_HEALTH_MODELS_SERVICE) {
+    } else if (query.queryType === AzureQueryType.AzureHealthModels) {
       subQuery = JSON.stringify(query.azureHealthModels);
     }
 
@@ -262,13 +260,12 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
     const mapped = queries.map((query) => {
-      const service = getAzureMonitorService(query);
-      if (!service) {
+      if (!query.queryType) {
         return query;
       }
 
-      const mappedService = service === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : service;
-      const ds = this.pseudoDatasource[mappedService];
+      const queryType = query.queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : query.queryType;
+      const ds = this.pseudoDatasource[queryType];
       return {
         datasource: ds?.getRef(),
         ...(ds?.applyTemplateVariables(query, scopedVars) ?? query),
@@ -312,11 +309,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 }
 
-function hasQueryForService(query: AzureMonitorQuery): boolean {
-  if (getAzureMonitorService(query) === AZURE_HEALTH_MODELS_SERVICE) {
-    return !!query.azureHealthModels?.healthModelId;
-  }
-
+function hasQueryForType(query: AzureMonitorQuery): boolean {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return !!query.azureMonitor;
@@ -326,6 +319,9 @@ function hasQueryForService(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
+
+    case AzureQueryType.AzureHealthModels:
+      return !!query.azureHealthModels?.healthModelId;
 
     case AzureQueryType.AzureTraces:
     case AzureQueryType.TraceExemplar:
