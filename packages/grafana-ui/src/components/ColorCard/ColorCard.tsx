@@ -207,7 +207,9 @@ const getStyles = (
       boxShadow: elevated ? theme.shadows.z3 : undefined,
       padding: theme.spacing(sizing.padding),
       background: variantColors.background,
-      borderLeft: `2px solid ${variantColors.border}`,
+      borderColor: variantColors.borderColor,
+      borderWidth: variantColors.borderWidth,
+      borderStyle: 'solid',
     }),
     icon: css({
       gridArea: 'Icon',
@@ -251,7 +253,8 @@ type ColorCardStylesProps = {
   background: string;
   backgroundEmphasis: string;
   iconBackground: string;
-  border: string;
+  borderColor: string;
+  borderWidth: string;
   borderEmphasis: string;
   titleColor: string;
 };
@@ -263,17 +266,20 @@ function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): Co
       background: theme.colors.background.primary,
       backgroundEmphasis: theme.colors.background.secondary,
       iconBackground: theme.colors.background.secondary,
-      border: theme.colors.border.weak,
+      borderColor: theme.colors.border.weak,
+      borderWidth: '1px',
       titleColor: theme.colors.text.primary,
     };
   }
 
   const color = theme.colors[variant];
+  const cardBg = theme.isDark ? theme.colors.background.primary : theme.colors.background.secondary;
 
   return {
-    background: `linear-gradient(45deg, color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background}), ${theme.components.card.background})`,
+    background: `linear-gradient(45deg, color-mix(in oklab, ${cardBg} 60%, ${color.background}), ${cardBg})`,
     backgroundEmphasis: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
-    border: `color-mix(in oklab, ${theme.colors.background.page} 1%, ${color.border})`,
+    borderColor: color.border,
+    borderWidth: '0 0 0 2px',
     iconBackground: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
     borderEmphasis: theme.colors[variant].borderEmphasis,
     titleColor: theme.colors[variant].text,

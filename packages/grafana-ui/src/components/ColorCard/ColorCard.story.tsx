@@ -39,7 +39,11 @@ const variants: ColorCardVariant[] = ['default', 'error', 'warning', 'info', 'su
 export const Examples: StoryFn<typeof ColorCard> = () => {
   return (
     <Stack direction="column" gap={4}>
-      <SimpleExampleWithButton title="Small info with title only" variant={'info'} size="sm" />
+      <ColorCard size={'sm'} variant={'default'}>
+        <ColorCard.Title>Default small with title only</ColorCard.Title>
+      </ColorCard>
+      <SimpleExampleWithButton title="Info with title only" variant={'info'} size="sm" />
+      <SimpleExampleWithButton title="Success" content="With content" variant={'success'} size="sm" />
       <SimpleExampleWithButton title="Default" content="with content" variant={'default'} size="md" />
       <SimpleExampleWithButton title="Error" content="with content" variant={'error'} size="md" />
     </Stack>
