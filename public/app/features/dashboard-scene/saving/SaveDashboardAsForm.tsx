@@ -79,7 +79,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
         uid: dashboard.state.meta.folderUid,
         title: dashboard.state.meta.folderTitle,
       },
-      copyTags: false,
+      // The Copy tags switch below is hidden for new dashboards, which have no source to copy
+      // from: their tags are the user's own, so the default must keep them.
+      copyTags: changeInfo.isNew,
     },
   });
 
