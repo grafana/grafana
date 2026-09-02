@@ -26,6 +26,9 @@ jest.mock('./data', () => {
     ],
   };
 });
+// The registry also imports the CARTO layer directly rather than through the barrel above, which
+// pulls in ol-mapbox-style (untransformed ESM under jest).
+jest.mock('ol-mapbox-style', () => ({}));
 
 const ids = (opts: Array<{ value?: string }>) => opts.map((o) => o.value);
 
