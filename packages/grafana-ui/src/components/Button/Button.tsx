@@ -347,12 +347,12 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       outlineBorderColor = color.text;
     }
     return {
-      background: 'transparent',
+      background: 'transparent', //color.background,
       color: color.text,
       border: `1px solid ${outlineBorderColor}`,
 
       '&:hover, &:focus': {
-        background: visualRefreshEnabled ? color.background : color.transparent,
+        background: visualRefreshEnabled ? color.backgroundEmphasis : color.transparent,
         borderColor: visualRefreshEnabled ? color.textEmphasis : theme.colors.emphasize(outlineBorderColor, 0.25),
         color: visualRefreshEnabled ? color.textEmphasis : color.text,
       },
@@ -388,10 +388,10 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   let hoverTextColor = color.contrastText;
 
   if (visualRefreshEnabled) {
-    textColor = color.text;
-    hoverTextColor = color.textEmphasis;
-    backgroundColor = color.background;
-    hoverBackgroundColor = color.backgroundEmphasis;
+    //textColor = color.text;
+    //hoverTextColor = color.textEmphasis;
+    // backgroundColor = color.background;
+    // hoverBackgroundColor = color.backgroundEmphasis;
 
     if (color.name === 'primary' && fill === 'solid') {
       backgroundColor = color.main;
@@ -400,6 +400,11 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       hoverBorderColor = 'transparent';
       textColor = color.contrastText;
       hoverTextColor = color.contrastText;
+    }
+
+    if (fill === 'solid' && color.name !== 'primary' && color.name !== 'secondary') {
+      backgroundColor = `linear-gradient(-180deg, ${color.main}, color-mix(in oklab, ${color.main} 90%, ${theme.colors.text.maxContrast}))`;
+      hoverBackgroundColor = `linear-gradient(-180deg, ${color.mainEmphasis}, color-mix(in oklab, ${color.main} 90%, ${theme.colors.text.maxContrast}))`;
     }
   }
 

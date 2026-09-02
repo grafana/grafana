@@ -36,7 +36,7 @@
       "borderEmphasis": "palette.violet700"
     },
     "accent": {
-      "main": "palette.orange500",
+      "main": "palette.orange400",
       "mainEmphasis": "palette.orange400",
       "text": "palette.orange400",
       "textEmphasis": "palette.orange300",
@@ -67,8 +67,8 @@
       "borderEmphasis": "palette.amber700"
     },
     "success": {
-      "main": "palette.sage500",
-      "mainEmphasis": "palette.sage400",
+      "main": "palette.sage600",
+      "mainEmphasis": "palette.sage500",
       "text": "palette.sage300",
       "textEmphasis": "palette.sage200",
       "background": "palette.sage950",
