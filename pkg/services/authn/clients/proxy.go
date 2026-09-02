@@ -278,17 +278,21 @@ func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]st
 }
 
 func getProxyCacheKey(username string, additional map[string]string) (string, bool) {
-	key := strings.Builder{}
-	key.WriteString(username)
-	for _, k := range proxyFields {
-		if v, ok := additional[k]; ok {
-			key.WriteString(v)
-		}
+	hash := fnv.New128a()
+
+	// Length-prefix each field so concatenation can't produce ambiguous field boundaries.
+	writeField := func(v string) bool {
+		_, err := fmt.Fprintf(hash, "%d:%s", len(v), v)
+		return err == nil
 	}
 
-	hash := fnv.New128a()
-	if _, err := hash.Write([]byte(key.String())); err != nil {
+	if !writeField(username) {
 		return "", false
+	}
+	for _, k := range proxyFields {
+		if !writeField(additional[k]) {
+			return "", false
+		}
 	}
 
 	return strings.Join([]string{proxyCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true
