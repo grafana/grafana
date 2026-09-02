@@ -2,6 +2,11 @@
 
 # 13.2.1 (2026-09-02)
 
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+
 ### Bug fixes
 
 - **Dashboards:** Fix adhoc and groupby variable datasource on UI import [#131819](https://github.com/grafana/grafana/pull/131819), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
