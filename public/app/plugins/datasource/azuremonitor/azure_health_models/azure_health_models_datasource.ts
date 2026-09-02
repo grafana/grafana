@@ -6,7 +6,6 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   type DataSourceInstanceSettings,
-  dateTimeFormat,
   FieldType,
   LoadingState,
   MappingType,
@@ -246,16 +245,6 @@ function entitiesFrame(refId: string, entities: HealthModelEntity[]): DataFrame 
           custom: { hidden: true },
           type: { enum: { text: HEALTH_STATES, color: HEALTH_STATE_TEXT_COLORS } },
         },
-      },
-      {
-        // Deliberately a string, not a time field. This frame is a point-in-time snapshot: every
-        // row is a different entity, not a step in a series. Typing this as `time` makes Grafana
-        // treat it as an x-axis, so a time series panel strings unrelated entities into a line and
-        // invents a trend that does not exist. Entity history comes from the data plane instead.
-        name: 'lastCheckedAt',
-        type: FieldType.string,
-        values: metrics.map((metric) => (metric.lastCheckedAt ? dateTimeFormat(metric.lastCheckedAt) : null)),
-        config: { displayName: 'Last checked' },
       },
       {
         name: 'signalsHealthy',

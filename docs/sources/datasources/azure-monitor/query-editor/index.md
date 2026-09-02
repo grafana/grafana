@@ -84,7 +84,6 @@ Grafana retrieves the selected Health Model, its entities, and its relationships
 | `displayName` | The entity's friendly name. Not guaranteed to be unique within a model. |
 | `healthState` | The current health state, color-coded. |
 | `healthStateValue` | The same state as an enum, so panels that need a number, such as **Stat**, **Gauge**, **Bar gauge**, and **Pie chart**, can display it. Hidden by default. |
-| `lastCheckedAt` | When the entity last reported. Empty for an entity that has never reported. |
 | `signalsHealthy`, `signalsTotal` | How many of the entity's signals are healthy. |
 | `availabilityState` | Azure Resource Health availability, when the entity is backed by an Azure resource. |
 | `alertSeverities` | Severities of the alerts configured on the entity. |
@@ -93,7 +92,7 @@ Grafana retrieves the selected Health Model, its entities, and its relationships
 **Model graph** returns nodes and edges for the **Node graph** panel, drawing each entity coloured by health state and connected to its dependencies.
 
 {{< admonition type="note" >}}
-Health Model queries return the model's current state, not a history, so the dashboard time range does not filter them. `lastCheckedAt` is a formatted string rather than a time field for the same reason: each row is a different entity, not a point in a series, so plotting the entity rows over time would suggest a trend that does not exist.
+Health Model queries return the model's current state, not a history, so the dashboard time range does not filter them.
 {{< /admonition >}}
 
 ## Query Azure Monitor Metrics

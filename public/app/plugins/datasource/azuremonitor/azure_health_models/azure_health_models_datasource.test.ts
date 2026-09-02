@@ -114,7 +114,6 @@ describe('AzureHealthModelsDatasource', () => {
       'displayName',
       'healthState',
       'healthStateValue',
-      'lastCheckedAt',
       'signalsHealthy',
       'signalsTotal',
       'availabilityState',
@@ -159,12 +158,6 @@ describe('AzureHealthModelsDatasource', () => {
     expect(entityField('signalsHealthy')).toBe(1);
     expect(entityField('availabilityState')).toBe('Available');
     expect(entityField('alertSeverities')).toBe('Sev1');
-    // A formatted string, not a time field: the frame is a snapshot, so a time axis would let
-    // panels invent a trend across unrelated entities.
-    expect(typeof entityField('lastCheckedAt')).toBe('string');
-    expect(
-      response.data[0].fields.find((field: Field) => field.name === 'lastCheckedAt')?.type
-    ).toBe('string');
     expect(entityField('impact')).toBe('Standard');
 
     expect(getResource).toHaveBeenCalledWith(`azuremonitor${healthModelId}`, {

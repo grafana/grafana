@@ -9,8 +9,6 @@ export interface EntitySignalStatus {
 }
 
 export interface EntityHealthMetrics {
-  /** Most recent `reportedAt` across every signal, i.e. when the entity was last evaluated. */
-  lastCheckedAt?: string;
   signals: EntitySignalStatus[];
   /** Azure Resource Health availability, when the entity is backed by an Azure resource. */
   availabilityState?: string;
@@ -81,11 +79,10 @@ export function getEntityHealthMetrics(entity: HealthModelEntity): EntityHealthM
     visit(group, toLabel(groupName));
   }
 
-  // Sorting newest first means the first entry is also the entity's last evaluation.
+  // Newest first, so the most recently reported signals lead.
   signals.sort((left, right) => compareTimestampsDescending(left.reportedAt, right.reportedAt));
 
   return {
-    lastCheckedAt: signals.find((signal) => signal.reportedAt)?.reportedAt,
     signals,
     availabilityState,
     summary,

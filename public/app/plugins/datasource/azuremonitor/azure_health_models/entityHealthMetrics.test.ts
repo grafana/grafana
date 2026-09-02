@@ -31,7 +31,6 @@ describe('getEntityHealthMetrics', () => {
       })
     );
 
-    expect(metrics.lastCheckedAt).toBe('2026-09-01T17:47:53.1899912+00:00');
     expect(metrics.availabilityState).toBe('Available');
     expect(metrics.summary).toBe("There aren't any known problems affecting this account.");
     expect(metrics.signals).toHaveLength(1);
@@ -62,23 +61,6 @@ describe('getEntityHealthMetrics', () => {
     expect(metrics.signals[0].value).toBe(42);
   });
 
-  test('reports the most recent timestamp across signal groups as last checked', () => {
-    const metrics = getEntityHealthMetrics(
-      entity({
-        signalGroups: {
-          azureResource: {
-            resourceHealth: { status: { healthState: 'Healthy', reportedAt: '2026-09-01T10:00:00Z' } },
-          },
-          azureLogAnalytics: {
-            signals: [{ displayName: 'Newer', status: { healthState: 'Healthy', reportedAt: '2026-09-01T18:00:00Z' } }],
-          },
-        },
-      })
-    );
-
-    expect(metrics.lastCheckedAt).toBe('2026-09-01T18:00:00Z');
-  });
-
   test('returns empty metrics for a group that carries only configuration', () => {
     // `dependencies` describes aggregation rules and reports no status of its own.
     const metrics = getEntityHealthMetrics(
@@ -86,14 +68,12 @@ describe('getEntityHealthMetrics', () => {
     );
 
     expect(metrics.signals).toEqual([]);
-    expect(metrics.lastCheckedAt).toBeUndefined();
   });
 
   test('returns empty metrics when the entity has no signal groups', () => {
     const metrics = getEntityHealthMetrics(entity({ displayName: 'Root' }));
 
     expect(metrics.signals).toEqual([]);
-    expect(metrics.lastCheckedAt).toBeUndefined();
     expect(metrics.alertSeverities).toEqual([]);
   });
 
@@ -125,7 +105,6 @@ describe('getEntityHealthMetrics', () => {
 
     expect(metrics.signals).toHaveLength(1);
     expect(metrics.signals[0].healthState).toBe('Unknown');
-    expect(metrics.lastCheckedAt).toBeUndefined();
   });
 
   test('sorts timestamped signals ahead of undated ones', () => {
@@ -143,7 +122,6 @@ describe('getEntityHealthMetrics', () => {
     );
 
     expect(metrics.signals[0].name).toBe('Dated');
-    expect(metrics.lastCheckedAt).toBe('2026-09-01T12:00:00Z');
   });
 
   test('falls back to a readable label derived from the signal group key', () => {
