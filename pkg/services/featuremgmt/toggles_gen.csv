@@ -171,8 +171,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-01-09,improvedExternalSessionHandlingSAML,GA,@grafana/identity-access-team,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
-2026-08-20,teamHttpHeadersFromAppPlatformST,experimental,@grafana/identity-access-team,false,false,false
-2026-08-20,teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
+2026-09-02,datasources.teamHttpHeadersFromAppPlatformST,experimental,@grafana/identity-access-team,false,false,false
+2026-09-02,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
