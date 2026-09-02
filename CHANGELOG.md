@@ -2,6 +2,12 @@
 
 # 13.0.8 (2026-09-02)
 
+### Security
+
+- Security: Fix CVE-2026-12704
+- Security: Fix CVE-2026-14199
+- Security: Fix CVE-2026-19475
+
 ### Bug fixes
 
 - **Dashboards:** Fix version dates and user display names in the legacy version history page [#131809](https://github.com/grafana/grafana/pull/131809), [@ivanortegaalba](https://github.com/ivanortegaalba)
