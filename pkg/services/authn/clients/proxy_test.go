@@ -125,6 +125,15 @@ func TestProxy_Authenticate(t *testing.T) {
 	}
 }
 
+func TestGetProxyCacheKey_NoCollision(t *testing.T) {
+	key1, ok1 := getProxyCacheKey("admin", map[string]string{proxyFieldEmail: "admin@corp.com"})
+	key2, ok2 := getProxyCacheKey("admina", map[string]string{proxyFieldEmail: "dmin@corp.com"})
+
+	require.True(t, ok1)
+	require.True(t, ok2)
+	assert.NotEqual(t, key1, key2)
+}
+
 func TestProxy_Test(t *testing.T) {
 	type testCase struct {
 		desc       string
