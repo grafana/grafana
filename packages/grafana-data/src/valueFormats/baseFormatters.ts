@@ -21,7 +21,9 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   }
 
   if (value === 0) {
-    return value.toFixed(decimals);
+    // Clamp decimals to the valid range for toFixed (0-100) to avoid RangeError
+    const safeDecimals = Math.min(Math.max(0, decimals ?? 0), 100);
+    return value.toFixed(safeDecimals);
   }
 
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
@@ -35,6 +37,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
+    // Use toFixed for padding when factor is too large (would produce scientific notation)
+    if (factor > 1e21) {
+      return value.toFixed(decimals);
+    }
     return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
   }
 
