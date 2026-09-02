@@ -38,30 +38,57 @@ const variants: ColorCardVariant[] = ['default', 'error', 'warning', 'info', 'su
 
 export const Examples: StoryFn<typeof ColorCard> = () => {
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={4}>
+      <SimpleExampleWithButton title="Small info with title only" variant={'info'} size="sm" />
+      <SimpleExampleWithButton title="Default" content="with content" variant={'default'} size="md" />
+      <SimpleExampleWithButton title="Error" content="with content" variant={'error'} size="md" />
+    </Stack>
+  );
+};
+
+export const Variants: StoryFn<typeof ColorCard> = () => {
+  return (
+    <Stack direction="column" gap={4}>
       {variants.map((variant) => (
-        <SimpleExampleWithButton key={variant} variant={variant} size="sm" />
+        <SimpleExampleWithButton key={variant} variant={variant} size="md" content="My box content" />
       ))}
     </Stack>
   );
 };
 
-function SimpleExampleWithButton({ variant, size }: { variant: ColorCardVariant; size: ColorCardSize }) {
+export const Sizes: StoryFn<typeof ColorCard> = () => {
+  const sizes: ColorCardSize[] = ['sm', 'md', 'lg'] as const;
   return (
-    <Stack direction="column">
-      <StoryExample name="With buttonContent and children">
-        <ColorCard size={size} variant={variant}>
-          <ColorCard.Icon name="exclamation-circle" />
-          <ColorCard.Title>My title</ColorCard.Title>
-          <ColorCard.Content>Some long content</ColorCard.Content>
-          <ColorCard.Actions>
-            <Button variant="secondary" onClick={action('Remove button clicked')}>
-              Close
-            </Button>
-          </ColorCard.Actions>
-        </ColorCard>
-      </StoryExample>
+    <Stack direction="column" gap={4}>
+      {sizes.map((size) => (
+        <SimpleExampleWithButton key={size} variant="default" size={size} />
+      ))}
     </Stack>
+  );
+};
+
+function SimpleExampleWithButton({
+  title = 'Card title',
+  variant,
+  size = 'md',
+  content,
+}: {
+  title?: string;
+  variant: ColorCardVariant;
+  content?: string;
+  size?: ColorCardSize;
+}) {
+  return (
+    <ColorCard size={size} variant={variant}>
+      <ColorCard.Icon name="exclamation-circle" />
+      <ColorCard.Title>{title}</ColorCard.Title>
+      {content && <ColorCard.Content>{content}</ColorCard.Content>}
+      <ColorCard.Actions>
+        <Button variant="secondary" onClick={action('Remove button clicked')} size={size}>
+          Close
+        </Button>
+      </ColorCard.Actions>
+    </ColorCard>
   );
 }
 

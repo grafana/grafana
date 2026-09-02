@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { type AriaRole, type HTMLAttributes, type ReactNode, createContext, useContext } from 'react';
 import * as React from 'react';
 
-import { type GrafanaTheme2, type ThemeSpacingTokens, type ThemeRichColor } from '@grafana/data';
+import { type GrafanaTheme2, type ThemeSpacingTokens, type ThemeTypographyVariantTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -52,8 +52,6 @@ const rolesByVariant: Record<ColorCardVariant, AriaRole> = {
 
 const ColorCardComponent = React.forwardRef<HTMLDivElement, Props>(
   ({ title, children, elevated, className, variant = 'error', size = 'md', ...restProps }, ref) => {
-    const styles = useStyles2(getStyles, variant, size, elevated);
-
     const role = restProps['role'] || rolesByVariant[variant];
     const ariaLabel = restProps['aria-label'] || title;
 
@@ -61,14 +59,20 @@ const ColorCardComponent = React.forwardRef<HTMLDivElement, Props>(
     // `<ColorCard title="x">some text</ColorCard>` works without reaching for ColorCard.Content.
     const slots: ReactNode[] = [];
     const loose: ReactNode[] = [];
+    let hasContent = false;
 
     for (const child of React.Children.toArray(children)) {
       if (React.isValidElement(child) && SLOT_COMPONENTS.has(child.type)) {
         slots.push(child);
+        hasContent = hasContent || child.type === ColorCardContent;
       } else {
         loose.push(child);
       }
     }
+
+    hasContent = hasContent || loose.length > 0;
+
+    const styles = useStyles2(getStyles, variant, size, elevated, hasContent);
 
     return (
       <ColorCardContext.Provider value={{ variant, size }}>
@@ -158,8 +162,14 @@ function getSpacing(size: ColorCardSize): {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorCardSize, elevated?: boolean) => {
-  const color = getColorFromVariant(theme, variant);
+const getStyles = (
+  theme: GrafanaTheme2,
+  variant: ColorCardVariant,
+  size: ColorCardSize,
+  elevated?: boolean,
+  hasContent = false
+) => {
+  const variantColors = getColorForVariant(theme, variant);
   const sizing = getSpacing(size);
 
   return {
@@ -181,10 +191,14 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
     }),
     box: css({
       display: 'grid',
-      gridTemplateAreas: `
+      // Without content the Content row is dropped entirely, otherwise it would absorb part of
+      // the height the taller icon adds and push the centered title above the vertical middle.
+      gridTemplateAreas: hasContent
+        ? `
         "Icon Title Actions"
         "Icon Content Actions"
-      `,
+      `
+        : `"Icon Title Actions"`,
       gridTemplateColumns: 'auto 1fr auto',
       columnGap: theme.spacing(sizing.padding),
       rowGap: theme.spacing(sizing.titleGap),
@@ -192,13 +206,13 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
       borderRadius: theme.shape.radius.lg,
       boxShadow: elevated ? theme.shadows.z3 : undefined,
       padding: theme.spacing(sizing.padding),
-      background: `color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background})`,
-      border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 55%, ${color.border})`,
+      background: variantColors.background,
+      borderLeft: `2px solid ${variantColors.border}`,
     }),
     icon: css({
       gridArea: 'Icon',
-      color: color.text,
-      backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
+      color: variantColors.titleColor,
+      backgroundColor: variantColors.iconBackground,
       position: 'relative',
       width: theme.spacing(sizing.iconWidth),
       height: theme.spacing(sizing.iconWidth),
@@ -212,7 +226,7 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
       gridArea: 'Title',
       alignSelf: 'center',
       ...theme.typography[sizing.titleVariant],
-      color: color.text,
+      color: variantColors.titleColor,
       fontWeight: theme.typography.fontWeightMedium,
       margin: 0,
     }),
@@ -232,16 +246,36 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
     }),
   };
 };
-function getColorFromVariant(theme: GrafanaTheme2, variant: ColorCardVariant): ThemeRichColor {
+
+type ColorCardStylesProps = {
+  background: string;
+  backgroundEmphasis: string;
+  iconBackground: string;
+  border: string;
+  borderEmphasis: string;
+  titleColor: string;
+};
+
+function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): ColorCardStylesProps {
   if (variant === 'default') {
     return {
       ...theme.colors.primary,
       background: theme.colors.background.primary,
       backgroundEmphasis: theme.colors.background.secondary,
+      iconBackground: theme.colors.background.secondary,
       border: theme.colors.border.weak,
-      text: theme.colors.text.primary,
+      titleColor: theme.colors.text.primary,
     };
   }
 
-  return theme.colors[variant];
+  const color = theme.colors[variant];
+
+  return {
+    background: `linear-gradient(45deg, color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background}), ${theme.components.card.background})`,
+    backgroundEmphasis: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
+    border: `color-mix(in oklab, ${theme.colors.background.page} 1%, ${color.border})`,
+    iconBackground: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
+    borderEmphasis: theme.colors[variant].borderEmphasis,
+    titleColor: theme.colors[variant].text,
+  };
 }
