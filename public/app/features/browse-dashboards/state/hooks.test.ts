@@ -1,10 +1,11 @@
+import { type DashboardViewItem } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { useSelector } from 'app/types/store';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { type BrowseDashboardsState } from '../types';
 
-import { useBrowseLoadingStatus } from './hooks';
+import { useBrowseLoadingStatus, useFlatTreeState } from './hooks';
 
 jest.mock('app/types/store', () => {
   const original = jest.requireActual('app/types/store');
@@ -75,6 +76,31 @@ describe('browse-dashboards state hooks', () => {
 
       const status = useBrowseLoadingStatus(folderUID);
       expect(status).toEqual('fulfilled');
+    });
+  });
+
+  describe('useFlatTreeState', () => {
+    it('does not recurse indefinitely when folder data contains a cycle', () => {
+      const firstFolder: DashboardViewItem = { kind: 'folder', uid: 'first', title: 'First' };
+      const secondFolder: DashboardViewItem = { kind: 'folder', uid: 'second', title: 'Second' };
+
+      mockState(
+        createInitialState({
+          rootItems: fullyLoadedViewItemCollection([firstFolder]),
+          childrenByParentUID: {
+            first: fullyLoadedViewItemCollection([secondFolder]),
+            second: fullyLoadedViewItemCollection([firstFolder]),
+          },
+          openFolders: {
+            first: true,
+            second: true,
+          },
+        })
+      );
+
+      const tree = useFlatTreeState(undefined);
+
+      expect(tree.map((item) => item.item.uid)).toEqual(['first', 'second']);
     });
   });
 });
