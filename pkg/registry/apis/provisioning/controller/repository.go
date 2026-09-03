@@ -514,7 +514,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	shouldResync bool,
 	isBlocked bool,
 	healthStatus provisioning.HealthStatus,
-) *provisioning.SyncJobOptions {
+) (*provisioning.SyncJobOptions, bool) {
 	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.determine_sync_strategy", repoSpanAttrs(obj))
 	defer span.End()
 
@@ -523,10 +523,10 @@ func (rc *RepositoryController) determineSyncStrategy(
 	switch {
 	case !obj.Spec.Sync.Enabled:
 		logger.Info("skip sync as it's disabled in the repository spec")
-		return nil
+		return nil, false
 	case isBlocked:
 		logger.Info("skip sync as the repository is blocked for exceeding its namespace quota")
-		return nil
+		return nil, false
 	case !healthStatus.Healthy:
 		// Surface why the repository is unhealthy so operators can act without
 		// having to inspect the repository status separately. The health error
@@ -535,36 +535,36 @@ func (rc *RepositoryController) determineSyncStrategy(
 			"health_error", healthStatus.Error,
 			"health_messages", healthStatus.Message,
 			"health_checked", time.UnixMilli(healthStatus.Checked))
-		return nil
+		return nil, false
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
 		logger.Info("full resync as the repository recovered from an unhealthy state")
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.SyncJobOptions{}, false
 	case obj.Status.ObservedGeneration < 1:
 		logger.Info("full sync as this is the first sync for a new repository")
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.SyncJobOptions{}, false
 	case obj.Generation != obj.Status.ObservedGeneration:
 		logger.Info("full sync as the repository spec changed",
 			"generation", obj.Generation, "observed_generation", obj.Status.ObservedGeneration)
-		return &provisioning.SyncJobOptions{}
+		return &provisioning.SyncJobOptions{}, false
 	case shouldResync:
 		// Continue to see if we could skip for other reasons
 		versioned, ok := repo.(repository.Versioned)
 		// If the repository is not versioned, we don't have a way to check for incremental updates
 		if !ok {
 			logger.Info("full sync on interval as the repository is not versioned and cannot be diffed incrementally")
-			return &provisioning.SyncJobOptions{}
+			return &provisioning.SyncJobOptions{}, false
 		}
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
 			logger.Warn("falling back to incremental sync on interval as the latest ref could not be resolved to detect changes", "error", err)
-			return &provisioning.SyncJobOptions{Incremental: true}
+			return &provisioning.SyncJobOptions{Incremental: true}, false
 		}
 
 		// Only resync if the latest ref is different from the last synced ref
 		if latestRef == obj.Status.Sync.LastRef {
 			logger.Info("skip sync on interval as the latest ref matches the last synced ref",
 				"ref", latestRef)
-			return nil
+			return nil, true
 		}
 
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
@@ -575,14 +575,14 @@ func (rc *RepositoryController) determineSyncStrategy(
 		if err != nil {
 			logger.Warn("falling back to full sync on interval as files could not be compared for an incremental sync",
 				"error", err, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
-			return &provisioning.SyncJobOptions{}
+			return &provisioning.SyncJobOptions{}, false
 		}
 
 		logger.Info("sync on interval as the latest ref changed",
 			"incremental", incremental, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
-		return &provisioning.SyncJobOptions{Incremental: incremental}
+		return &provisioning.SyncJobOptions{Incremental: incremental}, false
 	default:
-		return nil
+		return nil, false
 	}
 }
 
@@ -1073,8 +1073,15 @@ func (rc *RepositoryController) process(key string) (err error) {
 	}
 
 	// determine the sync strategy and sync status to apply
-	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
+	syncOptions, intervalNoOp := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
 	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+	if intervalNoOp {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "replace",
+			"path":  "/status/sync/finished",
+			"value": time.Now().UnixMilli(),
+		})
+	}
 
 	// Apply all patch operations
 	if patchErr := applyPatches(); patchErr != nil {
