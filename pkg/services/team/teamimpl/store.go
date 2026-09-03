@@ -283,7 +283,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := ac.AccessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sorts := make([]string, 0, len(query.SortOpts))
 		for i := range query.SortOpts {
@@ -450,7 +450,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		if err != nil {
 			return err
 		}
-		accessAll, accessTeamIDs := ac.AccessControlQueryFields(acFilter)
+		accessAll, accessTeamIDs := acFilter.AllowsAllRecords(), acFilter.Args
 
 		sqlQuery := getTeamsByUserQuery{
 			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
@@ -808,7 +808,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		accessAll := true
 		var accessUserIDs []any
 		if acUserFilter != nil {
-			accessAll, accessUserIDs = ac.AccessControlQueryFields(*acUserFilter)
+			accessAll, accessUserIDs = acUserFilter.AllowsAllRecords(), acUserFilter.Args
 		}
 
 		sqlQuery := getTeamMembersQuery{

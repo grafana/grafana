@@ -835,7 +835,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 			return err
 		}
 
-		accessAll, accessUserIDs := accesscontrol.AccessControlQueryFields(acFilter)
+		accessAll, accessUserIDs := acFilter.AllowsAllRecords(), acFilter.Args
 		joins, inFilters, whereFilters, err := buildSearchUserFilters(dbHelper, query.Filters)
 		if err != nil {
 			return err

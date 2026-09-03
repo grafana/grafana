@@ -911,7 +911,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			if err != nil {
 				return err
 			}
-			accessAll, accessUserIDs = accesscontrol.AccessControlQueryFields(acFilter)
+			accessAll, accessUserIDs = acFilter.AllowsAllRecords(), acFilter.Args
 		}
 
 		var hiddenUserLogins []string
