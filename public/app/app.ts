@@ -100,7 +100,6 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
-import { loadUserPermissions } from './core/services/userPermissions';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -252,19 +251,13 @@ export class GrafanaApp {
       configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
 
       // The multi-tenant frontend service ships a reduced boot with no user
-      // permissions. Fetch them from the AuthZ user-permissions API and rebuild
-      // the nav tree — configureStore built it with an empty permission set, and
-      // its sections are permission-gated.
-      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false)) {
-        // Only replace boot's permissions on a successful response: the legacy
-        // boot path populates a real map from /bootdata, and a failed request
-        // must not downgrade the session to "no permissions".
-        const permissions = await loadUserPermissions();
-        if (permissions) {
-          contextSrv.user.permissions = permissions;
-          dispatch(navTreeInitialized());
-          dispatch(navIndexInitialized());
-        }
+      // permissions, so fetch them before anything permission-gated renders. The
+      // nav tree needs rebuilding either way: configureStore built it with an
+      // empty permission set, and its sections are permission-gated.
+      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUserPermissionsApi, false)) {
+        await contextSrv.fetchUserPermissions();
+        dispatch(navTreeInitialized());
+        dispatch(navIndexInitialized());
       }
 
       initExtensions();

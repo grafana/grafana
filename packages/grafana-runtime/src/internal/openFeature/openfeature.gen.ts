@@ -117,6 +117,8 @@ export const FlagKeys = {
   GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
+  /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
+  GrafanaUserPermissionsApi: "grafana.userPermissionsApi",
   /** Enables semantic (vector) dashboard search in the command palette */
   GrafanaVectorSearchCmdk: "grafana.vectorSearchCmdk",
   /** Enables the sidebar pane with new toggles and options in panel view mode */
@@ -763,6 +765,17 @@ export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaUseDefaultScopesEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.useDefaultScopesEndpoint", false, options).value;
+};
+
+/**
+ * Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions
+ *
+ * **Details:**
+ * - flag key: `grafana.userPermissionsApi`
+ * - default value: `false`
+ */
+export const useFlagGrafanaUserPermissionsApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.userPermissionsApi", false, options).value;
 };
 
 /**

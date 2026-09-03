@@ -3486,6 +3486,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.userPermissionsApi",
+        "resourceVersion": "1788437516189",
+        "creationTimestamp": "2026-09-03T12:11:56Z"
+      },
+      "spec": {
+        "description": "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.vectorSearchCmdk",
         "resourceVersion": "1782378994121",
         "creationTimestamp": "2026-06-25T09:16:34Z"
