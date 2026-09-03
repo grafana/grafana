@@ -82,6 +82,34 @@ func (r *jobProgressRecorder) Started() time.Time {
 }
 
 func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, false)
+}
+
+// RecordDryRun tallies result into the job summary without the write-assuming
+// side effects Record has: no resource-operation metric, no per-file success/
+// failure log, and no contribution to errors/errorCount (so a preview failure
+// cannot flip the job's own state to error/warning in Complete). Use it for
+// previews (e.g. pull request evaluation) that never actually change anything.
+func (r *jobProgressRecorder) RecordDryRun(ctx context.Context, result JobResourceResult) {
+	r.record(ctx, result, true)
+}
+
+// record is the shared implementation behind Record and RecordDryRun. The
+// summary tally (updateSummary) always runs; isDryRun gates everything that
+// assumes a real write happened -- the resource-operation metric, the per-file
+// success/failure log, and error/warning bookkeeping (errors, errorCount,
+// failedCreations/Deletions/Updates) that would otherwise let a preview
+// failure flip the job's own state in Complete.
+func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResult, isDryRun bool) {
+	if isDryRun {
+		r.mu.Lock()
+		r.updateSummary(result)
+		r.mu.Unlock()
+
+		r.maybeNotify(ctx)
+		return
+	}
+
 	var (
 		shouldLogError   bool
 		shouldLogWarning bool
@@ -158,11 +186,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 	r.updateSummary(result)
 	r.mu.Unlock()
 
+	// Measure once so the metric and the log line agree on the operation duration.
+	duration := result.elapsed()
 	if r.metrics != nil {
-		r.metrics.RecordResourceOperation(r.action, result)
+		r.metrics.RecordResourceOperation(r.action, result, duration)
 	}
 
-	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name())
+	logger := logging.FromContext(ctx).With("path", result.Path(), "group", result.Group(), "kind", result.Kind(), "action", result.Action(), "name", result.Name(), "duration", duration, "bytes", result.Bytes())
 	if shouldLogError {
 		logger.Error("job resource operation failed", "err", logErr)
 	} else if shouldLogWarning {
@@ -310,6 +340,22 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 			summary.Create++
 		}
 		summary.Write = summary.Create + summary.Update
+
+		// Action-aware total, kept in sync with the counters above so the driver can
+		// sum it without re-deriving per action. Each single-purpose worker records
+		// one FileAction type: push writes, delete deletes, move renames (recorded as
+		// create+delete, so count creates only to avoid double-counting). Everything
+		// else (pull, migrate) sums create+update+delete.
+		switch r.action {
+		case provisioning.JobActionPush:
+			summary.TotalChanges = summary.Write
+		case provisioning.JobActionDelete:
+			summary.TotalChanges = summary.Delete
+		case provisioning.JobActionMove:
+			summary.TotalChanges = summary.Create
+		default:
+			summary.TotalChanges = summary.Create + summary.Update + summary.Delete
+		}
 	}
 }
 
@@ -364,7 +410,11 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 	}
 
 	if err != nil {
-		jobStatus.State = provisioning.JobStateError
+		if IsWarning(err) {
+			jobStatus.State = provisioning.JobStateWarning
+		} else {
+			jobStatus.State = provisioning.JobStateError
+		}
 		jobStatus.Message = err.Error()
 	}
 

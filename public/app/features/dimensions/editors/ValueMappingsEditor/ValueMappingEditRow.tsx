@@ -18,8 +18,8 @@ import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number | null;
-  to?: number | null;
+  from?: number | string | null;
+  to?: number | string | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -103,13 +103,13 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.from = parseFloat(event.currentTarget.value);
+      mapping.from = event.currentTarget.value;
     });
   };
 
   const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.to = parseFloat(event.currentTarget.value);
+      mapping.to = event.currentTarget.value;
     });
   };
 
@@ -211,13 +211,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.from ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
                 />
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.to ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}

@@ -6,6 +6,8 @@ import {
   type DataQueryResponse,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
+  FieldType,
+  isDataFrame,
   PluginType,
   type ScopedVars,
   type TimeRange,
@@ -17,6 +19,7 @@ import {
   type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
+  isExpressionReference,
   toDataQueryResponse,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
@@ -26,6 +29,64 @@ import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
+
+const SQL_DISPLAY_NAME_FIELD = '__display_name__';
+const SQL_VALUE_FIELD = '__value__';
+// Source frames consumed by SQL expressions are returned with these internal full-long conversion types.
+const SQL_FULL_LONG_FRAME_TYPES = new Set(['numeric-full-long', 'timeseries-full-long']);
+
+function restoreSQLDisplayName(frame: DataFrame): DataFrame {
+  const displayFields = frame.fields.filter((field) => field.name === SQL_DISPLAY_NAME_FIELD);
+  const valueFields = frame.fields.filter((field) => field.name === SQL_VALUE_FIELD && field.type === FieldType.number);
+  if (displayFields.length !== 1 || valueFields.length !== 1) {
+    return frame;
+  }
+
+  // A field-level display name can only describe one series. Multi-series full-long frames interleave
+  // names per row and need to be partitioned into separate series before their aliases can be restored.
+  const displayName = displayFields[0].values[0];
+  if (
+    typeof displayName !== 'string' ||
+    displayName.length === 0 ||
+    !displayFields[0].values.every((value) => value === displayName)
+  ) {
+    return frame;
+  }
+
+  const valueField = valueFields[0];
+  return {
+    ...frame,
+    fields: frame.fields.map((field) =>
+      field === valueField
+        ? { ...field, config: { ...field.config, displayNameFromDS: displayName }, state: null }
+        : field
+    ),
+  };
+}
+
+function restoreSQLDisplayNames(response: DataQueryResponse, queries: ExpressionQuery[]): DataQueryResponse {
+  const sqlRefIds = new Set(
+    queries
+      .filter((query) => isExpressionReference(query.datasource) && query.type === ExpressionQueryType.sql)
+      .map((query) => query.refId)
+  );
+  if (sqlRefIds.size === 0) {
+    return response;
+  }
+
+  const queryRefIds = new Set(queries.map((query) => query.refId));
+  return {
+    ...response,
+    data: response.data.map((frame) =>
+      isDataFrame(frame) &&
+      frame.refId &&
+      (sqlRefIds.has(frame.refId) ||
+        (queryRefIds.has(frame.refId) && SQL_FULL_LONG_FRAME_TYPES.has(frame.meta?.type ?? '')))
+        ? restoreSQLDisplayName(frame)
+        : frame
+    ),
+  };
+}
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -60,7 +121,11 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     });
 
     let sub = from(Promise.all(targets));
-    return sub.pipe(mergeMap((t) => super.query({ ...request, targets: t })));
+    return sub.pipe(
+      mergeMap((queries) =>
+        super.query({ ...request, targets: queries }).pipe(map((response) => restoreSQLDisplayNames(response, queries)))
+      )
+    );
   }
 
   newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {

@@ -94,5 +94,5 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *das
 func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {
 	tb.Helper()
 	quotaService := quotatest.New(false, nil)
-	return orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	return orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 }

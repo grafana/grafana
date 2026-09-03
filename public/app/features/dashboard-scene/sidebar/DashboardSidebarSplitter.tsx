@@ -24,6 +24,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -66,6 +67,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Adds star button and left side actions to app chrome breadcrumb area
@@ -131,7 +133,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
       return (
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
-          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+          data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
         </div>
@@ -141,14 +143,14 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     return (
       <div
         className={styles.bodyWrapper}
-        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
         <div
           className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
-          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
           // The dashboard scrolls inside this element rather than the document body, so make it
           // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
@@ -166,11 +168,17 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   }
 
   return (
-    <div className={styles.container}>
-      <ElementSelectionContext.Provider value={selectionContext}>
-        <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-        {renderBody()}
-      </ElementSelectionContext.Provider>
+    <div ref={containerRef} className={styles.container}>
+      <EditActionsLayoutProvider
+        containerRef={containerRef}
+        isDocked={sidebarContext.isDocked}
+        isHidden={sidebarContext.isHidden}
+      >
+        <ElementSelectionContext.Provider value={selectionContext}>
+          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+          {renderBody()}
+        </ElementSelectionContext.Provider>
+      </EditActionsLayoutProvider>
     </div>
   );
 }
@@ -248,6 +256,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 1,
       position: 'relative',
+      zIndex: 1, // creates stacking context below header (1000)
     }),
     bodyWrapper: css({
       label: 'body-wrapper',
@@ -284,7 +293,7 @@ function getStyles(theme: GrafanaTheme2) {
       // Clip-bleed: top padding + matching negative margin cancel out visually but extend the
       // clip box under the controls bar, so top-row selection outlines aren't sheared off. The
       // bar paints over the overlap — see DashboardControlsChrome.
-      padding: theme.spacing(1, 1, 2, 2),
+      padding: theme.spacing(1.125, 1, 2, 2),
       marginTop: theme.spacing(-1),
     }),
     scrollContainerNoSidebar: css({
@@ -308,7 +317,7 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
-      // Because the edit pane splitter handle area adds padding we can reduce it here
+      // Because the sidebar splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
   };

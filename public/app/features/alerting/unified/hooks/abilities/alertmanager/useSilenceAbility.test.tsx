@@ -1,9 +1,11 @@
-import { renderHook } from 'test/test-utils';
+import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
+import { setFolderAccessControl } from '../../../mocks/server/configure';
+import { useFolder } from '../../useFolder';
 import { isLoading } from '../abilityUtils';
 import { SilenceAction } from '../types';
 
@@ -15,7 +17,7 @@ import {
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
 } from './abilityTestUtils';
-import { useSilenceAbility } from './useSilenceAbility';
+import { useGlobalSilenceAbility, useSilenceAbility } from './useSilenceAbility';
 
 setupMswServer();
 
@@ -108,13 +110,79 @@ describe('useSilenceAbility', () => {
       expect(result.current.granted).toBe(true);
     });
 
-    it('should grant Create when only AlertingSilenceCreate is held', () => {
+    // AlertingSilenceCreate is always granted on folders, and the backend only accepts it for a
+    // silence that targets a single rule. Without a folderUID the silence is not tied to a rule,
+    // so holding it somewhere must not grant Create.
+    it('should deny Create when only AlertingSilenceCreate is held and no folderUID is given', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingSilenceCreate]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
 
       const { result } = renderHook(() => useSilenceAbility({ action: SilenceAction.Create }), {
         wrapper: createAlertmanagerWrapper(amSource),
       });
+
+      expect(result.current.granted).toBe(false);
+    });
+
+    // With a folderUID the silence targets a rule in that folder, which is what the backend
+    // accepts folder-level AlertingSilenceCreate for.
+    it('should grant Create when the rule folder allows AlertingSilenceCreate', async () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+      const { result } = renderHook(
+        () => useSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      await waitFor(() => expect(result.current.granted).toBe(true));
+    });
+
+    it('should deny Create when the rule folder does not allow AlertingSilenceCreate', async () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceRead]: true });
+
+      const { result } = renderHook(
+        () => ({
+          folder: useFolder('NAMESPACE_UID').folder,
+          ability: useSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      // Wait for the folder to arrive first - otherwise "denied" would pass while the check is
+      // still holding at Loading.
+      await waitFor(() => expect(result.current.folder).toBeDefined());
+      expect(isLoading(result.current.ability)).toBe(false);
+      expect(result.current.ability.granted).toBe(false);
+    });
+
+    // Denying before the folder arrives would hide a button the user is in fact allowed to use.
+    it('should report Loading while the rule folder is still resolving', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+      const { result } = renderHook(
+        () => useSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(isLoading(result.current)).toBe(true);
+    });
+
+    // Someone with the org-wide permission can silence any rule, so there is nothing to wait for.
+    it('should grant Create without waiting for the folder when AlertingInstanceCreate is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceCreate]);
+
+      const { result } = renderHook(
+        () => useSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
 
       expect(result.current.granted).toBe(true);
     });
@@ -140,6 +208,22 @@ describe('useSilenceAbility', () => {
         wrapper: createAlertmanagerWrapper(amSource),
       });
 
+      expect(result.current.granted).toBe(false);
+    });
+
+    // Grafana folders say nothing about who may silence in an external alertmanager, so a
+    // folderUID must not open the door here - and must not park the check at Loading either.
+    it('should ignore the rule folder and not wait for it', () => {
+      const amSource = setupMimirAlertmanager();
+      grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+      const { result } = renderHook(
+        () => useSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(isLoading(result.current)).toBe(false);
       expect(result.current.granted).toBe(false);
     });
 
@@ -248,6 +332,69 @@ describe('useSilenceAbility', () => {
       expect(isLoading(result.current.view)).toBe(true);
       expect(isLoading(result.current.preview)).toBe(true);
       expect(isLoading(result.current.update)).toBe(true);
+    });
+  });
+});
+
+describe('useGlobalSilenceAbility', () => {
+  // This hook reads folder access control through the store, so it needs the app providers
+  // even though it does no alertmanager-type gating. Build a fresh one per test so a folder
+  // fetched by one test isn't served from the query cache in the next.
+  let wrapper: ReturnType<typeof getWrapper>;
+  beforeEach(() => {
+    wrapper = getWrapper({ renderWithRouter: true });
+  });
+
+  // Mirrors the backend split: a silence with no rule attached needs the org-wide
+  // alert.instances:create, while a silence for a rule in a folder can also be created with
+  // alert.silences:create on that folder.
+  describe('silence that is not tied to a rule (no folderUID)', () => {
+    it('should grant Create when AlertingInstanceCreate is held', () => {
+      grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
+
+      const { result } = renderHook(() => useGlobalSilenceAbility({ action: SilenceAction.Create }), { wrapper });
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should deny Create when only AlertingSilenceCreate is held', () => {
+      grantUserPermissions([AccessControlAction.AlertingSilenceCreate]);
+
+      const { result } = renderHook(() => useGlobalSilenceAbility({ action: SilenceAction.Create }), { wrapper });
+
+      expect(result.current.granted).toBe(false);
+    });
+  });
+
+  describe('silence for a rule in a folder', () => {
+    it('should grant Create when the folder allows AlertingSilenceCreate', async () => {
+      grantUserPermissions([]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+      const { result } = renderHook(
+        () => useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        { wrapper }
+      );
+
+      await waitFor(() => expect(result.current.granted).toBe(true));
+    });
+
+    it('should deny Create when the folder does not allow AlertingSilenceCreate', async () => {
+      grantUserPermissions([]);
+      setFolderAccessControl({ [AccessControlAction.AlertingSilenceRead]: true });
+
+      const { result } = renderHook(
+        () => ({
+          folder: useFolder('NAMESPACE_UID').folder,
+          ability: useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: 'NAMESPACE_UID' }),
+        }),
+        { wrapper }
+      );
+
+      // Wait for the folder to arrive first - otherwise "denied" would pass before the check
+      // has had any access control to look at.
+      await waitFor(() => expect(result.current.folder).toBeDefined());
+      expect(result.current.ability.granted).toBe(false);
     });
   });
 });

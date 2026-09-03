@@ -39,7 +39,7 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ac := &Service{
 		cache:          localcache.ProvideService(),
@@ -138,7 +138,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestDB(t)),
+				database.ProvideService(db.InitTestDB(t)), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),

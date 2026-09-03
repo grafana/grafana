@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { type GrafanaTheme } from '../types/theme';
 
@@ -39,7 +39,7 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
-  };
+  } & Record<string, boolean | undefined>;
 }
 
 export const ThemeRichColorInputSchema = z.object({

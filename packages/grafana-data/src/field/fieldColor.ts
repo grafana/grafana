@@ -240,7 +240,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getColors: (theme: GrafanaTheme2) => {
         return theme.visualization.palette.filter(
           (color) =>
-            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            getContrastRatio(theme.visualization.getColorByName(color), theme.components.panel.background) >=
             theme.colors.contrastThreshold
         );
       },
@@ -253,7 +253,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       getColors: (theme: GrafanaTheme2) => {
         return COLORBLIND_SAFE_PALETTE.filter(
           (color) =>
-            getContrastRatio(theme.visualization.getColorByName(color), theme.colors.background.primary) >=
+            getContrastRatio(theme.visualization.getColorByName(color), theme.components.panel.background) >=
             theme.colors.contrastThreshold
         );
       },

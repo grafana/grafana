@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	natsclient "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,6 +32,20 @@ func TestPublisher(t *testing.T) {
 
 		p.close()
 		require.ErrorIs(t, p.Publish(context.Background(), "grafana.test.a", []byte("world")), ErrClosed)
+	})
+
+	t.Run("publish reports a connection that was never established", func(t *testing.T) {
+		cfg := setting.NATSSettings{
+			Enabled:    true,
+			Mode:       setting.NATSModeExternal,
+			ClientURLs: []string{"nats://127.0.0.1:1"},
+		}
+		p := newPublisher(log.NewNopLogger(), newPublisherMetrics(), newConfig(cfg, nil))
+		t.Cleanup(p.close)
+
+		err := p.Publish(context.Background(), "grafana.test.a", []byte("hello"))
+		require.ErrorIs(t, err, natsclient.ErrReconnectBufExceeded)
+		require.ErrorContains(t, err, "connection not established")
 	})
 
 	t.Run("publish honours a cancelled context", func(t *testing.T) {

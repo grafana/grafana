@@ -1,4 +1,3 @@
-import { clsx } from 'clsx';
 import { memo, type MemoExoticComponent, type NamedExoticComponent } from 'react';
 
 import { type Field, FieldType, type GrafanaTheme2, isDataFrame, isTimeSeriesFrame } from '@grafana/data';
@@ -37,13 +36,6 @@ function isCustomCellOptions(options: TableCellOptions): options is TableCustomC
   return options.type === TableCellDisplayMode.Custom;
 }
 
-function mixinAutoCellStyles(fn: TableCellStyles): TableCellStyles {
-  return (theme, options) => {
-    const styles = fn(theme, options);
-    return clsx(styles, getAutoCellStyles(theme, options));
-  };
-}
-
 interface CellRegistryEntry {
   renderer: MemoExoticComponent<TableCellRenderer> | NamedExoticComponent<TableCellRendererProps>;
   getStyles?: TableCellStyles;
@@ -65,7 +57,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
   },
   [TableCellDisplayMode.JSONView]: {
     renderer: AutoCellRenderer,
-    getStyles: mixinAutoCellStyles(getJsonCellStyles),
+    getStyles: getJsonCellStyles,
   },
   [TableCellDisplayMode.Actions]: {
     renderer: wrapComponentInMemo(
@@ -222,6 +214,10 @@ export function getAutoRendererDisplayMode(field: Field): TableCellOptions['type
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
       return TableCellDisplayMode.Sparkline;
     }
+  }
+  // `other` values have no scalar form, so Auto pretty-prints them as JSON.
+  if (field.type === FieldType.other) {
+    return TableCellDisplayMode.JSONView;
   }
   return TableCellDisplayMode.Auto;
 }

@@ -92,5 +92,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderTopLeftRadius: theme.shape.radius.default,
     borderTopRightRadius: theme.shape.radius.default,
     overflow: 'hidden',
+    '.cm-scroller': {
+      overscrollBehaviorX: 'contain',
+    },
   }),
 });

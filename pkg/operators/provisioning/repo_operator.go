@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -110,6 +111,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
+		nats.Enabled(controllerCfg.natsSubscriber),
 	)
 	reg, err := repoSource.AddEventHandler(controller.EventHandler())
 	if err != nil {

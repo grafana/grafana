@@ -168,7 +168,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
           'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-          { pluginType: 'panel' }
+          { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
         );
       });
 
@@ -180,7 +180,52 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { pluginType: 'panel' }
+            { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+          );
+        }
+      );
+    });
+
+    describe('and initPluginMetas or refetchPluginMetas returns null because plugin metas failed to load', () => {
+      beforeEach(() => {
+        jest.resetAllMocks();
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+        initPluginMetasMock.mockResolvedValue(null);
+        refetchPluginMetasMock.mockResolvedValue(null);
+      });
+
+      it.each([
+        { func: getPanelPluginMetas },
+        { func: getListedPanelPluginMetas },
+        { func: getPanelPluginMetasMap },
+        { func: getListedPanelPluginIds },
+        { func: refetchPanelPluginMetas },
+      ])(`when func:$func is called then an error warning should be logged`, async ({ func }) => {
+        await func();
+
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+          'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+          { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+        );
+      });
+
+      it.each([{ func: getPanelPluginMeta }, { func: isPanelPluginInstalled }, { func: getPanelPluginVersion }])(
+        `when func:$func is called then an error warning should be logged`,
+        async ({ func }) => {
+          await func('');
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+            { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
           );
         }
       );

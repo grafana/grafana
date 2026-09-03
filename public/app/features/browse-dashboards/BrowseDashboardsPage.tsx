@@ -46,6 +46,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const isSearching = stateManager.hasSearchFilters();
   const location = useLocation();
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  // At root, the starred param turns the page into the "Starred" view — give it the Starred nav identity
+  // so the mega menu highlights Starred instead of Dashboards. Inside a folder it's just a filter.
+  const isStarredView = !folderUID && search.has('starred');
   const {
     isReadOnlyRepo,
     status: repoViewStatus,
@@ -167,7 +170,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
 
   return (
     <Page
-      navId="dashboards/browse"
+      navId={isStarredView ? 'starred' : 'dashboards/browse'}
       pageNav={navModel}
       onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}

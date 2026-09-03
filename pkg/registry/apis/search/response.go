@@ -32,6 +32,25 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 	return out, nil
 }
 
+// trashResults maps a backend search response into the trash envelope. No facets:
+// trash never requests any, so the backend never returns any.
+func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.TrashResults, error) {
+	items, err := resultItems(res.GetResults(), kind)
+	if err != nil {
+		return nil, err
+	}
+
+	return &searchv0.TrashResults{
+		TypeMeta: metaForKind(searchv0.KindTrashResults),
+		Metadata: searchv0.ResultsMetadata{
+			TotalHits:         res.GetTotalHits(),
+			TotalHitsRelation: totalHitsRelation(res.GetTotalHitsExact()),
+			Continue:          continueToken(res.GetResults(), limit, res.GetTotalHitsExact()),
+		},
+		Items: items,
+	}, nil
+}
+
 func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 	if exact {
 		return searchv0.TotalHitsEqual

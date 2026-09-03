@@ -10,7 +10,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -694,10 +694,8 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
 	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
 	require.NoError(t, err)
-	require.NoError(t, db.SetProvenance(ctx, &definitions.MuteTimeInterval{
-		MuteTimeInterval: config.MuteTimeInterval{
-			Name: interval2.Spec.Name,
-		},
+	require.NoError(t, db.SetProvenance(ctx, &v1model.TimeInterval{
+		Title: interval2.Spec.Name,
 	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
 	interval2, err = adminClient.Get(ctx, interval2.GetStaticMetadata().Identifier())
 
@@ -765,10 +763,11 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	mtis := make([]definitions.MuteTimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))
+	mtis := make([]v1model.TimeInterval, 0, len(amConfig.AlertmanagerConfig.MuteTimeIntervals))
 	for _, interval := range amConfig.AlertmanagerConfig.MuteTimeIntervals {
-		mtis = append(mtis, definitions.MuteTimeInterval{
-			MuteTimeInterval: interval,
+		mtis = append(mtis, v1model.TimeInterval{
+			Title:         interval.Name,
+			TimeIntervals: interval.TimeIntervals,
 		})
 	}
 

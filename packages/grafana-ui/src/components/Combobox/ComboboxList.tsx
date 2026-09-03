@@ -10,7 +10,12 @@ import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import {
+  getComboboxStyles,
+  MENU_OPTION_HEIGHT,
+  MENU_OPTION_HEIGHT_DESCRIPTION,
+  MENU_PADDING,
+} from './getComboboxStyles';
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
@@ -19,6 +24,8 @@ const VIRTUAL_OVERSCAN_ITEMS = 4;
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
   highlightedIndex: number | null;
+  /** Whether the highlighted option should show a focus ring, rather than just the muted highlight */
+  showFocusRing?: boolean;
   selectedItems?: Array<ComboboxOption<T>>;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   getItemProps: UseComboboxPropGetters<ComboboxOption<T>>['getItemProps'];
@@ -32,6 +39,7 @@ interface ComboboxListProps<T extends string | number> {
 export const ComboboxList = <T extends string | number>({
   options,
   highlightedIndex,
+  showFocusRing = false,
   selectedItems = [],
   scrollRef,
   getItemProps,
@@ -67,6 +75,11 @@ export const ComboboxList = <T extends string | number>({
     estimateSize,
     getItemKey: (index: number) => options[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
+    // Vertical padding belongs to the virtualizer rather than CSS so that row offsets, the total
+    // size and scrollToIndex all account for it. Padding it in CSS instead would shift every row
+    // down without the virtualizer knowing, and scrolling would stop short of the focus ring.
+    paddingStart: MENU_PADDING,
+    paddingEnd: MENU_PADDING,
   });
 
   const isOptionSelected = useCallback(
@@ -77,11 +90,12 @@ export const ComboboxList = <T extends string | number>({
   const allItemsSelected = enableAllOption && options.length > 1 && selectedItems.length === options.length - 1;
 
   return (
-    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
+    <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
       <div style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
         {rowVirtualizer.getVirtualItems().map((virtualRow, index, allVirtualRows) => {
           const item = options[virtualRow.index];
           const startingNewGroup = isNewGroup(item, options[virtualRow.index - 1]);
+          const isHighlighted = highlightedIndex === virtualRow.index && !item.infoOption;
 
           // Find the item that renders the group header. It can be this same item if this is rendering it.
           const groupHeaderIndex = allVirtualRows.find((row) => {
@@ -127,7 +141,8 @@ export const ComboboxList = <T extends string | number>({
                 className={cx(
                   styles.option,
                   !isMultiSelect && isOptionSelected(item) && styles.optionSelected,
-                  highlightedIndex === virtualRow.index && !item.infoOption && styles.optionFocused,
+                  isHighlighted && styles.optionFocused,
+                  isHighlighted && showFocusRing && styles.optionFocusRing,
                   item.infoOption && styles.optionInfo
                 )}
                 {...getItemProps({

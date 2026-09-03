@@ -12,6 +12,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -59,7 +60,21 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/interactions', () =>
   DashboardLibraryInteractions: { entryPointClicked: jest.fn() },
 }));
 
+jest.mock('app/features/dashboard-prompt/useDashboardGenerationAvailable', () => ({
+  useDashboardGenerationAvailable: jest.fn(),
+}));
+
+// Stub the lazy-loaded modal: this suite covers QuickAdd's wiring, not the prompt itself.
+jest.mock('app/features/dashboard-prompt/GenerateDashboardModal', () => ({
+  GenerateDashboardModal: ({ onDismiss }: { onDismiss: () => void }) => (
+    <div data-testid="generate-dashboard-modal">
+      <button onClick={onDismiss}>Close prompt</button>
+    </div>
+  ),
+}));
+
 const useBooleanFlagValueMock = jest.mocked(useBooleanFlagValue);
+const mockUseDashboardGenerationAvailable = jest.mocked(useDashboardGenerationAvailable);
 
 const dashboardsNavItem: NavModelItem = {
   text: 'Dashboards',
@@ -117,6 +132,7 @@ describe('QuickAdd', () => {
     mockUseDataSourceInstanceList.mockReturnValue({ isLoading: false, items: [] });
     mockGetDashboardTemplatesTab.mockReturnValue(null);
     setTestFlags({ 'grafana.customDashboardTemplates': false });
+    mockUseDashboardGenerationAvailable.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -126,6 +142,11 @@ describe('QuickAdd', () => {
   it('renders a `New` button', () => {
     setup();
     expect(screen.getByRole('button', { name: 'New' })).toBeInTheDocument();
+  });
+
+  it('renders nothing when the navtree has no create actions', () => {
+    setup([{ text: 'Dashboards', id: 'dashboards/browse', url: '/dashboards' }]);
+    expect(screen.queryByRole('button', { name: 'New' })).not.toBeInTheDocument();
   });
 
   it('shows isCreateAction options when clicked', async () => {
@@ -290,6 +311,63 @@ describe('QuickAdd', () => {
       });
       expect(NewDashboardLibraryInteractions.entryPointClicked).not.toHaveBeenCalled();
       errorSpy.mockRestore();
+    });
+  });
+
+  describe('Generate dashboard button', () => {
+    let originalPermissions: typeof contextSrv.user.permissions;
+
+    beforeEach(() => {
+      mockUseDashboardGenerationAvailable.mockReturnValue(true);
+      originalPermissions = contextSrv.user.permissions;
+      contextSrv.user.permissions = { [AccessControlAction.DashboardsCreate]: true };
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
+    });
+
+    it('shows a `Generate dashboard` item directly after `New dashboard`', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+
+      const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
+      const items = within(dashboardGroup)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent);
+      expect(items).toEqual(['New dashboard', 'Generate dashboard', 'Import dashboard']);
+    });
+
+    it('opens the prompt when the item is clicked, and closes it again on dismiss', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Generate dashboard' }));
+      expect(await screen.findByTestId('generate-dashboard-modal')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Close prompt' }));
+      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
+    });
+
+    it('does not show the item when dashboard generation is unavailable', async () => {
+      mockUseDashboardGenerationAvailable.mockReturnValue(false);
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
+    });
+
+    it('does not show the item without dashboard create permission', async () => {
+      contextSrv.user.permissions = {};
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
+    });
+
+    it('does not show the item when there is no dashboard group to insert it into', async () => {
+      setup([alertingNavItem]);
+      await userEvent.click(screen.getByRole('button', { name: 'New' }));
+      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
     });
   });
 });

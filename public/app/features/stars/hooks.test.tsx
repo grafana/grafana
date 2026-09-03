@@ -100,111 +100,98 @@ function setupSearchMock(items: Array<{ uid: string; name: string; url: string; 
   return mockSearcher;
 }
 
-const fixtures: Array<[string, Parameters<typeof testWithFeatureToggles>[0]]> = [
-  ['starsFromAPIServer enabled', { enable: ['starsFromAPIServer'] }],
-  ['starsFromAPIServer disabled', {}],
-];
-
 describe('useSyncStarredItemsInNav', () => {
-  describe.each(fixtures)('%s', (_title, featureToggleSetup) => {
-    testWithFeatureToggles(featureToggleSetup);
+  beforeEach(() => {
+    // Provide a starred section in the nav tree so the reducer has a target
+    config.bootData.navTree = [
+      { id: 'home', text: 'Home', url: '/' },
+      { id: 'starred', text: 'Starred', children: [] },
+    ];
+  });
 
-    beforeEach(() => {
-      // Provide a starred section in the nav tree so the reducer has a target
-      config.bootData.navTree = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'starred', text: 'Starred', children: [] },
-      ];
+  it('populates the starred nav section with metadata from search', async () => {
+    const mockSearcher = setupSearchMock(
+      starredDashboards.map((d) => ({
+        uid: d.uid,
+        name: d.title,
+        url: `/d/${d.uid}`,
+        kind: 'dashboard',
+      }))
+    );
+
+    render(<TestHarness />);
+
+    // Loading until the stars query and search round-trip complete
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
+
+    await waitFor(() => {
+      expect(mockSearcher.search).toHaveBeenCalledWith({
+        name: starredDashboards.map((d) => d.uid).sort(),
+        kind: ['dashboard'],
+      });
     });
 
-    it('populates the starred nav section with metadata from search', async () => {
-      const mockSearcher = setupSearchMock(
-        starredDashboards.map((d) => ({
-          uid: d.uid,
-          name: d.title,
-          url: `/d/${d.uid}`,
-          kind: 'dashboard',
-        }))
-      );
-
-      render(<TestHarness />);
-
-      // Loading until the stars query and search round-trip complete
-      expect(screen.getByTestId('loading-state')).toHaveTextContent('true');
-
+    // Verify items appeared in the nav tree (sorted alphabetically). Per-kind icons are
+    // gated behind starredFoldersEnabled(): with starred folders disabled, synced rows
+    // must carry no icon at all (nav is unchanged from pre-feature behavior).
+    for (const dash of starredDashboards) {
       await waitFor(() => {
-        expect(mockSearcher.search).toHaveBeenCalledWith({
-          name: starredDashboards.map((d) => d.uid).sort(),
-          kind: ['dashboard'],
-        });
+        expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
       });
+      expect(screen.getByTestId(`synced-starred/${dash.uid}`)).not.toHaveAttribute('data-icon');
+    }
 
-      // Verify items appeared in the nav tree (sorted alphabetically). Per-kind icons are
-      // gated behind starredFoldersEnabled(): with starred folders disabled, synced rows
-      // must carry no icon at all (nav is unchanged from pre-feature behavior).
-      for (const dash of starredDashboards) {
-        await waitFor(() => {
-          expect(screen.getByTestId(`synced-starred/${dash.uid}`)).toBeInTheDocument();
-        });
-        expect(screen.getByTestId(`synced-starred/${dash.uid}`)).not.toHaveAttribute('data-icon');
-      }
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+  });
 
+  it('dispatches empty items when no stars exist', async () => {
+    server.use(
+      http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
+        HttpResponse.json({
+          kind: 'StarsList',
+          apiVersion: 'collections.grafana.app/v1alpha1',
+          metadata: { resourceVersion: '1' },
+          items: [],
+        })
+      )
+    );
+
+    const mockSearcher = setupSearchMock([]);
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      const list = screen.getByTestId('starred-list');
+      expect(list.children).toHaveLength(0);
+    });
+
+    // Search should NOT be called when there are no stars
+    expect(mockSearcher.search).not.toHaveBeenCalled();
+
+    // Loading resolves even without a search round-trip
+    await waitFor(() => {
       expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-    });
-
-    it('dispatches empty items when no stars exist', async () => {
-      const { http, HttpResponse } = await import('msw');
-      server.use(
-        // Legacy empty
-        http.get('/api/user/stars', () => HttpResponse.json([])),
-        // App platform empty
-        http.get('/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars', () =>
-          HttpResponse.json({
-            kind: 'StarsList',
-            apiVersion: 'collections.grafana.app/v1alpha1',
-            metadata: { resourceVersion: '1' },
-            items: [],
-          })
-        )
-      );
-
-      const mockSearcher = setupSearchMock([]);
-
-      render(<TestHarness />);
-
-      await waitFor(() => {
-        const list = screen.getByTestId('starred-list');
-        expect(list.children).toHaveLength(0);
-      });
-
-      // Search should NOT be called when there are no stars
-      expect(mockSearcher.search).not.toHaveBeenCalled();
-
-      // Loading resolves even without a search round-trip
-      await waitFor(() => {
-        expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-      });
-    });
-
-    it('reports an error and leaves the nav untouched when search fails', async () => {
-      const mockSearcher = setupSearchMock([]);
-      mockSearcher.search.mockRejectedValue(new Error('search unavailable'));
-      jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      render(<TestHarness />);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('error-state')).toHaveTextContent('true');
-      });
-
-      // Loading resolved instead of spinning forever, and no items were dispatched
-      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
-      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
     });
   });
 
+  it('reports an error and leaves the nav untouched when search fails', async () => {
+    const mockSearcher = setupSearchMock([]);
+    mockSearcher.search.mockRejectedValue(new Error('search unavailable'));
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<TestHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('error-state')).toHaveTextContent('true');
+    });
+
+    // Loading resolved instead of spinning forever, and no items were dispatched
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+    expect(screen.getByTestId('starred-list').children).toHaveLength(0);
+  });
+
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
 
     beforeEach(() => {
       setTestFlags({ 'grafana.starredFolders': true });
@@ -342,11 +329,9 @@ describe('useSyncStarredItemsInNav', () => {
 });
 
 describe('useStarItem', () => {
-  // starsFromAPIServer alone: the folder gates (grafana.starredFolders flag, foldersAppPlatformAPI)
-  // stay off, so kind Folder must never surface in the nav Starred section.
-  describe('with starsFromAPIServer on and starred folders disabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer'] });
-
+  // The folder gates (grafana.starredFolders flag, foldersAppPlatformAPI) stay off, so kind Folder
+  // must never surface in the nav Starred section.
+  describe('with starred folders disabled', () => {
     beforeEach(() => {
       // Provide a starred section in the nav tree so the reducer has a target
       config.bootData.navTree = [
@@ -375,8 +360,8 @@ describe('useStarItem', () => {
   });
 
   // Folder gates on: a successful star would land in the nav, so a rejected one must not.
-  describe('with starsFromAPIServer on and starred folders enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+  describe('with starred folders enabled', () => {
+    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
 
     beforeEach(() => {
       setTestFlags({ 'grafana.starredFolders': true });

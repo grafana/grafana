@@ -124,7 +124,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return nil, clientErr
 }
 
-func (c *Proxy) IsEnabled() bool {
+func (c *Proxy) IsEnabled(context.Context) bool {
 	return c.cfg.AuthProxy.Enabled
 }
 

@@ -7,12 +7,15 @@ import (
 	"testing"
 
 	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/baggage"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -222,11 +225,13 @@ func TestAuthenticate(t *testing.T) {
 		gotTestNS, ok := request.NamespaceFrom(client.gotTestCtx)
 		require.True(t, ok, "namespace must be set on Test ctx")
 		assert.Equal(t, "stacks-1234", gotTestNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotTestCtx))
 
 		require.NotNil(t, client.gotAuthCtx)
 		gotAuthNS, ok := request.NamespaceFrom(client.gotAuthCtx)
 		require.True(t, ok, "namespace must be set on Authenticate ctx")
 		assert.Equal(t, "stacks-1234", gotAuthNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotAuthCtx))
 	})
 
 	t.Run("all clients decline via NOT_HANDLED returns NOT_HANDLED", func(t *testing.T) {
@@ -347,4 +352,29 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 		assert.Equal(t, "stacks-456", fields["authn.namespace"])
 		assert.Equal(t, "Authorization", fields["authn.headers"])
 	})
+}
+
+func TestAuthenticate_TransactionContextFromBaggage(t *testing.T) {
+	client := &mockClient{
+		name:         "test-client",
+		testResult:   true,
+		authResponse: &authnv1.AuthenticateResponse{Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK},
+	}
+	svc := NewService(tracing.InitializeTracerForTest())
+	svc.RegisterClient(client)
+
+	// Baggage as otelgrpc.NewServerHandler would have extracted it from the request.
+	bag, err := baggage.Parse("slug=myslug,plan=pro,channel=stable,namespace=stacks-42")
+	require.NoError(t, err)
+	ctx := baggage.ContextWithBaggage(context.Background(), bag)
+
+	_, err = svc.Authenticate(ctx, &authnv1.AuthenticateRequest{Namespace: "stacks-42"})
+	require.NoError(t, err)
+
+	require.NotNil(t, client.gotAuthCtx, "client should have been invoked")
+	evalCtx := openfeature.TransactionContext(client.gotAuthCtx)
+	assert.Equal(t, "stacks-42", evalCtx.TargetingKey(), "namespace is the targeting key")
+	assert.Equal(t, "myslug", evalCtx.Attributes()["slug"], "slug attribute enables goff.ForSlugs targeting")
+	assert.Equal(t, "pro", evalCtx.Attributes()["plan"])
+	assert.Equal(t, "stable", evalCtx.Attributes()["channel"])
 }

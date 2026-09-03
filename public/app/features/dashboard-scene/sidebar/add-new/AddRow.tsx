@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
@@ -32,10 +33,10 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
   const label = useMemo(() => {
     // With no panels there is nothing to group, so present the action as a plain "add"
     if (layout instanceof RowsLayoutManager || isLayoutEmpty) {
-      return t('dashboard-scene.add-row.add-label', 'Add row');
+      return t('dashboard.sidebar.add.row.add-label', 'Add row');
     }
 
-    return t('dashboard-scene.add-row.group-label', 'Group into rows');
+    return t('dashboard.sidebar.add.row.group-label', 'Group into rows');
   }, [layout, isLayoutEmpty]);
 
   const onAddRowClick = useCallback(() => {
@@ -46,6 +47,7 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
     <AddButton
       icon="list-ul"
       label={label}
+      testId={selectors.components.Sidebar.addNewRowButton}
       onClick={onAddRowClick}
       disabled={disableGrouping}
       tooltip={disableGrouping ? getNestingRestrictionMessage() : undefined}

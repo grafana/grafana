@@ -60,5 +60,28 @@ describe('dateTimeParse', () => {
       expect(result.valueOf().toString()).not.toBe('NaN');
       expect(result.valueOf()).toBe(1772496000000);
     });
+
+    it('should still recover when a caller passes an unrelated format', () => {
+      // TimePickerWithHistory parses stored epoch ms values with an explicit fullDate format.
+      const result = dateTimeParse(EPOCH_MS, { timeZone: 'utc', format: 'YYYY-MM-DD HH:mm:ss' });
+      expect(result.valueOf()).toBe(1772496000000);
+    });
+  });
+
+  describe('all-digit values with a digit-based format (issue #130484)', () => {
+    it('should parse Unix seconds with the X format rather than as epoch ms', () => {
+      const result = dateTimeParse('1728397800', { timeZone: 'utc', format: 'X' });
+      expect(result.valueOf()).toBe(1728397800000);
+    });
+
+    it('should parse Unix milliseconds with the x format', () => {
+      const result = dateTimeParse('1728397800000', { timeZone: 'utc', format: 'x' });
+      expect(result.valueOf()).toBe(1728397800000);
+    });
+
+    it('should parse compact dates with the YYYYMMDD format', () => {
+      const result = dateTimeParse('20241008', { timeZone: 'utc', format: 'YYYYMMDD' });
+      expect(result.toISOString()).toBe('2024-10-08T00:00:00.000Z');
+    });
   });
 });

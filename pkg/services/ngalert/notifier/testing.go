@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"testing"
 	"time"
 
@@ -656,9 +657,7 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 	require.NoError(t, err)
 
 	if options.alertmanagers != nil {
-		for orgID, am := range options.alertmanagers {
-			moa.alertmanagers[orgID] = am
-		}
+		maps.Copy(moa.alertmanagers, options.alertmanagers)
 	}
 
 	if !options.skipLoad {

@@ -54,6 +54,7 @@ describe('isStep1Valid', () => {
         notificationsYamlFile: yamlFile,
         notificationsDatasourceUID: undefined,
         notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(true);
   });
@@ -66,6 +67,7 @@ describe('isStep1Valid', () => {
         notificationsYamlFile: null,
         notificationsDatasourceUID: 'am-uid',
         notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(true);
   });
@@ -78,6 +80,7 @@ describe('isStep1Valid', () => {
         notificationsYamlFile: yamlFile,
         notificationsDatasourceUID: undefined,
         notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
   });
@@ -90,6 +93,7 @@ describe('isStep1Valid', () => {
         notificationsYamlFile: yamlFile,
         notificationsDatasourceUID: undefined,
         notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
   });
@@ -105,6 +109,7 @@ describe('isStep1Valid', () => {
           new File(['a'], 'dup.tmpl', { type: 'text/plain' }),
           new File(['b'], 'dup.tmpl', { type: 'text/plain' }),
         ],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
   });
@@ -117,7 +122,49 @@ describe('isStep1Valid', () => {
         notificationsYamlFile: null,
         notificationsDatasourceUID: undefined,
         notificationsTemplateFiles: [],
+        autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
+  });
+
+  describe('with Auto-sync enabled', () => {
+    it('returns true once a data source is selected, even without a policy tree name', () => {
+      expect(
+        isStep1Valid({
+          policyTreeName: '',
+          notificationsSource: 'datasource',
+          notificationsYamlFile: null,
+          notificationsDatasourceUID: 'mimir-uid',
+          notificationsTemplateFiles: [],
+          autoSyncNotificationsEnabled: true,
+        })
+      ).toBe(true);
+    });
+
+    it('returns false without a data source selected', () => {
+      expect(
+        isStep1Valid({
+          policyTreeName: '',
+          notificationsSource: 'datasource',
+          notificationsYamlFile: null,
+          notificationsDatasourceUID: undefined,
+          notificationsTemplateFiles: [],
+          autoSyncNotificationsEnabled: true,
+        })
+      ).toBe(false);
+    });
+
+    it('is ignored for the YAML source — behaves as if unchecked', () => {
+      expect(
+        isStep1Valid({
+          policyTreeName: '',
+          notificationsSource: 'yaml',
+          notificationsYamlFile: yamlFile,
+          notificationsDatasourceUID: undefined,
+          notificationsTemplateFiles: [],
+          autoSyncNotificationsEnabled: true,
+        })
+      ).toBe(false);
+    });
   });
 });

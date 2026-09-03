@@ -769,6 +769,103 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/value2/)).toBeInTheDocument();
       });
 
+      test('Shows a prettify switch for JSON log lines when the log line section is open', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByRole('switch', { name: 'Prettify' })).toBeInTheDocument();
+      });
+
+      test('Does not show a prettify switch for non-JSON log lines', async () => {
+        await setup(undefined, { entry: 'plain log line', labels: { key1: 'label1' } });
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+      });
+
+      test('Toggling the prettify switch calls setPrettifyDetailsJSON', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+        const setPrettifyDetailsJSON = jest.fn();
+
+        await setup({ logs: [log] }, undefined, undefined, {
+          showDetails: [log],
+          currentLog: log,
+          prettifyDetailsJSON: true,
+          setPrettifyDetailsJSON,
+        });
+
+        await userEvent.click(screen.getByText('Log line'));
+        await userEvent.click(screen.getByRole('switch', { name: 'Prettify' }));
+
+        expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(false);
+      });
+
+      test('Renders a compact JSON log line when prettifyDetailsJSON is false', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: false }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.getByText(jsonEntry)).toBeInTheDocument();
+      });
+
+      test('Renders a prettified JSON log line when prettifyDetailsJSON is true', async () => {
+        const jsonEntry = '{"key":"value"}';
+        const log = createLogLine({
+          entry: jsonEntry,
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          datasourceUid: lokiDS.uid,
+        });
+        void log.body;
+
+        await setup(
+          { logs: [log] },
+          undefined,
+          { syntaxHighlighting: false },
+          { showDetails: [log], currentLog: log, prettifyDetailsJSON: true }
+        );
+
+        await userEvent.click(screen.getByText('Log line'));
+
+        expect(screen.queryByText(jsonEntry)).not.toBeInTheDocument();
+        expect(screen.getByText(/"key"/)).toBeInTheDocument();
+        expect(screen.getByText(/"value"/)).toBeInTheDocument();
+      });
+
       test('Exposes buttons to reorder displayed fields', async () => {
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();

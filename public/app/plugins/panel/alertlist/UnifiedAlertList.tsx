@@ -17,6 +17,7 @@ import {
   LoadingPlaceholder,
   ScrollContainer,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
@@ -292,6 +293,7 @@ function StatView({
   styles: ReturnType<typeof getStyles>;
 }) {
   const enhancementsEnabled = Boolean(config.featureToggles.alertingAlertListPanelEnhancements);
+  const theme = useTheme2();
 
   const displayValue = enhancementsEnabled
     ? getStatDisplayValue(
@@ -299,7 +301,7 @@ function StatView({
         options.statColorMode ?? BigValueColorMode.None,
         options.statThresholds ?? STAT_THRESHOLDS_DEFAULT,
         options.statValueMappings ?? [],
-        config.theme2
+        theme
       )
     : { text: `${rules.length}`, numeric: rules.length };
 
@@ -313,7 +315,7 @@ function StatView({
       graphMode={BigValueGraphMode.None}
       textMode={BigValueTextMode.Auto}
       justifyMode={BigValueJustifyMode.Auto}
-      theme={config.theme2}
+      theme={theme}
       value={displayValue}
     />
   );

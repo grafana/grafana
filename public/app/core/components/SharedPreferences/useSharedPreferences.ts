@@ -4,7 +4,7 @@ import {
   useListPreferencesQuery,
   useUpdatePreferencesMutation,
   type PreferencesSpec,
-} from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+} from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { type Props } from './utils';
 

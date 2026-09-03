@@ -1,9 +1,12 @@
 import { act, renderHook } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
+import { store } from '@grafana/data';
+
 import { createLogLine } from '../mocks/logRow';
 
 import {
+  emptyContextData,
   LogDetailsContextProvider,
   useLogDetailsContextData,
   useLogDetailsContext,
@@ -13,6 +16,7 @@ import {
 
 const log = createLogLine({ rowId: 'yep', uid: 'uid' });
 const contextValue: LogDetailsContextData = {
+  ...emptyContextData,
   currentLog: log,
   closeDetails: () => {},
   detailsDisplayed: () => false,
@@ -125,5 +129,52 @@ describe('replaceDetails', () => {
     expect(result.current.currentLog).toBe(logARefreshed);
     expect(result.current.showDetails).toEqual([logA]);
     expect(result.current.detailsDisplayed(logARefreshed)).toBe(true);
+  });
+});
+
+describe('prettifyDetailsJSON', () => {
+  const storageKey = 'grafana.logs.test.prettifyDetailsJSON';
+
+  afterEach(() => {
+    store.delete(`${storageKey}.prettifyDetailsJSON`);
+  });
+
+  function prettifyWrapper() {
+    return function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <LogDetailsContextProvider
+          detailsMode="sidebar"
+          enableLogDetails
+          logOptionsStorageKey={storageKey}
+          logs={logs}
+          showControls={false}
+        >
+          {children}
+        </LogDetailsContextProvider>
+      );
+    };
+  }
+
+  const logs = [log];
+
+  test('defaults to true', () => {
+    const { result } = renderHook(() => useLogDetailsContext(), {
+      wrapper: prettifyWrapper(),
+    });
+
+    expect(result.current.prettifyDetailsJSON).toBe(true);
+  });
+
+  test('setPrettifyDetailsJSON updates state and local storage', () => {
+    const { result } = renderHook(() => useLogDetailsContext(), {
+      wrapper: prettifyWrapper(),
+    });
+
+    act(() => {
+      result.current.setPrettifyDetailsJSON(false);
+    });
+
+    expect(result.current.prettifyDetailsJSON).toBe(false);
+    expect(store.getBool(`${storageKey}.prettifyDetailsJSON`, true)).toBe(false);
   });
 });

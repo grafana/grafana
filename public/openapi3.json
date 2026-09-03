@@ -15,6 +15,13 @@
         "description": "(empty)"
       },
       "SMTPNotEnabledError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "StateHistory": {
@@ -619,7 +626,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Status"
+              "$ref": "#/components/schemas/AccessControlStatus"
             }
           }
         },
@@ -731,6 +738,13 @@
         "description": "(empty)"
       },
       "getDashboardSnapshotResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DashboardFullWithMeta"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getDashboardsTagsResponse": {
@@ -1213,6 +1227,13 @@
         "description": "(empty)"
       },
       "getStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "getSyncStatusResponse": {
@@ -1658,6 +1679,13 @@
         "description": "(empty)"
       },
       "postRenewLicenseTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "preconditionFailedError": {
@@ -2053,6 +2081,14 @@
       }
     },
     "schemas": {
+      "AccessControlStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "Ack": {
         "type": "object"
       },
@@ -2756,6 +2792,11 @@
             },
             "type": "array"
           },
+          "policy": {
+            "description": "Name of the notification policy to route alerts through.\nMutually exclusive with all other fields, cannot be used with contact point routing via the \"receiver\" field.",
+            "example": "\"Alerting Team\"",
+            "type": "string"
+          },
           "receiver": {
             "description": "Name of the receiver to send notifications to.",
             "example": "grafana-default-email",
@@ -3009,7 +3050,8 @@
           "dashboardId": {
             "description": "Deprecated: Use DashboardUID and OrgID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "dashboardUID": {
             "type": "string"
@@ -3069,7 +3111,6 @@
         "type": "object"
       },
       "AnnotationActions": {
-        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "canAdd": {
             "type": "boolean"
@@ -3147,7 +3188,6 @@
         "type": "object"
       },
       "AnnotationPermission": {
-        "description": "+k8s:deepcopy-gen=true",
         "properties": {
           "dashboard": {
             "$ref": "#/components/schemas/AnnotationActions"
@@ -3659,6 +3699,10 @@
             "description": "MaxPathLenZero indicates that BasicConstraintsValid==true\nand MaxPathLen==0 should be interpreted as an actual\nmaximum path length of zero. Otherwise, that combination is\ninterpreted as MaxPathLen not being set.",
             "type": "boolean"
           },
+          "NotAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
           "NotBefore": {
             "format": "date-time",
             "type": "string"
@@ -3768,7 +3812,7 @@
             "type": "boolean"
           },
           "SerialNumber": {
-            "type": "string"
+            "type": "integer"
           },
           "Signature": {
             "items": {
@@ -3944,6 +3988,26 @@
         },
         "type": "array"
       },
+      "ConvertAlertmanagerResponse": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "errorType": {
+            "type": "string"
+          },
+          "rename_resources": {
+            "$ref": "#/components/schemas/RenameResources"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/MergeStats"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ConvertPrometheusResponse": {
         "properties": {
           "error": {
@@ -4071,7 +4135,7 @@
         "type": "object"
       },
       "CorrelationType": {
-        "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
+        "description": "the type of correlation, either query for containing query information, or external for containing an external URL",
         "type": "string"
       },
       "CounterResetHint": {
@@ -4135,7 +4199,7 @@
       "CreateDashboardSnapshotCommand": {
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "dashboard": {
@@ -4161,7 +4225,7 @@
             "type": "string"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
           "name": {
@@ -4198,14 +4262,15 @@
           "folderId": {
             "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "description": "UID of the folder where the library element is stored.",
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
             "enum": [
               1
             ],
@@ -4439,7 +4504,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -4451,7 +4517,7 @@
             "type": "boolean"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/DashboardaccessPermissionType"
           },
           "permissionName": {
             "type": "string"
@@ -4519,7 +4585,7 @@
       "DashboardACLUpdateItem": {
         "properties": {
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/DashboardaccessPermissionType"
           },
           "role": {
             "enum": [
@@ -4542,10 +4608,10 @@
         "type": "object"
       },
       "DashboardCreateCommand": {
-        "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
+        "description": "These are the values expected to be sent from an end user",
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "dashboard": {
@@ -4563,7 +4629,7 @@
             "type": "boolean"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           },
           "name": {
@@ -4624,7 +4690,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderTitle": {
             "type": "string"
@@ -4672,14 +4739,6 @@
           "version": {
             "format": "int64",
             "type": "integer"
-          }
-        },
-        "type": "object"
-      },
-      "DashboardRedirect": {
-        "properties": {
-          "redirectUri": {
-            "type": "string"
           }
         },
         "type": "object"
@@ -4781,6 +4840,10 @@
           }
         },
         "type": "object"
+      },
+      "DashboardaccessPermissionType": {
+        "format": "int64",
+        "type": "integer"
       },
       "DataLink": {
         "description": "DataLink define what",
@@ -4961,7 +5024,6 @@
         "type": "object"
       },
       "DataTopic": {
-        "description": "nolint:revive",
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
       },
@@ -5074,7 +5136,7 @@
         "type": "string"
       },
       "DsPermissionType": {
-        "description": "Datasource permission\nDescription:\n`0` - No Access\n`1` - Query\n`2` - Edit\nEnum: 0,1,2",
+        "description": "Datasource permission\nDescription:\n- `0` - No Access\n- `1` - Query\n- `2` - Edit",
         "format": "int64",
         "type": "integer"
       },
@@ -5389,7 +5451,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -5412,8 +5473,9 @@
           "identifier": {
             "type": "string"
           },
-          "merge_matchers": {
-            "$ref": "#/components/schemas/Matchers"
+          "managed_by": {
+            "description": "ManagedBy is \"manual\" or \"auto-sync\", computed server-side so callers don't need configs:get\nto tell the two apart.",
+            "type": "string"
           },
           "template_files": {
             "additionalProperties": {
@@ -5644,7 +5706,8 @@
           "id": {
             "description": "Deprecated: use UID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "managedBy": {
             "$ref": "#/components/schemas/ManagerKind"
@@ -5837,7 +5900,7 @@
         "type": "object"
       },
       "FrameType": {
-        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
+        "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
         "type": "string"
       },
       "FrameTypeVersion": {
@@ -6180,6 +6243,9 @@
           },
           "uid": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -6288,7 +6354,6 @@
             "type": "integer"
           },
           "last_applied": {
-            "format": "date-time",
             "type": "string"
           },
           "template_file_provenances": {
@@ -6314,6 +6379,10 @@
               "internal",
               "external"
             ],
+            "type": "string"
+          },
+          "external_alertmanager_uid": {
+            "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being\nsynced, or empty if sync is not configured for this org.",
             "type": "string"
           }
         },
@@ -6383,7 +6452,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -6509,6 +6577,9 @@
             "$ref": "#/components/schemas/URL"
           }
         },
+        "type": "object"
+      },
+      "Gone": {
         "type": "object"
       },
       "HTTPClientConfig": {
@@ -6735,7 +6806,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -6771,7 +6843,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -6854,6 +6927,52 @@
         },
         "type": "object"
       },
+      "InhibitionRule": {
+        "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+        "properties": {
+          "equal": {
+            "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "source_match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "source_match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "source_matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "target_match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "target_match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "target_matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          }
+        },
+        "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
+        "type": "object"
+      },
       "InspectType": {
         "format": "int64",
         "title": "InspectType is a type for the Inspect property of a Notice.",
@@ -6863,7 +6982,6 @@
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           },
           "lastNotifyAttemptDuration": {
@@ -6944,7 +7062,7 @@
             "$ref": "#/components/schemas/URL"
           },
           "Key": {
-            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\ned25519.PublicKey\ned25519.PrivateKey\necdsa.PublicKey\necdsa.PrivateKey\nrsa.PublicKey\nrsa.PrivateKey\n[]byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
+            "description": "Key is the Go in-memory representation of this key. It must have one\nof these types:\n- ed25519.PublicKey\n- ed25519.PrivateKey\n- *ecdsa.PublicKey\n- *ecdsa.PrivateKey\n- *rsa.PublicKey\n- *rsa.PrivateKey\n- []byte (a symmetric key)\n\nWhen marshaling this JSONWebKey into JSON, the \"kty\" header parameter\nwill be automatically set based on the type of this field."
           },
           "KeyID": {
             "description": "Key identifier, parsed from `kid` header.",
@@ -7016,21 +7134,10 @@
         "format": "int64",
         "type": "integer"
       },
-      "Label": {
-        "properties": {
-          "Name": {
-            "type": "string"
-          }
-        },
-        "title": "Label is a key/value pair of strings.",
-        "type": "object"
-      },
       "Labels": {
-        "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-        "items": {
-          "$ref": "#/components/schemas/Label"
-        },
-        "type": "array"
+        "description": "Each name and value is preceded by its length, encoded as a single byte\nfor size 0-254, or the following 3 bytes little-endian, if the first byte is 255.\nMaximum length allowed is 2^24 or 16MB.\nNames are in order.",
+        "title": "Labels is implemented by a single flat string holding name/value pairs.",
+        "type": "object"
       },
       "LibraryElementArrayResponse": {
         "properties": {
@@ -7067,7 +7174,8 @@
           "id": {
             "description": "Deprecated: this field will be removed in the future",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "kind": {
             "format": "int64",
@@ -7097,7 +7205,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -7113,9 +7222,7 @@
           "meta": {
             "$ref": "#/components/schemas/LibraryElementDTOMeta"
           },
-          "model": {
-            "type": "object"
-          },
+          "model": {},
           "name": {
             "type": "string"
           },
@@ -7294,8 +7401,21 @@
         },
         "type": "object"
       },
+      "ManagedInhibitionRules": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/InhibitionRule"
+        },
+        "type": "object"
+      },
+      "ManagedRoutes": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/Route"
+        },
+        "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
+        "type": "object"
+      },
       "ManagerKind": {
-        "description": "It can be a user or a tool or a generic API client.\n+enum",
+        "description": "It can be a user or a tool or a generic API client.",
         "title": "ManagerKind is the type of manager, which is responsible for managing the resource.",
         "type": "string"
       },
@@ -7352,6 +7472,44 @@
           "$ref": "#/components/schemas/Matcher"
         },
         "type": "array"
+      },
+      "MergeStats": {
+        "properties": {
+          "added_inhibition_rules": {
+            "description": "AddedInhibitionRules contains the names of inhibition rules added",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_receivers": {
+            "description": "AddedReceivers contains the names of receivers added (post-rename if renamed)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_route": {
+            "description": "AddedRoute is the identifier of the routing sub-tree added to the configuration",
+            "type": "string"
+          },
+          "added_templates": {
+            "description": "AddedTemplates contains the names of templates added",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "added_time_intervals": {
+            "description": "AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "title": "MergeStats describes which resources were added during configuration merge.",
+        "type": "object"
       },
       "Metadata": {
         "additionalProperties": {
@@ -7544,6 +7702,9 @@
       "Name": {
         "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
         "properties": {
+          "CommonName": {
+            "type": "string"
+          },
           "Country": {
             "items": {
               "type": "string"
@@ -7567,6 +7728,30 @@
             "description": "Names contains all parsed attributes. When parsing distinguished names,\nthis can be used to extract non-standard attributes that are not parsed\nby this package. When marshaling to RDNSequences, the Names field is\nignored, see ExtraNames.",
             "items": {
               "$ref": "#/components/schemas/AttributeTypeAndValue"
+            },
+            "type": "array"
+          },
+          "Organization": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "OrganizationalUnit": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "PostalCode": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "Province": {
+            "items": {
+              "type": "string"
             },
             "type": "array"
           },
@@ -8166,14 +8351,15 @@
           "folderId": {
             "description": "ID of the folder where the library element is stored.\n\nDeprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "description": "UID of the folder where the library element is stored.",
             "type": "string"
           },
           "kind": {
-            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels",
+            "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n- 1 - library panels",
             "enum": [
               1
             ],
@@ -8181,8 +8367,7 @@
             "type": "integer"
           },
           "model": {
-            "description": "The JSON model for the library element.",
-            "type": "object"
+            "description": "The JSON model for the library element."
           },
           "name": {
             "description": "Name of the library element.",
@@ -8203,7 +8388,7 @@
         "properties": {
           "homeDashboardId": {
             "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
+            "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -8268,10 +8453,6 @@
       },
       "PermissionDenied": {
         "type": "object"
-      },
-      "PermissionType": {
-        "format": "int64",
-        "type": "integer"
       },
       "Playlist": {
         "description": "Playlist model",
@@ -8384,7 +8565,7 @@
             "type": "string"
           },
           "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+            "description": "Value depends on type and describes the playlist item.\n\n- dashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\n- dashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\n- dashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
@@ -8512,105 +8693,29 @@
       "PostableApiReceiver": {
         "description": "nolint:revive",
         "properties": {
-          "discord_configs": {
-            "items": {
-              "$ref": "#/components/schemas/DiscordConfig"
-            },
-            "type": "array"
-          },
-          "email_configs": {
-            "items": {
-              "$ref": "#/components/schemas/EmailConfig"
-            },
-            "type": "array"
-          },
           "grafana_managed_receiver_configs": {
             "items": {
               "$ref": "#/components/schemas/PostableGrafanaReceiver"
             },
             "type": "array"
           },
-          "jira_configs": {
-            "items": {
-              "$ref": "#/components/schemas/JiraConfig"
-            },
-            "type": "array"
-          },
-          "msteams_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsConfig"
-            },
-            "type": "array"
-          },
-          "msteamsv2_configs": {
-            "items": {
-              "$ref": "#/components/schemas/MSTeamsV2Config"
-            },
-            "type": "array"
-          },
           "name": {
-            "description": "A unique identifier for this receiver.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PostableApiTemplate": {
+        "description": "nolint:revive",
+        "properties": {
+          "content": {
             "type": "string"
           },
-          "opsgenie_configs": {
-            "items": {
-              "$ref": "#/components/schemas/OpsGenieConfig"
-            },
-            "type": "array"
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
           },
-          "pagerduty_configs": {
-            "items": {
-              "$ref": "#/components/schemas/PagerdutyConfig"
-            },
-            "type": "array"
-          },
-          "pushover_configs": {
-            "items": {
-              "$ref": "#/components/schemas/PushoverConfig"
-            },
-            "type": "array"
-          },
-          "slack_configs": {
-            "items": {
-              "$ref": "#/components/schemas/SlackConfig"
-            },
-            "type": "array"
-          },
-          "sns_configs": {
-            "items": {
-              "$ref": "#/components/schemas/SNSConfig"
-            },
-            "type": "array"
-          },
-          "telegram_configs": {
-            "items": {
-              "$ref": "#/components/schemas/TelegramConfig"
-            },
-            "type": "array"
-          },
-          "victorops_configs": {
-            "items": {
-              "$ref": "#/components/schemas/VictorOpsConfig"
-            },
-            "type": "array"
-          },
-          "webex_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WebexConfig"
-            },
-            "type": "array"
-          },
-          "webhook_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WebhookConfig"
-            },
-            "type": "array"
-          },
-          "wechat_configs": {
-            "items": {
-              "$ref": "#/components/schemas/WechatConfig"
-            },
-            "type": "array"
+          "name": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8695,6 +8800,9 @@
           },
           "uid": {
             "type": "string"
+          },
+          "version": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8773,6 +8881,10 @@
               "external"
             ],
             "type": "string"
+          },
+          "external_alertmanager_uid": {
+            "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync\nconfiguration from. Empty string disables sync for this org.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -8836,6 +8948,18 @@
             },
             "type": "array"
           },
+          "managed_inhibition_rules": {
+            "$ref": "#/components/schemas/ManagedInhibitionRules"
+          },
+          "managed_routes": {
+            "$ref": "#/components/schemas/ManagedRoutes"
+          },
+          "managed_templates": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PostableApiTemplate"
+            },
+            "type": "object"
+          },
           "template_files": {
             "additionalProperties": {
               "type": "string"
@@ -8846,7 +8970,6 @@
         "type": "object"
       },
       "PreferencesNavbarPreference": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "bookmarkUrls": {
             "items": {
@@ -8858,7 +8981,6 @@
         "type": "object"
       },
       "PreferencesQueryHistoryPreference": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "homeTab": {
             "description": "one of: '' | 'query' | 'starred';",
@@ -8868,7 +8990,6 @@
         "type": "object"
       },
       "PreferencesSpec": {
-        "description": "+k8s:openapi-gen=true",
         "properties": {
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
@@ -9844,6 +9965,26 @@
         },
         "type": "object"
       },
+      "RenameResources": {
+        "description": "RenameResources describes which resources were renamed to avoid conflicts",
+        "properties": {
+          "receivers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Receivers maps old receiver names to new receiver names",
+            "type": "object"
+          },
+          "time_intervals": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "TimeIntervals maps old time interval names to new time interval names",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "Report": {
         "properties": {
           "created": {
@@ -9949,9 +10090,7 @@
           "dashboard": {
             "$ref": "#/components/schemas/ReportDashboardID"
           },
-          "reportVariables": {
-            "type": "object"
-          },
+          "reportVariables": {},
           "timeRange": {
             "$ref": "#/components/schemas/ReportTimeRange"
           }
@@ -10711,7 +10850,8 @@
           "folderId": {
             "description": "Deprecated: use FolderUID instead",
             "format": "int64",
-            "type": "integer"
+            "type": "integer",
+            "x-deprecated": true
           },
           "folderUid": {
             "type": "string"
@@ -10756,7 +10896,6 @@
         "type": "object"
       },
       "SearchOrgServiceAccountsResult": {
-        "description": "swagger: model",
         "properties": {
           "page": {
             "format": "int64",
@@ -10880,7 +11019,6 @@
         "$ref": "#/components/schemas/URL"
       },
       "ServiceAccountDTO": {
-        "description": "swagger: model",
         "properties": {
           "accessControl": {
             "additionalProperties": {
@@ -11396,7 +11534,6 @@
         "type": "object"
       },
       "State": {
-        "description": "+enum",
         "type": "string"
       },
       "Status": {
@@ -11559,7 +11696,7 @@
             "type": "integer"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           },
           "uid": {
             "type": "string"
@@ -11593,12 +11730,14 @@
           },
           "uid": {
             "description": "Deprecated: always empty; no per-entry id.",
-            "type": "string"
+            "type": "string",
+            "x-deprecated": true
           }
         },
         "type": "object"
       },
       "TeamGroupMapping": {
+        "description": "---------------------",
         "properties": {
           "groupId": {
             "type": "string"
@@ -11662,7 +11801,7 @@
             "type": "integer"
           },
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           },
           "teamId": {
             "format": "int64",
@@ -11683,6 +11822,10 @@
           }
         },
         "type": "object"
+      },
+      "TeamPermissionType": {
+        "format": "int64",
+        "type": "integer"
       },
       "TelegramConfig": {
         "properties": {
@@ -11778,6 +11921,9 @@
       "TempUserStatus": {
         "type": "string"
       },
+      "TemplateKind": {
+        "type": "string"
+      },
       "TestRulePayload": {
         "properties": {
           "expr": {
@@ -11809,6 +11955,9 @@
               "$ref": "#/components/schemas/postableAlert"
             },
             "type": "array"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TemplateKind"
           },
           "name": {
             "description": "Name of the template file.",
@@ -12159,22 +12308,20 @@
         "type": "array"
       },
       "Type": {
-        "description": "+enum",
         "type": "string"
       },
       "TypeMeta": {
-        "description": "+k8s:deepcopy-gen=false",
+        "description": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
         "properties": {
           "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
+            "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
           "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\n+optional",
+            "description": "Kind is a string value representing the REST resource this object represents.\nServers may infer this from the endpoint the client submits requests to.\nCannot be updated.\nIn CamelCase.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           }
         },
-        "title": "TypeMeta describes an individual object in an API response or request\nwith strings representing the type of the object and its API schema version.\nStructures that are versioned or persisted should inline TypeMeta.",
         "type": "object"
       },
       "URL": {
@@ -12427,7 +12574,7 @@
         "properties": {
           "homeDashboardId": {
             "default": 0,
-            "description": "The numerical :id of a favorited dashboard",
+            "description": "The numerical :id of a favorited dashboard\nDeprecated: Use HomeDashboardUID instead",
             "format": "int64",
             "type": "integer"
           },
@@ -12582,7 +12729,7 @@
       "UpdateTeamMemberCommand": {
         "properties": {
           "permission": {
-            "$ref": "#/components/schemas/PermissionType"
+            "$ref": "#/components/schemas/TeamPermissionType"
           }
         },
         "type": "object"
@@ -13006,7 +13153,6 @@
         "properties": {
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13105,7 +13251,6 @@
           },
           "uptime": {
             "description": "uptime",
-            "format": "date-time",
             "type": "string"
           },
           "versionInfo": {
@@ -13183,7 +13328,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "fingerprint": {
@@ -13192,7 +13336,6 @@
           },
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13207,7 +13350,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13215,7 +13357,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13261,7 +13402,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13276,7 +13416,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13284,7 +13423,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13319,7 +13457,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13331,7 +13468,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           },
           "status": {
@@ -13339,7 +13475,6 @@
           },
           "updatedAt": {
             "description": "updated at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13458,12 +13593,10 @@
           },
           "endsAt": {
             "description": "ends at\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           },
           "generatorURL": {
             "description": "generator URL\nFormat: uri",
-            "format": "uri",
             "type": "string"
           },
           "labels": {
@@ -13471,7 +13604,6 @@
           },
           "startsAt": {
             "description": "starts at\nFormat: date-time",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13500,7 +13632,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "id": {
@@ -13512,7 +13643,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -13657,7 +13787,6 @@
           },
           "endsAt": {
             "description": "ends at",
-            "format": "date-time",
             "type": "string"
           },
           "matchers": {
@@ -13665,7 +13794,6 @@
           },
           "startsAt": {
             "description": "starts at",
-            "format": "date-time",
             "type": "string"
           }
         },
@@ -15804,7 +15932,7 @@
             }
           },
           {
-            "description": "Return alerts or user created annotations",
+            "description": "Return alerts or user created annotations\nDescription:\n- `alert`\n- `annotation`",
             "in": "query",
             "name": "type",
             "schema": {
@@ -17959,6 +18087,7 @@
         "operationId": "updateDashboardPermissionsByUID",
         "parameters": [
           {
+            "description": "The dashboard UID",
             "in": "path",
             "name": "uid",
             "required": true,
@@ -19073,6 +19202,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19089,7 +19219,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19112,6 +19242,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19139,7 +19270,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"
@@ -19176,7 +19307,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19201,6 +19332,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19217,7 +19349,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19242,6 +19374,7 @@
             }
           },
           {
+            "description": "Optional datasource type used to disambiguate datasource UID lookups.",
             "in": "query",
             "name": "dataSourceType",
             "schema": {
@@ -19258,7 +19391,7 @@
                 }
               }
             },
-            "description": "CacheConfigResponse"
+            "description": "OK"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -19742,7 +19875,7 @@
                 }
               }
             },
-            "description": "healthResponse"
+            "description": "OK"
           },
           "503": {
             "$ref": "#/components/responses/internalServerError"
@@ -19767,7 +19900,7 @@
             }
           },
           {
-            "description": "Kind of element to search for.",
+            "description": "Kind of element to search for.\nDescription:\n- 1 - library panels",
             "in": "query",
             "name": "kind",
             "schema": {
@@ -19779,7 +19912,7 @@
             }
           },
           {
-            "description": "Sort order of elements.",
+            "description": "Sort order of elements.\nDescription:\n- alpha-asc: ascending\n- alpha-desc: descending",
             "in": "query",
             "name": "sortDirection",
             "schema": {
@@ -20115,7 +20248,7 @@
     "/licensing/custom-permissions": {
       "get": {
         "deprecated": true,
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "operationId": "getCustomPermissionsReport",
         "responses": {
           "500": {
@@ -20132,7 +20265,7 @@
     "/licensing/custom-permissions-csv": {
       "get": {
         "deprecated": true,
-        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "description": "You need to have a permission with action `licensing.reports:read`.\n\nDeprecated. There is currently no replacement for this endpoint. Please reach out to Grafana support if you rely on this endpoint.",
         "operationId": "getCustomPermissionsCSV",
         "responses": {
           "500": {
@@ -21493,7 +21626,6 @@
             }
           },
           {
-            "description": "in:limit",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -23034,7 +23166,7 @@
             }
           },
           {
-            "description": "Type to search for, dash-folder or dash-db",
+            "description": "Type to search for, dash-folder or dash-db\nDescription:\n- `dash-folder` - Search for folder\n- `dash-db` - Seatch for dashboard",
             "in": "query",
             "name": "type",
             "schema": {
@@ -23069,7 +23201,7 @@
             }
           },
           {
-            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead\n\nDeprecated: use FolderUIDs instead",
             "in": "query",
             "name": "folderIds",
             "schema": {
@@ -24715,7 +24847,7 @@
       },
       "put": {
         "deprecated": true,
-        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}",
+        "description": "Use /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{uid}\n\n\nOmitting a key (`theme`, `homeDashboardUID`, `timezone`) will cause the current value to be replaced with the system default value.",
         "operationId": "updateUserPreferences",
         "requestBody": {
           "content": {
@@ -24816,7 +24948,8 @@
     },
     "/user/stars/dashboard/uid/{dashboard_uid}": {
       "delete": {
-        "description": "Deletes the starring of the given Dashboard for the actual user.",
+        "deprecated": true,
+        "description": "Deletes the starring of the given Dashboard for the actual user.\n\nUse: DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}",
         "operationId": "unstarDashboardByUID",
         "parameters": [
           {
@@ -24851,7 +24984,8 @@
         ]
       },
       "post": {
-        "description": "Stars the given Dashboard for the actual user.",
+        "deprecated": true,
+        "description": "Stars the given Dashboard for the actual user.\n\nUse: PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}",
         "operationId": "starDashboardByUID",
         "parameters": [
           {
@@ -25794,6 +25928,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Create a contact point.",
@@ -25943,6 +26087,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Delete a contact point.",
@@ -26011,6 +26165,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Update an existing contact point.",
@@ -26396,6 +26560,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Create a new mute timing.",
@@ -26812,6 +26986,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Clears the notification policy tree.",
@@ -26902,6 +27086,16 @@
               }
             },
             "description": "ForbiddenError"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            },
+            "description": "PublicError"
           }
         },
         "summary": "Sets the notification policy tree.",

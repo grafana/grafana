@@ -768,6 +768,156 @@ describe('align frames', () => {
     );
   });
 
+  describe('inner joins with frames that cannot participate', () => {
+    // An inner join only yields rows present in every input, so a frame that cannot be joined at
+    // all -- because it has no fields, or none matching the join field -- leaves nothing to match
+    // against and the result must be empty. Outer joins keep dropping such frames instead, so that
+    // one unrelated series in a panel cannot blank out the whole visualization.
+    const joinByGA = fieldMatchers.get(FieldMatcherID.byName).get('GA');
+
+    const measurements = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'GA', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'Val', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+    const lookup = toDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'GA', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'GA_TEXT', type: FieldType.string, values: ['Alpha', 'Beta'] },
+      ],
+    });
+    const otherLookup = toDataFrame({
+      refId: 'C',
+      fields: [
+        { name: 'PA', type: FieldType.string, values: ['x', 'y'] },
+        { name: 'PA_TEXT', type: FieldType.string, values: ['Ex', 'Why'] },
+      ],
+    });
+
+    it('should return no rows when one of several frames is missing the join field', () => {
+      const out = joinDataFrames({
+        frames: [measurements, lookup, otherLookup],
+        joinBy: joinByGA,
+        mode: JoinMode.inner,
+      })!;
+
+      expect(out.length).toBe(0);
+      expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+        { name: 'GA', values: [] },
+        { name: 'Val', values: [] },
+        { name: 'GA_TEXT', values: [] },
+      ]);
+    });
+
+    // Only one frame can be joined, so joinTabular's merge loop never runs and previously returned
+    // that frame's rows verbatim -- an inner join that matched nothing yet output everything.
+    it('should return no rows when only one frame has the join field', () => {
+      const out = joinDataFrames({
+        frames: [otherLookup, lookup],
+        joinBy: joinByGA,
+        mode: JoinMode.inner,
+      })!;
+
+      expect(out.length).toBe(0);
+      expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+        { name: 'GA', values: [] },
+        { name: 'GA_TEXT', values: [] },
+      ]);
+    });
+
+    it('should return no rows when a frame has no fields at all', () => {
+      const out = joinDataFrames({
+        frames: [toDataFrame({ refId: 'A', fields: [] }), lookup],
+        joinBy: joinByGA,
+        mode: JoinMode.inner,
+      })!;
+
+      expect(out.length).toBe(0);
+      expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+        { name: 'GA', values: [] },
+        { name: 'GA_TEXT', values: [] },
+      ]);
+    });
+
+    // A query that returns nothing often drops the join field along with its rows -- e.g. Prometheus
+    // emits only Time/Value columns for an empty result, with no label columns to join on.
+    it('should return no rows when an empty frame between two joinable frames lacks the join field', () => {
+      const emptyResult = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [] },
+          { name: 'Value', type: FieldType.number, values: [] },
+        ],
+      });
+
+      const out = joinDataFrames({
+        frames: [measurements, emptyResult, lookup],
+        joinBy: joinByGA,
+        mode: JoinMode.inner,
+      })!;
+
+      expect(out.length).toBe(0);
+      expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+        { name: 'GA', values: [] },
+        { name: 'Val', values: [] },
+        { name: 'GA_TEXT', values: [] },
+      ]);
+    });
+
+    // A lone frame is handled by its own code path, but the rule is the same at every arity: with no
+    // field to join on there are no matching rows.
+    it('should return no rows when the only frame is missing the join field', () => {
+      const out = joinDataFrames({
+        frames: [otherLookup],
+        joinBy: joinByGA,
+        mode: JoinMode.inner,
+      })!;
+
+      expect(out.length).toBe(0);
+      expect(out.fields).toEqual([]);
+    });
+
+    // Panels join all of their series with an outer join and must still render a single series that
+    // has no field to join by, so outer joins deliberately keep returning a lone frame untouched.
+    it.each([JoinMode.outer, JoinMode.outerTabular])(
+      '%s join should return a lone frame that is missing the join field untouched',
+      (mode) => {
+        const out = joinDataFrames({
+          frames: [otherLookup],
+          joinBy: joinByGA,
+          mode,
+        })!;
+
+        expect(out.length).toBe(2);
+        expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+          { name: 'PA', values: ['x', 'y'] },
+          { name: 'PA_TEXT', values: ['Ex', 'Why'] },
+        ]);
+      }
+    );
+
+    it.each([JoinMode.outer, JoinMode.outerTabular])(
+      '%s join should keep dropping a frame that is missing the join field',
+      (mode) => {
+        const out = joinDataFrames({
+          frames: [measurements, lookup, otherLookup],
+          joinBy: joinByGA,
+          mode,
+        })!;
+
+        expect(out.length).toBe(2);
+        expect(out.fields.map((f) => ({ name: f.name, values: f.values }))).toEqual([
+          { name: 'GA', values: ['a', 'b'] },
+          { name: 'Val', values: [1, 2] },
+          { name: 'GA_TEXT', values: ['Alpha', 'Beta'] },
+        ]);
+      }
+    );
+  });
+
   describe('check ascending data', () => {
     it('simple ascending', () => {
       const v = [1, 2, 3, 4, 5];

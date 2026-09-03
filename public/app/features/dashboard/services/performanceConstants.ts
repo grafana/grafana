@@ -80,3 +80,8 @@ export const PERFORMANCE_MEASURES = {
  * Threshold in milliseconds for determining slow operations (panels, queries, transformations, etc.)
  */
 export const SLOW_OPERATION_THRESHOLD_MS = 500;
+
+/**
+ * Mirrors the private `POST_STORM_WINDOW` constant in @grafana/scenes' SceneRenderProfiler, which is not exported from the package.
+ */
+export const SCENES_POST_STORM_WINDOW_MS = 2000;

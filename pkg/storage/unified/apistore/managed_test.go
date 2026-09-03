@@ -662,7 +662,7 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				},
 			}
 
-			err := s.handleManagedResourceRouting(
+			cleanupSafe, err := s.handleManagedResourceRouting(
 				context.Background(),
 				errResourceIsManagedInRepository,
 				tt.action,
@@ -670,8 +670,10 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 				obj,
 				&dashboard.Dashboard{},
 			)
-			// The test server returns 500; surface that as a non-nil error.
+			// The test server returns an error; surface that as a non-nil error.
 			require.Error(t, err)
+			// Once the request is sent the write may have applied, so cleanup is never safe.
+			require.False(t, cleanupSafe, "a sent request must not report cleanupSafe")
 
 			require.Equal(t, tt.wantMethod, captured.method, "HTTP method")
 			require.Contains(t, captured.path, "/namespaces/default/repositories/my-repo/files/dashboards/dash.json",

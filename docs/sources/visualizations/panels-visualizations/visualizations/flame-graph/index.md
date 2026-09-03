@@ -202,3 +202,22 @@ You can customize the following standard options:
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="What can I learn from a flame graph?" >}}
+A flame graph helps you understand how your application spends time or consumes resources during execution.
+By visualizing the call hierarchy and the relative cost of each function, you can identify which parts of your application contribute most to overall resource usage and explore how functions relate to one another.
+{{< /qa >}}
+{{< qa question="How do I read a flame graph?" >}}
+A flame graph represents a hierarchy of function calls collected during profiling.
+Each block represents a function, and its position in the graph shows where it appears in the call stack.
+The width of a block indicates how much time or resources were spent in that function, making wider blocks a good starting point for identifying performance hotspots.
+You can click a function to inspect its call hierarchy, use Sandwich view to examine its callers and callees, or switch to the Top table to see aggregated profiling data in a tabular format.
+{{< /qa >}}
+{{< qa question="How does a flame graph help identify performance bottlenecks?" >}}
+A flame graph makes performance bottlenecks easier to spot by showing the relative cost of each function in the call stack.
+Wider blocks represent functions that consume more time or resources, allowing you to quickly identify hotspots and then drill into their callers and callees to understand where optimization efforts will have the greatest impact.
+{{< /qa >}}
+{{< /qa-list >}}

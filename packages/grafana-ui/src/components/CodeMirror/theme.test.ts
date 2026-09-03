@@ -83,13 +83,25 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
     editor.dom.remove();
   });
 
-  it('uses an accessible semantic color for SQL keywords', () => {
-    const theme = createTheme({ colors: { mode } });
+  it('uses the CodeEditor semantic colors for SQL syntax', () => {
+    const theme = createTheme({
+      colors: { mode },
+      components: {
+        codeEditor: {
+          keyword: '#123456',
+          variable: '#654321',
+        },
+      },
+    });
     const editor = createEditor(theme);
-    const keyword = editor.contentDOM.querySelector('span');
+    const syntaxSpans = Array.from(editor.contentDOM.querySelectorAll('span'));
+    const keyword = syntaxSpans.find((span) => span.textContent === 'SELECT');
+    const variable = syntaxSpans.find((span) => span.textContent === 'value_with_underscores');
 
-    expect(keyword).not.toBeNull();
-    expect(getComputedStyle(keyword!).color).toBe(normalizeColor(theme.colors.primary.text));
+    expect(keyword).toBeDefined();
+    expect(variable).toBeDefined();
+    expect(getComputedStyle(keyword!).color).toBe(normalizeColor(theme.components.codeEditor.keyword));
+    expect(getComputedStyle(variable!).color).toBe(normalizeColor(theme.components.codeEditor.variable));
 
     editor.destroy();
     editor.dom.remove();
@@ -97,16 +109,7 @@ describe.each(['light', 'dark'] as const)('Grafana CodeEditor %s theme', (mode) 
 
   it('keeps syntax colors above the WCAG AA text contrast threshold', () => {
     const theme = createTheme({ colors: { mode } });
-    const syntaxColors = [
-      theme.colors.text.primary,
-      theme.colors.text.secondary,
-      theme.colors.primary.text,
-      theme.colors.tertiary.text,
-      theme.colors.success.text,
-      theme.colors.warning.text,
-      theme.colors.error.text,
-      theme.colors.text.link,
-    ];
+    const syntaxColors = Object.values(theme.components.codeEditor);
     const syntaxBackgrounds = [
       theme.components.input.background,
       theme.colors.background.primary,

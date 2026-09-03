@@ -464,7 +464,7 @@ func TestUserTeamREST_Connect(t *testing.T) {
 		require.Equal(t, iamv0alpha1.TeamResourceInfo.GroupResource().Resource, mockClient.LastSearchRequest.Options.Key.Resource)
 		require.Equal(t, "test-namespace", mockClient.LastSearchRequest.Options.Key.Namespace)
 		require.Len(t, mockClient.LastSearchRequest.Options.Fields, 1)
-		require.Equal(t, resource.SEARCH_FIELD_PREFIX+builders.TEAM_SEARCH_MEMBERS, mockClient.LastSearchRequest.Options.Fields[0].Key)
+		require.Equal(t, builders.TEAM_SEARCH_MEMBERS, mockClient.LastSearchRequest.Options.Fields[0].Key)
 		require.Equal(t, []string{"alice"}, mockClient.LastSearchRequest.Options.Fields[0].Values)
 	})
 

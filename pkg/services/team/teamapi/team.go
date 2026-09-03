@@ -14,7 +14,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/folderownership"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -315,16 +314,11 @@ func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	ctx := c.Req.Context()
-	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		uid, errResp := tapi.resolveTeamUID(c, teamId)
-		if errResp != nil {
-			return errResp
-		}
-		return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	uid, errResp := tapi.resolveTeamUID(c, teamId)
+	if errResp != nil {
+		return errResp
 	}
-
-	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
+	return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
@@ -347,16 +341,11 @@ func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	ctx := c.Req.Context()
-	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
-		uid, errResp := tapi.resolveTeamUID(c, teamId)
-		if errResp != nil {
-			return errResp
-		}
-		return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	uid, errResp := tapi.resolveTeamUID(c, teamId)
+	if errResp != nil {
+		return errResp
 	}
-
-	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
+	return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
 }
 
 // resolveTeamUID returns the team UID. When the request used a UID in the

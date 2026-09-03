@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, IconButton, Stack, useStyles2, Text } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
 
@@ -27,42 +27,40 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   // While customising the nav, lock the header so the user can only pin/hide/reorder or finish editing:
-  // home navigation, docking and closing are all disabled until they leave customise mode.
+  // home navigation and closing are disabled until they leave customise mode.
   const customising = state.megaMenuCustomising ?? false;
+
+  // When undocked we do not show a header, but just the org switcher (which only renders when there are multiple orgs)
+  if (!state.megaMenuDocked) {
+    return <OrganizationSwitcher undocked={true} />;
+  }
 
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
         {/* `inert` (not just pointer-events) so the links are also removed from the tab order and can't
-            be reached/activated by keyboard while customising. Object-spread form is the React 18 way. */}
-        <div className={cx(customising && styles.disabled)} {...(customising && { inert: '' })}>
-          <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+            be reached/activated by keyboard while customising. */}
+        <div className={cx(customising && styles.disabled)} inert={customising}>
+          {state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
         </div>
         {/* Wrap the switcher itself, not its child: with multiple orgs it renders a dropdown instead of
             the passed HomeTitle, so this is what disables the org dropdown while customising. */}
-        <div className={cx(customising && styles.disabled)} {...(customising && { inert: '' })}>
+        <div className={cx(customising && styles.disabled)} inert={customising}>
           <OrganizationSwitcher>
-            <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+            {state.megaMenuDocked && (
+              <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+            )}
+            {!state.megaMenuDocked && (
+              <Box paddingLeft={2}>
+                <Text color="secondary">
+                  <Trans i18nKey="navigation.megamenu.header-title">Navigation</Trans>
+                </Text>
+              </Box>
+            )}
           </OrganizationSwitcher>
         </div>
       </Stack>
       <div className={styles.flexGrow} />
-      {/* Docking is intentionally not allowed in fullscreen workspace */}
-      {!state.fullscreenWorkspace && (
-        <IconButton
-          id={DOCK_MENU_BUTTON_ID}
-          className={styles.dockMenuButton}
-          tooltip={
-            state.megaMenuDocked
-              ? t('navigation.megamenu.undock', 'Undock menu')
-              : t('navigation.megamenu.dock', 'Dock menu')
-          }
-          name="web-section-alt"
-          onClick={handleDockedMenu}
-          disabled={customising}
-          variant="secondary"
-        />
-      )}
       <IconButton
         aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}

@@ -1,7 +1,7 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { type ThemeColors } from './createColors';
 

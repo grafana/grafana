@@ -155,6 +155,53 @@ describe('ValueMappingsEditorModal', () => {
         },
       ]);
     });
+
+    it('should allow editing negative bounds on existing range mapping', async () => {
+      const onChangeSpy = jest.fn();
+      setup(onChangeSpy, {
+        value: [
+          {
+            type: MappingType.RangeToText,
+            options: {
+              from: -1,
+              to: 10,
+              result: {
+                text: 'Negative range',
+                index: 0,
+              },
+            },
+          },
+        ],
+      });
+
+      const fromInput = screen.getByPlaceholderText('From');
+      const toInput = screen.getByPlaceholderText('To');
+
+      expect(fromInput).toHaveValue('-1');
+      expect(toInput).toHaveValue('10');
+
+      await userEvent.clear(fromInput);
+      await userEvent.type(fromInput, '-5');
+
+      await userEvent.clear(toInput);
+      await userEvent.type(toInput, '-2');
+
+      await userEvent.click(screen.getByText('Update'));
+
+      expect(onChangeSpy).toHaveBeenCalledWith([
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: -5,
+            to: -2,
+            result: {
+              text: 'Negative range',
+              index: 0,
+            },
+          },
+        },
+      ]);
+    });
   });
 
   describe('When adding and updating regex map', () => {

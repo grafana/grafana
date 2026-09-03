@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
@@ -25,8 +26,11 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     meta: { isEmbedded },
   } = useDashboardState(model);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
-  const { fillScreen, dropPosition } = layoutManager.useState();
+  const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
+  const autoHeightPanelsEnabled = useFlagGrafanaDashboardsAutoHeightPanels();
+  // Off => align items to the top so a tall fit panel doesn't stretch its row siblings.
+  const noStretchSiblings = autoHeightPanelsEnabled && matchRowHeights === false;
 
   if (isHidden || !layoutOrchestrator) {
     return null;
@@ -63,7 +67,12 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
   return (
     <div
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
-      className={cx(styles.container, fillScreen && styles.containerFillScreen, isEditing && styles.containerEditing)}
+      className={cx(
+        styles.container,
+        fillScreen && styles.containerFillScreen,
+        noStretchSiblings && styles.containerNoStretch,
+        isEditing && styles.containerEditing
+      )}
       ref={model.containerRef}
       {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: layoutManager.state.key }}
     >
@@ -89,7 +98,6 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     justifyItems: state.justifyItems || 'unset',
     alignItems: state.alignItems || 'unset',
     justifyContent: state.justifyContent || 'unset',
-    height: '100%',
     [theme.breakpoints.down('md')]: state.md
       ? {
           gridTemplateRows: state.md.templateRows,
@@ -105,6 +113,7 @@ const getStyles = (theme: GrafanaTheme2, state: AutoGridLayoutState) => ({
     ...dashboardCanvasAddButtonHoverStyles,
   }),
   containerFillScreen: css({ flexGrow: 1 }),
+  containerNoStretch: css({ alignItems: 'start' }),
   containerEditing: css({ paddingBottom: theme.spacing(5), position: 'relative' }),
   dropPlaceholder: css({
     border: `1px dashed ${theme.colors.primary.main}`,

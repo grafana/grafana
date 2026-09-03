@@ -12,7 +12,7 @@ labels:
 menuTitle: Query editor
 title: MySQL query editor
 weight: 30
-review_date: 2026-05-11
+review_date: 2026-08-10
 ---
 
 # MySQL query editor
@@ -22,7 +22,7 @@ Grafana’s query editors are unique for each data source. For general informati
 The MySQL query editor is located on the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/). You can also access the MySQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 {{< admonition type="note" >}}
-If a default database is configured in the **Data Source Configuration page**, or via a provisioning configuration file, users will be restricted to querying only that pre-configured database.
+If a default database is configured in the **Data Source Configuration page**, or via a provisioning configuration file, users are restricted to querying only that pre-configured database.
 {{< /admonition >}}
 
 ## MySQL query editor components
@@ -32,12 +32,12 @@ The MySQL query editor has two modes: **Builder** and **Code**.
 Builder mode helps you build a query using a visual interface. Code mode allows for advanced querying and offers support for complex SQL query writing.
 
 {{< admonition type="note" >}}
-If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor will put quotes around the name. For example, the name `table-name` will be quoted with backticks - `` `table-name` ``.
+If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor puts quotes around the name. For example, the name `table-name` is quoted with backticks - `` `table-name` ``.
 {{< /admonition >}}
 
 ## MySQL Builder mode
 
-The following components will help you build a MySQL query:
+The following components help you build a MySQL query:
 
 - **Format** - Select a format response from the drop-down for the MySQL query. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`.
 
@@ -51,7 +51,7 @@ The following components will help you build a MySQL query:
   - **Alias** - _Optional_ Add an alias from the drop-down. You can also add your own alias by typing it in the box and clicking **Enter**. Remove an alias by clicking the **X**.
 
 - **Filter** - Toggle to add filters.
-  - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter` which will add the `$\_\_timeFilter` macro to the query with the selected date column.
+  - **Filter by column value** - _Optional_ If you toggle **Filter** you can add a column to filter by from the drop-down. To filter on more columns, click the **+ sign** to the right of the condition drop-down. You can choose a variety of operators from the drop-down next to the condition. When multiple filters are added you can add an `AND` operator to display all true conditions or an `OR` operator to display any true conditions. Use the second drop-down to choose a filter. To remove a filter, click the `X` button next to that filter's drop-down. After selecting a date type column, you can choose **Macros** from the operators list and select `timeFilter`, which adds the `$\_\_timeFilter` macro to the query with the selected date column.
 
 - **Group** - Toggle to add **Group by column**.
   - **Group by column** - Select a column to filter by from the drop-down. Click the **+ sign** to filter by multiple columns. Click the **X** to remove a filter.
@@ -69,7 +69,7 @@ To create advanced queries, switch to **Code mode** by clicking **Code** in the 
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
 {{< admonition type="warning" >}}
-Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
+Changes made to a query in Code mode don't transfer to Builder mode and are discarded. Grafana prompts you to copy your code to the clipboard to save any changes.
 {{< /admonition >}}
 
 ## Macros
@@ -89,8 +89,6 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as the `$__timeGroup(dateColumn,'5m', previous)` macro, but uses the previous value in the series as the fill value. If no previous value exists,`NULL` will be used. **This applies only to time series queries.**                       |
 | `$__timeGroupAlias(dateColumn,'5m')`                  | Replaces the value identical to $\_\_timeGroup but with an added column alias.                                                                                                                                                                 |
 | `$__unixEpochFilter(dateColumn)`                      | Replaces the value by a time range filter using the specified column name with times represented as a UNIX timestamp. Example: _dateColumn > 1494410783 AND dateColumn < 1494497183_                                                           |
-| `$__unixEpochFrom()`                                  | Replaces the value with the start of the currently active time selection as a UNIX timestamp. Example: _1494410783_                                                                                                                            |
-| `$__unixEpochTo()`                                    | Replaces the value with the end of the currently active time selection as UNIX timestamp. Example: _1494497183_                                                                                                                                |
 | `$__unixEpochNanoFilter(dateColumn)`                  | Replaces the value with a time range filter using the specified column name with time represented as a nanosecond timestamp. Example: _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_                                  |
 | `$__unixEpochNanoFrom()`                              | Replaces the value with the start of the currently active time selection as nanosecond timestamp. Example: _1494410783152415214_                                                                                                               |
 | `$__unixEpochNanoTo()`                                | Replaces the value with the end of the currently active time selection as nanosecond timestamp. Example: _1494497183142514872_                                                                                                                 |
@@ -103,7 +101,7 @@ As of Grafana 13.0, fill resampling in `$__timeGroup` and `$__unixEpochGroup` in
 
 ## Table SQL queries
 
-If the **Format** option is set to **Table**, you can execute virtually any type of SQL query. The Table panel will automatically display the resulting columns and rows from your query.
+If the **Format** option is set to **Table**, you can execute virtually any type of SQL query. The Table panel automatically displays the resulting columns and rows from your query.
 
 You can change or customize the name of a Table panel column by using the SQL keyword `AS` syntax.
 

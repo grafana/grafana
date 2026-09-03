@@ -76,6 +76,9 @@ func (p *PublisherService) Publish(ctx context.Context, subject string, data []b
 	}
 	if err := nc.Publish(subject, data); err != nil {
 		p.metrics.publishErrors.Inc()
+		if isConnStateErr(err) {
+			return fmt.Errorf("publish to %q: nats connection not established (status=%s, last_err=%v): %w", subject, nc.Status(), nc.LastError(), err)
+		}
 		return fmt.Errorf("publish to %q: %w", subject, err)
 	}
 	p.metrics.messagesPublished.Inc()

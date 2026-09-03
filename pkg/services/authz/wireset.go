@@ -9,7 +9,9 @@ import (
 // WireSet) so they can rebind overridable providers such as the reconciler
 // CRD list.
 var WireSetBase = wire.NewSet(
-	ProvideAuthZClient,
+	ProvideAuthZClients,
+	ProvideAuthZAccessClient,
+	ProvideAuthZUserPermissionsClient,
 	ProvideZanzanaClient,
 	ProvideEmbeddedZanzanaServer,
 	ProvideEmbeddedZanzanaService,

@@ -1,18 +1,12 @@
-import { memo, useMemo } from 'react';
+import { lazy, memo, Suspense } from 'react';
 
 import { type VariableSuggestion } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
-import { CodeMirrorInlineInput } from '../CodeMirror/InlineInput';
+import { Input } from '../Input/Input';
 
-import {
-  createDataLinkHighlighter,
-  createDataLinkTheme,
-  dataLinkAutocompletion,
-  type DataLinkInterpolationMode,
-} from './codemirrorUtils';
+import { type DataLinkInterpolationMode } from './codemirrorUtils';
 
-interface DataLinkInputProps {
+export interface DataLinkInputProps {
   value: string;
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
@@ -32,43 +26,29 @@ interface DataLinkInputProps {
   monospace?: boolean;
 }
 
-export const DataLinkInput = memo(
-  ({
-    value,
-    onChange,
-    suggestions,
-    placeholder = 'http://your-grafana.com/d/000000010/annotations',
-    ['aria-labelledby']: ariaLabelledby,
-    id = 'data-link-input',
-    interpolationMode = 'url',
-    monospace = true,
-  }: DataLinkInputProps) => {
-    const theme = useTheme2();
-
-    // The highlighter tags `${...}` tokens; the theme colors them. Stable across
-    // renders unless the Grafana theme changes.
-    const extensions = useMemo(() => [createDataLinkHighlighter(), createDataLinkTheme(theme)], [theme]);
-    const completionSources = useMemo(
-      () => [dataLinkAutocompletion(suggestions, { mode: interpolationMode })],
-      [suggestions, interpolationMode]
-    );
-
-    return (
-      <CodeMirrorInlineInput
-        id={id}
-        value={value}
-        // CodeMirrorInlineInput only ever calls onChange(value); the optional
-        // callback in DataLinkInput's onChange is never invoked, so passing it
-        // straight through is safe.
-        onChange={onChange}
-        placeholder={placeholder}
-        monospace={monospace}
-        aria-labelledby={ariaLabelledby}
-        completionSources={completionSources}
-        extensions={extensions}
-      />
-    );
-  }
+const DataLinkInputImplementation = lazy(() =>
+  import(/* webpackChunkName: "react-codemirror-data-link-input" */ './DataLinkInputImplementation').then((module) => ({
+    default: module.DataLinkInputImplementation,
+  }))
 );
 
-DataLinkInput.displayName = 'DataLinkInput';
+export const DataLinkInput = memo(function DataLinkInput(props: DataLinkInputProps) {
+  return (
+    <Suspense
+      fallback={
+        <Input
+          id={`${props.id ?? 'data-link-input'}-loading`}
+          value={props.value}
+          placeholder={props.placeholder ?? 'http://your-grafana.com/d/000000010/annotations'}
+          readOnly
+          tabIndex={-1}
+          aria-label=""
+          aria-labelledby=""
+          aria-hidden
+        />
+      }
+    >
+      <DataLinkInputImplementation {...props} />
+    </Suspense>
+  );
+});

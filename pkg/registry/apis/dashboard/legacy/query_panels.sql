@@ -7,7 +7,7 @@ SELECT p.id, p.uid, p.folder_uid,
   LEFT OUTER JOIN {{ .Ident .UserTable }} AS updated_user ON p.updated_by = updated_user.id
   WHERE p.org_id = {{ .Arg .Query.OrgID }}
   {{ if .Query.LastID }}
-    AND p.id > {{ .Arg .Query.LastID }}
+    AND p.id < {{ .Arg .Query.LastID }}
   {{ end }}
   {{ if .Query.UID }}
     AND p.uid = {{ .Arg .Query.UID }}

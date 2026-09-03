@@ -348,8 +348,8 @@ type mockSocial struct {
 	OAuthProviders map[string]bool
 }
 
-func (m *mockSocial) GetOAuthProviders() map[string]bool {
-	return m.OAuthProviders
+func (m *mockSocial) GetOAuthProviders(context.Context) (map[string]bool, error) {
+	return m.OAuthProviders, nil
 }
 
 type mockAdvisor struct {

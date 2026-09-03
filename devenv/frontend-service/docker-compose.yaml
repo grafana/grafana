@@ -84,6 +84,8 @@ services:
         target: /config/config.yaml
       - source: goff_flags
         target: /flags/flags.yaml
+      - source: goff_flags_bundler
+        target: /flags/bundler.yaml
 
   postgres:
     image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
@@ -172,8 +174,14 @@ configs:
       retrievers:
         - kind: "file"
           path: "/flags/flags.yaml"
+        - kind: "file"
+          path: "/flags/bundler.yaml"
   goff_flags:
     file: ./goff-flags.yaml
+  # Which bundler the frontend-service reads assets from. Tilt points this at
+  # goff-flags.rspack.yaml when RSPACK=1 is set.
+  goff_flags_bundler:
+    file: ./goff-flags.webpack.yaml
 
 volumes:
   backend-data:

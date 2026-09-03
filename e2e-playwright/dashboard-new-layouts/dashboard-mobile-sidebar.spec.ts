@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -12,15 +10,8 @@ test.use({
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 
 test.describe('Mobile sidebar', { tag: ['@dashboards'] }, () => {
-  test('can show and hide the sidebar on-demand (hidden by default)', async ({
-    gotoDashboardPage,
-    selectors,
-    page,
-    components,
-  }) => {
-    const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+  test('can show and hide the sidebar on-demand (hidden by default)', async ({ gotoDashboardPage, sidebar }) => {
+    await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
     await expect(sidebar.getContainer()).not.toBeVisible();
     await expect(sidebar.toolbar.getVisibilityToggle()).toBeVisible();
 

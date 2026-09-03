@@ -2,8 +2,8 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 
+import { edit } from '../../actions/utils/edit';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
-import { dashboardEditActions } from '../../sidebar/shared';
 
 export const linkEditActions = {
   addLink({
@@ -17,7 +17,7 @@ export const linkEditActions = {
   }) {
     const linksBefore = [...(dashboard.state.links ?? [])];
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard-scene.link-edit-actions.add-link', 'Add link'),
       source: dashboard,
       addedObject,
@@ -33,7 +33,7 @@ export const linkEditActions = {
   removeLink({ dashboard, linkIndex }: { dashboard: DashboardSceneLike; linkIndex: number }) {
     const linksBefore = [...(dashboard.state.links ?? [])];
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard-scene.link-edit-actions.remove-link', 'Remove link'),
       source: dashboard,
       perform() {
@@ -58,7 +58,7 @@ export const linkEditActions = {
     newLink: DashboardLink;
     description?: string;
   }) {
-    dashboardEditActions.edit({
+    edit({
       description: description ?? t('dashboard-scene.link-edit-actions.update-link', 'Update link'),
       source: dashboard,
       perform() {

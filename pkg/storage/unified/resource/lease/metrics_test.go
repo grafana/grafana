@@ -299,7 +299,7 @@ func (r *retryKV) Batch(ctx context.Context, section string, ops []kv.BatchOp) e
 // lock and takes the skip path.
 func writeGCInternalKey(t *testing.T, store kv.KV, expires time.Time) {
 	t.Helper()
-	data := []byte(fmt.Sprintf(`{"expires":%d}`, expires.UnixNano()))
+	data := fmt.Appendf(nil, `{"expires":%d}`, expires.UnixNano())
 	w, err := store.Save(t.Context(), kv.LeasesSection, "lease-internal/gc")
 	require.NoError(t, err)
 	_, err = w.Write(data)

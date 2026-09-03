@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagProvisioningExport } from '@grafana/runtime/internal';
 import { Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 
 import { JobStatus } from '../Job/JobStatus';
@@ -28,6 +28,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 }: SynchronizeStepProps) {
   const { watch, register } = useFormContext<WizardFormData>();
   const { setStepStatusInfo } = useStepStatus();
+  const isExportEnabled = useFlagProvisioningExport();
   const [repoName = '', syncTarget, migrateResources] = watch([
     'repositoryName',
     'repository.sync.target',
@@ -124,7 +125,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
         </Trans>
       </Text>
       {isHealthy && <GitSyncLimitationsAlert syncTarget={syncTarget} />}
-      {config.featureToggles.provisioningExport && (
+      {isExportEnabled && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.options">Options</Trans>

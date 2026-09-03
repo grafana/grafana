@@ -1,4 +1,4 @@
-import { RoutingTreeFactory } from '../api/notifications/v0alpha1/mocks/fakes/Routes';
+import { RoutingTreeFactory } from '../api/notifications/v1beta1/mocks/fakes/Routes';
 
 import {
   DEFAULT_ROUTING_TREE_NAME_ALIAS,

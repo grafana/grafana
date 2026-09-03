@@ -79,7 +79,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => {
           background: theme.colors.background.elevated,
           border: `none`,
           borderRadius: theme.shape.radius.lg,
-          boxShadow: theme.shadows.z3,
+          boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
           whiteSpace: 'nowrap',
 
           '&.slide-up-enter, &.slide-up-appear': {

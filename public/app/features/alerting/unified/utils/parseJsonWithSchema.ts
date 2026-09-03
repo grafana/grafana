@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import type * as z from 'zod';
 
 /**
  * Parses a JSON string and validates it with a Zod schema.

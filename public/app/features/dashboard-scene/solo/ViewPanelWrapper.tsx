@@ -38,7 +38,7 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
     }
   }, [sidebar, isSmallScreen, viewPanelPane]);
 
-  // Handle manual toggling of the pane via the edit pane buttons
+  // Handle manual toggling of the pane via the sidebar buttons
   // This is done via an event that sidebar pane button publishes as the ViewPanelSidePane instance & panel ref is only available from this component
   useEffect(() => {
     const sub = sidebar.subscribeToEvent(ToggleViewPanePaneEvent, () => {

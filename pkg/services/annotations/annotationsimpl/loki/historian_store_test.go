@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	mockDashSvc := testutil.NewMockDashboardService(t)
 

@@ -77,6 +77,7 @@ SubMenu.displayName = 'SubMenu';
 
 /** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     iconWrapper: css({
       display: 'flex',
@@ -88,13 +89,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginLeft: theme.spacing(1),
       color: theme.colors.text.secondary,
     }),
-    itemsWrapper: css({
-      background: theme.colors.background.elevated,
-      padding: theme.spacing(0.5),
-      boxShadow: theme.shadows.z3,
-      display: 'inline-block',
-      borderRadius: theme.shape.radius.default,
-    }),
+    itemsWrapper: css(
+      {
+        background: theme.colors.background.elevated,
+        padding: theme.spacing(0.5),
+        boxShadow: theme.shadows.z3,
+        display: 'inline-block',
+        borderRadius: theme.shape.radius.default,
+      },
+      visualRefreshEnabled && {
+        border: `1px solid ${theme.colors.border.weak}`,
+        boxShadow: theme.shadows.z2,
+      }
+    ),
     subMenu: css({
       zIndex: theme.zIndex.dropdown,
     }),

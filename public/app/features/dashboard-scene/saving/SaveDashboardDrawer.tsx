@@ -116,28 +116,10 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
-  const renderBody = () => {
-    if (showDiff) {
-      const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
-      const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
-      return (
-        <SaveDashboardDiff
-          diff={diffs}
-          oldValue={initialSaveModel}
-          newValue={changedSaveModel}
-          hasFolderChanges={hasFolderChanges}
-          hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
-          hasMigratedToV2={hasMigratedToV2}
-          oldFolder={dashboard.getInitialState()?.meta.folderTitle}
-          newFolder={folderTitle}
-          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
-            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
-          )}
-          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
-        />
-      );
-    }
+  const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+  const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
 
+  const renderForm = () => {
     if (saveDashboardTemplate) {
       const SaveDashboardTemplateForm = getSaveDashboardTemplateForm();
       if (SaveDashboardTemplateForm) {
@@ -176,7 +158,24 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   return (
     <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
-      {renderBody()}
+      {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
+      <div style={{ display: showDiff ? 'none' : 'contents' }}>{renderForm()}</div>
+      {showDiff && (
+        <SaveDashboardDiff
+          diff={diffs}
+          oldValue={initialSaveModel}
+          newValue={changedSaveModel}
+          hasFolderChanges={hasFolderChanges}
+          hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
+          hasMigratedToV2={hasMigratedToV2}
+          oldFolder={dashboard.getInitialState()?.meta.folderTitle}
+          newFolder={folderTitle}
+          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
+            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
+          )}
+          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
+        />
+      )}
     </Drawer>
   );
 }

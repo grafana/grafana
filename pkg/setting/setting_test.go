@@ -456,10 +456,9 @@ func TestParseAppURLAndSubURL(t *testing.T) {
 		require.NoError(t, err)
 		_, err = s.NewKey("root_url", tc.rootURL)
 		require.NoError(t, err)
-		appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
-		require.NoError(t, err)
-		require.Equal(t, tc.expectedAppURL, appURL)
-		require.Equal(t, tc.expectedAppSubURL, appSubURL)
+		require.NoError(t, readServerURLSettings(f, cfg))
+		require.Equal(t, tc.expectedAppURL, cfg.AppURL)
+		require.Equal(t, tc.expectedAppSubURL, cfg.AppSubURL)
 	}
 }
 

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/foldertitle"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -54,6 +55,10 @@ const defaultLockRetryInterval = 10 * time.Second
 // memory bounded over large catch-up windows. Package-level so tests
 // can override.
 var startupBatchSize = 1000
+
+// maxStartupBatchBytes caps a startup batch's accumulated value bytes at
+// 64 MiB before flushing. Package-level so tests can override.
+var maxStartupBatchBytes = 64 * 1024 * 1024
 
 // pendingEvent flattens (group, resource, namespace, name) instead of
 // holding a *resourcepb.ResourceKey because that type embeds a sync.Mutex
@@ -89,6 +94,10 @@ type Options struct {
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// EmbeddingCountInterval paces the stored-embedding gauge. Each sample
+	// is a full aggregate scan of the embeddings table, so it belongs far
+	// above Interval. Zero disables the sampling entirely.
+	EmbeddingCountInterval time.Duration
 	// Metrics is optional; when nil the reconciler runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -100,15 +109,19 @@ type Options struct {
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage           resource.StorageBackend
-	vectorBackend     vector.VectorBackend
-	batchEmbedder     *embedder.BatchEmbedder
-	builders          map[string]embed.Builder
-	backfiller        Backfiller
-	interval          time.Duration
-	lockRetryInterval time.Duration
-	log               log.Logger
-	metrics           *resource.VectorMetrics
+	storage                resource.StorageBackend
+	vectorBackend          vector.VectorBackend
+	batchEmbedder          *embedder.BatchEmbedder
+	builders               map[string]embed.Builder
+	backfiller             Backfiller
+	interval               time.Duration
+	lockRetryInterval      time.Duration
+	embeddingCountInterval time.Duration
+	log                    log.Logger
+	metrics                *resource.VectorMetrics
+
+	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
+	folderTitleResolver *foldertitle.Resolver
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -142,17 +155,19 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:           opts.Storage,
-		vectorBackend:     opts.VectorBackend,
-		batchEmbedder:     opts.BatchEmbedder,
-		builders:          builders,
-		backfiller:        opts.Backfiller,
-		interval:          opts.Interval,
-		lockRetryInterval: opts.LockRetryInterval,
-		log:               log.New("embeddings_reconciler"),
-		metrics:           opts.Metrics,
-		pending:           make(map[string]*pendingEvent),
-		ensuredResources:  make(map[string]struct{}),
+		storage:                opts.Storage,
+		vectorBackend:          opts.VectorBackend,
+		batchEmbedder:          opts.BatchEmbedder,
+		builders:               builders,
+		backfiller:             opts.Backfiller,
+		interval:               opts.Interval,
+		lockRetryInterval:      opts.LockRetryInterval,
+		embeddingCountInterval: opts.EmbeddingCountInterval,
+		log:                    log.New("embeddings_reconciler"),
+		metrics:                opts.Metrics,
+		pending:                make(map[string]*pendingEvent),
+		ensuredResources:       make(map[string]struct{}),
+		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
 
@@ -235,6 +250,12 @@ func (s *Reconciler) Run(ctx context.Context) error {
 		}()
 	}
 
+	// Gauge sampling runs only on the lock holder so the aggregate scan
+	// happens once per cluster rather than once per replica.
+	if s.metrics != nil && s.embeddingCountInterval > 0 {
+		go s.runEmbeddingCounts(ctx)
+	}
+
 	// Subscribe before startupReconcile so events between the
 	// startupReconcile snapshot and the subscription join can't slip through;
 	// the broadcaster's replay buffer covers the brief overlap.
@@ -296,6 +317,36 @@ func (s *Reconciler) acquireLockBlocking(ctx context.Context) (func(), error) {
 	}
 }
 
+func (s *Reconciler) runEmbeddingCounts(ctx context.Context) {
+	t := time.NewTicker(s.embeddingCountInterval)
+	defer t.Stop()
+	for {
+		s.recordEmbeddingCounts(ctx)
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
+}
+
+// recordEmbeddingCounts refreshes the stored-embedding gauge. Reset drops
+// label pairs that no longer exist — e.g. the superseded model after a
+// rollout — instead of pinning them at their last observed value.
+func (s *Reconciler) recordEmbeddingCounts(ctx context.Context) {
+	counts, err := s.vectorBackend.CountStoredEmbeddings(ctx)
+	if err != nil {
+		if ctx.Err() == nil {
+			s.log.Warn("reconciler: count stored embeddings", "err", err)
+		}
+		return
+	}
+	s.metrics.EmbeddingsStored.Reset()
+	for _, c := range counts {
+		s.metrics.EmbeddingsStored.WithLabelValues(c.Resource, c.Model).Set(float64(c.Count))
+	}
+}
+
 func (s *Reconciler) consumeWatchEvents(ctx context.Context, ch <-chan *resource.WrittenEvent) {
 	for {
 		select {
@@ -341,7 +392,7 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 		return fmt.Errorf("ensure partition for %q: %w", r, err)
 	}
 
-	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV); err != nil {
+	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV, b.Version()); err != nil {
 		return fmt.Errorf("create backfill job for %q: %w", r, err)
 	}
 	s.ensuredResources[r] = struct{}{}
@@ -430,6 +481,7 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 	}
 
 	batch := make([]*pendingEvent, 0, startupBatchSize)
+	var batchBytes int
 	for mr, err := range seq {
 		if ctx.Err() != nil {
 			return
@@ -458,11 +510,13 @@ func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, 
 			continue
 		}
 		batch = append(batch, ev)
-		if len(batch) >= startupBatchSize {
+		batchBytes += len(ev.value)
+		if len(batch) >= startupBatchSize || batchBytes >= maxStartupBatchBytes {
 			if !flush(batch) {
 				return
 			}
 			batch = batch[:0]
+			batchBytes = 0
 		}
 	}
 	if len(batch) > 0 {
@@ -614,6 +668,11 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 			lowestFailedRv = s.recordFailure(ev, &failed, lowestFailedRv, logger)
 			continue
 		}
+		// successes accumulates across the whole startup backlog; drop the
+		// embedded value so retention doesn't grow unbounded. Nothing reads
+		// it afterwards — re-enqueue on checkpoint failure is a no-op for an
+		// already-embedded resource.
+		ev.value = nil
 		successes = append(successes, ev)
 		if ev.rv > maxRv {
 			maxRv = ev.rv
@@ -656,7 +715,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -683,7 +742,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		Name:      ev.name,
 	}
 
-	items, err := builder.Extract(ctx, key, ev.value, "")
+	folderTitle, err := s.folderTitleResolver.Title(ctx, ev.namespace, embed.FolderUIDFromValue(ev.value))
+	if err != nil {
+		statusLabel = "folder_title_error"
+		return fmt.Errorf("resolve folder title: %w", err)
+	}
+
+	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
@@ -698,7 +763,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -753,7 +818,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	var changed []vector.Vector
 	if len(toEmbed) > 0 {
-		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, toEmbed)
+		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, builder.Version(), toEmbed)
 		if err != nil {
 			statusLabel = "embed_error"
 			return fmt.Errorf("embed: %w", err)
@@ -763,7 +828,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, desired); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, nil, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}

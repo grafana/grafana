@@ -1,5 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
+
+import { locationService } from '@grafana/runtime';
+
+import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
 import { type SuggestedNavigationsFolder, type SuggestedNavigationsFoldersMap } from './types';
@@ -9,15 +14,31 @@ jest.mock('app/core/hooks/useQueryParams', () => ({
   useQueryParams: jest.fn(() => [{}]),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useLocation: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  locationService: {
+    push: jest.fn(),
+  },
+}));
+
 // Mock ScopesContextProvider
 const mockScopesSelectorService = {
   changeScopes: jest.fn(),
+  state: {
+    appliedScopes: [{ scopeId: 'shoe-org' }],
+  },
 };
 
 const mockScopesDashboardsService = {
   setNavigationScope: jest.fn(),
   state: {
-    navScopePath: undefined,
+    navScopePath: undefined as string[] | undefined,
+    navigationScope: undefined as string | undefined,
   },
 };
 
@@ -31,9 +52,20 @@ jest.mock('../ScopesContextProvider', () => ({
 
 describe('ScopesDashboardsTreeFolderItem', () => {
   const mockOnFolderUpdate = jest.fn();
+  const mockUseLocation = useLocation as jest.Mock;
+  const mockLocationServicePush = locationService.push as jest.Mock;
+  const mockUseScopesServices = useScopesServices as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseLocation.mockReturnValue({ pathname: '/current-path' });
+    mockScopesSelectorService.state.appliedScopes = [{ scopeId: 'shoe-org' }];
+    mockScopesDashboardsService.state.navScopePath = undefined;
+    mockScopesDashboardsService.state.navigationScope = undefined;
+    mockUseScopesServices.mockReturnValue({
+      scopesSelectorService: mockScopesSelectorService,
+      scopesDashboardsService: mockScopesDashboardsService,
+    });
   });
 
   const createMockFolder = (overrides?: Partial<SuggestedNavigationsFolder>): SuggestedNavigationsFolder => ({
@@ -51,6 +83,10 @@ describe('ScopesDashboardsTreeFolderItem', () => {
       folders: {},
       suggestedNavigations: {},
     },
+  };
+
+  const renderWithRouter = (ui: React.ReactElement) => {
+    return render(<MemoryRouter>{ui}</MemoryRouter>);
   };
 
   it('renders folder with correct props', () => {
@@ -266,8 +302,7 @@ describe('ScopesDashboardsTreeFolderItem', () => {
     const user = userEvent.setup();
     const folder = createMockFolder({ subScopeName: 'subScope1' });
 
-    // Mock useScopesServices to return undefined
-    jest.spyOn(require('../ScopesContextProvider'), 'useScopesServices').mockReturnValue(undefined);
+    mockUseScopesServices.mockReturnValueOnce(undefined);
 
     render(
       <ScopesDashboardsTreeFolderItem
@@ -344,6 +379,113 @@ describe('ScopesDashboardsTreeFolderItem', () => {
 
       const exchangeButton = screen.getByRole('button', { name: /change root scope/i });
       expect(exchangeButton).toBeInTheDocument();
+    });
+  });
+
+  describe('inherited subScope for group folders', () => {
+    it('writes nav_scope_path when clicking a dashboard under a group inside a ChildScope', async () => {
+      const user = userEvent.setup();
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      Object.defineProperty(window, 'location', {
+        value: { origin: 'http://localhost' },
+        writable: true,
+      });
+
+      // ChildScope folder containing a group folder with a dashboard
+      const shoesFolder = createMockFolder({
+        title: 'Shoes',
+        expanded: true,
+        subScopeName: 'shoes',
+        folders: {
+          'Team Metrics': {
+            title: 'Team Metrics',
+            expanded: true,
+            folders: {},
+            suggestedNavigations: {
+              latency: {
+                id: 'latency',
+                title: 'Latency (under group)',
+                url: '/d/latency',
+              },
+            },
+          },
+        },
+      });
+
+      const folders: SuggestedNavigationsFoldersMap = {
+        '': shoesFolder,
+        'Team Metrics': shoesFolder.folders['Team Metrics'],
+      };
+
+      renderWithRouter(
+        <ScopesDashboardsTreeFolderItem
+          folder={shoesFolder}
+          folderPath={['']}
+          folders={folders}
+          onFolderUpdate={mockOnFolderUpdate}
+          subScopePath={['shoes']}
+        />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-latency');
+      await user.click(link);
+
+      expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['shoes'], undefined, undefined, false);
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      expect(pushedUrl).toContain('scopes=shoes');
+      expect(pushedUrl).toContain('nav_scope_path=');
+      expect(decodeURIComponent(pushedUrl)).toContain('shoes');
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('writes nav_scope_path for a direct ChildScope dashboard when subScope prop is undefined', async () => {
+      const user = userEvent.setup();
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      Object.defineProperty(window, 'location', {
+        value: { origin: 'http://localhost' },
+        writable: true,
+      });
+
+      // Dashboard attached directly under ChildScope (no group). subScope prop omitted;
+      // folder.subScopeName alone should still drive nav_scope_path.
+      const shoesFolder = createMockFolder({
+        title: 'Shoes',
+        expanded: true,
+        subScopeName: 'shoes',
+        suggestedNavigations: {
+          overview: {
+            id: 'overview',
+            title: 'Overview',
+            url: '/d/overview',
+          },
+        },
+      });
+
+      const folders: SuggestedNavigationsFoldersMap = {
+        '': shoesFolder,
+      };
+
+      renderWithRouter(
+        <ScopesDashboardsTreeFolderItem
+          folder={shoesFolder}
+          folderPath={['']}
+          folders={folders}
+          onFolderUpdate={mockOnFolderUpdate}
+          subScopePath={['shoes']}
+        />
+      );
+
+      const link = screen.getByTestId('scopes-dashboards-overview');
+      await user.click(link);
+
+      expect(mockScopesSelectorService.changeScopes).toHaveBeenCalledWith(['shoes'], undefined, undefined, false);
+      expect(mockLocationServicePush).toHaveBeenCalled();
+      const pushedUrl = mockLocationServicePush.mock.calls[0][0];
+      expect(pushedUrl).toContain('scopes=shoes');
+      expect(pushedUrl).toContain('nav_scope_path=');
+      expect(decodeURIComponent(pushedUrl)).toContain('shoes');
+      consoleWarnSpy.mockRestore();
     });
   });
 });

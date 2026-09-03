@@ -2,6 +2,7 @@ package unified
 
 import (
 	"context"
+	"maps"
 	"net"
 	"strings"
 	"sync"
@@ -264,9 +265,7 @@ func (s *testServer) getCalls() map[string]int {
 	defer s.mu.Unlock()
 
 	calls := make(map[string]int, len(s.Calls))
-	for method, count := range s.Calls {
-		calls[method] = count
-	}
+	maps.Copy(calls, s.Calls)
 
 	return calls
 }

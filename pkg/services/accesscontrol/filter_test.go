@@ -191,7 +191,7 @@ func TestIntegrationFilter_Datasources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 				// seed 10 data sources

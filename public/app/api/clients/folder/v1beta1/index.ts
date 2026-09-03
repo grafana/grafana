@@ -90,6 +90,7 @@ export const folderAPIv1beta1 = generatedAPI
             dashboards: dashboardUIDs.length,
             librarypanels: 0,
             alertrules: 0,
+            recordingrules: 0,
           };
 
           const promises = folderUIDs.map(async (folderUID) =>
@@ -109,6 +110,7 @@ export const folderAPIv1beta1 = generatedAPI
               acc.dashboards += counts.dashboards ?? 0;
               acc.alertrules += counts.alertrules ?? 0;
               acc.librarypanels += counts.librarypanels ?? 0;
+              acc.recordingrules += counts.recordingrules ?? 0;
               return acc;
             }, initialCounts);
 

@@ -63,6 +63,7 @@ export function useIncidents() {
     count,
     hasMore,
     hasIncidents,
+    enabled: pluginLoading ? undefined : !!installed,
     loading,
     error: loadError,
     refetch,

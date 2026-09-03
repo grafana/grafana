@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n';
 import { type DashboardLink } from '@grafana/schema';
 import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';
 
-import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import { type LinkEdit } from './LinkAddEditableElement';
@@ -81,7 +81,7 @@ export function LinkTextInput({
   autoFocus?: boolean;
 }) {
   const { dashboard, link, linkIndex } = useLinkState(linkEdit);
-  const ref = useEditPaneInputAutoFocus({ autoFocus });
+  const ref = useSidebarInputAutoFocus({ autoFocus });
 
   const config = TEXT_LINK_PROP_CONFIG[prop];
   const oldValue = useRef(link?.[prop] ?? '');

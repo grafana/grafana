@@ -296,8 +296,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
-			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
+			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))     //nolint:staticcheck // legacy plumbing
+			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID)) //nolint:staticcheck // legacy plumbing
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))

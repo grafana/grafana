@@ -288,14 +288,10 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 	for i := range concurrency {
 		wg.Go(func() {
 			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
-			if err != nil {
-				results[i] = result{err: err}
-				return
-			}
-			if rsp.Error != nil {
+			if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 				results[i] = result{
-					err:           resource.GetError(rsp.Error),
-					alreadyExists: rsp.Error.Reason == string(metav1.StatusReasonAlreadyExists),
+					err:           err,
+					alreadyExists: resource.AsErrorResult(err).Reason == string(metav1.StatusReasonAlreadyExists),
 				}
 				return
 			}

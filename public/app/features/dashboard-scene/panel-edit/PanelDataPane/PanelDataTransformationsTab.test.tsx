@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -185,7 +185,11 @@ describe('PanelDataTransformationsTab', () => {
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
-    // Should show SQL transformation card in empty state
+    // Flush useHasBackendDatasource so setResolved is wrapped in act
+    await act(async () => {
+      await Promise.resolve();
+    });
+
     expect(screen.getByText('Add a Transformation')).toBeInTheDocument();
   });
 

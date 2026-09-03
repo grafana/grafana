@@ -180,7 +180,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 		installer := &mockAppInstaller{
 			groupVersions: []schema.GroupVersion{{Group: "test.example.com", Version: "v1"}},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 	})
 
@@ -201,7 +201,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 				return nil
 			},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 
 		require.Len(t, called, 2)
@@ -226,7 +226,7 @@ func TestRegisterStorageOptions(t *testing.T) {
 				return &apistore.StorageOptions{EnableFolderSupport: true}
 			},
 		}
-		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil)
+		reg := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
 		registerStorageOptions(installer, reg, logging.DefaultLogger)
 
 		assert.Equal(t, 1, callCount)

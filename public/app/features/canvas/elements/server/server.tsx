@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig, type ScalarDimensionConfig } from '@grafana/schema';
-import config from 'app/core/config';
 import { type DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors/ScalarDimensionEditor';
@@ -38,7 +37,6 @@ enum ServerType {
 }
 
 type Props = CanvasElementProps<ServerConfig, ServerData>;
-const outlineColor = config.theme2.colors.text.primary;
 
 const ServerDisplay = ({ data }: Props) => {
   return data ? (
@@ -154,39 +152,42 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
   },
 };
 
-export const getServerStyles = (data: ServerData | undefined) => (theme: GrafanaTheme2) => ({
-  bulb: css({
-    '@keyframes blink': {
-      '0%': {
-        fillOpacity: 0,
+export const getServerStyles = (data: ServerData | undefined) => (theme: GrafanaTheme2) => {
+  const outlineColor = theme.colors.text.primary;
+  return {
+    bulb: css({
+      '@keyframes blink': {
+        '0%': {
+          fillOpacity: 0,
+        },
+        '50%': {
+          fillOpacity: 1,
+        },
+        '100%': {
+          fillOpacity: 0,
+        },
       },
-      '50%': {
-        fillOpacity: 1,
+    }),
+    server: css({
+      fill: data?.statusColor ?? 'transparent',
+    }),
+    circle: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
       },
-      '100%': {
-        fillOpacity: 0,
-      },
-    },
-  }),
-  server: css({
-    fill: data?.statusColor ?? 'transparent',
-  }),
-  circle: css({
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
-    },
-    fill: data?.bulbColor,
-    stroke: 'none',
-  }),
-  circleBack: css({
-    fill: outlineColor,
-    stroke: 'none',
-    opacity: 1,
-  }),
-  outline: css({
-    stroke: outlineColor,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    strokeWidth: '4px',
-  }),
-});
+      fill: data?.bulbColor,
+      stroke: 'none',
+    }),
+    circleBack: css({
+      fill: outlineColor,
+      stroke: 'none',
+      opacity: 1,
+    }),
+    outline: css({
+      stroke: outlineColor,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      strokeWidth: '4px',
+    }),
+  };
+};

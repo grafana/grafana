@@ -52,13 +52,13 @@ func TestIntegrationCallResource(t *testing.T) {
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil, nil,
-		testdatasource.ProvideService(), nil, nil)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.Service{}, nil,
+		testdatasource.ProvideService(), nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
-		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider())
+		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

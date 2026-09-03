@@ -81,13 +81,13 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	setupSqlFS := func() {
 		commonSetup()
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/")
 	}
 
 	setupSqlFSNestedPath := func() {
 		commonSetup()
-		sqlStore = db.InitTestDB(t)
+		sqlStore = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		filestorage = NewDbStorage(testLogger, sqlStore, nil, "/5/dashboards/")
 	}
 

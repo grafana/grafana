@@ -1,8 +1,13 @@
-import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
+import { type DataSourceApi, type MetricFindValue, getDefaultTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, EmbeddedScene, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
-import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
+import {
+  fetchTagValues,
+  getAdHocTagKeysProvider,
+  getAdHocTagValuesProvider,
+  getGroupByTagKeysProvider,
+} from './tagKeysProviders';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -120,6 +125,19 @@ describe('tagKeysProviders', () => {
       expect(result.values).not.toEqual(
         expect.arrayContaining([{ text: 'namespace_extracted', value: 'namespace_extracted', group: 'All' }])
       );
+    });
+  });
+
+  describe('fetchTagValues', () => {
+    it('queries the datasource getTagValues with the key and no filters', async () => {
+      const getTagValues = jest.fn().mockResolvedValue([{ text: 'platform-monitoring' }] satisfies MetricFindValue[]);
+      mockGetDataSourceSrv({ getTagValues });
+
+      const timeRange = getDefaultTimeRange();
+      const result = await fetchTagValues(timeRange, 'team');
+
+      expect(result).toEqual([{ text: 'platform-monitoring' }]);
+      expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'team', filters: [], timeRange }));
     });
   });
 

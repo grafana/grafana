@@ -106,7 +106,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" alt="Add a template query" >}}
 
-1. Click **Back to dashboard**.
+1. Click **Back**.
 1. Click the **Add new element** icon and click **Variable**.
 1. Add a new variable called `traceId`, of variable type **Custom**, giving it a label if required.
 
@@ -137,7 +137,7 @@ It's more useful to instead be able to use TraceQL queries to search for specifi
 
 1. Click **Save**.
 1. Enter an optional description of your changes, and click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back** and **Exit edit**.
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
@@ -162,7 +162,7 @@ To create a set of data links in the panel, use the following steps:
 
 1. Select **Save** to save the data link.
 1. Enter an optional description of your changes, and click **Save**.
-1. Click **Back to dashboard** and **Exit edit**.
+1. Click **Back** and **Exit edit**.
 
 You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 

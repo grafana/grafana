@@ -12,7 +12,7 @@ import { FolderRepo } from './FolderRepo';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    config: { featureToggles: { provisioning: true } },
+    config: { featureToggles: {}, provisioningEnabled: true },
   };
 });
 

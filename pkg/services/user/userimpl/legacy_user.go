@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,18 +33,18 @@ type LegacyService struct {
 	cacheService *localcache.CacheService
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
-	db           db.DB
+	sql          legacysql.LegacyDatabaseProvider
 }
 
 func NewLegacyService(
-	db db.DB,
+	sql legacysql.LegacyDatabaseProvider,
 	orgService org.Service,
 	cfg *setting.Cfg,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
-	store := ProvideStore(db, cfg)
+	store := ProvideStore(sql, cfg)
 	s := &LegacyService{
 		store:        &store,
 		orgService:   orgService,
@@ -51,7 +52,7 @@ func NewLegacyService(
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
-		db:           db,
+		sql:          sql,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -131,7 +132,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 	}
 
 	if err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email); err != nil {
-		return nil, user.ErrUserAlreadyExists
+		return nil, err
 	}
 
 	// create user
@@ -174,7 +175,12 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 	}
 
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.InTransaction(ctx, func(ctx context.Context) error {
 		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
 			return err
@@ -448,6 +454,9 @@ func (s *LegacyService) CreateServiceAccount(ctx context.Context, cmd *user.Crea
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email)
 	if err != nil {
+		if !errors.Is(err, user.ErrUserAlreadyExists) {
+			return nil, err
+		}
 		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 

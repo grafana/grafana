@@ -1,1 +1,0 @@
-{"results":[{"statement_id":0,"series":[{"name":"series_name","tags":{},"columns":["time","col_1_name"],"values":[[1678723623474,"589051IR"]]},{"name":"series_name","tags":{},"columns":["time","col_1_name"],"values":[[1678723623474,null]]},{"name":"series_name","tags":{},"columns":["time","col_1_name"],"values":[[1678723623474,null]]}]}]}

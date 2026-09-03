@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
 
 // fakeTextEmbedder returns a deterministic fixed-length vector for any
@@ -86,6 +88,14 @@ func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...vector.SearchFilter,
 ) ([]vector.VectorSearchResult, error) {
@@ -100,15 +110,19 @@ func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
-func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []string) error {
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []vector.VectorMeta, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
-	return nil
+func (f *fakeVectorBackend) DeleteRows(context.Context, string, string, string, vector.DeleteSelector) (int64, bool, error) {
+	return 0, false, nil
 }
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
+func (f *fakeVectorBackend) UpdateMetadata(context.Context, string, string, *filter.Filter, json.RawMessage, []string) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeVectorBackend) DeleteNamespace(context.Context, string) (int64, error) {
 	return 0, nil
 }
@@ -117,6 +131,15 @@ func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, strin
 }
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
+}
+func (f *fakeVectorBackend) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
+func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
+func (f *fakeVectorBackend) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
 }
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
@@ -127,8 +150,11 @@ func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) 
 	return nil, nil
 }
 func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }
-func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64, _ int) error {
 	return nil
+}
+func (f *fakeVectorBackend) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
@@ -139,6 +165,9 @@ func (f *fakeVectorBackend) MarkBackfillJobError(context.Context, int64, string)
 func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
 func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
+}
+func (f *fakeVectorBackend) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // newTestSearchServer builds a searchServer with just the fields the
@@ -669,18 +698,16 @@ func TestVectorSearch_SearchesPartitionKeyNotWireName(t *testing.T) {
 	assert.Equal(t, "part_key", backend.gotResource)
 }
 
-func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
-	// External rows aren't unified-storage resources; per-result authz is
-	// skipped (the caller post-filters), so every row comes back even
-	// when the access client would deny everything.
+func TestVectorSearch_ExternalCollectionEnforcesAuthz(t *testing.T) {
+	// External collections are batch-checked per result like internal resources.
 	backend := &fakeVectorBackend{
-		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
+		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
 		results: []vector.VectorSearchResult{
-			{UID: "u1", Title: "T1", Score: 0.1},
-			{UID: "u2", Title: "T2", Score: 0.2},
+			{UID: "u1", Title: "T1", Folder: "f-allowed", Score: 0.1},
+			{UID: "u2", Title: "T2", Folder: "f-denied", Score: 0.2},
 		},
 	}
-	access := &countingAccessClient{allow: func(string, string) bool { return false }}
+	access := &countingAccessClient{allow: func(_, folder string) bool { return folder == "f-allowed" }}
 	s := newTestSearchServer(newTestEmbedder(&fakeTextEmbedder{dim: 4}), backend, access)
 
 	resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{
@@ -688,8 +715,9 @@ func TestVectorSearch_ExternalCollectionSkipsAuthz(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Nil(t, resp.Error)
-	require.Len(t, resp.Results, 2)
-	assert.Zero(t, access.batchCalls, "BatchCheck must not be called for external collections")
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, "u1", resp.Results[0].Name)
+	assert.NotZero(t, access.batchCalls, "BatchCheck must run for external collections")
 }
 
 func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
@@ -704,9 +732,7 @@ func TestVectorSearch_ResolveCollectionErrorIsInternal(t *testing.T) {
 }
 
 func TestVectorSearch_NamespaceMismatchIsForbidden(t *testing.T) {
-	// A caller authenticated for one namespace must not read another
-	// tenant's rows — critical for external collections, where the
-	// per-result BatchCheck (the old implicit tenant guard) is skipped.
+	// A caller authenticated for one namespace must not read another tenant's rows.
 	backend := &fakeVectorBackend{
 		collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: true},
 		results:    []vector.VectorSearchResult{{UID: "u1", Title: "T1", Score: 0.1}},

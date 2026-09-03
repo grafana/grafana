@@ -6,6 +6,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
 
+import { DashboardInteractions } from './interactions';
 import { getTestDashboardSceneFromSaveModel } from './test-utils';
 import { trackDashboardSceneCreatedOrSaved, trackDashboardSceneLoaded } from './tracking';
 
@@ -211,6 +212,38 @@ describe('dashboard tracking', () => {
         ],
         hasEditPermissions: true,
         hasSavePermissions: true,
+      });
+    });
+  });
+
+  describe('global variables interactions', () => {
+    it('reports dashboards_global_variables_loaded', () => {
+      DashboardInteractions.globalVariablesLoaded({
+        global_count: 2,
+        folder_count: 1,
+        total_count: 3,
+        mode: 'all',
+      });
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+        global_count: 2,
+        folder_count: 1,
+        total_count: 3,
+        mode: 'all',
+        isDynamicDashboard: true,
+      });
+    });
+
+    it('reports dashboards_global_variables_mode_changed', () => {
+      DashboardInteractions.globalVariablesModeChanged({
+        from_mode: 'all',
+        to_mode: 'none',
+      });
+
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_mode_changed', {
+        from_mode: 'all',
+        to_mode: 'none',
+        isDynamicDashboard: true,
       });
     });
   });

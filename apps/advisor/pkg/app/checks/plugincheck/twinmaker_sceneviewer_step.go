@@ -7,12 +7,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 )
 
 const (
-	twinmakerSceneViewerStepID  = "twinmaker_sceneviewer"
-	twinmakerAppPluginID        = "grafana-iot-twinmaker-app"
-	twinmakerSceneViewerMessage = "The SceneViewer panel in the TwinMaker App will stop working in Grafana 13.1. Ignore or silence this warning if you are not using the SceneViewer panel."
+	twinmakerSceneViewerStepID = "twinmaker_sceneviewer"
+	twinmakerAppPluginID       = "grafana-iot-twinmaker-app"
 )
 
 var _ checks.Step = &twinmakerSceneViewerStep{}
@@ -20,15 +20,15 @@ var _ checks.Step = &twinmakerSceneViewerStep{}
 type twinmakerSceneViewerStep struct{}
 
 func (s *twinmakerSceneViewerStep) Title() string {
-	return "TwinMaker SceneViewer deprecation check"
+	return translations.StepTitle(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) Description() string {
-	return "Warns when the Grafana IoT TwinMaker App is installed that the SceneViewer panel will stop working in Grafana 13.1."
+	return translations.StepDescription(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) Resolution() string {
-	return twinmakerSceneViewerMessage
+	return translations.StepResolution(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) ID() string {
@@ -48,13 +48,10 @@ func (s *twinmakerSceneViewerStep) Run(_ context.Context, log logging.Logger, _ 
 	return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 		advisor.CheckReportFailureSeverityLow,
 		s.ID(),
-		twinmakerSceneViewerMessage,
+		twinmakerAppPluginID,
 		twinmakerSceneViewerStepID,
 		[]advisor.CheckErrorLink{
-			{
-				Message: "View plugin",
-				Url:     fmt.Sprintf("/plugins/%s", p.ID),
-			},
+			checks.NewErrorLink("view-plugin", fmt.Sprintf("/plugins/%s", p.ID)),
 		},
 	)}, nil
 }

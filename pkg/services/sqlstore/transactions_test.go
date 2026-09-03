@@ -26,7 +26,7 @@ func TestTxnRetryBackoff(t *testing.T) {
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss, _ := InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	t.Run("top level transaction", func(t *testing.T) {
 		var outerSession *DBSession
@@ -84,7 +84,7 @@ func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss, _ := InitTestDB(t)
+	ss, _ := InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := context.Background()
 
 	// On X success

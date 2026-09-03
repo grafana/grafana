@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -32,6 +33,7 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 	return &AMConfigV1{
 		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
+		TimeIntervals:      TimeIntervalsToModel(in.AlertmanagerConfig.MuteTimeIntervals, in.AlertmanagerConfig.TimeIntervals),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
@@ -41,29 +43,30 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:        in.Global,
-			Route:         RouteToModel(in.Route),
-			InhibitRules:  slices.Clone(in.InhibitRules),
-			Templates:     slices.Clone(in.Templates),
-			TimeIntervals: TimeIntervalsToModel(in.MuteTimeIntervals, in.TimeIntervals),
+			Global:       in.Global,
+			Route:        RouteToModel(in.Route),
+			InhibitRules: slices.Clone(in.InhibitRules),
+			Templates:    slices.Clone(in.Templates),
 		},
 		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) []TimeInterval {
+func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) map[ResourceUID]TimeInterval {
 	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
-	// Fold mute time intervals into time intervals, mute first. A name cannot appear in both lists
-	// because Config rejects duplicates across them at unmarshal time, so the order only needs to be
-	// stable; mute-first matches what the config was previously flattened to when applied.
-	out := make([]TimeInterval, 0, len(muteIntervals)+len(timeIntervals))
+	// Fold the deprecated mute time intervals into time intervals. Merging both lists under one set
+	// of UIDs is safe because Config rejects duplicate names across them at unmarshal time, so no
+	// definition can silently overwrite another here.
+	out := make(map[ResourceUID]TimeInterval, len(muteIntervals)+len(timeIntervals))
 	for _, interval := range muteIntervals {
-		out = append(out, TimeInterval(interval))
+		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		out[ti.UID] = ti
 	}
 	for _, interval := range timeIntervals {
-		out = append(out, TimeInterval(interval))
+		ti := NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone)
+		out[ti.UID] = ti
 	}
 	return out
 }
@@ -84,10 +87,8 @@ func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApi
 		return nil
 	}
 	return &PostableApiReceiver{
-		Receiver: in.Receiver,
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-		},
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
 	}
 }
 
@@ -209,7 +210,7 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	}
 	dbModel := AMConfigDB{
 		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
+		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
 		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
 	}
@@ -224,27 +225,29 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
+func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.PostableApiAlertingConfig {
 	return definition.PostableApiAlertingConfig{
 		Config: definition.Config{
-			Global:        in.Global,
-			Route:         RouteToDB(in.Route),
-			InhibitRules:  slices.Clone(in.InhibitRules),
-			Templates:     slices.Clone(in.Templates),
-			TimeIntervals: TimeIntervalsToDB(in.TimeIntervals),
+			Global:       in.Global,
+			Route:        RouteToDB(in.Route),
+			InhibitRules: slices.Clone(in.InhibitRules),
+			Templates:    slices.Clone(in.Templates),
+			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+			TimeIntervals: TimeIntervalsToDB(timeIntervals),
 		},
 		Receivers: ReceiversToDB(in.Receivers),
 	}
 }
 
 func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
-	if in == nil {
+	// Keep the DB model free of an empty time_intervals array when there are none.
+	if len(in) == 0 {
 		return nil
 	}
 	out := make([]config.TimeInterval, 0, len(in))
 	for _, interval := range in {
 		out = append(out, config.TimeInterval{
-			Name:          interval.Name,
+			Name:          interval.Title,
 			TimeIntervals: interval.TimeIntervals,
 		})
 	}
@@ -267,7 +270,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiRec
 		return nil
 	}
 	return &definition.PostableApiReceiver{
-		Receiver: in.Receiver,
+		Name: in.Name,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 		},
@@ -434,26 +437,18 @@ func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 	}
 }
 
-// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to PostableGrafanaReceiver.
-// If receiver does not have any legacy receivers, returns the original receiver.
-// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
-func PostableMimirReceiverToPostableGrafanaReceiver(r *PostableApiReceiver) (*PostableApiReceiver, error) {
-	if !r.HasMimirIntegrations() {
-		return r, nil
-	}
-	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+// PostableMimirReceiverToPostableGrafanaReceiver converts an upstream (Mimir) receiver into a
+// receiver that carries the equivalent Grafana integrations. The result never contains legacy
+// models, so callers do not need to convert again.
+func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*PostableApiReceiver, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
 	result := &PostableApiReceiver{
-		Receiver: definition.Receiver{
-			Name: r.Name,
-		},
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
-		},
+		Name:                    r.Name,
+		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
 	}
-	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())

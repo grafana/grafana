@@ -41,7 +41,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';

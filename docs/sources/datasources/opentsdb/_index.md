@@ -18,12 +18,14 @@ labels:
 menuTitle: OpenTSDB
 title: OpenTSDB data source
 weight: 1100
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB data source
 
-Grafana ships with support for OpenTSDB, an open source time series database built on top of HBase. Use the OpenTSDB data source to visualize metrics, create alerts, and build dashboards from your time series data.
+OpenTSDB is an open source time series database built on top of HBase. Use the OpenTSDB data source to visualize metrics, create alerts, and build dashboards from your time series data.
+
+Grafana ships with OpenTSDB preinstalled in both Grafana OSS and Enterprise, so there's nothing for you to install. The data source is now packaged as a standalone plugin that updates independently of Grafana releases. For details, refer to [Plugin updates](#plugin-updates).
 
 ## Supported features
 
@@ -55,6 +57,30 @@ The following documents help you get started with the OpenTSDB data source:
 - [OpenTSDB query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/) - Create and edit queries with aggregation, downsampling, and filtering.
 - [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) - Create dynamic dashboards with OpenTSDB variables.
 - [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) - Solve common configuration and query errors.
+
+## Plugin updates
+
+Starting with Grafana v13.2, the OpenTSDB data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+
+To adjust this behavior:
+
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
+
+The standalone plugin requires Grafana 12.3.0 or later. The OpenTSDB data source bundled with Grafana 12.2 and earlier continues to work as before. These versions are unaffected by the externalization.
+
+Users running Grafana 12.3.x through 13.1.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.2. To use the standalone plugin with these versions, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.opentsdb]
+as_external = true
+
+[plugins]
+; Install the latest version on startup:
+preinstall_sync = opentsdb
+; Or install a specific version:
+; preinstall_sync = opentsdb@<version>
+```
 
 ## Additional features
 

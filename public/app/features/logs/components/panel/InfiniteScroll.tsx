@@ -306,7 +306,7 @@ export const InfiniteScroll = ({
     [infiniteLoaderState, logs, scrollElement]
   );
 
-  const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uid : index.toString()), [logs]);
+  const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
   const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
 

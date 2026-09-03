@@ -392,6 +392,7 @@ export class DatasourceSrv implements DataSourceService {
 
   async reload() {
     const settings = await getBackendSrv().get('/api/frontend/settings');
+    // eslint-disable-next-line @grafana/no-config-datasources -- reload() intentionally refreshes boot data for legacy sync consumers
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);

@@ -46,8 +46,10 @@ export interface Props {
   onUpdateDatasources?: (datasource: DataSourceRef) => void;
   onQueryReplacedFromLibrary?: () => void;
   queryRowWrapper?: (children: ReactNode, refId: string) => ReactNode;
-  queryLibraryRef?: string;
-  onCancelQueryLibraryEdit?: () => void;
+  editSavedQueryRef?: string;
+  onExitQueryLibraryEdit?: () => void;
+  addingSavedQuery?: boolean;
+  onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
   panelRef?: SceneObjectRef<VizPanel>;
   /** refId of a row to scroll into view once it renders (e.g. a freshly added query). */
@@ -231,8 +233,10 @@ export class QueryEditorRows extends PureComponent<Props> {
       onQueryOpenChanged,
       onQueryReplacedFromLibrary,
       queryRowWrapper,
-      queryLibraryRef,
-      onCancelQueryLibraryEdit,
+      editSavedQueryRef,
+      onExitQueryLibraryEdit,
+      addingSavedQuery,
+      onCancelAddSavedQuery,
       isOpen,
       panelRef,
       scrollToRefId,
@@ -283,8 +287,10 @@ export class QueryEditorRows extends PureComponent<Props> {
                       range={getTimeSrv().timeRange()}
                       history={history}
                       eventBus={eventBus}
-                      queryLibraryRef={queryLibraryRef}
-                      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+                      editSavedQueryRef={editSavedQueryRef}
+                      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
+                      addingSavedQuery={addingSavedQuery}
+                      onCancelAddSavedQuery={onCancelAddSavedQuery}
                       isOpen={isOpen}
                       scrollIntoView={scrollToRefId !== undefined && query.refId === scrollToRefId}
                       onScrollIntoView={onScrollIntoView}

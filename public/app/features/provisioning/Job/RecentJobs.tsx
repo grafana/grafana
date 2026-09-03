@@ -2,6 +2,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
@@ -267,7 +268,7 @@ export function RecentJobs({ repo }: Props) {
   };
 
   return (
-    <Card noMargin>
+    <Card noMargin data-testid={selectors.pages.Provisioning.RepositoryOverview.jobsCard}>
       <Card.Heading>
         <Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans>
       </Card.Heading>

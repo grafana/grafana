@@ -14,6 +14,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -22,17 +23,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type SocialService struct {
-	cfg *setting.Cfg
-
-	socialMap map[string]social.SocialConnector
-	log       log.Logger
+	cfgProvider   configprovider.ConfigProvider
+	socialMap     map[string]social.SocialConnector
+	log           log.Logger
+	features      featuremgmt.FeatureToggles
+	cache         remotecache.CacheStorage
+	orgRoleMapper *connectors.OrgRoleMapper
+	ssoSettings   ssosettings.Service
 }
 
-func ProvideService(cfg *setting.Cfg,
+func ProvideService(ctx context.Context,
+	cfgProvider configprovider.ConfigProvider,
 	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
@@ -40,15 +44,23 @@ func ProvideService(cfg *setting.Cfg,
 	orgRoleMapper *connectors.OrgRoleMapper,
 	ssoSettings ssosettings.Service,
 ) *SocialService {
+	if orgRoleMapper == nil {
+		orgRoleMapper = connectors.ProvideOrgRoleMapper(cfgProvider, nil)
+	}
+
 	ss := &SocialService{
-		cfg:       cfg,
-		socialMap: make(map[string]social.SocialConnector),
-		log:       log.New("login.social"),
+		cfgProvider:   cfgProvider,
+		socialMap:     make(map[string]social.SocialConnector),
+		log:           log.New("login.social"),
+		features:      features,
+		cache:         cache,
+		orgRoleMapper: orgRoleMapper,
+		ssoSettings:   ssoSettings,
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
-	allSettings, err := ssoSettings.List(context.Background())
+	allSettings, err := ssoSettings.List(ctx)
 	if err != nil {
 		ss.log.Error("Failed to get SSO settings", "error", err)
 	}
@@ -65,7 +77,7 @@ func ProvideService(cfg *setting.Cfg,
 			continue
 		}
 
-		conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
+		conn, err := ss.createOAuthConnector(ctx, ssoSetting.Provider, info, true)
 		if err != nil {
 			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 			continue
@@ -80,25 +92,35 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not
-func (ss *SocialService) GetOAuthProviders() map[string]bool {
+func (ss *SocialService) GetOAuthProviders(ctx context.Context) (map[string]bool, error) {
 	result := map[string]bool{}
 
-	for name, conn := range ss.socialMap {
-		result[name] = conn.GetOAuthInfo().Enabled
+	settingsList, err := ss.ssoSettings.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list OAuth settings: %w", err)
+	}
+	for _, settings := range settingsList {
+		if !slices.Contains(ssosettings.AllOAuthProviders, settings.Provider) {
+			continue
+		}
+		info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, settings.Provider, settings.Settings)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth info", "provider", settings.Provider, "error", err)
+			continue
+		}
+		result[settings.Provider] = info.Enabled
 	}
 
-	return result
+	return result, nil
 }
 
-func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+func (ss *SocialService) GetOAuthHttpClient(ctx context.Context, name string) (*http.Client, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
-	provider, ok := ss.socialMap[name]
-	if !ok {
-		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
+	info, err := ss.GetOAuthInfoProvider(ctx, name)
+	if err != nil {
+		return nil, err
 	}
-
-	info := provider.GetOAuthInfo()
 	if !info.Enabled {
 		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
@@ -152,43 +174,79 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	return oauthClient, nil
 }
 
-func (ss *SocialService) GetConnector(name string) (social.SocialConnector, error) {
+func (ss *SocialService) GetConnector(ctx context.Context, name string) (social.SocialConnector, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	provider := strings.TrimPrefix(name, "oauth_")
-	connector, ok := ss.socialMap[provider]
-	if !ok {
-		return nil, fmt.Errorf("failed to find oauth provider for %q", name)
+	info, err := ss.GetOAuthInfoProvider(ctx, provider)
+	if err != nil {
+		return nil, err
 	}
-	return connector, nil
+	return ss.createOAuthConnector(ctx, provider, info, false)
 }
 
-func (ss *SocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
+func (ss *SocialService) GetOAuthInfoProvider(ctx context.Context, name string) (*social.OAuthInfo, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	provider := strings.TrimPrefix(name, "oauth_")
-	connector, ok := ss.socialMap[provider]
-	if !ok {
-		return nil
+	settings, err := ss.ssoSettings.GetForProvider(ctx, provider)
+	if err != nil {
+		return nil, fmt.Errorf("get OAuth settings for %q: %w", provider, err)
 	}
-	return connector.GetOAuthInfo()
+	if settings == nil {
+		return nil, fmt.Errorf("could not find %q in OAuth settings", provider)
+	}
+
+	return ss.oauthInfoFromSettings(ctx, provider, settings.Settings)
 }
 
 // GetOAuthInfoProviders returns enabled OAuth providers
-func (ss *SocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+func (ss *SocialService) GetOAuthInfoProviders(ctx context.Context) (map[string]*social.OAuthInfo, error) {
 	result := map[string]*social.OAuthInfo{}
-	for name, connector := range ss.socialMap {
-		info := connector.GetOAuthInfo()
+	settingsList, err := ss.ssoSettings.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list OAuth settings: %w", err)
+	}
+	for _, settings := range settingsList {
+		if !slices.Contains(ssosettings.AllOAuthProviders, settings.Provider) {
+			continue
+		}
+		info, err := ss.oauthInfoFromSettings(ctx, settings.Provider, settings.Settings)
+		if err != nil {
+			ss.log.Error("Failed to create OAuth info", "provider", settings.Provider, "error", err)
+			continue
+		}
 		if info.Enabled {
-			result[name] = info
+			result[settings.Provider] = info
 		}
 	}
-	return result
+	return result, nil
+}
+
+func (ss *SocialService) oauthInfoFromSettings(ctx context.Context, provider string, settings map[string]any) (*social.OAuthInfo, error) {
+	info, err := connectors.CreateOAuthInfoFromKeyValuesWithLogging(ss.log, provider, settings)
+	if err != nil {
+		return nil, fmt.Errorf("create OAuth info for %q: %w", provider, err)
+	}
+	if provider == social.GrafanaComProviderName {
+		cfg, err := ss.cfgProvider.Get(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("get configuration for OAuth provider %q: %w", provider, err)
+		}
+		info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
+		info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
+		info.AuthStyle = "inheader"
+	}
+	return info, nil
 }
 
 func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, error) {
 	m := map[string]any{}
 
 	authTypes := map[string]bool{}
-	for provider, enabled := range ss.GetOAuthProviders() {
+	providers, err := ss.GetOAuthProviders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for provider, enabled := range providers {
 		authTypes["oauth_"+provider] = enabled
 	}
 
@@ -204,22 +262,26 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *connectors.OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+func (ss *SocialService) createOAuthConnector(ctx context.Context, name string, info *social.OAuthInfo, registerReloadable bool) (social.SocialConnector, error) {
+	var settingsService ssosettings.Service
+	if registerReloadable {
+		settingsService = ss.ssoSettings
+	}
 	switch name {
 	case social.AzureADProviderName:
-		return connectors.NewAzureADProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil
+		return connectors.NewAzureADProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features, ss.cache)
 	case social.GenericOAuthProviderName:
-		return connectors.NewGenericOAuthProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil
+		return connectors.NewGenericOAuthProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features, ss.cache)
 	case social.GitHubProviderName:
-		return connectors.NewGitHubProvider(info, cfg, orgRoleMapper, ssoSettings, features), nil
+		return connectors.NewGitHubProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features)
 	case social.GitlabProviderName:
-		return connectors.NewGitLabProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil
+		return connectors.NewGitLabProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features, ss.cache)
 	case social.GoogleProviderName:
-		return connectors.NewGoogleProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil
+		return connectors.NewGoogleProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features, ss.cache)
 	case social.GrafanaComProviderName:
-		return connectors.NewGrafanaComProvider(info, cfg, orgRoleMapper, ssoSettings, features), nil
+		return connectors.NewGrafanaComProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features)
 	case social.OktaProviderName:
-		return connectors.NewOktaProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil
+		return connectors.NewOktaProvider(ctx, info, ss.cfgProvider, ss.orgRoleMapper, settingsService, ss.features, ss.cache)
 	default:
 		return nil, fmt.Errorf("unknown oauth provider: %s", name)
 	}

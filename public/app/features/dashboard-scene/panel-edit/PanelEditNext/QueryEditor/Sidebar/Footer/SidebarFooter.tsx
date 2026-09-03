@@ -63,11 +63,7 @@ export function SidebarFooter() {
 
   return (
     <div className={styles.footer}>
-      <div
-        className={cx(styles.viewSlot, styles.countsLayout)}
-        aria-hidden={hasBulkActions}
-        {...(hasBulkActions && { inert: '' })}
-      >
+      <div className={cx(styles.viewSlot, styles.countsLayout)} aria-hidden={hasBulkActions} inert={hasBulkActions}>
         <div ref={containerRef} className={styles.measuredRegion}>
           <div ref={contentRef}>
             <Stack direction="row" alignItems="center" gap={0.5}>
@@ -110,7 +106,7 @@ export function SidebarFooter() {
       <div
         className={cx(styles.viewSlot, styles.barOverlay, hasBulkActions && styles.barOpen)}
         aria-hidden={!hasBulkActions}
-        {...(!hasBulkActions && { inert: '' })}
+        inert={!hasBulkActions}
       >
         <BulkActionsBar />
       </div>

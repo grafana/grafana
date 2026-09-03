@@ -780,7 +780,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     position: 'fixed',
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
@@ -789,6 +789,6 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     maxWidth: maxWidth ?? 'none',
   }),
   pinned: css({
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });

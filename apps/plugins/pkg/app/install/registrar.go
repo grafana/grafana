@@ -2,6 +2,7 @@ package install
 
 import (
 	"context"
+	"fmt"
 	"maps"
 	"strings"
 	"sync"
@@ -211,6 +212,13 @@ func (r *InstallRegistrar) GetClient() (*pluginsv0alpha1.PluginClient, error) {
 
 // Register creates or updates a plugin install in the registry.
 func (r *InstallRegistrar) Register(ctx context.Context, namespace string, install *PluginInstall) error {
+	_, err := r.register(ctx, namespace, install)
+	return err
+}
+
+// register reports whether it wrote. A concurrent conflict counts as a write
+// because the caller's view of the namespace is stale.
+func (r *InstallRegistrar) register(ctx context.Context, namespace string, install *PluginInstall) (bool, error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("register").Observe(time.Since(start).Seconds())
@@ -222,7 +230,7 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	if err != nil {
 		logger.Error("Failed to get plugin client", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		return false, err
 	}
 	identifier := resource.Identifier{
 		Namespace: namespace,
@@ -233,22 +241,27 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		return false, err
 	}
 
 	if existing != nil {
 		if install.ShouldUpdate(existing) {
 			_, err = client.Update(ctx, install.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 			if err != nil {
+				if errorsK8s.IsConflict(err) {
+					// another writer changed the record, report a write so the caller re-reads
+					metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
+					return true, nil
+				}
 				logger.Error("Failed to update plugin", "error", err)
 				metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-				return err
+				return false, err
 			}
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-			return nil
+			return true, nil
 		}
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-		return nil
+		return false, nil
 	}
 
 	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
@@ -256,18 +269,119 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 		if errorsK8s.IsAlreadyExists(err) {
 			// Another replica created it concurrently — desired state is achieved
 			metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
-			return nil
+			return true, nil
 		}
 		logger.Error("Failed to create plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
-		return err
+		return false, err
 	}
 	metrics.RegistrationOperationsTotal.WithLabelValues("register", "success").Inc()
-	return nil
+	return true, nil
+}
+
+// maxSyncNamespacePasses bounds SyncNamespace's passes. A namespace still
+// writing after this many passes is oscillating rather than settling.
+const maxSyncNamespacePasses = 5
+
+// SyncNamespace reconciles the namespace's plugin installs from the given
+// source to match desired, unregistering records not in it. In-sync records
+// are skipped without a read, and because writes fire storage hooks that can
+// rewrite sibling records, passes repeat against a fresh list until one
+// writes nothing.
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall) error {
+	client, err := r.GetClient()
+	if err != nil {
+		return err
+	}
+
+	desiredIDs := make(map[string]struct{}, len(desired))
+	for i := range desired {
+		desiredIDs[desired[i].ID] = struct{}{}
+	}
+
+	var written []string
+	for pass := 0; pass < maxSyncNamespacePasses; pass++ {
+		existing, err := client.ListAll(ctx, namespace, resource.ListOptions{})
+		if err != nil {
+			return err
+		}
+
+		written = written[:0]
+
+		// unregister plugins that are not installed
+		for i := range existing.Items {
+			record := &existing.Items[i]
+			if record.Spec.Id == "" {
+				continue
+			}
+			if _, ok := desiredIDs[record.Spec.Id]; ok {
+				continue
+			}
+			if r.unregisterIsNoOp(record, source) {
+				if pass == 0 {
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped").Inc()
+				}
+				continue
+			}
+			changed, err := r.unregister(ctx, namespace, record.Spec.Id, source)
+			if err != nil {
+				return err
+			}
+			if changed {
+				written = append(written, record.Spec.Id)
+			}
+		}
+
+		existingByName := make(map[string]*pluginsv0alpha1.Plugin, len(existing.Items))
+		for i := range existing.Items {
+			existingByName[existing.Items[i].Name] = &existing.Items[i]
+		}
+
+		// register plugins that are installed
+		for i := range desired {
+			d := &desired[i]
+			if cached := existingByName[d.ID]; cached != nil && !d.ShouldUpdate(cached) {
+				if pass == 0 {
+					metrics.RegistrationOperationsTotal.WithLabelValues("register", "skipped").Inc()
+				}
+				continue
+			}
+			changed, err := r.register(ctx, namespace, d)
+			if err != nil {
+				return err
+			}
+			if changed {
+				written = append(written, d.ID)
+			}
+		}
+
+		if len(written) == 0 {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("plugin install sync did not converge after %d passes, still writing: %v", maxSyncNamespacePasses, written)
+}
+
+// unregisterIsNoOp reports whether the listed record proves Unregister would
+// change nothing: it is the record Unregister would read by id, and it
+// belongs to a different source.
+func (r *InstallRegistrar) unregisterIsNoOp(record *pluginsv0alpha1.Plugin, source Source) bool {
+	if record.Name != record.Spec.Id {
+		return false
+	}
+	existingSource, ok := record.Annotations[PluginInstallSourceAnnotation]
+	return ok && existingSource != source
 }
 
 // Unregister removes a plugin install from the registry.
 func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, name string, source Source) error {
+	_, err := r.unregister(ctx, namespace, name, source)
+	return err
+}
+
+// unregister reports whether it wrote.
+func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, name string, source Source) (bool, error) {
 	start := time.Now()
 	defer func() {
 		metrics.RegistrationDurationSeconds.WithLabelValues("unregister").Observe(time.Since(start).Seconds())
@@ -279,7 +393,7 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	if err != nil {
 		logger.Error("Failed to get plugin client", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		return false, err
 	}
 	identifier := resource.Identifier{
 		Namespace: namespace,
@@ -289,17 +403,18 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 	if err != nil && !errorsK8s.IsNotFound(err) {
 		logger.Error("Failed to get existing plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		return false, err
 	}
 	// if the plugin doesn't exist, nothing to unregister
 	if existing == nil {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return false, nil
 	}
-	// if the source is different, do not unregister
+	// if the source is different, do not unregister. unregisterIsNoOp relies
+	// on this check running before the dependency-parents demote below.
 	if existingSource, ok := existing.Annotations[PluginInstallSourceAnnotation]; ok && existingSource != source {
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return false, nil
 	}
 	// if other plugins still depend on this plugin, keep the record and hand
 	// ownership back to the dependency machinery instead of deleting it, so it
@@ -312,23 +427,28 @@ func (r *InstallRegistrar) Unregister(ctx context.Context, namespace string, nam
 		}
 		if !demoted.ShouldUpdate(existing) {
 			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-			return nil
+			return false, nil
 		}
 		_, err = client.Update(ctx, demoted.applyTo(existing), resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
 		if err != nil {
+			if errorsK8s.IsConflict(err) {
+				// another writer changed the record, report a write so the caller re-reads
+				metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "conflict").Inc()
+				return true, nil
+			}
 			logger.Error("Failed to demote plugin to dependency install", "error", err)
 			metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-			return err
+			return false, err
 		}
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-		return nil
+		return true, nil
 	}
 	err = client.Delete(ctx, identifier, resource.DeleteOptions{})
 	if err != nil {
 		logger.Error("Failed to delete plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "error").Inc()
-		return err
+		return false, err
 	}
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
-	return err
+	return true, nil
 }

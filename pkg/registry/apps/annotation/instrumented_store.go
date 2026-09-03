@@ -14,24 +14,22 @@ import (
 // instrumentedStore decorates any Store with tracing, logging, and metrics.
 type instrumentedStore struct {
 	innerStore Store
-	tracer     trace.Tracer
 	metrics    *Metrics
 	logger     log.Logger
 }
 
 var _ Store = (*instrumentedStore)(nil)
 
-func newInstrumentedStore(innerStore Store, tracer trace.Tracer, metrics *Metrics, logger log.Logger) *instrumentedStore {
+func newInstrumentedStore(innerStore Store, metrics *Metrics, logger log.Logger) *instrumentedStore {
 	return &instrumentedStore{
 		innerStore: innerStore,
-		tracer:     tracer,
 		metrics:    metrics,
 		logger:     logger,
 	}
 }
 
 func (s *instrumentedStore) Get(ctx context.Context, namespace, name string) (out *annotationV0.Annotation, err error) {
-	ctx, span := s.tracer.Start(ctx, "annotation.store.get", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.store.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -54,7 +52,7 @@ func (s *instrumentedStore) List(ctx context.Context, namespace string, opts Lis
 	if opts.PanelID != 0 {
 		attrs = append(attrs, attribute.Int64("panel_id", opts.PanelID))
 	}
-	ctx, span := s.tracer.Start(ctx, "annotation.store.list", trace.WithAttributes(attrs...))
+	ctx, span := tracer.Start(ctx, "annotation.store.list", trace.WithAttributes(attrs...))
 	defer span.End()
 	start := time.Now()
 	defer func() {
@@ -68,7 +66,7 @@ func (s *instrumentedStore) List(ctx context.Context, namespace string, opts Lis
 }
 
 func (s *instrumentedStore) Create(ctx context.Context, anno *annotationV0.Annotation) (out *annotationV0.Annotation, err error) {
-	ctx, span := s.tracer.Start(ctx, "annotation.store.create", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.store.create", trace.WithAttributes(
 		attribute.String("namespace", anno.Namespace),
 	))
 	defer span.End()
@@ -79,7 +77,7 @@ func (s *instrumentedStore) Create(ctx context.Context, anno *annotationV0.Annot
 }
 
 func (s *instrumentedStore) Update(ctx context.Context, anno *annotationV0.Annotation) (out *annotationV0.Annotation, err error) {
-	ctx, span := s.tracer.Start(ctx, "annotation.store.update", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.store.update", trace.WithAttributes(
 		attribute.String("namespace", anno.Namespace),
 		attribute.String("name", anno.Name),
 	))
@@ -91,7 +89,7 @@ func (s *instrumentedStore) Update(ctx context.Context, anno *annotationV0.Annot
 }
 
 func (s *instrumentedStore) Delete(ctx context.Context, namespace, name string) (err error) {
-	ctx, span := s.tracer.Start(ctx, "annotation.store.delete", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "annotation.store.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))

@@ -58,6 +58,12 @@ var (
 	)
 )
 
+// Alertmanager configuration errors.
+var (
+	ErrVersionLockedObjectNotFound = errutil.Conflict("alerting.notifications.alertmanager.versionConflict",
+		errutil.WithPublicMessage("The Alertmanager configuration has changed since it was last loaded. Reload and try again."))
+)
+
 // Route errors.
 var (
 	ErrRouteNotFound = errutil.NotFound("alerting.notifications.routes.notFound", errutil.WithPublicMessage("Route not found"))

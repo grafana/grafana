@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type AlertRuleService interface {
@@ -239,8 +240,10 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if srv.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+	evalCtx := openfeature.NewEvaluationContext("cluster", openfeature.TransactionContext(ctx).Attributes())
+	isKubeSnapshotsEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, evalCtx)
+
+	if isKubeSnapshotsEnabled {
 		srv.deleteKubernetesExpiredSnapshots(ctx)
 	} else {
 		cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}

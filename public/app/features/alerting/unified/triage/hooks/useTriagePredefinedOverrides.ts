@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import z from 'zod';
+import * as z from 'zod';
 
 import { UserStorage } from '@grafana/runtime/internal';
 

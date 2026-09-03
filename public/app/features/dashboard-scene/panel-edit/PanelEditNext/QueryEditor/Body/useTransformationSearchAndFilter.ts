@@ -41,7 +41,10 @@ export function useTransformationSearchAndFilter(
     if (search) {
       const lower = search.toLowerCase();
       result = result.filter(
-        ({ name, description }) => name.toLowerCase().includes(lower) || description?.toLowerCase().includes(lower)
+        ({ name, description, tags }) =>
+          name.toLowerCase().includes(lower) ||
+          description?.toLowerCase().includes(lower) ||
+          Array.from(tags ?? []).some((tag) => tag.toLowerCase().includes(lower))
       );
     }
 

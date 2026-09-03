@@ -130,13 +130,7 @@ func (f *RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	var result = make([]*models.AlertRule, 0, len(rules))
 
 	for _, rule := range rules {
-		add := true
-		for _, UID := range UIDs {
-			if rule.UID == UID {
-				add = false
-				break
-			}
-		}
+		add := !slices.Contains(UIDs, rule.UID)
 		if add {
 			result = append(result, rule)
 		}

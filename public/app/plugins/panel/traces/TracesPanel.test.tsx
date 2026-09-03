@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 
 import { LoadingState, type PanelProps } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { TracesPanel } from './TracesPanel';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 jest.mock('app/features/explore/TraceView/TraceView', () => ({
@@ -18,13 +18,11 @@ jest.mock('app/features/explore/TraceView/utils/transform', () => ({
   transformDataFrames: jest.fn(() => ({ traceID: 'test-trace' })),
 }));
 
-const mockGetDataSourceSrv = getDataSourceSrv as jest.Mock;
+const mockGetDataSourceInstance = getDataSourceInstance as jest.Mock;
 
 describe('TracesPanel', () => {
   beforeEach(() => {
-    mockGetDataSourceSrv.mockReturnValue({
-      get: jest.fn().mockResolvedValue({ uid: 'tempo-uid', type: 'tempo' }),
-    });
+    mockGetDataSourceInstance.mockResolvedValue({ uid: 'tempo-uid', type: 'tempo' });
   });
 
   afterEach(() => {
@@ -63,8 +61,7 @@ describe('TracesPanel', () => {
 
     await screen.findByTestId('trace-view');
 
-    const getSrv = mockGetDataSourceSrv.mock.results[0].value;
-    expect(getSrv.get).toHaveBeenCalledWith('tempo-from-request');
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith('tempo-from-request');
   });
 
   it('falls back to options.datasource when data.request is undefined', async () => {
@@ -84,14 +81,10 @@ describe('TracesPanel', () => {
 
     await screen.findByTestId('trace-view');
 
-    const getSrv = mockGetDataSourceSrv.mock.results[0].value;
-    expect(getSrv.get).toHaveBeenCalledWith('tempo-from-options');
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith('tempo-from-options');
   });
 
-  it('does not call getDataSourceSrv().get when no uid is available', async () => {
-    const getMock = jest.fn();
-    mockGetDataSourceSrv.mockReturnValue({ get: getMock });
-
+  it('does not call getDataSourceInstance when no uid is available', async () => {
     const props = {
       data: {
         series: [{ fields: [], length: 0 }],
@@ -106,6 +99,6 @@ describe('TracesPanel', () => {
 
     await screen.findByTestId('trace-view');
 
-    expect(getMock).not.toHaveBeenCalled();
+    expect(mockGetDataSourceInstance).not.toHaveBeenCalled();
   });
 });

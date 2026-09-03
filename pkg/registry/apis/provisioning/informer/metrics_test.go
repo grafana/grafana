@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
 
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -125,18 +126,17 @@ func TestAPIServerMeter(t *testing.T) {
 		"initial adds, resync re-deliveries and stale deletes carry no latency")
 }
 
-// Several delta sources built against the same registry share one set of
-// collectors instead of failing the duplicate registration.
-func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
+// One instance serves every recorder in a delta source, each passing its own
+// resource label.
+func TestNewInformerMetrics_SharedByRecorders(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	first := newInformerMetrics(reg)
-	second := newInformerMetrics(reg)
+	m := newInformerMetrics(reg)
 
-	first.liveEvents.WithLabelValues("jobs", "add").Inc()
-	second.liveEvents.WithLabelValues("jobs", "add").Inc()
+	newNATSRecorder(m, "jobs").ObserveLiveEvent(usinformer.VerbAdd, 0)
+	apiServerMeter{metrics: m, resourceName: "repositories"}.OnAdd(&unstructured.Unstructured{}, false)
 
-	assert.Equal(t, 2.0, testutil.ToFloat64(first.liveEvents.WithLabelValues("jobs", "add")),
-		"both instances must write the same series")
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", usinformer.VerbAdd)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("repositories", usinformer.VerbAdd)))
 }
 
 // The re-list request counter counts one LIST request per page, so a snapshot

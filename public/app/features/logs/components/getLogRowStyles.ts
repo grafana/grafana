@@ -258,7 +258,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       top: 0,
       bottom: 'auto',
       background: theme.colors.background.primary,
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       padding: theme.spacing(0.5, 1, 0.5, 1),
       zIndex: 100,
       gap: theme.spacing(0.5),

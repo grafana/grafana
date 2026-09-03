@@ -347,7 +347,10 @@
         "deprecated": true,
         "responses": {
           "410": {
-            "$ref": "#/responses/Gone"
+            "description": "Gone",
+            "schema": {
+              "$ref": "#/definitions/Gone"
+            }
           }
         }
       }
@@ -1350,10 +1353,21 @@
             "in": "header"
           },
           {
-            "type": "string",
-            "example": "'environment=production,team=backend' will only apply this",
-            "description": "Comma-separated list of label matchers in 'key=value' format.\nThese matchers determine which alerts this configuration should handle.",
-            "name": "x-grafana-alerting-merge-matchers",
+            "type": "boolean",
+            "description": "If true, the configuration will replace an existing configuration regardless of its identifier",
+            "name": "x-grafana-alerting-config-force-replace",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "description": "If true, validates the configuration without saving it",
+            "name": "x-grafana-alerting-dry-run",
+            "in": "header"
+          },
+          {
+            "type": "boolean",
+            "description": "If true, immediately promotes the configuration into the main Grafana config, making it editable via regular APIs.",
+            "name": "x-grafana-alerting-promote",
             "in": "header"
           },
           {
@@ -1410,6 +1424,48 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
+    "/convert/api/v1/alerts/{Identifier}/promote": {
+      "post": {
+        "description": "The staged import is permanently merged: receivers, routes, time intervals, templates, and\ninhibition rules are folded into the main config and become editable via regular APIs.\nAfter promotion the ExtraConfiguration entry is removed.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "convert_prometheus"
+        ],
+        "summary": "Promote an extra Alertmanager configuration into the main Grafana Alertmanager configuration.",
+        "operationId": "RouteConvertPrometheusPromoteAlertmanagerConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Unique identifier for the Alertmanager configuration to promote.",
+            "name": "Identifier",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "ConvertAlertmanagerResponse",
+            "schema": {
+              "$ref": "#/definitions/ConvertAlertmanagerResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -2295,7 +2351,10 @@
             }
           },
           "404": {
-            "$ref": "#/responses/NotFound."
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
+            }
           }
         }
       }
@@ -3360,6 +3419,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       }
@@ -3480,6 +3545,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -3511,6 +3582,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -3789,6 +3866,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -4115,6 +4198,12 @@
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
             }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
+            }
           }
         }
       },
@@ -4140,6 +4229,12 @@
             "description": "ForbiddenError",
             "schema": {
               "$ref": "#/definitions/ForbiddenError"
+            }
+          },
+          "409": {
+            "description": "PublicError",
+            "schema": {
+              "$ref": "#/definitions/PublicError"
             }
           }
         }
@@ -4905,6 +5000,11 @@
             "maintenance"
           ]
         },
+        "policy": {
+          "description": "Name of the notification policy to route alerts through.\nMutually exclusive with all other fields, cannot be used with contact point routing via the \"receiver\" field.",
+          "type": "string",
+          "example": "\"Alerting Team\""
+        },
         "receiver": {
           "description": "Name of the receiver to send notifications to.",
           "type": "string",
@@ -5351,6 +5451,26 @@
         "$ref": "#/definitions/EmbeddedContactPoint"
       }
     },
+    "ConvertAlertmanagerResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "errorType": {
+          "type": "string"
+        },
+        "rename_resources": {
+          "$ref": "#/definitions/RenameResources"
+        },
+        "stats": {
+          "$ref": "#/definitions/MergeStats"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
     "ConvertPrometheusResponse": {
       "type": "object",
       "properties": {
@@ -5718,8 +5838,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -5735,8 +5854,9 @@
         "identifier": {
           "type": "string"
         },
-        "merge_matchers": {
-          "$ref": "#/definitions/Matchers"
+        "managed_by": {
+          "description": "ManagedBy is \"manual\" or \"auto-sync\", computed server-side so callers don't need configs:get\nto tell the two apart.",
+          "type": "string"
         },
         "template_files": {
           "type": "object",
@@ -6263,6 +6383,9 @@
         },
         "uid": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -6371,8 +6494,7 @@
           "format": "int64"
         },
         "last_applied": {
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "template_file_provenances": {
           "type": "object",
@@ -6398,6 +6520,10 @@
             "internal",
             "external"
           ]
+        },
+        "external_alertmanager_uid": {
+          "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being\nsynced, or empty if sync is not configured for this org.",
+          "type": "string"
         }
       }
     },
@@ -6472,8 +6598,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -6733,6 +6858,52 @@
         }
       }
     },
+    "InhibitionRule": {
+      "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
+      "type": "object",
+      "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
+      "properties": {
+        "equal": {
+          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "source_match": {
+          "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "source_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "source_matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "target_match": {
+          "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "target_match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "target_matchers": {
+          "$ref": "#/definitions/Matchers"
+        }
+      }
+    },
     "InspectType": {
       "type": "integer",
       "format": "int64",
@@ -6743,8 +6914,7 @@
       "properties": {
         "lastNotifyAttempt": {
           "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "lastNotifyAttemptDuration": {
           "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
@@ -6843,21 +7013,10 @@
     "Json": {
       "type": "object"
     },
-    "Label": {
-      "type": "object",
-      "title": "Label is a key/value pair of strings.",
-      "properties": {
-        "Name": {
-          "type": "string"
-        }
-      }
-    },
     "Labels": {
-      "description": "Labels is a sorted set of labels. Order has to be guaranteed upon\ninstantiation.",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/Label"
-      }
+      "description": "Each name and value is preceded by its length, encoded as a single byte\nfor size 0-254, or the following 3 bytes little-endian, if the first byte is 255.\nMaximum length allowed is 2^24 or 16MB.\nNames are in order.",
+      "type": "object",
+      "title": "Labels is implemented by a single flat string holding name/value pairs."
     },
     "LinkTransformationConfig": {
       "type": "object",
@@ -6925,6 +7084,19 @@
         }
       }
     },
+    "ManagedInhibitionRules": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/InhibitionRule"
+      }
+    },
+    "ManagedRoutes": {
+      "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/Route"
+      }
+    },
     "MatchRegexps": {
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
@@ -6959,6 +7131,44 @@
         "$ref": "#/definitions/Matcher"
       },
       "$ref": "#/definitions/Matchers"
+    },
+    "MergeStats": {
+      "type": "object",
+      "title": "MergeStats describes which resources were added during configuration merge.",
+      "properties": {
+        "added_inhibition_rules": {
+          "description": "AddedInhibitionRules contains the names of inhibition rules added",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_receivers": {
+          "description": "AddedReceivers contains the names of receivers added (post-rename if renamed)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_route": {
+          "description": "AddedRoute is the identifier of the routing sub-tree added to the configuration",
+          "type": "string"
+        },
+        "added_templates": {
+          "description": "AddedTemplates contains the names of templates added",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "added_time_intervals": {
+          "description": "AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "MultiStatus": {
       "type": "object"
@@ -7471,105 +7681,29 @@
       "description": "nolint:revive",
       "type": "object",
       "properties": {
-        "discord_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DiscordConfig"
-          }
-        },
-        "email_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EmailConfig"
-          }
-        },
         "grafana_managed_receiver_configs": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
-        "jira_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/JiraConfig"
-          }
-        },
-        "msteams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
-          }
-        },
-        "msteamsv2_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsV2Config"
-          }
-        },
         "name": {
-          "description": "A unique identifier for this receiver.",
+          "type": "string"
+        }
+      }
+    },
+    "PostableApiTemplate": {
+      "description": "nolint:revive",
+      "type": "object",
+      "properties": {
+        "content": {
           "type": "string"
         },
-        "opsgenie_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OpsGenieConfig"
-          }
+        "kind": {
+          "$ref": "#/definitions/TemplateKind"
         },
-        "pagerduty_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PagerdutyConfig"
-          }
-        },
-        "pushover_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PushoverConfig"
-          }
-        },
-        "slack_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SlackConfig"
-          }
-        },
-        "sns_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "telegram_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TelegramConfig"
-          }
-        },
-        "victorops_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
-          }
-        },
-        "webex_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/WebexConfig"
-          }
-        },
-        "webhook_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/WebhookConfig"
-          }
-        },
-        "wechat_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/WechatConfig"
-          }
+        "name": {
+          "type": "string"
         }
       }
     },
@@ -7654,6 +7788,9 @@
         },
         "uid": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -7732,6 +7869,10 @@
             "internal",
             "external"
           ]
+        },
+        "external_alertmanager_uid": {
+          "description": "ExternalAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync\nconfiguration from. Empty string disables sync for this org.",
+          "type": "string"
         }
       }
     },
@@ -7793,6 +7934,18 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/ExtraConfiguration"
+          }
+        },
+        "managed_inhibition_rules": {
+          "$ref": "#/definitions/ManagedInhibitionRules"
+        },
+        "managed_routes": {
+          "$ref": "#/definitions/ManagedRoutes"
+        },
+        "managed_templates": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/PostableApiTemplate"
           }
         },
         "template_files": {
@@ -8438,6 +8591,26 @@
       "properties": {
         "url": {
           "type": "string"
+        }
+      }
+    },
+    "RenameResources": {
+      "description": "RenameResources describes which resources were renamed to avoid conflicts",
+      "type": "object",
+      "properties": {
+        "receivers": {
+          "description": "Receivers maps old receiver names to new receiver names",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "time_intervals": {
+          "description": "TimeIntervals maps old time interval names to new time interval names",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     },
@@ -9152,6 +9325,9 @@
         }
       }
     },
+    "TemplateKind": {
+      "type": "string"
+    },
     "TestRulePayload": {
       "type": "object",
       "properties": {
@@ -9184,6 +9360,9 @@
           "items": {
             "$ref": "#/definitions/postableAlert"
           }
+        },
+        "kind": {
+          "$ref": "#/definitions/TemplateKind"
         },
         "name": {
           "description": "Name of the template file.",
@@ -9373,6 +9552,7 @@
       "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
+          "description": "ForceQuery indicates whether the original URL contained a query ('?') character.\nWhen set, the String method will include a trailing '?', even when RawQuery is empty.",
           "type": "boolean"
         },
         "Fragment": {
@@ -9382,6 +9562,7 @@
           "type": "string"
         },
         "OmitHost": {
+          "description": "OmitHost indicates the URL has an empty host (authority).\nWhen set, the String method will not include the host when it is empty.",
           "type": "boolean"
         },
         "Opaque": {
@@ -9391,12 +9572,15 @@
           "type": "string"
         },
         "RawFragment": {
+          "description": "RawFragment is an optional field containing an encoded fragment hint.\nSee the EscapedFragment method for more details.\n\nIn general, code should call EscapedFragment instead of reading RawFragment.",
           "type": "string"
         },
         "RawPath": {
+          "description": "RawPath is an optional field containing an encoded path hint.\nSee the EscapedPath method for more details.\n\nIn general, code should call EscapedPath instead of reading RawPath.",
           "type": "string"
         },
         "RawQuery": {
+          "description": "RawQuery contains the encoded query values, without the initial '?'.\nUse URL.Query to decode the query.",
           "type": "string"
         },
         "Scheme": {
@@ -9632,8 +9816,7 @@
       "properties": {
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
@@ -9735,8 +9918,7 @@
         },
         "uptime": {
           "description": "uptime",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "versionInfo": {
           "$ref": "#/definitions/versionInfo"
@@ -9789,8 +9971,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "fingerprint": {
           "description": "fingerprint",
@@ -9798,8 +9979,7 @@
         },
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
@@ -9813,16 +9993,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/alertStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -9868,8 +10046,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -9883,16 +10060,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/silenceStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -9926,8 +10101,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -9938,16 +10112,14 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "status": {
           "$ref": "#/definitions/silenceStatus"
         },
         "updatedAt": {
           "description": "updated at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10039,21 +10211,18 @@
         },
         "endsAt": {
           "description": "ends at\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "generatorURL": {
           "description": "generator URL\nFormat: uri",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "labels": {
           "$ref": "#/definitions/labelSet"
         },
         "startsAt": {
           "description": "starts at\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10085,8 +10254,7 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "id": {
           "description": "id",
@@ -10097,8 +10265,7 @@
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },
@@ -10136,16 +10303,14 @@
         },
         "endsAt": {
           "description": "ends at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         },
         "matchers": {
           "$ref": "#/definitions/matchers"
         },
         "startsAt": {
           "description": "starts at",
-          "type": "string",
-          "format": "date-time"
+          "type": "string"
         }
       }
     },

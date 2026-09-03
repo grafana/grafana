@@ -200,7 +200,7 @@ describe('DashboardOutline', () => {
       const scene = buildTestScene();
       const pane = new DashboardOutline({});
 
-      // enable selection on the edit pane to activate real selection behavior
+      // enable selection on the sidebar to activate real selection behavior
       scene.onEnterEditMode();
       scene.state.sidebar.enableSelection();
       scene.state.sidebar.openPane(pane);
@@ -247,7 +247,7 @@ describe('DashboardOutline', () => {
       const scene = buildTestScene();
       const pane = new DashboardOutline({});
 
-      // enable selection on the edit pane to activate real selection behavior
+      // enable selection on the sidebar to activate real selection behavior
       scene.state.sidebar.enableSelection();
       scene.state.sidebar.openPane(pane);
 

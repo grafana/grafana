@@ -101,6 +101,7 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	list = append(list, validateWorkflowOptions(cfg)...)
+	list = append(list, validateCommitOptions(cfg)...)
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
@@ -223,6 +224,44 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 		}
 	default:
 		// Hosting providers (github, githubEnterprise, bitbucket, gitlab) support all options.
+	}
+
+	return list
+}
+
+// validateCommitOptions keeps the two ways of setting a commit identity apart: the
+// signer identity only applies to signed commits, and the author override only
+// applies when commits are not signed.
+func validateCommitOptions(cfg *provisioning.Repository) field.ErrorList {
+	commit := cfg.Spec.Commit
+	if commit == nil {
+		return nil
+	}
+
+	path := field.NewPath("spec", "commit")
+	var list field.ErrorList
+
+	if commit.SigningMethod == "" {
+		const detail = "signer identity requires a signing method; use authorName/authorEmail to set the commit author without signing"
+		if commit.SignerName != "" {
+			list = append(list, field.Invalid(path.Child("signerName"), commit.SignerName, detail))
+		}
+		if commit.SignerEmail != "" {
+			list = append(list, field.Invalid(path.Child("signerEmail"), commit.SignerEmail, detail))
+		}
+		if commit.SignerIsAuthor {
+			list = append(list, field.Invalid(path.Child("signerIsAuthor"), commit.SignerIsAuthor, detail))
+		}
+
+		return list
+	}
+
+	const detail = "author override is not allowed when commit signing is enabled; use signerName/signerEmail with signerIsAuthor instead"
+	if commit.AuthorName != "" {
+		list = append(list, field.Invalid(path.Child("authorName"), commit.AuthorName, detail))
+	}
+	if commit.AuthorEmail != "" {
+		list = append(list, field.Invalid(path.Child("authorEmail"), commit.AuthorEmail, detail))
 	}
 
 	return list

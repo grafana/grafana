@@ -30,5 +30,6 @@ describe('RawListItem', () => {
     expect(screen.getAllByText(`instanceValue`)[0]).toBeVisible();
     expect(screen.getAllByText(`metric_name_here`)[0]).toBeVisible();
     expect(screen.getAllByText(`1234556677888`)[0]).toBeVisible();
+    expect(screen.getByText('1234556677888').parentElement).toHaveStyle({ minWidth: '128px' });
   });
 });

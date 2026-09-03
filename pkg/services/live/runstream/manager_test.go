@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -110,6 +111,56 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	require.Len(t, manager.streams, 1)
 	cancel()
 	waitWithTimeout(t, doneCh, time.Second)
+}
+
+func TestStreamManager_RunStream_DoesNotInheritSpanFromBaseContext(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockPacketSender := NewMockChannelLocalPublisher(mockCtrl)
+	mockNumSubscribersGetter := NewMockNumLocalSubscribersGetter(mockCtrl)
+	mockContextGetter := NewMockPluginContextGetter(mockCtrl)
+
+	manager := NewManager(mockPacketSender, mockNumSubscribersGetter, mockContextGetter)
+
+	// Simulate the background-service context carrying a process-lifetime span
+	// (like the server startup span). If streams inherit it, every streaming
+	// query in the process ends up in one shared trace.
+	spanCtx := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID:    trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		SpanID:     trace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+		TraceFlags: trace.FlagsSampled,
+	})
+	require.True(t, spanCtx.IsValid())
+	baseCtx := trace.ContextWithSpanContext(context.Background(), spanCtx)
+
+	ctx, cancel := context.WithCancel(baseCtx)
+	defer cancel()
+	go func() {
+		_ = manager.Run(ctx)
+	}()
+
+	runStreamSpanValid := make(chan bool, 1)
+
+	mockStreamRunner := NewMockStreamRunner(mockCtrl)
+	mockStreamRunner.EXPECT().RunStream(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+		runStreamSpanValid <- trace.SpanContextFromContext(ctx).IsValid()
+		return nil
+	}).Times(1)
+
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	require.NoError(t, err)
+	require.False(t, result.StreamExists)
+	waitWithTimeout(t, result.CloseNotify, time.Second)
+
+	select {
+	case valid := <-runStreamSpanValid:
+		require.False(t, valid, "RunStream context must not inherit a span from the manager's base context")
+	case <-time.After(time.Second):
+		t.Fatal("timeout waiting for RunStream span check")
+	}
 }
 
 func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {

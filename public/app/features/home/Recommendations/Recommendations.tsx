@@ -1,150 +1,172 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
-import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { setupGuideEnabled } from '../solutions/pluginAvailability';
+import { type SolutionState } from '../solutions/solutionState';
+import { getTelemetrySetupLink } from '../solutions/telemetrySetup';
+import { type SolutionId } from '../solutions/types';
+import { type HomepageSolutions } from '../useHomepageSolutions';
+
 import { RecommendationsSkeleton } from './RecommendationsSkeleton';
 import { RecommendationsView } from './RecommendationsView';
-import { fetchInstalledPlugins, getRecommendations, type PluginRecommendationItem } from './pluginRecommendations';
-import { hasSolutionData } from './solutionDataProbes';
+import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
+import { orderCardsForSolution, type RecommendedCardId, selectRecommendations } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
-// Remembers whether the section rendered on the last visit: the loading skeleton only
-// shows for users who actually get recommendations, so stacks that resolve to nothing
-// never flash a skeleton that collapses into empty space.
-const WAS_VISIBLE_KEY = 'grafana.home.recommendations.was-visible';
+const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
-export function Recommendations() {
-  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
-  // Unscoped pre-gate only; each disabled card re-checks plugins:write scoped to its own plugin.
-  // Deliberate limitation: users with only app access (no plugins:write/install anywhere) do not
-  // see the section at all — recommendations are a plugin-management surface, and the pre-gate
-  // spares every viewer the /api/plugins fetch and the solution data probes.
+interface RecommendationsProps {
+  solutions: HomepageSolutions;
+}
+
+export function Recommendations({ solutions }: RecommendationsProps) {
+  // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
+  // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
-  if (!canInstall && !canWriteSome) {
+  const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  if (!canWriteSome && !canCreateDataSources) {
     return null;
   }
-  return <GatedRecommendations canInstall={canInstall} />;
+  return <GatedRecommendations solutions={solutions} />;
 }
 
 interface GatedRecommendationsProps {
-  canInstall: boolean;
+  solutions: HomepageSolutions;
 }
 
-function toEnableItem(recommendation: PluginRecommendationItem): RecommendationItem {
+function toEnableItem(recommendation: PluginRecommendationCard): RecommendationItem {
   return { ...recommendation, cta: 'enable' };
 }
 
-// Enabled-but-silent app: the CTA leads into the app to finish setup, not to the catalog.
-function toSetupItem(recommendation: PluginRecommendationItem): RecommendationItem {
+// Enabled but silent: send the user into the app to finish setup, not back to the catalog.
+function toSetupItem(recommendation: PluginRecommendationCard): RecommendationItem {
   return { ...recommendation, action: recommendation.setupAction, href: recommendation.appHref, cta: 'setup' };
 }
 
-function mapPluginsById(plugins: LocalPlugin[] = []) {
-  return new Map(plugins.map((plugin) => [plugin.id, plugin]));
+function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionState, setupGuideEnabled: boolean) {
+  const pluginsById = new Map(inventory.map((plugin) => [plugin.id, plugin]));
+  const selection = selectRecommendations(signals);
+  const cardsById = getRecommendationCards();
+
+  // An unavailable plugin list fails closed (plugin cards only). /api/plugins always lists at
+  // least the core plugins, so an empty response means the list is unreliable and also fails closed.
+  const listReady = inventory.length > 0;
+
+  const toItems = (cards: RecommendedCardId[]): RecommendationItem[] =>
+    cards.flatMap((cardId): RecommendationItem[] => {
+      const card = cardsById[cardId];
+      if (card.kind === 'connection') {
+        // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
+        if (!contextSrv.hasPermission(AccessControlAction.DataSourcesCreate)) {
+          return [];
+        }
+        if (card.telemetryType) {
+          return [{ ...card, ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }) }];
+        }
+        return [card];
+      }
+      if (!listReady) {
+        return [];
+      }
+      const plugin = pluginsById.get(card.pluginId);
+      if (!plugin) {
+        return [];
+      }
+      if (plugin.enabled) {
+        // Telemetry onboarding can happen without drilldown access. Other app-specific setup
+        // flows still require access to the app page they open.
+        if (card.telemetryType) {
+          return [
+            {
+              ...toSetupItem(card),
+              ...getTelemetrySetupLink(card.telemetryType, { setupGuideEnabled }),
+            },
+          ];
+        }
+        // App access gates the destination page; setupPermission gates the flow itself.
+        const canSetup =
+          contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin) &&
+          (!card.setupPermission || contextSrv.hasPermission(card.setupPermission));
+        return canSetup ? [toSetupItem(card)] : [];
+      }
+      // plugins:write is scoped to this plugin.
+      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
+    });
+
+  const recommendations = toItems(selection.cards);
+  // Per-solution views are permutations of the same selection (membership is the matrix's
+  // call, never the view's), so the skeleton and region-hide gates below stay list-agnostic.
+  // The Record type keeps the literal in lockstep with SOLUTION_IDS.
+  const forSolution = (id: SolutionId) => toItems(orderCardsForSolution(selection.cards, id));
+  const recommendationsBySolution: Record<SolutionId, RecommendationItem[]> = {
+    kubernetes: forSolution('kubernetes'),
+    metrics: forSolution('metrics'),
+    logs: forSolution('logs'),
+    traces: forSolution('traces'),
+    synthetics: forSolution('synthetics'),
+  };
+
+  return { selection, recommendations, recommendationsBySolution };
 }
 
-function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
-  const { value: installedPlugins, loading: pluginsLoading } = useAsync(fetchInstalledPlugins, []);
-  // Memoized so the probe effect below can depend on derived values without re-running every render.
-  const pluginsById = useMemo(() => mapPluginsById(installedPlugins), [installedPlugins]);
-
-  // Enabled alone does not mean used: probe each enabled recommended solution for live data,
-  // and keep recommending the silent ones (preprovisioned cloud stacks enable apps by default).
-  // Only apps the user can open are worth probing — an inaccessible app can never show a setup
-  // card, and skipping it avoids doomed requests (e.g. a Faro proxy call that can only 403).
-  const probeCandidateIds = useMemo(
-    () =>
-      getRecommendations()
-        .filter((r) => {
-          const plugin = pluginsById.get(r.pluginId);
-          return !!plugin?.enabled && contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin);
-        })
-        .map((r) => r.pluginId),
-    [pluginsById]
-  );
-
-  // One entry per probed plugin, landing as each probe settles, so a slow probe never suppresses
-  // an already-settled setup card. hasSolutionData never rejects.
-  const [probeResults, setProbeResults] = useState<Record<string, boolean>>({});
-  useEffect(() => {
-    let cancelled = false;
-    setProbeResults({});
-    for (const pluginId of probeCandidateIds) {
-      hasSolutionData(pluginId).then((hasData) => {
-        if (!cancelled) {
-          setProbeResults((prev) => ({ ...prev, [pluginId]: hasData }));
-        }
-      });
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [probeCandidateIds]);
-
-  // An unavailable plugin list fails closed. /api/plugins always lists at least the core plugins,
-  // so an empty response means the list is unreliable and also fails closed.
-  const listReady = !pluginsLoading && !!installedPlugins && installedPlugins.length > 0;
-
-  const recommendations = !listReady
-    ? []
-    : getRecommendations().flatMap((recommendation): RecommendationItem[] => {
-        const plugin = pluginsById.get(recommendation.pluginId);
-        if (!plugin) {
-          // Unlistable plugins take the install-only path.
-          return canInstall ? [toEnableItem(recommendation)] : [];
-        }
-        if (plugin.enabled) {
-          // Setup card only for a probe that settled on "no data" (probed apps are pre-filtered
-          // to ones the user can open). A pending or skipped probe excludes just this card for
-          // the render; enable cards and the left no-data card mount immediately.
-          return probeResults[recommendation.pluginId] === false ? [toSetupItem(recommendation)] : [];
-        }
-        // plugins:write is scoped to this plugin.
-        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin)
-          ? [toEnableItem(recommendation)]
-          : [];
-      });
-
-  // Cards keep the slot they first appeared in; later-settling cards append. A card must never
-  // insert in front of the slide the user is reading — the carousel animates position shifts.
-  // Append-only ref mutation during render: idempotent, so StrictMode replays are harmless.
-  const seenOrder = useRef<string[]>([]);
-  for (const recommendation of recommendations) {
-    if (!seenOrder.current.includes(recommendation.id)) {
-      seenOrder.current.push(recommendation.id);
-    }
+function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
+  const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
+  // A stored collapsed preference must not start recommendation selection. Monotonic
+  // render-time latch: expanding never commits an ungated frame, re-collapsing never reselects.
+  const everExpanded = useRef(!collapsed);
+  if (!collapsed) {
+    everExpanded.current = true;
   }
-  recommendations.sort((a, b) => seenOrder.current.indexOf(a.id) - seenOrder.current.indexOf(b.id));
+  const selectionEnabled = everExpanded.current;
 
-  const visible = recommendations.length > 0;
-  // Settled empty: everything resolved and there is genuinely nothing to show — as opposed
-  // to a pending plugin list or pending probes that may still produce cards.
-  const allProbesSettled = probeCandidateIds.every((pluginId) => probeResults[pluginId] !== undefined);
-  const settledEmpty = listReady
-    ? !visible && allProbesSettled
-    : !pluginsLoading && (!installedPlugins || installedPlugins.length === 0);
-
-  useEffect(() => {
-    if (visible) {
-      store.set(WAS_VISIBLE_KEY, 'true');
-    } else if (settledEmpty) {
-      store.set(WAS_VISIBLE_KEY, 'false');
+  const selected = useAsync(async () => {
+    if (!selectionEnabled) {
+      return undefined;
     }
-  }, [visible, settledEmpty]);
+    const [inventory, signals, guideEnabled] = await Promise.all([
+      fetchInstalledPlugins().catch(() => []),
+      solutions.signals(),
+      setupGuideEnabled(),
+    ]);
+    return selectRecommendationState(inventory, signals, guideEnabled);
+  }, [selectionEnabled, solutions]);
 
-  if (visible) {
-    return <RecommendationsView recommendations={recommendations} />;
-  }
-
-  // Hold the section's space while loading, but only for users it rendered for last time.
-  if (!settledEmpty && store.getBool(WAS_VISIBLE_KEY, false)) {
+  // The region renders once the selection settles; recommendations only decide the right column.
+  // Collapsed (gated-off) renders immediately as just the header row.
+  const state = selected.value;
+  if (selectionEnabled && !state) {
     return <RecommendationsSkeleton />;
   }
 
-  return null;
+  // All-or-nothing: the region never renders one column alone. An empty right column —
+  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
+  // or every card failing closed — hides the whole region. The collapsed-gated render
+  // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
+  if (selectionEnabled && state && state.recommendations.length === 0) {
+    return null;
+  }
+
+  return (
+    <RecommendationsView
+      recommendations={state?.recommendations ?? []}
+      recommendationsBySolution={state?.recommendationsBySolution ?? EMPTY_BY_SOLUTION}
+      startingState={state?.selection.baseRow ?? 'unknown'}
+      collapsed={collapsed}
+      setCollapsed={setCollapsed}
+      solutions={solutions.solutions}
+    />
+  );
 }
+
+const EMPTY_BY_SOLUTION: Record<SolutionId, RecommendationItem[]> = {
+  kubernetes: [],
+  metrics: [],
+  logs: [],
+  traces: [],
+  synthetics: [],
+};

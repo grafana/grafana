@@ -16,7 +16,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Jaeger data source issues
 weight: 500
-review_date: 2026-03-03
+review_date: 2026-08-11
 ---
 
 # Troubleshoot Jaeger data source issues
@@ -196,7 +196,7 @@ These errors occur when using the gRPC query endpoint.
 
 **Solutions:**
 
-1. Verify the `jaegerEnableGrpcEndpoint` feature flag is enabled in Grafana. This feature is in public preview.
+1. Verify the `jaegerEnableGrpcEndpoint` feature flag is enabled in Grafana. This feature is experimental.
 1. Grafana Cloud customers should contact support to request access.
 1. Note that search and dependency graph queries currently use the REST endpoint even when the feature flag is enabled. Only service search, operation search, and trace ID queries use gRPC.
 

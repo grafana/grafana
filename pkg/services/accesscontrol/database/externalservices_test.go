@@ -117,7 +117,7 @@ func TestIntegrationAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestDB(t),
+				sql: db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			}
 
 			for i := range tt.runs {
@@ -192,7 +192,7 @@ func TestIntegrationAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestDB(t),
+				sql: db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			}
 			if tt.init != nil {
 				tt.init(t, ctx, s)

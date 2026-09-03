@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 
 import { type AdHocVariableFilter, type DataSourceRef, type SelectableValue } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SegmentAsync, useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   datasource: DataSourceRef;
@@ -47,7 +46,7 @@ const fetchFilterValues = async (
   key: string,
   allFilters: AdHocVariableFilter[]
 ): Promise<Array<SelectableValue<string>>> => {
-  const ds = await getDatasourceSrv().get(datasource);
+  const ds = await getDataSourceInstance(datasource);
 
   if (!ds || !ds.getTagValues) {
     return [];

@@ -1,4 +1,4 @@
-import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 
 export const initPreferences = async (): Promise<Preferences | undefined> => {
   const preferences = await fetchMergedPreferences();
@@ -44,7 +44,7 @@ export async function fetchMergedPreferences(): Promise<Preferences | undefined>
   }
 
   try {
-    const url = `apis/preferences.grafana.app/v1alpha1/namespaces/${namespace}/preferences/merged`;
+    const url = `apis/preferences.grafana.app/v1/namespaces/${namespace}/preferences/merged`;
     const resp = await fetch(url, { headers: { Accept: 'application/json' } });
     if (!resp.ok) {
       return undefined;

@@ -46,19 +46,18 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Grafana currently follows a monthly release schedule. Below are the planned releases for the end of 2025 and the first part of 2026. However, these dates may be subject to change:
+Grafana releases a new minor version every other month, with patching releases in between. Below are the planned releases for the rest of 2026. However, these dates may be subject to change:
 
 | **Release date** | **Grafana versions**      | **Release type** |
 | ---------------- | ------------------------- | ---------------- |
-| Sept. 23, 2025   | 12.2 & Supported versions | Minor & patching |
-| Oct. 21, 2025    | Supported versions        | Patching         |
-| Nov. 18, 2025    | 12.3 & Supported versions | Minor & patching |
-| Dec. 16, 2025    | Supported versions        | Patching         |
-| Jan. 13, 2026    | Supported versions        | Patching         |
 | Feb. 24, 2026    | 12.4 & Supported versions | Minor & patching |
-| Mar. 24, 2026    | Supported versions        | Patching         |
 | Apr. 14, 2026    | Grafana 13                | Major            |
 | Jun. 23, 2026    | 13.1 & Supported versions | Minor & patching |
+| Jul. 21, 2026    | Supported versions        | Patching         |
+| Aug. 4, 2026     | Supported versions        | Patching         |
+| Aug. 18, 2026    | 13.2 & Supported versions | Minor & patching |
+| Sept. 1, 2026    | Supported versions        | Patching         |
+| Oct. 20, 2026    | 13.3 & Supported versions | Minor & patching |
 
 ### A few important notes
 
@@ -96,7 +95,7 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions fol
   - **Patch Support**: Individual minor versions receive patch releases (bug fixes and security patches) until end of life
   - **Not Supported**: Versions beyond their support period receive no updates
 
-Here is an overview of version support through 2026:
+Here is an overview of version support through 2027:
 
 | **Version**               | **Release date**   | **Support end date** | **Support level** |
 | ------------------------- | ------------------ | -------------------- | ----------------- |
@@ -106,10 +105,12 @@ Here is an overview of version support through 2026:
 | 12.0.x                    | May 5, 2025        | February 5, 2026     | Not Supported     |
 | 12.1.x                    | July 22, 2025      | April 22, 2026       | Not Supported     |
 | 12.2.x                    | September 23, 2025 | June 23, 2026        | Not Supported     |
-| 12.3.x                    | November 19, 2025  | August 19, 2026      | Patch Support     |
+| 12.3.x                    | November 19, 2025  | August 19, 2026      | Not Supported     |
 | 12.4.x (Last minor of 12) | February 24, 2026  | May 24, 2027         | Patch Support     |
-| 13.0.0                    | April 14, 2026     | January 9, 2027      | Patch Support     |
-| 13.1.x                    | June 22, 2026      | March 20, 2027       | Patch Support     |
+| 13.0.x                    | April 14, 2026     | January 9, 2027      | Patch Support     |
+| 13.1.x                    | June 23, 2026      | March 20, 2027       | Patch Support     |
+| 13.2.x                    | August 18, 2026    | May 18, 2027         | Patch Support     |
+| 13.3.x                    | October 20, 2026   | July 20, 2027        | Patch Support     |
 
 ## How are these versions supported?
 

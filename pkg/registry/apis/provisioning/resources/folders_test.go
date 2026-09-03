@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -2165,8 +2166,8 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 	}
 
 	// recordingFn returns an fn callback that records its invocations and propagates any error it receives.
-	recordingFn := func(calls *[]fnCall) func(Folder, bool, error) error {
-		return func(f Folder, created bool, err error) error {
+	recordingFn := func(calls *[]fnCall) func(Folder, bool, time.Time, error) error {
+		return func(f Folder, created bool, _ time.Time, err error) error {
 			*calls = append(*calls, fnCall{f, created, err})
 			return err
 		}

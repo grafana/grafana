@@ -73,7 +73,7 @@ jobs:
             > grafana-server/grafana.log 2>&1 &
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -18,7 +20,9 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -35,6 +39,10 @@ const (
 type connectionQueueItem struct {
 	key      string
 	attempts int
+	// trigger records what enqueued this item, for the processing-level metrics.
+	// It rides the item so retries (which re-add the same item) keep the
+	// attribution.
+	trigger usinformer.ProcessTrigger
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -53,6 +61,11 @@ type ConnectionController struct {
 	healthChecker     ConnectionHealthCheckerInterface
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
+	tracer            tracing.Tracer
+
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and counts the start of each reconcile by what enqueued it.
+	processed *usinformer.ProcessedMetrics
 
 	// To allow injection for testing.
 	processFn func(ctx context.Context, item *connectionQueueItem) error
@@ -71,13 +84,18 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	tracer tracing.Tracer,
+	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns: conns,
+		conns:     conns,
+		tracer:    tracer,
+		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
-				Name: "provisioningConnectionController",
+				Name:            "provisioningConnectionController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
 			},
 		),
 		statusPatcher:     statusPatcher,
@@ -91,27 +109,61 @@ func NewConnectionController(
 
 	cc.processFn = cc.process
 
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_connection_worker_queue_size",
+			Help: "Number of connection keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(cc.queue.Len()) },
+	))
+
 	return cc
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Connection informer to enqueue connections on add and update.
-func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: cc.enqueue,
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj)
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}) {
+func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key})
+	cc.queue.Add(&connectionQueueItem{key: key, trigger: trigger})
+}
+
+// connectionResourceVersion returns the resource version of a delivered
+// Connection, or "" for a minimal NATS live event or a delete tombstone.
+func connectionResourceVersion(obj any) string {
+	if conn, ok := obj.(*provisioning.Connection); ok {
+		return conn.ResourceVersion
+	}
+	return ""
+}
+
+// connSpanAttrs returns the resource-identifying attributes stamped on every
+// reconcile child span, so a span is self-describing in isolation (e.g. a
+// health_check or apply_status span says which connection it concerns) rather
+// than only via its parent.
+func connSpanAttrs(conn *provisioning.Connection) trace.SpanStartOption {
+	return trace.WithAttributes(
+		attribute.String("connection.name", conn.GetName()),
+		attribute.String("connection.namespace", conn.GetNamespace()),
+	)
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -169,6 +221,13 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
+	// Count the start of processing once per pickup, attributed to what enqueued
+	// the item. Retries re-add the same item (attempts already bumped) and are not
+	// recounted.
+	if item.attempts == 0 {
+		cc.processed.RecordProcessed(item.trigger)
+	}
+
 	err := cc.processFn(ctx, item)
 	if err == nil {
 		cc.queue.Forget(item)
@@ -198,7 +257,7 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	return true
 }
 
-func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) error {
+func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) (err error) {
 	logger := cc.logger.With("key", item.key)
 	ctx = logging.Context(ctx, logger)
 
@@ -207,6 +266,21 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
 	}
+
+	// The worker loop carries no active span, so this opens a fresh trace per
+	// reconcile whose children show where the reconcile spends its time.
+	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile",
+		trace.WithAttributes(
+			attribute.String("connection.namespace", namespace),
+			attribute.String("connection.name", name),
+		),
+	)
+	defer span.End()
+	defer func() {
+		if err != nil {
+			_ = tracing.Error(span, err)
+		}
+	}()
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
 	// fresh is the informer.ConnectionGetter's concern, not the controller's.
@@ -237,7 +311,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
-	c, err := cc.connectionFactory.Build(ctx, conn)
+	buildCtx, buildSpan := cc.tracer.Start(ctx, "provisioning.controller.build", connSpanAttrs(conn))
+	c, err := cc.connectionFactory.Build(buildCtx, conn)
+	buildSpan.End()
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
 		// orphaned reference whose secret was deleted). Regenerate it from the private
@@ -267,25 +343,27 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	tokenConn, isTokenConnection := c.(connection.TokenConnection)
 	var shouldRefreshToken bool
 	if isTokenConnection {
-		shouldRefreshToken, err = cc.shouldGenerateToken(ctx, conn, tokenConn)
-		if err != nil {
-			logger.Error("failed to check if token needs to be generated", "error", err)
-			return err
-		}
+		shouldRefreshToken = cc.shouldGenerateToken(ctx, conn, tokenConn)
 	}
 
 	// Determine the main triggering condition
+	var reason string
 	switch {
 	case hasSpecChanged:
+		reason = "spec_changed"
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
+		reason = "health_stale"
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
 	case shouldRefreshToken:
+		reason = "token_refresh"
 		logger.Info("token must be refreshed or generated")
 	default:
+		span.SetAttributes(attribute.String("reconcile.reason", "skipped"))
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
 	}
+	span.SetAttributes(attribute.String("reconcile.reason", reason))
 
 	var patchOperations []map[string]interface{}
 
@@ -300,7 +378,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	if isTokenConnection && shouldRefreshToken {
 		logger.Info("generating connection token")
 
-		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+		tokenCtx, tokenSpan := cc.tracer.Start(ctx, "provisioning.controller.generate_token", connSpanAttrs(conn))
+		token, tokenOps, err := cc.generateConnectionToken(tokenCtx, tokenConn)
+		tokenSpan.End()
 		if err != nil {
 			logger.Error("failed to generate connection token", "error", err)
 			return err
@@ -317,12 +397,14 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 				"path":  "/status/token",
 				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
 			})
+			conn.Secure.Token = common.InlineSecureValue{Create: token}
 		}
-		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
 
 	// Handle health checks using the health checker
-	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
+	healthCtx, healthSpan := cc.tracer.Start(ctx, "provisioning.controller.health_check", connSpanAttrs(conn))
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(healthCtx, conn)
+	healthSpan.End()
 	if err != nil {
 		logger.Error("failed to get updated health status", "error", err)
 		return fmt.Errorf("update health status: %w", err)
@@ -352,7 +434,13 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	if len(patchOperations) > 0 {
 		// Update fieldErrors from test results
-		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
+		patchCtx, patchSpan := cc.tracer.Start(ctx, "provisioning.controller.apply_status",
+			connSpanAttrs(conn),
+			trace.WithAttributes(attribute.Int("patch.operations", len(patchOperations))),
+		)
+		err := cc.statusPatcher.Patch(patchCtx, conn, patchOperations...)
+		patchSpan.End()
+		if err != nil {
 			return fmt.Errorf("failed to update connection status: %w", err)
 		}
 	}
@@ -365,39 +453,39 @@ func (cc *ConnectionController) shouldGenerateToken(
 	ctx context.Context,
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
-) (bool, error) {
+) bool {
 	if obj.Secure.Token.IsZero() {
+		// An OAuth connection has no token until the user completes the authorization
+		// flow after creation; there is nothing to generate until one is stored.
+		if _, ok := c.(connection.OAuthConnection); ok {
+			return false
+		}
 		cc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
-		return true, nil
+		return true
 	}
 
-	if !c.TokenValid(ctx) {
+	expiresAt, err := c.ValidateToken()
+	if err != nil {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonInvalid)
-		return true, nil
+		return true
 	}
 
-	issuingTime, err := c.TokenCreationTime(ctx)
-	if err != nil {
-		return false, err
+	if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+		return false
 	}
 
-	if tokenRecentlyCreated(issuingTime) {
-		return false, nil
+	if expiresAt.IsZero() {
+		return false
 	}
 
-	expiration, err := c.TokenExpiration(ctx)
-	if err != nil {
-		return false, err
-	}
+	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiresAt).Seconds())
 
-	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
-
-	if shouldRefreshBeforeExpiration(expiration, cc.resyncInterval) {
+	if shouldRefreshBeforeExpiration(expiresAt, cc.resyncInterval) {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
@@ -406,7 +494,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (string, []map[string]interface{}, error) {
+) (token common.RawSecureValue, patchOperations []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
@@ -419,7 +507,7 @@ func (cc *ConnectionController) generateConnectionToken(
 		}
 	}()
 
-	token, err := conn.GenerateConnectionToken(ctx)
+	token, err = conn.GenerateConnectionToken(ctx)
 	if err != nil {
 		failed = true
 		logger.Error("failed to generate connection token", "error", err)
@@ -428,7 +516,7 @@ func (cc *ConnectionController) generateConnectionToken(
 
 	logger.Info("successfully generated new connection token")
 
-	patchOperations := []map[string]interface{}{
+	patchOperations = []map[string]interface{}{
 		{
 			"op":   "replace",
 			"path": "/secure/token",
@@ -438,5 +526,5 @@ func (cc *ConnectionController) generateConnectionToken(
 		},
 	}
 
-	return string(token), patchOperations, nil
+	return token, patchOperations, nil
 }

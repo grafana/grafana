@@ -3,11 +3,11 @@ import { useMount } from 'react-use';
 
 import { PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { type StoreState } from 'app/types/store';
+
+import { SharedPreferences } from '../../core/components/SharedPreferences/SharedPreferences';
 
 import UserOrganizations from './UserOrganizations';
 import UserProfileEditForm from './UserProfileEditForm';
@@ -63,8 +63,7 @@ export function UserProfileEditPage({
   const { components, isLoading } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.UserProfileTab,
   });
-  const newPrefsEnabled = useFlagGrafanaNewPreferencesPage();
-  const userResourceUri = newPrefsEnabled && user?.uid ? `user-${user.uid}` : 'user';
+  const userResourceUri = user?.uid ? `user-${user.uid}` : 'user';
   return (
     <Page navId="profile/settings">
       <Page.Contents isLoading={!user || isLoading}>

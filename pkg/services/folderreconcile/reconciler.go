@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -20,6 +21,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// lockActionName identifies this job's row in the server_lock table.
+const lockActionName = "folder-reconciler"
+
+// minInterval keeps every replica from hitting the folder API and the server_lock table too often
+// across a large multi-tenant fleet.
+const minInterval = 5 * time.Minute
+
+// passTimeoutMargin leaves headroom before the lock's maxInterval elapses, mirroring
+// dashboard_service.go's cleanupTimeout calculation.
+const passTimeoutMargin = 5 * time.Second
+
+// serverLock is the subset of serverlock.ServerLockService used here, so tests can fake it.
+type serverLock interface {
+	LockAndExecute(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
+}
 
 // Consumer is implemented by each resource type that stores resources inside folders.
 type Consumer interface {
@@ -40,6 +57,7 @@ type Reconciler struct {
 	consumers []Consumer
 	folders   folder.Service
 	orgs      orgLister
+	lock      serverLock
 	interval  time.Duration
 	log       log.Logger
 }
@@ -49,23 +67,27 @@ func ProvideReconciler(
 	cfg *setting.Cfg,
 	folders folder.Service,
 	orgs org.Service,
+	lock *serverlock.ServerLockService,
 	alertRules *ngalert.AlertRuleFolderConsumer,
 	libraryPanels *libraryelements.FolderConsumer,
 ) *Reconciler {
-	interval := cfg.SectionWithEnvOverrides("folder").Key("deleted_resource_cleanup_interval").MustDuration(time.Minute)
-	return newReconciler(folders, orgs, interval, alertRules, libraryPanels)
+	interval := cfg.SectionWithEnvOverrides("folder").Key("deleted_resource_cleanup_interval").MustDuration(minInterval)
+	return newReconciler(folders, orgs, lock, interval, alertRules, libraryPanels)
 }
 
-func newReconciler(folders folder.Service, orgs orgLister, interval time.Duration, consumers ...Consumer) *Reconciler {
-	if interval <= 0 {
-		interval = time.Minute
+func newReconciler(folders folder.Service, orgs orgLister, lock serverLock, interval time.Duration, consumers ...Consumer) *Reconciler {
+	l := log.New("folder-reconciler")
+	if interval < minInterval {
+		l.Warn("[folder.deleted_resource_cleanup_interval] is too low; the minimum allowed is enforced", "minimum", minInterval)
+		interval = minInterval
 	}
 	return &Reconciler{
 		consumers: consumers,
 		folders:   folders,
 		orgs:      orgs,
+		lock:      lock,
 		interval:  interval,
-		log:       log.New("folder-reconciler"),
+		log:       l,
 	}
 }
 
@@ -82,10 +104,25 @@ func (r *Reconciler) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			if err := r.reconcile(ctx); err != nil {
-				r.log.Error("Folder reconcile failed", "error", err)
-			}
+			r.tick(ctx)
 		}
+	}
+}
+
+// tick runs one reconcile pass under the server lock, so only one replica per tenant reconciles per
+// interval regardless of how many replicas tick. maxInterval == r.interval on purpose: LockAndExecute
+// skips work started less than maxInterval ago, which is what caps the actual run frequency. The pass
+// itself is bounded to the same duration, so it can never still be running once the lease goes stale.
+func (r *Reconciler) tick(ctx context.Context) {
+	err := r.lock.LockAndExecute(ctx, lockActionName, r.interval, func(ctx context.Context) {
+		ctx, cancel := context.WithTimeout(ctx, r.interval-passTimeoutMargin)
+		defer cancel()
+		if err := r.reconcile(ctx); err != nil {
+			r.log.Error("Folder reconcile failed", "error", err)
+		}
+	})
+	if err != nil {
+		r.log.Error("Failed to acquire folder reconciler lock", "error", err)
 	}
 }
 
@@ -95,6 +132,12 @@ func (r *Reconciler) reconcile(ctx context.Context) error {
 		return err
 	}
 	for _, o := range orgs {
+		// Stop cleanly at an org boundary rather than letting the deadline cut off mid-org;
+		// the remaining orgs are picked up on the next tick.
+		if ctx.Err() != nil {
+			r.log.Warn("Reconcile pass ran out of time, resuming next tick")
+			break
+		}
 		if err := r.reconcileOrg(ctx, o.ID); err != nil {
 			r.log.Error("Failed to reconcile org", "org_id", o.ID, "error", err)
 		}

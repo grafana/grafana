@@ -14,7 +14,7 @@ labels:
 menuTitle: Annotations
 title: Prometheus annotations
 weight: 500
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus annotations
@@ -60,12 +60,12 @@ To add a Prometheus annotation to your dashboard:
 Prometheus annotations work differently from SQL-based annotations. Instead of querying a table of events, you write a PromQL expression that returns time-series data. Grafana converts the query results into annotation events using these rules:
 
 - Grafana executes the PromQL query as a range query over the dashboard's time window.
-- **Every data point returned creates an annotation.** There is no automatic filtering of zero values — if you only want annotations at specific moments, your PromQL expression must filter the results (for example, using `> 0` or the `ALERTS` metric).
+- **Every data point returned creates an annotation.** There is no automatic filtering of zero values. If you only want annotations at specific moments, your PromQL expression must filter the results (for example, using `> 0` or the `ALERTS` metric).
 - Grafana uses the field mapping configuration to determine what text, title, and tags to display for each annotation.
 - If the query returns multiple time series, each series produces its own set of annotations.
 
 {{< admonition type="note" >}}
-Because every returned data point creates an annotation, queries that return continuous data (like `node_cpu_seconds_total`) will produce an annotation at every step interval, flooding your dashboard. Always use expressions that return data only at the moments you want annotated.
+Because every returned data point creates an annotation, queries that return continuous data (like `node_cpu_seconds_total`) produce an annotation at every step interval, flooding your dashboard. Always use expressions that return data only at the moments you want annotated.
 {{< /admonition >}}
 
 ## Field mappings
@@ -96,8 +96,8 @@ ALERTS{alertstate="firing"}
 
 This creates an annotation at every step interval where an alert is firing. The `ALERTS` metric includes labels such as:
 
-- `alertname` — The name of the alerting rule
-- `alertstate` — Either `firing` or `pending`
+- `alertname`: The name of the alerting rule
+- `alertstate`: Either `firing` or `pending`
 - Any labels defined on the alerting rule
 
 To limit to specific alerts or severity levels:
@@ -141,7 +141,7 @@ node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
 ```
 
 {{< admonition type="note" >}}
-Comparison operators in PromQL act as filters — they only return data points where the condition is true. This means the expression above only returns data when memory is below 10%, and annotations only appear at those times. There's no need to add an outer `> 0` wrapper.
+Comparison operators in PromQL act as filters. They only return data points where the condition is true. This means the expression above only returns data when memory is below 10%, and annotations only appear at those times. There's no need to add an outer `> 0` wrapper.
 {{< /admonition >}}
 
 ### Scaling event annotations
@@ -181,9 +181,9 @@ If your build info metric uses a `version` label (for example, `build_info{versi
 
 The **Min step** setting controls how many data points the query returns, which directly affects how many annotations appear. A larger step means fewer annotations:
 
-- **Min step `1m`** — Up to one annotation per minute (good for short time ranges).
-- **Min step `5m`** — Up to one annotation per 5 minutes (good for day-range dashboards).
-- **Min step `1h`** — Up to one annotation per hour (good for week-range dashboards).
+- **Min step `1m`:** Up to one annotation per minute (good for short time ranges).
+- **Min step `5m`:** Up to one annotation per 5 minutes (good for day-range dashboards).
+- **Min step `1h`:** Up to one annotation per hour (good for week-range dashboards).
 
 If your dashboard shows too many annotation markers, increase the Min step or add more specific filters to your query.
 

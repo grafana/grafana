@@ -85,12 +85,14 @@ export { QueryField, type QueryFieldProps } from './components/QueryField/QueryF
 export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
+export { ReactMonacoDiffEditorLazy as ReactMonacoDiffEditor } from './components/Monaco/ReactMonacoDiffEditorLazy';
 export {
   type Monaco,
   type monacoTypes,
   type MonacoEditor,
   type MonacoOptions as CodeEditorMonacoOptions,
   type CodeEditorSuggestionItem,
+  type ReactMonacoDiffEditorProps,
   CodeEditorSuggestionItemKind,
 } from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';

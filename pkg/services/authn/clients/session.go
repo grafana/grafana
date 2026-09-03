@@ -91,7 +91,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	return ident, nil
 }
 
-func (s *Session) IsEnabled() bool {
+func (s *Session) IsEnabled(context.Context) bool {
 	return true
 }
 

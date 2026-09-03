@@ -9,7 +9,7 @@ import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContex
 
 interface SaveButtonProps {
   // Ref to the parent container for positioning/formatting the saved queries dropdown
-  parentRef?: RefObject<HTMLDivElement>;
+  parentRef?: RefObject<HTMLDivElement | null>;
 }
 
 // TODO: Confirm this works as expected once we get the query content work completed

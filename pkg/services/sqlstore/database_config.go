@@ -202,8 +202,12 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
 
+		// SQLite keeps the journal mode in the database file, so a database that was once
+		// opened with WAL stays in WAL until we ask for something else.
 		if dbCfg.WALEnabled {
 			cnnstr += "&_journal_mode=WAL"
+		} else {
+			cnnstr += "&_journal_mode=DELETE"
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)

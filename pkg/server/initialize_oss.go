@@ -9,11 +9,28 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// This file provides the OSS versions of Initialize, InitializeForTest,
+// InitializeForCLI and InitializeAPIServerFactory (build tag !enterprise && !pro).
+// In an Enterprise build the generated enterprise_wire_gen.go provides those same
+// functions instead.
+//
+// The generated OSS code that actually builds the server lives in
+// pkg/server/bootstrap/wire, not here. That package imports pkg/server (its sets
+// call server.New and server.NewRunner), so pkg/server can't import it back. To
+// get around that, pkg/server/bootstrap/wire hands its build functions to us
+// through RegisterInitializers when it loads, and the functions below just call
+// whatever was handed in. For that to happen the program has to import
+// pkg/server/bootstrap/wire (main, grafana-cli, and testinfra do, with a blank _
+// import); otherwise these variables are nil.
+//
+// See docs/design/ge-standalone/unify-wire-core-sets.md for the plan to remove
+// this by moving server.New and server.NewRunner into their own package.
 type (
 	initializeFn        func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
 	initializeForTestFn func(context.Context, sqlutil.ITestDB, interface {
@@ -22,6 +39,7 @@ type (
 	}, *setting.Cfg, Options, api.ServerOptions) (*TestEnv, error)
 	initializeForCLIFn           func(context.Context, *setting.Cfg) (Runner, error)
 	initializeAPIServerFactoryFn func() (standalone.APIServerFactory, error)
+	initializeRouterFactoryFn    func() (router.RouterFactory, error)
 )
 
 var (
@@ -29,6 +47,7 @@ var (
 	initializeForTestServer        initializeForTestFn
 	initializeForCLIServer         initializeForCLIFn
 	initializeAPIServerFactoryFunc initializeAPIServerFactoryFn
+	initializeRouterFactoryFunc    initializeRouterFactoryFn
 )
 
 // RegisterInitializers wires OSS dependency-injection entrypoints implemented in
@@ -38,11 +57,13 @@ func RegisterInitializers(
 	initializeForTest initializeForTestFn,
 	initializeForCLI initializeForCLIFn,
 	initializeAPIServerFactory initializeAPIServerFactoryFn,
+	initializeRouterFactory initializeRouterFactoryFn,
 ) {
 	initializeServer = initialize
 	initializeForTestServer = initializeForTest
 	initializeForCLIServer = initializeForCLI
 	initializeAPIServerFactoryFunc = initializeAPIServerFactory
+	initializeRouterFactoryFunc = initializeRouterFactory
 }
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
@@ -63,4 +84,8 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
 
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return initializeAPIServerFactoryFunc()
+}
+
+func InitializeRouterFactory() (router.RouterFactory, error) {
+	return initializeRouterFactoryFunc()
 }

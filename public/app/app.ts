@@ -1,14 +1,9 @@
-import 'symbol-observable';
-import 'regenerator-runtime/runtime';
-
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'file-saver';
 import 'jquery';
 
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -22,6 +17,7 @@ import {
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
+  HistoryWrapper,
   locationService,
   setBackendSrv,
   setDataSourceSrv,
@@ -43,6 +39,7 @@ import {
   setPanelScreenshotService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  logError,
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
@@ -52,6 +49,7 @@ import {
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
+  setDataSourcePicker,
   setJourneyRegistry,
   setJourneyTracker,
   setPanelDataErrorView,
@@ -99,6 +97,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { RuntimeDataSourcePickerShim } from './features/datasources/components/picker/RuntimeDataSourcePickerShim';
 import { dataSource as expressionDatasource } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -162,14 +161,13 @@ export class GrafanaApp {
       initSystemJSHooks();
       initializeLoggersRegistry();
 
-      // Currently the OpenFeature API requires a signed in user. This means feature flags cannot be used
-      // on the login page.
-      if (contextSrv.user.isSignedIn) {
-        try {
-          await initOpenFeature();
-        } catch (err) {
-          console.error('Failed to initialize OpenFeature provider', err);
-        }
+      // Capture any error generated to pass to Faro once available.
+      let openFeatureError: unknown;
+      try {
+        await initOpenFeature();
+      } catch (err) {
+        openFeatureError = err;
+        console.error('Failed to initialize OpenFeature provider', err);
       }
 
       const initI18nPromise = initializeI18n({
@@ -190,6 +188,12 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       await initEchoSrv();
+
+      // This needs to be done after the `initEchoSrv` since that initializes Faro.
+      if (openFeatureError) {
+        logError(new Error('Failed to initialize OpenFeature provider', { cause: openFeatureError }));
+      }
+
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
@@ -221,6 +225,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setFolderPicker(LazyFolderPicker);
+      setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setCorrelationsService(new CorrelationsService());
@@ -280,6 +285,14 @@ export class GrafanaApp {
         getVariablesUrlParams: getVariablesUrlParams,
       });
 
+      // For multi-org users, ensure every SPA navigation carries ?orgId so
+      // dashboard / alert URLs are shareable across orgs. Single-org users
+      // (the OSS / Cloud majority) skip this, no URL pollution. Registered
+      // before handleRedirectTo() so the post-login redirect gets orgId too.
+      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
+        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
+      }
+
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();
       }
@@ -291,11 +304,13 @@ export class GrafanaApp {
       // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
       // need to wait on a network round trip).
       setExpressionDataSourceInstance(expressionDatasource);
+      // eslint-disable-next-line @grafana/no-config-datasources -- boot data is the seed for the instance settings cache
       initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
       setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
 
       // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
+      // eslint-disable-next-line @grafana/no-config-datasources -- legacy DataSourceSrv is seeded from boot data
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();

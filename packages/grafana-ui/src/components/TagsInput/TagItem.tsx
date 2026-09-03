@@ -43,7 +43,7 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
         tagColors
           ? visualRefreshEnabled
             ? { backgroundColor: tagColors.background, color: tagColors.text }
-            : { backgroundColor: tagColors.background, borderColor: tagColors.text }
+            : { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
           : undefined
       }
     >

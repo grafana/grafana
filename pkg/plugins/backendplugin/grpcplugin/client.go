@@ -1,6 +1,7 @@
 package grpcplugin
 
 import (
+	"maps"
 	"os"
 	"os/exec"
 	"runtime"
@@ -13,8 +14,8 @@ import (
 	"go.opentelemetry.io/otel/trace/embedded"
 	"google.golang.org/grpc"
 
+	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -31,17 +32,21 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-// pluginSet is list of plugins supported on v2.
-var pluginSet = map[int]goplugin.PluginSet{
-	grpcplugin.ProtocolVersion: {
+// pluginSet is the set of services Grafana can dispense from a backend plugin:
+// the plugin-sdk (v2) services plus the app-sdk (v3) ones. Any given plugin
+// implements only a subset.
+var pluginSet = func() map[int]goplugin.PluginSet {
+	services := goplugin.PluginSet{
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
 		"stream":      &grpcplugin.StreamGRPCPlugin{},
 		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
 		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
-	},
-}
+	}
+	maps.Copy(services, appgrpcplugin.ClientPluginSet())
+	return map[int]goplugin.PluginSet{grpcplugin.ProtocolVersion: services}
+}()
 
 type clientTracerProvider struct {
 	tracer trace.Tracer

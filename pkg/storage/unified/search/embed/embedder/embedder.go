@@ -72,6 +72,8 @@ type EmbedTextInput struct {
 // EmbedTextOutput holds embeddings 1:1 with EmbedTextInput.Texts.
 type EmbedTextOutput struct {
 	Embeddings []Embedding
+	// InputTokens is the provider-reported input token total across chunks; zero when unreported. Feeds vector_storage_embed_tokens_total.
+	InputTokens int
 }
 
 // TextEmbedder is the provider-facing interface — a single method that
@@ -107,24 +109,16 @@ func (e Embedder) ShouldNormalize() bool {
 	return e.VectorType == VectorTypeDense && e.Metric == CosineDistance && !e.Normalized
 }
 
-// Instrument wraps a TextEmbedder so each EmbedText call emits an OTel
-// span and (optionally) a latency histogram observation. The provider
-// call is the dominant latency source on every path that touches an
-// embedder (VectorSearch query embed, reconciler + backfiller document
-// batches), so wrapping here gives a single diagnostic anchor.
-//
-// The wrapped embedder is returned as a plain TextEmbedder so the caller
-// can assign it directly to Embedder.TextEmbedder — no special integration
-// with the Embedder struct required. duration may be nil; the span is
-// still emitted in that case.
-func Instrument(inner TextEmbedder, model string, duration *prometheus.HistogramVec) TextEmbedder {
-	return &instrumentedTextEmbedder{inner: inner, model: model, duration: duration}
+// Instrument wraps a TextEmbedder with an OTel span plus optional latency and token-spend observations; duration and tokensTotal may each be nil.
+func Instrument(inner TextEmbedder, model string, duration *prometheus.HistogramVec, tokensTotal *prometheus.CounterVec) TextEmbedder {
+	return &instrumentedTextEmbedder{inner: inner, model: model, duration: duration, tokensTotal: tokensTotal}
 }
 
 type instrumentedTextEmbedder struct {
-	inner    TextEmbedder
-	model    string
-	duration *prometheus.HistogramVec
+	inner       TextEmbedder
+	model       string
+	duration    *prometheus.HistogramVec
+	tokensTotal *prometheus.CounterVec
 }
 
 func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
@@ -149,6 +143,10 @@ func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTex
 			i.duration.WithLabelValues(i.model, string(input.Task), status),
 			time.Since(start).Seconds(),
 		)
+	}
+	// Counted even on error: a failed batch's successful chunks were still billed.
+	if i.tokensTotal != nil && out.InputTokens > 0 {
+		i.tokensTotal.WithLabelValues(i.model, string(input.Task)).Add(float64(out.InputTokens))
 	}
 	return out, err
 }

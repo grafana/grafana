@@ -240,11 +240,11 @@ export const OrgUsersTable = ({
             contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, original) && (
               <Button
                 size="sm"
-                variant="destructive"
+                variant="secondary"
                 onClick={() => {
                   setUserToRemove(original);
                 }}
-                icon="times"
+                icon="trash-alt"
                 aria-label={t('admin.org-users-table.delete-aria-label', 'Delete user: {{name}}', {
                   name: original.name,
                 })}

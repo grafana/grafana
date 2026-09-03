@@ -121,6 +121,7 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -168,8 +169,8 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 	store := &MockStore{}
 	// Claim blocks until ctx is cancelled, simulating drivers that are
 	// mid-claim when the shutdown signal arrives.
-	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything).
-		RunAndReturn(func(ctx context.Context, _, _ string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, _, _ string, _ string) (*provisioning.Job, func(), error) {
 			claimActive.Add(1)
 			defer claimActive.Add(-1)
 			<-ctx.Done()
@@ -182,6 +183,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -194,7 +196,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 
 	handler := driver.EventHandler()
 	for _, job := range pending {
-		handler.AddFunc(job)
+		handler.AddFunc(job, false)
 	}
 
 	// Wait until all drivers are blocked inside Claim, confirming they have

@@ -1,85 +1,61 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useLocalStorage } from 'react-use';
 
-import { QueryEditorType } from '../../constants';
+import { QUERY_EDITOR_STACKED_VIEW_KEY, QueryEditorType } from '../../constants';
 import { type StackedEditorItem, type StackedEditorState } from '../QueryEditorContext';
 
 interface UseStackedModeOrchestrationArgs {
   /**
-   * Card selection writer. Used by `enter` to promote a primary item into the selection and
-   * by `syncActiveItem` to mirror observer-driven activations back into selection state.
+   * Moves the active card by id, leaving the bulk selection alone. Scrolling the stack activates
+   * whichever card comes into view, which is navigation rather than a selection change — so it
+   * must not disturb checkboxes the user ticked.
    */
-  onCardSelectionChange: (queryRefId: string | null, transformationId: string | null) => void;
-  selectedQueryRefIds: readonly string[];
-  selectedTransformationIds: readonly string[];
-  /**
-   * Cross-mode cleanup invoked on `enter` (e.g. clear alert selection, exit multi-select).
-   * Captured via ref so callers can pass an inline function without re-creating `enter`.
-   */
-  onEnter?: () => void;
+  activateItem: (queryRefId: string | null, transformationId: string | null) => void;
+  /** True while the alerts view owns the content pane, which leaves no room for the stack. */
+  isAlertView: boolean;
 }
 
 /**
- * Owns the stacked-mode state machine: the on/off boolean, the imperative scroll bridge,
- * and the `enter` / `exit` / `syncActiveItem` callbacks.
+ * Owns the stacked-mode state machine: the user's on/off choice and the scroll-to-selection bridge.
+ *
+ * The choice outlives the editing session — it says how this user likes to read a panel's queries,
+ * so re-toggling it on every panel edit would be busywork. Only `enter` and `exit` write to it.
+ *
+ * `enabled` is derived rather than stored so that views which take over the content pane can
+ * pre-empt the stack without discarding the user's choice — switching to alerts and back leaves
+ * them where they were.
  *
  * Lives outside `QueryEditorContextWrapper` so the wrapper doesn't carry the stacked-only
  * plumbing inline. The wrapper composes this hook and exposes the returned `stackedMode`
- * on its context. Callers that need to force-exit reach for `stackedMode.exit`.
+ * on its context.
  */
 export function useStackedModeOrchestration({
-  onCardSelectionChange,
-  selectedQueryRefIds,
-  selectedTransformationIds,
-  onEnter,
+  activateItem,
+  isAlertView,
 }: UseStackedModeOrchestrationArgs): StackedEditorState {
-  const [isStackedMode, setIsStackedMode] = useState(false);
+  const [prefersStackedMode = false, setPrefersStackedMode] = useLocalStorage(QUERY_EDITOR_STACKED_VIEW_KEY, false);
 
-  // `enter` is invoked imperatively from a button click, so reading the latest selection
-  // and onEnter via refs is safe and keeps `enter` referentially stable across selections.
-  const selectedQueryRefIdsRef = useRef(selectedQueryRefIds);
-  selectedQueryRefIdsRef.current = selectedQueryRefIds;
-  const selectedTransformationIdsRef = useRef(selectedTransformationIds);
-  selectedTransformationIdsRef.current = selectedTransformationIds;
-  const onEnterRef = useRef(onEnter);
-  onEnterRef.current = onEnter;
-
-  const enter = useCallback(() => {
-    onEnterRef.current?.();
-    // Prefer the most-recently-selected transformation as the primary card. Transformations are
-    // downstream of queries in the pipeline, so if both are selected the user is most likely
-    // working on the transformation step.
-    const primaryTransformationId = selectedTransformationIdsRef.current.at(-1);
-    const primaryQueryRefId = selectedQueryRefIdsRef.current.at(-1);
-    if (primaryTransformationId) {
-      onCardSelectionChange(null, primaryTransformationId);
-    } else if (primaryQueryRefId) {
-      onCardSelectionChange(primaryQueryRefId, null);
-    }
-    setIsStackedMode(true);
-  }, [onCardSelectionChange]);
-
-  const exit = useCallback(() => {
-    setIsStackedMode(false);
-  }, []);
+  const enter = useCallback(() => setPrefersStackedMode(true), [setPrefersStackedMode]);
+  const exit = useCallback(() => setPrefersStackedMode(false), [setPrefersStackedMode]);
 
   const syncActiveItem = useCallback(
     (item: StackedEditorItem) => {
       if (item.type === QueryEditorType.Transformation) {
-        onCardSelectionChange(null, item.id);
+        activateItem(null, item.id);
       } else {
-        onCardSelectionChange(item.id, null);
+        activateItem(item.id, null);
       }
     },
-    [onCardSelectionChange]
+    [activateItem]
   );
 
   return useMemo<StackedEditorState>(
     () => ({
-      enabled: isStackedMode,
+      enabled: prefersStackedMode && !isAlertView,
       enter,
       exit,
       syncActiveItem,
     }),
-    [isStackedMode, enter, exit, syncActiveItem]
+    [prefersStackedMode, isAlertView, enter, exit, syncActiveItem]
   );
 }

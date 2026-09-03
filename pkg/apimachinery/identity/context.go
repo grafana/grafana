@@ -194,6 +194,10 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"variables:create",      // ActionVariablesCreate
+	"variables:read",        // ActionVariablesRead
+	"variables:write",       // ActionVariablesWrite
+	"variables:delete",      // ActionVariablesDelete
 	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
@@ -236,6 +240,9 @@ var serviceIdentityTokenPermissions = []string{
 
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
+
+	// Named explicitly: the *.ext.grafana.app wildcard only matches single-segment prefixes.
+	"assistant.alertrules.ext.grafana.app:*",
 
 	// Allow access to apps.grafana.app resources (e.g. AppManifest)
 	"apps.grafana.app:*",

@@ -84,6 +84,7 @@ function FolderCreationModal({
     >
       <Stack direction="column" gap={2}>
         <Field
+          noMargin
           label={
             <Label htmlFor="folder">
               <Trans i18nKey="alerting.create-new-folder.folder.name">Folder name</Trans>

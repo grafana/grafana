@@ -200,7 +200,7 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		err := backend.Update(ctx, key, newLockInfo("owner-2", time.Minute))
-		require.ErrorIs(t, err, errLockHeld)
+		require.ErrorIs(t, err, errLockNotOwned)
 	})
 
 	t.Run("returns errLockNotFound for missing key", func(t *testing.T) {
@@ -223,7 +223,7 @@ func TestCDKLockBackend_Update(t *testing.T) {
 		injectETagMismatch(backend, bucket, "lock-1")
 
 		err := backend.Update(ctx, "lock-1", newLockInfo("owner-1", 2*time.Minute))
-		require.ErrorIs(t, err, errLockHeld)
+		require.ErrorIs(t, err, errLockNotOwned)
 	})
 
 	t.Run("rejects renewal of expired lease", func(t *testing.T) {
@@ -296,7 +296,7 @@ func TestCDKLockBackend_Delete(t *testing.T) {
 		createLockForTest(t, backend, key, "owner-1", time.Minute)
 
 		err := backend.Delete(ctx, key, "owner-2")
-		require.ErrorIs(t, err, errLockHeld)
+		require.ErrorIs(t, err, errLockNotOwned)
 	})
 
 	t.Run("returns errLockNotFound for missing key", func(t *testing.T) {

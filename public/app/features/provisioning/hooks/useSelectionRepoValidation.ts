@@ -1,3 +1,6 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+
+import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { findItem } from 'app/features/browse-dashboards/state/utils';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
@@ -9,11 +12,12 @@ import { useChildrenByParentUIDState, rootItemsSelector } from '../../browse-das
 
 // This hook is responsible for validating if all selected resources (dashboard folders and dashboards) are in the same repository
 export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
+  const provisioningEnabled = config.provisioningEnabled;
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector)?.items ?? [];
   const isProvisionedInstance = useIsProvisionedInstance();
 
-  const { data: settingsData } = useGetFrontendSettingsQuery(undefined);
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   // Function to grab repository configuration by UID
   const getRepositoryByUid = (repoUid: string) => {
     if (!settingsData?.items || repoUid === 'non_provisioned') {

@@ -187,8 +187,8 @@ func mockClientWithHits() *MockClient {
 }
 
 func TestSearchSort(t *testing.T) {
-	loginField := resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN
-	emailField := resource.SEARCH_FIELD_PREFIX + builders.USER_EMAIL
+	loginField := builders.USER_LOGIN
+	emailField := builders.USER_EMAIL
 
 	tests := []struct {
 		name     string

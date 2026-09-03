@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
   TooltipPlugin2,
@@ -44,10 +44,10 @@ export const XYChartPanel2 = (props: Props2) => {
   // if series changed due to mappings or data structure, re-init config & renderers
   const { builder, warn, prepData } = useMemo(
     () => {
-      return prepConfig(series, config.theme2);
+      return prepConfig(series, theme);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip]
+    [mapping, mappedSeries, props.data.structureRev, props.fieldConfig, props.options.tooltip, theme]
   );
 
   // generate data struct for uPlot mode: 2

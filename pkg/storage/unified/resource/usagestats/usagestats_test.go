@@ -31,7 +31,7 @@ func newBadgerKV(t *testing.T) kv.KV {
 
 func newSQLKV(t *testing.T) kv.KV {
 	t.Helper()
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(t.Context())

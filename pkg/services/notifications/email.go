@@ -1,6 +1,8 @@
 package notifications
 
 import (
+	"maps"
+
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,8 +43,6 @@ func setDefaultTemplateData(cfg *setting.Cfg, data map[string]any, u *user.User)
 		data["Name"] = u.NameOrFallback()
 	}
 	dataCopy := map[string]any{}
-	for k, v := range data {
-		dataCopy[k] = v
-	}
+	maps.Copy(dataCopy, data)
 	data["TemplateData"] = dataCopy
 }

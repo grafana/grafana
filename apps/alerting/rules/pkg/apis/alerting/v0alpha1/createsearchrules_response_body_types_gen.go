@@ -8,6 +8,8 @@ package v0alpha1
 type CreateSearchRulesSearchResultsMetadata struct {
 	Continue  *string `json:"continue,omitempty"`
 	TotalHits *int64  `json:"totalHits,omitempty"`
+	// Always read totalHits together with totalHitsRelation.
+	TotalHitsRelation *CreateSearchRulesTotalHitsRelation `json:"totalHitsRelation,omitempty"`
 }
 
 // NewCreateSearchRulesSearchResultsMetadata creates a new CreateSearchRulesSearchResultsMetadata object.
@@ -18,6 +20,22 @@ func NewCreateSearchRulesSearchResultsMetadata() *CreateSearchRulesSearchResults
 // OpenAPIModelName returns the OpenAPI model name for CreateSearchRulesSearchResultsMetadata.
 func (CreateSearchRulesSearchResultsMetadata) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.CreateSearchRulesSearchResultsMetadata"
+}
+
+// #TotalHitsRelation says how totalHits relates to the real number of matching
+// rules the caller may see: "eq" when it is exact, "lte" when it is an upper
+// bound because authorisation was applied after the search ranked its results.
+// +k8s:openapi-gen=true
+type CreateSearchRulesTotalHitsRelation string
+
+const (
+	CreateSearchRulesTotalHitsRelationEq  CreateSearchRulesTotalHitsRelation = "eq"
+	CreateSearchRulesTotalHitsRelationLte CreateSearchRulesTotalHitsRelation = "lte"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for CreateSearchRulesTotalHitsRelation.
+func (CreateSearchRulesTotalHitsRelation) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.CreateSearchRulesTotalHitsRelation"
 }
 
 // #SearchResultHit is a single match: its identity, an optional relevance
@@ -117,8 +135,7 @@ func (CreateSearchRulesFacetValue) OpenAPIModelName() string {
 }
 
 // listMeta is intentionally omitted: #SearchResults carries its
-// own metadata (continue, totalHits) mirroring the generic
-// search.grafana.app SearchResults envelope.
+// own metadata (continue, totalHits).
 // +k8s:openapi-gen=true
 type CreateSearchRulesBody struct {
 	Metadata CreateSearchRulesSearchResultsMetadata   `json:"metadata"`

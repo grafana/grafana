@@ -24,15 +24,28 @@ func newMockReader(t *testing.T) (*MySQLReader, sqlmock.Sqlmock) {
 	return NewMySQLReader(db), mock
 }
 
-func TestMySQLReader_CountUserAnnotations(t *testing.T) {
+func TestMySQLReader_Totals(t *testing.T) {
 	r, mock := newMockReader(t)
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) FROM annotation WHERE org_id = ? AND alert_id = 0")).
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM annotation WHERE org_id = ? AND alert_id = 0")).
 		WithArgs(int64(7)).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(42)))
+		WillReturnRows(sqlmock.NewRows([]string{"count", "max_id"}).AddRow(int64(42), int64(913)))
 
-	count, err := r.CountUserAnnotations(context.Background(), 7)
+	totals, err := r.Totals(context.Background(), 7)
 	require.NoError(t, err)
-	require.Equal(t, int64(42), count)
+	require.Equal(t, LegacyTotals{Count: 42, MaxID: 913}, totals)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// An empty tenant must report a zero max, not a NULL the scan cannot read.
+func TestMySQLReader_TotalsOnEmptyTenant(t *testing.T) {
+	r, mock := newMockReader(t)
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*), COALESCE(MAX(id), 0)")).
+		WithArgs(int64(7)).
+		WillReturnRows(sqlmock.NewRows([]string{"count", "max_id"}).AddRow(int64(0), int64(0)))
+
+	totals, err := r.Totals(context.Background(), 7)
+	require.NoError(t, err)
+	require.Equal(t, LegacyTotals{}, totals)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -71,8 +84,7 @@ func TestMySQLReader_ReadBatch_MapsRowsAndResolvesTags(t *testing.T) {
 	require.Equal(t, int64(600), a.Updated)
 	require.Equal(t, "user-uid", a.UserUID)
 	require.False(t, a.UserIsServiceAccount)
-	// "key:value" for a valued tag, bare "key" when the value is empty.
-	require.Equal(t, []string{"team:ops", "prod"}, a.Tags)
+	require.Equal(t, []string{"prod", "team:ops"}, a.Tags)
 
 	b := batch[1]
 	require.True(t, b.UserIsServiceAccount, "is_service_account=1 maps to true")
@@ -84,8 +96,7 @@ func TestMySQLReader_ReadBatch_MapsRowsAndResolvesTags(t *testing.T) {
 func TestMySQLReader_ReadChangedBatch_KeysetAndOrdering(t *testing.T) {
 	r, mock := newMockReader(t)
 
-	// Assert the (updated, id) keyset predicate and ordering, plus that the
-	// cursor value is bound twice (for `updated >` and `updated =`).
+	// The cursor is bound twice: once for `updated >`, once for `updated =`.
 	pattern := `a\.updated > \? OR \(a\.updated = \? AND a\.id > \?\).*ORDER BY a\.updated ASC, a\.id ASC`
 	mock.ExpectQuery(pattern).
 		WithArgs(int64(1), int64(100), int64(100), int64(5), 10).
@@ -104,6 +115,42 @@ func TestMySQLReader_ReadChangedBatch_KeysetAndOrdering(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestMySQLReader_LatestChange(t *testing.T) {
+	r, mock := newMockReader(t)
+	mock.ExpectQuery(`ORDER BY a\.updated DESC, a\.id DESC.*LIMIT 1`).
+		WithArgs(int64(7)).
+		WillReturnRows(sqlmock.NewRows([]string{"updated", "id"}).AddRow(int64(1700), int64(42)))
+
+	cursor, err := r.LatestChange(context.Background(), 7)
+	require.NoError(t, err)
+	require.Equal(t, UpdateCursor{Updated: 1700, ID: 42}, cursor)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// No user annotations is not an error: the zero cursor is the start of the timeline.
+func TestMySQLReader_LatestChange_NoRows(t *testing.T) {
+	r, mock := newMockReader(t)
+	mock.ExpectQuery(`ORDER BY a\.updated DESC, a\.id DESC`).
+		WithArgs(int64(7)).
+		WillReturnRows(sqlmock.NewRows([]string{"updated", "id"}))
+
+	cursor, err := r.LatestChange(context.Background(), 7)
+	require.NoError(t, err)
+	require.Equal(t, UpdateCursor{}, cursor)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestMySQLReader_LatestChange_PropagatesQueryError(t *testing.T) {
+	r, mock := newMockReader(t)
+	mock.ExpectQuery(`ORDER BY a\.updated DESC, a\.id DESC`).
+		WithArgs(int64(7)).
+		WillReturnError(errors.New("boom"))
+
+	_, err := r.LatestChange(context.Background(), 7)
+	require.ErrorContains(t, err, "boom")
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestMySQLReader_ReadBatch_EmptySkipsTagQuery(t *testing.T) {
 	r, mock := newMockReader(t)
 	mock.ExpectQuery(regexp.QuoteMeta("a.alert_id = 0 AND a.id > ?")).
@@ -113,8 +160,7 @@ func TestMySQLReader_ReadBatch_EmptySkipsTagQuery(t *testing.T) {
 	batch, err := r.ReadBatch(context.Background(), 1, 999, 2)
 	require.NoError(t, err)
 	require.Empty(t, batch)
-	// No tag query was expected; if ReadBatch had issued one against the empty
-	// batch, sqlmock would have failed it as unexpected.
+	// No tag query was expected, so sqlmock fails if ReadBatch issued one.
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

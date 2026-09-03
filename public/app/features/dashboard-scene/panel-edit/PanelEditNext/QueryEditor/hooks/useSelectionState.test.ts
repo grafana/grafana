@@ -420,10 +420,10 @@ describe('useSelectionState', () => {
     });
   });
 
-  describe('onCardSelectionChange — seedBulk', () => {
+  describe("onCardSelectionChange — bulk: 'seed'", () => {
     it('seeds the bulk selection with the activated query', () => {
       const { result } = setup();
-      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      act(() => result.current.onCardSelectionChange('B', null, { bulk: 'seed' }));
       expect(result.current.activeQueryRefId).toBe('B');
       expect(result.current.selectedQueryRefIds).toEqual(['B']);
       expect(result.current.selectedTransformationIds).toEqual([]);
@@ -431,7 +431,7 @@ describe('useSelectionState', () => {
 
     it('seeds the bulk selection with the activated transformation', () => {
       const { result } = setup();
-      act(() => result.current.onCardSelectionChange(null, 'tx-1', { seedBulk: true }));
+      act(() => result.current.onCardSelectionChange(null, 'tx-1', { bulk: 'seed' }));
       expect(result.current.activeTransformationId).toBe('tx-1');
       expect(result.current.selectedTransformationIds).toEqual(['tx-1']);
       expect(result.current.selectedQueryRefIds).toEqual([]);
@@ -439,7 +439,7 @@ describe('useSelectionState', () => {
 
     it('seeds the query anchor so a follow-up Shift+Click ranges from it', () => {
       const { result } = setup();
-      act(() => result.current.onCardSelectionChange('B', null, { seedBulk: true }));
+      act(() => result.current.onCardSelectionChange('B', null, { bulk: 'seed' }));
       act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['B', 'C', 'D']);
     });
@@ -447,9 +447,45 @@ describe('useSelectionState', () => {
     it('seeds nothing when activating with null ids', () => {
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }));
-      act(() => result.current.onCardSelectionChange(null, null, { seedBulk: true }));
+      act(() => result.current.onCardSelectionChange(null, null, { bulk: 'seed' }));
       expect(result.current.selectedQueryRefIds).toEqual([]);
       expect(result.current.selectedTransformationIds).toEqual([]);
+    });
+  });
+
+  // Used by the stacked view, where scrolling moves the active card as a side effect of
+  // navigation and must not disturb what the user has checked.
+  describe("onCardSelectionChange — bulk: 'keep'", () => {
+    it('moves the active query without touching the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
+
+      act(() => result.current.onCardSelectionChange('C', null, { bulk: 'keep' }));
+
+      expect(result.current.activeQueryRefId).toBe('C');
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('moves the active transformation without touching the bulk selection', () => {
+      const { result } = setup();
+      act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
+
+      act(() => result.current.onCardSelectionChange(null, 'tx-2', { bulk: 'keep' }));
+
+      expect(result.current.activeTransformationId).toBe('tx-2');
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+    });
+
+    it('leaves the range anchor intact so a follow-up Shift+Click still ranges from it', () => {
+      const { result } = setup();
+      act(() => result.current.toggleQuerySelection({ refId: 'B' }, { multi: true }));
+
+      // Scrolling past another card must not re-anchor the range.
+      act(() => result.current.onCardSelectionChange('D', null, { bulk: 'keep' }));
+      act(() => result.current.toggleQuerySelection({ refId: 'D' }, { range: true }));
+
+      expect(result.current.selectedQueryRefIds).toEqual(['B', 'C', 'D']);
     });
   });
 

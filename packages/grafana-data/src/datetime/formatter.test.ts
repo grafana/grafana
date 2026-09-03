@@ -132,4 +132,11 @@ describe('timeZoneAbbrevation', () => {
     const options = { timeZone: 'Europe/Bucharest' };
     expect(timeZoneAbbrevation(1587126975779, options)).toBe('EEST');
   });
+  it('should return UTC for the utc time zone (like moment-timezone)', () => {
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'utc' })).toBe('UTC');
+  });
+  it('should return an empty string for zone names that do not resolve to an IANA zone (like moment)', () => {
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'browser' })).toBe('');
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'not/a-zone' })).toBe('');
+  });
 });

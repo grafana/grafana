@@ -9,9 +9,8 @@ export const createStorybookTheme = (theme: GrafanaTheme2) => {
 
     // UI
     appBg: theme.colors.background.canvas,
-    appContentBg: theme.colors.background.primary,
-    appBorderColor: theme.colors.border.medium,
-    appBorderRadius: 0,
+    appContentBg: theme.colors.background.page,
+    appBorderColor: theme.colors.border.weak,
 
     // Typography
     fontBase: theme.typography.fontFamily,

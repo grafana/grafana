@@ -144,6 +144,23 @@ jobs:
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
       latest: ${{ needs.setup.outputs.latest }}
 
+  # Attach the SBOM to the GitHub release. Needs create_github_release because the upload targets an
+  # existing release; the SBOM itself is scanned from the release branch.
+  # Skipped on dry runs.
+  export_sbom:
+    name: Export SBOM and attach to the GitHub release
+    needs:
+      - setup
+      - create_github_release
+    if: ${{ needs.setup.outputs.dry_run != 'true' }}
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/sbom-on-release.yml
+    with:
+      version: ${{ needs.setup.outputs.version }}
+      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+
   # Attach this release's deb/rpm to the GitHub release so the external apt/yum repo-sync can consume
   # them. Runs for every non-+security, non-dry-run public release. The gcom public packages API is the
   # authoritative manifest (it holds exactly this version's build), so no build id is needed. Sources

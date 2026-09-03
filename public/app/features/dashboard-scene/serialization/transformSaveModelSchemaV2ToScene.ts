@@ -13,7 +13,6 @@ import {
   QueryVariable,
   SceneRefreshPicker,
   SceneTimePicker,
-  SceneTimeRange,
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
@@ -36,7 +35,6 @@ import {
   defaultQueryVariableKind,
   defaultTextVariableKind,
   defaultSwitchVariableKind,
-  defaultTimeSettingsSpec,
   type GroupByVariableKind,
   type IntervalVariableKind,
   type LibraryPanelKind,
@@ -87,6 +85,7 @@ import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
+import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -241,15 +240,7 @@ export function transformSaveModelSchemaV2ToScene(
       uid: metadata.name,
       version: metadata.generation,
       body: layoutManager,
-      $timeRange: new SceneTimeRange({
-        // Use defaults when time is empty to match DashboardModel behavior
-        from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
-        to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
-        fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
-        timeZone: dashboard.timeSettings.timezone,
-        weekStart: dashboard.timeSettings.weekStart,
-        UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
-      }),
+      $timeRange: buildSceneTimeRange(dashboard.timeSettings),
       $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
       $behaviors: [
         new behaviors.CursorSync({

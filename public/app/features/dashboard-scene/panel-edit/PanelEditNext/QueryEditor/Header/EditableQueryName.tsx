@@ -13,10 +13,9 @@ interface EditableQueryNameProps {
   query: DataQuery;
   queries: DataQuery[];
   onQueryUpdate: (updatedQuery: DataQuery, originalRefId: string) => void;
-  readOnly?: boolean;
 }
 
-export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: EditableQueryNameProps) {
+export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQueryNameProps) {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -104,16 +103,6 @@ export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: E
     event.target.select();
   };
 
-  if (readOnly) {
-    return (
-      <span className={styles.queryNameText}>
-        <Text color="primary" truncate variant="code">
-          {query.refId}
-        </Text>
-      </span>
-    );
-  }
-
   if (isEditing) {
     return (
       <div className={styles.inputRow}>
@@ -145,7 +134,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: E
       title={t('query-editor-next.edit-query-name', 'Edit query name')}
     >
       <span className={styles.queryNameText}>
-        <Text color="primary" element="p" truncate variant="code">
+        <Text color="primary" element="p" truncate variant="body">
           {query.refId}
         </Text>
       </span>
@@ -190,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     maxWidth: '300px',
 
     input: {
-      fontFamily: theme.typography.fontFamilyMonospace,
+      fontFamily: theme.typography.fontFamily,
     },
   }),
   inputRow: css({

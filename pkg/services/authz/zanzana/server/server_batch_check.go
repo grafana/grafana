@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -878,9 +879,7 @@ func (s *Server) doOpenFGABatchCheck(
 		if err != nil {
 			return nil, err
 		}
-		for k, v := range results {
-			allResults[k] = v
-		}
+		maps.Copy(allResults, results)
 	}
 
 	return allResults, nil

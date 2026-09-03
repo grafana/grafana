@@ -1,19 +1,19 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useId } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
-import { MegaMenuHeader } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
@@ -54,7 +54,7 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
 
-    const styles = useStyles2(getStyles, canCustomise, visualRefreshEnabled);
+    const styles = useStyles2(getStyles, visualRefreshEnabled);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -102,7 +102,7 @@ export const MegaMenu = memo(
     );
 
     const navLabel = t('navigation.megamenu.list-label', 'Navigation');
-    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
+    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned items');
     // The pinned list is named by its visible heading (aria-labelledby) rather than repeating the
     // label as an aria-label, so screen readers don't announce "Pinned" twice.
     const pinnedHeadingId = useId();
@@ -155,10 +155,10 @@ export const MegaMenu = memo(
         <>
           <div className={styles.pinnedBox}>
             <div className={styles.pinnedHeading} id={pinnedHeadingId}>
-              <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
               </Text>
+              <div className={styles.pinnedHeadingLine} />
             </div>
             {editMode ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
@@ -191,6 +191,7 @@ export const MegaMenu = memo(
               </ul>
             )}
           </div>
+          <hr className={styles.dividerLine} />
         </>
       );
 
@@ -230,7 +231,7 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <nav className={styles.content}>
+        <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
@@ -252,16 +253,9 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
-              pinned list and pressing Done before the pins arrive would overwrite them with []. */}
-          {canCustomise && !editMode && !isLoading && (
-            <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
-              <Icon name="sliders-v-alt" size="lg" />
-              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise navigation')}</Text>
-            </button>
-          )}
-          {editMode && (
-            <div className={styles.editFooter}>
+          <hr className={styles.dividerLine} />
+          <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
+            {editMode && (
               <MegaMenuCustomiseControls
                 canReset={canReset}
                 onResetToDefault={onResetToDefault}
@@ -269,8 +263,27 @@ export const MegaMenu = memo(
                 onSaveEdit={onSaveEdit}
                 saving={isSaving}
               />
-            </div>
-          )}
+            )}
+            {!editMode && canCustomise && !isLoading && (
+              <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+              </Button>
+            )}
+            {!editMode && !state.fullscreenWorkspace && (
+              <IconButton
+                id={DOCK_MENU_BUTTON_ID}
+                className={styles.dockMenuButton}
+                tooltip={
+                  state.megaMenuDocked
+                    ? t('navigation.megamenu.undock', 'Undock menu')
+                    : t('navigation.megamenu.dock', 'Dock menu')
+                }
+                name="web-section-alt"
+                onClick={handleDockedMenu}
+                variant="secondary"
+              />
+            )}
+          </div>
         </nav>
       </div>
     );
@@ -279,7 +292,7 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEnabled: boolean) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -287,6 +300,10 @@ const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEna
       minHeight: 0,
       flexGrow: 1,
       position: 'relative',
+      paddingTop: theme.spacing(0.5),
+    }),
+    contentDocked: css({
+      paddingTop: theme.spacing(0),
     }),
     scrollArea: css({
       flex: 1,
@@ -297,11 +314,7 @@ const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEna
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
-      // inset by the box margin + its own padding). With customisation on, extra right padding keeps
-      // the collapse chevrons clear of an always-visible OS scrollbar (the ScrollContainer layers it
-      // over this edge); gated on the flag to leave the default menu's spacing untouched.
-      padding: canCustomise ? theme.spacing(1, 2, 2, 1.5) : theme.spacing(1, 1, 2, 1.5),
+      padding: theme.spacing(1, 1, 2, 1),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
@@ -313,17 +326,8 @@ const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEna
       padding: 0,
       margin: 0,
     }),
-    // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
-    // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
-    // icons line up with the nav section icons. A slightly tighter gap below than around the other
-    // sides, so the nav list sits closer beneath. Under visual refresh, mirror the page content pane:
-    // flush at the top, matching the page background token and radius.
     pinnedBox: css({
-      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: visualRefreshEnabled ? theme.shape.radius.lg : theme.shape.radius.default,
-      margin: visualRefreshEnabled ? theme.spacing(0, 1, 0.5, 1) : theme.spacing(1, 1, 0.5, 1),
-      padding: theme.spacing(1),
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
     // a heading, distinct from the pinned item rows). The icon column matches the item rows so it
@@ -332,43 +336,43 @@ const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEna
       alignItems: 'center',
       color: theme.colors.text.secondary,
       display: 'flex',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       height: theme.spacing(3.5),
       // Matches the item rows' label inset so the heading icon lines up with the pinned item icons.
-      paddingLeft: theme.spacing(0.5),
+      paddingLeft: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
     }),
-    pinnedHeadingIcon: css({
-      flexShrink: 0,
-      width: theme.spacing(3),
+    pinnedHeadingLine: css({
+      flexGrow: 1,
+      height: '1px',
+      background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
     }),
-    // Customise entry point, pinned to the bottom of the menu as a footer button.
-    customiseButton: css({
-      alignItems: 'center',
-      background: 'none',
+    // Divider separating the pinned box from the rest of the nav, and nav from footer
+    dividerLine: css({
       border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      cursor: 'pointer',
-      display: 'flex',
       flexShrink: 0,
-      gap: theme.spacing(1),
-      padding: theme.spacing(1.5, 2),
-      width: '100%',
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
+      height: 1,
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
+      margin: theme.spacing(1),
     }),
-    // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
-    editFooter: css({
+    // Menu footer: the Customise entry point (or, while editing, the Reset/Cancel/Done controls).
+    footer: css({
       alignItems: 'center',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexShrink: 0,
-      justifyContent: 'flex-end',
-      padding: theme.spacing(1.5, 2),
+      justifyContent: 'space-between',
+      padding: theme.spacing(0.5, 2, 1.5, 2),
+    }),
+    footerEditMode: css({
+      justifyContent: 'center',
+    }),
+    dockMenuButton: css({
+      display: 'none',
+      marginLeft: 'auto',
+
+      [theme.breakpoints.up('xl')]: {
+        display: 'inline-flex',
+      },
     }),
   };
 };

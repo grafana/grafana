@@ -46,6 +46,7 @@ export interface DescendantCountDTO {
   folders?: number;
   dashboards?: number;
   alertrules?: number;
+  recordingrules?: number;
   // There is this weird thing where legacy/sql-fallback values have different resource name for the panels. As the old
   // API uses the same backend as new and just reshapes it, this will leak here.
   library_elements?: number;
@@ -58,6 +59,6 @@ export interface DescendantCountDTO {
   librarypanel?: number;
 }
 
-type DescendantResource = 'folders' | 'dashboards' | 'librarypanels' | 'alertrules';
+type DescendantResource = 'folders' | 'dashboards' | 'librarypanels' | 'alertrules' | 'recordingrules';
 /** Summary of descendant counts by resource type, with keys matching the App Platform API response */
 export interface DescendantCount extends Record<DescendantResource, number> {}

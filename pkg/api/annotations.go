@@ -498,6 +498,11 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 		Limit: c.QueryInt64("limit"),
 	}
 
+	// Default limit if not specified
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
+	}
+
 	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to find annotation tags", err)
@@ -640,7 +645,6 @@ type GetAnnotationsParams struct {
 	// Use this to filter organization annotations. Organization annotations are annotations from an annotation data source that are not connected specifically to a dashboard or panel. You can filter by multiple tags.
 	// in:query
 	// required:false
-	// type: array
 	// collectionFormat: multi
 	Tags []string `json:"tags"`
 	// Return alerts or user created annotations

@@ -17,7 +17,7 @@ function getStyles(theme: GrafanaTheme2) {
       whiteSpace: 'nowrap',
       textDecoration: 'none',
       color: theme.colors.text.primary,
-      ...theme.typography.code,
+      ...theme.typography.body,
       fontWeight: theme.typography.fontWeightLight,
     }),
 

@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { isFetchError } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -56,10 +56,11 @@ const useResourceRepositoryViewData = ({
   skipQuery,
   includeInstance,
 }: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
+  const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
   // `includeInstance` overrides the skip for root-level instance lookups.
-  const shouldSkipSettings = skipQuery || (!name && !folderName && !includeInstance);
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -68,12 +69,21 @@ const useResourceRepositoryViewData = ({
     error: settingsError,
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
-  const skipFolderQuery = !folderName || skipQuery;
+  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
   const {
     data: folder,
     isLoading: isFolderLoading,
     error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
+
+  if (!provisioningEnabled) {
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Disabled,
+    };
+  }
 
   if (isSettingsLoading || isFolderLoading) {
     return {

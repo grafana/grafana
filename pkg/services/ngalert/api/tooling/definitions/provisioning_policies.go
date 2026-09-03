@@ -28,6 +28,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/policies provisioning stable RouteResetPolicyTree
 //
@@ -41,6 +42,7 @@ import (
 //     Responses:
 //       202: Ack
 //       403: ForbiddenError
+//       409: PublicError
 
 // swagger:route GET /v1/provisioning/policies/export provisioning stable RouteGetPolicyTreeExport
 //

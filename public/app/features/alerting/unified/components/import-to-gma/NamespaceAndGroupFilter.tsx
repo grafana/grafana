@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption, Field, Stack } from '@grafana/ui';
 
@@ -76,7 +77,7 @@ export const NamespaceAndGroupFilter = ({ rulesSourceName }: Props) => {
       </Field>
       <Field
         htmlFor="group-picker"
-        data-testid="group-picker"
+        data-testid={selectors.components.AlertRules.groupPicker}
         label={t('alerting.import-to-gma.group.label', 'Group')}
         description={t('alerting.import-to-gma.group.description', 'Type to search for an existing group')}
         error={errors.ruleGroup?.message}

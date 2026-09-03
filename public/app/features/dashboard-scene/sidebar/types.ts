@@ -49,3 +49,20 @@ export interface DashboardSidebarPane extends SceneObject {
   /** Exclude this pane from the go back history */
   excludeFromHistory?: boolean;
 }
+
+export enum SidebarCategoryType {
+  TabSectionVariables = 'tab-section-variables',
+  TabSectionVariablesList = 'tab-section-variables-list',
+  RowSectionVariables = 'dash-row-section-variables',
+  RowSectionVariablesList = 'dash-row-section-variables-list',
+  DashboardVariables = 'dashboard-variables',
+
+  TabSectionFilters = 'tab-section-filters',
+  TabSectionFiltersList = 'tab-section-filters-list',
+  RowSectionFilters = 'dash-row-section-filters',
+  RowSectionFiltersList = 'dash-row-section-filters-list',
+  DashboardFilters = 'dashboard-filters',
+
+  DashboardLinks = 'dashboard-links',
+  DashboardAnnotations = 'dashboard-annotations',
+}

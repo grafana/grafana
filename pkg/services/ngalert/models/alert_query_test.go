@@ -257,11 +257,15 @@ func TestAlertQuery(t *testing.T) {
 			if tc.expectedIsHysteresis {
 				t.Run("can patch the command with loaded metrics", func(t *testing.T) {
 					require.NoError(t, tc.alertQuery.PatchHysteresisExpression(map[data.Fingerprint]struct{}{1: {}, 2: {}, 3: {}}))
-					data, ok := tc.alertQuery.modelProps["conditions"].([]any)[0].(map[string]any)["loadedDimensions"]
+					condition := tc.alertQuery.modelProps["conditions"].([]any)[0].(map[string]any)
+					fingerprints, ok := condition["loadedFingerprints"].([]string)
 					require.True(t, ok)
-					require.NotNil(t, data)
-					_, err := tc.alertQuery.GetModel()
+					require.ElementsMatch(t, []string{"1", "2", "3"}, fingerprints)
+
+					// The fingerprints have to reach the marshalled model, not just modelProps.
+					blob, err := tc.alertQuery.GetModel()
 					require.NoError(t, err)
+					require.Contains(t, string(blob), `"loadedFingerprints"`)
 				})
 			}
 		})

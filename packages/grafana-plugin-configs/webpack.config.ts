@@ -103,7 +103,16 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       { 'amd-module': 'module' },
       'lodash',
       'jquery',
-      'moment',
+      // moment stays external (served lazily by the runtime's shared dependencies), except when
+      // imported by @react-awesome-query-builder, which is redirected to a luxon-backed compat
+      // adapter through the `moment$` resolve alias below so SQL plugins don't load real moment.
+      ({ context, request }, callback) => {
+        if (request === 'moment' && !context?.includes('@react-awesome-query-builder')) {
+          return callback(undefined, 'moment');
+        }
+
+        callback();
+      },
       'slate',
       'emotion',
       '@emotion/react',
@@ -316,6 +325,11 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
     ],
 
     resolve: {
+      // only reachable from @react-awesome-query-builder imports; all other moment imports are
+      // externalized before resolution (see externals above)
+      alias: {
+        moment$: path.resolve(import.meta.dirname, '../grafana-sql/src/utils/raqbMomentCompat.ts'),
+      },
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       conditionNames: ['@grafana-app/source', '...'],
       unsafeCache: true,

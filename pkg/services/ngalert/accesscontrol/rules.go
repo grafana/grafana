@@ -65,8 +65,7 @@ func (r *RuleService) getRulesQueryEvaluator(rules ...*models.AlertRule) accessc
 	evals := make([]accesscontrol.Evaluator, 0, 2)
 	for _, rule := range rules {
 		for _, query := range rule.Data {
-			if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
-				DatasourceUID == expr.OldDatasourceUID {
+			if query.DatasourceUID == expr.DatasourceUID || query.DatasourceUID == expr.OldDatasourceUID {
 				continue
 			}
 			if _, ok := added[query.DatasourceUID]; ok {

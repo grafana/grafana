@@ -1921,7 +1921,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			getRepoError:  repo.ErrFileNotFound,
 			expectGetRepo: true,
 			expectedResult: &provisioning.TestResults{
-				Code:    http.StatusBadRequest,
+				Code:    http.StatusNotFound,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
 					Type:   metav1.CauseTypeFieldValueInvalid,

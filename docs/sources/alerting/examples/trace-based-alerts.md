@@ -51,7 +51,7 @@ You can then create alert rules that query metrics derived from traces.
 
 You can use service graph metrics to detect infrastructure issues such as network degradation or service mesh problems.
 
-For trace-based alerts, we recommend using [span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/).
+For trace-based alerts, use [span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/).
 
 **Span metrics** measure the total processing time of a service request: capturing what happens inside the service, not just the communication between services. They include the time spent on internal processing and waiting on downstream calls, providing an **end-to-end picture of service performance**.
 
@@ -299,7 +299,7 @@ With **tail sampling**, it’s important to generate span metrics before a sampl
 
 TraceQL is a query language for searching and filtering traces in Grafana Tempo, which uses a syntax similar to `PromQL` and `LogQL`.
 
-With TraceQL, you can skip converting tracing data into span metrics and query raw trace data directly. It provides a more flexible filtering based on the trace structure, attributes, or resource metadata, and can detect issues faster as it does not wait for metric generation.
+With TraceQL, you can skip converting tracing data into span metrics and query raw trace data directly. It provides a more flexible filtering based on the trace structure, attributes, or resource metadata, and can detect issues faster as it doesn't wait for metric generation.
 
 TraceQL isn't suitable for all scenarios. For example:
 
@@ -310,8 +310,8 @@ TraceQL isn't suitable for all scenarios. For example:
 
   {{< admonition type="caution" >}}
 
-  TraceQL alerting is available in Grafana v12.1 or higher, supported as an [experimental feature](https://grafana.com/docs/release-life-cycle/).
-  Engineering and on-call support isn't available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+  TraceQL alerting is available in Grafana v12.1 or higher, supported as a [private preview feature](https://grafana.com/docs/release-life-cycle/).
+  Engineering and on-call support isn't available. No SLA is provided.
 
   While TraceQL can be powerful for exploring and detecting issues directly from trace data, **alerting with TraceQL shouldn't be used in production environments yet**. Use it for testing and experimentation at this moment.
 

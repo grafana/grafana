@@ -66,7 +66,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}, nil
 }
 
-func (c *Render) IsEnabled() bool {
+func (c *Render) IsEnabled(context.Context) bool {
 	return true
 }
 

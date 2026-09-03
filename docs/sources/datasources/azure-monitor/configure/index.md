@@ -519,7 +519,7 @@ Querying Basic Logs tables incurs additional costs on a per-query basis.
 Toggle **Enable Batch API** to query metrics for multiple resources in a single request using the [Azure Monitor Metrics Batch API](https://learn.microsoft.com/en-us/azure/azure-monitor/metrics/migrate-to-batch-api). Instead of sending one request per resource, Grafana groups eligible metric queries and sends them together. This reduces the number of calls to Azure, which improves query performance and lowers the chance of throttling on dashboards that query many resources.
 
 {{< admonition type="note" >}}
-This setting is only available when the `azureMonitorBatchAPI` feature toggle is enabled.
+This setting is only available when the `datasources.azureMonitorBatchAPI` feature toggle is enabled.
 {{< /admonition >}}
 
 Because requests to the Batch API are sent to the `metrics.monitor.azure.com` data plane endpoint, you need the [Monitoring Reader](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/rest-api-walkthrough#retrieve-metric-values-multi-dimensional-api) role at the subscription scope to use it.

@@ -1,13 +1,14 @@
 import { cx } from '@emotion/css';
 import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 
-import { ModalBase } from './ModalBase';
+import { ModalBase, type ModalBaseProps } from './ModalBase';
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
 
@@ -17,6 +18,8 @@ interface BaseProps {
   closeOnEscape?: boolean;
   closeOnBackdropClick?: boolean;
   trapFocus?: boolean;
+  /** See ModalBase. Pass a negative number when the content focuses itself. */
+  initialFocus?: ModalBaseProps['initialFocus'];
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -56,6 +59,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onDismiss,
     onClickBackdrop,
     trapFocus = true,
+    initialFocus,
   } = props;
   const styles = useStyles2(getModalStyles);
   const titleId = useId();
@@ -69,6 +73,7 @@ export function Modal(props: PropsWithChildren<Props>) {
       closeOnEscape={closeOnEscape}
       closeOnBackdropClick={closeOnBackdropClick}
       trapFocus={trapFocus}
+      initialFocus={initialFocus}
       className={className}
       onClickBackdrop={onClickBackdrop}
       aria-label={ariaLabel}
@@ -86,6 +91,7 @@ export function Modal(props: PropsWithChildren<Props>) {
             name="times"
             size="xl"
             onClick={onDismiss}
+            data-testid={selectors.components.Modal.closeButton}
             aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
           />
         </div>

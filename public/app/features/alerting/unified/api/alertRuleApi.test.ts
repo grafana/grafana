@@ -89,12 +89,19 @@ describe('alertRuleApi', () => {
     it('refetches combined rule queries after a group is saved', async () => {
       const store = createTestStore();
 
+      // Count only the combined-rule GET requests. Counting *all* fetches would make this pass on the
+      // mutation's own POST alone, so the test would still be green with the invalidation removed.
+      const combinedRuleRequestCount = () =>
+        fetchMock.mock.calls.filter(([request]) =>
+          String(request?.url).includes(`api/prometheus/${GRAFANA_RULES_SOURCE_NAME}/api/v1/rules`)
+        ).length;
+
       // Keep a combined-rule-backed query subscribed so invalidation can trigger a refetch.
       const querySubscription = store.dispatch(
         alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({ ruleSourceName: GRAFANA_RULES_SOURCE_NAME })
       );
       await querySubscription;
-      const callsAfterInitialQuery = fetchMock.mock.calls.length;
+      expect(combinedRuleRequestCount()).toBe(1);
 
       await store.dispatch(
         alertRuleApi.endpoints.upsertRuleGroupForNamespace.initiate({
@@ -105,9 +112,11 @@ describe('alertRuleApi', () => {
       );
 
       await waitFor(() => {
-        expect(fetchMock.mock.calls.length).toBeGreaterThan(callsAfterInitialQuery);
+        expect(combinedRuleRequestCount()).toBe(2);
       });
 
+      // Unsubscribe before afterEach clears the mock implementation, so a late refetch can't fire
+      // against a fetch mock that no longer returns an observable.
       querySubscription.unsubscribe();
     });
   });

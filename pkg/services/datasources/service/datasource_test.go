@@ -828,7 +828,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("should not return an error if data source doesn't exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -850,7 +850,7 @@ func TestIntegrationService_DeleteDataSource(t *testing.T) {
 	})
 
 	t.Run("should successfully delete a data source that exists", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1125,7 +1125,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			Type: "Kubernetes",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1164,7 +1164,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuthWithCACert", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1217,7 +1217,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsAuth", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1267,7 +1267,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson.Set("tlsAuthWithCACert", true)
 		sjson.Set("serverName", "server-name")
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1325,7 +1325,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson := simplejson.New()
 		sjson.Set("tlsSkipVerify", true)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1362,7 +1362,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Authorization",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1433,7 +1433,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 			"httpHeaderName1": "Host",
 		})
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1514,7 +1514,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 		sjson, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
 		require.NoError(t, err)
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -1539,7 +1539,7 @@ func TestIntegrationService_GetHttpTransport(t *testing.T) {
 func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1657,7 +1657,7 @@ func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 func TestIntegrationService_getConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1863,7 +1863,7 @@ func TestIntegrationService_getConnections(t *testing.T) {
 func TestIntegrationService_getProxySettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1963,7 +1963,7 @@ func TestIntegrationService_getTimeout(t *testing.T) {
 		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -1990,7 +1990,7 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -2020,7 +2020,7 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 			Type: "prometheus",
 		}
 
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
@@ -2048,7 +2048,7 @@ func TestIntegrationService_GetDecryptedValues(t *testing.T) {
 func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
@@ -2137,7 +2137,7 @@ func TestIntegrationDataSource_CustomHeaders(t *testing.T) {
 
 func initDSService(t *testing.T) *Service {
 	cfg := &setting.Cfg{}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)

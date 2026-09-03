@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -48,4 +49,10 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.Modul
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(StandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
+}
+
+// Initialize the standalone router factory
+func InitializeRouterFactory() (router.RouterFactory, error) {
+	wire.Build(RouterFactorySet)
+	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
 }

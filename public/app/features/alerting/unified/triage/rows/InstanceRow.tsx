@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
 import { type DataFrame, type GrafanaTheme2, type Labels, LoadingState, type TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { SceneDataNode, VizConfigBuilders } from '@grafana/scenes';
 import { SceneContextProvider, VizPanel } from '@grafana/scenes-react';
@@ -110,6 +111,7 @@ export function InstanceRow({
         actions={
           <OpenDrawerButton
             aria-label={t('alerting.triage.open-in-sidebar', 'Open in sidebar')}
+            data-testid={selectors.pages.Alerting.Triage.openDrawerButton}
             onClick={handleDrawerOpen}
             text={t('alerting.open-drawer-icon-button.instance-details', 'Instance details')}
           />

@@ -1,6 +1,15 @@
 import { of, lastValueFrom } from 'rxjs';
 
-import { dateTime, type DataQueryRequest, type DataSourceInstanceSettings } from '@grafana/data';
+import {
+  dateTime,
+  type DataFrame,
+  type DataFrameType,
+  type DataQueryRequest,
+  type DataSourceInstanceSettings,
+  FieldType,
+  getFieldDisplayName,
+  toDataFrame,
+} from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -49,7 +58,7 @@ describe('ExpressionDatasourceApi', () => {
 
   describe('query datasource scoping', () => {
     const buildRequest = (
-      query: ExpressionQuery,
+      query: ExpressionQuery | ExpressionQuery[],
       scopedVars: Record<string, { value: string; text: string }>
     ): DataQueryRequest<ExpressionQuery> =>
       ({
@@ -61,7 +70,7 @@ describe('ExpressionDatasourceApi', () => {
           to: dateTime('2026-01-01T01:00:00Z'),
           raw: { from: 'now-1h', to: 'now' },
         },
-        targets: [query],
+        targets: Array.isArray(query) ? query : [query],
         scopedVars,
         filters: [],
         interval: '1m',
@@ -122,6 +131,146 @@ describe('ExpressionDatasourceApi', () => {
           targets: [expect.objectContaining({ expression: '$A + $B' })],
         })
       );
+    });
+
+    it('restores display names for a SQL expression and its converted source frame', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const sourceQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      } as ExpressionQuery;
+      const sqlQuery: ExpressionQuery = {
+        type: ExpressionQueryType.sql,
+        refId: 'B',
+        expression: 'SELECT * FROM A',
+        datasource: { uid: '__expr__', type: '__expr__' },
+      };
+      const sourceFrame = toDataFrame({
+        refId: 'A',
+        meta: { type: 'timeseries-full-long' as DataFrameType },
+        fields: [
+          { name: '__value__', type: FieldType.number, values: [1] },
+          { name: '__display_name__', type: FieldType.string, values: ['source'] },
+        ],
+      });
+      const sqlFrame = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          { name: '__value__', type: FieldType.number, config: { unit: 'short' }, values: [10, 20] },
+          { name: '__display_name__', type: FieldType.string, values: ['x', 'x'] },
+        ],
+      });
+      const staleState = { displayName: 'stale' };
+      sqlFrame.fields[1].state = staleState;
+
+      mockGetDatasource.mockResolvedValue({});
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [sourceFrame, sqlFrame] }));
+
+      const response = await lastValueFrom(ds.query(buildRequest([sourceQuery, sqlQuery], {})));
+
+      const sourceResultFrame = response.data[0] as DataFrame;
+      expect(sourceResultFrame).not.toBe(sourceFrame);
+      expect(sourceResultFrame.fields[0].config.displayNameFromDS).toBe('source');
+      expect(getFieldDisplayName(sourceResultFrame.fields[0], sourceResultFrame, [sourceResultFrame])).toBe('source');
+      expect(sourceFrame.fields[0].config.displayNameFromDS).toBeUndefined();
+      const resultFrame = response.data[1] as DataFrame;
+      expect(resultFrame).not.toBe(sqlFrame);
+      expect(resultFrame.fields[1].config).toEqual({ unit: 'short', displayNameFromDS: 'x' });
+      expect(resultFrame.fields[1].state).toBeNull();
+      expect(getFieldDisplayName(resultFrame.fields[1], resultFrame, [resultFrame])).toBe('x');
+      expect(sqlFrame.fields[1].config).toEqual({ unit: 'short' });
+      expect(sqlFrame.fields[1].state).toBe(staleState);
+    });
+
+    it('does not treat a datasource SQL query as a SQL expression', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query = {
+        type: ExpressionQueryType.sql,
+        refId: 'A',
+        datasource: { uid: 'mysql', type: 'mysql' },
+      } as ExpressionQuery;
+      const frame = toDataFrame({
+        refId: 'A',
+        meta: { type: 'timeseries-full-long' as DataFrameType },
+        fields: [
+          { name: '__value__', type: FieldType.number, values: [30] },
+          { name: '__display_name__', type: FieldType.string, values: ['third-party'] },
+        ],
+      });
+
+      mockGetDatasource.mockResolvedValue({});
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const response = await lastValueFrom(ds.query(buildRequest(query, {})));
+
+      expect(response.data[0]).toBe(frame);
+      expect(frame.fields[0].config.displayNameFromDS).toBeUndefined();
+    });
+
+    it('restores the reserved value field when other numeric fields are present', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query: ExpressionQuery = {
+        type: ExpressionQueryType.sql,
+        refId: 'B',
+        expression: 'SELECT * FROM A',
+        datasource: { uid: '__expr__', type: '__expr__' },
+      };
+      const frame = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: '__value__', type: FieldType.number, values: [1] },
+          { name: 'other', type: FieldType.number, values: [2] },
+          { name: '__display_name__', type: FieldType.string, values: ['A'] },
+        ],
+      });
+
+      mockGetDatasource.mockResolvedValue({});
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const response = await lastValueFrom(ds.query(buildRequest(query, {})));
+
+      const resultFrame = response.data[0] as DataFrame;
+      expect(resultFrame).not.toBe(frame);
+      expect(resultFrame.fields[0].config.displayNameFromDS).toBe('A');
+      expect(resultFrame.fields[1].config.displayNameFromDS).toBeUndefined();
+      expect(frame.fields[0].config.displayNameFromDS).toBeUndefined();
+    });
+
+    it('does not restore an ambiguous SQL expression display name or a frame without a value field', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query: ExpressionQuery = {
+        type: ExpressionQueryType.sql,
+        refId: 'B',
+        expression: 'SELECT * FROM A',
+        datasource: { uid: '__expr__', type: '__expr__' },
+      };
+      const differentNames = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: '__value__', type: FieldType.number, values: [1, 2] },
+          { name: '__display_name__', type: FieldType.string, values: ['A', 'B'] },
+        ],
+      });
+      const missingValue = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: 'n', type: FieldType.number, values: [1] },
+          { name: '__display_name__', type: FieldType.string, values: ['A'] },
+        ],
+      });
+
+      mockGetDatasource.mockResolvedValue({});
+      jest
+        .spyOn(DataSourceWithBackend.prototype, 'query')
+        .mockReturnValue(of({ data: [differentNames, missingValue] }));
+
+      const response = await lastValueFrom(ds.query(buildRequest(query, {})));
+
+      expect(response.data[0]).toBe(differentNames);
+      expect(response.data[1]).toBe(missingValue);
+      expect(differentNames.fields[0].config.displayNameFromDS).toBeUndefined();
+      expect(missingValue.fields[0].config.displayNameFromDS).toBeUndefined();
     });
   });
 });

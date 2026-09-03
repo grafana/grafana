@@ -2,6 +2,7 @@ package fakes
 
 import (
 	"context"
+	"maps"
 	"strings"
 	"sync"
 	"testing"
@@ -115,8 +116,6 @@ func (fkv *FakeKVStore) GetAll(ctx context.Context, orgId int64, namespace strin
 		return all, nil
 	}
 
-	for k, v := range values {
-		all[orgId][k] = v
-	}
+	maps.Copy(all[orgId], values)
 	return all, nil
 }

@@ -11,5 +11,6 @@ func init() {
 		InitializeForTest,
 		InitializeForCLI,
 		InitializeAPIServerFactory,
+		InitializeRouterFactory,
 	)
 }

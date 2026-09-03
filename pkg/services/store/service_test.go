@@ -76,7 +76,7 @@ func TestIntegrationListFiles(t *testing.T) {
 
 	roots := []storageRuntime{publicStaticFilesStorage}
 
-	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		return make([]storageRuntime, 0)
 	}, allowAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
@@ -90,7 +90,7 @@ func TestIntegrationListFilesWithoutPermissions(t *testing.T) {
 
 	roots := []storageRuntime{publicStaticFilesStorage}
 
-	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), roots, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		return make([]storageRuntime, 0)
 	}, denyAllAuthService, cfg, nil)
 	frame, err := store.List(context.Background(), dummyUser, "public/maps", 0)
@@ -104,13 +104,13 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	sqlStorage.store = mockStorage
 
 	if authService == nil {
 		authService = allowAllAuthService
 	}
-	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		return make([]storageRuntime, 0)
 	}, authService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
@@ -237,8 +237,8 @@ func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	prefix := "resources"
-	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
-	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false)  //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, db.InitTestDB(t), 1, false) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	defer func() {
 		if r := recover(); r == nil {
@@ -246,7 +246,7 @@ func TestIntegrationSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 		}
 	}()
 
-	newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime {
+	newStandardStorageService(db.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		return make([]storageRuntime, 0)
 	}, allowAllAuthService, cfg, nil)
 }
@@ -255,7 +255,7 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	globalOrgID := int64(accesscontrol.GlobalOrgID)
-	testDB := db.InitTestDB(t)
+	testDB := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgedUser := &user.SignedInUser{OrgID: 1}
 
 	t.Helper()
@@ -273,7 +273,7 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 	nestedOrgedStorage := newSQLStorage(RootStorageMeta{}, nestedOrgedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, testDB, globalOrgID, true)
 	nestedOrgedStorage.store = mockNestedOrgedFSApi
 
-	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
+	store := newStandardStorageService(db.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime { //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		return []storageRuntime{nestedOrgedStorage, contentStorage}
 	}, allowAllAuthService, cfg, nil)
 	store.cfg = &GlobalStorageConfig{
@@ -455,7 +455,7 @@ func TestIntegrationContentRootWithNestedStorage(t *testing.T) {
 func TestIntegrationShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db := db.InitTestDB(t)
+	db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	ctx := context.Background()
 	nestedStorage := newSQLStorage(RootStorageMeta{}, "nested", "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, true)
 	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, false)

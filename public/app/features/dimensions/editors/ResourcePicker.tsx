@@ -144,7 +144,9 @@ export const ResourcePicker = (props: Props) => {
 
 // strip the SVG off icons in the icons folder
 function getDisplayName(src?: string, name?: string): string | undefined {
-  if (src?.startsWith('public/build/img/icons')) {
+  // `src` is a resolved URL, so match on the folder rather than on a build directory that
+  // varies by bundler and CDN.
+  if (src?.includes('img/icons/')) {
     const idx = name?.lastIndexOf('.svg') ?? 0;
     if (idx > 0) {
       return name!.substring(0, idx);

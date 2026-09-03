@@ -51,6 +51,7 @@ jest.mock('@grafana/assistant', () => ({
 
 const mockGet = jest.fn(() => Promise.resolve(mockDS));
 const mockGetInstanceSettings = jest.fn(() => mockDS);
+const mockReportInteraction = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -59,6 +60,7 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => {},
     getInstanceSettings: mockGetInstanceSettings,
   }),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
 
 // Draggable fails to render in tests, so we mock it out
@@ -542,12 +544,12 @@ describe('QueryEditorRow', () => {
 
   describe('Query Library Integration', () => {
     let testData: PanelData;
-    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+    let mockOnExitEdit: jest.MockedFunction<() => void>;
 
     beforeEach(() => {
       jest.clearAllMocks();
       mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
-      mockOnCancelEdit = jest.fn();
+      mockOnExitEdit = jest.fn();
 
       // Standard test data for QueryEditorRow
       testData = {
@@ -557,9 +559,9 @@ describe('QueryEditorRow', () => {
       };
     });
 
-    it('should render query library editing header when queryLibraryRef is provided', async () => {
+    it('should render query library editing header when editSavedQueryRef is provided', async () => {
       render(
-        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
 
       // Wait for async datasource loading and component rendering
@@ -567,15 +569,59 @@ describe('QueryEditorRow', () => {
         expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
           expect.objectContaining({ refId: 'B' }),
           undefined, // app
-          'test-ref', // queryLibraryRef
-          mockOnCancelEdit, // onCancelEdit
+          'test-ref', // editSavedQueryRef
+          expect.any(Function), // onCancelEdit
           expect.any(Function), // onUpdateSuccess
-          expect.any(Function) // onSelectQuery
+          expect.any(Function), // onSelectQuery
+          'edit' // mode
         );
       });
     });
 
-    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+    it('routes both cancelling and saving to the single exit callback', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
+      );
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalled();
+      });
+
+      const [, , , onCancelEdit, onUpdateSuccess] =
+        mockQueryLibraryContext.renderQueryLibraryEditingHeader.mock.calls[0];
+
+      onUpdateSuccess();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(1);
+
+      onCancelEdit();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(2);
+
+      // The cancelled event now comes from the editing header, which dispatches it through the Query
+      // Library context so it picks up the app/is_v2 stamping this raw call was missing.
+      expect(mockReportInteraction).not.toHaveBeenCalledWith(
+        'query_library-update_query_from_explore_cancelled',
+        expect.anything()
+      );
+    });
+
+    it('should render the add-mode header when addingSavedQuery is set without an editSavedQueryRef', async () => {
+      const mockOnCancelAdd = jest.fn();
+      render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          undefined, // editSavedQueryRef (none for a brand-new query)
+          mockOnCancelAdd, // onCancelEdit → exits add mode
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function), // onSelectQuery
+          'add' // mode
+        );
+      });
+    });
+
+    it('should not render query library editing header when editSavedQueryRef is not provided', async () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {

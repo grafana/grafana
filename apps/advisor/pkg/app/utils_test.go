@@ -220,7 +220,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta.SetCreatedBy("user:1")
-	client := &mockClient{}
+	client := &mockClient{res: obj}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
@@ -232,6 +232,41 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
+}
+
+func TestProcessCheckRetry_DryRun_NeverPersisted(t *testing.T) {
+	// Simulates a dry-run update: the retry annotation on obj (the hypothetical new
+	// state from the admission request) never actually lands in storage, since a
+	// dry-run request is never persisted. grafana-app-sdk's AdmissionRequest has no
+	// dryRun flag, so this is detected indirectly by the annotation never showing up
+	// when polling storage. No patches should be issued in this case.
+	retryAnnotationPollingInterval = 1 * time.Millisecond
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{
+		checks.RetryAnnotation:  "item",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetCreatedBy("user:1")
+
+	// storedObj represents the object as it actually exists in storage: no retry
+	// annotation was ever persisted for it, since the update was a dry-run.
+	storedObj := &advisorv0alpha1.Check{}
+	storedObj.SetAnnotations(map[string]string{
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
+	})
+	client := &mockClient{res: storedObj}
+	typesClient := &mockTypesClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items: []any{"item"},
+	}
+
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
+	assert.Error(t, err)
+	assert.Empty(t, client.values, "no patches should be issued for a retry annotation that never lands in storage")
 }
 
 func TestProcessCheckRetry_SkipMissingItem(t *testing.T) {

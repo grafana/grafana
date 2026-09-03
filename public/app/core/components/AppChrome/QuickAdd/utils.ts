@@ -11,6 +11,7 @@ export const ITEM_ICONS: Record<string, IconName> = {
   'dashboards/new': 'plus',
   'browse-template-dashboard': 'grid',
   'dashboards/import': 'import',
+  'generate-dashboard': 'ai-sparkle',
   alert: 'plus',
   folder: 'folder',
 };

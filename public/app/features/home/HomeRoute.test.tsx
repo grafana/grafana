@@ -1,11 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
+import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1';
 import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
@@ -29,10 +29,23 @@ jest.mock('./analytics/main', () => ({
 
 jest.mock('app/plugins/panel/news/useNewsFeed');
 
+// Call through by default so MSW-backed tests keep working; override only for the
+// cached-data-after-error case that is hard to reproduce via the network layer.
+jest.mock('@grafana/api-clients/rtkq/preferences/v1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1');
+  return {
+    ...actual,
+    useMergedPreferencesQuery: jest.fn(actual.useMergedPreferencesQuery),
+  };
+});
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
 const useNewsFeedMock = jest.mocked(useNewsFeed);
+const useMergedPreferencesQueryMock = jest.mocked(useMergedPreferencesQuery);
+const actualUseMergedPreferencesQuery = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1')
+  .useMergedPreferencesQuery as typeof useMergedPreferencesQuery;
 
 describe('HomeRoute', () => {
   let probeCallCount = 0;
@@ -48,6 +61,7 @@ describe('HomeRoute', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useMergedPreferencesQueryMock.mockImplementation(actualUseMergedPreferencesQuery);
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     useNewsFeedMock.mockReturnValue({
@@ -67,28 +81,12 @@ describe('HomeRoute', () => {
   });
 
   afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
-    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
-    await act(async () => {
-      setTestFlags({});
-    });
     jest.restoreAllMocks();
   });
 
   const props = {} as ComponentProps<typeof HomeRoute>;
 
-  it('flag off → renders dashboard proxy without probing merged preferences', async () => {
-    stubMergedPreferences({ homeDashboardUID: '' });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
-    expect(probeCallCount).toBe(0);
-    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
-  });
-
-  it('flag on + homeDashboardUID empty → renders HomePage', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID empty → renders HomePage', async () => {
     stubMergedPreferences({ homeDashboardUID: '' });
 
     render(<HomeRoute {...props} />);
@@ -97,8 +95,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
-  it('flag on + homeDashboardUID absent → renders HomePage', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID absent → renders HomePage', async () => {
     stubMergedPreferences({});
 
     render(<HomeRoute {...props} />);
@@ -107,8 +104,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
-  it('flag on + homeDashboardUID present → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID present → renders dashboard proxy', async () => {
     stubMergedPreferences({ homeDashboardUID: 'abc' });
 
     render(<HomeRoute {...props} />);
@@ -117,8 +113,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('flag on + homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
     stubMergedPreferences({ homeDashboardUID: 'default-home-dashboard' });
 
     render(<HomeRoute {...props} />);
@@ -127,8 +122,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('flag on + merged endpoint returns 500 → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('merged endpoint returns 500 → renders HomePage', async () => {
     server.use(
       http.get(MERGED_PREFS_URL, () => {
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
@@ -137,12 +131,26 @@ describe('HomeRoute', () => {
 
     render(<HomeRoute {...props} />);
 
+    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefs error with cached homeDashboardUID → still renders dashboard proxy', async () => {
+    // Simulate RTK Query keeping previous data after a failed refetch.
+    useMergedPreferencesQueryMock.mockReturnValue({
+      data: { metadata: {}, spec: { homeDashboardUID: 'abc' } },
+      isLoading: false,
+      isError: true,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useMergedPreferencesQuery>);
+
+    render(<HomeRoute {...props} />);
+
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('flag on + homeURL present → calls locationService.replace', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeURL present → calls locationService.replace', async () => {
     stubMergedPreferences({ homeURL: '/d/abc' });
 
     render(<HomeRoute {...props} />);
@@ -155,19 +163,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('flag on + homeURL pointing at the setup guide → renders HomePage without redirecting', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubMergedPreferences({ homeURL: '/a/grafana-setupguide-app/home' });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
-    expect(locationService.getLocation().pathname).not.toContain('grafana-setupguide-app');
-    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
-  });
-
-  it('flag on + homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
+  it('homeDashboardUID and homeURL both present → renders dashboard proxy without redirecting', async () => {
     stubMergedPreferences({ homeDashboardUID: 'abc', homeURL: '/d/other' });
 
     render(<HomeRoute {...props} />);

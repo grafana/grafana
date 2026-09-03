@@ -101,7 +101,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupBackend(t *testing.T) *ResourcePermSqlBackend {
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	sqlHelper := &legacysql.LegacyDatabaseHelper{
 		DB:    store,
@@ -403,7 +403,7 @@ func TestIntegration_ResourcePermSqlBackend_deleteResourcePermission(t *testing.
 func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	timeNow = func() time.Time {
 		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
@@ -795,7 +795,7 @@ func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *t
 func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject_SAMapper(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	sqlHelper := &legacysql.LegacyDatabaseHelper{
 		DB:    store,
 		Table: func(name string) string { return name },

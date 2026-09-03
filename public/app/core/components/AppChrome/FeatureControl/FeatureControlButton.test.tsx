@@ -59,14 +59,6 @@ describe('FeatureControlButton', () => {
     useFeatureControlContextMock.mockReturnValue(buildContext());
   });
 
-  it('does not render when feature control is not accessible', () => {
-    useFeatureControlContextMock.mockReturnValue(buildContext({ isAccessible: false }));
-
-    render(<FeatureControlButton />);
-
-    expect(screen.queryByRole('button', { name: 'Feature control' })).not.toBeInTheDocument();
-  });
-
   it('renders a collapsed button when feature control is closed', () => {
     render(<FeatureControlButton />);
 

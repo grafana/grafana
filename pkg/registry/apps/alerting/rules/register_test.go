@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -41,9 +43,9 @@ func TestRegisterAppInstaller_UnifiedAlertingEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			enabled := tt.enabled
 			cfg := &setting.Cfg{UnifiedAlerting: setting.UnifiedAlertingSettings{Enabled: &enabled}}
-			ng := &ngalert.AlertNG{Cfg: cfg}
+			ng := &ngalert.AlertNG{Cfg: cfg, Api: &api.API{AlertRules: &provisioning.AlertRuleService{}}}
 
-			inst, err := RegisterAppInstaller(cfg, ng, nil)
+			inst, err := RegisterAppInstaller(cfg, ng, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

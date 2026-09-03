@@ -33,7 +33,7 @@ func newPublicDashboardServiceImpl(
 	t.Helper()
 
 	if store == nil {
-		store, cfg = db.InitTestDBWithCfg(t)
+		store, cfg = db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	}
 	tagService := tagimpl.ProvideService(store)
 	if annotationsRepo == nil {

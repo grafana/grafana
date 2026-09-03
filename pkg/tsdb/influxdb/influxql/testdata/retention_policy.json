@@ -1,1 +1,0 @@
-{"results":[{"statement_id":0,"series":[{"columns":["name","duration","shardGroupDuration","replicaN","default"],"values":[["default","0s","168h0m0s",1,true],["autogen","0s","168h0m0s",1,false],["bar","0s","168h0m0s",1,false],["5m_avg","0s","168h0m0s",1,false],["1m_avg","0s","168h0m0s",1,false]]}]}]}

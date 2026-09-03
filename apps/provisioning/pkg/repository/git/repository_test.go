@@ -99,7 +99,7 @@ func TestNewGit(t *testing.T) {
 
 	// This should succeed in creating the client but won't be able to connect
 	// We just test that the basic structure is created correctly
-	gitRepo, err := NewRepository(ctx, config, gitConfig)
+	gitRepo, err := NewRepository(ctx, config, gitConfig, nil)
 	require.NoError(t, err)
 	require.NotNil(t, gitRepo)
 	require.Equal(t, "https://git.example.com/owner/repo.git", gitRepo.URL())
@@ -293,7 +293,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "failed check if authorized: auth error",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusUnauthorized,
 			},
 			wantError: nil,
 		},
@@ -314,7 +314,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "not authorized",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusUnauthorized,
 			},
 			wantError: nil,
 		},
@@ -336,7 +336,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "failed check if repository exists: repo error",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusNotFound,
 			},
 			wantError: nil,
 		},
@@ -358,7 +358,7 @@ func TestGitRepository_Test(t *testing.T) {
 						Detail: "repository not found",
 					},
 				},
-				Code: http.StatusBadRequest,
+				Code: http.StatusNotFound,
 			},
 			wantError: nil,
 		},
@@ -2252,6 +2252,76 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.Equal(t, "Bot Signer", committer.Name)
 		require.Equal(t, "signer@example.com", committer.Email)
 	})
+
+	t.Run("should override author and committer from spec", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						AuthorName:  "Sync Bot",
+						AuthorEmail: "bot@example.com",
+					},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "Sync Bot", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Sync Bot", committer.Name)
+		require.Equal(t, "bot@example.com", committer.Email)
+	})
+
+	t.Run("should default author name when only author email is overridden", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{AuthorEmail: "bot@example.com"},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "bot@example.com", committer.Email)
+	})
+
+	t.Run("should keep the signer as committer when the author is overridden", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						AuthorName:  "Sync Bot",
+						AuthorEmail: "bot@example.com",
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Sync Bot", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
 }
 
 func TestNewGitRepository(t *testing.T) {
@@ -2309,7 +2379,7 @@ func TestNewGitRepository(t *testing.T) {
 				},
 			}
 
-			gitRepo, err := NewRepository(ctx, config, tt.gitConfig)
+			gitRepo, err := NewRepository(ctx, config, tt.gitConfig, nil)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -3153,7 +3223,7 @@ func TestGitRepository_NewGitRepository_ClientError(t *testing.T) {
 		Path:   "configs",
 	}
 
-	gitRepo, err := NewRepository(ctx, config, gitConfig)
+	gitRepo, err := NewRepository(ctx, config, gitConfig, nil)
 
 	// We expect this to fail during client creation
 	require.Error(t, err)

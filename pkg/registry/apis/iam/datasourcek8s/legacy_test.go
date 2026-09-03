@@ -101,6 +101,28 @@ func TestK8sDSActionToLegacy(t *testing.T) {
 	}
 }
 
+func TestIsInvalidK8sDatasourceScope(t *testing.T) {
+	tests := []struct {
+		name  string
+		scope string
+		want  bool
+	}{
+		{name: "valid k8s uid scope", scope: "loki.datasource.grafana.app/datasources:uid:abc", want: false},
+		{name: "valid k8s wildcard scope", scope: "loki.datasource.grafana.app/datasources:*", want: false},
+		{name: "wildcard-type k8s uid scope", scope: "*.datasource.grafana.app/datasources:uid:abc", want: false},
+		{name: "non-datasource scope", scope: "dashboards:*", want: false},
+		{name: "legacy datasource scope (no group)", scope: "datasources:uid:abc", want: false},
+		{name: "non-datasource k8s resource", scope: "loki.datasource.grafana.app/connections:uid:abc", want: false},
+		{name: "k8s scope missing uid attribute", scope: "loki.datasource.grafana.app/datasources:abc", want: true},
+		{name: "k8s scope with empty uid", scope: "loki.datasource.grafana.app/datasources:uid:", want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsInvalidK8sDatasourceScope(tt.scope))
+		})
+	}
+}
+
 func TestK8sDSUIDScopeToLegacy(t *testing.T) {
 	scope, dsType, ok := K8sDSUIDScopeToLegacy("loki.datasource.grafana.app/datasources:uid:abc")
 	require.True(t, ok)

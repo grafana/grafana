@@ -837,7 +837,7 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 	dc := &fakeDataSourceCache{cache: dss}
 	rv := &fakeDataSourceRequestValidator{}
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 

@@ -89,7 +89,7 @@ jobs:
           echo "$!" > /tmp/release-verify-deb.pid
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |
@@ -190,7 +190,7 @@ jobs:
           echo "$!" > /tmp/release-verify-rpm.pid
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |
@@ -276,7 +276,7 @@ jobs:
         run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |
@@ -363,7 +363,7 @@ jobs:
         run: docker run -d --name grafana-verify -p 3000:3000 -e GF_FEATURE_TOGGLES_splashScreen=false "${IMAGE_UNDER_TEST}"
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |

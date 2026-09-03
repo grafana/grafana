@@ -95,6 +95,11 @@ export enum AccessControlAction {
   PlaylistsRead = 'playlists:read',
   PlaylistsWrite = 'playlists:write',
 
+  VariablesCreate = 'variables:create',
+  VariablesRead = 'variables:read',
+  VariablesWrite = 'variables:write',
+  VariablesDelete = 'variables:delete',
+
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',
@@ -177,6 +182,11 @@ export enum AccessControlAction {
   AlertingTemplatesWrite = 'alert.notifications.templates:write',
   AlertingTemplatesDelete = 'alert.notifications.templates:delete',
   AlertingNotificationsTemplatesTest = 'alert.notifications.templates.test:write',
+
+  // Alerting inhibition rules actions
+  AlertingInhibitionRulesRead = 'alert.notifications.inhibition-rules:read',
+  AlertingInhibitionRulesWrite = 'alert.notifications.inhibition-rules:write',
+  AlertingInhibitionRulesDelete = 'alert.notifications.inhibition-rules:delete',
 
   // Alerting enrichments actions
   AlertingEnrichmentsRead = 'alert.enrichments:read',

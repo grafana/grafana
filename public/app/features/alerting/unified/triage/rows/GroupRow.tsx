@@ -3,6 +3,7 @@ import React from 'react';
 
 import { AlertLabel } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Text, useStyles2 } from '@grafana/ui';
 
@@ -27,6 +28,7 @@ export const GroupRow = ({ row, leftColumnWidth, rowKey, depth = 0, children }: 
   return (
     <GenericRow
       key={rowKey}
+      data-testid={selectors.pages.Alerting.Triage.groupRow(formatLabelValue(row.metadata.value))}
       width={leftColumnWidth}
       title={
         isEmptyValue ? (

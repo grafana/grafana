@@ -15,17 +15,18 @@ import { type LogListModel } from './processing';
 
 interface Props {
   log: LogListModel;
+  prettifyJSON?: boolean;
   syntaxHighlighting: boolean;
 }
 
-export const LogLineDetailsLog = memo(({ log: originalLog, syntaxHighlighting }: Props) => {
+export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxHighlighting }: Props) => {
   const { fontSize, noInteractions, onClickFilterOutString, onClickFilterString } = useLogListContext();
   const logStyles = useStyles2(getStyles);
   const styles = useStyles2(getLogLineDetailsLogStyles);
   const log = useMemo(() => {
-    const log = originalLog.clone();
+    const log = originalLog.clone({ prettifyJSON });
     return log;
-  }, [originalLog]);
+  }, [originalLog, prettifyJSON]);
 
   const filterLogLine = useCallback(() => {
     onClickFilterString?.(log.entry, log.dataFrame?.refId);

@@ -4,9 +4,21 @@ import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { AGGREGATION_PREFIX } from '../constants/aggregation';
-import { type SpanAggregation } from '../types/trace';
+import { type SpanAggregation, type TraceSpan } from '../types/trace';
 
 import { formatDuration } from './date';
+
+type SpanWithAggregation = Pick<TraceSpan, 'aggregation'>;
+
+/** True for pruned summary spans (`aggregation.is_summary`), false for normal and preserved-outlier spans. */
+export function isSummarySpan(span: SpanWithAggregation): boolean {
+  return span.aggregation?.isSummary === true;
+}
+
+/** Number of summary spans in a list; used to attribute trace-view interactions to summary presence. */
+export function countSummarySpans(spans: SpanWithAggregation[]): number {
+  return spans.reduce((count, span) => (isSummarySpan(span) ? count + 1 : count), 0);
+}
 
 /**
  * Split a span's tags into the raw `aggregation.*` tags written by span pruning and

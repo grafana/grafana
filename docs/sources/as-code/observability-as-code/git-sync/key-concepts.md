@@ -34,7 +34,7 @@ Before you start using Git Sync, understand how the key Git Sync components rela
 - [Grafana instance](#grafana-instance)
 - [Git repository](#git-repository)
 - [Git Sync repository resource](#git-sync-repository-resource)
-- [Git Sync connection](#git-sync-connection)
+- [Git Sync connection resource](#git-sync-connection-resource)
 
 ### Grafana instance
 

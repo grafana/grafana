@@ -15,6 +15,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -210,6 +211,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     adHocFilters={adHocFilters}
                     hideZeros={options.tooltip.hideZeros}
                     canExecuteActions={userCanExecuteActions}
+                    assistantContext={getAssistantTooltipContext(props, info.series)}
                   />
                 );
               }}

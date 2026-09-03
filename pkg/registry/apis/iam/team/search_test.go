@@ -101,9 +101,9 @@ func TestSearchHandler(t *testing.T) {
 		}
 		expectedFields := []string{
 			resource.SEARCH_FIELD_TITLE,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
-			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			builders.TEAM_SEARCH_EMAIL,
+			builders.TEAM_SEARCH_PROVISIONED,
+			builders.TEAM_SEARCH_EXTERNAL_UID,
 			teamsearch.LegacyIDField,
 		}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {

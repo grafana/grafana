@@ -33,49 +33,51 @@ export function getGroupDepth(layout: DashboardLayoutManager): number {
  * inside it one level deeper -- so the subtree depth counts towards the limit,
  * not just the ancestor groups.
  */
+export function getNestingRestrictions(layoutManager: DashboardLayoutManager) {
+  let ancestorGroups = 0;
+  let nearestGroupIsTabs = false;
+
+  let parent = layoutManager.parent;
+  while (parent) {
+    if (isDashboardLayoutManager(parent)) {
+      if (ancestorGroups === 0) {
+        nearestGroupIsTabs = parent instanceof TabsLayoutManager;
+      }
+      ancestorGroups++;
+    }
+    parent = parent.parent;
+  }
+
+  // Adding a row: rows layouts just get a new row (no new layer); tabs
+  // layouts delegate to the current tab's layout (wrapping it one level
+  // deeper when it isn't rows); grids get wrapped in a new rows layer.
+  let disableGrouping: boolean;
+  if (layoutManager instanceof RowsLayoutManager) {
+    disableGrouping = false;
+  } else if (layoutManager instanceof TabsLayoutManager) {
+    const currentTabLayout = layoutManager.getCurrentTab()?.state.layout;
+    disableGrouping = !(currentTabLayout instanceof RowsLayoutManager) && ancestorGroups + 2 > MAX_NESTING_DEPTH;
+  } else {
+    disableGrouping = ancestorGroups + 1 > MAX_NESTING_DEPTH;
+  }
+
+  // Adding a tab: tabs layouts just get a new tab (no new layer); anything
+  // else gets wrapped (with its whole subtree) in a new tabs layer, which is
+  // also rejected when it would sit directly inside another tabs layout.
+  let disableTabsReason: DisableTabsReason | undefined;
+  if (!(layoutManager instanceof TabsLayoutManager)) {
+    if (nearestGroupIsTabs) {
+      disableTabsReason = 'nested-tabs';
+    } else if (ancestorGroups + 1 + getGroupDepth(layoutManager) > MAX_NESTING_DEPTH) {
+      disableTabsReason = 'max-depth';
+    }
+  }
+
+  return { disableGrouping, disableTabs: disableTabsReason !== undefined, disableTabsReason };
+}
+
 export function useNestingRestrictions(layoutManager: DashboardLayoutManager) {
-  return useMemo(() => {
-    let ancestorGroups = 0;
-    let nearestGroupIsTabs = false;
-
-    let parent = layoutManager.parent;
-    while (parent) {
-      if (isDashboardLayoutManager(parent)) {
-        if (ancestorGroups === 0) {
-          nearestGroupIsTabs = parent instanceof TabsLayoutManager;
-        }
-        ancestorGroups++;
-      }
-      parent = parent.parent;
-    }
-
-    // Adding a row: rows layouts just get a new row (no new layer); tabs
-    // layouts delegate to the current tab's layout (wrapping it one level
-    // deeper when it isn't rows); grids get wrapped in a new rows layer.
-    let disableGrouping: boolean;
-    if (layoutManager instanceof RowsLayoutManager) {
-      disableGrouping = false;
-    } else if (layoutManager instanceof TabsLayoutManager) {
-      const currentTabLayout = layoutManager.getCurrentTab()?.state.layout;
-      disableGrouping = !(currentTabLayout instanceof RowsLayoutManager) && ancestorGroups + 2 > MAX_NESTING_DEPTH;
-    } else {
-      disableGrouping = ancestorGroups + 1 > MAX_NESTING_DEPTH;
-    }
-
-    // Adding a tab: tabs layouts just get a new tab (no new layer); anything
-    // else gets wrapped (with its whole subtree) in a new tabs layer, which is
-    // also rejected when it would sit directly inside another tabs layout.
-    let disableTabsReason: DisableTabsReason | undefined;
-    if (!(layoutManager instanceof TabsLayoutManager)) {
-      if (nearestGroupIsTabs) {
-        disableTabsReason = 'nested-tabs';
-      } else if (ancestorGroups + 1 + getGroupDepth(layoutManager) > MAX_NESTING_DEPTH) {
-        disableTabsReason = 'max-depth';
-      }
-    }
-
-    return { disableGrouping, disableTabs: disableTabsReason !== undefined, disableTabsReason };
-  }, [layoutManager]);
+  return useMemo(() => getNestingRestrictions(layoutManager), [layoutManager]);
 }
 
 export function getNestingRestrictionMessage(): string {

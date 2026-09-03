@@ -69,7 +69,7 @@ describe('DashboardSidebarSplitter', () => {
 
     render(<DashboardSidebarSplitter dashboard={scene} />);
 
-    const scrollContainer = screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
+    const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');
   });
 });

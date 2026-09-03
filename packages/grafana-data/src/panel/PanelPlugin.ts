@@ -181,6 +181,13 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
+  /**
+   * Whether this plugin can render in a content-fit layout (no fixed height,
+   * sizes to content within the layout's min/max). Declared statically via
+   * {@link setFitContentSupport}; content-aware layouts read it to decide
+   * whether to offer "fit content" for this panel.
+   */
+  supportsFitContent?: boolean;
   noPadding?: boolean;
   /** @internal - set via {@link setScreenshotImage}, read by the panel screenshot service. */
   onScreenshot?: PanelScreenshotHandler;
@@ -291,6 +298,20 @@ export class PanelPlugin<
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
+    return this;
+  }
+
+  /**
+   * Declares that this panel can render in a content-fit layout: with no fixed
+   * height, sizing to its content while the layout enforces min/max via CSS.
+   * The panel receives {@link PanelProps.fitContent} and is responsible for
+   * rendering in flow (or self-sizing) when it is set.
+   *
+   * Plugins that don't call this stay fixed-height and are not offered the
+   * "fit content" layout option.
+   */
+  setFitContentSupport(supports = true) {
+    this.supportsFitContent = supports;
     return this;
   }
 

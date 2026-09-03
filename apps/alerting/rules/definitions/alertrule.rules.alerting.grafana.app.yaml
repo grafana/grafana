@@ -122,6 +122,7 @@ spec:
                   routingTree:
                     type: string
                   type:
+                    default: SimplifiedRouting
                     enum:
                     - SimplifiedRouting
                     - NamedRoutingTree

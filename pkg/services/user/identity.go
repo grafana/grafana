@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -315,12 +316,7 @@ func (u *SignedInUser) GetAuthenticatedBy() string {
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if u.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, u.AuthenticatedBy)
 }
 
 // FIXME: remove this method once all services are using an interface

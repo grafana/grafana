@@ -273,10 +273,10 @@ export function DashboardTabs({ extensionComponents }: Props) {
     </>
   );
   return (
-    <Stack direction="column" gap={2} minWidth={0}>
+    <Stack direction="column" gap={redesignEnabled ? 1 : 2} minWidth={0}>
       {redesignEnabled ? (
         <>
-          <Stack justifyContent="space-between">
+          <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
             <Text element="h2" variant="h5">
               <Trans i18nKey="home.dashboards.title">Dashboards</Trans>
             </Text>

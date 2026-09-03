@@ -2,16 +2,20 @@ package oauthtoken
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	"gopkg.in/ini.v1"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,6 +39,25 @@ const UNEXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHR
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
+}
+
+type errorConfigProvider struct {
+	err error
+}
+
+func (p errorConfigProvider) Get(context.Context) (*setting.Cfg, error) {
+	return nil, p.err
+}
+
+func (p errorConfigProvider) GetSections(context.Context, ...string) (*ini.File, error) {
+	return nil, p.err
 }
 
 var (
@@ -73,6 +96,7 @@ type environment struct {
 	serverLock      *serverlock.ServerLockService
 	socialConnector *socialtest.MockSocialConnector
 	socialService   *socialtest.FakeSocialService
+	cfgProvider     configprovider.ConfigProvider
 
 	store   db.DB
 	service *Service
@@ -88,6 +112,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 		setup           func(env *environment)
 		expectedToken   *oauth2.Token
 		expectedErr     error
+		expectNoError   bool
 	}
 
 	userIdentity := &authn.Identity{
@@ -112,6 +137,25 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			desc:            "should skip token refresh when no oauth provider was found",
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.SAMLAuthModule},
+		},
+		{
+			desc:            "should skip token refresh when provider configuration lookup fails",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProviderError = assert.AnError
+			},
+			expectNoError: true,
+		},
+		{
+			desc:            "should skip token refresh when refresh configuration lookup fails",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{UseRefreshToken: true}
+				env.cfgProvider = errorConfigProvider{err: assert.AnError}
+			},
+			expectNoError: true,
 		},
 		{
 			desc:            "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
@@ -327,7 +371,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -337,7 +381,8 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
 				},
-				store: store,
+				cfgProvider: mustConfigProvider(t, setting.NewCfg()),
+				store:       store,
 			}
 
 			if tt.setup != nil {
@@ -347,7 +392,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				env.cfgProvider,
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -361,6 +406,9 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
 				return
+			}
+			if tt.expectNoError {
+				require.NoError(t, err)
 			}
 
 			if tt.expectedToken == nil {
@@ -627,7 +675,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
 
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
@@ -647,7 +695,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -745,6 +793,19 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
 		})
 	}
+}
+
+func TestTokenRefreshSuccessLabel(t *testing.T) {
+	assert.Equal(t, "true", tokenRefreshSuccessLabel(nil))
+	assert.Equal(t, "false", tokenRefreshSuccessLabel(errors.New("refresh failed")))
+}
+
+func TestTokenRefreshDurationMetricReusesRegisteredCollector(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	first := newTokenRefreshDurationMetric(registry)
+	second := newTokenRefreshDurationMetric(registry)
+
+	assert.Same(t, first, second)
 }
 
 func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
@@ -1075,7 +1136,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			features := featuremgmt.WithFeatures()
 
 			env := environment{
@@ -1096,7 +1157,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -1375,7 +1436,7 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := socialtest.NewMockSocialConnector(t)
-			store := db.InitTestDB(t)
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			features := featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling)
 
 			env := environment{
@@ -1396,7 +1457,7 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),

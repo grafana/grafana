@@ -49,7 +49,7 @@ test.describe(
       // wait for the page to reload before trying to navigate, otherwise this can cause flakes
       // see e.g. https://github.com/microsoft/playwright/issues/21451#issuecomment-1502251404
       await expect(page.getByTestId(selectors.components.UserProfile.preferencesSaveButton)).not.toBeDisabled();
-      await page.waitForURL('/profile');
+      await page.waitForURL((url) => new URL(url).pathname === '/profile');
       await page.waitForLoadState('networkidle');
       await expect(page.getByTestId(selectors.components.TimeZonePicker.containerV2)).toContainText('Tokyo');
 

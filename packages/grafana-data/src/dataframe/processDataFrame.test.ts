@@ -372,7 +372,7 @@ describe('sorted DataFrame by nanos', () => {
         {
           name: 'first',
           type: FieldType.time,
-          values: [dateTime(50), dateTime(50), dateTime(100)],
+          values: [dateTime(50).valueOf(), dateTime(50).valueOf(), dateTime(100).valueOf()],
           nanos: [1, 0, 100],
         },
         { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
@@ -381,7 +381,7 @@ describe('sorted DataFrame by nanos', () => {
 
     const sorted = sortDataFrame(frame, 0);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values).toEqual([dateTime(50), dateTime(50), dateTime(100)]);
+    expect(sorted.fields[0].values).toEqual([dateTime(50).valueOf(), dateTime(50).valueOf(), dateTime(100).valueOf()]);
     expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
   });
 

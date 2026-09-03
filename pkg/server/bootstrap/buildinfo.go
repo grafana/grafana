@@ -1,10 +1,10 @@
 package bootstrap
 
 import (
+	"slices"
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,24 +24,23 @@ func getBuildstamp(opts BuildInfo) int64 {
 
 func validPackaging(packaging string) string {
 	validTypes := []string{"dev", "deb", "rpm", "docker", "brew", "hosted", "unknown"}
-	for _, vt := range validTypes {
-		if packaging == vt {
-			return packaging
-		}
+	if slices.Contains(validTypes, packaging) {
+		return packaging
 	}
 	return "unknown"
 }
 
 // SetBuildInfo records build metadata on the global setting package so it is
 // available to services during startup. packaging describes how Grafana was
-// installed (see validPackaging); it is supplied by the caller rather than read
-// from a CLI flag global so bootstrap stays independent of the CLI layer.
-func SetBuildInfo(opts BuildInfo, packaging string) {
+// installed (see validPackaging) and isEnterprise reports the edition; both are
+// supplied by the caller rather than read from CLI flag globals or
+// pkg/extensions so bootstrap stays independent of the CLI layer and edition.
+func SetBuildInfo(opts BuildInfo, packaging string, isEnterprise bool) {
 	setting.BuildVersion = opts.Version
 	setting.BuildCommit = opts.Commit
 	setting.EnterpriseBuildCommit = opts.EnterpriseCommit
 	setting.BuildStamp = getBuildstamp(opts)
 	setting.BuildBranch = opts.BuildBranch
-	setting.IsEnterprise = extensions.IsEnterprise
+	setting.IsEnterprise = isEnterprise
 	setting.Packaging = validPackaging(packaging)
 }

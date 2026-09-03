@@ -48,7 +48,27 @@ func useFastSnapshotStoreRetries(t *testing.T) {
 	snapshotStoreRetryBackoffConfig.MinBackoff = 0
 	snapshotStoreRetryBackoffConfig.MaxBackoff = 0
 	snapshotStoreRetryBackoffConfig.MaxRetries = 2
-	t.Cleanup(func() { snapshotStoreRetryBackoffConfig = old })
+	oldMeta := snapshotStoreMetadataRetryBackoffConfig
+	snapshotStoreMetadataRetryBackoffConfig.MinBackoff = 0
+	snapshotStoreMetadataRetryBackoffConfig.MaxBackoff = 0
+	t.Cleanup(func() {
+		snapshotStoreRetryBackoffConfig = old
+		snapshotStoreMetadataRetryBackoffConfig = oldMeta
+	})
+}
+
+// Failing a metadata read leaves no candidate, so it waits longer than a file read.
+func TestMetadataRetriesOutlastFileRetries(t *testing.T) {
+	require.Greater(t, snapshotStoreMetadataRetryBackoffConfig.MaxRetries, snapshotStoreRetryBackoffConfig.MaxRetries)
+
+	useFastSnapshotStoreRetries(t)
+	attempts := 0
+	_, err := retryMetadataRemoteIndexStoreValue(t.Context(), "test", nil, func() (struct{}, error) {
+		attempts++
+		return struct{}{}, transientTestError{}
+	})
+	require.Error(t, err)
+	require.Equal(t, snapshotStoreMetadataRetryBackoffConfig.MaxRetries+1, attempts)
 }
 
 // testBucket returns a bucket for testing. Uses CDK_TEST_BUCKET_URL if set,
@@ -1531,6 +1551,7 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    buildTime.Unix(),
 		BuildVersion: meta.BuildVersion,
+		Features:     meta.Features,
 	})
 	require.NoError(t, err)
 	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), bi))

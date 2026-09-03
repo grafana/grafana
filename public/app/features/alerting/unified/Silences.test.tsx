@@ -7,6 +7,7 @@ import { type DataSourceApi, dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
@@ -73,6 +74,7 @@ const ui = {
   addSilenceButton: byRole('link', { name: /add silence/i }),
   existingSilenceNotFound: byRole('alert', { name: /existing silence .* not found/i }),
   noPermissionToEdit: byRole('alert', { name: /do not have permission/i }),
+  ruleUnavailable: byRole('alert', { name: /alert rule unavailable/i }),
   editor: {
     timeRange: byTestId(selectors.components.TimePicker.openButton),
     durationField: byLabelText('Duration'),
@@ -428,4 +430,88 @@ describe('Silence create/edit', () => {
     },
     TEST_TIMEOUT
   );
+
+  const ruleSilenceUrlPath = `${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3D${grafanaRulerRule.grafana_alert.uid}`;
+
+  // A silence with no rule attached can silence alerts from any rule, so the backend asks for the
+  // org-wide create permission - folder permissions are no help. Someone whose silence permission
+  // comes from a folder can still follow a link to this page, and should be told rather than shown
+  // a form that fails on save.
+  it('shows a permission error for a silence that is not tied to an alert rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceCreate]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // A silence for a single rule only affects that rule, so silence create on the folder the rule
+  // lives in is enough - no org-wide permission needed.
+  it('renders the form for a rule silence when the rule folder allows creating silences', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(ruleSilenceUrlPath);
+
+    expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
+  });
+
+  it('shows a permission error for a rule silence when the rule folder does not allow creating silences', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceRead]: true });
+
+    renderSilences(ruleSilenceUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // Reading the rule needs alert.rules:read on its folder, which the backend does not ask for when
+  // creating a silence. A failed lookup therefore says nothing about whether the silence is
+  // allowed, so blaming permissions would be misleading.
+  it('reports the rule as unavailable rather than blaming permissions when the rule cannot be loaded', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    renderSilences(`${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3Ddoes-not-exist`);
+
+    expect(await ui.ruleUnavailable.find()).toBeInTheDocument();
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
+    expect(ui.editor.durationField.query()).not.toBeInTheDocument();
+  });
+
+  // Sending someone to the rule detail pages only helps if they can silence a rule once they get
+  // there. Reaching this page on silence update permission alone does not give them that.
+  it('omits the rule-page suggestion for a user who cannot silence any rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceUpdate]);
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(screen.queryByText(/silence individual alert rules/i)).not.toBeInTheDocument();
+  });
+
+  it('suggests the rule detail pages to a user who can silence rules in a folder', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingSilenceCreate]);
+
+    renderSilences(baseUrlPath);
+
+    expect(await ui.noPermissionToEdit.find()).toBeInTheDocument();
+    expect(screen.getByText(/silence individual alert rules/i)).toBeInTheDocument();
+  });
+
+  // The backend lets anyone holding the org-wide permission through before it resolves the rule's
+  // folder, so a rule we cannot load must not stop them.
+  it('renders the form for an unloadable rule when the org-wide permission is held', async () => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingInstanceCreate]);
+
+    renderSilences(`${baseUrlPath}?matcher=${MATCHER_ALERT_RULE_UID}%3Ddoes-not-exist`);
+
+    expect(await ui.editor.durationField.find()).toBeInTheDocument();
+    expect(ui.ruleUnavailable.query()).not.toBeInTheDocument();
+    expect(ui.noPermissionToEdit.query()).not.toBeInTheDocument();
+  });
 });

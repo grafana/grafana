@@ -341,16 +341,23 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
+func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
+	return setupHelperFull(t, mode, false, extraFeatures...)
+}
+
+func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+
+	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
+	if withManifest {
+		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+	}
 
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagApppluginsRegisterAPIServer,
-		},
+		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
@@ -369,6 +376,11 @@ func setupHelper(t *testing.T, mode rest.DualWriterMode) *apis.K8sTestHelper {
 	testAppDst := filepath.Join(dir, "plugins", testAppID)
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
+
+	if withManifest {
+		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json")
+		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
+	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 		GrafanaOpts: testinfra.GrafanaOpts{

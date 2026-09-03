@@ -2,7 +2,9 @@
 // from core and moved to an external repo, but the core trace download utility still needs to support
 // converting DataFrames to OTLP format for existing traces tagged with traceFormat: 'otlp'.
 import { type SpanStatus } from '@opentelemetry/api';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+// Type-only: importing the value pulls the exporter's whole runtime (~54 modules) into the
+// initial bundle just for the SpanKind numbers, which are inlined in getOTLPSpanKind instead.
+import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
 import {
   type MutableDataFrame,
@@ -80,11 +82,29 @@ export function transformToOTLP(data: MutableDataFrame): {
   return result;
 }
 
-function getOTLPSpanKind(kind: string): collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind | undefined {
+type OTLPSpanKind = collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind;
+
+/**
+ * OTLP `Span.SpanKind` wire values, mirrored from the exporter's enum so the import above can
+ * stay type-only.
+ *
+ * A type-only import cannot reach the enum's member names, so the compiler cannot check this
+ * mirrors the real thing. `transformToOTLP.test.ts` asserts it against the enum instead —
+ * the test may import the value because tests are not part of the app bundle.
+ */
+export const SpanKind = {
+  SPAN_KIND_UNSPECIFIED: 0,
+  SPAN_KIND_INTERNAL: 1,
+  SPAN_KIND_SERVER: 2,
+  SPAN_KIND_CLIENT: 3,
+  SPAN_KIND_PRODUCER: 4,
+  SPAN_KIND_CONSUMER: 5,
+};
+
+function getOTLPSpanKind(kind: string): OTLPSpanKind | undefined {
   if (!kind) {
     return undefined;
   }
-  const { SpanKind } = collectorTypes.opentelemetryProto.trace.v1.Span;
   switch (kind) {
     case 'server':
       return SpanKind.SPAN_KIND_SERVER;

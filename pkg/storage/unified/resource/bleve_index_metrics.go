@@ -3,13 +3,11 @@ package resource
 import (
 	"time"
 
-	"github.com/grafana/dskit/instrument"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type BleveIndexMetrics struct {
-	IndexLatency         *prometheus.HistogramVec
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -18,11 +16,11 @@ type BleveIndexMetrics struct {
 	IndexBuildFailures   prometheus.Counter
 	IndexBuildSkipped    prometheus.Counter
 	UpdateLatency        prometheus.Histogram
-	UpdatedDocuments     prometheus.Summary
+	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
-	IndexSnapshotDownloads                *prometheus.CounterVec
+	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
 	IndexSnapshotUploadDuration           prometheus.Histogram
@@ -33,22 +31,16 @@ type BleveIndexMetrics struct {
 
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
+
+	SearchCapabilityViolations *prometheus.CounterVec
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
 
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m := &BleveIndexMetrics{
-		IndexLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "index_server_index_latency_seconds",
-			Help:                            "Time (in seconds) until index is updated with new event",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1, // enable native histograms
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "index_server_index_size",
+			Name: "index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",
 		}),
 		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
@@ -86,9 +78,12 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		UpdatedDocuments: promauto.With(reg).NewSummary(prometheus.SummaryOpts{
-			Name: "index_server_update_documents",
-			Help: "Number of documents indexed during index update",
+		UpdatedDocuments: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "index_server_update_documents",
+			Help:                            "Number of documents indexed during index update",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}),
 		SearchUpdateWaitTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "index_server_search_update_wait_time_seconds",
@@ -101,8 +96,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
-		IndexSnapshotDownloads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "index_server_snapshot_downloads_total",
+		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
 		}, []string{"policy", "status"}), // policy: tiered, same_version. status: success, empty, download_error, validate_error
 		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
@@ -149,6 +144,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_disk_cleanup_dirs_deleted_total",
 			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
 		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
+		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "index_server_search_capability_violations_total",
+			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
+		}, []string{"resource", "capability"}),
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
@@ -169,10 +168,10 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 		return
 	}
 	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "success").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "empty").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "download_error").Add(0)
-		m.IndexSnapshotDownloads.WithLabelValues(policy, "validate_error").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "success").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "empty").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "download_error").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "validate_error").Add(0)
 	}
 	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
 	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)

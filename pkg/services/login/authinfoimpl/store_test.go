@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAuthInfoStore(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store, err := ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sql), secretstest.NewFakeSecretsService())
 	require.NoError(t, err)
 

@@ -14,5 +14,9 @@ func Convert_V0_to_V2(in *dashv0.Dashboard, out *dashv2.Dashboard, scope convers
 	if err := Convert_V0_to_V2beta1(in, intermediate, scope, dsIndexProvider, leIndexProvider); err != nil {
 		return err
 	}
-	return Convert_V2beta1_to_V2(intermediate, out, scope)
+	if err := Convert_V2beta1_to_V2(intermediate, out, scope); err != nil {
+		return err
+	}
+	setDefaultGridLayoutPreference(out)
+	return nil
 }

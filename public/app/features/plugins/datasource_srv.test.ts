@@ -13,7 +13,7 @@ import {
 import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
-  initDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
 import {
@@ -843,7 +843,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     legacySrv.init(clone() as any, DEFAULT_NAME);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
+    setDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
   });
 
   const cases: Array<{ label: string; filters: GetDataSourceInstanceListFilters }> = [

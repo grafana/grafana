@@ -22,7 +22,6 @@ func newSearchHandler(
 	store Store,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
-	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
@@ -120,6 +119,8 @@ func listOptionsFromQueryParams(queryParams url.Values) ListOptions {
 		opts.Scopes = scopes
 	}
 
+	// Scopes default to matching any of the requested values to align with other scope-based filtering in Grafana.
+	opts.ScopesMatchAny = true
 	if v := queryParams.Get("scopesMatchAny"); v != "" {
 		if matchAny, err := strconv.ParseBool(v); err == nil {
 			opts.ScopesMatchAny = matchAny

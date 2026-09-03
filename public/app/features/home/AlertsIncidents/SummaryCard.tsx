@@ -68,7 +68,7 @@ export function SummaryCard<T>({
         )}
 
         {loading && (
-          <Stack direction="column">
+          <Stack direction="column" data-testid="summary-card-skeleton">
             {Array.from({ length: 3 }, (_, i) => (
               <Skeleton key={i} height={20} />
             ))}
@@ -89,7 +89,8 @@ export function SummaryCard<T>({
 
         {!loading && !error && items.length === 0 && (
           <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
-            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+            <Text color="secondary">{emptyMessage}</Text>
+            {emptyAction}
           </Stack>
         )}
 

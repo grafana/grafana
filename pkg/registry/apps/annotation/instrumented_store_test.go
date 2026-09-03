@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -48,27 +47,29 @@ func (f *fakeStore) Delete(_ context.Context, _, _ string) error {
 
 func (f *fakeStore) Close() error { return nil }
 
-// newTestInstrumentedStore wires a real (in-memory) tracer + prometheus
-// registry so tests can read back what the instrumentation actually emitted.
-func newTestInstrumentedStore(t *testing.T, inner Store) (*instrumentedStore, *tracetest.SpanRecorder, prometheus.Gatherer) {
+// newTestInstrumentedStore wires a prometheus registry and returns a view over
+// the spans this test emits, so tests can read back what the instrumentation
+// actually recorded via the shared package-level tracer.
+func newTestInstrumentedStore(t *testing.T, inner Store) (*instrumentedStore, func() []tracesdk.ReadOnlySpan, prometheus.Gatherer) {
 	t.Helper()
-	recorder := tracetest.NewSpanRecorder()
-	tp := tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(recorder))
-	t.Cleanup(func() { _ = tp.Shutdown(context.Background()) })
+	start := len(testSpanRecorder.Ended())
+	spansSince := func() []tracesdk.ReadOnlySpan {
+		return testSpanRecorder.Ended()[start:]
+	}
 
 	reg := prometheus.NewRegistry()
 	m := ProvideMetrics(reg)
-	store := newInstrumentedStore(inner, tp.Tracer("annotation-test"), m, log.NewNopLogger())
-	return store, recorder, reg
+	store := newInstrumentedStore(inner, m, log.NewNopLogger())
+	return store, spansSince, reg
 }
 
 func TestInstrumentedStore_RecordsSuccessfulCall(t *testing.T) {
-	store, recorder, reg := newTestInstrumentedStore(t, &fakeStore{getRes: &annotationV0.Annotation{}})
+	store, spansSince, reg := newTestInstrumentedStore(t, &fakeStore{getRes: &annotationV0.Annotation{}})
 
 	_, err := store.Get(context.Background(), "ns", "n")
 	require.NoError(t, err)
 
-	spans := recorder.Ended()
+	spans := spansSince()
 	require.Len(t, spans, 1)
 	assert.Equal(t, "annotation.store.get", spans[0].Name())
 	assert.Equal(t, otelcodes.Unset, spans[0].Status().Code, "successful op should not set Error status")
@@ -82,12 +83,12 @@ func TestInstrumentedStore_RecordsSuccessfulCall(t *testing.T) {
 }
 
 func TestInstrumentedStore_ExpectedClientErrorAttachesButDoesNotFail(t *testing.T) {
-	store, recorder, reg := newTestInstrumentedStore(t, &fakeStore{getErr: ErrNotFound})
+	store, spansSince, reg := newTestInstrumentedStore(t, &fakeStore{getErr: ErrNotFound})
 
 	_, err := store.Get(context.Background(), "ns", "missing")
 	require.ErrorIs(t, err, ErrNotFound)
 
-	spans := recorder.Ended()
+	spans := spansSince()
 	require.Len(t, spans, 1)
 	assert.Equal(t, otelcodes.Unset, spans[0].Status().Code,
 		"expected client errors must NOT mark span as Error — keeps trace error rates clean")
@@ -105,12 +106,12 @@ func TestInstrumentedStore_ExpectedClientErrorAttachesButDoesNotFail(t *testing.
 
 func TestInstrumentedStore_UnexpectedErrorMarksSpanFailed(t *testing.T) {
 	boom := errors.New("backend exploded")
-	store, recorder, reg := newTestInstrumentedStore(t, &fakeStore{getErr: boom})
+	store, spansSince, reg := newTestInstrumentedStore(t, &fakeStore{getErr: boom})
 
 	_, err := store.Get(context.Background(), "ns", "n")
 	require.ErrorIs(t, err, boom)
 
-	spans := recorder.Ended()
+	spans := spansSince()
 	require.Len(t, spans, 1)
 	assert.Equal(t, otelcodes.Error, spans[0].Status().Code,
 		"unexpected errors must mark span as Error so trace dashboards page on them")
@@ -125,13 +126,13 @@ func TestInstrumentedStore_UnexpectedErrorMarksSpanFailed(t *testing.T) {
 
 func TestInstrumentedStore_ApierrorsForbiddenIsExpected(t *testing.T) {
 	gr := schema.GroupResource{Group: "annotation.grafana.app", Resource: "annotations"}
-	store, recorder, _ := newTestInstrumentedStore(t,
+	store, spansSince, _ := newTestInstrumentedStore(t,
 		&fakeStore{getErr: apierrors.NewForbidden(gr, "n", errors.New("nope"))})
 
 	_, err := store.Get(context.Background(), "ns", "n")
 	require.Error(t, err)
 
-	spans := recorder.Ended()
+	spans := spansSince()
 	require.Len(t, spans, 1)
 	assert.Equal(t, otelcodes.Unset, spans[0].Status().Code,
 		"forbidden is part of normal API traffic, must not mark span Error")

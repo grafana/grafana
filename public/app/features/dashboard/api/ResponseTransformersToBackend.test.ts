@@ -159,13 +159,13 @@ describe('V1 to V2 Dashboard Transformation Comparison (ResponseTransformers)', 
   );
 
   const jsonInputs = readdirSync(inputDir);
-  const LATEST_API_VERSION = 'dashboard.grafana.app/v2beta1';
+  const LATEST_API_VERSION = 'dashboard.grafana.app/v2';
 
   // Filter to only process v1beta1 input files
   const v1beta1Inputs = jsonInputs.filter((inputFile) => inputFile.startsWith('v1beta1.'));
 
   v1beta1Inputs.forEach((inputFile) => {
-    it(`compare ${inputFile} from v1beta1 to v2beta1 backend and frontend conversions`, async () => {
+    it(`compare ${inputFile} from v1beta1 to ${LATEST_API_VERSION.split('/')[1]} backend and frontend conversions`, async () => {
       const jsonInput = JSON.parse(readFileSync(path.join(inputDir, inputFile), 'utf8'));
 
       // Find the corresponding v2beta1 output file

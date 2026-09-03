@@ -15,7 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot PostgreSQL data source issues
 weight: 600
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # Troubleshoot PostgreSQL data source issues
@@ -45,13 +45,13 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 **Error message:** `dial tcp: connect: connection refused`, `i/o timeout`, or `context deadline exceeded` when using Grafana Cloud with a database on a private network.
 
-**Cause:** Grafana Cloud runs in a hosted environment and can't directly reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`). This is the most common issue when migrating from self-hosted Grafana to Grafana Cloud.
+**Cause:** Grafana Cloud runs in a hosted environment and can't directly reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`). This is the most common issue when migrating from self-managed Grafana to Grafana Cloud.
 
 **Solution:**
 
 1. Set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to create a secure tunnel between Grafana Cloud and your private network.
 1. Install the PDC agent on a machine that has network access to your PostgreSQL instance.
-1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead—this has resolved stability issues in some environments.
+1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead. This has resolved stability issues in some environments.
 1. Update the **Host URL** in the data source settings to use the hostname as seen from the PDC agent's network (not `localhost`).
 
 ### Request timed out
@@ -230,13 +230,13 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 **Error message:** Unexpected syntax errors or truncated results when string values contain `--` (double dash).
 
-**Cause:** In Grafana versions before 13.1, the SQL comment-stripping parser didn't correctly handle `--` inside single-quoted strings. A query like `WHERE name = 'value--suffix'` would be truncated at the `--`, causing the rest of the query to be silently dropped. This also affected strings with consecutive hyphens (for example, `'10YDE-VE-------2'` would be truncated to `'10YDE-VE`).
+**Cause:** In older Grafana versions, the SQL comment-stripping parser didn't correctly handle `--` inside single-quoted strings. A query like `WHERE name = 'value--suffix'` would be truncated at the `--`, causing the rest of the query to be silently dropped. This also affected strings with consecutive hyphens (for example, `'10YDE-VE-------2'` would be truncated to `'10YDE-VE`).
 
-This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #121772). The fix also handles PostgreSQL dollar-quoted strings (`$$...$$`).
+This was fixed with a quote-aware comment-stripping parser (PR #121772). The fix also handles PostgreSQL dollar-quoted strings (`$$...$$`). It is available in Grafana 13.1 and later, Grafana 13.0.2 and later, and these 12.x patch releases: 12.1.11, 12.2.9, 12.3.7, and 12.4.3.
 
 **Solution:**
 
-1. Upgrade to Grafana 13.1 or later, which includes the fix.
+1. Upgrade to a Grafana release that includes the fix (13.1+, 13.0.2+, or one of the 12.x patch releases listed above).
 1. If you can't upgrade immediately, work around the issue by using PostgreSQL string concatenation to avoid literal `--` in your queries:
 
    ```sql

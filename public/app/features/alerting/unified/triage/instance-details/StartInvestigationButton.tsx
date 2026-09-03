@@ -94,6 +94,7 @@ export function StartInvestigationButton({
           href={view.href}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={view.onOpenReport}
         >
           <Trans i18nKey="alerting.triage.instance-details-drawer.open-investigation">
             Open full investigation report
@@ -143,6 +144,7 @@ export function StartInvestigationButton({
             href={view.href}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={view.onOpenReport}
           >
             <Trans i18nKey="alerting.triage.instance-details-drawer.open-failed-investigation">
               Open failed report
@@ -172,6 +174,7 @@ export function StartInvestigationButton({
             href={view.href}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={view.onWatchLive}
           >
             <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
               Watch live in assistant workspace
@@ -197,6 +200,7 @@ export function StartInvestigationButton({
             href={view.href}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={view.onWatchLive}
           >
             <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-watch-live">
               Watch live in assistant workspace

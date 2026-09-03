@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useAppPluginInstalled } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
@@ -71,7 +71,7 @@ export function AdvisorRedirectNotice() {
         <LinkButton
           aria-label={t('connections.advisor-redirect-notice.aria-label-link-to-advisor', 'Link to Advisor')}
           icon="arrow-right"
-          href="/a/grafana-advisor-app"
+          href={locationUtil.assureBaseUrl('/a/grafana-advisor-app')}
           fill="text"
         >
           <Trans i18nKey="connections.advisor-redirect-notice.go-to-advisor">Go to Advisor</Trans>

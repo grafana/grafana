@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,8 +47,9 @@ func (e *partialDecodeError) Unwrap() error { return e.Err }
 
 // MigrationProxy routes annotation writes to the new API server.
 type MigrationProxy struct {
-	client annotationClient
-	logger log.Logger
+	client  annotationClient
+	userSvc user.Service
+	logger  log.Logger
 }
 
 // ProvideMigrationProxy builds the proxy that routes legacy annotation operations to the new API server.
@@ -66,9 +70,15 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service, exchanger aut
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
+	client, err := newAnnotationAPIClient(cfg, exchanger)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MigrationProxy{
-		client: newAnnotationAPIClient(cfg, userSvc, exchanger),
-		logger: log.New("annotationsapi"),
+		client:  client,
+		userSvc: userSvc,
+		logger:  log.New("annotationsapi"),
 	}, nil
 }
 
@@ -92,7 +102,7 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	userMap := map[string]*user.User{}
 	if len(createdByMeta) > 0 {
 		var err error
-		userMap, err = h.client.GetUsersFromMeta(ctx, createdByMeta)
+		userMap, err = client.GetUsersFromMeta(ctx, h.userSvc, createdByMeta)
 		if err != nil {
 			h.logger.Warn("failed to hydrate annotation users", "err", err)
 		}
@@ -143,6 +153,47 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		}
 		return cmp.Compare(b.Time, a.Time)
 	})
+
+	if limit > 0 && int64(len(merged)) > limit {
+		merged = merged[:limit]
+	}
+	return merged
+}
+
+// FindTags fetches org-wide tag counts from the new store.
+func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	tags, err := h.client.ListTags(ctx, orgID, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	// Convert the new store's tag counts to the legacy DTO shape.
+	result := make([]*annotations.TagsDTO, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, &annotations.TagsDTO{
+			Tag:   tag.Tag,
+			Count: int64(tag.Count),
+		})
+	}
+	return annotations.FindTagsResult{Tags: result}, nil
+}
+
+// MergeTags combines new-store and legacy tag counts, summing the counts of tags present in
+// both stores, then sorts ascending by tag and applies limit to match the legacy response shape.
+func MergeTags(newTags, legacyTags []*annotations.TagsDTO, limit int64) []*annotations.TagsDTO {
+	counts := make(map[string]int64, len(newTags)+len(legacyTags))
+	for _, tag := range newTags {
+		counts[tag.Tag] += tag.Count
+	}
+	for _, tag := range legacyTags {
+		counts[tag.Tag] += tag.Count
+	}
+
+	merged := make([]*annotations.TagsDTO, 0, len(counts))
+	for tag, count := range counts {
+		merged = append(merged, &annotations.TagsDTO{Tag: tag, Count: count})
+	}
+	sort.Sort(annotations.SortedTags(merged))
 
 	if limit > 0 && int64(len(merged)) > limit {
 		merged = merged[:limit]
@@ -243,6 +294,32 @@ func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID i
 	return h.client.Delete(ctx, orgID, existing.GetName())
 }
 
+// MassDelete removes every annotation on a dashboard panel from the new store.
+// The new API has no delete-collection route, so this enumerates the panel's annotations
+// via /search and deletes them one by one.
+func (h *MigrationProxy) MassDelete(ctx context.Context, orgID int64, dashboardUID string, panelID int64) error {
+	query := &annotations.ItemQuery{DashboardUID: dashboardUID, PanelID: panelID}
+	const maxMassDeletePasses = 1000
+	for range maxMassDeletePasses {
+		annos, err := h.client.Search(ctx, orgID, query)
+		if err != nil {
+			return err
+		}
+		// Continue querying relevant annotations until the list is empty.
+		if len(annos) == 0 {
+			return nil
+		}
+
+		for _, anno := range annos {
+			if err := h.client.Delete(ctx, orgID, anno.GetName()); err != nil {
+				return fmt.Errorf("deleting annotation %q: %w", anno.GetName(), err)
+			}
+		}
+	}
+
+	return fmt.Errorf("annotation mass delete: exceeded %d passes for dashboard %q panel %d", maxMassDeletePasses, dashboardUID, panelID)
+}
+
 // Get reads a single annotation from the new store. Returns ErrNotFound if the
 // record is not there yet (caller falls back to legacy) or ErrGone if it was
 // soft-deleted (caller must not fall back).
@@ -267,7 +344,7 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 
 	createdBy := anno.GetCreatedBy()
 	if createdBy != "" {
-		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
+		if users, err := client.GetUsersFromMeta(ctx, h.userSvc, []string{createdBy}); err == nil {
 			if u, ok := users[createdBy]; ok {
 				applyUserToDTO(u, dto)
 			}
@@ -316,11 +393,19 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 }
 
 func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) {
+	// Legacy API defaults an unset time to now and silently accepts negative values;
+	// the new API rejects both, so the proxy normalizes them here to keep legacy behavior unchanged
+	epoch := item.Epoch
+	if epoch <= 0 {
+		epoch = time.Now().UnixMilli()
+	}
+
 	spec := annotationV0.AnnotationSpec{
 		Text: item.Text,
-		Time: item.Epoch,
+		Time: epoch,
 		Tags: item.Tags,
 	}
+
 	if item.EpochEnd != 0 {
 		spec.TimeEnd = &item.EpochEnd
 	}

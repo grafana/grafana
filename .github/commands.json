@@ -408,7 +408,7 @@
     "name": "type/build-packaging",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/632"
+      "url": "https://github.com/orgs/grafana/projects/467"
     }
   },
   {
@@ -1062,6 +1062,14 @@
   {
     "type": "label",
     "name": "datasource/Timestream",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/97"
+    }
+  },
+  {
+    "type": "label",
+    "name": "datasource/athena",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/97"

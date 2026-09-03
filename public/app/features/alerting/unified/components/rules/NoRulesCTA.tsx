@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
@@ -74,7 +75,13 @@ export const NoRulesSplash = () => {
           canCreateAnything ? (
             <Stack direction="column" alignItems="center" justifyContent="center">
               {canCreateAnything && (
-                <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/alerting">
+                <LinkButton
+                  variant="primary"
+                  icon="plus"
+                  size="lg"
+                  href="alerting/new/alerting"
+                  data-testid={selectors.pages.Alerting.RuleList.emptyStateNewRuleLink}
+                >
                   <Trans i18nKey="alerting.list-view.empty.new-alert-rule">New alert rule</Trans>
                 </LinkButton>
               )}

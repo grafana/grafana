@@ -231,8 +231,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
-    small: `/public/build/img/icn-${type}.svg`,
-    large: `/public/build/img/icn-${type}.svg`,
+    small: `${window.__grafana_build_path__}img/icn-${type}.svg`,
+    large: `${window.__grafana_build_path__}img/icn-${type}.svg`,
   };
 
   if (remote) {

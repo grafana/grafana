@@ -1,41 +1,67 @@
-import { createDataFrame, type Field, FieldType, getPanelDataSummary } from '@grafana/data';
+import { createDataFrame, type DataFrame, type Field, FieldType, getPanelDataSummary } from '@grafana/data';
 
 import { gaugeSuggestionsSupplier } from './suggestions';
 
+/** MAX_GAUGES in ./suggestions — more numeric fields than this and no gauge is suggested. */
+const MAX_GAUGES = 10;
+
+function numericFields(count: number): Field[] {
+  return Array.from({ length: count }, (_, i) => ({
+    name: `numeric-${i}`,
+    type: FieldType.number,
+    values: [0, 100, 200, 300, 400, 500],
+    config: {},
+  }));
+}
+
 describe('GaugePanel Suggestions', () => {
-  it('does not suggest gauge if no data is present', () => {
-    expect(gaugeSuggestionsSupplier(getPanelDataSummary([]))).toBeFalsy();
-    expect(gaugeSuggestionsSupplier(getPanelDataSummary(undefined))).toBeFalsy();
-    expect(
-      gaugeSuggestionsSupplier(
-        getPanelDataSummary([
-          createDataFrame({
-            fields: [
-              { name: 'time', type: FieldType.time, values: [] },
-              { name: 'value', type: FieldType.number, values: [] },
-            ],
-          }),
-        ])
-      )
-    ).toBeFalsy();
-  });
-
-  it('does not suggest gauge if there are no numeric fields', () => {
-    const df = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time },
-        { name: 'status', type: FieldType.string },
+  it.each<{ description: string; frames?: DataFrame[] }>([
+    { description: 'an empty frame list', frames: [] },
+    { description: 'undefined panel data', frames: undefined },
+    {
+      description: 'a frame whose fields carry no rows',
+      frames: [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [] },
+            { name: 'value', type: FieldType.number, values: [] },
+          ],
+        }),
       ],
-    });
-    expect(gaugeSuggestionsSupplier(getPanelDataSummary([df]))).toBeFalsy();
+    },
+  ])('returns undefined for $description', ({ frames }) => {
+    expect(gaugeSuggestionsSupplier(getPanelDataSummary(frames))).toBeUndefined();
   });
 
-  it('does not suggest gauge if there are too many numeric fields', () => {
-    const fields: Field[] = [];
-    for (let i = 0; i < 20; i++) {
-      fields.push({ name: `numeric-${i}`, type: FieldType.number, values: [0, 100, 200, 300, 400, 500], config: {} });
-    }
-    expect(gaugeSuggestionsSupplier(getPanelDataSummary([createDataFrame({ fields })]))).toBeFalsy();
+  it('returns undefined when rows exist but no field is numeric', () => {
+    const dataSummary = getPanelDataSummary([
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [0, 100, 200] },
+          { name: 'status', type: FieldType.string, values: ['ok', 'warn', 'error'] },
+        ],
+      }),
+    ]);
+    // The fields must carry rows, otherwise the supplier returns on `!hasData` and this case
+    // would only repeat the no-data one above instead of reaching the numeric-field check.
+    expect(dataSummary.hasData).toBe(true);
+
+    expect(gaugeSuggestionsSupplier(dataSummary)).toBeUndefined();
+  });
+
+  it('still suggests gauges at the limit of 10 numeric fields', () => {
+    const dataSummary = getPanelDataSummary([createDataFrame({ fields: numericFields(MAX_GAUGES) })]);
+
+    expect(gaugeSuggestionsSupplier(dataSummary)).toEqual([
+      expect.objectContaining({ name: 'Gauge' }),
+      expect.objectContaining({ name: 'Circular gauge' }),
+    ]);
+  });
+
+  it('returns undefined one numeric field past the limit of 10', () => {
+    const dataSummary = getPanelDataSummary([createDataFrame({ fields: numericFields(MAX_GAUGES + 1) })]);
+
+    expect(gaugeSuggestionsSupplier(dataSummary)).toBeUndefined();
   });
 
   it('suggests gauge for a single numeric field', () => {
@@ -136,16 +162,12 @@ describe('GaugePanel Suggestions', () => {
         ],
       },
     ])('$description suggests aggregated=$aggregated', ({ dataframes, aggregated }) => {
-      const suggestions = gaugeSuggestionsSupplier(getPanelDataSummary(dataframes));
-      const expected = aggregated ? { values: false, calcs: ['lastNotNull'] } : { values: true, calcs: [] };
-      if (Array.isArray(suggestions)) {
-        for (const suggestion of suggestions) {
-          expect(suggestion.options?.reduceOptions).toEqual(expected);
-        }
-      } else {
-        // this will fail if we're in this else case.
-        expect(suggestions).toBeInstanceOf(Array);
-      }
+      const reduceOptions = aggregated ? { values: false, calcs: ['lastNotNull'] } : { values: true, calcs: [] };
+
+      expect(gaugeSuggestionsSupplier(getPanelDataSummary(dataframes))).toEqual([
+        expect.objectContaining({ name: 'Gauge', options: expect.objectContaining({ reduceOptions }) }),
+        expect.objectContaining({ name: 'Circular gauge', options: expect.objectContaining({ reduceOptions }) }),
+      ]);
     });
   });
 });
