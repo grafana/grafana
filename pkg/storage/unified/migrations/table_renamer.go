@@ -225,16 +225,9 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 	return nil
 }
 
-// waitForRenamesQueued polls information_schema.processlist via sess to confirm all
-// RENAME statements have reached the server and are parked behind the read lock.
-// Returns error on timeout.
-//
-// Matching is on the info column only, which holds the exact SQL generated in
-// RenameTables. The wait state text is deliberately NOT matched: forks report
-// different text for the same condition, e.g. MariaDB Galera parks DDL in total order
-// isolation and reports "Waiting to execute in isolation" rather than "Waiting for
-// table metadata lock". Seeing the full set on renameQueuedConfirmations consecutive
-// polls is what establishes the statements are queued rather than merely in flight.
+// waitForRenamesQueued confirms via processlist that every RENAME is parked behind the
+// read lock. Matches info only: wait-state text differs per fork and per stage (Galera
+// reports "Waiting to execute in isolation"), so consecutive sightings stand in for it.
 func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []renamePair) error {
 	deadline := time.NewTimer(r.waitDeadline)
 	defer deadline.Stop()
@@ -275,8 +268,8 @@ func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []re
 	}
 }
 
-// describeRenameThreads reports every RENAME thread the polling connection can see, so a
-// timeout says why it failed instead of requiring SHOW FULL PROCESSLIST on the server.
+// describeRenameThreads makes a timeout self-diagnosing: it reports the RENAME threads
+// this connection can see, and the state text that failed to look queued.
 func (r *mysqlTableRenamer) describeRenameThreads() string {
 	rows, err := r.sess.QueryString(
 		"SELECT id, command, state, info FROM information_schema.processlist WHERE info LIKE 'RENAME TABLE %'")

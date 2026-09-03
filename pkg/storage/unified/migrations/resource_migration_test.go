@@ -408,7 +408,7 @@ func TestIntegrationMySQL_WaitForRenamesQueued(t *testing.T) {
 		err := renamer.waitForRenamesQueued(context.Background(), []renamePair{{"nonexistent_xyz", "nonexistent_xyz" + legacySuffix}})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "visible RENAME threads")
-		require.Contains(t, err.Error(), table, "diagnostic must name the queued rename so a timeout is triageable without SHOW FULL PROCESSLIST")
+		require.Contains(t, err.Error(), table)
 
 		unlock()
 		select {
