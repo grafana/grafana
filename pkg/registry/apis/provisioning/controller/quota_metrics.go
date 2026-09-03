@@ -6,6 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Use finer resolution during the first hour of quota-service failures, then
+// track prolonged reliance on cached quota at 3, 6, 12, and 24 hours.
 var repositoryQuotaStalenessBuckets = []float64{
 	0,
 	time.Minute.Seconds(),
