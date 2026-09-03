@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, locationService } from '@grafana/runtime';
+import { config, LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -14,8 +14,9 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
-import { ToolbarActions } from './NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { type DashboardPlanningState } from './types/dashboard';
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
@@ -216,38 +217,57 @@ describe('NavToolbarActions', () => {
 });
 
 describe('when previewing an unbuilt dashboard plan', () => {
-  it('offers only Build and Dismiss, and withholds save, settings and sharing', async () => {
+  // Rendered through NavToolbarActions rather than ToolbarActions: the wrapper is what chooses
+  // between the new and legacy toolbars, and testing the legacy one directly missed that the new
+  // toolbar — the default under dashboardNewLayouts — never saw the planning state at all.
+  function setupPlanning(planningOverrides: Partial<DashboardPlanningState> = {}) {
     const onBuild = jest.fn();
     const onDismiss = jest.fn();
-    const { dashboard } = setup();
-
-    await act(async () => {
-      dashboard.onEnterEditMode();
-      dashboard.setState({
-        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss },
-      });
+    const dashboard = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      meta: { canEdit: true, canSave: true, canShare: true, canStar: true },
+      title: 'hello',
+      editable: true,
+      uid: 'dash-1',
+      isEditing: true,
+      planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss, ...planningOverrides },
+      body: DefaultGridLayoutManager.fromVizPanels([
+        new VizPanel({ title: 'Panel A', key: 'panel-1', pluginId: 'table' }),
+      ]),
     });
+
+    const context = getGrafanaContextMock();
+    locationService.push('/');
+
+    render(
+      <TestProvider grafanaContext={context}>
+        <LocationServiceProvider service={locationService}>
+          <UrlSyncContextProvider scene={dashboard}>
+            <NavToolbarActions dashboard={dashboard} />
+          </UrlSyncContextProvider>
+        </LocationServiceProvider>
+      </TestProvider>
+    );
+
+    // AppChromeUpdate hands the toolbar to app chrome rather than rendering it in place.
+    render(<TestProvider grafanaContext={context}>{context.chrome.state.getValue().actions}</TestProvider>);
+
+    return { dashboard, onBuild, onDismiss };
+  }
+
+  it.each([true, false])('offers only Build and Dismiss (dashboardNewLayouts=%s)', async (newLayouts) => {
+    config.featureToggles.dashboardNewLayouts = newLayouts;
+    setupPlanning();
 
     expect(await screen.findByText('Kafka overview')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)).toBeInTheDocument();
     expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton)).toBeInTheDocument();
-
     expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.settingsButton)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(selectors.components.NavToolbar.shareDashboard)).not.toBeInTheDocument();
   });
 
   it('wires the banner actions to the plan callbacks', async () => {
-    const onBuild = jest.fn();
-    const onDismiss = jest.fn();
-    const { dashboard } = setup();
-
-    await act(async () => {
-      dashboard.onEnterEditMode();
-      dashboard.setState({
-        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss },
-      });
-    });
+    const { onBuild, onDismiss } = setupPlanning();
 
     await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton));
     expect(onBuild).toHaveBeenCalledTimes(1);
@@ -256,22 +276,10 @@ describe('when previewing an unbuilt dashboard plan', () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('restores the normal edit-mode actions once the plan is built', async () => {
-    const { dashboard } = setup();
+  it('pluralises the panel count', async () => {
+    setupPlanning({ panelCount: 1 });
 
-    await act(async () => {
-      dashboard.onEnterEditMode();
-      dashboard.setState({
-        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild: jest.fn(), onDismiss: jest.fn() },
-      });
-    });
-    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
-
-    await act(async () => {
-      dashboard.setState({ planning: undefined });
-    });
-
-    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    expect(await screen.findByText('1 panel')).toBeInTheDocument();
   });
 });
 

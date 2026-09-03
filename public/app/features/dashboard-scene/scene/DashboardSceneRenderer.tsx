@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -13,6 +14,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -88,6 +90,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
+  /**
+   * A previewed plan has no queries, so the time picker and variable bar would be inert controls
+   * over nothing — they come back when the plan is built. What replaces them depends on where this
+   * dashboard keeps its actions: the new toolbar puts Save and friends in this very bar, so the
+   * plan's banner takes their place here; the legacy toolbar puts them in the app chrome, where
+   * NavToolbarActions swaps them instead, leaving this bar simply empty.
+   */
+  function renderControls() {
+    if (planning) {
+      return config.featureToggles.dashboardNewLayouts ? <PlanningBanner planning={planning} /> : null;
+    }
+
+    return controls && <controls.Component model={controls} />;
+  }
+
   function renderBody() {
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
@@ -113,9 +130,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
-            // A previewed plan has no queries, so the time picker and variable bar would be inert
-            // controls over nothing. They come back when the plan is built.
-            controls={!planning && controls && <controls.Component model={controls} />}
+            controls={renderControls()}
             body={renderBody()}
           />
         )}
