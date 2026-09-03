@@ -378,7 +378,7 @@ describe('ResponseTransformers', () => {
             links: [],
             transformations: [],
             repeat: 'var1',
-            repeatDirection: 'h',
+            // repeatDirection intentionally omitted to verify the v1 horizontal default
             timeCompare: '1d',
           },
           {
