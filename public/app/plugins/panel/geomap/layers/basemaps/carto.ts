@@ -1,9 +1,14 @@
 import LayerGroup from 'ol/layer/Group';
+import Layer from 'ol/layer/Layer';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
 import { apply } from 'ol-mapbox-style';
 
 import { type MapLayerRegistryItem } from '@grafana/data';
 
 // https://docs.carto.com/faqs/carto-basemaps
+
+const ATTRIBUTION = `<a href="https://carto.com/attribution/">©CARTO</a> <a href="https://www.openstreetmap.org/copyright">©OpenStreetMap</a> contributors`;
 
 export enum LayerTheme {
   Auto = 'auto',
@@ -39,13 +44,24 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       const dark = !cfg.theme || cfg.theme === LayerTheme.Auto ? theme.isDark : cfg.theme === LayerTheme.Dark;
       const style = `${dark ? 'dark-matter' : 'positron'}${cfg.showLabels ? '' : '-nolabels'}`;
       const styleUrl = `https://basemaps.cartocdn.com/gl/${style}-gl-style/style.json`;
-      const layer = new LayerGroup();
+      // The style's own attribution is two chained requests away, so an empty source carries it from
+      // the first render instead, the way the raster source used to.
+      const attribution = new VectorLayer({ source: new VectorSource({ attributions: ATTRIBUTION }) });
+      const layer = new LayerGroup({ layers: [attribution] });
 
       // CARTO serves every style with the same id and ol-mapbox-style caches paint functions per id,
       // so without a unique one the first basemap on the page repaints all the others.
       fetch(styleUrl)
         .then((response) => response.json())
         .then((glStyle) => apply(layer, { ...glStyle, id: styleUrl }, { styleUrl }))
+        .then(() =>
+          layer.getLayers().forEach((child) => {
+            // The TileJSON credits the same two projects in its own words, so drop it and keep one
+            if (child !== attribution && child instanceof Layer) {
+              child.getSource()?.setAttributions(undefined);
+            }
+          })
+        )
         .catch((error) => console.warn('Failed to load CARTO basemap style:', error));
 
       return layer;
