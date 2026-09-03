@@ -67,6 +67,7 @@ export function ToolbarActions({ dashboard }: Props) {
     editPanel,
     editable,
     title,
+    planning,
     meta: { isEmbedded, isSnapshot, canMakeEditable, canStar, canSave, folderUid },
   } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -75,6 +76,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const styles = useStyles2(getStyles);
+  const planningStyles = useStyles2(getPlanningStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanel);
 
@@ -91,6 +93,21 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+
+  // While a plan is only previewed there is no dashboard to save, share or configure yet, so the
+  // whole action row is replaced rather than filtered — no condition below can put Save back on
+  // screen. Placed after the last hook so every render runs the same ones.
+  if (planning) {
+    return (
+      <PlanningBannerActions
+        planTitle={planning.planTitle}
+        panelCount={planning.panelCount}
+        onBuild={planning.onBuild}
+        onDismiss={planning.onDismiss}
+        styles={planningStyles}
+      />
+    );
+  }
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -504,6 +521,79 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;
+}
+
+interface PlanningBannerActionsProps {
+  planTitle: string;
+  panelCount: number;
+  onBuild: () => void;
+  onDismiss: () => void;
+  styles: ReturnType<typeof getPlanningStyles>;
+}
+
+/**
+ * The toolbar for a dashboard plan that has not been built yet: what the plan is and how big it is,
+ * then the only two things the user can do with it.
+ */
+function PlanningBannerActions({ planTitle, panelCount, onBuild, onDismiss, styles }: PlanningBannerActionsProps) {
+  return (
+    <ToolbarButtonRow alignment="right">
+      <div className={styles.summary}>
+        <Icon name="ai-sparkle" />
+        <span className={styles.planTitle}>{planTitle}</span>
+        <span className={styles.panelCount}>
+          <Trans
+            i18nKey="dashboard.planning-banner.panel-count"
+            count={panelCount}
+            tOptions={{
+              defaultValue_one: '{{count}} panel',
+              defaultValue_other: '{{count}} panels',
+            }}
+          >
+            {'{{count}}'} panels
+          </Trans>
+        </span>
+      </div>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onDismiss}
+        data-testid={selectors.components.NavToolbar.editDashboard.planningDismissButton}
+      >
+        <Trans i18nKey="dashboard.planning-banner.dismiss">Dismiss</Trans>
+      </Button>
+      <Button
+        variant="primary"
+        size="sm"
+        onClick={onBuild}
+        data-testid={selectors.components.NavToolbar.editDashboard.planningBuildButton}
+      >
+        <Trans i18nKey="dashboard.planning-banner.build">Build</Trans>
+      </Button>
+    </ToolbarButtonRow>
+  );
+}
+
+function getPlanningStyles(theme: GrafanaTheme2) {
+  return {
+    summary: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginRight: theme.spacing(1),
+      minWidth: 0,
+    }),
+    planTitle: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    panelCount: css({
+      color: theme.colors.text.secondary,
+      whiteSpace: 'nowrap',
+    }),
+  };
 }
 
 function renderActionElements(toolbarActions: ToolbarAction[]) {

@@ -753,6 +753,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // An unbuilt plan is a preview, not the user's work. Every save entry point funnels through
+    // here (toolbar, the mod+s keybinding, the exit-edit-mode confirm), so guarding this one method
+    // is what keeps the planning banner's promise that saving isn't on offer yet.
+    if (this.isPlanning()) {
+      return;
+    }
+
     this.setState({
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
@@ -1156,11 +1163,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
+    // Settings edit the dashboard, which does not exist yet while a plan is only previewed.
+    // Guards the toolbar entry point and the `d s` keybinding alike.
+    if (this.isPlanning()) {
+      return;
+    }
+
     const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
     locationService.partial({ editview });
   };
 
+  /**
+   * True while an unbuilt dashboard plan is being previewed on this scene. Planning is a sub-state
+   * of edit mode: the scene is editable so the user can rearrange the plan, but the dashboard-level
+   * actions that assume a real dashboard (save, settings, sharing) are withheld until they build it.
+   */
+  public isPlanning(): boolean {
+    return this.state.planning !== undefined;
+  }
+
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
+    // A library panel carries its own queries, so unlike a blank panel it cannot be added in a
+    // query-less form. Adding one to a plan preview is disallowed rather than made inert.
+    if (this.isPlanning()) {
+      return;
+    }
+
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
     });
@@ -1172,7 +1200,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onCreateNewPanel(): VizPanel {
     const profiler = getDashboardSceneProfiler();
-    const vizPanel = getDefaultVizPanel();
+    const vizPanel = getDefaultVizPanel(this);
     profiler.attachProfilerToPanel(vizPanel);
 
     this.addPanel(vizPanel);

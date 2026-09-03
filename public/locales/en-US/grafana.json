@@ -6086,6 +6086,12 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "planning-banner": {
+      "build": "Build",
+      "dismiss": "Dismiss",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",

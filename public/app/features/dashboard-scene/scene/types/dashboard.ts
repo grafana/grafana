@@ -73,6 +73,25 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /**
+   * Set while an unbuilt dashboard plan is being previewed on this scene. The plan's panels are
+   * scaffolded as real but query-less panels so the user can judge the layout before committing to
+   * a build. Presence of this state is what puts the scene into planning mode: the toolbar shows the
+   * plan's banner instead of save/settings/sharing, dashboard controls are hidden, and panels added
+   * by hand stay query-less.
+   */
+  planning?: DashboardPlanningState;
+}
+
+export interface DashboardPlanningState {
+  /** Title of the plan being previewed, shown in the banner. */
+  planTitle: string;
+  /** How many panels the plan proposes, shown in the banner. */
+  panelCount: number;
+  /** Build the plan: attach real queries to the scaffolded panels. */
+  onBuild: () => void;
+  /** Discard the plan and remove its scaffolded panels. */
+  onDismiss: () => void;
 }
 
 interface DashboardScenePreferences {

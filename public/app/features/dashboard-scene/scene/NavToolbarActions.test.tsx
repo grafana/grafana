@@ -215,6 +215,66 @@ describe('NavToolbarActions', () => {
   });
 });
 
+describe('when previewing an unbuilt dashboard plan', () => {
+  it('offers only Build and Dismiss, and withholds save, settings and sharing', async () => {
+    const onBuild = jest.fn();
+    const onDismiss = jest.fn();
+    const { dashboard } = setup();
+
+    await act(async () => {
+      dashboard.onEnterEditMode();
+      dashboard.setState({
+        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss },
+      });
+    });
+
+    expect(await screen.findByText('Kafka overview')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton)).toBeInTheDocument();
+
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.settingsButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.NavToolbar.shareDashboard)).not.toBeInTheDocument();
+  });
+
+  it('wires the banner actions to the plan callbacks', async () => {
+    const onBuild = jest.fn();
+    const onDismiss = jest.fn();
+    const { dashboard } = setup();
+
+    await act(async () => {
+      dashboard.onEnterEditMode();
+      dashboard.setState({
+        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild, onDismiss },
+      });
+    });
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningBuildButton));
+    expect(onBuild).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByTestId(selectors.components.NavToolbar.editDashboard.planningDismissButton));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores the normal edit-mode actions once the plan is built', async () => {
+    const { dashboard } = setup();
+
+    await act(async () => {
+      dashboard.onEnterEditMode();
+      dashboard.setState({
+        planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild: jest.fn(), onDismiss: jest.fn() },
+      });
+    });
+    expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+
+    await act(async () => {
+      dashboard.setState({ planning: undefined });
+    });
+
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+  });
+});
+
 function setup(meta?: DashboardMeta, editable?: boolean) {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),

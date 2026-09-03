@@ -168,6 +168,13 @@ const getStyles = () => ({
  * For some dashboards and users changes should be ignored *
  */
 export function ignoreChanges(scene: DashboardScene | null) {
+  // A previewed plan is not the user's unsaved work: its panels were scaffolded for them to look
+  // at, and dismissing the plan navigates away on purpose. Without this, Dismiss would be met with
+  // an "unsaved changes" modal offering to save a plan the user just rejected.
+  if (scene?.isPlanning()) {
+    return true;
+  }
+
   const original = scene?.getInitialSaveModel();
 
   if (!original) {

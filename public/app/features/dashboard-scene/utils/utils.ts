@@ -248,6 +248,16 @@ export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   throw new Error('SceneObject root is not a DashboardScene');
 }
 
+/**
+ * Like `getDashboardSceneFor`, but for callers that may legitimately not be inside a dashboard —
+ * the shared layout managers also ride a notebook scene — and want to degrade rather than throw.
+ */
+export function findDashboardSceneFor(sceneObject: SceneObject | undefined): DashboardScene | undefined {
+  const root = sceneObject?.getRoot();
+
+  return root instanceof DashboardScene ? root : undefined;
+}
+
 export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
   if (sceneObject instanceof VizPanel) {
     return sceneObject;
@@ -264,12 +274,22 @@ export function getDefaultPluginId(): string {
   return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
-export function getDefaultVizPanel(): VizPanel {
+/**
+ * Build the panel a user gets when they add one by hand.
+ *
+ * Pass the scene when one is reachable: while a dashboard plan is being previewed, the new panel is
+ * built without a query runner so it matches the plan's other placeholders and issues no traffic
+ * against the default datasource. Attaching real queries is the build step's job, not the preview's.
+ */
+export function getDefaultVizPanel(sceneObject?: SceneObject): VizPanel {
+  const withQuery = !findDashboardSceneFor(sceneObject)?.isPlanning();
   const defaultPluginId = getDefaultPluginId();
 
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 
-  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+  // Only resolved when the panel is going to carry a query: a plan preview has no business
+  // touching the datasource registry just to throw the result away.
+  const datasourceSettings = withQuery ? getDataSourceSrv().getInstanceSettings(null) : undefined;
 
   return new VizPanel({
     title: newPanelTitle,

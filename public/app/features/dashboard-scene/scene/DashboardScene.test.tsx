@@ -3528,6 +3528,81 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
   };
 }
 
+describe('planning mode', () => {
+  const planning = {
+    planTitle: 'Kafka overview',
+    panelCount: 4,
+    onBuild: jest.fn(),
+    onDismiss: jest.fn(),
+  };
+
+  it('reports planning only while the planning state is set', () => {
+    const scene = buildTestScene();
+    expect(scene.isPlanning()).toBe(false);
+
+    scene.setState({ planning });
+    expect(scene.isPlanning()).toBe(true);
+
+    scene.setState({ planning: undefined });
+    expect(scene.isPlanning()).toBe(false);
+  });
+
+  it('does not open the save drawer while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    scene.openSaveDrawer({});
+
+    expect(scene.state.overlay).toBeUndefined();
+  });
+
+  it('opens the save drawer again once the plan is built', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    scene.openSaveDrawer({});
+    expect(scene.state.overlay).toBeUndefined();
+
+    scene.setState({ planning: undefined });
+    scene.openSaveDrawer({});
+
+    expect(scene.state.overlay).toBeDefined();
+  });
+
+  it('does not navigate to settings while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const partial = jest.spyOn(locationService, 'partial');
+
+    scene.onOpenSettings();
+
+    expect(partial).not.toHaveBeenCalled();
+    partial.mockRestore();
+  });
+
+  it('does not open the library panel drawer while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    scene.onShowAddLibraryPanelDrawer();
+
+    expect(scene.state.overlay).toBeUndefined();
+  });
+
+  it('creates query-less panels while planning', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+
+    const panel = scene.onCreateNewPanel();
+
+    expect(panel.state.$data).toBeUndefined();
+  });
+});
+
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
     title: 'hello',

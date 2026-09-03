@@ -71,6 +71,21 @@ describe('DashboardPrompt', () => {
       });
     });
 
+    describe('when a dashboard plan is being previewed', () => {
+      it('then it should return true, so dismissing the plan is not blocked by an unsaved-changes prompt', () => {
+        const { contextSrv } = getTestContext();
+        const scene = buildTestScene({ meta: { canSave: true } });
+        scene.setInitialSaveModel(transformSceneToSaveModel(scene));
+        contextSrv.isEditor = true;
+        scene.setState({
+          isDirty: true,
+          planning: { planTitle: 'Kafka overview', panelCount: 4, onBuild: jest.fn(), onDismiss: jest.fn() },
+        });
+
+        expect(ignoreChanges(scene)).toBe(true);
+      });
+    });
+
     describe('when called for a viewer without save permissions', () => {
       it('then it should return true', () => {
         const { contextSrv } = getTestContext();

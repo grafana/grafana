@@ -550,7 +550,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   };
 
   private _addNewPanelToLayout = (dropTarget: DashboardDropTarget | null) => {
-    const panel = getDefaultVizPanel();
+    const panel = getDefaultVizPanel(this._getDashboard());
     this._getLayoutForDropTarget(dropTarget).addPanel(panel);
     DashboardInteractions.trackAddPanelClick('sidebar', dropTarget ? getLayoutType(dropTarget) : 'dashboard', 'drop');
   };

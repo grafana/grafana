@@ -26,6 +26,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    planning,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -112,7 +113,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
-            controls={controls && <controls.Component model={controls} />}
+            // A previewed plan has no queries, so the time picker and variable bar would be inert
+            // controls over nothing. They come back when the plan is built.
+            controls={!planning && controls && <controls.Component model={controls} />}
             body={renderBody()}
           />
         )}
