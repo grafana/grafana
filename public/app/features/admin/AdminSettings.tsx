@@ -2,7 +2,7 @@ import { useAsync } from 'react-use';
 
 import { Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { ColorCard, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { AdminSettingsTable } from './AdminSettingsTable';
@@ -15,16 +15,20 @@ function AdminSettings() {
   return (
     <Page navId="server-settings">
       <Page.Contents>
-        <Alert severity="info" title="">
-          <Trans i18nKey="admin.settings.info-description">
-            These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change
-            these you currently need to restart Grafana.
-          </Trans>
-        </Alert>
+        <Stack direction="column" gap={2}>
+          <ColorCard variant="info" title="" size="sm">
+            <ColorCard.Icon />
+            <ColorCard.Title>Info</ColorCard.Title>
+            <Trans i18nKey="admin.settings.info-description">
+              These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change
+              these you currently need to restart Grafana.
+            </Trans>
+          </ColorCard>
 
-        {loading && <AdminSettingsTable.Skeleton />}
+          {loading && <AdminSettingsTable.Skeleton />}
 
-        {settings && <AdminSettingsTable settings={settings} />}
+          {settings && <AdminSettingsTable settings={settings} />}
+        </Stack>
       </Page.Contents>
     </Page>
   );

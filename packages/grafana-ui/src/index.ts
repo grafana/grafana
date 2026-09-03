@@ -18,6 +18,7 @@ import * as floatingUtils from './utils/floating';
 import * as ReactUtils from './utils/reactUtils';
 
 export { Icon } from './components/Icon/Icon';
+export { ColorCard } from './components/ColorCard/ColorCard';
 export { IconButton, type IconButtonVariant } from './components/IconButton/IconButton';
 export { ConfirmButton } from './components/ConfirmButton/ConfirmButton';
 export { DeleteButton } from './components/ConfirmButton/DeleteButton';

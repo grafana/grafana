@@ -249,7 +249,6 @@ const getStyles = (
     }),
     content: css({
       gridArea: 'Content',
-      color: theme.colors.text.secondary,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
