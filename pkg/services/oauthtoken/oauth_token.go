@@ -595,6 +595,17 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 	return true
 }
 
+// IsOAuthTokenCurrent reports whether a token can be reused without a refresh.
+// The copy prevents the refresh check from clearing the caller's access token
+// when an ID token has expired.
+func IsOAuthTokenCurrent(ctx context.Context, token *oauth2.Token) bool {
+	if token == nil {
+		return false
+	}
+	clone := *token
+	return !needTokenRefresh(ctx, &clone)
+}
+
 func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
 	token := &oauth2.Token{
 		AccessToken:  authInfo.OAuthAccessToken,

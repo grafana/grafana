@@ -59,9 +59,24 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
-	if err != nil {
-		return nil, err
+	var authnInfo *auth.SessionTokenAuthnInfo
+	if r.GetMeta(authn.MetaKeyOAuthPassthrough) != "" {
+		if optimized, ok := s.sessionService.(auth.SessionTokenAuthnService); ok {
+			authnInfo, err = optimized.LookupTokenForAuthn(ctx, rawSessionToken)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var token *auth.UserToken
+	if authnInfo != nil {
+		token = authnInfo.Token
+	} else {
+		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if token.NeedsRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute) {
@@ -76,6 +91,14 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			FetchSyncedUser: true,
 			SyncPermissions: true,
 		},
+	}
+	if authnInfo != nil {
+		ident.OAuthToken = authnInfo.OAuthToken
+		if authnInfo.HasAuthInfo {
+			ident.AuthID = authnInfo.AuthID
+			ident.AuthenticatedBy = authnInfo.AuthModule
+			return ident, nil
+		}
 	}
 
 	info, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: token.UserId})

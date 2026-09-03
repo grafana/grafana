@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -72,6 +74,24 @@ type CreateTokenCommand struct {
 	ClientIP        net.IP
 	UserAgent       string
 	ExternalSession *ExternalSession
+}
+
+// SessionTokenAuthnInfo contains the session data needed by the authentication
+// path. Implementations can resolve it in one database query instead of loading
+// the token, auth info, and external OAuth session independently.
+type SessionTokenAuthnInfo struct {
+	Token       *UserToken
+	AuthID      string
+	AuthModule  string
+	OAuthToken  *oauth2.Token
+	HasAuthInfo bool
+}
+
+// SessionTokenAuthnService is an optional optimized read path used by session
+// authentication. UserTokenService implementations that do not provide it keep
+// using LookupToken and AuthInfoService as a fallback.
+type SessionTokenAuthnService interface {
+	LookupTokenForAuthn(ctx context.Context, unhashedToken string) (*SessionTokenAuthnInfo, error)
 }
 
 // UserTokenService are used for generating and validating user tokens

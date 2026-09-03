@@ -37,6 +37,7 @@ const (
 	MetaKeyUsername            = "username"
 	MetaKeyAuthModule          = "authModule"
 	MetaKeyIsLogin             = "isLogin"
+	MetaKeyOAuthPassthrough    = "oauthPassthrough"
 	defaultRedirectToCookieKey = "redirect_to"
 )
 
