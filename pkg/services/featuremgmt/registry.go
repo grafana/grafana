@@ -3313,7 +3313,7 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "grafana.userPermissionsApi",
+			Name:         "grafana.multiTenantUserPermissions",
 			Description:  "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,

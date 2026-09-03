@@ -35,7 +35,7 @@ describe('fetchUserPermissions', () => {
   });
 
   it('reads from the IAM app platform API when the flag is on', async () => {
-    setTestFlags({ 'grafana.userPermissionsApi': true });
+    setTestFlags({ 'grafana.multiTenantUserPermissions': true });
     mockLoadUserPermissions.mockResolvedValue({ 'datasources:read': true });
 
     await contextSrv.fetchUserPermissions();
@@ -47,7 +47,7 @@ describe('fetchUserPermissions', () => {
   // A failed refresh must not downgrade the session to "no permissions" — the
   // user keeps whatever they were granted at boot.
   it('keeps the existing permissions when the IAM request fails', async () => {
-    setTestFlags({ 'grafana.userPermissionsApi': true });
+    setTestFlags({ 'grafana.multiTenantUserPermissions': true });
     mockLoadUserPermissions.mockResolvedValue(null);
 
     await contextSrv.fetchUserPermissions();

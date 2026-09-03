@@ -12,7 +12,12 @@ import { type UserPermission } from 'app/types/accessControl';
 export async function loadUserPermissions(): Promise<UserPermission | null> {
   try {
     const { permissions }: UserPermissions = await dispatch(
-      iamAPIv0alpha1.endpoints.getCurrentUserPermissions.initiate(undefined, { subscribe: false })
+      // forceRefetch because callers use this to observe permissions they were
+      // just granted; subscribe: false alone would serve a cached map back
+      iamAPIv0alpha1.endpoints.getCurrentUserPermissions.initiate(undefined, {
+        subscribe: false,
+        forceRefetch: true,
+      })
     ).unwrap();
 
     return permissions.reduce<UserPermission>((acc, { action }) => {

@@ -106,7 +106,7 @@ export class ContextSrv {
   }
 
   async fetchUserPermissions() {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUserPermissionsApi, false)) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)) {
       // Null means the request failed; keep the permissions we already have rather
       // than downgrading the session to "no permissions"
       const permissions = await loadUserPermissions();

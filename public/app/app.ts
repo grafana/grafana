@@ -254,7 +254,10 @@ export class GrafanaApp {
       // permissions, so fetch them before anything permission-gated renders. The
       // nav tree needs rebuilding either way: configureStore built it with an
       // empty permission set, and its sections are permission-gated.
-      if (isFrontendService() && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaUserPermissionsApi, false)) {
+      if (
+        isFrontendService() &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
         await contextSrv.fetchUserPermissions();
         dispatch(navTreeInitialized());
         dispatch(navIndexInitialized());
