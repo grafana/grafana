@@ -171,7 +171,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 				OrgID:    1,
 			})
 
-			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(legacysql.NewDatabaseProvider(store)))
 			authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(store), secretsService)
 			require.NoError(t, err)
 

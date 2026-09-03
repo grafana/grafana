@@ -299,7 +299,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -365,7 +366,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
 	if err != nil {
@@ -1067,7 +1067,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	providerProvider := provider.ProvideEncryptionProvider()
 	serviceService, err := service2.ProvideEncryptionService(tracingService, providerProvider, usageStats, cfg)
 	if err != nil {
@@ -1133,7 +1134,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
 	if err != nil {
@@ -1836,14 +1836,14 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	secretsStoreImpl := database.ProvideSecretsStore(sqlStore)
+	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
+	secretsStoreImpl := database.ProvideSecretsStore(legacyDatabaseProvider)
 	osskmsprovidersService := osskmsproviders.ProvideService(serviceService, cfg, featureToggles)
 	secretsService, err := manager.ProvideSecretsService(tracingService, secretsStoreImpl, osskmsprovidersService, serviceService, cfg, featureToggles, usageStats)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
-	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
 	orgService, err := orgimpl.ProvideService(legacyDatabaseProvider, cfg, quotaService)
 	if err != nil {
