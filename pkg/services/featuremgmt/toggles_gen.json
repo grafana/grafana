@@ -2131,6 +2131,32 @@
     },
     {
       "metadata": {
+        "name": "datasources.teamHttpHeadersFromAppPlatformMT",
+        "resourceVersion": "1788332992874",
+        "creationTimestamp": "2026-09-02T07:09:52Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.teamHttpHeadersFromAppPlatformST",
+        "resourceVersion": "1788334529644",
+        "creationTimestamp": "2026-09-02T07:35:29Z"
+      },
+      "spec": {
+        "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.useNewStackInfoToSettingsCache",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -6563,7 +6589,8 @@
       "metadata": {
         "name": "teamHttpHeadersFromAppPlatformMT",
         "resourceVersion": "1787269128937",
-        "creationTimestamp": "2026-08-20T23:38:48Z"
+        "creationTimestamp": "2026-08-20T23:38:48Z",
+        "deletionTimestamp": "2026-09-02T07:09:52Z"
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
@@ -6576,7 +6603,8 @@
       "metadata": {
         "name": "teamHttpHeadersFromAppPlatformST",
         "resourceVersion": "1787269128937",
-        "creationTimestamp": "2026-08-20T23:38:48Z"
+        "creationTimestamp": "2026-08-20T23:38:48Z",
+        "deletionTimestamp": "2026-09-02T07:35:29Z"
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
