@@ -287,12 +287,12 @@ func stripBOMReflect(v reflect.Value) {
 }
 
 // RedactSecret truncates the middle of the secret with '...', keeping 3 characters at the start and end.
-// If the secret is shorter than 8 characters, the special string '<redacted>' is returned instead.
+// If the secret is shorter than 16 characters, the special string '<redacted>' is returned instead.
 func RedactSecret(secret string) string {
 	runes := []rune(secret)
 	l := len(runes)
 
-	if l < 8 {
+	if l < 16 {
 		return "<redacted>"
 	}
 

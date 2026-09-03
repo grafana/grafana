@@ -599,8 +599,8 @@ func TestRedactSecret(t *testing.T) {
 	}{
 		{
 			name:  "basic secret",
-			input: "secret-value",
-			want:  "sec...lue",
+			input: "my-secret-value-that-should-be-redacted",
+			want:  "my-...ted",
 		},
 		{
 			name:  "small secret",
@@ -609,8 +609,8 @@ func TestRedactSecret(t *testing.T) {
 		},
 		{
 			name:  "secret with minimal length",
-			input: "12345678",
-			want:  "123...678",
+			input: "123456789abcdefg",
+			want:  "123...efg",
 		},
 	}
 
