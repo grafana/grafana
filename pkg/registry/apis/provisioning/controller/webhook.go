@@ -85,6 +85,10 @@ func webhookOnDelete(ctx context.Context, repo repository.WebhookRepository) err
 	return deleteWebhook(ctx, repo)
 }
 
+func webhookExpected(cfg *provisioning.Repository) bool {
+	return len(cfg.Spec.Workflows) > 0 || !repository.GetID(cfg.Status.Webhook).IsEmpty()
+}
+
 func createWebhook(ctx context.Context, repo repository.WebhookRepository) (repository.WebhookConfig, error) {
 	secret, err := uuid.NewRandom()
 	if err != nil {
