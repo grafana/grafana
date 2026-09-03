@@ -12,7 +12,7 @@ interface Props {
  */
 export function MegaMenuFeedbackButton({ onClick }: Props) {
   return (
-    <Button variant="secondary" fill="text" size="sm" icon="comment-alt-message" onClick={onClick}>
+    <Button variant="secondary" size="sm" icon="comment-alt-message" onClick={onClick}>
       {t('navigation.megamenu.feedback', 'Give feedback')}
     </Button>
   );
