@@ -78,7 +78,7 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
 	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		if errors.Is(err, auth.ErrInvalidSessionToken) {
+		if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, auth.ErrUserTokenNotFound) {
 			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 		}
@@ -110,13 +110,9 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	if err := hs.rotateToken(c); err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		if errors.Is(err, auth.ErrInvalidSessionToken) {
+		if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, auth.ErrUserTokenNotFound) {
 			hs.log.FromContext(c.Req.Context()).Debug("Deleting session cookie")
 			authn.DeleteSessionCookie(c.Resp, hs.Cfg)
-			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
-		}
-
-		if errors.Is(err, auth.ErrUserTokenNotFound) {
 			return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 		}
 
