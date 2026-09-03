@@ -217,7 +217,7 @@ require (
 	google.golang.org/api v0.288.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754 // @grafana/identity-access-team
-	google.golang.org/grpc v1.83.0 // @grafana/grafana-catalog
+	google.golang.org/grpc v1.83.1 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
