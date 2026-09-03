@@ -300,7 +300,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		return response.JSON(http.StatusOK, result)
 	}
 
-	namespaceUIDs := make([]string, len(namespaceMap))
+	namespaceUIDs := make([]string, 0, len(namespaceMap))
 	for k := range namespaceMap {
 		namespaceUIDs = append(namespaceUIDs, k)
 	}
