@@ -7,13 +7,12 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ScrollContainer, Stack, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
-import { MegaMenuFeedbackButton } from './MegaMenuFeedbackButton';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
@@ -267,31 +266,24 @@ export const MegaMenu = memo(
                 saving={isSaving}
               />
             )}
-            {!editMode && (
-              <>
-                {canCustomise && !isLoading && (
-                  <Stack alignItems="center" gap={0.5}>
-                    <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
-                      <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
-                    </Button>
-                    <MegaMenuFeedbackButton onClick={onGiveFeedback} />
-                  </Stack>
-                )}
-                {!state.fullscreenWorkspace && (
-                  <IconButton
-                    id={DOCK_MENU_BUTTON_ID}
-                    className={styles.dockMenuButton}
-                    tooltip={
-                      state.megaMenuDocked
-                        ? t('navigation.megamenu.undock', 'Undock menu')
-                        : t('navigation.megamenu.dock', 'Dock menu')
-                    }
-                    name="web-section-alt"
-                    onClick={handleDockedMenu}
-                    variant="secondary"
-                  />
-                )}
-              </>
+            {!editMode && canCustomise && !isLoading && (
+              <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+              </Button>
+            )}
+            {!editMode && !state.fullscreenWorkspace && (
+              <IconButton
+                id={DOCK_MENU_BUTTON_ID}
+                className={styles.dockMenuButton}
+                tooltip={
+                  state.megaMenuDocked
+                    ? t('navigation.megamenu.undock', 'Undock menu')
+                    : t('navigation.megamenu.dock', 'Dock menu')
+                }
+                name="web-section-alt"
+                onClick={handleDockedMenu}
+                variant="secondary"
+              />
             )}
           </div>
         </nav>

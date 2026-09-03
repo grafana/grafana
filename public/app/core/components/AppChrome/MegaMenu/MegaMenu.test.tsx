@@ -695,6 +695,8 @@ describe('MegaMenu', () => {
           sectionOrder: ['dashboards'],
         });
 
+        // The button only shows while customising, and it reports the applied (not draft) state.
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Give feedback' }));
 
         expect(events).toHaveLength(1);
@@ -711,11 +713,14 @@ describe('MegaMenu', () => {
         subscription.unsubscribe();
       });
 
-      it('offers the feedback button both at rest and while editing', async () => {
+      it('offers the feedback button only while customising', async () => {
         const { user } = renderMegaMenu();
 
-        expect(await screen.findByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
-        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        // At rest the footer shows the Customise entry point but no feedback button.
+        await screen.findByRole('button', { name: 'Customise navigation' });
+        expect(screen.queryByRole('button', { name: 'Give feedback' })).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Customise navigation' }));
         expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
       });
     });
