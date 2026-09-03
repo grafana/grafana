@@ -65,7 +65,12 @@ export const Sizes: StoryFn<typeof ColorCard> = () => {
   return (
     <Stack direction="column" gap={4}>
       {sizes.map((size) => (
-        <SimpleExampleWithButton key={size} variant="default" size={size} />
+        <SimpleExampleWithButton
+          key={size}
+          content="Some example content that is not very long but still has a few words"
+          variant="default"
+          size={size}
+        />
       ))}
     </Stack>
   );
@@ -89,7 +94,7 @@ function SimpleExampleWithButton({
       <ColorCard.Title>{title}</ColorCard.Title>
       {content && <ColorCard.Content>{content}</ColorCard.Content>}
       <ColorCard.Actions>
-        <Button variant="secondary" onClick={action('Remove button clicked')} size={size}>
+        <Button variant="secondary" onClick={action('Remove button clicked')} size={size === 'sm' ? 'sm' : 'md'}>
           Close
         </Button>
       </ColorCard.Actions>

@@ -59,6 +59,7 @@ const rolesByVariant: Record<ColorCardVariant, AriaRole> = {
   success: 'status',
   tertiary: 'status',
   accent: 'status',
+  default: 'status',
 };
 
 const ColorCardComponent = React.forwardRef<HTMLDivElement, Props>(
@@ -215,7 +216,7 @@ const getStyles = (
       `
         : `"Icon Title Actions"`,
       gridTemplateColumns: 'auto 1fr auto',
-      columnGap: theme.spacing(sizing.padding),
+      columnGap: 0,
       rowGap: theme.spacing(sizing.titleGap),
       alignItems: 'start',
       borderRadius: theme.shape.radius.lg,
@@ -225,6 +226,9 @@ const getStyles = (
       borderColor: variantColors.borderColor,
       borderWidth: variantColors.borderWidth,
       borderStyle: 'solid',
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
     }),
     icon: css({
       gridArea: 'Icon',
@@ -237,6 +241,8 @@ const getStyles = (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      //alignSelf: 'center',
+      marginRight: theme.spacing(sizing.padding),
     }),
     iconSize: sizing.iconSize,
     title: css({
@@ -249,6 +255,7 @@ const getStyles = (
     }),
     content: css({
       gridArea: 'Content',
+      color: variantColors.textColor,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
@@ -271,6 +278,7 @@ type ColorCardStylesProps = {
   borderWidth: string;
   borderEmphasis: string;
   titleColor: string;
+  textColor?: string;
 };
 
 function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): ColorCardStylesProps {
@@ -283,6 +291,7 @@ function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): Co
       borderColor: theme.colors.border.weak,
       borderWidth: '1px',
       titleColor: theme.colors.text.primary,
+      textColor: theme.colors.text.secondary,
     };
   }
 
@@ -290,12 +299,13 @@ function getColorForVariant(theme: GrafanaTheme2, variant: ColorCardVariant): Co
   const cardBg = theme.isDark ? theme.colors.background.primary : theme.colors.background.secondary;
 
   return {
-    background: `linear-gradient(45deg, color-mix(in oklab, ${cardBg} 60%, ${color.background}), ${cardBg})`,
+    background: `linear-gradient(90deg, color-mix(in oklab, ${cardBg} 90%, ${color.main}), ${cardBg})`,
     backgroundEmphasis: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
     borderColor: color.border,
     borderWidth: '0 0 0 2px',
     iconBackground: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
     borderEmphasis: theme.colors[variant].borderEmphasis,
     titleColor: theme.colors[variant].text,
+    textColor: theme.colors.text.primary,
   };
 }
