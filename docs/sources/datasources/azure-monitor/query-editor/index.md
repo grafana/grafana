@@ -76,23 +76,25 @@ Grafana retrieves the selected Health Model, its entities, and its relationships
 
 ### Formats
 
-**Entities** returns one row per entity and is the default. Grafana ranks **Table** as the preferred visualization for it. Alongside the entity name and a color-coded health state, each row carries the health telemetry reported for that entity:
+**Health Model Entities** returns one row per entity and is the default. It shows health as a point-in-time snapshot at the end of the dashboard time range. Grafana ranks **Table** as the preferred visualization for it. Alongside the entity name and a color-coded health state, each row carries the health telemetry reported for that entity:
 
-| Field | Description |
-| --- | --- |
-| `name` | The entity's resource name. Relationships reference entities by this name, so it is the key to join on. Hidden by default. |
-| `displayName` | The entity's friendly name. Not guaranteed to be unique within a model. |
-| `healthState` | The current health state, color-coded. |
-| `healthStateValue` | The same state as an enum, so panels that need a number, such as **Stat**, **Gauge**, **Bar gauge**, and **Pie chart**, can display it. Hidden by default. |
-| `signalsHealthy`, `signalsTotal` | How many of the entity's signals are healthy. |
-| `availabilityState` | Azure Resource Health availability, when the entity is backed by an Azure resource. |
-| `alertSeverities` | Severities of the alerts configured on the entity. |
-| `impact`, `healthObjective`, `provisioningState` | The entity's configured impact, health objective, and provisioning state. |
+| Field                                            | Description                                                                                                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                           | The entity's resource name. Relationships reference entities by this name, so it is the key to join on. Hidden by default.                                 |
+| `displayName`                                    | The entity's friendly name. Not guaranteed to be unique within a model.                                                                                    |
+| `healthState`                                    | The health state at the end of the dashboard time range, color-coded.                                                                                      |
+| `healthStateValue`                               | The same state as an enum, so panels that need a number, such as **Stat**, **Gauge**, **Bar gauge**, and **Pie chart**, can display it. Hidden by default. |
+| `signalsHealthy`, `signalsTotal`                 | How many of the entity's signals are healthy.                                                                                                              |
+| `availabilityState`                              | Azure Resource Health availability, when the entity is backed by an Azure resource.                                                                        |
+| `alertSeverities`                                | Severities of the alerts configured on the entity.                                                                                                         |
+| `impact`, `healthObjective`, `provisioningState` | The entity's configured impact, health objective, and provisioning state.                                                                                  |
 
-**Model graph** returns nodes and edges for the **Node graph** panel, drawing each entity coloured by health state and connected to its dependencies.
+**Health Model Graph** returns nodes and edges for the **Node graph** panel. It shows health as a point-in-time snapshot at the end of the dashboard time range, drawing each entity coloured by its health state and connected to its dependencies.
+
+**Health Model Entity History** returns one stepwise series per entity using the entity history endpoint. Each series covers the full dashboard time range and maps health states to stable enum values: `Healthy` is `0`, `Degraded` is `1`, `Unhealthy` is `2`, `Unknown` is `3`, and `Deleted` is `4`. Grafana ranks **Time series** as the preferred visualization.
 
 {{< admonition type="note" >}}
-Health Model queries return the model's current state, not a history, so the dashboard time range does not filter them.
+The **Health Model Entities** and **Health Model Graph** formats use the end of the dashboard time range as a point-in-time snapshot. Select **Health Model Entity History** to retrieve health-state changes across the selected range.
 {{< /admonition >}}
 
 ## Query Azure Monitor Metrics

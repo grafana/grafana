@@ -108,4 +108,46 @@ describe('HealthModelsQueryEditor', () => {
       })
     );
   });
+
+  it('stores Health Model Entity History as the selected result format', async () => {
+    const datasource = createMockDatasource({
+      getSubscriptions: jest.fn().mockResolvedValue([{ text: 'Subscription One', value: subscriptionId }]),
+      azureHealthModelsDatasource: {
+        getHealthModels: jest.fn().mockResolvedValue([]),
+      },
+    });
+    const onChange = jest.fn();
+    const query = createMockHealthModelsQuery({
+      subscription: subscriptionId,
+      azureHealthModels: { healthModelId, resultFormat: 'entities' },
+    });
+
+    render(
+      <HealthModelsQueryEditor
+        query={query}
+        datasource={datasource}
+        onChange={onChange}
+        variableOptionGroup={variableOptionGroup}
+        setError={jest.fn()}
+      />
+    );
+
+    const resultFormatSelect = screen.getByLabelText('Result format');
+    await userEvent.click(resultFormatSelect);
+    expect(await screen.findByRole('option', { name: /Health Model Entities/ })).toHaveTextContent(
+      'Point-in-time entity health at the end of the selected time range, as a table.'
+    );
+    expect(screen.getByRole('option', { name: /Health Model Graph/ })).toHaveTextContent(
+      'Point-in-time entity health and relationships at the end of the selected time range, for the Node graph panel.'
+    );
+    await userEvent.click(await screen.findByRole('option', { name: /Health Model Entity History/ }));
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...query,
+      azureHealthModels: {
+        healthModelId,
+        resultFormat: 'timeSeries',
+      },
+    });
+  });
 });

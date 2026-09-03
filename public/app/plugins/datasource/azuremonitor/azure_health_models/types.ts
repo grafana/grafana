@@ -9,7 +9,7 @@ export interface AzureHealthModelsOptions {
   resultFormat?: HealthModelsResultFormat;
 }
 
-export type HealthModelsResultFormat = 'entities' | 'modelGraph';
+export type HealthModelsResultFormat = 'entities' | 'modelGraph' | 'timeSeries';
 
 export interface HealthModelResourceId {
   subscriptionId: string;
@@ -60,6 +60,19 @@ export interface HealthModelRelationship {
     provisioningState?: string;
     tags?: Record<string, string>;
   };
+}
+
+export interface HealthModelEntityHistoryTransition {
+  previousState: string;
+  newState: string;
+  occurredAt: string;
+  reason?: string;
+}
+
+export interface HealthModelEntityHistoryResponse {
+  entityName: string;
+  history: HealthModelEntityHistoryTransition[];
+  nextMarker?: string;
 }
 
 export interface ArmListResponse<T> {

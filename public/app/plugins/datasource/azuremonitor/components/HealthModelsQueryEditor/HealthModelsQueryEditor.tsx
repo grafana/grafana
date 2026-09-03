@@ -25,11 +25,21 @@ const SUBSCRIPTIONS_ERROR_SOURCE = 'health-models-subscriptions';
 const HEALTH_MODELS_ERROR_SOURCE = 'health-models-list';
 
 const RESULT_FORMAT_OPTIONS: Array<ComboboxOption<HealthModelsResultFormat>> = [
-  { label: 'Entities', value: 'entities', description: 'Entity health, as a table.' },
   {
-    label: 'Model graph',
+    label: 'Health Model Entities',
+    value: 'entities',
+    description: 'Point-in-time entity health at the end of the selected time range, as a table.',
+  },
+  {
+    label: 'Health Model Graph',
     value: 'modelGraph',
-    description: 'Entities and their relationships, for the Node graph panel.',
+    description:
+      'Point-in-time entity health and relationships at the end of the selected time range, for the Node graph panel.',
+  },
+  {
+    label: 'Health Model Entity History',
+    value: 'timeSeries',
+    description: 'Entity health-state history over the dashboard time range.',
   },
 ];
 
