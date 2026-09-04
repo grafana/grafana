@@ -12,6 +12,7 @@ import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type FavoriteDatasources, reportInteraction, useFavoriteDatasources } from '@grafana/runtime';
+import { isDataSourceCompatibleWithPicker } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
 import {
   Button,
@@ -33,7 +34,7 @@ import { useDatasource, useDatasources } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { getDataSourcePickerPlaceholder, matchDataSourceWithSearch } from './utils';
 
 export const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 export const INTERACTION_ITEM = {
@@ -134,6 +135,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     type: props.type,
     variables: props.variables,
   });
+  // useDatasources() does not take `filter`; apply it so compatibility matches what the user can pick.
+  const allowed = props.filter ? dataSources.filter(props.filter) : dataSources;
+  const isCurrentCompatible = isDataSourceCompatibleWithPicker(current, currentValue, allowed);
   const favoriteDataSources = useFavoriteDatasources();
   const placement = 'bottom-start';
 
@@ -291,8 +295,14 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={suffix}
-          invalid={invalid}
-          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
+          invalid={invalid || !isCurrentCompatible}
+          placeholder={getDataSourcePickerPlaceholder(
+            currentValue,
+            current,
+            isCurrentCompatible,
+            placeholder,
+            hideTextValue
+          )}
           onFocus={() => {
             setInputHasFocus(true);
           }}

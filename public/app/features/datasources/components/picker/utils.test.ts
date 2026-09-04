@@ -1,6 +1,11 @@
 import { type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
 
-import { isDataSourceMatch, getDataSourceCompareFn, matchDataSourceWithSearch } from './utils';
+import {
+  isDataSourceMatch,
+  getDataSourceCompareFn,
+  getDataSourcePickerPlaceholder,
+  matchDataSourceWithSearch,
+} from './utils';
 
 describe('isDataSourceMatch', () => {
   const dataSourceInstanceSettings = { uid: 'a' } as DataSourceInstanceSettings;
@@ -116,6 +121,32 @@ describe('getDataSouceCompareFn', () => {
       { uid: 'D', name: 'D', meta: { builtIn: false } },
       { uid: 'a', name: 'a', meta: { builtIn: true } },
     ] as DataSourceInstanceSettings[]);
+  });
+});
+
+describe('getDataSourcePickerPlaceholder', () => {
+  const prometheus = { uid: 'prom-uid', name: 'Prometheus' } as DataSourceInstanceSettings;
+
+  it('returns an empty string when text is hidden', () => {
+    expect(getDataSourcePickerPlaceholder(prometheus, prometheus, true, 'Select data source', true)).toBe('');
+  });
+
+  it('returns the resolved data source name when settings exist', () => {
+    expect(getDataSourcePickerPlaceholder(prometheus, 'prom-uid', false, 'Select data source')).toBe('Prometheus');
+  });
+
+  it('returns a not-found label when the current value is unresolved and incompatible', () => {
+    expect(getDataSourcePickerPlaceholder(undefined, 'missing-uid', false, 'Select data source')).toBe(
+      'missing-uid - not found'
+    );
+  });
+
+  it('returns the default placeholder when nothing is selected', () => {
+    expect(getDataSourcePickerPlaceholder(undefined, null, true, 'Select data source')).toBe('Select data source');
+  });
+
+  it('returns the default placeholder when the current uid is an empty string', () => {
+    expect(getDataSourcePickerPlaceholder(undefined, '', false, 'Select data source')).toBe('Select data source');
   });
 });
 
