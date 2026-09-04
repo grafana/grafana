@@ -1,13 +1,11 @@
 import { createDataFrame, createTheme, FieldType, MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { fieldValueColors } from './scatter';
+import { getEnumConfig } from './scatter';
 
-// Golden baseline for the value->color compiler that scatter currently builds via
-// `new Function`. The upcoming field.display.colors() migration must reproduce the
-// same resolved colors. We snapshot the deduped palette plus the resolved color per
-// representative value via getAll (the path the renderer uses), and assert getOne
-// agrees with getAll for the discrete compilers.
+// Golden baseline for the value-to-state compiler. We snapshot the deduped color
+// palette plus the resolved color per representative value via getAll (the path the
+// renderer uses), and assert getOne agrees with getAll for discrete compilers.
 const theme = createTheme();
 
 function makeColorField(config: Record<string, unknown>, values: unknown[], type: FieldType = FieldType.number) {
@@ -30,16 +28,17 @@ function resolve(
 ) {
   const { type, min, max, discrete = true } = opts;
   const field = makeColorField(config, values, type);
-  const { index, getOne, getAll } = fieldValueColors(field, theme);
+  const { index, getOne, getAll } = getEnumConfig(field, theme);
+  const palette = index.color ?? [];
 
-  const byAll = getAll(values, min, max).map((i) => index[i] ?? null);
+  const byAll = getAll(values, min, max).map((i) => palette[i] ?? null);
 
   if (discrete) {
-    const byOne = values.map((v) => index[getOne(v, min, max)] ?? null);
+    const byOne = values.map((v) => palette[getOne(v, min, max)] ?? null);
     expect(byOne).toEqual(byAll);
   }
 
-  return { palette: index, colors: byAll };
+  return { palette, colors: byAll };
 }
 
 describe('fieldValueColors (golden baseline)', () => {
@@ -69,6 +68,23 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [10, 75, 200])).toMatchSnapshot();
   });
 
+  it('formats generated range mapping labels with the field unit', () => {
+    const field = makeColorField(
+      {
+        unit: 'percent',
+        mappings: [
+          {
+            type: MappingType.RangeToText,
+            options: { from: 0, to: 50, result: { color: 'blue' } },
+          },
+        ],
+      },
+      [25]
+    );
+
+    expect(getEnumConfig(field, theme).index.text).toEqual(['0% - 50%']);
+  });
+
   it('SpecialValue mapping (NaN / Null)', () => {
     const config = {
       mappings: [
@@ -94,6 +110,52 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [10, 50, 79, 80, 100])).toMatchSnapshot();
   });
 
+  it('formats absolute threshold labels with the field unit', () => {
+    const field = makeColorField(
+      {
+        unit: 'percent',
+        color: { mode: FieldColorModeId.Thresholds },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'red' },
+          ],
+        },
+      },
+      [25, 75]
+    );
+
+    expect(getEnumConfig(field, theme).index.text).toEqual(['< 50%', '≥ 50%']);
+  });
+
+  it('percentage thresholds', () => {
+    const config = {
+      min: 0,
+      max: 200,
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: 0, color: 'green' },
+          { value: 50, color: 'yellow' },
+          { value: 80, color: 'red' },
+        ],
+      },
+    };
+
+    const field = makeColorField(config, [0, 100, 159, 160, 200]);
+    const { index, getAll } = getEnumConfig(field, theme);
+
+    expect(index).toEqual({
+      color: ['#73bf69ff', '#fade2aff', '#f2495cff'],
+      text: ['0%+', '50%+', '80%+'],
+      icon: ['', '', ''],
+    });
+    expect(getAll(field.values)).toEqual([0, 1, 1, 2, 2]);
+    expect(getAll(field.values, 0, 100)).toEqual([0, 1, 1, 2, 2]);
+  });
+
   it('continuous gradient (needs min/max)', () => {
     const config = { color: { mode: FieldColorModeId.ContinuousGrYlRd } };
     expect(
@@ -101,14 +163,118 @@ describe('fieldValueColors (golden baseline)', () => {
     ).toMatchSnapshot();
   });
 
-  it('RegexToText is currently a no-op (documents pre-migration behavior)', () => {
+  it('compiles a continuous palette into the requested number of range states', () => {
+    const field = makeColorField(
+      { color: { mode: FieldColorModeId.ContinuousGrYlRd }, unit: 'percent' },
+      [0, 10, 99, 100]
+    );
+    const { index, getOne, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(index.color?.[0]).toBe('#73bf69ff');
+    expect(index.color?.[9]).toBe('#f2495cff');
+    expect(index.text).toEqual([
+      '< 10%',
+      '≥ 10%',
+      '≥ 20%',
+      '≥ 30%',
+      '≥ 40%',
+      '≥ 50%',
+      '≥ 60%',
+      '≥ 70%',
+      '≥ 80%',
+      '≥ 90%',
+    ]);
+    expect(getOne(-1)).toBe(0);
+    expect(getOne(101)).toBe(9);
+    expect(getAll(field.values)).toEqual([0, 1, 9, 9]);
+  });
+
+  it.each([
+    ['classic', FieldColorModeId.PaletteClassic],
+    ['classic by name', FieldColorModeId.PaletteClassicByName],
+    ['colorblind', FieldColorModeId.PaletteColorblind],
+    ['categorical next', FieldColorModeId.PaletteCategoricalNext],
+    ['categorical next 2', FieldColorModeId.PaletteCategoricalNext2],
+    ['categorical next 3', FieldColorModeId.PaletteCategoricalNext3],
+  ])('compiles the %s palette into ten range states', (_name, mode) => {
+    const field = makeColorField({ color: { mode, fixedColor: 'blue' } }, [0, 100]);
+    const { index, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(getAll(field.values)).toEqual([0, 9]);
+  });
+
+  it('compiles shades into ten distinct range states', () => {
+    const field = makeColorField({ color: { mode: FieldColorModeId.Shades, fixedColor: 'blue' } }, [0, 100]);
+    const { index, getAll } = getEnumConfig(field, theme, {
+      paletteStatesQty: 10,
+      range: { min: 0, max: 100 },
+    });
+
+    expect(index.color).toHaveLength(10);
+    expect(new Set(index.color).size).toBe(10);
+    expect(getAll(field.values)).toEqual([0, 9]);
+  });
+
+  it('keeps mappings and thresholds ahead of palette bucketing', () => {
+    const mappingField = makeColorField(
+      {
+        color: { mode: FieldColorModeId.PaletteClassic },
+        mappings: [{ type: MappingType.ValueToText, options: { '1': { text: 'one', color: 'green' } } }],
+      },
+      [1, 2]
+    );
+    const thresholdField = makeColorField(
+      {
+        color: { mode: FieldColorModeId.Thresholds },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'red' },
+          ],
+        },
+      },
+      [0, 100]
+    );
+    const options = { paletteStatesQty: 10, range: { min: 0, max: 100 } };
+
+    expect(getEnumConfig(mappingField, theme, options).index.text).toEqual(['one']);
+    expect(getEnumConfig(thresholdField, theme, options).index.text).toEqual(['< 50', '≥ 50']);
+  });
+
+  it('RegexToText mapping', () => {
     const config = {
       mappings: [
         { type: MappingType.RegexToText, options: { pattern: '/^foo/', result: { text: 'm', color: 'orange' } } },
       ],
     };
-    // empty palette, all values fall through to the -1 fallback (null here)
     expect(resolve(config, ['foobar', 'baz'], { type: FieldType.string })).toMatchSnapshot();
+  });
+
+  it('ignores RegexToText mappings for non-string fields', () => {
+    const field = makeColorField(
+      {
+        mappings: [
+          { type: MappingType.RegexToText, options: { pattern: '/^foo/', result: { text: 'm', color: 'orange' } } },
+        ],
+      },
+      ['foobar'],
+      FieldType.number
+    );
+
+    const { getOne, getAll, index } = getEnumConfig(field, theme);
+
+    expect(getOne('foobar')).toBe(-1);
+    expect(getAll(field.values)).toEqual([-1]);
+    expect(index).toEqual({ color: [], text: [], icon: [] });
   });
 
   it('ValueToText mapping on a string field (compares against quoted keys)', () => {
@@ -126,13 +292,13 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, ['a', 'b', 'c'], { type: FieldType.string })).toMatchSnapshot();
   });
 
-  it('ValueToText mapping entries without a color are skipped', () => {
+  it('ValueToText mapping entries without a color use the fallback color', () => {
     const config = {
       mappings: [
         {
           type: MappingType.ValueToText,
           options: {
-            '1': { text: 'one' }, // no color -> skipped, palette not advanced
+            '1': { text: 'one' },
             '2': { text: 'two', color: 'red' },
           },
         },
@@ -141,12 +307,12 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [1, 2])).toMatchSnapshot();
   });
 
-  it('RangeToText with open-ended (from-only / to-only) and unbounded ranges', () => {
+  it('RangeToText with open-ended and unbounded ranges', () => {
     const config = {
       mappings: [
         { type: MappingType.RangeToText, options: { from: 10, result: { color: 'green' } } }, // v >= 10
         { type: MappingType.RangeToText, options: { to: 5, result: { color: 'blue' } } }, // v <= 5
-        { type: MappingType.RangeToText, options: { result: { color: 'red' } } }, // no bounds -> skipped
+        { type: MappingType.RangeToText, options: { result: { color: 'red' } } },
       ],
     };
     expect(resolve(config, [3, 7, 20])).toMatchSnapshot();
@@ -175,10 +341,10 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [true, false], { type: FieldType.boolean })).toMatchSnapshot();
   });
 
-  it('SpecialValue mapping result without a color is skipped', () => {
+  it('SpecialValue mapping result without a color uses the fallback color', () => {
     const config = {
       mappings: [
-        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: {} } }, // no color -> skipped
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: {} } },
         { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
       ],
     };
@@ -202,7 +368,7 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [1, 2, 3], { discrete: false })).toMatchSnapshot();
   });
 
-  it('single-step absolute thresholds (every value gets the base step)', () => {
+  it('single-step absolute thresholds do not create discrete states', () => {
     const config = {
       color: { mode: FieldColorModeId.Thresholds },
       thresholds: {
@@ -210,6 +376,6 @@ describe('fieldValueColors (golden baseline)', () => {
         steps: [{ value: -Infinity, color: 'green' }],
       },
     };
-    expect(resolve(config, [1, 100])).toMatchSnapshot();
+    expect(resolve(config, [1, 100], { discrete: false })).toEqual({ palette: [], colors: [] });
   });
 });

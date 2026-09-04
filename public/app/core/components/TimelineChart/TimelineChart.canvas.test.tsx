@@ -47,9 +47,11 @@ const timeRange: TimeRange = {
 /**
  * Runs raw series through the same two steps the state-timeline / status-history panels use before
  * handing frames to TimelineChart: field overrides (to attach `display` + color resolution) followed
- * by `prepareTimelineFields` (null insertion, sorting, span-null config).
+ * by `prepareTimelineFields` (null insertion, sorting, span-null config, enum conversion).
+ * Fixtures default to unmerged data (mergeValues: false) so every sample renders as its own box;
+ * data-level merging of equal consecutive states is exercised by its dedicated test below.
  */
-function prepareFrames(raw: DataFrame[], mergeValues = true): DataFrame[] {
+function prepareFrames(raw: DataFrame[], mergeValues = false): DataFrame[] {
   const withDisplay = applyFieldOverrides({
     data: raw,
     // Panels supply custom field-config defaults; the timeline core reads `field.config.custom`
@@ -93,6 +95,29 @@ function stateFrame(values: Array<string | null> = ['OK', 'OK', 'Warning', 'Crit
     ],
   });
   return prepareFrames([raw]);
+}
+
+/** Raw (unprepared) frame with runs of repeated states, for exercising the mergeValues option. */
+function repeatedStatesFrame(): DataFrame {
+  return toDataFrame({
+    name: 'Server',
+    fields: [
+      { name: 'time', type: FieldType.time, values: times, config: { custom: {} } },
+      {
+        name: 'State',
+        type: FieldType.string,
+        values: ['OK', 'OK', 'OK', 'Critical', 'Critical'],
+        config: {
+          mappings: [
+            {
+              type: MappingType.ValueToText,
+              options: { OK: { color: 'green', index: 0 }, Critical: { color: 'red', index: 1 } },
+            },
+          ],
+        },
+      },
+    ],
+  });
 }
 
 /** Two string state series → exercises multi-lane vertical distribution. */
@@ -271,29 +296,23 @@ describe('TimelineChart (canvas)', () => {
     });
 
     it('keeps adjacent equal states separate when mergeValues is false', async () => {
-      const raw = toDataFrame({
-        name: 'Server',
-        fields: [
-          { name: 'time', type: FieldType.time, values: times, config: { custom: {} } },
-          {
-            name: 'State',
-            type: FieldType.string,
-            values: ['OK', 'OK', 'OK', 'Critical', 'Critical'],
-            config: {
-              mappings: [
-                {
-                  type: MappingType.ValueToText,
-                  options: { OK: { color: 'green', index: 0 }, Critical: { color: 'red', index: 1 } },
-                },
-              ],
-            },
-          },
-        ],
-      });
-      // mergeValues defaults to false at render time; the frames are prepared unmerged too, so the
-      // three consecutive OK samples stay as distinct boxes rather than collapsing into one.
-      renderTimeline(prepareFrames([raw], false), { showValue: VisibilityMode.Always });
+      // with mergeValues: false the three consecutive OK samples keep their enum state
+      // indices in the data and render as distinct boxes rather than collapsing into one
+      renderTimeline(prepareFrames([repeatedStatesFrame()], false), { showValue: VisibilityMode.Always });
       await assertCanvasOutput();
+    });
+
+    it('merges adjacent equal states into single boxes when mergeValues is true', async () => {
+      // merging happens in the data (consecutive duplicate state indices become undefined),
+      // so one box + one label is drawn per state run instead of per sample
+      renderTimeline(prepareFrames([repeatedStatesFrame()], true), { showValue: VisibilityMode.Always });
+      await assertUPlotReady();
+
+      const labels = uPlotInstance!.ctx
+        .__getEvents()
+        .filter((e) => e.type === 'fillText')
+        .map((e) => e.props.text);
+      expect(labels).toEqual(['OK', 'Critical']);
     });
   });
 

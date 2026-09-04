@@ -57,14 +57,14 @@ test.describe('Panels test: StateTimeine', { tag: ['@panels', '@state-timeline']
     // hover over a spot to trigger the tooltip
     await stateTimelineUplot.hover({ position: { x: 100, y: 50 } });
     await expect(tooltip, 'tooltip appears on hover').toBeVisible();
-    await expect(tooltip, 'tooltip displays the value').toContainText('value5');
+    await expect(tooltip, 'tooltip displays the value').toContainText('valueOther');
     await expect(tooltip, 'tooltip displays the duration').toContainText('Duration1h');
 
     // click to pin the tooltip, hover away to be sure it's pinned
     await stateTimelineUplot.click({ position: { x: 100, y: 50 } });
     await stateTimelineUplot.hover({ position: { x: 300, y: 50 } });
     await expect(tooltip, 'tooltip pinned on click').toBeVisible();
-    await expect(tooltip, 'tooltip displays the first value').toContainText('value5');
+    await expect(tooltip, 'tooltip displays the first value').toContainText('valueOther');
     await expect(tooltip, 'tooltip displays the first duration').toContainText('Duration1h');
 
     // unpin the tooltip, ensure it closes on hover away
