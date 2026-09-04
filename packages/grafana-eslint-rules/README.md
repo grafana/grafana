@@ -12,6 +12,14 @@ Previously we hijacked the aria-label property to use as E2E selectors as an att
 
 Now, we prefer using data-testid for E2E selectors.
 
+### `serializable-e2e-selectors`
+
+Require function selectors in `@grafana/e2e-selectors` to be serializable to `public/e2e-selectors.json` for runtime delivery to `@grafana/plugin-e2e`.
+
+The selector tree is serialized to a data-only JSON file at build time by invoking each function selector and turning it into a template descriptor. This only works for functions that interpolate their parameters directly into a string, so anything with logic (method calls, operators, helper calls, multi-branch conditionals) would silently serialize to the wrong value.
+
+This rule flags such functions at authoring time. Allowed shapes are a string literal, a template literal interpolating parameters directly, a parameter returned as-is, and the single present/absent conditional `(x) => (x ? \`...${x}...\` : '...')`.
+
 ### `no-border-radius-literal`
 
 Check if border-radius theme tokens are used.
