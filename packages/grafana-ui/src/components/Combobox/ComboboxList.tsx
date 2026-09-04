@@ -20,6 +20,8 @@ import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
+// Leave room for a two-line custom option before its measured height is known.
+const DYNAMIC_OPTION_HEIGHT_ESTIMATE = MENU_OPTION_HEIGHT_DESCRIPTION + MENU_PADDING;
 
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
@@ -39,9 +41,22 @@ interface ComboboxListProps<T extends string | number> {
   loading?: boolean;
 }
 
-export const ComboboxList = <T extends string | number>({
+export const ComboboxList = <T extends string | number>(props: ComboboxListProps<T>) => {
+  const dynamicOptionHeight = props.renderOption !== undefined;
+
+  return (
+    <VirtualizedComboboxList
+      key={dynamicOptionHeight ? 'dynamic' : 'fixed'}
+      {...props}
+      dynamicOptionHeight={dynamicOptionHeight}
+    />
+  );
+};
+
+const VirtualizedComboboxList = <T extends string | number>({
   options,
   renderOption,
+  dynamicOptionHeight,
   customValueOption,
   allOption,
   highlightedIndex,
@@ -54,7 +69,7 @@ export const ComboboxList = <T extends string | number>({
   error = false,
   loading = false,
   noOptionsMessage,
-}: ComboboxListProps<T>) => {
+}: ComboboxListProps<T> & { dynamicOptionHeight: boolean }) => {
   const styles = useStyles2(getComboboxStyles);
   const groupStartIndices = useMemo(() => {
     const indices = new Map<string, number>();
@@ -71,19 +86,18 @@ export const ComboboxList = <T extends string | number>({
   const estimateSize = useCallback(
     (index: number) => {
       const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
-      const hasDescription = 'description' in options[index];
       const hasGroup = 'group' in options[index];
 
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
+      if (dynamicOptionHeight) {
+        return DYNAMIC_OPTION_HEIGHT_ESTIMATE + (firstGroupItem && hasGroup ? MENU_OPTION_HEIGHT : 0);
       }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
+
+      return (
+        ('description' in options[index] ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT) +
+        (firstGroupItem && hasGroup ? MENU_OPTION_HEIGHT : 0)
+      );
     },
-    [options]
+    [dynamicOptionHeight, options]
   );
 
   const getItemKey = useCallback((index: number) => options[index]?.value ?? index, [options]);
@@ -169,9 +183,11 @@ export const ComboboxList = <T extends string | number>({
             // It's children (header and option) should appear as flat list items.
             <div
               key={virtualRow.key}
+              ref={dynamicOptionHeight ? rowVirtualizer.measureElement : undefined}
+              data-index={dynamicOptionHeight ? virtualRow.index : undefined}
               className={styles.listItem}
               style={{
-                height: virtualRow.size,
+                height: dynamicOptionHeight ? undefined : virtualRow.size,
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
@@ -195,6 +211,7 @@ export const ComboboxList = <T extends string | number>({
               <div
                 className={cx(
                   styles.option,
+                  dynamicOptionHeight && styles.optionDynamic,
                   !isMultiSelect && isOptionSelected(item) && styles.optionSelected,
                   isHighlighted && styles.optionFocused,
                   isHighlighted && showFocusRing && styles.optionFocusRing,
@@ -224,7 +241,7 @@ export const ComboboxList = <T extends string | number>({
                   </div>
                 )}
 
-                <div className={styles.optionBody}>
+                <div className={cx(styles.optionBody, dynamicOptionHeight && styles.optionBodyDynamic)}>
                   {renderOption && item !== customValueOption && item !== allOption ? (
                     renderOption(item)
                   ) : (

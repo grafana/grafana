@@ -39,6 +39,57 @@ const iconOptions: Array<ComboboxOption<string>> = [
   { label: 'Option 4', value: '4', icon: 'add-user' },
 ];
 
+function trackResizeObserverTargets() {
+  const originalResizeObserver = global.ResizeObserver;
+  const observedElements = new Set<Element>();
+  const observations = new Map<Element, { callback: ResizeObserverCallback; observer: ResizeObserver }>();
+  const observerStates = new Map<Element, { disconnected: boolean }>();
+
+  global.ResizeObserver = class {
+    constructor(private callback: ResizeObserverCallback) {}
+    private state = { disconnected: false };
+
+    observe(target: Element) {
+      observedElements.add(target);
+      observerStates.set(target, this.state);
+      observations.set(target, { callback: this.callback, observer: this as unknown as ResizeObserver });
+    }
+    unobserve(target: Element) {
+      observations.delete(target);
+    }
+    disconnect() {
+      this.state.disconnected = true;
+    }
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof ResizeObserver;
+
+  return {
+    observedElements,
+    observerStates,
+    resize: (target: Element, height: number) => {
+      const observation = observations.get(target);
+      if (!observation) {
+        throw new Error('Element is not observed');
+      }
+
+      observation.callback(
+        [
+          {
+            target,
+            borderBoxSize: [{ blockSize: height, inlineSize: 120 }],
+          } as unknown as ResizeObserverEntry,
+        ],
+        observation.observer
+      );
+    },
+    restore: () => {
+      global.ResizeObserver = originalResizeObserver;
+    },
+  };
+}
+
 describe('Combobox', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
@@ -136,6 +187,252 @@ describe('Combobox', () => {
     expect([...renderedValues]).toContain('0');
     expect([...renderedValues]).not.toContain('999');
     expect(renderedValues.size).toBeLessThan(50);
+  });
+
+  it('uses measured custom row heights for following row positions and total height', async () => {
+    const rowHeights = [70, 80, 60, 100];
+    const resizeObservers = trackResizeObserverTargets();
+    const rectSpy = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const height = this.hasAttribute('data-index') ? 40 : 120;
+      return {
+        width: 120,
+        height,
+        top: 0,
+        right: 120,
+        bottom: height,
+        left: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    });
+    const groupedOptions = options.map((option) => ({ ...option, group: 'Services' }));
+    const view = render(
+      <Combobox
+        options={groupedOptions}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label}</span>}
+      />
+    );
+
+    try {
+      await user.click(screen.getByRole('combobox'));
+      const renderedOptions = await screen.findAllByRole('option');
+      const renderedRows = renderedOptions.map((option) => {
+        const row = option.parentElement;
+        expect(row).not.toBeNull();
+        return row!;
+      });
+
+      act(() => {
+        renderedRows.forEach((row, index) => resizeObservers.resize(row, rowHeights[index] ?? 40));
+      });
+
+      await waitFor(() => expect(renderedRows[1]).toHaveStyle({ transform: 'translateY(74px)' }));
+      expect(renderedRows[2]).toHaveStyle({ transform: 'translateY(154px)' });
+      expect(renderedRows[3]).toHaveStyle({ transform: 'translateY(214px)' });
+      expect(renderedRows[0].parentElement).toHaveStyle({ height: '318px' });
+
+      const firstRow = renderedRows[0];
+      expect(firstRow).toHaveAttribute('data-index', '0');
+      expect(firstRow).toHaveStyle({ transform: 'translateY(4px)' });
+      expect(firstRow.getAttribute('style')).not.toContain('height');
+      expect(firstRow).toContainElement(screen.getByText('Services'));
+      expect(resizeObservers.observedElements).toContain(firstRow);
+    } finally {
+      view.unmount();
+      rectSpy.mockRestore();
+      resizeObservers.restore();
+    }
+  });
+
+  it('keeps the first grouped custom option visible without scrolling on open', async () => {
+    const groupedOptions = options.map((option) => ({ ...option, group: 'Services' }));
+    const resizeObservers = trackResizeObserverTargets();
+    const scrollRequests: number[] = [];
+    const rectSpy = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      let height = 120;
+      if (this.hasAttribute('data-index')) {
+        height = 178;
+      } else if (this.getAttribute('tabindex') === '0') {
+        height = 99;
+      }
+      return {
+        width: 120,
+        height,
+        top: 0,
+        right: 120,
+        bottom: height,
+        left: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    });
+    const scrollHeightSpy = jest.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(4000);
+    const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo').mockImplementation(function (
+      this: Element,
+      options?: ScrollToOptions | number,
+      y?: number
+    ) {
+      const top = typeof options === 'number' ? (y ?? 0) : (options?.top ?? 0);
+      scrollRequests.push(top);
+      Object.defineProperty(this, 'scrollTop', { configurable: true, value: top, writable: true });
+    });
+    const view = render(
+      <Combobox
+        options={groupedOptions}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    try {
+      await user.click(screen.getByRole('combobox'));
+      const firstOption = await screen.findByRole('option', { name: 'Option 1 custom' });
+      const scrollElement = firstOption.closest<HTMLElement>('[tabindex="0"]')!;
+
+      expect(scrollElement.scrollTop).toBe(0);
+      // The zero request is TanStack's measurement adjustment. A replayed scrollToIndex(0)
+      // would end-align the 178px row in the 99px viewport and add a 79px request.
+      expect(scrollRequests).toEqual([0]);
+      expect(firstOption.parentElement).toContainElement(screen.getByText('Services'));
+    } finally {
+      view.unmount();
+      scrollToSpy.mockRestore();
+      scrollHeightSpy.mockRestore();
+      rectSpy.mockRestore();
+      resizeObservers.restore();
+    }
+  });
+
+  it('keeps default rows fixed-height and does not register them for measurement', async () => {
+    const resizeObservers = trackResizeObserverTargets();
+    const view = render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+    try {
+      await user.click(screen.getByRole('combobox'));
+      const firstOption = await screen.findByRole('option', { name: 'Option 1' });
+      const firstRow = firstOption.parentElement;
+
+      expect(firstRow).not.toHaveAttribute('data-index');
+      expect(firstRow).toHaveStyle({ height: '39px', transform: 'translateY(4px)' });
+      expect(resizeObservers.observedElements).not.toContain(firstRow);
+    } finally {
+      view.unmount();
+      resizeObservers.restore();
+    }
+  });
+
+  it('resets measured row state when custom rendering is removed while open', async () => {
+    const resizeObservers = trackResizeObserverTargets();
+    const rectSpy = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const height = this.hasAttribute('data-index') ? 80 : 120;
+      return {
+        width: 120,
+        height,
+        top: 0,
+        right: 120,
+        bottom: height,
+        left: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    });
+    const view = render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    try {
+      await user.click(screen.getByRole('combobox'));
+      const customOption = await screen.findByRole('option', { name: 'Option 1 custom' });
+      const measuredRow = customOption.parentElement!;
+      const measuredRowObserver = resizeObservers.observerStates.get(measuredRow);
+
+      expect(measuredRow).toHaveAttribute('data-index', '0');
+      expect(measuredRow).toHaveStyle({ transform: 'translateY(4px)' });
+      expect(measuredRow.getAttribute('style')).not.toContain('height');
+      expect(measuredRowObserver?.disconnected).toBe(false);
+
+      view.rerender(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const defaultOption = await screen.findByRole('option', { name: 'Option 1' });
+      const fixedRow = defaultOption.parentElement;
+      expect(fixedRow).not.toHaveAttribute('data-index');
+      expect(fixedRow).toHaveStyle({ height: '39px', transform: 'translateY(4px)' });
+      expect(resizeObservers.observedElements).not.toContain(fixedRow);
+      await waitFor(() => expect(measuredRowObserver?.disconnected).toBe(true));
+    } finally {
+      view.unmount();
+      rectSpy.mockRestore();
+      resizeObservers.restore();
+    }
+  });
+
+  it('requests measured scrolling and selects a distant option by keyboard', async () => {
+    const largeOptions: Array<ComboboxOption<string>> = Array.from({ length: 50 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: String(index),
+    }));
+    const resizeObservers = trackResizeObserverTargets();
+    const scrollRequests: number[] = [];
+    const rectSpy = jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const height = this.hasAttribute('data-index') ? 100 : 120;
+      return {
+        width: 120,
+        height,
+        top: 0,
+        right: 120,
+        bottom: height,
+        left: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => {},
+      };
+    });
+    const scrollToSpy = jest.spyOn(Element.prototype, 'scrollTo').mockImplementation(function (
+      options?: ScrollToOptions | number,
+      y?: number
+    ) {
+      const top = typeof options === 'number' ? (y ?? 0) : (options?.top ?? 0);
+      scrollRequests.push(top);
+    });
+    const view = render(
+      <Combobox
+        options={largeOptions}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    try {
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      const firstOption = await screen.findByRole('option', { name: 'Option 0 custom' });
+      const scrollElement = firstOption.closest<HTMLElement>('[tabindex="0"]')!;
+      Object.defineProperty(scrollElement, 'scrollHeight', { configurable: true, value: 4000 });
+      await user.keyboard('{ArrowDown}'.repeat(30));
+
+      expect(scrollRequests[scrollRequests.length - 1]).toBeGreaterThan(1800);
+
+      await user.keyboard('{Enter}');
+      expect(onChangeHandler).toHaveBeenCalledWith(largeOptions[30]);
+      expect(input).toHaveValue('Option 30');
+    } finally {
+      view.unmount();
+      scrollToSpy.mockRestore();
+      rectSpy.mockRestore();
+      resizeObservers.restore();
+    }
   });
 
   it('selects the source option from a custom descendant and keeps its string label in the input', async () => {
