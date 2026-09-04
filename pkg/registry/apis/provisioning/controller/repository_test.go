@@ -1110,7 +1110,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := rc.process(namespace + "/" + repoName)
+			err := rc.process(context.Background(), namespace+"/"+repoName)
 
 			if tc.wantErr {
 				require.Error(t, err)
@@ -1236,7 +1236,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 				tracer:        tracing.InitializeTracerForTest(),
 			}
 
-			err := rc.process(namespace + "/" + repoName)
+			err := rc.process(context.Background(), namespace+"/"+repoName)
 			assert.NoError(t, err)
 
 			if tc.expectReconcile {
@@ -1333,7 +1333,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process("default/test-repo")
+	err := rc.process(context.Background(), "default/test-repo")
 	require.NoError(t, err)
 
 	// Find the last /status/conditions patch operation — if there are multiple
@@ -1487,7 +1487,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	// The token patch must be present even though the repository is currently over quota.
@@ -1592,7 +1592,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 		tracer:            tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	// Regeneration happened: a fresh token status was written and Build was retried.
@@ -1857,7 +1857,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
@@ -1950,7 +1950,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 		webhookSecretRotationInterval: 30 * 24 * time.Hour,
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(),
@@ -1989,7 +1989,7 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err, "an unauthorized hook failure must not surface as a controller error")
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(), "the hook attempt should still have run")
@@ -2032,7 +2032,7 @@ func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t
 	stub := &hookRepoStub{cfg: repo} // hookErrSet is false -> hookResult() returns assert.AnError
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.Error(t, err, "a non-auth hook failure must still surface as a controller error")
 	assert.ErrorIs(t, err, assert.AnError)
 
@@ -2129,7 +2129,7 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2188,7 +2188,7 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2242,7 +2242,7 @@ func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *tes
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2294,7 +2294,7 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
@@ -2376,7 +2376,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err)
 
 	assert.Equal(t, int32(1), stub.onCreateCalls.Load(),
@@ -2429,7 +2429,7 @@ func TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObserved
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
 
 	assert.Equal(t, int32(0), stub.onDeleteCalls.Load(),
@@ -2487,7 +2487,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	require.NoError(t, rc.process(context.Background(), namespace+"/"+repoName))
 
 	assert.Equal(t, int32(1), stub.testCalls.Load(),
 		"health refresh must run after workflows are removed even during the previous cooldown")
@@ -2586,13 +2586,13 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 	rc, patcher := newRecoveryController(t, repo, stub)
 
 	// Pass 1: the repo is unreachable for the first time and status is updated.
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	require.NoError(t, rc.process(context.Background(), namespace+"/"+repoName))
 	require.NotEmpty(t, patcher.ops, "the first transition to unhealthy should record status")
 	applyCapturedPatches(t, repo, patcher.ops)
 	patcher.ops = nil
 
 	// Pass 2: same repo, same failure, nothing has changed since pass 1.
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	require.NoError(t, rc.process(context.Background(), namespace+"/"+repoName))
 
 	assert.Equal(t, int32(2), stub.testCalls.Load(),
 		"Test() must still run on pass 2 -- reachability can't be safely inferred from stale status")
@@ -2645,7 +2645,7 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 	stub := &hookRepoStub{cfg: repo}
 	rc, patcher := newRecoveryController(t, repo, stub)
 
-	require.NoError(t, rc.process(namespace+"/"+repoName))
+	require.NoError(t, rc.process(context.Background(), namespace+"/"+repoName))
 
 	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
 		"hooks must not run when the spec is observed and the webhook already exists")
@@ -2756,7 +2756,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 
-	err := rc.process(namespace + "/" + repoName)
+	err := rc.process(context.Background(), namespace+"/"+repoName)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "status patch operations failed")
 }
@@ -2783,7 +2783,7 @@ func TestRepositoryController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(_ context.Context, key string) error {
 		switch processCount.Add(1) {
 		case 1:
 			close(firstProcessingStarted)
@@ -2837,7 +2837,7 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(_ context.Context, key string) error {
 		processCount.Add(1)
 		close(processingDone)
 		return nil
@@ -2881,7 +2881,7 @@ func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testin
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(_ context.Context, key string) error {
 		if processCount.Add(1) == maxAttempts {
 			close(allAttemptsDone)
 		}
@@ -2921,7 +2921,7 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 		drainTimeout: 5 * time.Second,
 	}
 
-	rc.processFn = func(key string) error {
+	rc.processFn = func(_ context.Context, key string) error {
 		processCount.Add(1)
 		close(processingDone)
 		return errors.New("some non-retryable error")

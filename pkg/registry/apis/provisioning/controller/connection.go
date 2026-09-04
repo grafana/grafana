@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -267,8 +268,28 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return err
 	}
 
-	// The worker loop carries no active span, so this opens a fresh trace per
-	// reconcile whose children show where the reconcile spends its time.
+	// Reconcile the object the read seam returns; how it is sourced and kept
+	// fresh is the informer.ConnectionGetter's concern, not the controller's.
+	conn, err := cc.conns.Get(ctx, namespace, name)
+	switch {
+	case apierrors.IsNotFound(err):
+		return errors.New("connection not found")
+	case err != nil:
+		logger.Error("getting connection", "error", err)
+		return err
+	}
+
+	// Continue the trace of whatever last wrote this connection (the request
+	// that changed its spec, or created it), so the reconcile below traces
+	// back to that request instead of a disconnected root. A no-op if the
+	// object carries no trace annotation -- in that case (and for every
+	// controller-driven reconcile that isn't itself request-triggered, e.g. a
+	// periodic resync) this still opens a fresh root, same as before.
+	ctx = utils.ExtractTraceContext(ctx, conn.Annotations)
+
+	// The worker loop carries no active span (unless bridged above), so this
+	// opens a fresh trace per reconcile whose children show where the
+	// reconcile spends its time.
 	ctx, span := cc.tracer.Start(ctx, "provisioning.controller.reconcile",
 		trace.WithAttributes(
 			attribute.String("connection.namespace", namespace),
@@ -281,17 +302,6 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 			_ = tracing.Error(span, err)
 		}
 	}()
-
-	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the informer.ConnectionGetter's concern, not the controller's.
-	conn, err := cc.conns.Get(ctx, namespace, name)
-	switch {
-	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
-	case err != nil:
-		logger.Error("getting connection", "error", err)
-		return err
-	}
 
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
