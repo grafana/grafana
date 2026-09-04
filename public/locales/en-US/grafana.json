@@ -2439,8 +2439,7 @@
     },
     "open-drawer-icon-button": {
       "details": "Details",
-      "instance-details": "Instance details",
-      "rule-details": "Rule details"
+      "instance-details": "Instance details"
     },
     "option-customfield": {
       "label-custom-template": "Custom template",
@@ -3722,18 +3721,24 @@
         "start-investigation-tooltip": "Assistant will draft it in your workspace"
       },
       "labels-column-title": "Labels",
+      "loading-actions": "Loading",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
       "no-matching-instances-with-filters": "No alert instances match your current set of filters for the selected time range.",
       "open-in-sidebar": "Open in sidebar",
-      "open-rule-details": "Open rule details",
       "query-error-forbidden": "This page reads alert state history from a Prometheus data source, and you do not have permission to query it. Ask an administrator to grant you the query permission for that data source.",
       "query-error-generic": "The query for alert instances failed, so we cannot tell which alerts are firing or pending.",
       "query-error-title": "Unable to load alert instances",
+      "rule-actions": "Actions",
+      "rule-actions-aria-label": "Actions for {{ruleName}}",
       "rule-details": {
         "subtitle": "Rule details and conditions",
         "title": "Rule Details"
+      },
+      "rule-details-aria-label": "Open details for {{ruleName}}",
+      "rule-details-drawer": {
+        "silence-no-permission": "You do not have permission to create silences"
       },
       "rule-not-found": {
         "description": "The requested rule could not be found.",
@@ -3754,9 +3759,11 @@
       "show-fewer-values": "Show fewer",
       "showing-groups-count_one": "Showing {{count}} groups",
       "showing-groups-count_other": "Showing {{count}} groups",
+      "silence-notifications": "Silence notifications",
       "state-filter-title": "State",
       "state-firing": "Firing",
-      "state-pending": "Pending"
+      "state-pending": "Pending",
+      "view-alert-rule": "View alert rule"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
