@@ -85,6 +85,94 @@ spec:
 		require.NotNil(t, obj)
 	})
 
+	t.Run("load classic alerting json", func(t *testing.T) {
+		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`{
+			"apiVersion": 1,
+			"groups": [
+				{
+					"name": "cpu_rules",
+					"rules": [
+						{"uid": "cpu_high", "title": "High CPU Usage"}
+					]
+				}
+			]
+		}`),
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ClassicAlerting, classic)
+		require.Equal(t, &schema.GroupVersionKind{
+			Group:   "rules.alerting.grafana.app",
+			Version: "v0alpha1",
+			Kind:    "AlertRule",
+		}, gvk)
+		require.NotNil(t, obj)
+		require.NotEmpty(t, obj.GetName())
+	})
+
+	t.Run("load classic alerting yaml", func(t *testing.T) {
+		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`
+apiVersion: 1
+groups:
+  - name: my_rule_group
+    folder: my_first_folder
+    interval: 60s
+    rules:
+      - uid: my_id_1
+        title: my_first_rule
+        condition: A
+`),
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ClassicAlerting, classic)
+		require.Equal(t, &schema.GroupVersionKind{
+			Group:   "rules.alerting.grafana.app",
+			Version: "v0alpha1",
+			Kind:    "AlertRule",
+		}, gvk)
+		require.NotNil(t, obj)
+		require.Equal(t, "my_id_1", obj.GetName())
+		spec, ok := obj.Object["spec"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "my_first_rule", spec["title"])
+	})
+
+	t.Run("load classic recording rule yaml", func(t *testing.T) {
+		obj, gvk, classic, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`
+apiVersion: 1
+groups:
+  - name: rec_group
+    rules:
+      - record: metric:rate5m
+        expr: rate(http_requests_total[5m])
+`),
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ClassicAlerting, classic)
+		require.Equal(t, &schema.GroupVersionKind{
+			Group:   "rules.alerting.grafana.app",
+			Version: "v0alpha1",
+			Kind:    "RecordingRule",
+		}, gvk)
+		require.NotNil(t, obj)
+	})
+
+	t.Run("reject empty classic alerting groups yaml", func(t *testing.T) {
+		_, _, _, err := ReadClassicResource(context.Background(), &repository.FileInfo{
+			Data: []byte(`
+apiVersion: 1
+groups: []
+`),
+		})
+
+		require.Error(t, err)
+	})
+
 	t.Run("lint dashboard", func(t *testing.T) {
 		// Use an inline classic (v1) dashboard rather than reading a devenv file, which
 		// avoids a cross-package file dependency and stays a classic dashboard regardless
