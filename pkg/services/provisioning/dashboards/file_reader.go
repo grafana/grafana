@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -64,6 +65,7 @@ type FileReader struct {
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
 	settingCfg                   *setting.Cfg
+	libraryPanelService          librarypanels.Service
 
 	mux                     sync.RWMutex
 	usageTracker            *usageTracker
@@ -72,7 +74,7 @@ type FileReader struct {
 
 // NewDashboardFileReader returns a new filereader based on `config`
 func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService,
-	dashboardStore utils.DashboardStore, folderService folder.Service, settingCfg *setting.Cfg) (*FileReader, error) {
+	dashboardStore utils.DashboardStore, folderService folder.Service, settingCfg *setting.Cfg, libraryPanelService librarypanels.Service) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -98,6 +100,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		folderService:                folderService,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		settingCfg:                   settingCfg,
+		libraryPanelService:          libraryPanelService,
 		usageTracker:                 newUsageTracker(),
 	}, nil
 }
@@ -363,6 +366,10 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	if !fr.isDatabaseAccessRestricted() {
+		if err := fr.importLibraryPanels(ctx, jsonFile, folderID, folderUID); err != nil {
+			return provisioningMetadata, fmt.Errorf("failed to provision library panels embedded in dashboard %q: %w", path, err)
+		}
+
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 		// nolint:staticcheck
 		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID, "folderUid", dash.Dashboard.FolderUID)
@@ -386,6 +393,34 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	return provisioningMetadata, nil
+}
+
+// importLibraryPanels creates any library panels embedded in a provisioned dashboard's
+// __elements map that don't already exist. This mirrors the step the manual "Import
+// dashboard" flow performs (see ImportDashboardService.ImportDashboard) but which file
+// provisioning has never done: without it, a provisioned dashboard referencing a library
+// panel that doesn't already exist in Grafana fails to render that panel.
+func (fr *FileReader) importLibraryPanels(ctx context.Context, jsonFile *dashboardJSONFile, folderID int64, folderUID string) error {
+	if fr.libraryPanelService == nil {
+		return nil
+	}
+
+	// A dashboard's __elements map only exists when the file was exported with library
+	// panel content inlined. Without it there's no model to create a panel from: calling
+	// ImportLibraryPanelsForDashboard anyway would create an empty library panel for every
+	// referenced UID, permanently shadowing a real definition provisioned later (a later
+	// run finds the empty element already exists by UID and skips creating the real one).
+	if len(jsonFile.libraryElements.MustMap()) == 0 {
+		return nil
+	}
+
+	signedInUser, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+
+	panels := jsonFile.dashboard.Dashboard.Data.Get("panels").MustArray()
+	return fr.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, signedInUser, jsonFile.libraryElements, panels, folderID, folderUID)
 }
 
 func (fr *FileReader) getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
@@ -590,9 +625,13 @@ func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
 }
 
 type dashboardJSONFile struct {
-	dashboard    *dashboards.SaveDashboardDTO
-	checkSum     string
-	lastModified time.Time
+	dashboard *dashboards.SaveDashboardDTO
+	// libraryElements holds the contents of the dashboard JSON's `__elements` map (if any):
+	// library panel definitions inlined by "Export for sharing externally" so a dashboard
+	// referencing library panels is self-contained. Keyed by library panel UID.
+	libraryElements *simplejson.Json
+	checkSum        string
+	lastModified    time.Time
 }
 
 func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64, folderUID string) (*dashboardJSONFile, error) {
@@ -623,15 +662,32 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 		return nil, err
 	}
 
+	// Maintain backwards compatibility with dashboards exported as an array of library
+	// elements, mirroring the same normalization the manual "Import dashboard" flow
+	// applies in ImportDashboardService.ImportDashboard.
+	libraryElements := data.Get("__elements")
+	if libElementsArr, err := libraryElements.Array(); err == nil {
+		elementMap := map[string]any{}
+		for _, el := range libElementsArr {
+			libElement := simplejson.NewFromAny(el)
+			elementMap[libElement.Get("uid").MustString()] = el
+		}
+		libraryElements = simplejson.NewFromAny(elementMap)
+	}
+	// __elements is not part of the persisted dashboard schema; it only exists to make an
+	// exported dashboard JSON file self-contained.
+	data.Del("__elements")
+
 	dash, err := createDashboardJSON(data, lastModified, fr.Cfg, folderID, folderUID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dashboardJSONFile{
-		dashboard:    dash,
-		checkSum:     checkSum,
-		lastModified: lastModified,
+		dashboard:       dash,
+		libraryElements: libraryElements,
+		checkSum:        checkSum,
+		lastModified:    lastModified,
 	}, nil
 }
 
