@@ -89,6 +89,29 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.decimals).toBe(5);
   });
 
+  it.each([
+    ['negative', -3],
+    ['non-integer', 2.5],
+    ['out of the editor range', 42],
+  ])('Skips a decimals mapping with a %s value', (_name, value) => {
+    const decimalsConfig = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1] },
+        { name: 'Decimals', type: FieldType.number, values: [value] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Decimals', handlerKey: 'decimals' }],
+    };
+
+    const results = extractConfigFromQuery(options, [decimalsConfig, seriesA]);
+    expect(results.length).toBe(1);
+    expect(results[0].fields[1].config.decimals).toBeUndefined();
+  });
+
   it('With custom reducer', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',

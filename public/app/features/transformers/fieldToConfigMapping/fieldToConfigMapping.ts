@@ -16,6 +16,8 @@ import {
   FieldType,
 } from '@grafana/data';
 
+const MAX_DECIMALS = 15;
+
 interface ThresholdArguments {
   color: string;
 }
@@ -153,7 +155,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   },
   {
     key: 'decimals',
-    processor: toNumericOrUndefined,
+    processor: toDecimalsOrUndefined,
   },
   {
     key: 'displayName',
@@ -275,6 +277,21 @@ function toNumericOrUndefined(value: unknown) {
   const numeric = anyToNumber(value);
 
   if (isNaN(numeric)) {
+    return;
+  }
+
+  return numeric;
+}
+
+// The Decimals field option only accepts whole numbers from 0 to MAX_DECIMALS.
+// A value outside that range reaches Number.prototype.toFixed through the
+// display processor, which throws a RangeError for negative values and blanks
+// the panel, so skip the mapping rather than write a value the option itself
+// would reject.
+function toDecimalsOrUndefined(value: unknown) {
+  const numeric = anyToNumber(value);
+
+  if (!Number.isInteger(numeric) || numeric < 0 || numeric > MAX_DECIMALS) {
     return;
   }
 
