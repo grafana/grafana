@@ -6,6 +6,8 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
+import { type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { configureStore } from 'app/store/configureStore';
@@ -43,9 +45,9 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: () => mockQueryLibraryContext,
 }));
 
-function renderStaticActions() {
+function renderStaticActions(grafanaContext?: Partial<GrafanaContextType>) {
   const store = configureStore({ navBarTree: [] });
-  const Wrapper = getWrapper({ store, renderWithRouter: true });
+  const Wrapper = getWrapper({ store, renderWithRouter: true, grafanaContext });
   const wrapper = ({ children }: { children: ReactNode }) => <Wrapper>{children}</Wrapper>;
   return renderHook(() => useStaticActions(), { wrapper });
 }
@@ -182,5 +184,54 @@ describe('useStaticActions - open saved queries action', () => {
     // perform ignores its ActionImpl argument, so a placeholder is enough to invoke it.
     action?.perform?.({} as ActionImpl);
     expect(mockQueryLibraryContext.openDrawer).toHaveBeenCalledWith({ options: { context: 'command-palette' } });
+  });
+});
+
+const hasCustomiseNavAction = (actions: CommandPaletteAction[]) =>
+  actions.some((action) => action.id === 'customise-navigation');
+
+const getCustomiseNavAction = (actions: CommandPaletteAction[]) =>
+  actions.find((action) => action.id === 'customise-navigation');
+
+describe('useStaticActions - customise navigation action', () => {
+  let originalIsSignedIn: boolean;
+
+  beforeEach(() => {
+    originalIsSignedIn = contextSrv.isSignedIn;
+    contextSrv.isSignedIn = true;
+    setTestFlags({ 'grafana.customizableMegaMenu': true });
+  });
+
+  afterEach(() => {
+    contextSrv.isSignedIn = originalIsSignedIn;
+  });
+
+  it('includes the action when the flag is on and the user is signed in', () => {
+    const { result } = renderStaticActions();
+    expect(hasCustomiseNavAction(result.current)).toBe(true);
+  });
+
+  it('does not include the action when the flag is off', () => {
+    setTestFlags({ 'grafana.customizableMegaMenu': false });
+    const { result } = renderStaticActions();
+    expect(hasCustomiseNavAction(result.current)).toBe(false);
+  });
+
+  it('does not include the action when the user is not signed in', () => {
+    contextSrv.isSignedIn = false;
+    const { result } = renderStaticActions();
+    expect(hasCustomiseNavAction(result.current)).toBe(false);
+  });
+
+  it('opens the menu and enters customise mode when performed', () => {
+    const chrome = new AppChromeService();
+    const openSpy = jest.spyOn(chrome, 'setMegaMenuOpen');
+    const customiseSpy = jest.spyOn(chrome, 'setMegaMenuCustomising');
+
+    const { result } = renderStaticActions({ chrome });
+    getCustomiseNavAction(result.current)?.perform?.({} as ActionImpl);
+
+    expect(openSpy).toHaveBeenCalledWith(true);
+    expect(customiseSpy).toHaveBeenCalledWith(true);
   });
 });
