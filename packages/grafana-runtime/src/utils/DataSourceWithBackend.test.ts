@@ -1,4 +1,4 @@
-import { firstValueFrom, of } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 
 import {
   type DataQuery,
@@ -12,6 +12,7 @@ import {
   type AdHocVariableFilter,
   type ScopedVars,
   getDefaultTimeRange,
+  LoadingState,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -195,6 +196,31 @@ describe('DataSourceWithBackend', () => {
         } as DataQueryRequest)
       )
     ).rejects.toThrow('Unknown Datasource');
+  });
+
+  test('surfaces an error when the response body cannot be parsed', async () => {
+    const { ds } = createMockDatasource();
+    // backend_srv rejects like this when response.json() fails, e.g. because the body is larger
+    // than the browser's maximum string length
+    const parseError = new SyntaxError('Unexpected end of JSON input');
+    const fetchSpy = jest.spyOn(backendSrv, 'fetch').mockReturnValueOnce(throwError(() => parseError));
+
+    try {
+      const response = await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(response.state).toBe(LoadingState.Error);
+      expect(response.data).toEqual([]);
+      expect(response.error?.message).toBe('Unexpected end of JSON input');
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   test('does not prepare the request until the observable is subscribed to', async () => {
