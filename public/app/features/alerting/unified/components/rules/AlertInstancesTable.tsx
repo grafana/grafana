@@ -2,12 +2,14 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { dateTime } from '@grafana/data';
+import { dateTime, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { usePluginLinks } from '@grafana/runtime';
 import { type Alert, type CombinedRule, type PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
+import { AlertInstanceExtensionPoint } from '../extensions/AlertInstanceExtensionPoint';
 
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertInstanceNotificationAction } from './AlertInstanceNotificationAction';
@@ -38,6 +40,15 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
       })),
     [instances, rule]
   );
+
+  // Detect if any plugins have registered alert instance actions at all. If none are registered,
+  // we avoid adding the plugin-actions column so the table doesn't reserve an empty 40px column.
+  const { links: anyInstanceActionLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.AlertInstanceAction,
+    limitPerPlugin: 1,
+  });
+
+  const showPluginActionsColumn = anyInstanceActionLinks.length > 0;
 
   const columns: AlertTableColumnProps[] = [
     {
@@ -82,6 +93,20 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sh
             ),
             size: '120px',
           } satisfies AlertTableColumnProps,
+        ]
+      : []),
+    // Only include the plugin actions column when there are registered plugins that can provide actions.
+    ...(showPluginActionsColumn
+      ? [
+          {
+            id: 'plugin-actions',
+            label: '',
+            // eslint-disable-next-line react/display-name
+            renderCell: ({ data: { alert, rule } }: AlertTableItemProps) => (
+              <AlertInstanceExtensionPoint rule={rule} instance={alert} />
+            ),
+            size: '40px',
+          },
         ]
       : []),
   ];
