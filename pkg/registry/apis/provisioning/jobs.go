@@ -325,6 +325,14 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		return apierrors.NewBadRequest("migrate jobs require the provisioningExport feature flag")
 	}
 
+	// A push job exports with newly generated resource identifiers so the files
+	// do not collide with the resources they came from. Replayed history would
+	// then belong to resources that do not exist, so refuse the combination here
+	// rather than accepting the option and quietly ignoring it.
+	if spec.Action == provisioning.JobActionPush && spec.Push != nil && spec.Push.History {
+		return apierrors.NewBadRequest("push jobs cannot replay history because they export with newly generated resource identifiers; use a migrate job to preserve history")
+	}
+
 	switch spec.Action {
 	case provisioning.JobActionPush:
 		return c.authorizePushJob(ctx, repo, cfg)
