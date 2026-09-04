@@ -5,13 +5,12 @@ import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
+import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
-  ExtensionSidebarContextProvider,
-  useExtensionSidebarContext,
+  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
-  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
-} from './ExtensionSidebarProvider';
+} from './extensionSidebarUtils';
 
 const mockComponent = {
   title: 'Test Component',

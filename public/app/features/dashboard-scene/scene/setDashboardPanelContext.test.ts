@@ -1,14 +1,18 @@
+import { delay, of, Subject } from 'rxjs';
+
 import {
   type AdHocVariableModel,
   CoreApp,
   EventBusSrv,
+  getDefaultTimeRange,
   type GroupByVariableModel,
+  LoadingState,
   type Scope,
   type VariableModel,
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { GroupByVariable, SceneDataNode, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
@@ -29,6 +33,28 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
+}));
+
+const mockIsAssistantAvailable = jest.fn();
+const mockOpenAssistant = jest.fn();
+const mockCreateAssistantContextItem = jest.fn();
+
+jest.mock('@grafana/assistant', () => ({
+  isAssistantAvailable: () => mockIsAssistantAvailable(),
+  openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
+  createAssistantContextItem: (...args: unknown[]) => mockCreateAssistantContextItem(...args),
+}));
+
+// Opaque on purpose. The real `createAssistantContextItem` returns a `{ node: { ... } }` tree, so
+// standing in a different shape here and then asserting against that shape would pass no matter
+// how this call site drifted. Instead the tests assert the arguments we pass it (its real
+// signature still type-checks the call site) and that whatever it returns reaches `openAssistant`.
+const PANEL_CONTEXT_ITEM = Symbol('panel context item');
+
+const mockGetAssistantChatIdToContinue = jest.fn();
+
+jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+  getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
@@ -67,6 +93,10 @@ beforeEach(() => {
   mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
   stubFFEnabled(false);
+  mockIsAssistantAvailable.mockReset().mockReturnValue(of(false));
+  mockOpenAssistant.mockReset();
+  mockCreateAssistantContextItem.mockReset().mockReturnValue(PANEL_CONTEXT_ITEM);
+  mockGetAssistantChatIdToContinue.mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
@@ -563,6 +593,233 @@ describe('setDashboardPanelContext', () => {
 
       await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('onInvestigateErrors', () => {
+    beforeEach(() => {
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? true : defaultValue
+      );
+    });
+
+    it('is not set when the new panel query errors UI feature flag is disabled', () => {
+      stubFFEnabled(false);
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('is not set when the assistant is unavailable', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(false));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('is set once the assistant reports available', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+    });
+
+    it('picks up availability reported after the initial (stale) check, and forces a re-render', () => {
+      // The assistant app plugin can still be loading when this runs, so the very first
+      // emission can be `false` even though the plugin registers moments later. A live
+      // subscription (not a one-shot check) needs to catch that second emission.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      availability.next(true);
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalled();
+    });
+
+    it('ignores registry churn that does not change availability, and stops watching once available', () => {
+      // `isAssistantAvailable()` re-emits on every plugin extension registration, not only when
+      // availability actually changes, so every panel would otherwise re-render on each one.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      availability.next(false);
+      availability.next(false);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+
+      availability.next(true);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(2);
+
+      // Availability never flips back, so the subscription completes here instead of living on
+      // past the panel it closes over — nothing in a panel context can tear it down.
+      expect(availability.observed).toBe(false);
+    });
+
+    it('re-renders when availability arrives asynchronously, as it always does in practice', async () => {
+      // `isAssistantAvailable()` resolves through the plugin extension registries, which are
+      // promise-backed, so its first value always lands after the render that built this panel
+      // context. Without the re-render the popover never picks the action up — a panel sitting in
+      // a static error state has no other reason to render again.
+      mockIsAssistantAvailable.mockReturnValue(of(true).pipe(delay(0)));
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does nothing when the panel currently has no errors or notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
+    it('opens the assistant with a fix-errors prompt when the panel has a query error', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        title: 'CPU usage',
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'grafana/panel-status-popover',
+          prompt: expect.stringContaining('fix the query errors'),
+          context: [PANEL_CONTEXT_ITEM],
+        })
+      );
+      // Attaches a reference to the panel itself (matching the assistant's own "select a panel as
+      // context" picker) rather than a text snapshot of its errors.
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('falls back to a placeholder name for an untitled panel', () => {
+      // Otherwise the context pill reads "Panel: " with nothing after it.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        title: '',
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith(
+        'structured',
+        expect.objectContaining({ data: expect.objectContaining({ name: 'Panel: Untitled' }) })
+      );
+    });
+
+    it('does not target a chat when the assistant is not on screen', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockGetAssistantChatIdToContinue.mockReturnValue(undefined);
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
+    });
+
+    it('targets the active chat when the assistant is already on screen', async () => {
+      // Otherwise this silently does nothing: opening the assistant while it's already open just
+      // republishes the same props instead of landing in the active conversation.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockGetAssistantChatIdToContinue.mockReturnValue('active-chat-id');
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ appendContext: true, chatId: 'active-chat-id' })
+      );
+    });
+
+    it('opens the assistant with an explain-notices prompt when the panel only has notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Done,
+            series: [
+              { name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'slow query' }] } },
+            ],
+            timeRange: getDefaultTimeRange(),
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('Investigate the query notices'),
+        })
+      );
     });
   });
 });

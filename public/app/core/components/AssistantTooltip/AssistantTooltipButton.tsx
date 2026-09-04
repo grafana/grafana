@@ -1,24 +1,13 @@
 import { css } from '@emotion/css';
 
-import { ASSISTANT_PLUGIN_ID, useAssistant } from '@grafana/assistant';
-import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, store, usePluginContext } from '@grafana/data';
+import { useAssistant } from '@grafana/assistant';
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, usePluginContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
-import {
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
 
+import { getAssistantChatIdToContinue } from './assistantSidebarState';
 import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
-
-// Active conversation id stored by the assistant app.
-const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
-
-function getActiveAssistantChatId(): string | undefined {
-  return store.get(ACTIVE_ASSISTANT_CHAT_ID_KEY) ?? undefined;
-}
 
 interface AssistantTooltipButtonProps {
   series: DataFrame;
@@ -39,20 +28,12 @@ export function AssistantTooltipButton({
   xVal,
 }: AssistantTooltipButtonProps) {
   const { isAvailable, openAssistant } = useAssistant();
-  const { isOpen, dockedComponentId } = useExtensionSidebarContext();
-  const { fullscreenWorkspaceActive } = useFullscreenWorkspace();
   const pluginContext = usePluginContext();
   const styles = useStyles2(getStyles);
 
   if (!isAvailable || !openAssistant) {
     return null;
   }
-
-  // Reuse the open chat when the assistant is visible: docked in the sidebar or in fullscreen
-  // workspace (where the sidebar is closed but the chat stays active).
-  const isAssistantSidebarOpen =
-    isOpen && getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
-  const isAssistantOpen = isAssistantSidebarOpen || fullscreenWorkspaceActive;
 
   const handleClick = () => {
     const items = buildDatapointAssistantContext({
@@ -77,7 +58,7 @@ export function AssistantTooltipButton({
       context: items,
       autoSend: false,
       appendContext: true,
-      chatId: isAssistantOpen ? getActiveAssistantChatId() : undefined,
+      chatId: getAssistantChatIdToContinue(),
     });
   };
 

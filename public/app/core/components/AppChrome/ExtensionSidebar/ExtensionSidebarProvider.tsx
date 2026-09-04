@@ -12,8 +12,8 @@ import {
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_WIDTH,
 } from './ExtensionSidebar';
+import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
-export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
@@ -257,31 +257,6 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     </ExtensionSidebarContext.Provider>
   );
 };
-
-export function getComponentIdFromComponentMeta(pluginId: string, componentTitle: string) {
-  return JSON.stringify({ pluginId, componentTitle });
-}
-
-export function getComponentMetaFromComponentId(
-  componentId: string
-): { pluginId: string; componentTitle: string } | undefined {
-  try {
-    const parsed = JSON.parse(componentId);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'pluginId' in parsed &&
-      'componentTitle' in parsed &&
-      typeof parsed.pluginId === 'string' &&
-      typeof parsed.componentTitle === 'string'
-    ) {
-      return parsed;
-    }
-    return undefined;
-  } catch (error) {
-    return undefined;
-  }
-}
 
 // The interactive learning plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
 // Support both until that migration is complete.
