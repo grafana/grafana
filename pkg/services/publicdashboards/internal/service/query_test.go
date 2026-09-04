@@ -1391,6 +1391,86 @@ func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 	})
 }
 
+func TestSanitizeData(t *testing.T) {
+	t.Run("removes query expression fields from panel targets", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"targets": []interface{}{
+						map[string]interface{}{
+							"expr":       "go_goroutines{job=\"grafana\"}",
+							"refId":      "A",
+							"datasource": "prometheus",
+						},
+					map[string]interface{}{
+						"rawSql":   "SELECT * FROM metrics",
+						"rawQuery": "SELECT * FROM metrics WHERE env = 'prod'",
+						"refId":    "B",
+					},
+						map[string]interface{}{
+							"target":     "aliasByNode(stats.gauges.*, 1)",
+							"targetFull": "aliasByNode(stats.gauges.production, 1)",
+							"refId":      "C",
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeData(data)
+
+		targets := simplejson.NewFromAny(data.Get("panels").MustArray()[0]).Get("targets").MustArray()
+		require.Len(t, targets, 3)
+
+		prometheus := simplejson.NewFromAny(targets[0])
+		assert.Empty(t, prometheus.Get("expr").MustString())
+		assert.Equal(t, "A", prometheus.Get("refId").MustString())
+		assert.Equal(t, "prometheus", prometheus.Get("datasource").MustString())
+
+		sql := simplejson.NewFromAny(targets[1])
+		assert.Empty(t, sql.Get("rawSql").MustString())
+		assert.Equal(t, "B", sql.Get("refId").MustString())
+
+		graphite := simplejson.NewFromAny(targets[2])
+		assert.Empty(t, graphite.Get("target").MustString())
+		assert.Empty(t, graphite.Get("targetFull").MustString())
+		assert.Equal(t, "C", graphite.Get("refId").MustString())
+	})
+
+	t.Run("removes query expression fields from collapsed row panels", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"panels": []interface{}{
+				map[string]interface{}{
+					"type":      "row",
+					"collapsed": true,
+					"panels": []interface{}{
+						map[string]interface{}{
+							"targets": []interface{}{
+								map[string]interface{}{
+									"target": "sumSeries(stats.counters.*.count)",
+									"refId":  "A",
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeData(data)
+
+		row := simplejson.NewFromAny(data.Get("panels").MustArray()[0])
+		innerTargets := simplejson.NewFromAny(row.Get("panels").MustArray()[0]).Get("targets").MustArray()
+		require.Len(t, innerTargets, 1)
+		assert.Empty(t, simplejson.NewFromAny(innerTargets[0]).Get("target").MustString())
+	})
+
+	t.Run("does not panic when panels key is missing", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{})
+		require.NotPanics(t, func() { sanitizeData(data) })
+	})
+}
+
 func TestSanitizeDataV2(t *testing.T) {
 	t.Run("removes expr, query, rawSql from query specs", func(t *testing.T) {
 		data := simplejson.NewFromAny(map[string]interface{}{
@@ -1474,6 +1554,44 @@ func TestSanitizeDataV2(t *testing.T) {
 		q3spec := simplejson.NewFromAny(panel2Queries[0]).Get("spec").Get("query").Get("spec")
 		assert.Empty(t, q3spec.Get("query").MustString())
 		assert.Equal(t, "A", q3spec.Get("refId").MustString())
+	})
+
+	t.Run("removes target and targetFull from query specs", func(t *testing.T) {
+		data := simplejson.NewFromAny(map[string]interface{}{
+			"elements": map[string]interface{}{
+				"panel-1": map[string]interface{}{
+					"spec": map[string]interface{}{
+						"data": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"queries": []interface{}{
+									map[string]interface{}{
+										"spec": map[string]interface{}{
+											"query": map[string]interface{}{
+												"spec": map[string]interface{}{
+													"target":     "aliasByNode(stats.gauges.*, 1)",
+													"targetFull": "aliasByNode(stats.gauges.production, 1)",
+													"refId":      "A",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		sanitizeDataV2(data)
+
+		queries := simplejson.NewFromAny(data.Get("elements").MustMap()["panel-1"]).
+			Get("spec").Get("data").Get("spec").Get("queries").MustArray()
+		require.Len(t, queries, 1)
+		qspec := simplejson.NewFromAny(queries[0]).Get("spec").Get("query").Get("spec")
+		assert.Empty(t, qspec.Get("target").MustString())
+		assert.Empty(t, qspec.Get("targetFull").MustString())
+		assert.Equal(t, "A", qspec.Get("refId").MustString())
 	})
 
 	t.Run("does not panic when queries key is missing", func(t *testing.T) {
