@@ -48,7 +48,11 @@ export function generateAssetsManifest(
   }
 
   return {
-    entrypoints,
+    entrypoints: {
+      ...entrypoints,
+      // Rspack outputs es modules. webassets.go uses this to set the type attribute. <script type="text/javascript | module">.
+      esModule: compilation.outputOptions.module === true,
+    },
     ...manifestAssets,
   };
 }

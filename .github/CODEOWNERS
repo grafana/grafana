@@ -972,6 +972,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/CorsSharedWorker.rspack.ts @grafana/grafana-frontend-platform
+/public/app/core/utils/CorsWorker.rspack.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/datapro

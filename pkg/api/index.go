@@ -191,6 +191,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
 		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
+		ESModuleAssetsEnabled:               assets.ESModule,
 	}
 
 	if hs.Cfg.CSPEnabled {

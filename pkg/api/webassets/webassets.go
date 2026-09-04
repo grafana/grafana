@@ -54,6 +54,9 @@ type ManifestInfo struct {
 	App   *EntryPointInfo `json:"app,omitempty"`
 	Dark  *EntryPointInfo `json:"dark,omitempty"`
 	Light *EntryPointInfo `json:"light,omitempty"`
+
+	// ESModule is true when the bundler emitted ES modules rather than classic scripts.
+	ESModule bool `json:"esModule,omitempty"`
 }
 
 type EntryPointInfo struct {
@@ -172,6 +175,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 
 	rsp := &dtos.EntryPointAssets{
+		ESModule: entryPoints.ESModule,
 		JSFiles:  make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.JS)),
 		CSSFiles: make([]dtos.EntryPointAsset, 0, len(entryPoints.App.Assets.CSS)),
 	}

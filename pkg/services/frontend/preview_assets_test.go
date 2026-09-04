@@ -19,8 +19,10 @@ import (
 const previewTestNamespace = "stacks-123456"
 
 // previewTestManifest is served by the mock bucket server in preview assets tests.
+// set esModule true here so tests can confirm the served page's <script type>
 const previewTestManifest = `{
 	"entrypoints": {
+		"esModule": true,
 		"app": {
 			"assets": {
 				"js": ["public/build/runtime.preview.js", "public/build/app.preview.js"],

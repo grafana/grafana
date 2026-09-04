@@ -80,7 +80,9 @@ describe('assets manifest', () => {
   it('emits the entrypoints shape the backend decodes', async () => {
     const { entrypoints } = await build([sriPlugin(), manifestPlugin()]);
 
-    expect(Object.keys(entrypoints).sort()).toEqual(['app', 'boot', 'dark', 'light']);
+    // esModule is a flag, not an entrypoint. It sits in here because webassets.go decodes
+    // entrypoints into a struct that has the flag alongside app/dark/light.
+    expect(Object.keys(entrypoints).sort()).toEqual(['app', 'boot', 'dark', 'esModule', 'light']);
     // Load order matters: the runtime chunk has to come before the entry chunk.
     expect(entrypoints.app.assets.js[0]).toMatch(/^public\/build\/runtime\./);
     expect(entrypoints.app.assets.js).toHaveLength(2);
@@ -117,7 +119,11 @@ describe('assets manifest', () => {
     const { entrypoints, entries } = await build([sriPlugin(), manifestPlugin()]);
 
     const integrityMap = new Map(Object.values(entries).map((entry) => [entry.src, entry.integrity]));
-    const entrypointFilePaths = Object.values(entrypoints).flatMap((v) => Object.values(v.assets).flat());
+    const entrypointFilePaths = Object.entries(entrypoints)
+      // Rspack injects an esModule flag into the entrypoints object as a temporary workaround for
+      // the backend to detect builds that emit es modules. Filtered here as it's not an actual entrypoint and has no assets.
+      .filter(([name]) => name !== 'esModule')
+      .flatMap(([, entrypoint]) => Object.values(entrypoint.assets).flat());
 
     for (const entrypoint of entrypointFilePaths) {
       expect(integrityMap.get(entrypoint), `${entrypoint} must have an integrity hash`).toBeDefined();
