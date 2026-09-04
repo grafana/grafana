@@ -1281,6 +1281,30 @@ export const versionedComponents = {
             '9.1.2': 'root Gazetteer field property editor',
           },
         },
+        wkt: {
+          option: {
+            '13.3.0': 'WKT location option',
+          },
+          wktFieldLabel: {
+            '13.3.0': 'data-testid root WKT field field property editor',
+          },
+        },
+        wkb: {
+          option: {
+            '13.3.0': 'WKB location option',
+          },
+          wkbFieldLabel: {
+            '13.3.0': 'data-testid root Geometry field field property editor',
+          },
+        },
+        geojson: {
+          option: {
+            '13.3.0': 'GeoJSON location option',
+          },
+          geojsonFieldLabel: {
+            '13.3.0': 'data-testid root Geometry field field property editor',
+          },
+        },
       },
     },
     searchInput: {
