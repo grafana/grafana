@@ -24,6 +24,17 @@
       ],
       "cache": false
     },
+    "start:rspack:noHmr": {
+      "dependsOn": [
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
     "build": {
       "dependsOn": [
         "themes-generate",

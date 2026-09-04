@@ -8574,10 +8574,50 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rspack/dev-middleware@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@rspack/dev-middleware@npm:2.0.3"
+  peerDependencies:
+    "@rspack/core": ^2.0.0
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+  checksum: 10/851a9e05fa788c2c49f434a5844a2b43211059f590e4188852e1e89bd51f6428131a0e775ecb20652e89246ca95b21983c33ce2b0e19d9118235857e9993b574
+  languageName: node
+  linkType: hard
+
+"@rspack/dev-server@npm:2.2.1":
+  version: 2.2.1
+  resolution: "@rspack/dev-server@npm:2.2.1"
+  dependencies:
+    "@rspack/dev-middleware": "npm:^2.0.3"
+  peerDependencies:
+    "@rspack/core": ^2.0.0
+    selfsigned: ^5.0.0
+  peerDependenciesMeta:
+    selfsigned:
+      optional: true
+  checksum: 10/4ae7a1a5e3ce1dc03c3fa43832fb01f9153a0674474445051917de6d3bf874a10377b4eb95ec9df33ad817a92110c2fa5eeb791d75bcf8130c1d57309f2a29db
+  languageName: node
+  linkType: hard
+
 "@rspack/lite-tapable@npm:^1.0.1, @rspack/lite-tapable@npm:^1.1.2":
   version: 1.1.5
   resolution: "@rspack/lite-tapable@npm:1.1.5"
   checksum: 10/e74775fd2d9355175168cde752467bb9906bb5deb850f11e65535effa7d775230fa2f9583587a36b360ba0bea45e841d785858f61ea31d2c2bf36fe9ab6c27b1
+  languageName: node
+  linkType: hard
+
+"@rspack/plugin-react-refresh@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@rspack/plugin-react-refresh@npm:2.0.2"
+  peerDependencies:
+    "@rspack/core": ^2.0.0
+    react-refresh: ">=0.10.0 <1.0.0"
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+  checksum: 10/bf1b129e4834a6ef61bfb170fb6a68b1e928dcc0c254756f8a892d331c0d33a311179fead3e30faad45b21402e4ff21ece2f0f7d887edfa542999427e6f0d45a
   languageName: node
   linkType: hard
 
@@ -10517,7 +10557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/babel__core@npm:^7.1.14, @types/babel__core@npm:^7.18.0, @types/babel__core@npm:^7.20.5":
+"@types/babel__core@npm:*, @types/babel__core@npm:^7.1.14, @types/babel__core@npm:^7.18.0, @types/babel__core@npm:^7.20.5":
   version: 7.20.5
   resolution: "@types/babel__core@npm:7.20.5"
   dependencies:
@@ -11463,6 +11503,16 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/56246d8678ef5cf32b7c02bce7759946e28da7b079d5a59c7f1ca5b3e5a8bd521c4151fac192281cf56c0a62b2276d990162253f869e9ff3ef451c603e783bc4
+  languageName: node
+  linkType: hard
+
+"@types/react-refresh@npm:^0":
+  version: 0.14.7
+  resolution: "@types/react-refresh@npm:0.14.7"
+  dependencies:
+    "@types/babel__core": "npm:*"
+    csstype: "npm:^3.2.2"
+  checksum: 10/c4eca39a4e6991ad637044294045824784a048cbf84c8972361c686af7c17a32ffb11e3a24be519f7961a6690fce4a92a8007e2a060197dca43b0b66eff56bc6
   languageName: node
   linkType: hard
 
@@ -20027,6 +20077,8 @@ __metadata:
     "@rsdoctor/webpack-plugin": "npm:^1.0.0"
     "@rspack/cli": "npm:^2"
     "@rspack/core": "npm:^2.1.7"
+    "@rspack/dev-server": "npm:2.2.1"
+    "@rspack/plugin-react-refresh": "npm:2.0.2"
     "@stylistic/eslint-plugin-ts": "npm:^4.0.0"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:0.5.17"
@@ -20063,6 +20115,7 @@ __metadata:
     "@types/react": "npm:19.2.18"
     "@types/react-dom": "npm:19.2.4"
     "@types/react-highlight-words": "npm:0.20.0"
+    "@types/react-refresh": "npm:^0"
     "@types/react-resizable": "npm:3.0.8"
     "@types/react-router": "npm:5.1.20"
     "@types/react-router-dom": "npm:5.3.3"
@@ -20221,6 +20274,7 @@ __metadata:
     react-loading-skeleton: "npm:3.5.0"
     react-moveable: "npm:0.56.0"
     react-redux: "npm:9.2.0"
+    react-refresh: "npm:^0.18.0"
     react-resizable: "npm:3.0.5"
     react-router: "npm:5.3.4"
     react-router-dom: "npm:5.3.4"
@@ -29695,6 +29749,13 @@ __metadata:
     redux:
       optional: true
   checksum: 10/c4c7586cff3abeb784e73598d330f5301116a4e9942fd36895f2bccd8990001709c6c3ea1817edb75ee477470d6c67c9113e05a7f86b2b68a3950c9c29fe20cb
+  languageName: node
+  linkType: hard
+
+"react-refresh@npm:^0.18.0":
+  version: 0.18.0
+  resolution: "react-refresh@npm:0.18.0"
+  checksum: 10/504c331c19776bf8320c23bad7f80b3a28de03301ed7523b0dd21d3f02bf2b53bbdd5aa52469b187bc90f358614b2ba303c088a0765c95f4f0a68c43a7d67b1d
   languageName: node
   linkType: hard
 

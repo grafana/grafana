@@ -106,6 +106,38 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
 
+#### Hot module replacement with rspack
+
+Grafana is migrating its frontend build from webpack to rspack. The rspack build supports hot
+module replacement and React Fast Refresh, so editing a component updates the running page
+without a reload and without losing app state.
+
+Start the frontend and the backend in two terminals:
+
+```
+yarn start:rspack
+RSPACK=1 make run
+```
+
+`RSPACK=1` turns on the `grafana.rspackBuild` feature toggle, which is what makes the backend
+read the rspack build instead of the webpack one.
+
+Keep using `http://localhost:3000`. The rspack dev server holds the bundles in memory and
+listens on the port named by `[frontend_dev] server_url`. Grafana treats it as a CDN: the
+`index.html` it renders points the browser straight at the dev server for frontend assets, and
+the hot-update websocket connects there too. When a module cannot be hot-applied, rspack
+reloads the page.
+
+Two things follow from this setup:
+
+- Nothing is written to `public/build/rspack`. Serving the build from a static file server, as
+  `make frontend-service` does, needs `yarn start:rspack:noHmr` instead.
+- If the dev server is not running, Grafana falls back to whatever the last build left on disk.
+  A stale page usually means the dev server stopped.
+- Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy
+  will not let the page load assets from another origin, so Grafana logs a line and serves the
+  build on disk. This is also what keeps the e2e suite off the dev server.
+
 #### Plugins
 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.

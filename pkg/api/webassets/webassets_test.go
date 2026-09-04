@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -214,5 +218,55 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
 		require.NoError(t, err)
 		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+	})
+}
+
+func TestGetWebAssetsFromDevServer(t *testing.T) {
+	license := licensingtest.NewFakeLicensing()
+	license.On("ContentDeliveryPrefix").Return("grafana")
+
+	manifest, err := os.ReadFile(filepath.Join("testdata", RspackBuildDir, AssetsManifestFile))
+	require.NoError(t, err)
+
+	t.Run("prefixes assets with the dev server origin", func(t *testing.T) {
+		var gotPath string
+		devServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotPath = r.URL.Path
+			_, _ = w.Write(manifest)
+		}))
+		defer devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		require.NoError(t, err)
+
+		require.Equal(t, "/public/build/rspack/"+AssetsManifestFile, gotPath)
+		require.Equal(t, devServer.URL+"/", assets.ContentDeliveryURL)
+		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, devServer.URL+"/public/build/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	t.Run("falls back to the build on disk when the dev server is down", func(t *testing.T) {
+		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+		devServerURL := devServer.URL
+		devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServerURL}
+		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		require.NoError(t, err)
+
+		require.Empty(t, assets.ContentDeliveryURL)
+		require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
+	})
+
+	t.Run("is ignored for the webpack build, which has no dev server", func(t *testing.T) {
+		devServer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			t.Error("the webpack build must not read its manifest from the dev server")
+		}))
+		defer devServer.Close()
+
+		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
+		_, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
+		require.NoError(t, err)
 	})
 }
