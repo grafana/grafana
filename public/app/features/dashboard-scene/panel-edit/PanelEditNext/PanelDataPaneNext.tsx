@@ -500,6 +500,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       });
     }
 
+    this.setState({ dsError: undefined });
     this.resolveUniformDatasource();
     queryRunner.runQueries();
   };
@@ -711,6 +712,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       queryRunner.setState({ queries });
     }
 
+    this.setState({ dsError: undefined });
     this.resolveUniformDatasource();
     queryRunner.runQueries();
   };
