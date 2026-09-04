@@ -61,8 +61,7 @@ func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDataba
 		tracer:            tracer,
 	}
 
-	s.externalSessionSecrets = provideExternalSessionStore(sql, secretService, tracer)
-	s.externalSessionStore = s.externalSessionSecrets
+	s.externalSessionStore = provideExternalSessionStore(sql, secretService, tracer)
 
 	cfg, err := cfgProvider.Get(ctx)
 	if err != nil {
@@ -86,15 +85,14 @@ func ProvideUserAuthTokenService(ctx context.Context, sql legacysql.LegacyDataba
 
 type UserAuthTokenService struct {
 	// sql resolves qualified table names and the shared database.
-	sql                    legacysql.LegacyDatabaseProvider
-	serverLockService      *serverlock.ServerLockService
-	cfgProvider            configprovider.ConfigProvider
-	log                    log.Logger
-	externalSessionStore   auth.ExternalSessionStore
-	externalSessionSecrets *store
-	singleflight           *singleflight.Group
-	features               featuremgmt.FeatureToggles
-	tracer                 tracing.Tracer
+	sql                  legacysql.LegacyDatabaseProvider
+	serverLockService    *serverlock.ServerLockService
+	cfgProvider          configprovider.ConfigProvider
+	log                  log.Logger
+	externalSessionStore auth.ExternalSessionStore
+	singleflight         *singleflight.Group
+	features             featuremgmt.FeatureToggles
+	tracer               tracing.Tracer
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
@@ -277,11 +275,12 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 		IDToken:      row.IDToken.String,
 		ExpiresAt:    time.Time(row.ExpiresAt),
 	}
-	if s.externalSessionSecrets == nil {
+	secretDecoder, ok := s.externalSessionStore.(oauthSessionSecretDecoder)
+	if !ok {
 		s.log.FromContext(ctx).Warn("OAuth session prefetch is unavailable; falling back to OAuth token service")
 		return result, nil
 	}
-	if err := s.externalSessionSecrets.decryptOAuthSecrets(externalSession); err != nil {
+	if err := secretDecoder.decryptOAuthSecrets(externalSession); err != nil {
 		s.log.FromContext(ctx).Warn("Failed to decrypt prefetched OAuth session; falling back to OAuth token service", "err", err)
 		return result, nil
 	}
@@ -296,6 +295,10 @@ func (s *UserAuthTokenService) LookupTokenForAuthn(ctx context.Context, unhashed
 	}
 
 	return result, nil
+}
+
+type oauthSessionSecretDecoder interface {
+	decryptOAuthSecrets(*auth.ExternalSession) error
 }
 
 func (s *UserAuthTokenService) validateToken(ctx context.Context, cfg *setting.Cfg, dbHelper *legacysql.LegacyDatabaseHelper,

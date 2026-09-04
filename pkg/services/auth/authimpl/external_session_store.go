@@ -24,7 +24,7 @@ type store struct {
 func provideExternalSessionStore(sql legacysql.LegacyDatabaseProvider,
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer tracing.Tracer,
-) *store {
+) auth.ExternalSessionStore {
 	return &store{
 		sql:            sql,
 		secretsService: secretService,

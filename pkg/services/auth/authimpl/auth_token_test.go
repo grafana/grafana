@@ -987,14 +987,13 @@ func createTestContext(t *testing.T) *testContext {
 	require.NoError(t, err)
 
 	tokenService := &UserAuthTokenService{
-		sql:                    sqlProvider,
-		cfgProvider:            cfgProvider,
-		log:                    log.New("test-logger"),
-		singleflight:           new(singleflight.Group),
-		externalSessionStore:   extSessionStore,
-		externalSessionSecrets: extSessionStore,
-		features:               featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling),
-		tracer:                 tracer,
+		sql:                  sqlProvider,
+		cfgProvider:          cfgProvider,
+		log:                  log.New("test-logger"),
+		singleflight:         new(singleflight.Group),
+		externalSessionStore: extSessionStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagImprovedExternalSessionHandling),
+		tracer:               tracer,
 	}
 
 	return &testContext{
