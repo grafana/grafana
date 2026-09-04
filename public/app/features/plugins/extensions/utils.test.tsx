@@ -618,6 +618,26 @@ describe('Plugin Extensions / Utils', () => {
         }
       );
     });
+
+    it('should return React elements untouched', () => {
+      const element = <div>hello</div>;
+
+      expect(writableProxy(element)).toBe(element);
+    });
+
+    it('should keep React elements inside props by reference instead of cloning them', () => {
+      // Regression: prop objects crossing the extension boundary can carry JSX (e.g. children);
+      // deep-cloning an element chases its fiber back-references and overflows the call stack.
+      const child = <span>hello</span>;
+      const props = { children: child, extra: { label: 'a' } };
+
+      const copy = writableProxy(props);
+
+      expect(copy).not.toBe(props);
+      expect(copy.children).toBe(child);
+      expect(copy.extra).not.toBe(props.extra);
+      expect(copy.extra.label).toBe('a');
+    });
   });
 
   describe('createOpenModalFunction()', () => {
