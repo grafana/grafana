@@ -386,8 +386,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	if opts.From > 0 {
-		// Check against time for point annotations and time_end for range annotations
-		conditions = append(conditions, fmt.Sprintf("((time_end IS NULL AND time >= $%d) OR (time_end IS NOT NULL AND time_end >= $%d))", argNum, argNum))
+		conditions = append(conditions, fmt.Sprintf("time_end >= $%d", argNum))
 		args = append(args, opts.From)
 		argNum++
 	}
@@ -444,29 +443,18 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		argNum++
 	}
 
-	// Points and ranges are fetched separately so each is able to leverage its own index (time vs time_end)
-	// with results unioned. Either subquery could supply the entire page on its own, so each must return enough
-	// to cover the outer query's offset+limit, plus one extra row to detect whether a next page exists.
 	cols := `namespace, name, time, time_end, dashboard_uid, panel_id,
 	         text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at`
 	where := strings.Join(conditions, " AND ")
 
-	innerLimit := offset + limit + 1
 	query := fmt.Sprintf(`
-		SELECT * FROM (
-			(SELECT %[1]s FROM annotations
-			 WHERE %[2]s AND time_end IS NULL
-			 ORDER BY time DESC, name LIMIT $%[3]d)
-			UNION ALL
-			(SELECT %[1]s FROM annotations
-			 WHERE %[2]s AND time_end IS NOT NULL
-			 ORDER BY time_end DESC, time DESC, name LIMIT $%[3]d)
-		) merged
-		ORDER BY COALESCE(time_end, time) DESC, time DESC, name
-		LIMIT $%[4]d OFFSET $%[5]d
-	`, cols, where, argNum, argNum+1, argNum+2)
+		SELECT %[1]s FROM annotations
+		WHERE %[2]s
+		ORDER BY time_end DESC, time DESC, name
+		LIMIT $%[3]d OFFSET $%[4]d
+	`, cols, where, argNum, argNum+1)
 
-	args = append(args, innerLimit, limit+1, offset)
+	args = append(args, limit+1, offset)
 
 	return query, args
 }

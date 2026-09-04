@@ -37,7 +37,7 @@ FOR VALUES FROM (%d) TO (%d);
 	createBRINIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s USING BRIN (time);`
 	createTimeIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, time);`
 	createDashboardIndexSQL = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, dashboard_uid, panel_id, time);`
-	createTimeEndIndexSQL   = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, time_end) WHERE time_end IS NOT NULL;`
+	createTimeEndIndexSQL   = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, time_end);`
 	createTagsIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, tags);`
 	createScopesIndexSQL    = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, scopes);`
 
