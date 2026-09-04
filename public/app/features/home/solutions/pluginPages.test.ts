@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
@@ -34,6 +35,7 @@ beforeEach(() => {
   isPluginEnabledMock.mockReset();
   canAccessPluginPageMock.mockReset();
   constructDataSourceExploreUrlMock.mockReset();
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
   isPluginEnabledMock.mockReturnValue(true);
   canAccessPluginPageMock.mockReturnValue(true);
   constructDataSourceExploreUrlMock.mockReturnValue('/explore?left=prometheus');
@@ -81,6 +83,17 @@ it('falls back to Explore with the proving datasource when the deep page is inac
     drilldownActiveCta(datasource, 'inaccessible-app', 'Metrics Drilldown', '/a/inaccessible-app/explore')
   ).resolves.toEqual({ label: 'Open in Explore', href: '/explore?left=prometheus', action: 'open_solution' });
   expect(constructDataSourceExploreUrlMock).toHaveBeenCalledWith({ name: 'Prometheus' });
+});
+
+it('omits the CTA when neither the drilldown page nor Explore is accessible', async () => {
+  probePluginMock.mockResolvedValue({ settings: settings('inaccessible-app') });
+  canAccessPluginPageMock.mockReturnValue(false);
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+  await expect(
+    drilldownActiveCta(datasource, 'inaccessible-app', 'Metrics Drilldown', '/a/inaccessible-app/explore')
+  ).resolves.toBeNull();
+  expect(constructDataSourceExploreUrlMock).not.toHaveBeenCalled();
 });
 
 it('returns a bridge path only when that app page is accessible', async () => {

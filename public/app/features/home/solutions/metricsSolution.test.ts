@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { metricsSolution } from './metricsSolution';
@@ -62,6 +63,7 @@ beforeEach(() => {
     href: '/metrics',
     action: 'open_solution',
   });
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
 });
 
 describe('metricsSolution', () => {
@@ -246,6 +248,24 @@ describe('metricsSolution', () => {
     });
     expect(mockFetchDiskHoursToFull).not.toHaveBeenCalled();
     expect(mockDrilldownActiveCta).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the active CTA without checking attention when Explore is inaccessible', async () => {
+    mockFetchDiskPressure.mockResolvedValue({
+      hostsAbove: 1,
+      worstInstance: 'web-03:9100',
+      worstMount: '/data',
+      worstRatio: 0.96,
+    });
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+    await expect(metricsSolution().cta()).resolves.toEqual({
+      label: 'Open Metrics Drilldown',
+      href: '/metrics',
+      action: 'open_solution',
+    });
+    expect(mockFetchDiskPressure).not.toHaveBeenCalled();
+    expect(mockDrilldownActiveCta).toHaveBeenCalled();
   });
 
   it('builds the active CTA from the datasource that proved usage', async () => {
