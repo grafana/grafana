@@ -1,4 +1,4 @@
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -40,8 +40,7 @@ export function AlertIncidentTabs({
   const canViewIncidents = !!incidentsData.enabled;
   const canViewAlerts = alertsData.enabled;
 
-  // Default to alerts tab if alerts are available, otherwise default to incidents tab
-  const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+  const [activeTab, setActiveTab] = useState<TabId>(INCIDENTS_TAB_ID);
   const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
@@ -53,47 +52,7 @@ export function AlertIncidentTabs({
     canAccess: incidentsCanAccess,
   } = incidentsData;
 
-  const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
-  const isIncidentsActionsVisible =
-    canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(
-    switchRef,
-    () => ({
-      switch: (tab: TabId, scroll = true) => {
-        setActiveTab(tab);
-        if (scroll) {
-          containerRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-      },
-    }),
-    []
-  );
-
-  // Hide the tabs if neither alerts nor incidents are available
-  if (!canViewAlerts && !canViewIncidents) {
-    return null;
-  }
-
-  const title =
-    canViewAlerts && canViewIncidents
-      ? t('home.alerts-incidents.title', 'Alerts & incidents')
-      : canViewIncidents
-        ? t('home.alerts-incidents.title-incidents', 'Incidents')
-        : t('home.alerts-incidents.title-alerts', 'Alerts');
-
   const tabs = [
-    ...(canViewAlerts
-      ? [
-          {
-            id: ALERTS_TAB_ID,
-            label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
-            // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
-            counter: loading ? undefined : count,
-          },
-        ]
-      : []),
     ...(canViewIncidents
       ? [
           {
@@ -107,7 +66,68 @@ export function AlertIncidentTabs({
           },
         ]
       : []),
+    ...(canViewAlerts
+      ? [
+          {
+            id: ALERTS_TAB_ID,
+            label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
+            // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
+            counter: loading ? undefined : count,
+          },
+        ]
+      : []),
   ];
+
+  // Incidents is the default, but the plugin probe hasn't resolved on first render, so the
+  // state can name a tab that isn't available (yet, or ever). Fall back to the one that is.
+  const effectiveTab = tabs.some((tab) => tab.id === activeTab) ? activeTab : tabs[0]?.id;
+
+  const isAlertActionsVisible = canViewAlerts && !loading && !error && effectiveTab === ALERTS_TAB_ID;
+  const isIncidentsActionsVisible =
+    canViewIncidents && !incidentsLoading && !incidentsError && effectiveTab === INCIDENTS_TAB_ID;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const userPickedTabRef = useRef(false);
+  const autoSelectSettledRef = useRef(false);
+
+  useImperativeHandle(
+    switchRef,
+    () => ({
+      switch: (tab: TabId, scroll = true) => {
+        userPickedTabRef.current = true;
+        setActiveTab(tab);
+        if (scroll) {
+          containerRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      },
+    }),
+    []
+  );
+
+  // Neither count is known at mount, so the default lands once the initial loads settle:
+  // Incidents wins unless it is confirmed empty while alerts are firing. Evaluated once, so
+  // later team-filter refetches don't move the tab under the user.
+  useEffect(() => {
+    if (autoSelectSettledRef.current || userPickedTabRef.current || !canViewIncidents || loading || incidentsLoading) {
+      return;
+    }
+    autoSelectSettledRef.current = true;
+    // An errored fetch isn't the same as an empty one, so neither side falls through on error.
+    const preferAlerts = !incidentsError && incidentsCount === 0 && canViewAlerts && !error && count > 0;
+    setActiveTab(preferAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+  }, [canViewAlerts, canViewIncidents, loading, incidentsLoading, count, incidentsCount, error, incidentsError]);
+
+  // Hide the tabs if neither alerts nor incidents are available
+  if (!canViewAlerts && !canViewIncidents) {
+    return null;
+  }
+
+  const title =
+    canViewAlerts && canViewIncidents
+      ? t('home.alerts-incidents.title', 'Alerts & incidents')
+      : canViewIncidents
+        ? t('home.alerts-incidents.title-incidents', 'Incidents')
+        : t('home.alerts-incidents.title-alerts', 'Alerts');
 
   return (
     <Stack direction="column" gap={1} minWidth={0} ref={containerRef}>
@@ -118,7 +138,7 @@ export function AlertIncidentTabs({
         {canViewAlerts && (
           // Hidden rather than unmounted on the Incidents tab, so the combobox keeps
           // its fetched team values instead of refetching them on every tab switch.
-          <div hidden={activeTab !== ALERTS_TAB_ID}>
+          <div hidden={effectiveTab !== ALERTS_TAB_ID}>
             <TeamFilterCombobox selectedTeam={team} onChange={setTeam} userHasTeams={hasTeams} />
           </div>
         )}
@@ -130,9 +150,10 @@ export function AlertIncidentTabs({
             <Tab
               key={tab.id}
               label={tab.label}
-              active={activeTab === tab.id}
+              active={effectiveTab === tab.id}
               counter={tab.counter}
               onChangeTab={() => {
+                userPickedTabRef.current = true;
                 setActiveTab(tab.id);
                 tabChanged({ tab: tab.id });
               }}
@@ -146,8 +167,8 @@ export function AlertIncidentTabs({
             maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
             minHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}
           >
-            {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
-            {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
+            {effectiveTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
+            {effectiveTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
           </ScrollContainer>
 
           <Box padding={1} paddingTop={1.5}>
