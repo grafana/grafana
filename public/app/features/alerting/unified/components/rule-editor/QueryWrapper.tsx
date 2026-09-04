@@ -127,7 +127,17 @@ export const QueryWrapper = ({
             </Trans>
           }
         >
-          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
+          <a
+            href={DOCS_URL_DATA_SOURCE_ALERTING}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t(
+              'alerting.selecting-data-source-tooltip.aria-label-data-source-support',
+              'Read about data source support for alerting'
+            )}
+          >
+            <Icon name="info-circle" />
+          </a>
         </Tooltip>
       </div>
     );
