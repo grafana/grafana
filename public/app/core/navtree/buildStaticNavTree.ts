@@ -16,15 +16,7 @@ import { getHomeNode } from './sections/home.navEntry';
 import { notebooksNavEntry } from './sections/notebooks.navEntry';
 import { profileNavEntry } from './sections/profile.navEntry';
 import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEntry';
-import {
-  applyAppSubUrl,
-  buildEntries,
-  findNavById,
-  type NavEntryBuilder,
-  pruneEmptyNavSections,
-  sortNavTree,
-  updateNavById,
-} from './utils';
+import { applyAppSubUrl, buildEntries, findNavById, type NavEntryBuilder, sortNavTree, updateNavById } from './utils';
 
 /**
  * Whether to build the nav tree client-side. Gated on grafana.multiTenantNavTree
@@ -54,6 +46,16 @@ function isClientNavTreeEnabled(): boolean {
 }
 
 /**
+ * Whether app plugin nav items should be fetched and folded into the tree. On
+ * top of the client-build gate this additionally requires plugins.useMTPlugins:
+ * without it the pluginMeta service never fetches, so grafana.multiTenantNavTree
+ * alone renders the static tree only.
+ */
+export function arePluginNavItemsEnabled(): boolean {
+  return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
+}
+
+/**
  * The entry point used by the redux slices: returns the client-built static
  * tree when the flag is on, or the server-provided tree otherwise.
  */
@@ -65,10 +67,10 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty sections (cfg/access without children) are pruned like the server
-  // prunes them after its enterprise hooks run.
-  return pruneEmptyNavSections(staticTree);
+  // Empty attachment-parent shells (connections, cfg/access) are intentionally
+  // kept here: the plugin nav merge needs them as targets. Pruning happens when
+  // the merge completes, mirroring the server's post-hook pruning.
+  return applyAppSubUrl(buildStaticNavTree());
 }
 
 /**
