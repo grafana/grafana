@@ -145,7 +145,7 @@ func TestStoreUsesProviderTables(t *testing.T) {
 
 	mock.ExpectQuery(`(?s).*FROM .*test_schema.*data_keys.*`).WillReturnRows(newDataKeyRows())
 	mock.ExpectExec(`(?s)UPDATE .*test_schema.*data_keys.*`).WillReturnResult(sqlmock.NewResult(0, 1))
-	err = store.ReEncryptDataKeys(ctx, map[secrets.ProviderID]secrets.Provider{
+	err = store.ReEncryptDataKeys(ctx, map[secrets.ProviderID]secrets.Provider{ //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 		"test.v1": testKeyProvider{},
 	}, "test.v1")
 	require.NoError(t, err)
