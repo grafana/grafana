@@ -405,6 +405,15 @@ func (fr *FileReader) importLibraryPanels(ctx context.Context, jsonFile *dashboa
 		return nil
 	}
 
+	// A dashboard's __elements map only exists when the file was exported with library
+	// panel content inlined. Without it there's no model to create a panel from: calling
+	// ImportLibraryPanelsForDashboard anyway would create an empty library panel for every
+	// referenced UID, permanently shadowing a real definition provisioned later (a later
+	// run finds the empty element already exists by UID and skips creating the real one).
+	if len(jsonFile.libraryElements.MustMap()) == 0 {
+		return nil
+	}
+
 	signedInUser, err := identity.GetRequester(ctx)
 	if err != nil {
 		return err

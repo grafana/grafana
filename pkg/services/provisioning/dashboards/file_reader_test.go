@@ -45,6 +45,7 @@ const (
 	unprovision               = "testdata/test-dashboards/unprovision"
 	foldersFromFilesStructure = "testdata/test-dashboards/folders-from-files-structure"
 	withLibraryPanel          = "testdata/test-dashboards/with-library-panel"
+	libraryPanelRefOnly       = "testdata/test-dashboards/library-panel-ref-without-elements"
 	configName                = "default"
 )
 
@@ -371,6 +372,27 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 			libraryPanelRef, ok := panel["libraryPanel"].(map[string]any)
 			require.True(t, ok)
 			assert.Equal(t, "lib-panel-uid-1", libraryPanelRef["uid"])
+		})
+
+		t.Run("Dashboard referencing a library panel without __elements does not create an empty stub", func(t *testing.T) {
+			setup()
+			cfg.Options["path"] = libraryPanelRefOnly
+
+			fakeService.On("GetProvisionedDashboardData", mock.Anything, configName).Return(nil, nil).Once()
+			fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Once()
+
+			libPanelService := &fakeLibraryPanelService{}
+			reader, err := NewDashboardFileReader(cfg, logger, fakeService, fakeStore, folderSvc, cfgT, libPanelService)
+			require.NoError(t, err)
+
+			err = reader.walkDisk(context.Background())
+			require.NoError(t, err)
+
+			// No __elements means there's no model to create a library panel from. Calling
+			// ImportLibraryPanelsForDashboard anyway would create an empty stub for the
+			// referenced UID, permanently shadowing the real definition if it's ever
+			// provisioned later (see the guard in FileReader.importLibraryPanels).
+			assert.Empty(t, libPanelService.calls)
 		})
 
 		t.Run("Overrides id from dashboard.json files", func(t *testing.T) {
