@@ -1,4 +1,13 @@
-import { type DataFrameJSON } from '@grafana/data';
+type SerializedLiveField = {
+  values?: unknown[];
+  [key: string]: unknown;
+};
+
+type SerializedLiveFrame = {
+  fields: SerializedLiveField[];
+  refId?: string;
+  [key: string]: unknown;
+};
 
 export type LiveMathExpression = {
   sourceRefId: string;
@@ -109,7 +118,13 @@ export function createLiveMathTransform(expression: LiveMathExpression, fieldInd
   const evaluate = (value: unknown) => new Parser(tokens, value).parse();
   const values = (input: unknown[][]) => input.map((column, index) => fieldIndexes.includes(index) ? column.map(evaluate) : column);
   return {
-    frame: (input: DataFrameJSON): DataFrameJSON => ({ ...input, schema: { ...input.schema, refId: expression.resultRefId }, data: { ...input.data, values: values(input.data.values) } }),
+    frame: (input: SerializedLiveFrame): SerializedLiveFrame => ({
+      ...input,
+      refId: expression.resultRefId,
+      fields: input.fields.map((field, index) =>
+        fieldIndexes.includes(index) ? { ...field, values: field.values?.map(evaluate) } : field
+      ),
+    }),
     values,
   };
 }
