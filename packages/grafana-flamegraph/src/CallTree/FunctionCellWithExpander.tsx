@@ -130,7 +130,7 @@ export function FunctionCellWithExpander({
   return (
     <div className={styles.functionCellContainer}>
       {connector && <span className={styles.treeConnector}>{connector} </span>}
-      <span className={styles.functionNameWrapper}>
+      <span className={styles.functionNameWrapper} title={value}>
         <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
           {value}
         </Button>
@@ -153,8 +153,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: '2px',
       height: '20px',
       lineHeight: '1',
-      overflow: 'hidden',
-      minWidth: 0,
+      width: 'max-content',
+      whiteSpace: 'nowrap',
     }),
     treeConnector: css({
       color: theme.colors.text.secondary,
@@ -169,18 +169,19 @@ function getStyles(theme: GrafanaTheme2) {
     functionNameWrapper: css({
       display: 'inline-flex',
       alignItems: 'center',
-      overflow: 'hidden',
-      minWidth: 0,
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
     }),
     functionButton: css({
       padding: 0,
       fontSize: theme.typography.fontSize,
       textAlign: 'left',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-      minWidth: 0,
-      flexShrink: 1,
+      overflow: 'visible',
+      textOverflow: 'clip',
+      flexShrink: 0,
+      width: 'auto',
+      maxWidth: 'none',
     }),
     nodeBadge: css({
       marginLeft: theme.spacing(0.5),
