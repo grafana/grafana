@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	types "k8s.io/apimachinery/pkg/types"
 )
 
 var (
@@ -195,48 +197,43 @@ func (s *CorrelationsK8sService) DeleteCorrelation(ctx context.Context, cmd Dele
 	return s.k8sClient.Delete(ctx, cmd.UID, cmd.OrgId, v1.DeleteOptions{})
 }
 
+// source datasource and target datasource cannot be edited
 func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error) {
-	correlation := Correlation{
-		UID:       cmd.UID,
-		OrgID:     cmd.OrgId,
-		SourceUID: cmd.SourceUID,
-	}
+	patchSpec := map[string]interface{}{}
 
 	if cmd.Label != nil {
-		correlation.Label = *cmd.Label
+		patchSpec["label"] = *cmd.Label
 	}
 
 	if cmd.Description != nil {
-		correlation.Description = *cmd.Description
+		patchSpec["description"] = *cmd.Description
 	}
 
 	if cmd.Type != nil {
-		correlation.Type = *cmd.Type
+		patchSpec["type"] = string(*cmd.Type)
 	}
-
 	if cmd.Config != nil {
+		config := map[string]interface{}{}
 		if cmd.Config.Field != nil {
-			correlation.Config.Field = *cmd.Config.Field
+			config["field"] = *cmd.Config.Field
 		}
 		if cmd.Config.Target != nil {
-			correlation.Config.Target = *cmd.Config.Target
+			config["target"] = *cmd.Config.Target
 		}
-		correlation.Config.Transformations = cmd.Config.Transformations
+		if cmd.Config.Transformations != nil {
+			config["transformations"] = cmd.Config.Transformations
+		}
+		patchSpec["config"] = config
 	}
-
-	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: cmd.SourceUID}
-	sourceDs, err := s.DataSourceService.GetDataSource(ctx, dsCmd)
+	patch := map[string]interface{}{
+		"spec": patchSpec,
+	}
+	patchData, err := json.Marshal(patch)
 	if err != nil {
 		return Correlation{}, err
 	}
-	correlation.SourceType = &sourceDs.Type
 
-	unstructCorr, err := convertCorrelationToUnstructured(correlation)
-	if err != nil {
-		return Correlation{}, err
-	}
-
-	returnedUnstructCorr, err := s.k8sClient.Update(ctx, unstructCorr, cmd.OrgId, v1.UpdateOptions{})
+	returnedUnstructCorr, err := s.k8sClient.Patch(ctx, cmd.UID, types.MergePatchType, patchData, cmd.OrgId, v1.PatchOptions{})
 	if err != nil {
 		return Correlation{}, err
 	}
