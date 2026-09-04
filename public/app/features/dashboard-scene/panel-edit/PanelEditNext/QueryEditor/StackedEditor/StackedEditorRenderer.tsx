@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
+import { DatasourceErrorAlert } from '../DatasourceErrorAlert';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { StackedSection } from './StackedSection';
@@ -77,6 +78,9 @@ export function StackedEditorRenderer() {
           <Trans i18nKey="query-editor-next.stacked.exit">Exit stacked view</Trans>
         </Button>
       </div>
+
+      <DatasourceErrorAlert />
+
       <div
         className={styles.scrollArea}
         ref={containerRef}

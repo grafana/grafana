@@ -14,12 +14,8 @@ import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
-import {
-  useActionsContext,
-  useDatasourceContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from './QueryEditorContext';
+import { DatasourceErrorAlert } from './DatasourceErrorAlert';
+import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
@@ -188,21 +184,13 @@ export function QueryEditorPanel({
 }
 
 export function QueryEditorRenderer() {
-  const { dsError } = useDatasourceContext();
   const { queries, data } = useQueryRunnerContext();
   const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
 
   return (
     <>
-      {dsError && (
-        <Alert
-          severity="error"
-          title={t('query-editor-renderer.datasource-change-error-title', 'Failed to change datasource')}
-        >
-          {dsError.message}
-        </Alert>
-      )}
+      <DatasourceErrorAlert />
       <QueryEditorPanel
         query={selectedQuery}
         queryDsData={selectedQueryDsData}

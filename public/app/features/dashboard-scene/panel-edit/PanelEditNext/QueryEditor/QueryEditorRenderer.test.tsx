@@ -128,8 +128,10 @@ describe('QueryEditorRenderer', () => {
     expect(screen.getByText(/select a datasource for this query/i)).toBeInTheDocument();
   });
 
-  it('shows an error when a datasource change fails', () => {
+  it('shows a datasource error', () => {
     renderRenderer(queryA, {}, { dsError: new Error('Failed to load datasource: Prometheus') });
+
+    expect(screen.getByText('Datasource error')).toBeInTheDocument();
     expect(screen.getByText(/failed to load datasource: prometheus/i)).toBeInTheDocument();
   });
 
