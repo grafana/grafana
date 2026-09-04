@@ -13,8 +13,9 @@ import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
+import { arrayToRecord } from '../../utils/misc';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -245,10 +246,9 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend),
-  // falling back to the legacy __grafana_managed_route__ label, so the notification preview fetches
-  // the correct routing tree instead of always defaulting to root.
-  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
+  // Forwards the active policy to the preview so it fetches the correct routing tree instead of
+  // always defaulting to root.
+  const policyNameForPreview = resolveNamedPolicyName({ policy: selectedPolicy }, arrayToRecord(labels));
 
   return (
     <Stack direction="column" gap={2}>
