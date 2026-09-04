@@ -215,7 +215,7 @@ func TestService_Update(t *testing.T) {
 		err := service.Update(context.Background(), &user.UpdateUserCommand{
 			OldPassword: passwordPtr("test123"),
 		})
-		assert.ErrorIs(t, err, user.ErrPasswordMissmatch)
+		assert.ErrorIs(t, err, user.ErrPasswordMismatch)
 	})
 
 	t.Run("should return error new password is not valid", func(t *testing.T) {
@@ -231,6 +231,64 @@ func TestService_Update(t *testing.T) {
 			Password:    passwordPtr("asd"),
 		})
 		require.ErrorIs(t, err, user.ErrPasswordTooShort)
+	})
+
+	t.Run("should return error if new password matches current password", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("test"),
+		})
+		require.ErrorIs(t, err, user.ErrNewPasswordSameAsOld)
+	})
+
+	t.Run("should return error if new password matches stored password without old password", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			Password: passwordPtr("test"),
+		})
+		require.ErrorIs(t, err, user.ErrNewPasswordSameAsOld)
+	})
+
+	t.Run("should reject empty new password before reuse check", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			Password: passwordPtr(""),
+		})
+		require.ErrorIs(t, err, user.ErrPasswordTooShort)
+	})
+
+	t.Run("should update password when new password differs from current", func(t *testing.T) {
+		service := setup(func(svc *LegacyService) {
+			stored, err := user.Password("test").Hash("salt")
+			require.NoError(t, err)
+			svc.cfg = setting.NewCfg()
+			svc.store = &FakeUserStore{ExpectedUser: &user.User{Password: stored, Salt: "salt"}}
+		})
+
+		err := service.Update(context.Background(), &user.UpdateUserCommand{
+			OldPassword: passwordPtr("test"),
+			Password:    passwordPtr("newpassword"),
+		})
+		require.NoError(t, err)
 	})
 
 	t.Run("Can set using org", func(t *testing.T) {
