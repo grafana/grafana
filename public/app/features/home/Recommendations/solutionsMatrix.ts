@@ -1,6 +1,7 @@
 /**
  * Pure recommendation matrix ("Homepage Led Growth" analytics matrix), scoped to Logs, Traces
- * (Hosted Traces), Kubernetes Monitoring, Application Observability and Synthetic Monitoring.
+ * (Hosted Traces), Kubernetes Monitoring, Application Observability (also a widget-bearing
+ * solution) and Synthetic Monitoring.
  * No I/O: signal detection lives in solutionState.ts.
  */
 
@@ -49,6 +50,18 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'kubernetes-monitoring',
     'hosted-traces',
     'synthetic-monitoring',
+  ],
+  // Matrix "App O11y active" row: K8s Monitoring ("App-to-Infra crosscheck") is the only shipped
+  // recommendation; IRM/FE O11y are PRIMARY but have no cards yet, Synthetics is n/a. Telemetry
+  // cards are near-unreachable here (App O11y implies M+L+T); own card last (matches kubernetes).
+  'app-observability': [
+    'kubernetes-monitoring',
+    'hosted-traces',
+    'enable-logs',
+    'enable-logs-k8s',
+    'connect-metrics',
+    'synthetic-monitoring',
+    'application-observability',
   ],
   kubernetes: [
     'enable-logs-k8s',
