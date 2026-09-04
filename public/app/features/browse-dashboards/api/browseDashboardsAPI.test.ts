@@ -19,6 +19,7 @@ import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { deletedDashboardsCache } from 'app/features/search/service/deletedDashboardsCache';
+import * as variablesManagementAPI from 'app/features/variables-management/api';
 import { setStore } from 'app/store/store';
 import { type FolderDTO } from 'app/types/folders';
 import { type ThunkDispatch } from 'app/types/store';
@@ -266,6 +267,44 @@ describe('browseDashboardsAPI', () => {
     });
   });
 
+  it('invalidates the variables list after deleting a folder', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(http.delete('/api/folders/folder-1', () => HttpResponse.json({})));
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
+  it('does not invalidate the variables list when deleting a folder fails', async () => {
+    const store = createTestStore();
+    const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+    try {
+      server.use(
+        http.delete('/api/folders/folder-1', () =>
+          HttpResponse.json({ message: 'folder delete failed' }, { status: 500 })
+        )
+      );
+
+      await store.dispatch(
+        browseDashboardsAPI.endpoints.deleteFolder.initiate({ uid: 'folder-1', parentUid: undefined } as FolderDTO)
+      );
+
+      expect(invalidateVariablesSpy).not.toHaveBeenCalled();
+    } finally {
+      invalidateVariablesSpy.mockRestore();
+    }
+  });
+
   describe('getAffectedItems', () => {
     it('aggregates plural descendant count keys', async () => {
       const store = createTestStore();
@@ -280,6 +319,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 4,
                   alertrules: 5,
                   recordingrules: 6,
+                  variables: 2,
                 }
               : {
                   folders: 1,
@@ -287,6 +327,7 @@ describe('browseDashboardsAPI', () => {
                   library_elements: 3,
                   alertrules: 4,
                   recordingrules: 1,
+                  variables: 3,
                 }
           )
         )
@@ -305,6 +346,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 7,
         alertrules: 9,
         recordingrules: 7,
+        variables: 5,
       });
     });
 
@@ -335,6 +377,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 4,
         alertrules: 5,
         recordingrules: 0,
+        variables: 0,
       });
     });
 
@@ -360,6 +403,7 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 3,
         alertrules: 4,
         recordingrules: 5,
+        variables: 0,
       });
     });
 
@@ -381,8 +425,42 @@ describe('browseDashboardsAPI', () => {
         librarypanels: 0,
         alertrules: 0,
         recordingrules: 0,
+        variables: 0,
       });
       expect(result.data && Object.values(result.data).every(Number.isFinite)).toBe(true);
+    });
+
+    it('includes variable counts', async () => {
+      const store = createTestStore();
+
+      server.use(
+        customFolderCountsHandler(() =>
+          HttpResponse.json({
+            folders: 0,
+            dashboards: 0,
+            library_elements: 0,
+            alertrules: 0,
+            recordingrules: 0,
+            variables: 4,
+          })
+        )
+      );
+
+      const result = await store.dispatch(
+        browseDashboardsAPI.endpoints.getAffectedItems.initiate({
+          folderUIDs: ['folder-1'],
+          dashboardUIDs: [],
+        })
+      );
+
+      expect(result.data).toEqual({
+        folders: 1,
+        dashboards: 0,
+        librarypanels: 0,
+        alertrules: 0,
+        recordingrules: 0,
+        variables: 4,
+      });
     });
   });
 
@@ -522,6 +600,23 @@ describe('browseDashboardsAPI', () => {
       await store.dispatch(browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1'] }));
 
       expect(deleteSpy).not.toHaveBeenCalled();
+    });
+
+    it('invalidates the variables list after bulk-deleting folders', async () => {
+      const store = createTestStore();
+      const invalidateVariablesSpy = jest.spyOn(variablesManagementAPI, 'invalidateVariablesAfterFolderDelete');
+
+      try {
+        server.use(http.delete('/api/folders/:uid', () => HttpResponse.json({})));
+
+        await store.dispatch(
+          browseDashboardsAPI.endpoints.deleteFolders.initiate({ folderUIDs: ['folder-1', 'folder-2'] })
+        );
+
+        expect(invalidateVariablesSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        invalidateVariablesSpy.mockRestore();
+      }
     });
 
     it('removes each bulk-deleted folder from the nav starred section', async () => {

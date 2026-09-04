@@ -33,6 +33,7 @@ import {
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { invalidateVariablesAfterFolderDelete } from '../../variables-management/api';
 import { refetchChildren, refreshParents } from '../state/actions';
 import { findItem } from '../state/utils';
 import { getFolderURL } from '../utils/dashboards';
@@ -79,6 +80,7 @@ const normalizeDescendantCounts = (folderCounts: DescendantCountDTO): Descendant
   librarypanels: folderCounts.librarypanels || folderCounts.library_elements || folderCounts.librarypanel || 0,
   alertrules: folderCounts.alertrules || folderCounts.alertrule || 0,
   recordingrules: folderCounts.recordingrules || 0,
+  variables: folderCounts.variables || 0,
 });
 
 export interface ListFolderQueryArgs {
@@ -221,6 +223,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(refetchChildren({ parentUID: parentUid, pageSize: PAGE_SIZE }));
           refreshTeamFolders();
           invalidateQuotaUsage(dispatch);
+          invalidateVariablesAfterFolderDelete();
           dispatch(setStarred({ id: uid, title: '', url: '', isStarred: false }));
         } catch {
           // Error handled by mutation caller
@@ -245,6 +248,7 @@ export const browseDashboardsAPI = createApi({
             librarypanels: 0,
             alertrules: 0,
             recordingrules: 0,
+            variables: 0,
           };
 
           for (const folderCounts of results) {
@@ -254,6 +258,7 @@ export const browseDashboardsAPI = createApi({
             totalCounts.alertrules += normalizedCounts.alertrules;
             totalCounts.librarypanels += normalizedCounts.librarypanels;
             totalCounts.recordingrules += normalizedCounts.recordingrules;
+            totalCounts.variables += normalizedCounts.variables;
           }
 
           return { data: totalCounts };
@@ -379,6 +384,7 @@ export const browseDashboardsAPI = createApi({
           // Clear the deleted dashboards cache since deleting a folder also deletes its dashboards
           deletedDashboardsCache.clear();
           invalidateQuotaUsage(dispatch);
+          invalidateVariablesAfterFolderDelete();
         });
       },
     }),
