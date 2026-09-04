@@ -84,7 +84,6 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 			for idx := range versions {
 				version := &versions[idx]
 				version.ID = 0
-				version.RuleUID = ""
 				version.Created = TimeNow()
 				version.CreatedBy = nil
 				if user != nil {
