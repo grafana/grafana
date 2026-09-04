@@ -138,7 +138,9 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
           {query.refId}
         </Text>
       </span>
-      <Icon name="pen" className={styles.queryEditIcon} data-edit-icon size="sm" />
+      <div className={styles.hoverAction}>
+        <Icon name="pen" size="sm" />
+      </div>
     </button>
   );
 }
@@ -147,54 +149,88 @@ function isSidebarCardElement(target: EventTarget | null) {
   return target instanceof HTMLElement && target.closest(`[${SIDEBAR_CARD_DATA_ATTR}]`) !== null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  queryNameWrapper: css({
+const getStyles = (theme: GrafanaTheme2) => {
+  const fadeToHoverBackground = [
+    `linear-gradient(270deg, ${theme.colors.action.hover} 80%, transparent)`,
+    `linear-gradient(270deg, ${theme.colors.background.secondary} 80%, transparent)`,
+  ].join(', ');
+
+  // Keep on a plain element: Icon runs className through emotion's cx, which merges
+  // registered classes into a new one, so this name would never reach the DOM.
+  const hoverAction = css({
+    position: 'absolute',
+    inset: '0 0 0 auto',
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(1.5),
-    cursor: 'pointer',
-    border: '1px solid transparent',
-    borderRadius: theme.shape.radius.default,
-    padding: theme.spacing(0, 0.5),
-    margin: 0,
-    background: 'transparent',
-    overflow: 'hidden',
-
-    '&:hover': {
-      background: theme.colors.action.hover,
-      border: `1px dashed ${theme.colors.border.strong}`,
-    },
-
-    '&:focus-visible': {
-      border: `2px solid ${theme.colors.primary.border}`,
-    },
-  }),
-  queryNameText: css({
-    display: 'block',
-    maxWidth: '180px',
-    minWidth: 0,
-    overflow: 'hidden',
-  }),
-  queryNameInput: css({
-    maxWidth: '300px',
-
-    input: {
-      fontFamily: theme.typography.fontFamily,
-    },
-  }),
-  inputRow: css({
-    position: 'relative',
-  }),
-  queryEditIcon: css({
+    padding: theme.spacing(0, 0.5, 0, 1.5),
     color: theme.colors.text.secondary,
-  }),
-  validationMessage: css({
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    marginTop: theme.spacing(0.5),
-    whiteSpace: 'normal',
-    maxWidth: 'min(360px, 40vw)',
-    zIndex: theme.zIndex.tooltip,
-  }),
-});
+    background: fadeToHoverBackground,
+    opacity: 0,
+    transform: 'translateX(8px)',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['opacity', 'transform']),
+    },
+  });
+
+  return {
+    queryNameWrapper: css({
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      cursor: 'pointer',
+      // Dashed at rest so hover only changes the color; border-style cannot transition.
+      border: '1px dashed transparent',
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0.5, 1),
+      margin: 0,
+      background: 'transparent',
+      overflow: 'hidden',
+      textAlign: 'left',
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color', 'border-color']),
+      },
+
+      '&:hover': {
+        background: theme.colors.action.hover,
+        borderColor: theme.colors.border.strong,
+      },
+
+      '&:focus-visible': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
+
+      [`&:hover .${hoverAction}, &:focus-visible .${hoverAction}`]: {
+        opacity: 1,
+        transform: 'translateX(0)',
+      },
+    }),
+    queryNameText: css({
+      display: 'block',
+      maxWidth: '180px',
+      // Keeps a single-character refId clear of the icon and its gradient.
+      minWidth: theme.spacing(4),
+      overflow: 'hidden',
+    }),
+    queryNameInput: css({
+      maxWidth: '300px',
+
+      input: {
+        fontFamily: theme.typography.fontFamily,
+      },
+    }),
+    inputRow: css({
+      position: 'relative',
+    }),
+    hoverAction,
+    validationMessage: css({
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      marginTop: theme.spacing(0.5),
+      whiteSpace: 'normal',
+      maxWidth: 'min(360px, 40vw)',
+      zIndex: theme.zIndex.tooltip,
+    }),
+  };
+};
