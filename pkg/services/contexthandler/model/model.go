@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -44,19 +45,35 @@ type ReqContext struct {
 
 // Handle handles and logs error by given status.
 func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
+	assets := getErrorAssets(cfg)
+
+	themeType := "dark"
+	appSubURL := ""
+	errTemplateName := "error"
+	if cfg != nil {
+		if theme := pref.GetThemeByID(cfg.DefaultTheme); theme != nil && theme.Type == "light" {
+			themeType = "light"
+		}
+		appSubURL = cfg.AppSubURL
+		if cfg.ErrTemplateName != "" {
+			errTemplateName = cfg.ErrTemplateName
+		}
+	}
+
 	data := struct {
 		Title     string
 		AppTitle  string
 		AppSubUrl string
 		ThemeType string
 		ErrorMsg  error
-	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
+		Assets    *errorAssets
+	}{title, "Grafana", appSubURL, themeType, nil, assets}
 
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 	}
 
-	ctx.HTML(status, cfg.ErrTemplateName, data)
+	ctx.HTML(status, errTemplateName, data)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {
