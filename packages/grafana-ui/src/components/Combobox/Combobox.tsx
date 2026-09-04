@@ -51,6 +51,13 @@ interface ComboboxStaticProps<T extends string | number>
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
 
   /**
+   * Renders custom content for each mounted option supplied through `options`.
+   * Combobox owns the option row and its interactions. Generated options use the default content.
+   * The renderer must be pure because it can run repeatedly.
+   */
+  renderOption?: (option: ComboboxOption<T>) => React.ReactNode;
+
+  /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
    * it may be better to pass in an Option with a label to display.
    */
@@ -152,6 +159,7 @@ const VIRTUAL_OVERSCAN_ITEMS = 4;
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
     options: allOptions,
+    renderOption,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
@@ -187,6 +195,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
+    customValueOption,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -453,6 +462,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             <ComboboxList
               loading={loading}
               options={filteredOptions}
+              renderOption={renderOption}
+              customValueOption={customValueOption}
               highlightedIndex={highlightedIndex}
               showFocusRing={showFocusRing}
               selectedItems={selectedItem ? [selectedItem] : []}

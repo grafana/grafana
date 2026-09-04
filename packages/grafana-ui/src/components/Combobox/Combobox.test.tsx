@@ -121,6 +121,63 @@ describe('Combobox', () => {
     expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
   });
 
+  it('renders custom content only for a bounded set of virtualized options', async () => {
+    const largeOptions: Array<ComboboxOption<string>> = Array.from({ length: 1000 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: String(index),
+    }));
+    const renderOption = jest.fn((option: ComboboxOption<string>) => <span>{option.label}</span>);
+
+    render(<Combobox options={largeOptions} value={null} onChange={onChangeHandler} renderOption={renderOption} />);
+    await user.click(screen.getByRole('combobox'));
+    await screen.findByRole('option', { name: 'Option 0' });
+
+    const renderedValues = new Set(renderOption.mock.calls.map(([option]) => option.value));
+    expect([...renderedValues]).toContain('0');
+    expect([...renderedValues]).not.toContain('999');
+    expect(renderedValues.size).toBeLessThan(50);
+  });
+
+  it('selects the source option from a custom descendant and keeps its string label in the input', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => (
+          <span>
+            Custom content for <strong data-testid={`custom-option-${option.value}`}>{option.label}</strong>
+          </span>
+        )}
+      />
+    );
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByTestId('custom-option-2'));
+
+    expect(onChangeHandler).toHaveBeenCalledTimes(1);
+    expect(onChangeHandler.mock.calls[0][0]).toBe(options[1]);
+    expect(screen.getByRole('combobox')).toHaveValue('Option 2');
+  });
+
+  it('selects an option with custom content by keyboard', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+    expect(input).toHaveValue('Option 3');
+  });
+
   it('selects value by clicking that needs scrolling', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
@@ -428,6 +485,34 @@ describe('Combobox', () => {
       await userEvent.keyboard('{Enter}'); // Select 1 as the first option
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
+    });
+
+    it('uses default content for a numeric custom-value row', async () => {
+      const numericOptions: Array<ComboboxOption<number>> = [
+        { label: 'One', value: 1 },
+        { label: 'Two', value: 2 },
+      ];
+      const renderOption = jest.fn((option: ComboboxOption<number>) => <span>Number {option.value.toFixed(2)}</span>);
+
+      render(
+        <Combobox<number>
+          options={numericOptions}
+          value={null}
+          onChange={onChangeHandler}
+          createCustomValue
+          renderOption={renderOption}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByText('Number 1.00')).toBeInTheDocument();
+
+      await user.type(input, 'custom');
+
+      expect(await screen.findByText('custom')).toBeInTheDocument();
+      expect(screen.getByText('Use custom value')).toBeInTheDocument();
+      expect(renderOption.mock.calls.map(([option]) => option.value)).toContain(1);
     });
   });
 

@@ -133,6 +133,66 @@ describe('MultiCombobox', () => {
     expect(onChange).toHaveBeenNthCalledWith(3, [{ label: 'C', value: third }]);
   });
 
+  it('keeps checkboxes and selection behavior with custom option content', async () => {
+    const options: Array<ComboboxOption<string>> = [
+      { label: 'Alpha', value: 'a' },
+      { label: 'Beta', value: 'b' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = () => {
+      const [value, setValue] = React.useState<Array<ComboboxOption<string>>>([]);
+
+      return (
+        <MultiCombobox
+          options={options}
+          value={value}
+          onChange={(selectedOptions) => {
+            setValue(selectedOptions);
+            onChange(selectedOptions);
+          }}
+          renderOption={(option) => (
+            <span>
+              Custom <strong data-testid={`custom-multi-option-${option.value}`}>{option.label}</strong>
+            </span>
+          )}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox />);
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getByTestId('combobox-option-b-checkbox')).not.toBeChecked();
+    await user.click(await screen.findByTestId('custom-multi-option-b'));
+
+    expect(onChange).toHaveBeenCalledWith([options[1]]);
+    expect(screen.getByTestId('combobox-option-b-checkbox')).toBeChecked();
+  });
+
+  it('uses default content for the numeric select-all row', async () => {
+    const numericOptions: Array<ComboboxOption<number>> = [
+      { label: 'One', value: 1 },
+      { label: 'Two', value: 2 },
+    ];
+    const renderOption = jest.fn((option: ComboboxOption<number>) => <span>Number {option.value.toFixed(2)}</span>);
+
+    render(
+      <MultiCombobox<number>
+        options={numericOptions}
+        value={[]}
+        onChange={jest.fn()}
+        enableAllOption
+        renderOption={renderOption}
+      />
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Select all')).toBeInTheDocument();
+    expect(screen.getByText('Number 1.00')).toBeInTheDocument();
+    expect(renderOption.mock.calls.map(([option]) => option.value)).toContain(1);
+  });
+
   it('should allow for options to be deselected', async () => {
     // This test ensures that our fix for async options doesn't break sync options
     const options = [
