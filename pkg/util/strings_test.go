@@ -590,3 +590,34 @@ func BenchmarkStripBOMFromStruct(b *testing.B) {
 		}
 	})
 }
+
+func TestRedactSecret(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "basic secret",
+			input: "my-secret-value-that-should-be-redacted",
+			want:  "my-...ted",
+		},
+		{
+			name:  "small secret",
+			input: "abc",
+			want:  "<redacted>",
+		},
+		{
+			name:  "secret with minimal length",
+			input: "123456789abcdefg",
+			want:  "123...efg",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RedactSecret(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
