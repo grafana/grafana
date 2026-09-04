@@ -1255,3 +1255,42 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
 }
+
+// nonWebhookRepo implements only repository.Repository (not WebhookRepository),
+// standing in for a repo build that couldn't produce a webhook-capable result.
+type nonWebhookRepo struct {
+	cfg *provisioning.Repository
+}
+
+func (r nonWebhookRepo) Config() *provisioning.Repository { return r.cfg }
+func (r nonWebhookRepo) Test(context.Context) (*provisioning.TestResults, error) {
+	panic("not needed for testing")
+}
+
+// TestProcess_CleanFinalizer_SkipsWhenNotWebhookCapable
+func TestProcess_CleanFinalizer_SkipsWhenNotWebhookCapable(t *testing.T) {
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{metrics: &metrics}
+
+	repo := nonWebhookRepo{cfg: &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+		Status:     provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{ID: 1}},
+	}}
+
+	err := f.process(t.Context(), repo, []string{repository.CleanFinalizer})
+	assert.NoError(t, err)
+}
+
+// TestProcess_CleanFinalizer_NoOpWhenNoWebhookInStatus with no webhook recorded in status there's nothing to delete, so a
+// repo that isn't webhook-capable is the normal case and must not error.
+func TestProcess_CleanFinalizer_NoOpWhenNoWebhookInStatus(t *testing.T) {
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{metrics: &metrics}
+
+	repo := nonWebhookRepo{cfg: &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+	}}
+
+	err := f.process(t.Context(), repo, []string{repository.CleanFinalizer})
+	assert.NoError(t, err)
+}
