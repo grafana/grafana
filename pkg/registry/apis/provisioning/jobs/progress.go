@@ -65,7 +65,7 @@ type jobProgressRecorder struct {
 	action              provisioning.JobAction
 }
 
-func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
+func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
 		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
