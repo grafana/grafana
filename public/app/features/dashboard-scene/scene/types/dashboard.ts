@@ -92,6 +92,14 @@ export interface DashboardPlanningState {
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
+  /**
+   * A placeholder's visualization was changed by hand.
+   *
+   * Placeholder data is shaped for the visualization it was drawn for — a single value for a stat,
+   * a series for a time series, categories for a pie — so whoever supplied that data needs to know
+   * in order to re-shape it. Core does not know where the data came from, hence the callback.
+   */
+  onPanelVisualizationChanged?: (panelKey: string, pluginId: string) => void;
 }
 
 interface DashboardScenePreferences {

@@ -30,6 +30,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { PlanVisualizationPicker } from './PlanVisualizationPicker';
 
 function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
@@ -110,6 +111,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public renderTopButton() {
+    // While planning, panel edit is refused, so the pane offers the one thing from it a plan
+    // actually needs: a different visualization.
+    if (getDashboardSceneFor(this.panel).isPlanning()) {
+      return <PlanVisualizationPicker panel={this.panel} />;
+    }
+
     return <OpenPanelEditViz panel={this.panel} />;
   }
 

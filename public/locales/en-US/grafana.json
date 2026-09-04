@@ -6522,11 +6522,13 @@
         "title": "View panel controls"
       },
       "viz-panel": {
+        "change-visualization-button": "Change visualization",
         "configure-button": "Edit visualization",
         "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
         "delete-panel-title": "Delete panel?",
         "delete-panel-yes": "Delete",
         "options": {
+          "change-visualization-tooltip": "Choose how this planned panel is drawn",
           "configure-button-tooltip": "Edit queries and visualization options",
           "description": "Description",
           "title-option": "Title",

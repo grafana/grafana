@@ -124,6 +124,9 @@ export const versionedComponents = {
     closePane: {
       '12.4.0': 'data-testid Sidebar close pane',
     },
+    changePlanVisualizationButton: {
+      '13.3.0': 'data-testid Sidebar change plan visualization',
+    },
     goBack: {
       '12.4.0': 'data-testid Sidebar go back',
     },
