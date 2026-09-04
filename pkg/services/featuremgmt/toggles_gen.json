@@ -3210,6 +3210,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.multiTenantUserPermissions",
+        "resourceVersion": "1788454129908",
+        "creationTimestamp": "2026-09-03T16:48:49Z"
+      },
+      "spec": {
+        "description": "Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1781775898347",
         "creationTimestamp": "2026-06-18T09:44:58Z"

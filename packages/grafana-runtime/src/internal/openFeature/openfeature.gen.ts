@@ -91,6 +91,8 @@ export const FlagKeys = {
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
+  /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
+  GrafanaMultiTenantUserPermissions: "grafana.multiTenantUserPermissions",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Enables the new text panel */
@@ -626,6 +628,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantNavTree", false, options).value;
+};
+
+/**
+ * Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantUserPermissions`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantUserPermissions", false, options).value;
 };
 
 /**
