@@ -74,3 +74,25 @@ func TestLegacyDatasourceAction(t *testing.T) {
 		assert.Equal(t, "datasources.id:read", a)
 	})
 }
+
+func TestIsUnmappedLegacyDatasourceAction(t *testing.T) {
+	tests := []struct {
+		name   string
+		action string
+		want   bool
+	}{
+		{name: "unmapped nested resource", action: "datasources.caching:read", want: true},
+		{name: "unmapped datasource verb", action: "datasources:custom", want: true},
+		{name: "mapped datasource verb", action: "datasources:read", want: false},
+		{name: "mapped permissions verb", action: "datasources.permissions:read", want: false},
+		{name: "different resource", action: "dashboards:read", want: false},
+		{name: "missing verb", action: "datasources:", want: false},
+		{name: "k8s action", action: "loki.datasource.grafana.app/datasources:get", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, IsUnmappedLegacyDatasourceAction(tt.action))
+		})
+	}
+}
