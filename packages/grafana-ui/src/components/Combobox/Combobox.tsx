@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
@@ -15,16 +14,11 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import {
-  getComboboxStyles,
-  MENU_OPTION_HEIGHT,
-  MENU_OPTION_HEIGHT_DESCRIPTION,
-  MENU_PADDING,
-} from './getComboboxStyles';
+import { getComboboxStyles } from './getComboboxStyles';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup, isKeyboardEvent } from './utils';
+import { isKeyboardEvent } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -146,8 +140,6 @@ export type AutoSizeConditionals =
 export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 const noop = () => {};
-
-const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 /**
  * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
@@ -271,29 +263,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     [isOpenProp, onIsOpenChangeProp, updateOptions, resetSearch]
   );
 
-  const rowVirtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      const hasGroup = 'group' in filteredOptions[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
-    },
-    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-    paddingStart: MENU_PADDING,
-    paddingEnd: MENU_PADDING,
-  });
-
   const {
     isOpen,
     highlightedIndex,
@@ -342,11 +311,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     onIsOpenChange: onIsOpenChangeHandler,
 
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       setShowFocusRing(isKeyboardEvent(type));
 
