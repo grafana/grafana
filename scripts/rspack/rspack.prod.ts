@@ -4,6 +4,7 @@ import { merge } from 'webpack-merge';
 
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { fullStatsOptions } from './plugins/webpackStatsCompat.ts';
 import common, { type Env } from './rspack.common.ts';
 import swaggerConfig from './rspack.swagger.ts';
 
@@ -67,6 +68,12 @@ export default (env: Env = {}) => {
       },
     ],
   };
+
+  // `rspack build --json` serialises `compiler.options.stats`. yarn stats:rspack asks for the
+  // whole graph; a normal build leaves it off so the console output stays short.
+  if (env.fullStats) {
+    prodConfig.stats = fullStatsOptions;
+  }
 
   const mergedProdConfig = merge(common(env), prodConfig);
   return Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });
