@@ -12,6 +12,7 @@ keywords:
   - resources
   - queries
   - traces
+  - health models
   - application insights
 labels:
   products:
@@ -31,7 +32,7 @@ Grafana provides a query editor for the Azure Monitor data source, which is loca
 This document explains querying specific to the Azure Monitor data source.
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
+The Azure Monitor data source can retrieve data from Azure Monitor Metrics and Logs, the Azure Resource Graph, Application Insights Traces, and Azure Health Models. Each source has its own specialized editor.
 
 ## Before you begin
 
@@ -49,14 +50,52 @@ If you're new to Azure Monitor, here are some key terms used throughout this doc
 | **Application Insights**       | Azure's application performance monitoring (APM) service. It collects telemetry data like requests, exceptions, and traces from your applications.                                                                                                                                                                                        |
 | **Metrics vs. Logs**           | **Metrics** are lightweight numeric values collected at regular intervals (for example, CPU percentage). **Logs** are detailed records of events with varying schemas (for example, request logs, error messages). Metrics use a visual query builder; Logs require KQL.                                                                  |
 
-## Choose a query editor mode
+## Choose a service
 
-The Azure Monitor data source's query editor has four modes depending on which Azure service you want to query:
+The Azure Monitor data source provides five service options:
 
 - **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
 - **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
 - **Traces** for [Application Insights Traces](#query-application-insights-traces)
 - **Azure Resource Graph** for [Azure Resource Graph](#query-azure-resource-graph)
+- **Azure Health Models** for [Azure Health Models](#view-azure-health-models)
+
+## View Azure Health Models
+
+The Azure Health Models editor loads data directly from the `Microsoft.CloudHealth` REST API. It doesn't require KQL or another query language.
+
+To add a Health Model to a dashboard:
+
+1. In a Grafana panel, select the **Azure Monitor** data source.
+1. From the **Service** menu, select **Azure Health Models**.
+1. Select the Azure subscription containing the Health Model.
+1. Select the Health Model.
+1. Choose a **Format**.
+
+Grafana retrieves the selected Health Model, its entities, and its relationships using API version `2026-09-01-preview`. The configured Azure Monitor data source identity must have permission to read those resources.
+
+### Formats
+
+**Health Model Entities** returns one row per entity and is the default. It shows health as a point-in-time snapshot at the end of the dashboard time range. Grafana ranks **Table** as the preferred visualization for it. Alongside the entity name and a color-coded health state, each row carries the health telemetry reported for that entity:
+
+| Field                                            | Description                                                                                                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                           | The entity's resource name. Relationships reference entities by this name, so it is the key to join on. Hidden by default.                                 |
+| `displayName`                                    | The entity's friendly name. Not guaranteed to be unique within a model.                                                                                    |
+| `healthState`                                    | The health state at the end of the dashboard time range, color-coded.                                                                                      |
+| `healthStateValue`                               | The same state as an enum, so panels that need a number, such as **Stat**, **Gauge**, **Bar gauge**, and **Pie chart**, can display it. Hidden by default. |
+| `signalsHealthy`, `signalsTotal`                 | How many of the entity's signals are healthy.                                                                                                              |
+| `availabilityState`                              | Azure Resource Health availability, when the entity is backed by an Azure resource.                                                                        |
+| `alertSeverities`                                | Severities of the alerts configured on the entity.                                                                                                         |
+| `impact`, `healthObjective`, `provisioningState` | The entity's configured impact, health objective, and provisioning state.                                                                                  |
+
+**Health Model Graph** returns nodes and edges for the **Node graph** panel. It shows health as a point-in-time snapshot at the end of the dashboard time range, drawing each entity coloured by its health state and connected to its dependencies.
+
+**Health Model Entity History** returns one stepwise series per entity using the entity history endpoint. Each series covers the full dashboard time range and maps health states to stable enum values: `Healthy` is `0`, `Degraded` is `1`, `Unhealthy` is `2`, `Unknown` is `3`, and `Deleted` is `4`. Grafana ranks **Time series** as the preferred visualization.
+
+{{< admonition type="note" >}}
+The **Health Model Entities** and **Health Model Graph** formats use the end of the dashboard time range as a point-in-time snapshot. Select **Health Model Entity History** to retrieve health-state changes across the selected range.
+{{< /admonition >}}
 
 ## Query Azure Monitor Metrics
 

@@ -164,6 +164,20 @@ describe('Azure Monitor QueryEditor', () => {
     );
   });
 
+  it('renders the Health Models editor when the service is Azure Health Models', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureHealthModels,
+    };
+
+    render(<QueryEditor query={mockQuery} datasource={mockDatasource} onChange={() => {}} onRunQuery={() => {}} />);
+
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.healthModelsQueryEditor.container.input)
+    ).toBeInTheDocument();
+  });
+
   it('changes the query type when selected', async () => {
     const mockDatasource = createMockDatasource();
     const mockQuery = createMockQuery();

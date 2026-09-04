@@ -44,6 +44,9 @@ export const QueryHeader = ({
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
     { value: AzureQueryType.AzureTraces, label: 'Traces' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
+    ...(app !== CoreApp.UnifiedAlerting && app !== CoreApp.CloudAlerting
+      ? [{ value: AzureQueryType.AzureHealthModels, label: 'Azure Health Models' }]
+      : []),
   ];
 
   const handleChange = useCallback(

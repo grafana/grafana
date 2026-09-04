@@ -75,6 +75,36 @@ describe('Azure Monitor QueryHeader', () => {
     );
   });
 
+  it('offers Azure Health Models as a dashboard service', async () => {
+    const query = createMockQuery();
+    const onQueryChange = jest.fn();
+
+    renderComponent(query, { app: CoreApp.Dashboard, onQueryChange });
+
+    const serviceSelect = await screen.findByLabelText(/Service/i);
+    await selectOptionInTest(serviceSelect, 'Azure Health Models');
+
+    expect(onQueryChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryType: AzureQueryType.AzureHealthModels,
+        azureHealthModels: query.azureHealthModels,
+      })
+    );
+  });
+
+  it('places Azure Health Models immediately after Azure Resource Graph', async () => {
+    const user = userEvent.setup();
+    const query = createMockQuery();
+
+    renderComponent(query, { app: CoreApp.Dashboard });
+
+    await user.click(await screen.findByLabelText(/Service/i));
+    const options = await screen.findAllByRole('option');
+    const optionLabels = options.map((option) => option.textContent);
+
+    expect(optionLabels.indexOf('Azure Health Models')).toBe(optionLabels.indexOf('Azure Resource Graph') + 1);
+  });
+
   it('initializes logs editor mode to Raw when a raw query exists and builder is enabled', async () => {
     config.featureToggles.azureMonitorLogsBuilderEditor = true;
 
