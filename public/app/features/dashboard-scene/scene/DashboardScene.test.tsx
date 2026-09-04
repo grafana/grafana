@@ -43,6 +43,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -3590,6 +3591,44 @@ describe('planning mode', () => {
     scene.onShowAddLibraryPanelDrawer();
 
     expect(scene.state.overlay).toBeUndefined();
+  });
+
+  it('refuses to open the panel editor while planning, so a placeholder cannot be given a query', async () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const panel = scene.state.body.getVizPanels()[0];
+
+    await openPanelEditor(scene, panel);
+
+    expect(scene.state.editPanel).toBeUndefined();
+  });
+
+  it('opens the panel editor again once the plan is built', async () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ planning });
+    const panel = scene.state.body.getVizPanels()[0];
+    await openPanelEditor(scene, panel);
+    expect(scene.state.editPanel).toBeUndefined();
+
+    scene.setState({ planning: undefined });
+    await openPanelEditor(scene, panel);
+
+    expect(scene.state.editPanel).toBeDefined();
+  });
+
+  it('answers the capability gate as always-allowed outside planning', () => {
+    const scene = buildTestScene();
+
+    expect(scene.isPlanningActionAllowed('edit-panel')).toBe(true);
+    expect(scene.isPlanningActionAllowed('save-dashboard')).toBe(true);
+
+    scene.setState({ planning });
+
+    expect(scene.isPlanningActionAllowed('edit-panel')).toBe(false);
+    expect(scene.isPlanningActionAllowed('save-dashboard')).toBe(false);
+    expect(scene.isPlanningActionAllowed('change-visualization')).toBe(true);
   });
 
   it('creates query-less panels while planning', () => {

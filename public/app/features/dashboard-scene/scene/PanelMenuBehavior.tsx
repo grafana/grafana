@@ -51,6 +51,44 @@ import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
  */
+/**
+ * The panel menu for a placeholder on an unbuilt plan.
+ *
+ * Deliberately short: the actions that make sense are the ones that change the *plan* — how the
+ * panel is drawn, whether there are more or fewer of them — not the ones that interrogate data the
+ * panel does not have yet.
+ */
+function buildPlanningMenuItems(panel: VizPanel, dashboard: DashboardScene): PanelMenuItem[] {
+  const items: PanelMenuItem[] = [];
+  const panelId = getPanelIdForVizPanel(panel);
+
+  if (dashboard.isPlanningActionAllowed('duplicate-panel')) {
+    items.push({
+      text: t('panel.header-menu.duplicate', `Duplicate`),
+      iconClassName: 'copy',
+      shortcut: 'p d',
+      onClick: () => {
+        dashboard.duplicatePanel(panel);
+        DashboardInteractions.panelActionClicked('duplicate', panelId, 'panel');
+      },
+    });
+  }
+
+  if (dashboard.isPlanningActionAllowed('remove-panel')) {
+    items.push({
+      text: t('panel.header-menu.remove', `Remove`),
+      iconClassName: 'trash-alt',
+      shortcut: 'p r',
+      onClick: () => {
+        onRemovePanel(dashboard, panel);
+        DashboardInteractions.panelActionClicked('delete', panelId, 'panel');
+      },
+    });
+  }
+
+  return items;
+}
+
 export function panelMenuBehavior(menu: VizPanelMenu) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
@@ -70,6 +108,15 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       if (exploreMenuItem) {
         menu.setState({ items: [exploreMenuItem] });
       }
+      return;
+    }
+
+    // A plan preview gets its own menu rather than the dashboard's minus exclusions. Most of what
+    // follows speaks about a panel with a query behind it — inspect, alerting, explore, sharing —
+    // and a placeholder has none, so listing them and disabling them one by one would be both more
+    // code and a worse menu. The policy in planningPolicy.ts decides what belongs.
+    if (dashboard.isPlanning()) {
+      menu.setState({ items: buildPlanningMenuItems(panel, dashboard) });
       return;
     }
 

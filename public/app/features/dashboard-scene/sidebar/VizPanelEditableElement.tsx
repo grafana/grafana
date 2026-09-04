@@ -169,6 +169,13 @@ type PanelActionSource = 'edit_pane' | 'edit_popover';
 type OpenPanelEditVizProps = { panel: VizPanel };
 
 const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
+  // This button is a link into panel edit, which a plan preview refuses — rendering it would leave
+  // a control that visibly does nothing. What it offers (queries and visualization options) is not
+  // what a plan panel needs anyway; the plan's own fields are edited elsewhere in this pane.
+  if (!getDashboardSceneFor(panel).isPlanningActionAllowed('edit-panel')) {
+    return null;
+  }
+
   return (
     <Button
       onClick={() => {

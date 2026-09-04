@@ -11,6 +11,14 @@ import { type DashboardScene } from '../scene/DashboardScene';
  * by the time this returns.
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
+  // Enforced here rather than only on the menu item that opens it: panel edit is reachable by URL
+  // (`?editPanel=<id>`) and by keyboard, and on a plan preview it is not merely useless but
+  // destructive — the editor supplies a default query for a panel that has none, turning a
+  // placeholder into a live-querying panel. Every route in passes through this function.
+  if (!dashboard.isPlanningActionAllowed('edit-panel')) {
+    return;
+  }
+
   const { buildPanelEditScene } = await import(/* webpackChunkName: "panel-edit" */ './PanelEditor');
   dashboard.setState({ editPanel: buildPanelEditScene(panel, isNewPanel) });
 }

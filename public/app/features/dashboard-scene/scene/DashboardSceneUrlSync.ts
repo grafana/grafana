@@ -204,6 +204,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       return;
     }
 
+    // `openPanelEditor` refuses this too, but releasing here as well is what keeps the url honest:
+    // otherwise `?editPanel=<id>` would sit in the address bar describing a pane that never opened.
+    if (!this._scene.isPlanningActionAllowed('edit-panel')) {
+      this._releaseEditPanel();
+      return;
+    }
+
     const panel = findEditPanel(this._scene, panelId);
     if (!panel) {
       return;

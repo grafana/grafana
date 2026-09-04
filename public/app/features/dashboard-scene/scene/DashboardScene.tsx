@@ -124,6 +124,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
+import { isActionAllowedWhilePlanning, type PlanningAction } from './planningPolicy';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -756,7 +757,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // An unbuilt plan is a preview, not the user's work. Every save entry point funnels through
     // here (toolbar, the mod+s keybinding, the exit-edit-mode confirm), so guarding this one method
     // is what keeps the planning banner's promise that saving isn't on offer yet.
-    if (this.isPlanning()) {
+    if (!this.isPlanningActionAllowed('save-dashboard')) {
       return;
     }
 
@@ -1165,7 +1166,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public onOpenSettings = () => {
     // Settings edit the dashboard, which does not exist yet while a plan is only previewed.
     // Guards the toolbar entry point and the `d s` keybinding alike.
-    if (this.isPlanning()) {
+    if (!this.isPlanningActionAllowed('dashboard-settings')) {
       return;
     }
 
@@ -1182,10 +1183,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this.state.planning !== undefined;
   }
 
+  /**
+   * Whether `action` is available on this dashboard right now.
+   *
+   * Always true unless a plan is being previewed, so callers can ask this instead of checking for
+   * planning themselves. The policy lives in `planningPolicy.ts`; this is only the scene-aware
+   * front door to it.
+   */
+  public isPlanningActionAllowed(action: PlanningAction): boolean {
+    return !this.isPlanning() || isActionAllowedWhilePlanning(action);
+  }
+
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
     // A library panel carries its own queries, so unlike a blank panel it cannot be added in a
     // query-less form. Adding one to a plan preview is disallowed rather than made inert.
-    if (this.isPlanning()) {
+    if (!this.isPlanningActionAllowed('add-library-panel')) {
       return;
     }
 
