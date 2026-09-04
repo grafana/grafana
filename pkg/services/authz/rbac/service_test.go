@@ -3479,6 +3479,8 @@ type fakeStore struct {
 	userPermissions []accesscontrol.Permission
 	err             bool
 	calls           int
+	// folderListCalls counts only ListFolders, since calls counts every store call.
+	folderListCalls int
 }
 
 func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
@@ -3525,6 +3527,7 @@ func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceIn
 		return nil, fmt.Errorf("namespace mismatch")
 	}
 	f.calls++
+	f.folderListCalls++
 	if f.err {
 		return nil, fmt.Errorf("store error")
 	}
@@ -4750,4 +4753,54 @@ func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns typ
 		t.folderPermCalls++
 	}
 	return t.inner.GetUserPermissions(ctx, ns, query)
+}
+
+// Checking a folder that is missing from the tree rebuilds the tree, and a batch can
+// be mostly missing folders: a trash listing names the folders things were deleted
+// from. Rebuilding per item lists every folder in the namespace once per item.
+func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
+	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+		},
+		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+
+	s := setupService()
+	ctx := types.WithAuthInfo(context.Background(), callingService)
+
+	// The tree holds one folder, so every check below asks about a folder missing
+	// from it.
+	fStore := &fakeStore{
+		userID:          &store.UserIdentifiers{UID: "test-uid", ID: 1},
+		userPermissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "folders:uid:known"}},
+		folders:         []store.Folder{{UID: "known"}},
+	}
+	s.store = fStore
+	s.permissionStore = fStore
+	s.folderStore = fStore
+
+	checks := make([]*authzv1.BatchCheckItem, 0, 20)
+	for i := range 20 {
+		checks = append(checks, &authzv1.BatchCheckItem{
+			CorrelationId: fmt.Sprintf("check%d", i),
+			Group:         "dashboard.grafana.app",
+			Resource:      "dashboards",
+			Verb:          "get",
+			Name:          fmt.Sprintf("dash%d", i),
+			Folder:        fmt.Sprintf("missing-%d", i),
+		})
+	}
+
+	resp, err := s.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+		Namespace: "org-12",
+		Subject:   "user:test-uid",
+		Checks:    checks,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, len(checks))
+
+	assert.LessOrEqual(t, fStore.folderListCalls, 2,
+		"the folder list is fetched once and rebuilt at most once, not once per item")
 }
