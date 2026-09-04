@@ -239,19 +239,11 @@ export class LiveDataStream<T = unknown> {
 
     const shouldSendLastPacketOnly = options?.buffer?.action === StreamingFrameAction.Replace;
 
-    const mathTransform = options.mathExpression
-      ? createLiveMathTransform(
-          options.mathExpression,
-          this.frameBuffer.fields
-            .map((field, index) => (field.type === 'number' ? index : -1))
-            .filter((index) => index >= 0)
-        )
-      : undefined;
-
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
     const fieldFilterPredicate = dataNeedsFiltering ? ({ name }: Field) => fieldsNamesFilter.includes(name) : undefined;
     let matchingFieldIndexes: number[] | undefined = undefined;
+    let mathTransform: ReturnType<typeof createLiveMathTransform> | undefined;
 
     const getFullFrameResponseData = <T>(
       messages: InternalStreamMessage[],
@@ -260,6 +252,14 @@ export class LiveDataStream<T = unknown> {
       matchingFieldIndexes = fieldFilterPredicate
         ? this.frameBuffer.getMatchingFieldIndexes(fieldFilterPredicate)
         : undefined;
+
+      if (options.mathExpression) {
+        const sourceFieldIndexes = matchingFieldIndexes ?? this.frameBuffer.fields.map((_, index) => index);
+        const transformedFieldIndexes = sourceFieldIndexes
+          .map((fieldIndex, filteredIndex) => (this.frameBuffer.fields[fieldIndex]?.type === 'number' ? filteredIndex : -1))
+          .filter((index) => index >= 0);
+        mathTransform = createLiveMathTransform(options.mathExpression, transformedFieldIndexes);
+      }
 
       if (!shouldSendLastPacketOnly) {
         return {
@@ -333,8 +333,8 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
-      const transformedValues = mathTransform?.values(filteredValues) ?? filteredValues;
+      const transformedValues = mathTransform?.values(values) ?? values;
+      const filteredValues = matchingFieldIndexes ? transformedValues.filter((v, i) => matchingFieldIndexes?.includes(i)) : transformedValues;
 
       return {
         key: subKey,
@@ -342,7 +342,7 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.NewValuesSameSchema,
-            values: transformedValues,
+            values: filteredValues,
           },
         ],
       };
