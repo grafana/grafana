@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { type AlignedData } from 'uplot';
 
 import { join } from '../transformations/transformers/joinDataFrames';
@@ -8,6 +9,7 @@ import { renderLegendFormat } from '../utils/legend';
 
 import { type DataFrameJSON, decodeFieldValueEntities, type FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './guessFieldType';
+
 import { toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
@@ -42,6 +44,7 @@ export interface StreamPacketInfo {
   action: StreamingFrameAction;
   length: number;
   schemaChanged: boolean;
+  frameChanged: boolean;
 }
 
 const PROM_STYLE_METRIC_LABEL = '__name__';
@@ -85,6 +88,7 @@ export class StreamingDataFrame implements DataFrame {
   private labels: Set<string> = new Set();
   readonly packetInfo: StreamPacketInfo = {
     schemaChanged: true,
+    frameChanged: true,
     number: 0,
     action: StreamingFrameAction.Replace,
     length: 0,
@@ -156,6 +160,7 @@ export class StreamingDataFrame implements DataFrame {
     this.packetInfo.number = serialized.packetInfo.number;
     this.packetInfo.action = StreamingFrameAction.Replace;
     this.packetInfo.schemaChanged = true;
+    this.packetInfo.frameChanged = true;
     this.fields = serialized.fields.map((f) => ({
       ...f,
       type: f.type ?? FieldType.other,
@@ -218,6 +223,7 @@ export class StreamingDataFrame implements DataFrame {
     this.packetInfo.number++;
     this.packetInfo.length = 0;
     this.packetInfo.schemaChanged = false;
+    this.packetInfo.frameChanged = false;
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -236,11 +242,17 @@ export class StreamingDataFrame implements DataFrame {
 
       this.refId = schema.refId;
       if (schema.meta) {
+        if (!isEqual(this.meta, schema.meta)) {
+          this.packetInfo.frameChanged = true;
+        }
         this.meta = { ...schema.meta };
       }
 
       const { displayNameFormat } = this.options;
       if (hasSameStructure(this.schemaFields, niceSchemaFields)) {
+        if (!isEqual(this.schemaFields, niceSchemaFields)) {
+          this.packetInfo.frameChanged = true;
+        }
         const len = niceSchemaFields.length;
         this.fields.forEach((f, idx) => {
           const sf = niceSchemaFields[idx % len];
@@ -381,6 +393,7 @@ export class StreamingDataFrame implements DataFrame {
     this.packetInfo.number++;
     this.packetInfo.length = values[0].length;
     this.packetInfo.schemaChanged = false;
+    this.packetInfo.frameChanged = false;
 
     if (this.options.action === StreamingFrameAction.Append) {
       circPush(
