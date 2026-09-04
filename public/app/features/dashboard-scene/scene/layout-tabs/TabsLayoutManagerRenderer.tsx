@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
 
@@ -22,7 +23,8 @@ import { TabItemRepeater } from './TabItemRepeater';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const layoutControlsStyles = useStyles2(getLayoutControlsStyles);
 
   const { tabs, key, placeholder, isDropTarget } = model.useState();
@@ -32,6 +34,11 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { isEditing } = dashboard.useState();
   const { hasCopiedTab } = useClipboardState();
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
+  // Only the dashboard's root layout gets the sticky tab bar. Any nested tabs layout - whether
+  // directly in a tab (forbidden by the product anyway) or reached through one or more rows, e.g.
+  // Dashboard > Rows > Row > Tabs - would stick at the same `top: 0` and either overlap an
+  // ancestor tab bar or stay pinned to the top of the viewport well past the row it belongs to.
+  const isTopLevelLayout = model.parent === dashboard;
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
 
@@ -98,7 +105,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   return (
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
-      <TabsBar className={styles.tabsBar}>
+      <TabsBar className={cx(styles.tabsBar, { [styles.tabsBarSticky]: isTopLevelLayout })}>
         <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
           <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
             <div className={styles.tabsScrollArea}>
@@ -217,7 +224,7 @@ function TabWrapper({ tab, manager }: { tab: TabItem; manager: TabsLayoutManager
   return <tab.Component model={tab} key={tab.state.key!} />;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   // Single source of truth for the fade inset. Used in both scroll-padding
   // (read back by scrollTabIntoView via getComputedStyle) and mask-image.
   const fadeInset = theme.spacing(6);
@@ -230,6 +237,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     tabsBar: css({
       ...dashboardCanvasAddButtonHoverStyles,
+    }),
+    // Keeps the tab strip reachable while a tall tab's panels scroll past it (WCAG 3.2.3
+    // Consistent Navigation), matching the dashboard controls bar's sticky behavior in
+    // DashboardControlsChrome. `top: 0` sticks it to the top of the dashboard's own scroll
+    // container (see scrollContainer in DashboardSidebarSplitter) rather than the viewport,
+    // since that's the nearest scrolling ancestor. Only applied to the dashboard's root layout
+    // (see isTopLevelLayout) — a nested tabs layout would stick at the same offset, overlapping
+    // an ancestor tab bar or staying pinned well past the row/tab it actually belongs to.
+    tabsBarSticky: css({
+      position: 'sticky',
+      top: 0,
+      // Panel chrome (e.g. hover controls) commonly sits at zIndex 1 within the canvas, so match
+      // DashboardControlsChrome's baseline zIndex to make sure this paints above panel content
+      // scrolling underneath it, not just the DOM order it happens to have.
+      zIndex: 2,
+      background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
     }),
     tabsRow: css({
       display: 'flex',
