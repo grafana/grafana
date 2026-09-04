@@ -23,6 +23,9 @@ const VIRTUAL_OVERSCAN_ITEMS = 4;
 
 interface ComboboxListProps<T extends string | number> {
   options: Array<ComboboxOption<T>>;
+  renderOption?: (option: ComboboxOption<T>) => React.ReactNode;
+  customValueOption?: ComboboxOption<T>;
+  allOption?: ComboboxOption<T>;
   highlightedIndex: number | null;
   /** Whether the highlighted option should show a focus ring, rather than just the muted highlight */
   showFocusRing?: boolean;
@@ -38,6 +41,9 @@ interface ComboboxListProps<T extends string | number> {
 
 export const ComboboxList = <T extends string | number>({
   options,
+  renderOption,
+  customValueOption,
+  allOption,
   highlightedIndex,
   showFocusRing = false,
   selectedItems = [],
@@ -170,12 +176,18 @@ export const ComboboxList = <T extends string | number>({
                 )}
 
                 <div className={styles.optionBody}>
-                  <Stack direction="row" alignItems="center">
-                    {item.icon && <Icon name={item.icon} />}
-                    <div className={styles.optionLabel}>{item.label ?? item.value}</div>
-                  </Stack>
+                  {renderOption && item !== customValueOption && item !== allOption ? (
+                    renderOption(item)
+                  ) : (
+                    <>
+                      <Stack direction="row" alignItems="center">
+                        {item.icon && <Icon name={item.icon} />}
+                        <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                      </Stack>
 
-                  {item.description && <div className={styles.optionDescription}>{item.description}</div>}
+                      {item.description && <div className={styles.optionDescription}>{item.description}</div>}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
