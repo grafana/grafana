@@ -211,7 +211,11 @@ func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
 	if ng.clientGenerator == nil {
 		return nil
 	}
-	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
+	return schedule.NewK8sRuleSequenceStore(
+		ng.clientGenerator,
+		schedule.RuleSequenceNamespace(ng.Cfg),
+		log.New("ngalert.rulesequence.store"),
+	)
 }
 
 func (ng *AlertNG) init() error {
