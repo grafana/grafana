@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type Meta } from '@storybook/react-webpack5';
+import { type Meta } from '@storybook/react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { StoryExample } from '../../utils/storybook/StoryExample';
