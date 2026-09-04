@@ -10,7 +10,6 @@ import (
 	"math"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
-	gocache "github.com/patrickmn/go-cache"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
@@ -46,8 +44,6 @@ func mustTemplate(filename string) *template.Template {
 
 const (
 	dataSection = kvpkg.DataSection
-	// cache
-	groupResourcesCacheKey = "group-resources"
 	// batch operations
 	dataBatchSize = 50 // default batch size for BatchGet operations
 	// keyPageSize is the number of raw keys fetched per key-scan page.
@@ -57,7 +53,6 @@ const (
 // dataStore is a data store that uses a KV store to store data.
 type dataStore struct {
 	kv            KV
-	cache         *gocache.Cache
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 	metrics       *kvBackendMetrics
 }
@@ -69,7 +64,6 @@ type dataImportBatchWriter interface {
 func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
 	ds := &dataStore{
 		kv:      kv,
-		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
 		metrics: metrics,
 	}
 
@@ -916,20 +910,10 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 // getGroupResources returns all unique group/resource combinations in the data store.
 // It efficiently discovers these by using the key ordering and PrefixRangeEnd to jump
 // between different group/resource prefixes without iterating through all keys.
-// Results are cached to improve performance.
 func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, error) {
 	ctx, span := tracer.Start(ctx, "resource.dataStore.getGroupResources")
 	defer span.End()
 
-	// Check cache first
-	if cached, found := d.cache.Get(groupResourcesCacheKey); found {
-		if cachedResults, ok := cached.([]GroupResource); ok {
-			span.SetAttributes(attribute.Bool("cacheHit", true))
-			return cachedResults, nil
-		}
-	}
-
-	// Cache miss or invalid data, compute the results
 	results := make([]GroupResource, 0)
 	seenGroupResources := make(map[string]bool) // "group/resource" -> seen
 
@@ -986,9 +970,6 @@ func (d *dataStore) getGroupResources(ctx context.Context) ([]GroupResource, err
 
 		startKey = nextStartKey
 	}
-
-	// Cache the results using the default expiration (1 hour)
-	d.cache.Set(groupResourcesCacheKey, results, gocache.DefaultExpiration)
 
 	return results, nil
 }
