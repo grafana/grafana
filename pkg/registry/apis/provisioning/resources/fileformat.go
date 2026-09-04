@@ -38,6 +38,10 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	// Strip BOMs from file data before parsing
 	cleanData := util.StripBOMFromBytes(info.Data)
 
+	if len(cleanData) == 0 {
+		return nil, nil, "", ErrUnableToReadResourceBytes
+	}
+
 	// Try parsing as JSON
 	if cleanData[0] == '{' {
 		err := json.Unmarshal(cleanData, &value)
