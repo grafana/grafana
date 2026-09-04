@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { type PropsWithChildren, type ReactElement, useEffect, useRef, useState } from 'react';
 
 import {
@@ -226,6 +226,74 @@ describe('QueryEditorRenderer', () => {
 
     view.unmount();
     portalTarget.remove();
+  });
+
+  it('does not render an adapter registered for a previous query or datasource', async () => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true });
+
+    const createAdapter = (): QueryEditorCoauthoringAdapterV1 => {
+      const snapshot = { mode: 'hidden' } as const;
+      return {
+        getSnapshot: jest.fn(() => snapshot),
+        subscribe: () => () => undefined,
+        invoke: jest.fn(),
+        readInvocation: jest.fn(),
+        prepareProposal: jest.fn(),
+        dismiss: jest.fn(),
+      };
+    };
+    const adapterA = createAdapter();
+    const adapterB = createAdapter();
+
+    function CapabilityQueryEditor({
+      query,
+      unstable_queryEditorCoauthoringV1,
+    }: {
+      query: DataQuery;
+      unstable_queryEditorCoauthoringV1?: QueryEditorCoauthoringRegistrationV1;
+    }) {
+      const adapter = query.refId === 'A' ? adapterA : adapterB;
+      useEffect(
+        () => unstable_queryEditorCoauthoringV1?.register(adapter),
+        [adapter, unstable_queryEditorCoauthoringV1]
+      );
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    const prometheusSettings = { ...ds1SettingsMock, uid: 'prometheus-1', type: 'prometheus' };
+    const prometheusData = {
+      datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }, prometheusSettings),
+      dsSettings: prometheusSettings,
+    };
+    const otherSettings = { ...ds1SettingsMock, uid: 'other-1', type: 'other' };
+    const otherData = {
+      datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }, otherSettings),
+      dsSettings: otherSettings,
+    };
+    const panelProps = {
+      queryDsLoading: false,
+      queries: [queryA, queryB],
+      updateQuery: jest.fn(),
+      addQuery: jest.fn(),
+      runQueries: jest.fn(),
+      startQueryPreview: jest.fn(),
+    };
+
+    const view = renderWithOpenFeature(
+      <QueryEditorPanel {...panelProps} query={queryA} queryDsData={prometheusData} />
+    );
+    await waitFor(() => expect(adapterA.getSnapshot).toHaveBeenCalled());
+    jest.mocked(adapterA.getSnapshot).mockClear();
+
+    view.rerender(<QueryEditorPanel {...panelProps} query={queryB} queryDsData={prometheusData} />);
+
+    expect(adapterA.getSnapshot).not.toHaveBeenCalled();
+    await waitFor(() => expect(adapterB.getSnapshot).toHaveBeenCalled());
+    jest.mocked(adapterB.getSnapshot).mockClear();
+
+    view.rerender(<QueryEditorPanel {...panelProps} query={queryB} queryDsData={otherData} />);
+
+    expect(adapterB.getSnapshot).not.toHaveBeenCalled();
   });
 
   it('synchronizes only a baseline that differs from the current query', () => {
