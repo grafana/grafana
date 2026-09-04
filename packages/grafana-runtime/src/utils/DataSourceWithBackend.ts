@@ -126,7 +126,7 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
 
 const liveMathReferenceIds = (expression: string): string[] => {
   const refs = new Set<string>();
-  const pattern = /\\$(?:\\{([^}]+)\\}|([A-Za-z_][A-Za-z0-9_]*))/g;
+  const pattern = /\$(?:\{([^}]+)\}|([A-Za-z_][A-Za-z0-9_]*))/g;
 
   for (const match of expression.matchAll(pattern)) {
     refs.add(match[1] ?? match[2]);
