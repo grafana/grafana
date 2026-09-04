@@ -1,0 +1,178 @@
+{
+  "uid": "demo-observability",
+  "title": "Demo: Logs, traces & dependencies",
+  "tags": ["demo", "dummy", "o11y"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "fiscalYearStartMonth": 0,
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "templating": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "Application logs",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 12, "w": 14, "x": 0, "y": 0 },
+      "options": {
+        "dedupStrategy": "none",
+        "enableInfiniteScrolling": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "logs",
+          "alias": "checkout-api",
+          "lines": 80,
+          "levelColumn": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "piechart",
+      "title": "Error mix (dummy)",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 12, "w": 10, "x": 14, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "values": ["value", "percent"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "errors",
+          "labels": "reason=$seriesIndex",
+          "min": 2,
+          "max": 40,
+          "seriesCount": 5
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "US region traffic",
+      "description": "TestData USA scenario — dummy regional series",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "pointSize": 5,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": { "type": "linear" },
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" },
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean"], "displayMode": "list", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "usa",
+          "usa": { "mode": "timeseries", "period": "10m", "fields": ["foo"], "states": ["CA", "NY", "TX", "WA", "FL"] }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Live stream (dummy)",
+      "description": "Streaming TestData client — updates in real time",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "pointSize": 5,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": { "type": "linear" },
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" },
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "streaming_client",
+          "stream": { "noise": 8, "speed": 150, "spread": 18, "type": "signal", "bands": 2 }
+        }
+      ]
+    }
+  ]
+}
