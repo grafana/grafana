@@ -100,14 +100,14 @@ The data is converted as follows:
 ### Histogram options
 
 Use the following options to refine your histogram visualization.
-When the query data is already a histogram frame, the bucket options are read-only and Grafana shows frequencies calculated by the query.
+When the query data is already a histogram frame, the bucket options are hidden and Grafana shows frequencies calculated by the query.
 
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
 | Bucket count | Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30. |
-| Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range). |
+| Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing, calculated from the data range and the **Bucket count**. |
 | [Bucket offset](#bucket-offset) | If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. |
 | Combine series | This will merge all series and fields into a combined histogram. |
 | Stacking | Controls how multiple series are displayed in the histogram. Choose from the following:<ul><li>**Off** - Series are not stacked, but instead shown side by side.</li><li>**Normal** - Series are stacked on top of each other, showing cumulative values.</li><li>**100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.</li></ul> |

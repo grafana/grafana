@@ -4,7 +4,7 @@ title: Connect null values
 
 ### Connect null values
 
-Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected.
+Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected. This is a field option and can be set in field defaults or overrides.
 
 - **Never** - Time series data points with gaps in the data are never connected.
 - **Always** - Time series data points with gaps in the data are always connected.

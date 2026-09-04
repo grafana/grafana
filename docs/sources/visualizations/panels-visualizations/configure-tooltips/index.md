@@ -124,7 +124,7 @@ You can use a [field override](ref:field-override) to hide individual series fro
 
 When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
 
-- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **None** - Values in the tooltip are listed in the order their series appear in the visualization. No additional sorting is applied.
 - **Ascending** - Values in the tooltip are listed from smallest to largest.
 - **Descending** - Values in the tooltip are listed from largest to smallest.
 
@@ -144,7 +144,7 @@ Set the maximum width of the tooltip box.
 
 ### Max height
 
-Set the maximum height of the tooltip box. The default is 600 pixels.
+Set the maximum height of the tooltip box. If you leave this unset, the tooltip box has no maximum height.
 
 ### Show histogram (Y axis)
 
