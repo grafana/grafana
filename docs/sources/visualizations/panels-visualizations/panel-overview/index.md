@@ -92,6 +92,9 @@ When you open a panel in full-screen view mode, Grafana displays a **View panel*
 These controls make it easier to view specific data or identify patterns and correlations.
 Because these controls exist in view mode, you don't need edit permissions to use them, and the changes you make don't affect the saved dashboard.
 
+If you close the sidebar, Grafana remembers your choice and doesn't open it automatically the next time you view a panel.
+To open it again, click the **View panel controls** button in the sidebar toolbar, which also restores the automatic opening.
+
 The sidebar includes the following controls:
 
 - **Quick toggles**: Adjust common visualization options, such as legend visibility and basic graph styles.
