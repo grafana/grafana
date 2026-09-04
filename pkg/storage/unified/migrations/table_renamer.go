@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -10,7 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-const legacySuffix = "_legacy"
+const (
+	legacySuffix = "_legacy"
+
+	renameQueuePollInterval   = 100 * time.Millisecond
+	renameQueuedConfirmations = 2
+)
 
 // MigrationTableRenamer renames legacy tables after a successful migration.
 type MigrationTableRenamer interface {
@@ -219,24 +225,21 @@ func (r *mysqlTableRenamer) RenameTables(ctx context.Context, tables []string, d
 	return nil
 }
 
-// waitForRenamesQueued polls information_schema.processlist via sess to confirm all
-// RENAME statements are waiting for metadata locks. Returns error on timeout.
-// NOTE: This relies on exact text matching of the info column in processlist against
-// the SQL we generate. If MySQL ever normalizes the SQL (quoting, casing, whitespace),
-// the match will fail and this will timeout. This is acceptable because we control
-// the SQL generation in RenameTables above.
+// waitForRenamesQueued confirms via processlist that every RENAME is parked behind the
+// read lock. Matches info only: wait-state text differs per fork and per stage (Galera
+// reports "Waiting to execute in isolation"), so consecutive sightings stand in for it.
 func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []renamePair) error {
 	deadline := time.NewTimer(r.waitDeadline)
 	defer deadline.Stop()
 
+	confirmations := 0
 	for {
 		found := 0
 		for _, p := range pairs {
 			exactMatch := fmt.Sprintf("RENAME TABLE %s TO %s", r.mg.Dialect.Quote(p.oldName), r.mg.Dialect.Quote(p.newName))
 			var count int
 			_, err := r.sess.SQL(
-				"SELECT COUNT(*) FROM information_schema.processlist "+
-					"WHERE state = 'Waiting for table metadata lock' AND info = ?",
+				"SELECT COUNT(*) FROM information_schema.processlist WHERE info = ?",
 				exactMatch).Get(&count)
 			if err != nil {
 				return err
@@ -246,17 +249,41 @@ func (r *mysqlTableRenamer) waitForRenamesQueued(ctx context.Context, pairs []re
 			}
 		}
 		if found >= len(pairs) {
-			r.log.Info("All MySQL RENAME TABLE statements queued", "count", found)
-			return nil
+			confirmations++
+			if confirmations >= renameQueuedConfirmations {
+				r.log.Info("All MySQL RENAME TABLE statements queued", "count", found)
+				return nil
+			}
+		} else {
+			confirmations = 0
 		}
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("context cancelled while waiting for RENAME statements to queue: %w", ctx.Err())
 		case <-deadline.C:
-			return fmt.Errorf("timeout: only %d of %d RENAME statements confirmed in processlist", found, len(pairs))
-		case <-time.After(100 * time.Millisecond):
+			return fmt.Errorf("timeout: only %d of %d RENAME statements confirmed in processlist%s",
+				found, len(pairs), r.describeRenameThreads())
+		case <-time.After(renameQueuePollInterval):
 		}
 	}
+}
+
+// describeRenameThreads makes a timeout self-diagnosing: it reports the RENAME threads
+// this connection can see, and the state text that failed to look queued.
+func (r *mysqlTableRenamer) describeRenameThreads() string {
+	rows, err := r.sess.QueryString(
+		"SELECT id, command, state, info FROM information_schema.processlist WHERE info LIKE 'RENAME TABLE %'")
+	if err != nil {
+		return ""
+	}
+	if len(rows) == 0 {
+		return "; no RENAME threads visible in processlist"
+	}
+	seen := make([]string, 0, len(rows))
+	for _, row := range rows {
+		seen = append(seen, fmt.Sprintf("id=%s command=%q state=%q info=%q", row["id"], row["command"], row["state"], row["info"]))
+	}
+	return "; visible RENAME threads: " + strings.Join(seen, ", ")
 }
 
 // rollbackRenames reverses successful renames when some failed, keeping DB consistent.
