@@ -211,8 +211,10 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
     if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
       return false;
     }
-    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
+    if (option.value === 'adhoc' && unifiedDrilldown && standalone === false) {
       // Dashboards have a dedicated "Filter and Group by" entry point instead.
+      // Only hide when standalone is explicitly false (edit-pane context);
+      // undefined (Settings > Variables page) should still show the adhoc type.
       return false;
     }
 
