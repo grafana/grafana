@@ -19,8 +19,9 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
-    expect(frames).toBeNull();
+    const { frames, warn } = prepareGraphableFields(input, createTheme());
+    expect(frames).toEqual([]);
+    expect(warn).toBe('No graphable fields');
   });
 
   it('does not needlessly copy clean arrays', () => {
@@ -32,7 +33,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const { frames } = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toBe(values);
@@ -47,8 +48,9 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
-    expect(frames).toBeNull();
+    const { frames, warn } = prepareGraphableFields(input, createTheme());
+    expect(frames).toEqual([]);
+    expect(warn).toBe('No graphable fields');
   });
 
   it('sets classic palette index on graphable fields', () => {
@@ -63,7 +65,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const { frames } = prepareGraphableFields(input, createTheme());
     expect(frames![0].fields.map((f) => f.state?.seriesIndex)).toEqual([undefined, undefined, 0, undefined, 1]);
   });
 
@@ -78,7 +80,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const { frames } = prepareGraphableFields(input, createTheme());
     const out = frames![0];
 
     expect(out.fields.map((f) => f.name)).toEqual(['a', 'b', 'c', 'd']);
@@ -104,7 +106,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity, null] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const { frames } = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
@@ -126,7 +128,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [1, 2, 3] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const { frames } = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
@@ -150,7 +152,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', config: { noValue: '20' }, values: [1, 2, 3] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const { frames } = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
@@ -174,7 +176,7 @@ describe('prepare timeseries graph', () => {
       ],
     });
 
-    const frames = prepareGraphableFields([df], createTheme());
+    const { frames } = prepareGraphableFields([df], createTheme());
     expect(frames).not.toBeNull();
     expect(typeof frames![0].fields[0].values[0]).toBe('number');
   });
@@ -188,7 +190,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df], createTheme());
+      const { frames } = prepareGraphableFields([df], createTheme());
       const field = frames![0].fields.find((f) => f.name === 'a');
       expect(field?.config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
       expect(df.fields[1].config?.custom).toBeUndefined();
@@ -208,7 +210,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df], createTheme());
+      const { frames } = prepareGraphableFields([df], createTheme());
       expect(df.fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.Smooth);
       expect(frames![0].fields[1].config.custom.lineInterpolation).toEqual(LineInterpolation.StepAfter);
     });
@@ -226,7 +228,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df], createTheme());
+      const { frames } = prepareGraphableFields([df], createTheme());
       expect(frames![0].fields[1].config.custom.lineInterpolation).toBe(LineInterpolation.StepBefore);
     });
 
@@ -238,7 +240,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df], createTheme());
+      const { frames } = prepareGraphableFields([df], createTheme());
       expect(frames![0].fields[1].values).toEqual([1, null, 0]);
     });
   });
@@ -257,7 +259,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df], createTheme());
+      const { frames } = prepareGraphableFields([df], createTheme());
       expect(frames).not.toBeNull();
       expect(frames![0].fields[1].type).toBe(FieldType.enum);
     });
@@ -286,7 +288,7 @@ describe('prepare timeseries graph', () => {
         ],
       });
 
-      const frames = prepareGraphableFields([df1, df2], createTheme());
+      const { frames } = prepareGraphableFields([df1, df2], createTheme());
       expect(frames).not.toBeNull();
       // Second enum field values should be offset by the length of the first enum's text
       expect(frames![1].fields[1].values).toEqual([2, 3]);
@@ -617,7 +619,7 @@ describe('prepareGraphableFields with xNumFieldIdx', () => {
         { name: 'y', type: FieldType.number, values: [10, 20, 30] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme(), undefined, 0);
+    const { frames } = prepareGraphableFields([df], createTheme(), undefined, 0);
     expect(frames).not.toBeNull();
     expect(frames![0].fields[0].name).toBe('x');
   });
@@ -631,7 +633,7 @@ describe('prepareGraphableFields with xNumFieldIdx', () => {
       ],
     });
 
-    const frames = prepareGraphableFields([df], createTheme(), undefined, 1);
+    const { frames } = prepareGraphableFields([df], createTheme(), undefined, 1);
     expect(frames).not.toBeNull();
     expect(frames![0].fields[0].name).toBe('x');
   });
@@ -782,7 +784,7 @@ describe('TimeComparison high cardinality (#126181)', () => {
       }
     }
 
-    const frames = prepareGraphableFields([mainA, mainB, compareB, compareA], theme);
+    const { frames } = prepareGraphableFields([mainA, mainB, compareB, compareA], theme);
     expect(frames).not.toBeNull();
 
     const mainFields = frames!.filter((f) => !f.meta?.timeCompare?.isTimeShiftQuery).map((f) => f.fields[1]);
@@ -838,7 +840,7 @@ describe('prepareGraphableFields gap filling for compare frames (#125104)', () =
     const current = seriesFrame(FROM, false);
     const compare = seriesFrame(FROM - OFFSET, true);
 
-    const frames = prepareGraphableFields([current, compare], createTheme(), timeRange)!;
+    const { frames } = prepareGraphableFields([current, compare], createTheme(), timeRange)!;
 
     expect(frames[1].length).toBe(compare.length);
     expect(frames[1].length).toBe(frames[0].length);
@@ -859,7 +861,7 @@ describe('prepareGraphableFields gap filling for compare frames (#125104)', () =
       ],
     });
 
-    const frames = prepareGraphableFields([compare], createTheme(), timeRange)!;
+    const { frames } = prepareGraphableFields([compare], createTheme(), timeRange)!;
 
     expect(frames[0].length).toBeGreaterThan(3);
     expect(frames[0].fields[1].values).toContain(null);
@@ -1032,5 +1034,37 @@ describe('getComparisonFieldPairs', () => {
 
     // same aligned frame, but neither source frame is a comparison query now
     expect(getComparisonFieldPairs(alignedFrame, [currentFrame('A'), currentFrame('B')]).size).toBe(0);
+  });
+});
+
+describe('prepareGraphableFields null-time validation (#130379)', () => {
+  it('rejects frames with null time cells in time-X mode', () => {
+    const frame = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+      ],
+    });
+    const { frames, warn } = prepareGraphableFields([frame], createTheme());
+    expect(frames).toEqual([]);
+    expect(warn).toMatch(/query A returned a time field with null values/);
+  });
+
+  it('skips the null-time check in numeric-X mode (trend panel path)', () => {
+    // Trend uses numeric X and never mounts the zoom plugin that crashes on
+    // null timestamps, so an unused time column with a null cell must not
+    // reject the frame.
+    const frame = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'x', type: FieldType.number, values: [1, 2, 3], config: {} },
+        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
+        { name: 'time', type: FieldType.time, values: [1000, null, 3000], config: {} },
+      ],
+    });
+    const { frames, warn } = prepareGraphableFields([frame], createTheme(), undefined, 0);
+    expect(warn).toBeUndefined();
+    expect(frames?.length).toBe(1);
   });
 });

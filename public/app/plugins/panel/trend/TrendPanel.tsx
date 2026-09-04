@@ -53,7 +53,7 @@ export const TrendPanel = ({
 
   const info = useMemo(() => prepSeries(data.series, options.xField), [data.series, options.xField]);
 
-  if (info.warning || !info.frames) {
+  if (info.warning || !info.frames?.length) {
     return (
       <PanelDataErrorView
         panelId={id}

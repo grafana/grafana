@@ -86,8 +86,16 @@ export const StateTimelinePanel = ({
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
-  if (!paginatedFrames || typeof warn === 'string') {
-    return <PanelDataErrorView panelId={panelId} fieldConfig={fieldConfig} data={data} message={warn} needsTimeField />;
+  if (!paginatedFrames?.length || typeof warn === 'string') {
+    return (
+      <PanelDataErrorView
+        panelId={panelId}
+        fieldConfig={fieldConfig}
+        data={data}
+        message={warn}
+        needsTimeField
+      />
+    );
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());

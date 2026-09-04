@@ -12,8 +12,10 @@ import {
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/internal';
+import { findFrameWithNullTimeValue } from 'app/features/panel/frames/validation';
 
 type ScaleKey = string;
 
@@ -100,7 +102,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
 }
 
 /**
- * Returns null if there are no graphable fields
+ * Returns graphable frames or a warning explaining why no graphable frames are available.
  */
 export function prepareGraphableFields(
   series: DataFrame[],
@@ -108,9 +110,9 @@ export function prepareGraphableFields(
   timeRange?: TimeRange,
   // numeric X requires a single frame where the first field is numeric
   xNumFieldIdx?: number
-): DataFrame[] | null {
+): { frames: DataFrame[]; warn?: string } {
   if (!series?.length) {
-    return null;
+    return { frames: undefined };
   }
 
   cacheFieldDisplayNames(series);
@@ -269,10 +271,30 @@ export function prepareGraphableFields(
   if (frames.length) {
     setClassicPaletteIdxs(frames, theme, 0);
     matchEnumColorToSeriesColor(frames, theme);
-    return frames;
+
+    // The Data Plane timeseries spec requires non-null timestamps, and time-axis
+    // panels (timeseries, state-timeline, status-history, candlestick) crash on
+    // null time cells via the zoom-to-data path. Trend in numeric-X mode never
+    // mounts the zoom plugin, so it is exempt from this check.
+    if (!useNumericX) {
+      const invalidFrame = findFrameWithNullTimeValue(frames);
+      if (invalidFrame) {
+        const refId = invalidFrame.refId ? `query ${invalidFrame.refId}` : 'a query';
+        return {
+          frames: [],
+          warn: t(
+            'timeseries.time-series-panel.null-time-value',
+            '{{refId}} returned a time field with null values; filter out rows with empty timestamps',
+            { refId }
+          ),
+        };
+      }
+    }
+
+    return { frames };
   }
 
-  return null;
+  return { frames: [], warn: t('timeseries.time-series-panel.no-graphable-fields', 'No graphable fields') };
 }
 
 const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) => {
