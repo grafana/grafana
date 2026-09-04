@@ -7689,6 +7689,12 @@
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
     },
+    "save-provisioned-dashboard": {
+      "folder-repo-missing-body": "The provisioning repository managing this folder no longer exists. Choose a different folder or save at the repository root.",
+      "folder-repo-missing-title": "The selected folder cannot be saved to",
+      "save-to-database": "Save to Grafana database instead",
+      "save-to-git": "Save to Git repository instead"
+    },
     "save-provisioned-dashboard-form": {
       "advanced-options": "Advanced options",
       "cancel": "Cancel",
@@ -7699,6 +7705,7 @@
       "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "folder-create-error": "Failed to create folder",
+      "folder-select-error": "Failed to change the target folder",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "format": {
@@ -7711,6 +7718,7 @@
       "label-target-folder": "Target folder",
       "label-title": "Title",
       "new-folder": "New folder",
+      "no-folder-root": "No folder (repository root)",
       "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",

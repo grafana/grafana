@@ -9,6 +9,7 @@ import {
   AnnoKeyIgnorePredefinedVariables,
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
+  AnnoKeySourcePath,
 } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
@@ -16,6 +17,7 @@ import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
+import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { type DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
 import { useSaveDashboard } from './useSaveDashboard';
 
@@ -32,6 +34,8 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
   /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
   onCancel?: () => void;
+  /** Carries title/description across a swap to another save form; omit outside the save drawer. */
+  drawer?: SaveDashboardDrawer;
 }
 
 /**
@@ -47,9 +51,12 @@ export function nextMetaAfterSaveAsFolderChange(
   const currentAnnotations = currentMeta.k8s?.annotations ?? {};
   const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
 
-  // Drop previous folder's manager annotations; keep everything else (including denylist).
+  // Drop the previous folder's manager annotations, and the source path with them: it records where
+  // the file currently lives, so keeping it would pin generatePath() to the old folder and revert the
+  // pick. Everything else is kept (including denylist).
+  const droppedAnnotations = new Set<string>([AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath]);
   const preservedAnnotations = Object.fromEntries(
-    Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
+    Object.entries(currentAnnotations).filter(([key]) => !droppedAnnotations.has(key))
   );
 
   return {
@@ -67,14 +74,15 @@ export function nextMetaAfterSaveAsFolderChange(
   };
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel, drawer }: Props) {
   const { changedSaveModel } = changeInfo;
+  const draft = drawer?.saveFormDraft;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
-      title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
-      description: changedSaveModel.description ?? '',
+      title: draft?.title ?? (changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`),
+      description: draft?.description ?? changedSaveModel.description ?? '',
       folder: {
         uid: dashboard.state.meta.folderUid,
         title: dashboard.state.meta.folderTitle,
@@ -107,6 +115,44 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
       }
     };
   }, []);
+
+  // Park what is typed as it changes rather than on unmount: React renders the form that takes
+  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
+  useEffect(() => {
+    if (drawer) {
+      drawer.saveFormDraft = { title: formValues.title, description: formValues.description };
+    }
+  }, [drawer, formValues.title, formValues.description]);
+
+  const folderSelectionIdRef = useRef(0);
+  const onFolderChange = useCallback(
+    async (uid: string | undefined, title: string | undefined) => {
+      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
+      const selectionId = ++folderSelectionIdRef.current;
+      setValue('folder', { uid, title });
+      let provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>;
+      try {
+        // The database escape hatch stays unmanaged whatever folder is picked
+        provisionedMeta = drawer?.state.saveToDatabase ? {} : await getProvisionedMeta(uid);
+      } catch {
+        // Revert to what the scene meta still describes: a racing pick's value may never have reached it
+        if (selectionId === folderSelectionIdRef.current) {
+          setValue('folder', { uid: dashboard.state.meta.folderUid, title: dashboard.state.meta.folderTitle });
+        }
+        return;
+      }
+      if (selectionId !== folderSelectionIdRef.current) {
+        return;
+      }
+      // folderTitle goes with folderUid, or the diff tab and a remounted picker keep naming the old folder
+      dashboard.setState({
+        meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta), folderTitle: title },
+      });
+      // Re-validate title when folder changes to check for duplicates in new folder
+      trigger('title');
+    },
+    [dashboard, drawer, setValue, trigger]
+  );
 
   const handleTitleChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -248,18 +294,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) 
         </Field>
 
         <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-folder', 'Folder')}>
-          <FolderPicker
-            onChange={async (uid: string | undefined, title: string | undefined) => {
-              setValue('folder', { uid, title });
-              const provisionedMeta = await getProvisionedMeta(uid);
-              dashboard.setState({
-                meta: nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta),
-              });
-              // Re-validate title when folder changes to check for duplicates in new folder
-              trigger('title');
-            }}
-            value={formValues.folder?.uid}
-          />
+          <FolderPicker onChange={onFolderChange} value={formValues.folder?.uid} />
         </Field>
         {!changeInfo.isNew && (
           <Field noMargin label={t('dashboard-scene.save-dashboard-as-form.label-copy-tags', 'Copy tags')}>

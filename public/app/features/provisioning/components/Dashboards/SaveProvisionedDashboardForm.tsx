@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -17,6 +17,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
+import { nextMetaAfterSaveAsFolderChange } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -53,6 +54,8 @@ export interface Props extends SaveProvisionedDashboardProps {
   canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
+  /** A folder pick is still resolving, so the defaults below still describe the previous folder */
+  isReresolving?: boolean;
 }
 
 export function SaveProvisionedDashboardForm({
@@ -65,6 +68,7 @@ export function SaveProvisionedDashboardForm({
   readOnly,
   repository,
   saveAsCopy,
+  isReresolving,
 }: Props) {
   const navigate = useNavigate();
   const { isDirty } = dashboard.useState();
@@ -88,7 +92,19 @@ export function SaveProvisionedDashboardForm({
       mountedRef.current = false;
     };
   }, []);
-  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues });
+  // Seeded from the draft the previous save form parked on the drawer: a folder pick can swap
+  // which form applies, and title/description live in each form's own state. Read once, so the
+  // draft this form keeps parking as it is typed doesn't feed back into the reset below
+  const draftRef = useRef(drawer.saveFormDraft);
+  const seededDefaultValues = useMemo(
+    () => ({
+      ...defaultValues,
+      title: draftRef.current?.title ?? defaultValues.title,
+      description: draftRef.current?.description ?? defaultValues.description,
+    }),
+    [defaultValues]
+  );
+  const methods = useForm<ProvisionedDashboardFormData>({ defaultValues: seededDefaultValues });
   const [createFolder] = useCreateRepositoryFilesWithPathMutation();
 
   const {
@@ -115,6 +131,7 @@ export function SaveProvisionedDashboardForm({
   const [workflow, ref] = watch(['workflow', 'ref']);
   const isFolderless = repository?.target === 'folderless';
   const title = watch('title');
+  const description = watch('description');
 
   // Clear indefinite save-event suppression on unmount (covers cancel, error, navigation away).
   useEffect(() => {
@@ -126,8 +143,14 @@ export function SaveProvisionedDashboardForm({
   // Update the form if default values change. keepDirtyValues so a background refetch
   // (e.g. cache invalidation after creating a folder) doesn't wipe fields the user changed.
   useEffect(() => {
-    reset(defaultValues, { keepDirtyValues: true });
-  }, [defaultValues, reset]);
+    reset(seededDefaultValues, { keepDirtyValues: true });
+  }, [seededDefaultValues, reset]);
+
+  // Park what is typed as it changes rather than on unmount: React renders the form that takes
+  // over before this one's cleanup runs, so an unmount write would reach it one swap too late
+  useEffect(() => {
+    drawer.saveFormDraft = { title, description };
+  }, [drawer, title, description]);
 
   const templateVars: CommitTemplateVars = {
     action: isNew ? 'create' : 'update',
@@ -266,20 +289,67 @@ export function SaveProvisionedDashboardForm({
   );
   // Updating the dashboard meta (not just the form field) makes the defaults recompute
   // against the selected folder, so path and post-save handlers stay in sync.
+  const folderSelectionIdRef = useRef(0);
   const selectFolder = useCallback(
     async (uid?: string, title?: string) => {
+      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
+      const selectionId = ++folderSelectionIdRef.current;
       setValue('folder', { uid, title });
-      updateURLParams('folderUid', uid);
-      const meta = await getProvisionedMeta(uid);
+      let meta: Awaited<ReturnType<typeof getProvisionedMeta>>;
+      try {
+        meta = await getProvisionedMeta(uid);
+      } catch (err) {
+        // An outdated pick's failure is moot: the latest pick owns the field and any error surfaced
+        if (selectionId !== folderSelectionIdRef.current) {
+          return;
+        }
+        // Revert to what the scene meta still describes: a racing pick's value may never have reached it
+        setValue('folder', { uid: dashboard.state.meta.folderUid, title: dashboard.state.meta.folderTitle });
+        throw err;
+      }
+      if (selectionId !== folderSelectionIdRef.current) {
+        return;
+      }
+      // A dirty filename survives the defaults reset with the old folder prefix attached, so the path moves here
+      const directory = uid ? meta.folderPath : '';
+      if (directory !== undefined) {
+        const currentPath = getValues('path');
+        const nextPath = joinPath(directory, splitPath(currentPath).filename);
+        if (nextPath !== currentPath) {
+          setValue('path', nextPath);
+        }
+      }
+      // Same merge Save As uses: swaps the folder's manager annotations without dropping the
+      // dashboard's k8s identity, so an open copy still resolves as an update
       dashboard.setState({
-        meta: {
-          ...meta,
-          folderUid: uid,
-        },
+        meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, meta), folderTitle: title },
       });
     },
-    [setValue, dashboard]
+    [setValue, getValues, dashboard]
   );
+
+  // Picker/root-button entry point: surfaces a failed pick, where handleCreateFolder stays silent
+  const handleFolderChange = useCallback(
+    (uid?: string, title?: string) => {
+      setError(undefined);
+      selectFolder(uid, title).catch((err) => {
+        setError(
+          getProvisionedRequestError(
+            err,
+            t(
+              'dashboard-scene.save-provisioned-dashboard-form.folder-select-error',
+              'Failed to change the target folder'
+            )
+          )
+        );
+      });
+    },
+    [selectFolder]
+  );
+
+  const handleSaveAtRoot = useCallback(() => {
+    handleFolderChange();
+  }, [handleFolderChange]);
 
   const handleCreateFolder = useCallback(async () => {
     if (isCreatingFolderRef.current) {
@@ -495,8 +565,9 @@ export function SaveProvisionedDashboardForm({
                   render={({ field: { ref, value, onChange, ...field } }) => {
                     return (
                       <ProvisioningAwareFolderPicker
-                        onChange={selectFolder}
-                        value={value.uid}
+                        onChange={handleFolderChange}
+                        // An empty uid must read as "root", or the picker's team-folder preselect overwrites it
+                        value={value.uid || undefined}
                         {...field}
                         showAllFolders
                       />
@@ -504,6 +575,21 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
+              {isFolderless && (
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    onClick={handleSaveAtRoot}
+                    disabled={isCreatingFolder}
+                  >
+                    <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.no-folder-root">
+                      No folder (repository root)
+                    </Trans>
+                  </Button>
+                </div>
+              )}
               {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
@@ -602,7 +688,13 @@ export function SaveProvisionedDashboardForm({
               type="submit"
               data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
               disabled={
-                request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating || isCreatingFolder
+                request.isLoading ||
+                readOnly ||
+                !isDirtyState ||
+                isSubmitting ||
+                isValidating ||
+                isCreatingFolder ||
+                isReresolving
               }
             >
               {request.isLoading || isSubmitting || isValidating
@@ -638,17 +730,6 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
           'Dashboard title validation failed.'
         );
   }
-}
-
-// Update the URL params without reloading the page
-function updateURLParams(param: string, value?: string) {
-  // only check undefine and null, empty string = root folder, we still want to update the URL
-  if (value === undefined || value === null) {
-    return;
-  }
-  const url = new URL(window.location.href);
-  url.searchParams.set(param, value);
-  window.history.replaceState({}, '', url);
 }
 
 /**

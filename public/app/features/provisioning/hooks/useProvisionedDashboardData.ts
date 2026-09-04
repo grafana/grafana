@@ -1,4 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -17,9 +18,14 @@ import {
   getDefaultWorkflow,
   shouldEnforceBranchTemplate,
 } from '../components/defaults';
-import { generatePath } from '../components/utils/path';
+import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
+
+// A save-as copy writes a new file even though the source dashboard already exists.
+export function getIsNewDashboardSave(meta: DashboardMeta, saveAsCopy?: boolean) {
+  return !meta.k8s?.name || Boolean(saveAsCopy);
+}
 
 interface UseDefaultValuesParams {
   meta: DashboardMeta;
@@ -40,10 +46,21 @@ export function useDefaultValues({
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
+  const isNew = getIsNewDashboardSave(meta, saveAsCopy);
   const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,
+    includeFolderless: !meta.folderUid && isNew,
+    // A new save owns no file yet, so its manager annotation is only a hint. Resolving it the same
+    // way useIsProvisionedNG does keeps the two from disagreeing over whether this is provisioned,
+    // which is what left the drawer rendering the provisioned branch around an orphan notice.
+    nameIsHint: isNew,
   });
+  // Minted once per form rather than per render: this feeds the fallback filename for a save with
+  // no title to slugify, and regenerating it would rewrite that filename on every recompute
+  const timestampRef = useRef<string>(undefined);
+  timestampRef.current ??= generateTimestamp();
+  const timestamp = timestampRef.current;
 
   if (isLoading || status === RepoViewStatus.Loading) {
     return {
@@ -75,13 +92,18 @@ export function useDefaultValues({
     };
   }
 
-  const timestamp = generateTimestamp();
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath];
+
+  const formTitle = saveAsCopy ? `${defaultTitle} Copy` : defaultTitle;
+  // The form syncs a new save's filename from its title, so seed that same name here. Falling back
+  // to a timestamped placeholder would mint a fresh one on every defaults recompute, and each one
+  // lands in the field for the render before the sync replaces it, which reads as a flicker.
+  const titleSlug = isNew ? slugifyForFilename(formTitle ?? '') : undefined;
 
   const dashboardPath = generatePath({
     timestamp,
     pathFromAnnotation: saveAsCopy ? undefined : sourcePath,
-    slug: saveAsCopy ? undefined : meta.slug,
+    slug: titleSlug || (saveAsCopy ? undefined : meta.slug),
     folderPath,
   });
 
@@ -89,18 +111,20 @@ export function useDefaultValues({
     values: {
       ref: getDefaultRef(repository, 'dashboard', loadedFromRef),
       path: dashboardPath,
-      repo: managerIdentity || repository?.name || '',
+      // A new save targets whatever repository actually resolved: when the annotation hint missed,
+      // the name it still carries is a repository that no longer exists
+      repo: (isNew ? repository.name : managerIdentity || repository.name) ?? '',
       comment: '',
       folder: {
         uid: meta.folderUid,
         title: '',
       },
-      title: saveAsCopy ? `${defaultTitle} Copy` : defaultTitle,
+      title: formTitle,
       description: defaultDescription ?? '',
       workflow: getDefaultWorkflow(repository, loadedFromRef),
       copyTags: saveAsCopy ? false : true,
     },
-    isNew: !meta.k8s?.name,
+    isNew,
     repository,
     status,
   };

@@ -1,17 +1,56 @@
 import { config } from '@grafana/runtime';
 
+import { AnnoKeyManagerIdentity, AnnoKeyManagerKind } from '../../apiserver/types';
 import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
+import { getIsNewDashboardSave } from './useProvisionedDashboardData';
 
-export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
-  const params = new URLSearchParams(window.location.search);
-  const folderName = params.get('folderUid') || undefined;
+export interface ProvisionedNGState {
+  isProvisioned: boolean;
+  /** Repository resolution is still in flight, so isProvisioned is not yet meaningful */
+  isLoading: boolean;
+}
 
-  const { repository, isInstanceManaged } = useGetResourceRepositoryView({ folderName });
+export function useIsProvisionedNG(dashboard: DashboardScene, saveAsCopy?: boolean): ProvisionedNGState {
+  // Subscribed here rather than read off state, so the lookup re-resolves when the save form
+  // changes the folder without relying on the caller to subscribe
+  const { uid, meta } = dashboard.useState();
+  // Built on the shared predicate so it cannot drift from the other save paths. The extra uid
+  // term is this hook's own: a stored dashboard resolves its repository from its own annotations,
+  // so neither identity may be present before a folder or folderless lookup is triggered
+  const isNewDashboard = !uid && getIsNewDashboardSave(meta);
+  // A save-as copy writes a new file, so it resolves the folder/root like a new dashboard: the
+  // source's own annotations describe where the source lives, not where the copy is headed
+  const isNewSave = isNewDashboard || Boolean(saveAsCopy);
+  // meta.folderUid is seeded from the URL for new dashboards and then tracks the folder picked in
+  // the save form, so this resolves the same folder useDefaultValues does
+  const folderName = isNewSave ? meta.folderUid || undefined : undefined;
+  // For a new save the annotation identity is resolved as the same hint useDefaultValues resolves,
+  // so both hooks reach the same answer. Passing it here is what stops this hook from reporting
+  // "provisioned" off an annotation the form's own lookup then rejects as an orphan
+  const annotations = meta.k8s?.annotations;
+  const managerName =
+    isNewSave && annotations?.[AnnoKeyManagerKind] === 'repo' ? annotations[AnnoKeyManagerIdentity] : undefined;
 
+  const { repository, isInstanceManaged, isLoading } = useGetResourceRepositoryView({
+    name: managerName,
+    folderName,
+    includeFolderless: !folderName && isNewSave,
+    nameIsHint: isNewSave,
+  });
+
+  // The config flag wins over everything, even repo-managed annotations on the dashboard itself
   if (!config.provisioningEnabled) {
-    return false;
+    return { isProvisioned: false, isLoading: false };
   }
-  return dashboard.isManagedRepository() || Boolean(repository) || isInstanceManaged;
+
+  // A stored dashboard's own annotations settle this without waiting on the repository lookup. A new
+  // save has no file to be managed yet, so its annotations are only the hint resolved above: trusting
+  // them here is what rendered the provisioned branch around a form that could not resolve a repo
+  if (!isNewSave && dashboard.isManagedRepository()) {
+    return { isProvisioned: true, isLoading: false };
+  }
+
+  return { isProvisioned: Boolean(repository) || isInstanceManaged, isLoading: Boolean(isLoading) };
 }

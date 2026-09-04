@@ -1,10 +1,13 @@
+import { useRef } from 'react';
+
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -29,9 +32,28 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  // Git/Database switch for provisioned saves, owned by useDatabaseSaveSwitch. Lives on the
+  // drawer because switching tabs unmounts the save form while the drawer stays open.
+  saveToDatabase?: boolean;
+  // uid is the scene uid at switch time; a different one on unmount means a save already landed
+  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean; uid?: string };
+}
+
+/** Title and description typed into a save form, so a form swap can hand them to the next one */
+export interface SaveFormDraft {
+  title?: string;
+  description?: string;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
+  /**
+   * Deliberately not scene state: a folder pick can change which save form applies, and each form
+   * keeps title/description in its own local form state, so the draft outlives the swap here. It is
+   * only read when a form mounts and written when one unmounts, so making it reactive would just
+   * re-render the drawer on every swap.
+   */
+  public saveFormDraft: SaveFormDraft | undefined;
+
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
     const changeInfo = dashboard.getDashboardChanges();
@@ -67,6 +89,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
+    saveToDatabase,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -85,7 +108,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const isProvisionedNG = useIsProvisionedNG(dashboard);
+  const { isProvisioned: resolvedIsProvisionedNG, isLoading: isResolvingRepo } = useIsProvisionedNG(
+    dashboard,
+    saveAsCopy
+  );
+  // A folder pick re-runs the repository lookup, so hold the last settled answer while the next one
+  // is in flight: unmounting the form that is already up would drop what the user typed into it
+  const settledIsProvisionedNG = useRef<boolean | undefined>(undefined);
+  if (!isResolvingRepo) {
+    settledIsProvisionedNG.current = resolvedIsProvisionedNG;
+  }
+  const isProvisionedNG = settledIsProvisionedNG.current ?? resolvedIsProvisionedNG;
+  // Only the first lookup has nothing to hold, so it is the only one that may show a spinner
+  const isFirstRepoResolve = isResolvingRepo && settledIsProvisionedNG.current === undefined;
 
   const tabs = (
     <TabsBar>
@@ -112,7 +147,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
-  } else if (isProvisioned || isProvisionedNG) {
+  } else if ((isProvisioned || isProvisionedNG) && !changeInfo.isNew && !saveToDatabase) {
+    // A dashboard that does not exist yet, or one being written to the database, is not provisioned
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
@@ -134,7 +170,9 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    if (isProvisionedNG) {
+    // Checked before the spinner: once switched to the database form, a folder pick re-runs the
+    // repository lookup, and neither a cold cache nor an unmanaged folder may unmount that form
+    if (saveToDatabase || isProvisionedNG) {
       return (
         <SaveProvisionedDashboard
           dashboard={dashboard}
@@ -145,8 +183,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       );
     }
 
+    if (isFirstRepoResolve) {
+      return <Spinner />;
+    }
+
     if (saveAsCopy || changeInfo.isNew) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} />;
+      return (
+        <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} drawer={model} />
+      );
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {
