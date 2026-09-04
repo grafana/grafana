@@ -12981,8 +12981,14 @@
       "code": {
         "aria-label-editor": "Code",
         "aria-label-language": "Code language",
+        "aria-label-run": "Run code",
         "custom-language": "Use this language name",
-        "language-plain-text": "Plain text"
+        "language-plain-text": "Plain text",
+        "no-output": "Ran with no output",
+        "output-label": "Output",
+        "ran-in": "{{duration}} ms",
+        "run": "Run",
+        "running": "Running"
       },
       "delete": "Delete block",
       "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
